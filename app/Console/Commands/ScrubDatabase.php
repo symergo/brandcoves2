@@ -89,6 +89,15 @@ class ScrubDatabase extends Command
             DB::statement('UPDATE wishlist_items SET note = NULL');
 
             /*
+             * This or that together links and gift profile cards: their tokens
+             * open real pages, and a card may carry the name its maker typed.
+             * `left(md5(...))` rather than ShareCode: these only have to stop
+             * matching production, not be pleasant to read.
+             */
+            DB::statement('UPDATE taste_invites SET token = left(md5(random()::text || id::text), 16)');
+            DB::statement('UPDATE gift_profile_cards SET token = left(md5(random()::text || id::text), 16), name = NULL');
+
+            /*
              * Secret Santa members: real names and email addresses, typed in by
              * people who never made an account here.
              *

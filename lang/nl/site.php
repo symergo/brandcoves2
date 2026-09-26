@@ -1437,6 +1437,54 @@ return [
             'finder_title' => 'Liever kiezen dan vragen beantwoorden?',
             'finder_cta' => 'Speel Dit of dat',
         ],
+        // Dit of dat samen (TasteTogetherController): meerdere mensen spelen
+        // over één persoon, en de gever ziet het samengevoegde resultaat, nooit
+        // wie wat koos. docs/features/taste-together.md
+        'together' => [
+            'title' => 'Wat zou :name leuk vinden?',
+            'subtitle' => 'Help uitzoeken wat :name leuk vindt: kies een tiental keer tussen twee dingen, wat :name liever zou krijgen.',
+            'privacy' => 'Geen account nodig. Je keuzes worden bij die van de anderen gevoegd, en wie je deze link stuurde ziet alleen wat jullie samen vonden, nooit je naam of je eigen antwoorden.',
+            'full' => 'Er hebben al genoeg mensen gespeeld voor :name. Bedankt dat je wilde helpen.',
+            'recorded' => 'Bedankt. Je keuzes zijn bij die van de anderen gevoegd, en wie de link stuurde ziet wat jullie samen vonden.',
+            'not_recorded' => 'Bedankt voor het spelen. Er hebben al genoeg mensen gespeeld voor :name, dus je keuzes zijn niet toegevoegd.',
+            'opened' => 'De link voor :name is klaar om te versturen.',
+            'stopped' => 'De link is gestopt. Wat erlangs gekozen werd, blijft hier staan.',
+            'panel_title' => 'Zoek samen uit wat :name leuk vindt',
+            'panel_hint' => 'Stuur de anderen een link. Elk van hen speelt Dit of dat over :name, zonder account. Jij ziet hoeveel mensen speelden en wat ze samen vonden, nooit wie wat koos.',
+            'make' => 'Maak een link',
+            'make_new' => 'Maak een nieuwe link',
+            'stop' => 'Stop de link',
+            'share_text' => 'Help je mee uitzoeken wat :name leuk zou vinden? Kies een tiental keer tussen twee cadeaus.',
+            'players_none' => 'Nog niemand heeft gespeeld.',
+            'players_one' => 'Eén persoon speelde.',
+            'players_many' => ':count mensen speelden.',
+            'full_note' => 'De link neemt :max mensen. Hij is nu vol.',
+            'stopped_note' => 'De link is gestopt. De antwoorden die al gegeven zijn, staan hier nog.',
+            'result' => 'Wat ze samen vonden',
+            'nothing' => 'Nog geen duidelijke favoriet.',
+            'apply' => 'Voeg dit toe aan :name',
+            'apply_hint' => 'Het komt bij wat je al over :name weet. Als :name zelf zijn smaak beschreef, blijven die antwoorden.',
+            'applied' => 'Toegevoegd aan :name. Opnieuw toevoegen neemt nieuwere antwoorden mee.',
+        ],
+
+        // "Mijn cadeauprofiel" (GiftProfileCardController): een kaart over
+        // jezelf met een link die de Cadeauzoeker ingevuld opent.
+        // docs/features/gift-profile-card.md
+        'card' => [
+            'title_anonymous' => 'Een cadeauprofiel',
+            'title_named' => 'Cadeauprofiel van :name',
+            'prefilled' => 'De vragen hieronder zijn ingevuld vanuit deze kaart. Bekijk meteen ideeën, of pas eerst een antwoord aan.',
+            'see_ideas' => 'Bekijk ideeën',
+            'make_own' => 'Maak je eigen kaart',
+            'remove' => 'Verwijder deze kaart',
+            'make_title' => 'Deel je cadeauprofiel',
+            'make_hint' => 'Maak een kaart met een link voor wie een cadeau voor je koopt. Die opent de Cadeauzoeker met jouw smaak al ingevuld. Er staat geen naam op tenzij je er een typt, en je kunt hem altijd verwijderen.',
+            'name_label' => 'Je naam op de kaart (niet verplicht)',
+            'name_placeholder' => 'Je voornaam (niet verplicht)',
+            'make' => 'Maak mijn kaart',
+            'made' => 'Je kaart: :summary. Stuur de link naar wie een cadeau voor je koopt.',
+            'share_text' => 'Mijn cadeauprofiel: :summary.',
+        ],
     ],
 
     'ask' => [
@@ -2139,6 +2187,8 @@ return [
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
         'find_gift' => 'Vertel de Cadeauzoeker voor wie het is, wat die persoon leuk vindt en wat je wilt uitgeven, en kies uit de ideeën.',
         'find_taste' => 'Weet je niet goed wat iemand leuk vindt? In Dit of dat kies je een tiental keer tussen twee producten. Zo vinden we hun smaak en een budget, tonen we ideeën, en kun je het resultaat bij een persoon bewaren.',
+        'find_taste_together' => 'Weet je niet goed wat iemand leuk vindt, en de anderen ook niet? Maak op de lijst voor die persoon een Dit of dat-link en stuur hem rond. Iedereen speelt over die persoon zonder account, en jij ziet hoeveel mensen speelden en wat ze samen vonden, nooit wie wat koos. Met één druk voeg je het toe aan die persoon.',
+        'find_taste_card' => 'Dit of dat voor jezelf gespeeld? Maak een cadeauprofielkaart, zoals "koffie, wandelen, ongeveer €30 tot €60", en stuur de link naar wie een cadeau voor je koopt. Die opent de Cadeauzoeker met jouw smaak al ingevuld. Geen naam tenzij je er een typt, en je kunt hem altijd verwijderen.',
         'find_offline_ideas' => 'Onder de ideeën van de Cadeauzoeker en Dit of dat zie je soms Ideeën zonder winkel: dingen die veel verschillende mensen zelf op hun lijst schreven, zoals een workshop of een dagje uit. We tonen er pas een nadat we het zelf nalazen, nooit wie het schreef, en Op mijn lijst zet het als offline artikel op de jouwe.',
         'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeau-ideeën per persoon, en koopgidsen.',
         'find_filters' => 'Zoek vanaf een pagina met cadeau-ideeën alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',

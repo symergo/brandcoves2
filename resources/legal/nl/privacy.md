@@ -45,6 +45,8 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Prijs- en voorraadmeldingen | De melding sturen waar je om vroeg | Overeenkomst (art. 6(1)(b)) |
 | E-mailadres nieuwsbrief, bevestigingsdatum, IP bij inschrijving | De mail sturen, en toestemming kunnen aantonen | Toestemming (art. 6(1)(a)) |
 | Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
+| Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
+| Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
 
 ### Een woord over de bezoekerscookie
 
@@ -156,6 +158,8 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Inschrijving nieuwsbrief | Tot je je uitschrijft |
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |
 | Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
+| Keuzes via een Dit of dat samen-link | 180 dagen, daarna ook de link zodra er geen keuzes meer op staan |
+| Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
 | Serverlogs | 30 dagen |
 | Analyticscookie, als je die toestond | 13 maanden |
 | Advertentiemetingcookie, als je die toestond | 90 dagen |

@@ -1434,6 +1434,54 @@ return [
             'finder_title' => 'Plutôt choisir que répondre à des questions ?',
             'finder_cta' => 'Jouer à Ceci ou cela',
         ],
+        // Ceci ou cela ensemble (TasteTogetherController) : plusieurs personnes
+        // jouent pour une même personne, et celui qui offre voit le résultat
+        // commun, jamais qui a choisi quoi. docs/features/taste-together.md
+        'together' => [
+            'title' => 'Qu’est-ce qui plairait à :name ?',
+            'subtitle' => 'Aidez à découvrir ce que :name aime : choisissez une douzaine de fois entre deux choses, ce que :name préférerait recevoir.',
+            'privacy' => 'Aucun compte nécessaire. Vos choix s’ajoutent à ceux des autres, et la personne qui vous a envoyé ce lien ne voit que ce que vous avez trouvé ensemble, jamais votre nom ni vos propres réponses.',
+            'full' => 'Assez de personnes ont déjà joué pour :name. Merci d’avoir voulu aider.',
+            'recorded' => 'Merci. Vos choix s’ajoutent à ceux des autres, et la personne qui a envoyé le lien voit ce que vous avez trouvé ensemble.',
+            'not_recorded' => 'Merci d’avoir joué. Assez de personnes ont déjà joué pour :name, vos choix n’ont donc pas été ajoutés.',
+            'opened' => 'Le lien pour :name est prêt à être envoyé.',
+            'stopped' => 'Le lien est arrêté. Ce qui a été choisi par ce lien reste ici.',
+            'panel_title' => 'Découvrez ensemble ce que :name aime',
+            'panel_hint' => 'Envoyez un lien aux autres. Chacun joue à Ceci ou cela pour :name, sans compte. Vous voyez combien ont joué et ce qu’ils ont trouvé ensemble, jamais qui a choisi quoi.',
+            'make' => 'Créer un lien',
+            'make_new' => 'Créer un nouveau lien',
+            'stop' => 'Arrêter le lien',
+            'share_text' => 'Tu m’aides à découvrir ce qui plairait à :name ? Choisis une douzaine de fois entre deux cadeaux.',
+            'players_none' => 'Personne n’a encore joué.',
+            'players_one' => 'Une personne a joué.',
+            'players_many' => ':count personnes ont joué.',
+            'full_note' => 'Le lien accepte :max personnes. Il est complet.',
+            'stopped_note' => 'Le lien est arrêté. Les réponses déjà données restent ici.',
+            'result' => 'Ce qu’ils ont trouvé ensemble',
+            'nothing' => 'Pas encore de favori clair.',
+            'apply' => 'Ajouter à :name',
+            'apply_hint' => 'Cela s’ajoute à ce que vous savez déjà de :name. Si :name a décrit ses goûts lui-même, ses réponses restent.',
+            'applied' => 'Ajouté à :name. Ajouter à nouveau reprend les réponses plus récentes.',
+        ],
+
+        // « Mon profil cadeau » (GiftProfileCardController) : une carte sur
+        // soi avec un lien qui ouvre l’Assistant cadeau déjà rempli.
+        // docs/features/gift-profile-card.md
+        'card' => [
+            'title_anonymous' => 'Un profil cadeau',
+            'title_named' => 'Le profil cadeau de :name',
+            'prefilled' => 'Les questions ci-dessous sont remplies à partir de cette carte. Voyez des idées tout de suite, ou changez d’abord une réponse.',
+            'see_ideas' => 'Voir des idées',
+            'make_own' => 'Créer votre carte',
+            'remove' => 'Supprimer cette carte',
+            'make_title' => 'Partagez votre profil cadeau',
+            'make_hint' => 'Créez une carte avec un lien pour ceux qui vous offrent des cadeaux. Elle ouvre l’Assistant cadeau avec vos goûts déjà remplis. Aucun nom n’y figure sauf si vous en tapez un, et vous pouvez la supprimer à tout moment.',
+            'name_label' => 'Votre nom sur la carte (facultatif)',
+            'name_placeholder' => 'Votre prénom (facultatif)',
+            'make' => 'Créer ma carte',
+            'made' => 'Votre carte : :summary. Envoyez le lien à ceux qui vous offrent des cadeaux.',
+            'share_text' => 'Mon profil cadeau : :summary.',
+        ],
     ],
 
     'ask' => [
@@ -2128,6 +2176,8 @@ return [
         'find_scan' => 'Scannez un code-barres avec l\'appareil photo de votre téléphone pour voir le produit et son prix ailleurs.',
         'find_gift' => 'Dans « Trouver un cadeau », dites pour qui c\'est, ce que la personne aime et votre budget, et choisissez parmi les idées.',
         'find_taste' => 'Vous ne savez pas ce que quelqu’un aime ? Dans Ceci ou cela, vous choisissez une douzaine de fois entre deux produits. Nous en tirons ses goûts et un budget, montrons des idées, et vous pouvez garder le résultat pour une personne.',
+        'find_taste_together' => 'Vous ne savez pas ce que quelqu’un aime, et les autres non plus ? Sur la liste pour cette personne, créez un lien Ceci ou cela et faites-le circuler. Chacun joue pour cette personne sans compte, et vous voyez combien ont joué et ce qu’ils ont trouvé ensemble, jamais qui a choisi quoi. Ajoutez-le à la personne d’un seul geste.',
+        'find_taste_card' => 'Vous avez joué à Ceci ou cela pour vous-même ? Créez une carte de profil cadeau, comme « café, marche, environ 30 € à 60 € », et envoyez son lien à ceux qui vous offrent des cadeaux. Elle ouvre l’Assistant cadeau avec vos goûts déjà remplis. Aucun nom sauf si vous en tapez un, et vous pouvez la supprimer à tout moment.',
         'find_offline_ideas' => 'Sous les idées de « Trouver un cadeau » et de Ceci ou cela, vous verrez parfois des Idées hors boutique : des choses que beaucoup de personnes différentes ont notées elles-mêmes sur leur liste, comme un atelier ou une sortie. Nous n\'en montrons une qu\'après l\'avoir relue, jamais qui l\'a écrite, et Ajouter à ma liste la met sur la vôtre comme article hors ligne.',
         'find_browse' => 'Parcourez les Coves : une nouvelle chaque jour, des idées cadeaux par personne, et des guides d\'achat.',
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',

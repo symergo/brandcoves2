@@ -153,6 +153,15 @@ class LegalPagesTest extends TestCase
                 $text,
                 "the {$language} policy does not state the unconfirmed-subscriber window",
             );
+
+            // This or that together and gift profile cards (2026-09-26).
+            foreach (['taste_runs', 'gift_profile_cards'] as $window) {
+                $this->assertStringContainsString(
+                    $windows[$window].($language === 'en' ? ' days' : ' dagen'),
+                    $text,
+                    "the {$language} policy does not state the {$window} window the pruner uses",
+                );
+            }
         }
     }
 

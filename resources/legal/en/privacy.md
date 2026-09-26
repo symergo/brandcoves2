@@ -44,6 +44,8 @@ you have the right to object, and section *Your rights* explains how.
 | Price and stock alerts | Sending the alert you asked for | Contract (Art. 6(1)(b)) |
 | Daily email address, confirmation date, signup IP | Sending the email, and proving consent | Consent (Art. 6(1)(a)) |
 | Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
+| This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
+| A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
 
 ### A note on the visitor cookie
 
@@ -151,6 +153,8 @@ safeguards above.
 | Newsletter subscription | Until you unsubscribe |
 | Unconfirmed subscription | Deleted after 30 days |
 | Feedback you send us | 12 months, message and reply address together |
+| Choices made through a This or that together link | 180 days, then the link too once nobody's choices are left on it |
+| Gift profile card | Until you remove it, or 365 days after anyone last opened it |
 | Server logs | 30 days |
 | Analytics cookie, if you allowed it | 13 months |
 | Advertising measurement cookie, if you allowed it | 90 days |

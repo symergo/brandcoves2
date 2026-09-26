@@ -242,7 +242,7 @@ class TasteController extends Controller
      * @param  list<array<string, mixed>>  $raw
      * @return array<string, mixed>
      */
-    private function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true): array
+    protected function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true): array
     {
         $choices = $reader->read($raw, $current->get());
         $profile = TasteProfiler::fromConfig()->profile($choices);
@@ -310,6 +310,8 @@ class TasteController extends Controller
                 'save' => $current->url('gift/taste/save'),
                 'restart' => $current->url('gift/taste'),
                 'finder' => $current->url('gift'),
+                // "My gift profile", offered after choosing for yourself.
+                'card' => $current->url('gift/card'),
             ],
             'total' => TasteDeck::ROUNDS,
             'recipients' => $owner->scope(Recipient::query())
@@ -334,6 +336,9 @@ class TasteController extends Controller
                 'save' => $current->url("for/{$token}/taste/save"),
                 'restart' => $current->url("for/{$token}/taste"),
                 'finder' => $current->url("for/{$token}"),
+                // The same card as from /gift/taste: it carries nothing of
+                // this page, no giver and no link back to it.
+                'card' => $current->url('gift/card'),
             ],
             'total' => TasteDeck::ROUNDS,
             'recipients' => [],
@@ -351,7 +356,7 @@ class TasteController extends Controller
     }
 
     /** @return list<list<array<string, mixed>>> */
-    private function firstRounds(TasteDeck $deck, CurrentMarket $current): array
+    protected function firstRounds(TasteDeck $deck, CurrentMarket $current): array
     {
         return $this->present($deck->next($current->get(), [], [], 0));
     }
@@ -381,7 +386,7 @@ class TasteController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function choiceRules(string $presence): array
+    protected function choiceRules(string $presence): array
     {
         return [
             'choices' => [$presence, 'array', 'max:'.(TasteDeck::ROUNDS * 2)],

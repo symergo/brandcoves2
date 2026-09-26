@@ -26,6 +26,7 @@ use App\Http\Controllers\GiftCoveManualController;
 use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\GiftLandingController;
 use App\Http\Controllers\GiftPledgeController;
+use App\Http\Controllers\GiftProfileCardController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
@@ -61,6 +62,7 @@ use App\Http\Controllers\ShopsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\TasteController;
+use App\Http\Controllers\TasteTogetherController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
@@ -549,6 +551,14 @@ Route::prefix('{market}')->group(function () {
         Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
         Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
 
+        // "Help me find out what :name likes": This or that played by several
+        // people about one of yours (docs/features/taste-together.md).
+        Route::middleware('throttle:20,1')->whereUuid('recipient')->group(function () {
+            Route::post('/recipients/{recipient}/taste-together', [TasteTogetherController::class, 'store'])->name('recipients.together.store');
+            Route::delete('/recipients/{recipient}/taste-together', [TasteTogetherController::class, 'destroy'])->name('recipients.together.destroy');
+            Route::post('/recipients/{recipient}/taste-together/apply', [TasteTogetherController::class, 'apply'])->name('recipients.together.apply');
+        });
+
         // Hand a list to the person it was built for. It stops being research
         // and becomes theirs — which is what makes it claimable.
         Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
@@ -697,6 +707,19 @@ Route::prefix('{market}')->group(function () {
         Route::get('/for/{token}/taste', [TasteController::class, 'selfShow'])->name('recipients.self.taste');
         Route::post('/for/{token}/taste', [TasteController::class, 'selfResult'])->name('recipients.self.taste.result');
         Route::post('/for/{token}/taste/save', [TasteController::class, 'selfSave'])->name('recipients.self.taste.save');
+    });
+
+    /*
+     * This or that together, for whoever holds the link: play about one of
+     * somebody's people, no account needed. The token is the whole permission,
+     * as with `/l/{token}`, so the same limit; finishing writes a row, so
+     * harder there. See docs/features/taste-together.md.
+     */
+    Route::middleware('throttle:60,1')->where(['token' => ShareCode::pattern()])->group(function () {
+        Route::get('/t/{token}', [TasteTogetherController::class, 'play'])->name('taste.together');
+        Route::post('/t/{token}', [TasteTogetherController::class, 'finish'])
+            ->middleware('throttle:10,1')
+            ->name('taste.together.finish');
     });
 
     /*
@@ -856,6 +879,19 @@ Route::prefix('{market}')->group(function () {
         Route::post('/gift/taste', [TasteController::class, 'result'])->name('gift.taste.result');
         Route::post('/gift/taste/next', [TasteController::class, 'next'])->name('gift.taste.next');
         Route::post('/gift/taste/save', [TasteController::class, 'save'])->name('gift.taste.save');
+    });
+
+    /*
+     * "My gift profile": a card made after choosing for yourself, whose link
+     * opens the Gift Finder filled in. Making one writes a row, so it is
+     * throttled like a save. See docs/features/gift-profile-card.md.
+     */
+    Route::post('/gift/card', [GiftProfileCardController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('gift.card.store');
+    Route::middleware('throttle:60,1')->where(['token' => ShareCode::pattern()])->group(function () {
+        Route::get('/gift/card/{token}', [GiftProfileCardController::class, 'show'])->name('gift.card');
+        Route::delete('/gift/card/{token}', [GiftProfileCardController::class, 'destroy'])->name('gift.card.destroy');
     });
 
     /*

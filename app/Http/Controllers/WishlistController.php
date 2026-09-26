@@ -19,6 +19,7 @@ use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
 use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftTarget;
+use App\Services\Gift\TasteTogether;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\Friends;
 use App\Services\Social\ListSharer;
@@ -800,6 +801,17 @@ class WishlistController extends Controller
                 ? url($current->url("q/{$quiz->share_token}"))
                 : null,
             'quizPlays' => $quiz?->attempts()->count() ?? 0,
+
+            /*
+             * "Help me find out what :name likes": This or that, played by
+             * several people about the list's person, their answers combined.
+             * The owner only, since it is their person; a count and the
+             * combined result, never who chose what. See
+             * docs/features/taste-together.md.
+             */
+            'tasteTogether' => $wishlist->recipient !== null && ListAccess::isOwner($wishlist, $owner)
+                ? app(TasteTogether::class)->forGiver($wishlist->recipient, $current->url())
+                : null,
 
             /*
              * Groups this list could answer for.
