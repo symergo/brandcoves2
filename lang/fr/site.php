@@ -2378,4 +2378,41 @@ return [
         'see_birthday_hint' => 'Le jour et le mois. Jamais l\'année.',
     ],
 
+    /*
+     * « Mes proches » : les personnes enregistrées et les amis sur une seule
+     * liste, à /people (docs/features/my-people.md). Les détails d'un ami
+     * reprennent les textes `friends` ci-dessus.
+     */
+    'people' => [
+        'title' => 'Mes proches',
+        'intro' => 'Tous ceux à qui vous offrez, l\'anniversaire ou l\'occasion la plus proche d\'abord.',
+        'intro_tip' => 'Certaines personnes sont enregistrées pour vous seul : ce que vous savez d\'elles, ce que vous leur avez offert, des idées pour elles. D\'autres sont elles-mêmes sur GiftCoves : vous voyez les listes qu\'elles partagent avec vous et l\'anniversaire qu\'elles affichent. Personne d\'autre ne voit ce que vous avez enregistré.',
+        'guest' => 'Connectez-vous pour garder au même endroit tous ceux à qui vous offrez : leur anniversaire, ce que vous leur avez offert, et des idées pour eux.',
+        'empty' => 'Personne pour l\'instant. Ajoutez quelqu\'un à qui vous offrez, ou invitez un ami qui est sur GiftCoves.',
+        'on_giftcoves' => 'sur GiftCoves',
+        'birthday' => 'Anniversaire',
+        'today' => 'aujourd\'hui',
+        'tomorrow' => 'demain',
+        'in_days' => 'dans :count jours',
+        'open' => 'Sa page',
+        'find_gift' => 'Trouver un cadeau',
+        'taste' => 'Ceci ou cela',
+        'together' => 'Ceci ou cela ensemble',
+        'their_lists' => 'Ses listes (:count)',
+        'details' => 'Détails',
+        'save_known' => 'Enregistrer ce que vous savez de :name',
+        'save_known_tip' => 'Ses centres d\'intérêt, son budget et ce que vous lui avez offert, et des idées de cadeaux. Vous seul le voyez.',
+        'add_person' => 'Ajouter quelqu\'un',
+        'add_person_tip' => 'Vous seul voyez cette personne. Ni compte ni adresse e-mail nécessaire.',
+        'name' => 'Nom',
+        'relationship' => 'Qui est-ce pour vous ?',
+        'relationship_none' => 'Choisir (facultatif)',
+        'birthday_optional' => 'Anniversaire (facultatif)',
+        'add' => 'Ajouter',
+        'invite' => 'Inviter sur GiftCoves',
+        'invite_tip' => 'Son adresse e-mail. Si la personne a un compte, ou en crée un, vous êtes liés : vous voyez les listes qu\'elle partage avec vous, et elle les vôtres. Nous ne lui envoyons pas d\'e-mail : prévenez-la vous-même.',
+        'invite_button' => 'Inviter',
+        'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves, l\'anniversaire ou l\'occasion la plus proche d\'abord. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Pour chaque personne : sa page, Trouver un cadeau pour elle et les listes qu\'elle partage avec vous.',
+    ],
+
 ];

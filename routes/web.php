@@ -44,6 +44,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
+use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\PopularSearchesController;
@@ -366,6 +367,20 @@ Route::prefix('{market}')->group(function () {
     Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
     Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');
 
+    /*
+     * "My people": saved people and friends on one list (2026-09-26, see
+     * docs/features/my-people.md). Outside `auth` like `/lists`, so a guest
+     * gets what the page is for and a sign-in rather than a bare login form;
+     * nothing about anybody is sent to them.
+     *
+     * `/friends` was the friends' own page and now redirects here: emails,
+     * the help pages and bookmarks carry it. Outside `auth` too, so a guest
+     * following an old link lands on the explanation, not the login form.
+     * The friend actions (`POST /friends` and the rest) stay where they were.
+     */
+    Route::get('/people', [PeopleController::class, 'index'])->name('people');
+    Route::get('/friends', [FriendController::class, 'index'])->name('friends');
+
     // Where a save could go. JSON, fetched by the save picker on first open.
     Route::get('/list-options', [WishlistItemController::class, 'options'])->name('items.options');
 
@@ -439,16 +454,6 @@ Route::prefix('{market}')->group(function () {
         Route::delete('/lists/{list}/publish', [ListPublishController::class, 'destroy'])
             ->whereUuid('list')
             ->name('lists.unpublish');
-
-        /*
-         * The people you share lists with.
-         *
-         * Made by following somebody's share link and having an account at the
-         * end of it — see App\Services\Social\Friends. Behind `auth` because
-         * a friendship is between two accounts and there is nothing to show
-         * somebody who is not one of them.
-         */
-        Route::get('/friends', [FriendController::class, 'index'])->name('friends');
 
         /*
          * Adding somebody by their address.

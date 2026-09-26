@@ -175,7 +175,7 @@ class GiftCoveController extends Controller
                 'search' => $current->url('search'),
                 'ask' => $current->url('ask'),
                 'notifications' => $current->url('notifications'),
-                'friends' => $current->url('friends'),
+                'friends' => $current->url('people'),
                 'daily' => $current->get()->covePath(),
                 'guides' => $current->url('guides'),
                 'ideas' => $current->url('gift-ideas'),

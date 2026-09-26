@@ -104,7 +104,8 @@ is true now.
 | [config-contract.md](config-contract.md) | Core / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — claiming needs an account |
 | [pasted-links.md](pasted-links.md) | Wishlist / Ingestion | Active — links looked up (catalogue and connectors first), own photos, unknown barcodes; needs the `media_data` volume |
-| [friends.md](friends.md) | Wishlist / Accounts | Active |
+| [friends.md](friends.md) | Wishlist / Accounts | Active — the page itself merged into My people (`/people`) on 2026-09-26; `/friends` redirects |
+| [my-people.md](my-people.md) | Accounts / Gifting | Active — `/people`: saved people and friends on one list, nearest date first; add someone or invite; `/friends` redirects here |
 | [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built; invitations retired 2026-09-14; the views became sections of one page 2026-09-26 |
 | [saved-coves.md](saved-coves.md) | Coves / Wishlist | Active: save a Cove into My Coves, or copy it into a list of your own |
 | [save-button.md](save-button.md) | Wishlist / Coves / UI | Active: one Save button and one panel for products and Coves; the "▾" is gone |

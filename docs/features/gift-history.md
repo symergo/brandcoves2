@@ -31,7 +31,9 @@ A "saved person" is a `recipients` row: somebody a user buys for (see
 - buttons to the Gift Finder and This or that for this person.
 
 Linked from a list about somebody (under the description, owner only), from the Gift Finder's
-results when a saved person is chosen, and from the reminder email.
+results when a saved person is chosen, from the reminder email, and since 2026-09-26 from **My
+people** (`/{market}/people`, [my-people.md](my-people.md)), the page that lists every saved person
+together with your friends on GiftCoves. Before that there was no list of saved people anywhere.
 
 ## What the history holds
 

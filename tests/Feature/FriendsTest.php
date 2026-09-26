@@ -179,9 +179,9 @@ class FriendsTest extends TestCase
 
         $this->assertNull($friend->fresh()->birthday);
 
-        $this->actingAs($inviter)->get('/be-nl/friends')->assertInertia(fn ($page) => $page
-            ->where('friends.0.birthday', '12-01')
-            ->where('friends.0.birthdayIsMine', true));
+        $this->actingAs($inviter)->get('/be-nl/people')->assertInertia(fn ($page) => $page
+            ->where('people.0.friend.birthday', '12-01')
+            ->where('people.0.friend.birthdayIsMine', true));
 
         /*
          * And their own published date takes precedence over it — trimmed to
@@ -190,9 +190,9 @@ class FriendsTest extends TestCase
          */
         $friend->update(['birthday' => '1988-11-30']);
 
-        $this->actingAs($inviter)->get('/be-nl/friends')->assertInertia(fn ($page) => $page
-            ->where('friends.0.birthday', '11-30')
-            ->where('friends.0.birthdayIsMine', false));
+        $this->actingAs($inviter)->get('/be-nl/people')->assertInertia(fn ($page) => $page
+            ->where('people.0.friend.birthday', '11-30')
+            ->where('people.0.friend.birthdayIsMine', false));
     }
 
     #[Test]
@@ -221,8 +221,8 @@ class FriendsTest extends TestCase
         $this->actingAs($inviter)->post('/be-nl/friends', ['email' => 'kim@example.com']);
         $friend->update(['friends_see_birthday' => false]);
 
-        $this->actingAs($inviter)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.birthday', null),
+        $this->actingAs($inviter)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.birthday', null),
         );
     }
 
@@ -242,8 +242,8 @@ class FriendsTest extends TestCase
         $this->actingAs($visitor)->get("/be-nl/l/{$list->share_token}")->assertOk();
         $this->actingAs($visitor)->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
 
-        $props = $this->actingAs($owner)->get('/be-nl/friends')->assertOk()->viewData('page')['props'];
-        $encoded = json_encode($props['friends']);
+        $props = $this->actingAs($owner)->get('/be-nl/people')->assertOk()->viewData('page')['props'];
+        $encoded = json_encode($props['people']);
 
         foreach (['claimed', 'claims', 'progress', 'bought', 'taken'] as $forbidden) {
             $this->assertStringNotContainsString($forbidden, $encoded);
@@ -253,9 +253,13 @@ class FriendsTest extends TestCase
     #[Test]
     public function the_page_needs_an_account(): void
     {
-        // A friendship is between two accounts. There is nothing to show
-        // somebody who is not one of them.
-        $this->get('/be-nl/friends')->assertRedirect();
+        // A friendship is between two accounts. The old address sends a
+        // guest to My people, which explains itself and sends nothing about
+        // anybody (docs/features/my-people.md).
+        $this->get('/be-nl/friends')->assertRedirect('/be-nl/people');
+        $this->get('/be-nl/people')->assertOk()->assertInertia(fn ($page) => $page
+            ->where('isSignedIn', false)
+            ->where('people', []));
     }
 
     #[Test]
@@ -294,13 +298,13 @@ class FriendsTest extends TestCase
             'user_id' => $picked->id,
         ]);
 
-        $this->actingAs($picked)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.lists', fn ($lists) => str_contains(json_encode($lists), 'Wedding')),
+        $this->actingAs($picked)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => str_contains(json_encode($lists), 'Wedding')),
         );
 
         // The other friend never learns it exists.
-        $this->actingAs($other)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wedding')),
+        $this->actingAs($other)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wedding')),
         );
     }
 
@@ -375,8 +379,8 @@ class FriendsTest extends TestCase
         $invited = User::factory()->create();
         $this->actingAs($invited)->get("/be-nl/l/{$group->share_token}")->assertOk();
 
-        $this->actingAs($invited)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.lists', fn ($lists) => count($lists) === 1
+        $this->actingAs($invited)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => count($lists) === 1
                 && $lists[0]['title'] === 'Leaving present'),
         );
     }
@@ -408,8 +412,8 @@ class FriendsTest extends TestCase
 
         $this->assertDatabaseCount('wishlist_shares', 0);
 
-        $this->actingAs($friend)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wedding')),
+        $this->actingAs($friend)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wedding')),
         );
 
         // And the link still opens, which is the whole point of the distinction.
@@ -443,8 +447,8 @@ class FriendsTest extends TestCase
         $this->actingAs($owner)
             ->post("/be-nl/lists/{$shared->id}/share-with-friends", ['friend_ids' => [$picked->id]]);
 
-        $props = $this->actingAs($owner)->get('/be-nl/friends')->assertOk()->viewData('page')['props'];
-        $byId = collect($props['friends'])->keyBy('id');
+        $props = $this->actingAs($owner)->get('/be-nl/people')->assertOk()->viewData('page')['props'];
+        $byId = collect($props['people'])->pluck('friend')->keyBy('id');
 
         $this->assertCount(2, $byId[$picked->id]['theySee'], 'Both the doorway and the shared list.');
         $this->assertCount(1, $byId[$other->id]['theySee'], 'Only the one they opened.');
@@ -574,8 +578,8 @@ class FriendsTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wat David')));
 
         // Off the friends page too, and the token stops resolving.
-        $this->actingAs($friend)->get('/be-nl/friends')->assertInertia(
-            fn ($page) => $page->where('friends.0.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wat David')),
+        $this->actingAs($friend)->get('/be-nl/people')->assertInertia(
+            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => ! str_contains(json_encode($lists), 'Wat David')),
         );
 
         $this->actingAs($friend)->get("/be-nl/l/{$shared->share_token}")->assertNotFound();

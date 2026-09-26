@@ -62,6 +62,7 @@ Grouped by what a visitor is doing, not by file order:
   (gift landing pages), `/gift-cove`, `/ask`
 - **Organize** — `/lists`, `/lists/{list}`, `/list-options`, `/saved-items`, `/l/{token}` (shared
   list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`,
+  `/people` (My people: saved people and friends on one list; `/friends` redirects here),
   `/people/{recipient}` (a saved person's gift history and next step)
 - **Account** — `/login`, `/auth/magic/{token}`, `/auth/google`, `/logout`, `/notifications`,
   `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email)

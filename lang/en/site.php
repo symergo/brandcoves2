@@ -2646,4 +2646,41 @@ return [
         'see_birthday_hint' => 'The day and the month. Never the year.',
     ],
 
+    /*
+     * "My people": saved people and friends on one list, at /people
+     * (docs/features/my-people.md). The friend details on this page reuse
+     * the `friends` strings above.
+     */
+    'people' => [
+        'title' => 'My people',
+        'intro' => 'Everybody you buy for, the nearest birthday or occasion first.',
+        'intro_tip' => 'Some people are saved for you alone: what you know about them, what you gave them, ideas for them. Others are on GiftCoves themselves: you see the lists they share with you and the birthday they show. Nobody else sees what you saved.',
+        'guest' => 'Sign in to keep everybody you buy for in one place: their birthdays, what you gave them, and ideas for them.',
+        'empty' => 'Nobody yet. Add somebody you buy for, or invite a friend who is on GiftCoves.',
+        'on_giftcoves' => 'on GiftCoves',
+        'birthday' => 'Birthday',
+        'today' => 'today',
+        'tomorrow' => 'tomorrow',
+        'in_days' => 'in :count days',
+        'open' => 'Their page',
+        'find_gift' => 'Find a gift',
+        'taste' => 'This or that',
+        'together' => 'This or that together',
+        'their_lists' => 'Their lists (:count)',
+        'details' => 'Details',
+        'save_known' => 'Save what you know about :name',
+        'save_known_tip' => 'Their interests, budget and what you gave them, and gift ideas for them. Only you see it.',
+        'add_person' => 'Add someone',
+        'add_person_tip' => 'Only you see this person. No account or email address needed.',
+        'name' => 'Name',
+        'relationship' => 'Who are they to you?',
+        'relationship_none' => 'Choose (optional)',
+        'birthday_optional' => 'Birthday (optional)',
+        'add' => 'Add',
+        'invite' => 'Invite on GiftCoves',
+        'invite_tip' => 'Their email address. If they have an account, or make one, you are connected: you see the lists they share with you, and they see the ones you share. We do not email them, so tell them yourself.',
+        'invite_button' => 'Invite',
+        'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves, the nearest birthday or occasion first. Add someone only you see, or invite someone by email. From each person you reach their page, Find a gift for them and the lists they share with you.',
+    ],
+
 ];
