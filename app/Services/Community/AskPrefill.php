@@ -87,7 +87,7 @@ class AskPrefill
                 ? rtrim(rtrim(number_format($person->budget_max / 100, 2, '.', ''), '0'), '.')
                 : '',
             'occasion' => $list === null ? '' : $this->occasion($list),
-            'list' => $list === null ? null : ['id' => $list->id, 'title' => $list->displayTitle()],
+            'list' => $list === null ? null : ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value],
         ];
     }
 

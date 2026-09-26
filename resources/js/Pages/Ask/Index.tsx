@@ -6,6 +6,8 @@ import CoveIcon from '../../Components/CoveIcon'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import type { ListKind } from '../../Components/ListKindBadge'
+import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
 
 interface Question {
@@ -52,7 +54,7 @@ interface Prefill {
     budget_max: string
     occasion: string
     /** The list it is asked from: answers get "save to" this list. */
-    list: { id: string; title: string } | null
+    list: { id: string; title: string; kind?: ListKind } | null
 }
 
 /**
@@ -95,7 +97,7 @@ export default function AskIndex({
     sendsToPeople = false,
 }: Props) {
     const { market } = usePage<SharedProps>().props
-    const { t, n } = useTranslations()
+    const { t, tRich, n } = useTranslations()
     const base = `/${market.key}`
 
     /*
@@ -323,7 +325,7 @@ export default function AskIndex({
                     */}
                     {prefill?.list && (
                         <p className="flex flex-wrap items-center gap-1 text-sm text-ink-soft">
-                            <span>{t('ask.from_list', { list: prefill.list.title })}</span>
+                            <span>{tRich('ask.from_list', { list: <ListName name={prefill.list.title} kind={prefill.list.kind} /> })}</span>
                             <InfoTip>{t('ask.from_list_hint')}</InfoTip>
                         </p>
                     )}

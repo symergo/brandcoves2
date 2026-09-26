@@ -403,7 +403,7 @@ class AskController extends Controller
         ], array_slice($results, 0, 8));
     }
 
-    /** @return array{id: string, title: string}|null */
+    /** @return array{id: string, title: string, kind: string}|null */
     private function askersList(CommunityQuestion $question, Request $request): ?array
     {
         $viewer = $request->user();
@@ -418,7 +418,7 @@ class AskController extends Controller
             return null;
         }
 
-        return ['id' => $list->id, 'title' => $list->displayTitle()];
+        return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
     }
 
     /** @return array<string, mixed> */

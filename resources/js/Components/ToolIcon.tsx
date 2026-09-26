@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 export type ToolKey =
     | 'wishlist'
+    | 'list'
     | 'giftlist'
     | 'shared'
     | 'collab'
@@ -162,10 +163,32 @@ const paths: Record<ToolKey, ReactNode> = {
         </>
     ),
 
-    // A heart — the one thing on this page that is about wanting rather than
-    // organising.
+    /*
+     * A heart — the one thing on this page that is about wanting rather than
+     * organising.
+     *
+     * Redrawn 2026-09-26 at nine tenths of its old size, around the centre.
+     * The three list kinds (this, `giftlist`, `collab`) now sit beside a
+     * list's name inside sentences (`ListName`), where they are seen side by
+     * side at text size, and the old heart ran from edge to edge of the grid
+     * (x 2–22) while the clipboard and the two figures keep a margin of about
+     * three units. Next to them it read a size larger and heavier. Same
+     * stroke, same round joins; only the outline moved in.
+     */
     wishlist: (
-        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+        <path d="M18.3 13.8c1.34-1.31 2.7-2.89 2.7-4.95A4.95 4.95 0 0 0 16.05 3.9c-1.58 0-2.7.45-4.05 1.8-1.35-1.35-2.47-1.8-4.05-1.8A4.95 4.95 0 0 0 3 8.85c0 2.07 1.35 3.65 2.7 4.95l6.3 6.3Z" />
+    ),
+
+    /*
+     * A list whose kind is unknown or does not apply: a Cove somebody
+     * bookmarked, named in a sentence by `ListName`. Three rows with a mark
+     * before each, in the same grid and stroke as the three kinds beside it.
+     */
+    list: (
+        <>
+            <path d="M9.5 6.5H20M9.5 12H20M9.5 17.5H20" />
+            <path d="M4.5 6.5h.5M4.5 12h.5M4.5 17.5h.5" />
+        </>
     ),
 
     // A clipboard. A list *for* somebody is research you keep about them, not a

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import ListName from './ListName'
 import CommunityCoveCards, { type CommunityCoveCard } from './CommunityCoveCards'
 import NextSteps, { type NextStepCard } from './NextSteps'
 import OfflineIdeas, { type OfflineIdea } from './OfflineIdeas'
@@ -102,7 +103,7 @@ export default function GiftResults({
     onAsk,
 }: Props) {
     const { market } = usePage<SharedProps>().props
-    const { t } = useTranslations()
+    const { t, tRich } = useTranslations()
 
     const interest = (value: string) => {
         if (interestLabel) {
@@ -134,7 +135,7 @@ export default function GiftResults({
             )}
 
             {into && canSave && (
-                <p className="mt-1 text-sm text-ink-soft">{t('gift.saving_to', { list: into.title })}</p>
+                <p className="mt-1 text-sm text-ink-soft">{tRich('gift.saving_to', { list: <ListName name={into.title} kind={into.kind} /> })}</p>
             )}
 
             {note}

@@ -10,6 +10,7 @@ use App\Services\Wishlist\ItemMover;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
+use App\Support\ListName;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,7 +84,7 @@ class ItemTransferController extends Controller
 
         $this->mover->copy($item, $to);
 
-        return back()->with('success', __('site.lists.copied_to', ['list' => $to->displayTitle()]));
+        return back()->with(ListName::flash(ListName::mentionList('site.lists.copied_to', $to)));
     }
 
     /**
@@ -128,7 +129,7 @@ class ItemTransferController extends Controller
          */
         $this->mover->copy($item, $to, keepNote: false);
 
-        return back()->with('success', __('site.lists.copied_to', ['list' => $to->displayTitle()]));
+        return back()->with(ListName::flash(ListName::mentionList('site.lists.copied_to', $to)));
     }
 
     /** A list this person may see, or a 404. */

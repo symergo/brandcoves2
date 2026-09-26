@@ -280,6 +280,12 @@ class HandleInertiaRequests extends Middleware
                 // closing.
                 'action' => fn () => $request->session()->get('action'),
 
+                // The `success` sentence again, in pieces, when it names a list:
+                // `message`, `template` (with `:list` left in), `name`, `kind`.
+                // `FlashMessage` draws the name as a list's name from these; see
+                // App\Support\ListName. Null for every other message.
+                'list' => fn () => $request->session()->get('success_list'),
+
                 // Not a message: the id of a row a page can point at itself.
                 // A save made from a list's own page answers with this instead
                 // of a sentence — see `WishlistItemController::report()`.

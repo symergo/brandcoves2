@@ -22,6 +22,8 @@
  * A card that unmounts mid-request — a filter changed, a page turned — must not
  * take the confirmation with it.
  */
+import type { ListKind } from './Components/ListKindBadge'
+
 export interface SaveToast {
     /**
      * Identity, not order. Saving the same product to the same list twice in a
@@ -30,6 +32,11 @@ export interface SaveToast {
      */
     key: number
     message: string
+    /**
+     * The message again in pieces when it names a list ("Saved to :list"), so
+     * the toast draws the name as a list's name. See `ListName`.
+     */
+    list?: { template: string; name: string; kind: ListKind | null }
     tone: 'ok' | 'error'
     /** Present only when there is a row to take back out again. */
     undo?: { itemId: number; groupId?: number }
@@ -61,6 +68,17 @@ export function snapshot(): SaveToast | null {
 /** Nothing on the server-rendered pass; toasts are always a response to a click. */
 export function serverSnapshot(): SaveToast | null {
     return null
+}
+
+/**
+ * The `list` of a toast, from what `POST /list-items` answers: the name, its
+ * kind and the sentence with `:list` left in. Undefined when the answer came
+ * without them, and the toast then shows `message` as it is.
+ */
+export function listFrom(result: { listTitle: string; listKind?: ListKind; messageTemplate?: string }): SaveToast['list'] {
+    return result.messageTemplate === undefined
+        ? undefined
+        : { template: result.messageTemplate, name: result.listTitle, kind: result.listKind ?? null }
 }
 
 export function show(toast: Omit<SaveToast, 'key'>): void {

@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
-import { type ListKind } from '../../Components/ListKindBadge'
+import { kindIcons, type ListKind } from '../../Components/ListKindBadge'
+import ToolIcon, { type ToolKey } from '../../Components/ToolIcon'
 import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -457,7 +458,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 <>
                     {filled.map((section) => (
                         <section key={section.key} id={`section-${section.key}`} aria-labelledby={`heading-${section.key}`} className={sectionClass(section.key)}>
-                            <SectionHeading id={`heading-${section.key}`} label={section.label} count={section.lists.length} hint={section.hint} />
+                            <SectionHeading id={`heading-${section.key}`} label={section.label} count={section.lists.length} hint={section.hint} icon={sectionIcons[section.key]} />
                             <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {section.lists.map((list) => (
                                     <li key={list.id}>
@@ -500,18 +501,31 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
 }
 
 /**
+ * The mark of the kind each section holds, the same drawing a list's name
+ * carries in a sentence (`ListName`) and its badge carries on a card, so a
+ * kind looks the same everywhere it is shown with an icon. "For others" holds
+ * lists about somebody (`for_someone`).
+ */
+const sectionIcons: Partial<Record<string, ToolKey>> = {
+    mine: kindIcons.mine,
+    shared: kindIcons.for_someone,
+    group: kindIcons.group,
+}
+
+/**
  * A section's heading: its name, how many are in it, and the explanation
  * behind the info icon (the site standard since 2026-09-07). The count is
  * what tells somebody at a glance that their four lists are all here.
  */
-function SectionHeading({ id, label, count, hint }: { id: string; label: string; count: number; hint: string }) {
+function SectionHeading({ id, label, count, hint, icon }: { id: string; label: string; count: number; hint: string; icon?: ToolKey }) {
     const { n } = useTranslations()
 
     return (
         /* `flex-wrap` is what puts the opened note under the heading rather
            than beside it: see InfoTip. */
         <div className="flex flex-wrap items-center gap-1">
-            <h2 id={id} className="text-lg font-semibold">
+            <h2 id={id} className="flex items-center gap-1.5 text-lg font-semibold">
+                {icon && <ToolIcon name={icon} className="h-5 w-5 text-accent" />}
                 {label} <span className="font-normal text-ink-soft">({n(count)})</span>
             </h2>
             <InfoTip>{hint}</InfoTip>

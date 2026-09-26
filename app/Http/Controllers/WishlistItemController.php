@@ -23,6 +23,7 @@ use App\Services\Wishlist\ListMaker;
 use App\Services\Wishlist\ListOptions;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
+use App\Support\ListName;
 use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -648,14 +649,20 @@ class WishlistItemController extends Controller
         if (! $request->expectsJson()) {
             return $request->boolean('on_list_page')
                 ? back()->with('saved_item', $item->id)
-                : back()->with('success', $this->confirm($list));
+                : back()->with(ListName::flash($this->confirm($list)));
         }
+
+        $confirm = $this->confirm($list);
 
         return response()->json([
             'itemId' => $item->id,
             'listId' => $list->id,
             'listTitle' => $list->displayTitle(),
-            'message' => $this->confirm($list),
+            // What the toast draws the list's name from (see App\Support\ListName);
+            // `message` stays the finished sentence for anything reading text.
+            'listKind' => $list->kind->value,
+            'messageTemplate' => $confirm['template'],
+            'message' => $confirm['message'],
         ]);
     }
 
@@ -667,10 +674,12 @@ class WishlistItemController extends Controller
      * a list created in the same click — three destinations behind one word.
      * Naming the list is what makes the picker's default trustworthy enough to
      * accept without opening it.
+     *
+     * @return array{message: string, template: string, name: string, kind: string|null}
      */
-    private function confirm(Wishlist $list): string
+    private function confirm(Wishlist $list): array
     {
-        return __('site.lists.added_to', ['list' => $list->displayTitle()]);
+        return ListName::mentionList('site.lists.added_to', $list);
     }
 
     /**

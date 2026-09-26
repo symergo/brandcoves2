@@ -133,7 +133,7 @@ class GiftResults
      * Signed-in owners only: an anonymous visitor cannot save at all. See
      * docs/features/gift-whisperer.md, "Saving lands on that person's list".
      *
-     * @return array{id: string, title: string}|null
+     * @return array{id: string, title: string, kind: string}|null
      */
     public function recipientList(Owner $owner, ?Recipient $recipient, CurrentMarket $current): ?array
     {
@@ -160,7 +160,7 @@ class GiftResults
             );
         }
 
-        return ['id' => $list->id, 'title' => $list->displayTitle()];
+        return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
     }
 
     /**

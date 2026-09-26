@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\ListKind;
 use App\Models\User;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
 use App\Services\Wishlist\PendingSave;
+use App\Support\ListName;
 use Illuminate\Auth\Events\Login;
 
 /**
@@ -55,6 +57,17 @@ class ReplayPendingSave
          */
         // In the language of the market the save belongs to, which is where
         // the visitor lands next; see PendingSave::replayFor().
-        session()->flash('success', trans($replay['message'] ?? 'site.lists.added_to', ['list' => $replay['title']], $replay['language']));
+        // With the name as a list's name, like every other confirmation that
+        // names one; see App\Support\ListName.
+        $mention = ListName::mention(
+            $replay['message'] ?? 'site.lists.added_to',
+            $replay['title'],
+            ListKind::tryFrom((string) ($replay['kind'] ?? '')),
+            locale: $replay['language'],
+        );
+
+        foreach (ListName::flash($mention) as $key => $value) {
+            session()->flash($key, $value);
+        }
     }
 }

@@ -99,7 +99,11 @@ class PendingSave
      * login ran in (the admin's, a magic link opened from another market)
      * reads in the wrong language on arrival (owner, 2026-09-13).
      *
-     * @return array{title: string, language: string}|null
+     * The list's kind rides along so the confirmation can draw the name as a
+     * list's name, with its kind's icon (see App\Support\ListName); null for a
+     * Cove that was only bookmarked, which is not a list of yours.
+     *
+     * @return array{title: string, kind: string|null, language: string, message?: string}|null
      */
     public function replayFor(User $user, ItemSaver $saver, DefaultList $lists): ?array
     {
@@ -151,7 +155,7 @@ class PendingSave
 
             $saver->saveManual($list, $idea->title);
 
-            return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
+            return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
         }
 
         // A group id is only meaningful inside its own market — `product_groups`
@@ -168,7 +172,7 @@ class PendingSave
 
             $saver->saveGroup($list, $group, $current);
 
-            return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
+            return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
         }
 
         $source = Source::tryFrom((string) ($payload['source'] ?? ''));
@@ -194,13 +198,13 @@ class PendingSave
             ],
         );
 
-        return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
+        return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
     }
 
     /**
      * Finish a guest's press on a Cove's Save or "Make it my list".
      *
-     * @return array{title: string, language: string, message: string}|null
+     * @return array{title: string, kind: string|null, language: string, message: string}|null
      */
     private function replayCove(User $user, CurrentMarket $current, int $coveId, string $action): ?array
     {
@@ -218,19 +222,19 @@ class PendingSave
             // Land on the new list, not back on the Cove.
             $this->session->put('url.intended', $current->url("lists/{$list->id}"));
 
-            return ['title' => (string) $cove->theme_title, 'language' => $language, 'message' => 'site.saved_coves.copied'];
+            return ['title' => (string) $cove->theme_title, 'kind' => $list->kind->value, 'language' => $language, 'message' => 'site.saved_coves.copied'];
         }
 
         $saved->save($user, $cove);
 
-        return ['title' => (string) $cove->theme_title, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
+        return ['title' => (string) $cove->theme_title, 'kind' => null, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
     }
 
     /**
      * The same, for a Community Cove (a list somebody published). Only while
      * it is still on the site: an owner may have taken it down in between.
      *
-     * @return array{title: string, language: string, message: string}|null
+     * @return array{title: string, kind: string|null, language: string, message: string}|null
      */
     private function replayCommunityCove(User $user, CurrentMarket $current, string $slug, string $action): ?array
     {
@@ -248,11 +252,11 @@ class PendingSave
             $copy = $saved->copyListToList($user, $list);
             $this->session->put('url.intended', $current->url("lists/{$copy->id}"));
 
-            return ['title' => $title, 'language' => $language, 'message' => 'site.saved_coves.copied'];
+            return ['title' => $title, 'kind' => $copy->kind->value, 'language' => $language, 'message' => 'site.saved_coves.copied'];
         }
 
         $saved->saveList($user, $list);
 
-        return ['title' => $title, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
+        return ['title' => $title, 'kind' => null, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
     }
 }

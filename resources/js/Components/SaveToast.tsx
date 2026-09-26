@@ -4,7 +4,8 @@ import { send } from '../http'
 import { markRemoved } from '../savedItems'
 import { dismiss, snapshot, serverSnapshot, subscribe } from '../saveToast'
 import type { SharedProps } from '../types'
-import { useTranslations } from '../useTranslations'
+import { rich, useTranslations } from '../useTranslations'
+import ListName from './ListName'
 
 /**
  * "Saved to Camping · Undo · View list", where you are looking.
@@ -97,11 +98,20 @@ export default function SaveToast() {
                 onMouseLeave={() => setPaused(false)}
                 onFocus={() => setPaused(true)}
                 onBlur={() => setPaused(false)}
-                className={`pointer-events-auto flex max-w-full items-center gap-3 rounded-card border px-4 py-3 text-sm shadow-xl ${
+                className={`pointer-events-auto flex max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-card border px-4 py-3 text-sm shadow-xl ${
                     isError ? 'border-accent/40 bg-card text-ink' : 'border-line bg-card text-ink'
                 }`}
             >
-                <span className="min-w-0 flex-1 truncate">{toast.message}</span>
+                {/* The sentence gets its own line on a phone, with the buttons
+                    under it, rather than being cut to fit beside them: there
+                    the buttons left room for "Saved to …" and no more, and the
+                    list's name (held to its icon, see ListName) is the part that
+                    was cut, the one part of the sentence that is news. */}
+                <span className="line-clamp-2 min-w-0 basis-full sm:basis-auto sm:flex-1">
+                    {toast.list
+                        ? rich(toast.list.template, { list: <ListName name={toast.list.name} kind={toast.list.kind} /> })
+                        : toast.message}
+                </span>
 
                 {toast.undo && (
                     <button

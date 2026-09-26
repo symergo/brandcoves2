@@ -9,6 +9,7 @@ use App\Services\Cove\CommunityCoves;
 use App\Services\Cove\SavedCoves;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\ListName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -122,7 +123,7 @@ class CommunityCoveController extends Controller
         $list = $saved->copyListToList($request->user(), $this->published($coves, $current, $slug));
 
         return redirect()->to($current->url("lists/{$list->id}"))
-            ->with('success', __('site.saved_coves.copied', ['list' => $list->title]));
+            ->with(ListName::flash(ListName::mention('site.saved_coves.copied', (string) $list->title, $list->kind)));
     }
 
     /** Only a Cove on the site now can be saved or copied; anything else is a 404. */

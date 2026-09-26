@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
-import { useTranslations } from '../useTranslations'
+import { rich, useTranslations } from '../useTranslations'
+import ListName from './ListName'
 
 /**
  * What the server just said.
@@ -43,7 +44,12 @@ export default function FlashMessage() {
             }`}
         >
             <span className="flex-1">
-                {message}
+                {/* A sentence naming a list arrives in pieces too, so the name
+                    is drawn as a list's name (ListName). Only when the pieces
+                    belong to the message on screen. */}
+                {!isError && flash.list && flash.list.message === message
+                    ? rich(flash.list.template, { list: <ListName name={flash.list.name} kind={flash.list.kind} /> })
+                    : message}
                 {/* The way on, when the server named one: a link, not a
                     second sentence, so the banner still reads as one line. */}
                 {flash.action && (

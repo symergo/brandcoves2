@@ -39,6 +39,9 @@ class NotificationController extends Controller
                 'price' => $n->payload['price'] ?? null,
                 'baseline' => $n->payload['baseline'] ?? null,
                 'count' => $n->payload['count'] ?? null,
+                // The title in pieces, so the list's name is drawn as one; see
+                // App\Support\ListName. Older rows have none and show the title.
+                'list' => is_array($n->payload['list'] ?? null) ? $n->payload['list'] : null,
                 'readAt' => $n->read_at?->toIso8601String(),
                 'createdAt' => $n->created_at->toIso8601String(),
                 // Formatted here, not in the browser: the SSR container and

@@ -29,10 +29,15 @@ trait UsesTemplate
      * `content()` needs the body, and asking twice would be two cache reads to
      * answer one question.
      *
+     * `$bodyValues` replace some of `$values` in the body only: a list's name
+     * is bold in the body (App\Support\ListName::inMail) and plain in the
+     * subject, where markup would show as markup.
+     *
      * @param  array<string, string|int>  $values
+     * @param  array<string, string|int>  $bodyValues
      * @return array{subject: string, body: string}|null
      */
-    protected function template(string $key, string $language, array $values = []): ?array
+    protected function template(string $key, string $language, array $values = [], array $bodyValues = []): ?array
     {
         $override = app(MailTemplates::class)->for($key, $language);
 
@@ -42,7 +47,7 @@ trait UsesTemplate
 
         return [
             'subject' => MailTemplates::fill($override['subject'], $values),
-            'body' => MailTemplates::fill($override['body'], $values),
+            'body' => MailTemplates::fill($override['body'], $bodyValues + $values),
         ];
     }
 

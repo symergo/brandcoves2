@@ -21,10 +21,12 @@ import {
     serverSnapshot,
     subscribe,
 } from '../savedItems'
-import { show as showToast } from '../saveToast'
+import { listFrom, show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
 import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import type { ListKind } from './ListKindBadge'
+import ListName from './ListName'
 import SaveButton from './SaveButton'
 import SaveSheet from './SaveSheet'
 
@@ -32,6 +34,9 @@ interface SaveResult {
     itemId: number
     listId: string
     listTitle: string
+    /** For drawing the list's name in the toast; see App\Support\ListName. */
+    listKind?: ListKind
+    messageTemplate?: string
     message: string
 }
 
@@ -104,7 +109,7 @@ export default function SaveToList({
 }) {
     const { market, auth, savingTo, lists } = usePage<SharedProps>().props
     const signIn = useSignIn()
-    const { t } = useTranslations()
+    const { t, tRich } = useTranslations()
 
     const [busy, setBusy] = useState(false)
 
@@ -336,6 +341,7 @@ export default function SaveToList({
 
             showToast({
                 message: result.message,
+                list: listFrom(result),
                 tone: 'ok',
                 undo: { itemId: result.itemId, groupId },
                 listId: result.listId,
@@ -432,6 +438,9 @@ export default function SaveToList({
      * next to each other.
      */
     const quick = into ?? savingTo ?? (lastList ? { id: lastList.id, title: lastListTitle ?? lastList.title } : null)
+    // The kind, for drawing the name (ListName): from the page's own rows,
+    // which know every list of yours, else from `into` or adding mode.
+    const quickKind = (lists.find((l) => l.id === quick?.id)?.kind ?? (quick && 'kind' in quick ? quick.kind : undefined)) ?? null
     const quickFirst = (a: ListOption, b: ListOption) => Number(b.id === quick?.id) - Number(a.id === quick?.id)
 
     const mine = lists.filter((l) => l.kind === 'mine').sort(quickFirst)
@@ -572,7 +581,7 @@ export default function SaveToList({
                     {saved
                         ? t('save_button.saved_hint')
                         : quick
-                          ? t('save_button.quick_hint', { list: quick.title })
+                          ? tRich('save_button.quick_hint', { list: <ListName name={quick.title} kind={quickKind} /> })
                           : t('save_button.pick_hint')}
                 </p>
                 <p className="border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">

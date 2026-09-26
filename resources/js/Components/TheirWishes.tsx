@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { CurrentMarket } from '../types'
 import { formatPrice } from '../types'
 import InfoTip from './InfoTip'
+import ListName from './ListName'
 import { markSaved } from '../savedItems'
 import { useTranslations } from '../useTranslations'
 
@@ -112,7 +113,7 @@ export default function TheirWishes({
                     {lists.map(([token, title]) => (
                         // A real anchor: their list is the sort of thing people open in a tab.
                         <a key={token} href={`${base}/l/${token}`} className="text-ink-soft underline hover:text-ink">
-                            {lists.length === 1 ? t('lists.their_wishes_open') : title}
+                            {lists.length === 1 ? t('lists.their_wishes_open') : <ListName name={title} kind="mine" />}
                         </a>
                     ))}
                 </p>
