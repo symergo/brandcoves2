@@ -197,6 +197,11 @@ not Coves. Gift personas are hand-written Coves, not briefs.
 
 **Missing.** `TasteBrief` behind search (section 5), guide landing pages and Cove suggestions.
 
+**A second way to fill it (2026-09-26): choosing.** This or that asks a dozen "which would they
+rather get?" questions between real products and turns the choices into a `TasteBrief` (interests,
+price band, interests to leave out), with no AI; for a giver who cannot name what somebody likes,
+and for the person themselves on their own page ([taste-discovery.md](features/taste-discovery.md)).
+
 ### F. A list's intent teaches the catalogue
 
 The owner's idea (2026-09-26): **when somebody builds a list with an intent, the products on it

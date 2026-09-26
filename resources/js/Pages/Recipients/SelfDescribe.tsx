@@ -1,9 +1,10 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import SignInLink from '../../Components/SignInLink'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ScanButton from '../../Components/ScanButton'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Option {
     value: string
@@ -192,6 +193,22 @@ export default function SelfDescribe({
 
             <section className="mt-10 max-w-2xl">
                 <h2 className="text-lg font-medium">{t('recipients.about_you')}</h2>
+
+                {/*
+                  The other way to say it: choose between products a dozen
+                  times and let the choices describe you (This or that). What
+                  comes out is saved as your own answer, like the form below.
+                */}
+                <div className="mt-3">
+                    <Link
+                        href={`${base}/taste`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-line bg-card px-4 py-2 text-sm hover:border-ink"
+                    >
+                        <ToolIcon name="taste" className="h-4 w-4 text-accent" />
+                        {t('recipients.taste_link')}
+                    </Link>
+                    <p className="mt-1 text-xs text-ink-soft">{t('recipients.taste_link_hint')}</p>
+                </div>
 
                 <form
                     className="mt-4 space-y-6"

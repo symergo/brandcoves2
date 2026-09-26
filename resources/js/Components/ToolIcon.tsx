@@ -31,6 +31,7 @@ export type ToolKey =
     | 'barcode'
     | 'picture'
     | 'people'
+    | 'taste'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -328,6 +329,15 @@ const paths: Record<ToolKey, ReactNode> = {
             <path d="M3 19a5.5 5.5 0 0 1 11 0" />
             <circle cx="16.5" cy="9" r="2.5" />
             <path d="M15.5 14a5 5 0 0 1 6 5" />
+        </>
+    ),
+
+    // Two cards leaning apart: this or that, the taste discovery tool.
+    taste: (
+        <>
+            <rect x="2.8" y="6" width="8" height="12" rx="1.5" transform="rotate(-8 6.8 12)" />
+            <rect x="13.2" y="6" width="8" height="12" rx="1.5" transform="rotate(8 17.2 12)" />
+            <path d="M12 3.5v2M12 18.5v2" />
         </>
     ),
 
