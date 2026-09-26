@@ -83,7 +83,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Editorial/` | the API's view of products; link checking; allowlist |
 | `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs |
 | `Guides/` | topic mining and planning |
-| `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2 |
+| `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2; merges, splits and the match rules (`GroupMerger`, `GroupSplitter`, `MatchFinder`, `ModelNumber`) |
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
 | `Ops/` | config report, market supply |
 | `Pages/` | editable page templates and copy blocks |
@@ -110,10 +110,11 @@ Editable-in-admin copy is a different system: `app/Services/Pages/` plus the `Pa
 Filament 5 at `/admin`, gated on `users.is_admin`.
 
 - **Resources** (CRUD over a model): AiUsage, ApiTokens, CommunityPosts, CoveEditorials, CovePlans,
-  Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, Products, PromptTemplates,
-  Users (Operations > Accounts: find a person, grant or remove panel access, delete an account)
+  Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, ProductGroups (Catalogue >
+  Products: merge and split), Products (the offers), PromptTemplates, Users (Operations > Accounts:
+  find a person, grant or remove panel access, delete an account)
 - **Pages** (custom): AiSettings, DiscoverAwinFeeds, EditPageTemplate, MarketSupply, MarketTrends,
-  Migration
+  MatchReview (the queue of products that may be one), Migration
 
 Styling gotcha, and it looks exactly like a page nobody styled: Filament's prebuilt stylesheet ships
 **no** Tailwind utilities. `resources/css/filament/admin/theme.css` supplies them, scanned from

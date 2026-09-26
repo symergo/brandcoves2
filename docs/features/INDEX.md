@@ -26,7 +26,8 @@ is true now.
 | [tradedoubler-connector.md](tradedoubler-connector.md) | Catalogue | Merged, unverified — supplied token is rejected, see [TODO](../TODO.md) |
 | [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
 | [source-switch.md](source-switch.md) | Catalogue / Operations | Active |
-| [product-identity.md](product-identity.md) | Catalogue | Active |
+| [product-identity.md](product-identity.md) | Catalogue | Active — merges and splits live in identity (aliases, overrides) since 2026-09-27 |
+| [match-review.md](match-review.md) | Catalogue / Admin | Active — rules propose, a person decides every pair at /admin/match-review; no auto-merge yet |
 | [product-signals.md](product-signals.md) | Catalogue / Discovery | Active — price range, saved by (from 5 people), found in Coves, related |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |

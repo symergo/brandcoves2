@@ -143,14 +143,15 @@ must not become four unrelated products because they arrived from different plac
 
 The shape is **product → its offers**, never **feed → product**.
 
-**Where we stand.** Matching is exact only: the same GTIN, or the same brand plus the same
+**Where we stand.** Grouping is still exact: the same GTIN, or the same brand plus the same
 normalised title (`app/Services/Ingestion/ProductGrouper.php`). That favours never merging two
-different things over always merging two copies of the same thing, and it leaves many offers
-ungrouped on purpose. The four LEGO titles above would stay apart unless a barcode joined them.
-There is no fuzzy matching and no admin tool to merge or split products.
+different things over always merging two copies of the same thing. Since 2026-09-27 rules propose
+pairs beyond that (a shared barcode, the same model number, similar titles, all within one brand)
+and a person confirms each one at /admin/match-review; merges and splits are kept in identity so
+the grouper follows them. See [match-review.md](features/match-review.md).
 
-**Missing.** Matching in steps: barcode first, then brand plus model number, then similar titles
-put in front of a person to confirm; and an admin merge and split.
+**Missing.** A rule merging on its own once its measured precision clears a bar the owner sets, and
+matching a visitor's pasted product against the catalogue.
 
 ### D. Relevance and commercial value are separate
 
@@ -436,7 +437,11 @@ Order agreed with the owner on 2026-09-26.
    pages, how strictly a page must fit the recipient (`gift_landings.min_recipient_matches`), and
    an AI tagging pass (not built).
 5. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
-   confirmed by a person; admin merge and split.
+   confirmed by a person; admin merge and split. Built 2026-09-27
+   ([match-review.md](features/match-review.md), [product-identity.md](features/product-identity.md#merges-and-splits)):
+   merges and splits live in identity and survive regrouping, and every proposed pair waits for a
+   person. Still to come: the owner's bar for letting a rule merge on its own (the review page
+   measures each rule's precision), and whether a visitor's pasted product may meet a feed's.
 6. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with
    titles that follow the naming rule above).
 7. **People find each other.** Handles and `/u/{handle}` profiles, following switched on,
