@@ -3,8 +3,11 @@ import EntityRails, { RailCard, type EntityRailSet } from '../../Components/Enti
 import PageBlocks from '../../Components/PageBlocks'
 import type { BlockPayload } from '../../Components/Parts'
 import { useTranslations } from '../../useTranslations'
+import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
 
 interface Props {
+    /** Save into My Coves; see docs/features/saved-coves.md. */
+    saveCove: SaveCoveState
     entity: { name: string; kind: 'brand' | 'shop'; total: number | null; logo: string | null }
     cove: { title: string; intro: string; body: string[] }
     rails: EntityRailSet | null
@@ -48,7 +51,7 @@ interface Props {
  * with the two borrowed from merchants states it more quietly than it deserves.
  * It gets the full width under the article.
  */
-export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Props) {
+export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveCove }: Props) {
     const { t } = useTranslations()
     const sidebar = rails
         ? [
@@ -74,6 +77,9 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                             <img src={entity.logo} alt="" className="mb-4 h-10 w-10 rounded" loading="lazy" />
                         )}
                         <h1 className="text-2xl font-semibold text-ink sm:text-3xl">{cove.title}</h1>
+                        <div className="mt-4">
+                            <SaveCove state={saveCove} />
+                        </div>
                     </header>
 
                     <PageBlocks blocks={copy.above_prose} className="mt-6 max-w-2xl" />

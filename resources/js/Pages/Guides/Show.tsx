@@ -9,6 +9,7 @@ import MoreCoves from '../../Components/MoreCoves'
 import EntityRails, { type EntityRailSet } from '../../Components/EntityRails'
 import SaveToList from '../../Components/SaveToList'
 import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
+import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
 
 interface Item {
     rank: number
@@ -54,6 +55,8 @@ interface Block {
 }
 
 interface Props {
+    /** Save into My Coves; see docs/features/saved-coves.md. */
+    saveCove: SaveCoveState
     preview?: boolean
 
     guide: {
@@ -263,7 +266,7 @@ function Article({
     )
 }
 
-export default function GuideShow({ preview = false, guide, items, rail, rails = null }: Props) {
+export default function GuideShow({ preview = false, guide, items, rail, rails = null, saveCove }: Props) {
     const { market, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -348,8 +351,9 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
                         </p>
 
                         {/* The share sheet, on a page written to be sent on. */}
-                        <div className="mt-4">
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
                             <ShareMenu url={canonical} text={guide.title} label={t('nav.share')} />
+                            <SaveCove state={saveCove} />
                         </div>
 
                         {/*

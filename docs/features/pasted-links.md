@@ -19,8 +19,10 @@ with no picture, on purpose (see *What this replaced*).
 1. In the add panel (`Components/AddProduct.tsx`) a pasted `https://` link is not searched as text.
    `GET /list-search` sends it to `LinkRouter` (below) without fetching anything, so a bol, eBay or
    feed-shop link usually comes back as an ordinary result to pick.
-2. What nothing recognises comes back as `link`, and one tap saves it as it is:
-   `ItemSaver::saveManual()` with the link and no title. The item is called after the shop's host
+2. What nothing recognises comes back as `link`, and the panel saves it at once, with no card
+   asking first (owner's call, 2026-09-26: "add this link?" had only one sensible answer). When the
+   link also matched something, the matches are shown with "add the link itself" beneath them. The
+   save is `ItemSaver::saveManual()` with the link and no title. The item is called after the shop's host
    ("small-shop.example") and marked `link_status = pending`.
 3. `ReadItemLink` runs in the queue after the save commits. It asks `LinkRouter` again (this time
    connectors may be called), and only for an unknown shop reads the page (`PageReader`).

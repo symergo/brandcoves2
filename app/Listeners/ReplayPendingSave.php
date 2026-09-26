@@ -55,6 +55,6 @@ class ReplayPendingSave
          */
         // In the language of the market the save belongs to, which is where
         // the visitor lands next; see PendingSave::replayFor().
-        session()->flash('success', trans('site.lists.added_to', ['list' => $replay['title']], $replay['language']));
+        session()->flash('success', trans($replay['message'] ?? 'site.lists.added_to', ['list' => $replay['title']], $replay['language']));
     }
 }

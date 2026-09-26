@@ -7,6 +7,7 @@ import { useTranslations } from '../../useTranslations'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
+import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
 
 interface Find {
     id: number
@@ -21,6 +22,8 @@ interface Find {
 }
 
 interface Props {
+    /** Save into My Coves; see docs/features/saved-coves.md. */
+    saveCove: SaveCoveState
     preview?: boolean
 
     persona: {
@@ -63,7 +66,7 @@ interface Props {
  * no longer ends in a single link back to the shelf: a persona found from
  * search used to be the narrowest dead end of the three Cove pages.
  */
-export default function Persona({ preview = false, persona, finds, guide, rail }: Props) {
+export default function Persona({ preview = false, persona, finds, guide, rail, saveCove }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -112,6 +115,9 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                             </p>
                             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{persona.title}</h1>
                             {persona.blurb && <p className="mt-2 text-ink-soft">{persona.blurb}</p>}
+                            <div className="mt-4">
+                                <SaveCove state={saveCove} />
+                            </div>
                         </div>
 
                         <SceneIllustration

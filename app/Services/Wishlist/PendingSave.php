@@ -6,8 +6,10 @@ namespace App\Services\Wishlist;
 
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Cove\SavedCoves;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Contracts\Session\Session;
@@ -123,6 +125,12 @@ class PendingSave
         $owner = new Owner(user: $user, anonymous: null);
         $payload = $pending['payload'];
 
+        // A Cove, not a product: saved, or made into a list. Before the
+        // default list is looked up, which a Cove does not need.
+        if (! empty($payload['cove_id'])) {
+            return $this->replayCove($user, $current, (int) $payload['cove_id'], (string) ($payload['cove_action'] ?? 'save'));
+        }
+
         $list = $lists->for($owner, $current);
 
         // A group id is only meaningful inside its own market — `product_groups`
@@ -166,5 +174,34 @@ class PendingSave
         );
 
         return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
+    }
+
+    /**
+     * Finish a guest's press on a Cove's Save or "Make it my list".
+     *
+     * @return array{title: string, language: string, message: string}|null
+     */
+    private function replayCove(User $user, CurrentMarket $current, int $coveId, string $action): ?array
+    {
+        $cove = DailyPickSet::query()->find($coveId);
+
+        if ($cove === null || ! $cove->isPublished()) {
+            return null;
+        }
+
+        $saved = app(SavedCoves::class);
+        $language = $current->get()->language();
+
+        if ($action === 'copy') {
+            $list = $saved->copyToList($user, $cove);
+            // Land on the new list, not back on the Cove.
+            $this->session->put('url.intended', $current->url("lists/{$list->id}"));
+
+            return ['title' => (string) $cove->theme_title, 'language' => $language, 'message' => 'site.saved_coves.copied'];
+        }
+
+        $saved->save($user, $cove);
+
+        return ['title' => (string) $cove->theme_title, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
     }
 }

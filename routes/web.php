@@ -45,6 +45,7 @@ use App\Http\Controllers\PopularSearchesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
+use App\Http\Controllers\SavedCoveController;
 use App\Http\Controllers\SaveIntentController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SearchAlertController;
@@ -389,6 +390,23 @@ Route::prefix('{market}')->group(function () {
         ->name('lists.claim.intent');
 
     Route::middleware('auth')->group(function () {
+        /*
+         * Saved Coves: a bookmark on a published Cove, and "Make it my list",
+         * a copy into a list of your own. See SavedCoveController and
+         * docs/features/saved-coves.md.
+         */
+        Route::post('/coves/{set}/save', [SavedCoveController::class, 'store'])
+            ->whereNumber('set')
+            ->middleware('throttle:60,1')
+            ->name('coves.save');
+        Route::delete('/coves/{set}/save', [SavedCoveController::class, 'destroy'])
+            ->whereNumber('set')
+            ->name('coves.unsave');
+        Route::post('/coves/{set}/copy', [SavedCoveController::class, 'copy'])
+            ->whereNumber('set')
+            ->middleware('throttle:20,1')
+            ->name('coves.copy');
+
         /*
          * The people you share lists with.
          *

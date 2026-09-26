@@ -11,6 +11,7 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EntityRails;
+use App\Services\Cove\SavedCoves;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
@@ -244,6 +245,8 @@ class GuideController extends Controller
         }
 
         return Inertia::render('Guides/Show', [
+            // Save into My Coves; see docs/features/saved-coves.md.
+            'saveCove' => app(SavedCoves::class)->button($guide->id),
             // Renders a banner, and only ever true for somebody entitled to it.
             'preview' => $preview && $guide->status !== PublishStatus::Published,
             'rails' => $rails,
@@ -389,6 +392,8 @@ class GuideController extends Controller
         );
 
         return Inertia::render('Entity/Cove', [
+            // Save into My Coves; see docs/features/saved-coves.md.
+            'saveCove' => app(SavedCoves::class)->button($guide->id),
             'entity' => [
                 'name' => $shop?->displayName() ?? (string) $guide->theme_title,
                 'kind' => 'shop',

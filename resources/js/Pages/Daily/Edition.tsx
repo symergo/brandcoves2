@@ -11,6 +11,7 @@ import CoveRail, { type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 import ShareMenu from '../../Components/ShareMenu'
+import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
 
 interface Find {
     id: number
@@ -27,6 +28,8 @@ interface Find {
 }
 
 interface Props {
+    /** Save into My Coves; see docs/features/saved-coves.md. */
+    saveCove: SaveCoveState
     preview?: boolean
 
     edition: {
@@ -74,7 +77,7 @@ interface Props {
     rail: Rail
 }
 
-export default function Edition({ preview = false, edition, finds, guide, deals, rail }: Props) {
+export default function Edition({ preview = false, edition, finds, guide, deals, rail, saveCove }: Props) {
     const { market, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -214,8 +217,9 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{edition.theme}</h1>
             {edition.blurb && <p className="mt-2 text-ink-soft">{edition.blurb}</p>}
             {/* The share sheet, on a page written to be sent on. */}
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
                 <ShareMenu url={canonical} text={edition.theme} label={t('nav.share')} />
+                <SaveCove state={saveCove} />
             </div>
         </header>
     )

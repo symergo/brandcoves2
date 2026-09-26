@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\DailyPickSet;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
+use App\Services\Cove\SavedCoves;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -110,6 +111,8 @@ class GiftIdeasController extends Controller
         $this->seo($persona, $current);
 
         return Inertia::render('GiftIdeas/Persona', [
+            // Save into My Coves; see docs/features/saved-coves.md.
+            'saveCove' => app(SavedCoves::class)->button($persona->id),
             'preview' => $preview && ! $persona->isPublished(),
             'persona' => [
                 'id' => $persona->id,

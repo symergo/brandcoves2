@@ -39,13 +39,18 @@ class SaveIntentController extends Controller
          * it and accepting one here would be a free-text channel with no owner.
          */
         $validated = $request->validate([
-            'group_id' => ['nullable', 'integer', 'required_without:source'],
+            'group_id' => ['nullable', 'integer', 'required_without_all:source,cove_id'],
             'source' => [
                 'nullable',
                 'string',
                 'in:'.implode(',', array_diff(Source::values(), [Source::Manual->value])),
-                'required_without:group_id',
+                'required_without_all:group_id,cove_id',
             ],
+
+            // A Cove to save, or to make a list of, after sign-in. See
+            // docs/features/saved-coves.md.
+            'cove_id' => ['nullable', 'integer'],
+            'cove_action' => ['nullable', 'string', 'in:save,copy'],
             'external_id' => ['nullable', 'string', 'max:190', 'required_with:source'],
             'title' => ['nullable', 'string', 'max:500'],
             'image_url' => ['nullable', 'url', 'max:1024'],

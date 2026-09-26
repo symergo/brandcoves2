@@ -12,6 +12,7 @@ use App\Enums\RecipientStatus;
 use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
+use App\Models\SavedCove;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -84,6 +85,9 @@ class WishlistController extends Controller
         $view = match ($request->query('view')) {
             'shared' => 'shared',
             'group' => 'group',
+            // Coves somebody bookmarked, since 2026-09-26: not lists, but kept
+            // here because My Coves is where a person looks for what they keep.
+            'saved' => 'saved',
             default => 'mine',
         };
 
@@ -164,7 +168,11 @@ class WishlistController extends Controller
         );
 
         return Inertia::render('Lists/Index', [
-            'lists' => $lists,
+            'lists' => $view === 'saved' ? [] : $lists,
+
+            // The saved view's rows; empty on every other view. See
+            // docs/features/saved-coves.md.
+            'savedCoves' => $view === 'saved' ? $this->savedCoves($owner) : [],
             /*
              * Which view this is, so the page can say so.
              *
@@ -187,6 +195,49 @@ class WishlistController extends Controller
             'isSignedIn' => $owner->isSignedIn(),
 
         ]);
+    }
+
+    /**
+     * The published Coves this person saved, newest first.
+     *
+     * An unpublished Cove is left out, not deleted: the bookmark comes back if
+     * the Cove is republished. Each Cove links in its own market, which is not
+     * necessarily the one this page is read in; a person's saves are theirs,
+     * wherever they made them.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function savedCoves(Owner $owner): array
+    {
+        if (! $owner->isSignedIn()) {
+            return [];
+        }
+
+        return SavedCove::query()
+            ->where('user_id', $owner->user->id)
+            ->whereHas('cove', fn ($q) => $q->published())
+            ->with(['cove.picks.group'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (SavedCove $saved): array {
+                $cove = $saved->cove;
+
+                return [
+                    'id' => $cove->id,
+                    'title' => (string) $cove->theme_title,
+                    'kind' => $cove->kind->value,
+                    'url' => '/'.$cove->market->value.'/'.$cove->kind->path(
+                        // The slug, which every Cove gets on creation. A Daily's
+                        // dated URL would only redirect to it.
+                        $cove->slug ?? $cove->drop_date->toDateString(),
+                        $cove->market,
+                    ),
+                    'image' => $cove->picks->first(fn ($pick) => $pick->group?->image_url !== null)?->group?->image_url,
+                    'savedAt' => $saved->created_at?->toDateString(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     public function store(Request $request, CurrentMarket $current, ListMaker $maker): RedirectResponse

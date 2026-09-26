@@ -62,6 +62,7 @@ export default function AddProduct({
     listId,
     market,
     defaultOpen = false,
+    onListPage = true,
 }: {
     base: string
     listId: string
@@ -72,6 +73,12 @@ export default function AddProduct({
      * that says so is a step between the person and it.
      */
     defaultOpen?: boolean
+    /**
+     * On the list itself, the new row appearing is the confirmation. Anywhere
+     * else (the My Coves overview) the list is not on screen, so the server
+     * answers with a toast naming it instead.
+     */
+    onListPage?: boolean
 }) {
     const { t } = useTranslations()
 
@@ -170,6 +177,18 @@ export default function AddProduct({
                 }) => {
                     if (id !== latest.current) return
 
+                    /*
+                     * A link nothing in the catalogue matched goes straight on
+                     * the list (owner's call, 2026-09-26): a card asking "add
+                     * this link?" was a step with only one sensible answer.
+                     * The shop's page is read afterwards and fills the row in.
+                     */
+                    if (data.link && (data.groups ?? []).length === 0 && (data.live ?? []).length === 0) {
+                        addLink(data.link)
+
+                        return
+                    }
+
                     setGroups(data.groups ?? [])
                     setLive(data.live ?? [])
                     setLink(data.link ?? null)
@@ -224,9 +243,9 @@ export default function AddProduct({
      */
     const barcode = /^\d{8,14}$/.test(term.trim()) ? term.trim() : null
 
-    /** Save a pasted link as it is, in one tap. The title comes from the page. */
-    function addLink(): void {
-        if (link === null) return
+    /** Save a pasted link as it is. The title comes from the page, read later. */
+    function addLink(target: { url: string } | null = link): void {
+        if (target === null) return
 
         setError(null)
         setBusy(true)
@@ -236,9 +255,9 @@ export default function AddProduct({
             {
                 wishlist_id: listId,
                 source: 'manual',
-                url: link.url,
+                url: target.url,
                 title: null,
-                on_list_page: true,
+                on_list_page: onListPage,
             },
             {
                 preserveScroll: true,
@@ -286,7 +305,7 @@ export default function AddProduct({
              * appears under it a moment later. `Lists/Show` tints that row
              * instead.
              */
-            on_list_page: true,
+            on_list_page: onListPage,
         }
 
         const payload =
@@ -471,30 +490,16 @@ export default function AddProduct({
                         <p className="mt-3 text-sm text-danger">{t('lists.link_refused')}</p>
                     )}
 
+                    {/* Only when the link also matched something; alone, it was added already. */}
                     {link !== null && !searching && (
-                        groups.length === 0 && live.length === 0 ? (
-                            <div className="mt-3 rounded-lg bg-cream p-3 text-sm">
-                                <p>{t('lists.add_link_intro', { host: link.host })}</p>
-                                <p className="mt-1 text-xs text-ink-soft">{t('lists.add_link_after')}</p>
-                                <button
-                                    type="button"
-                                    onClick={addLink}
-                                    disabled={busy}
-                                    className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
-                                >
-                                    {t('lists.add_link_cta')}
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={addLink}
-                                disabled={busy}
-                                className="mt-2 text-sm text-accent underline hover:text-accent-dark disabled:opacity-50"
-                            >
-                                {t('lists.add_link_also')}
-                            </button>
-                        )
+                        <button
+                            type="button"
+                            onClick={() => addLink()}
+                            disabled={busy}
+                            className="mt-2 text-sm text-accent underline hover:text-accent-dark disabled:opacity-50"
+                        >
+                            {t('lists.add_link_also')}
+                        </button>
                     )}
 
                     {error && <p className="mt-3 text-sm text-danger">{error}</p>}

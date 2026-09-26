@@ -51,6 +51,16 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasMany(Wishlist::class, 'owner_user_id');
     }
 
+    /**
+     * The Coves this person saved into My Coves: bookmarks, not copies.
+     *
+     * @return HasMany<SavedCove, $this>
+     */
+    public function savedCoves(): HasMany
+    {
+        return $this->hasMany(SavedCove::class);
+    }
+
     /** @return HasMany<Recipient, $this> */
     public function recipients(): HasMany
     {

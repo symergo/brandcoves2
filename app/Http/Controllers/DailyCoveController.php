@@ -8,6 +8,7 @@ use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
+use App\Services\Cove\SavedCoves;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
@@ -69,6 +70,8 @@ class DailyCoveController extends Controller
         $this->seo($edition, $current, $slug !== null, $preview && ! $edition->isPublished());
 
         return Inertia::render('Daily/Edition', [
+            // Save into My Coves; see docs/features/saved-coves.md.
+            'saveCove' => app(SavedCoves::class)->button($edition->id),
             // Renders a banner, and only ever true for somebody entitled to it.
             'preview' => $preview && ! $edition->isPublished(),
             'edition' => [

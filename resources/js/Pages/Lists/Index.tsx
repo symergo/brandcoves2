@@ -1,10 +1,11 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import { type ListKind } from '../../Components/ListKindBadge'
 import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
+import AddProduct from '../../Components/AddProduct'
 import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
@@ -40,7 +41,17 @@ interface ListSummary {
     role: string | null
 }
 
-type ListsView = 'mine' | 'shared' | 'group'
+type ListsView = 'mine' | 'shared' | 'group' | 'saved'
+
+/** A Cove somebody saved into My Coves; see docs/features/saved-coves.md. */
+interface SavedCoveRow {
+    id: number
+    title: string
+    kind: string
+    url: string
+    image: string | null
+    savedAt: string | null
+}
 
 /**
  * The page's own props, plus everything the list wizard needs — people,
@@ -49,6 +60,8 @@ type ListsView = 'mine' | 'shared' | 'group'
 interface Props extends WizardOffer {
     lists: ListSummary[]
     view: ListsView
+    /** Only on the saved view. */
+    savedCoves: SavedCoveRow[]
     isSignedIn: boolean
 }
 
@@ -209,7 +222,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn, savedCoves }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -291,6 +304,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
         mine: t('lists.title'),
         shared: t('nav.shared_lists'),
         group: t('nav.group_lists'),
+        saved: t('nav.saved_coves'),
     }[view]
 
     // "My lists" carries no subtitle: the groups below it are already labelled
@@ -301,6 +315,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
         mine: null,
         shared: t('lists.shared_subtitle'),
         group: t('lists.group_subtitle'),
+        saved: t('saved_coves.subtitle'),
     }[view]
 
     return (
@@ -380,7 +395,11 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 </div>
             )}
 
-            {lists.length === 0 ? (
+            {view !== 'saved' && <QuickAdd lists={lists} />}
+
+            {view === 'saved' ? (
+                <SavedCoves coves={savedCoves} base={`/${market.key}`} />
+            ) : lists.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
                     {/*
                       Shared Lists says something different when it is empty,
@@ -469,3 +488,101 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
         </>
     )
 }
+
+/**
+ * The saved view: the Coves this person bookmarked, each with the way back to
+ * it, "Make it my list" (a copy into a list of their own) and a way to let go.
+ */
+function SavedCoves({ coves, base }: { coves: SavedCoveRow[]; base: string }) {
+    const { t } = useTranslations()
+
+    if (coves.length === 0) {
+        return (
+            <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
+                <p className="font-medium">{t('saved_coves.empty')}</p>
+                <Link href={`${base}/coves`} className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white">
+                    {t('home.cta_explore')}
+                </Link>
+            </div>
+        )
+    }
+
+    return (
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {coves.map((cove) => (
+                <li key={cove.id} className="flex flex-col rounded-card border border-line bg-card">
+                    <Link href={cove.url} className="group block p-4">
+                        <div className="aspect-[4/3] overflow-hidden rounded-lg bg-cream">
+                            {cove.image && (
+                                <img src={cove.image} alt="" loading="lazy" className="h-full w-full object-contain transition group-hover:scale-105" />
+                            )}
+                        </div>
+                        <span className="mt-3 block text-2xs font-medium tracking-wide text-ink-soft uppercase">
+                            {t(`home.cove_kind_${cove.kind}`)}
+                        </span>
+                        <span className="mt-1 block font-medium group-hover:text-accent">{cove.title}</span>
+                    </Link>
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3">
+                        <button
+                            type="button"
+                            onClick={() => router.post(`${base}/coves/${cove.id}/copy`)}
+                            className="text-sm font-medium text-accent-dark underline hover:text-ink"
+                        >
+                            {t('saved_coves.copy')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => router.delete(`${base}/coves/${cove.id}/save`, { preserveScroll: true })}
+                            className="text-sm text-ink-soft hover:text-danger"
+                        >
+                            {t('saved_coves.unsave')}
+                        </button>
+                    </div>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+/**
+ * Add a product without opening a list first (owner's request, 2026-09-26).
+ *
+ * The same AddProduct panel as on a list page, so search, a pasted link, a
+ * barcode and writing it down all work here too, with a picker for which list
+ * it goes on. Only lists this person may add to are offered: their own, and
+ * ones shared with them as an editor. It starts on the default list, the one a
+ * product saved from anywhere else lands on.
+ */
+function QuickAdd({ lists }: { lists: ListSummary[] }) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const writable = lists.filter((list) => !list.sharedWithMe || list.role === 'editor')
+    const [listId, setListId] = useState(() => (writable.find((list) => list.isDefault) ?? writable[0])?.id ?? '')
+
+    if (writable.length === 0) return null
+
+    const target = writable.some((list) => list.id === listId) ? listId : writable[0].id
+
+    return (
+        <div className="mt-6 flex flex-wrap items-start gap-2">
+            {writable.length > 1 && (
+                <label className="flex min-h-10 items-center gap-2 text-sm text-ink-soft">
+                    {t('lists.quick_add_to')}
+                    <select
+                        value={target}
+                        onChange={(event) => setListId(event.target.value)}
+                        className="rounded-lg border border-line bg-card px-2 py-2 text-sm text-ink"
+                    >
+                        {writable.map((list) => (
+                            <option key={list.id} value={list.id}>
+                                {list.title}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+            )}
+            <AddProduct base={`/${market.key}`} listId={target} market={market} onListPage={false} />
+        </div>
+    )
+}
+

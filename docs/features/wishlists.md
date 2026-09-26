@@ -1195,3 +1195,12 @@ skipped with no outbound request, and an eBay offer still refreshed by its id.
   only, so a source whose programme forbids product data in email cannot reach the template.
 
 `AlertTest` pins all three.
+
+## Adding from the My Coves overview (2026-09-26)
+
+The owner asked for a way to add a product without opening a list first. The overview
+(`Lists/Index.tsx`, `QuickAdd`) now carries the same `AddProduct` panel as a list page, so search, a
+pasted link, a barcode and writing it down all work there, with a picker for the list. Only lists
+the person may add to are offered (their own, and ones shared with them as an editor), starting on
+the default list. The panel posts `on_list_page: false`, so the server answers with a "Saved to
+:list" toast: the list is not on screen, and a new row cannot be the confirmation there.

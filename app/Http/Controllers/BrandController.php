@@ -12,6 +12,7 @@ use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use App\Services\Cove\EntityRails;
+use App\Services\Cove\SavedCoves;
 use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\BlockSections;
@@ -319,6 +320,8 @@ class BrandController extends Controller
             ));
 
         return Inertia::render('Entity/Cove', [
+            // Save into My Coves; see docs/features/saved-coves.md.
+            'saveCove' => app(SavedCoves::class)->button((int) $cove['id']),
             'entity' => [
                 'name' => $stat->brand,
                 'kind' => 'brand',
@@ -389,6 +392,7 @@ class BrandController extends Controller
         );
 
         return [
+            'id' => $cove->id,
             'title' => $cove->theme_title,
             // `render()` returns html plus a link report; the page wants the
             // html. The report is for the author, and they read it from the

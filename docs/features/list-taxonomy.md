@@ -384,6 +384,10 @@ invited — so the card can say *From Sanne · may add and remove*.
 `?view=shared` and `?view=group` still answer the narrow questions and the nav still links to them.
 What changed is that they are no longer the *only* way to reach those rows.
 
+A fourth value, `?view=saved` (2026-09-26), is not a list view at all: it shows the Coves this
+person saved. It lives on this page because My Coves is where people look for what they keep. See
+[saved-coves.md](saved-coves.md).
+
 `a_group_list_does_not_appear_under_my_lists` asserted the opposite until this change, on the stated
 grounds that showing a group list in two views makes the sections decoration. The sections survived;
 the exclusion did not, and the test was rewritten rather than deleted so the reversal is on the

@@ -56,6 +56,7 @@ export default function Help({ guides, path }: Props) {
                         <p>{t('help.coves_body1')}</p>
                         <p>{t('help.coves_body2')}</p>
                         <p>{t('help.coves_body3')}</p>
+                        <p>{t('help.coves_body4')}</p>
                     </div>
                 </section>
 
@@ -79,6 +80,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'barcode', text: t('help.add_barcode') },
                         { icon: 'picture', text: t('help.add_photo') },
                         { icon: 'build', text: t('help.add_write') },
+                        { icon: 'wishlist', text: t('help.add_overview') },
                     ]}
                 />
 
