@@ -47,6 +47,21 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Pictures on hand-written list items (App\Services\Images\ImageStore),
+         * served by MediaController at /media/items/{file}.
+         *
+         * In production this directory is a Docker volume (`media_data` in
+         * docker-compose.coolify.yml): the container's own disk is replaced on
+         * every deploy, and people's photos must outlive a deploy.
+         */
+        'media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/media'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

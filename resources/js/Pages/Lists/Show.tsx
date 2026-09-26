@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
@@ -35,6 +35,8 @@ interface Item {
     url: string | null
     merchantCount: number
     inStock: boolean
+    /** A pasted link still being looked up. See `ReadItemLink`. */
+    reading: boolean
 }
 
 interface Asked {
@@ -187,6 +189,36 @@ export default function ListShow({
      * scrolled anywhere, and a confirmation on a part of the page nobody is
      * looking at is the problem the banner had.
      */
+    /*
+     * Wait for a pasted link to be looked up.
+     *
+     * The item is saved at once under the shop's name, and a queued job fills
+     * in the rest a few seconds later (ReadItemLink). Asking for the items
+     * again every two seconds, for at most thirty, is what makes the name and
+     * picture appear without a reload. It stops as soon as nothing is pending,
+     * and gives up quietly after that: the row is still there, as typed.
+     */
+    const reading = items.some((item) => item.reading)
+
+    useEffect(() => {
+        if (!reading) return
+
+        let tries = 0
+        const timer = window.setInterval(() => {
+            tries += 1
+
+            if (tries > 15) {
+                window.clearInterval(timer)
+
+                return
+            }
+
+            router.reload({ only: ['items'] })
+        }, 2000)
+
+        return () => window.clearInterval(timer)
+    }, [reading])
+
     const [fresh, setFresh] = useState<number | null>(null)
     const freshRow = useRef<HTMLLIElement | null>(null)
 
@@ -541,12 +573,19 @@ export default function ListShow({
                                             </>
                                         }
                                     >
+                                        {item.reading && (
+                                            <p className="mt-1 text-xs text-ink-soft" aria-live="polite">
+                                                {t('lists.reading_link')}
+                                            </p>
+                                        )}
+
                                         {editingItem === item.id && (
                                             <EditManualItem
                                                 action={`${base}/list-items/${item.id}`}
                                                 title={item.title}
                                                 url={item.externalUrl}
                                                 price={item.price}
+                                                image={item.image}
                                                 onDone={() => setEditingItem(null)}
                                             />
                                         )}

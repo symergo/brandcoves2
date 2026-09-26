@@ -49,6 +49,9 @@ The offer-comparison card the result renders is the one Phase 2 builds anyway.
    product we never ingested can still turn up. The scanner itself makes no bol call.
 5. **Record it.** Every scan is logged as a `scan` event with `hit: true|false`; see *What a miss is
    worth*.
+6. **Still nothing, from a list?** In the add panel a miss can be saved anyway: the barcode is kept
+   on the hand-written item, and the item becomes the product once a shop in the list's market
+   sells it (since 2026-09-26, [pasted-links.md](pasted-links.md#a-barcode-nobody-sells-yet)).
 
 ## Three honest limitations
 

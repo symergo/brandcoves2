@@ -34,6 +34,7 @@ export default function EditManualItem({
     title,
     url,
     price,
+    image = null,
     onDone,
 }: {
     /** `/{market}/list-items/{item}` — PATCH. */
@@ -41,9 +42,43 @@ export default function EditManualItem({
     title: string
     url: string | null
     price: Cents | null
+    /** The picture it has now: an uploaded photo, or one copied from a pasted page. */
+    image?: string | null
     onDone: () => void
 }) {
     const { t } = useTranslations()
+
+    const [photoError, setPhotoError] = useState<string | null>(null)
+    const [uploading, setUploading] = useState(false)
+
+    /*
+     * A photo goes up on its own, the moment it is chosen, rather than with
+     * the form. It is a file, not a field: waiting for "save" would make the
+     * text fields a multipart form for the one edit in ten that has a photo.
+     * The server re-encodes it and drops what a phone writes into the file,
+     * including where it was taken (ImageStore).
+     */
+    function upload(file: File | undefined) {
+        if (!file) return
+
+        setPhotoError(null)
+        setUploading(true)
+
+        router.post(
+            `${action}/photo`,
+            { photo: file },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onError: (errors) => setPhotoError(Object.values(errors)[0] ?? null),
+                onFinish: () => setUploading(false),
+            },
+        )
+    }
+
+    function removePhoto() {
+        router.delete(`${action}/photo`, { preserveScroll: true })
+    }
 
     const [form, setForm] = useState({
         title,
@@ -107,6 +142,35 @@ export default function EditManualItem({
                     className="mt-1 w-32 rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
                 />
             </label>
+
+            <div className="text-xs font-medium">
+                {t('lists.photo_label')}
+                <div className="mt-1 flex flex-wrap items-center gap-3">
+                    {image && <img src={image} alt="" className="h-14 w-14 rounded object-cover" />}
+
+                    <label className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-sm font-normal hover:border-ink">
+                        {image ? t('lists.photo_replace') : t('lists.photo_add')}
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            disabled={uploading}
+                            onChange={(e) => upload(e.target.files?.[0])}
+                            className="sr-only"
+                        />
+                    </label>
+
+                    {image?.startsWith('/media/') && (
+                        <button
+                            type="button"
+                            onClick={removePhoto}
+                            className="text-xs font-normal text-ink-soft underline hover:text-ink"
+                        >
+                            {t('lists.photo_remove')}
+                        </button>
+                    )}
+                </div>
+                {photoError && <p className="mt-1 font-normal text-danger">{photoError}</p>}
+            </div>
 
             <div className="flex items-center gap-3 pt-1">
                 <button

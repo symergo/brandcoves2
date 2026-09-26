@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Wishlist;
 
 use App\Enums\Source;
+use App\Jobs\ReadItemLink;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
+use App\Services\Identity\Gtin;
 use App\Support\CurrentMarket;
+use InvalidArgumentException;
 
 /**
  * The one place a product becomes a list entry.
@@ -111,26 +114,26 @@ class ItemSaver
      * — `wishlist_items_identifiable` was widened for exactly that — and this is
      * the path that finally writes one.
      *
-     * ## Why nothing is fetched
+     * ## The link is looked up, in a queued job
      *
-     * Pasting a product URL was deliberately deferred, and the reason was never
-     * the URL itself: it was that the obvious implementation *fetches* it to
-     * pull out a title and an image. That turns a wishlist into an SSRF probe
-     * anybody can point at anything, plus a renderer of arbitrary remote
-     * content.
+     * Until 2026-09-26 nothing was ever fetched from the link, and the reasons
+     * were right: a server that fetches what it is handed is an SSRF probe
+     * anybody can point at anything, and a remote image on a shared list is a
+     * tracking pixel reporting who opened it. Roadmap step 1
+     * (docs/strategy.md) keeps both reasons and answers them instead of
+     * avoiding the link:
      *
-     * So the person types what it is, and we never make a request to the link.
-     * That removes the whole class of problem instead of trying to filter it,
-     * and the cost is one more field for somebody who is already typing.
+     * - {@see ReadItemLink} runs after the save, never in the request. It asks
+     *   our catalogue and the connectors first (`LinkRouter`: an Amazon ASIN,
+     *   a bol or eBay id, a feed merchant's deep link) and reads the shop's
+     *   page only when nothing recognises it, through `SafeFetch`, which
+     *   refuses private addresses on every hop.
+     * - A picture from the page is copied to our own storage and re-encoded
+     *   (`ImageStore`), so a shared list never loads one from a stranger's host.
      *
-     * ## And no image
-     *
-     * An image URL would be rendered on a **shared** page, which means every
-     * visitor's browser fetches whatever host the list owner chose — an
-     * on-by-default tracking pixel that reports who opened the list and when.
-     * On a gift list, where the owner is specifically not supposed to learn
-     * about activity, that is the wrong default to hand anyone. A manual item
-     * shows no picture, deliberately.
+     * A title is optional when there is a link: the item shows the shop's
+     * host until the page is read, and only that placeholder is ever replaced.
+     * See docs/features/pasted-links.md.
      *
      * ## No `external_id`
      *
@@ -141,29 +144,62 @@ class ItemSaver
      */
     public function saveManual(
         Wishlist $list,
-        string $title,
+        ?string $title,
         ?string $url = null,
         ?int $price = null,
         ?string $note = null,
+        ?string $gtin = null,
     ): WishlistItem {
+        // Re-checked here rather than trusted from the request. The rule is
+        // the model's, and this is the only place a manual URL is written.
+        $url = WishlistItem::isSafeExternalUrl($url) ? trim((string) $url) : null;
+        $title = trim((string) $title);
+
+        if ($title === '') {
+            $title = WishlistItem::placeholderTitle($url);
+        }
+
+        if ($title === '') {
+            // Neither a title nor a link: nothing to call it. The controller
+            // requires one of the two, so this is a caller's bug.
+            throw new InvalidArgumentException('A hand-written item needs a title or a link.');
+        }
+
         $item = $list->allItems()->create([
             'source' => Source::Manual->value,
             'external_id' => null,
-            'snapshot_title' => trim($title),
+            'snapshot_title' => $title,
             'snapshot_image_url' => null,
             'snapshot_price' => $price,
-            // Re-checked here rather than trusted from the request. The rule is
-            // the model's, and this is the only place a manual URL is written.
-            'snapshot_url' => WishlistItem::isSafeExternalUrl($url) ? trim((string) $url) : null,
+            'snapshot_url' => $url,
             'note' => $note,
+            // Kept for the nightly pass that joins it to its product once a
+            // shop carries it. See LinkBarcodeItems.
+            'gtin' => Gtin::normalise($gtin),
+            'link_status' => $url === null ? null : 'pending',
             // Suggestions null this immediately afterwards, exactly as they do
             // for a catalogue save.
             'accepted_at' => now(),
         ]);
 
+        $this->readLinkOf($item);
+
         $list->touch();
 
         return $item;
+    }
+
+    /**
+     * Look the item's link up, after the save has committed.
+     *
+     * Also called when somebody edits the link on an item they typed: the new
+     * link deserves the same lookup as the first one.
+     */
+    public function readLinkOf(WishlistItem $item): void
+    {
+        if ($item->link_status === 'pending') {
+            ReadItemLink::dispatch($item->id)->afterCommit();
+        }
     }
 
     /**

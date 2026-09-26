@@ -8,7 +8,8 @@
 #   Scheduled Backups       = on the `postgres` service
 #
 # Everything is built from the repo. There are NO bind mounts and no seeded
-# volumes — the only persistent state is the postgres volume. That is the whole
+# volumes. Persistent state is the postgres volume, redis's, and since
+# 2026-09-26 `media_data` (pictures on list items). That is still the whole
 # reason this deployment is simpler than v1's WordPress one.
 #
 # BUILD VARIABLES: VITE_* is baked into the client bundle at BUILD time. In
@@ -114,6 +115,10 @@ x-app: &app
     # ConfigContractTest caught it missing, on every CI run from 2026-09-12
     # until 2026-09-13.
     REGISTRATION_NOTIFY_EMAIL: ${REGISTRATION_NOTIFY_EMAIL:-}
+    # Who receives each report sent from the help page. Same shape and the
+    # same trap as the line above: added to config on 2026-09-26 without this
+    # passthrough, which ConfigContractTest caught the same day.
+    FEEDBACK_NOTIFY_EMAIL: ${FEEDBACK_NOTIFY_EMAIL:-}
 
     # Kept so switching back is an env change rather than a redeploy of this
     # file. Unused while MAIL_MAILER is smtp.
@@ -188,6 +193,13 @@ x-app: &app
     # empty, which is what finally identified the runtime route as the working
     # one.
   restart: unless-stopped
+  # Pictures on list items: photos people upload, and pictures copied from a
+  # pasted shop page (App\Services\Images\ImageStore). On every service that
+  # shares this anchor, because the queue writes them and `app` serves them.
+  # The one piece of state besides Postgres and Redis that must outlive a
+  # deploy: the container's own disk does not.
+  volumes:
+    - media_data:/app/storage/app/media
   depends_on:
     postgres:
       condition: service_healthy
@@ -391,3 +403,4 @@ services:
 volumes:
   pg_data:
   redis_data:
+  media_data:

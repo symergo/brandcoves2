@@ -36,6 +36,7 @@ use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
@@ -97,6 +98,17 @@ Route::get('/webhooks/ebay/account-deletion', [AccountDeletionController::class,
     ->name('ebay.deletion.challenge');
 Route::post('/webhooks/ebay/account-deletion', [AccountDeletionController::class, 'notify'])
     ->name('ebay.deletion.notify');
+
+/*
+ * Pictures we stored ourselves: photos people uploaded to items they typed, and
+ * pictures copied from a pasted shop page (see App\Services\Images\ImageStore).
+ *
+ * Unprefixed, because a picture belongs to no market. The name is a random
+ * UUID and the file is never rewritten, so it may be cached for a year.
+ */
+Route::get('/media/items/{file}', MediaController::class)
+    ->where('file', '[0-9a-f-]{36}\.webp')
+    ->name('media');
 
 // Sitemaps and robots. Unprefixed: crawlers look for them at the root, and a
 // per-market copy would just be five competing files.
@@ -433,8 +445,24 @@ Route::prefix('{market}')->group(function () {
             ->name('lists.unshare-from-friend');
         Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
 
-        Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
-        Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
+        /*
+         * Throttled since 2026-09-26, when a saved link started queueing a
+         * lookup that may call a connector or read a shop's page. Sixty a
+         * minute is far above anybody filling a list by hand.
+         */
+        Route::post('/list-items', [WishlistItemController::class, 'store'])
+            ->middleware('throttle:60,1')
+            ->name('items.store');
+        Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])
+            ->middleware('throttle:60,1')
+            ->name('items.update');
+
+        // A photo of your own on something you typed. See ImageStore.
+        Route::post('/list-items/{item}/photo', [WishlistItemController::class, 'photo'])
+            ->middleware('throttle:20,1')
+            ->name('items.photo');
+        Route::delete('/list-items/{item}/photo', [WishlistItemController::class, 'removePhoto'])
+            ->name('items.photo.remove');
         Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
 
         /*

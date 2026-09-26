@@ -764,6 +764,11 @@ class WishlistController extends Controller
                      */
                     'externalUrl' => $item->externalUrl(),
 
+                    // A pasted link still being looked up in a queued job.
+                    // The page asks again for a few seconds while any row
+                    // says so. See ReadItemLink.
+                    'reading' => $item->isReading(),
+
                     // Current cheapest, so the owner sees whether it moved
                     // since they added it.
                     'currentPrice' => $item->group?->min_price,

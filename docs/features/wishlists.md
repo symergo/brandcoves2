@@ -865,6 +865,12 @@ the owner on `Lists/Show` and a visitor on `Lists/Shared`. The owner's path now 
 Neither page needs to know how the other behaves, and a second copy of the form would drift the
 moment one of them gained a field.
 
+**Since 2026-09-26 a link is looked up and a picture is allowed.** A link on a hand-written item is
+resolved through our catalogue and connectors, or by reading the shop's page in a queued job, and
+the item fills itself in; the title may be left out when there is a link. The owner can add a photo
+of their own, and a scanned barcode nobody sells yet is kept. See
+[pasted-links.md](pasted-links.md).
+
 Euros in the box, cents on the wire (invariant #7), converted in the component — and a comma is
 accepted, because half our markets write €12,50 and typing it the way you say it should not be a
 validation error.

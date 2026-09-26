@@ -82,6 +82,18 @@ export default function AddProduct({
     const [searching, setSearching] = useState(false)
     const [searched, setSearched] = useState(false)
 
+    /*
+     * A pasted link, as the server understood it.
+     *
+     * The server looks it up in our catalogue and through the connectors first
+     * (`LinkRouter`), so a bol, eBay or feed-shop link usually comes back as an
+     * ordinary result above. What it does not recognise comes back here, and
+     * one tap saves it as it is; the shop's page is read afterwards, in a
+     * queued job, and the row fills itself in.
+     */
+    const [link, setLink] = useState<{ url: string; host: string } | null>(null)
+    const [linkRefused, setLinkRefused] = useState(false)
+
     const [chosen, setChosen] = useState<Chosen | null>(null)
     const [title, setTitle] = useState('')
     const [note, setNote] = useState('')
@@ -129,6 +141,9 @@ export default function AddProduct({
 
         setError(null)
 
+        setLink(null)
+        setLinkRefused(false)
+
         if (q.length < 2) {
             setGroups([])
             setLive([])
@@ -146,13 +161,22 @@ export default function AddProduct({
             headers: { Accept: 'application/json' },
         })
             .then((r) => r.json())
-            .then((data: { groups: GroupHit[]; live: LiveHit[] }) => {
-                if (id !== latest.current) return
+            .then(
+                (data: {
+                    groups: GroupHit[]
+                    live: LiveHit[]
+                    link?: { url: string; host: string } | null
+                    linkRefused?: boolean
+                }) => {
+                    if (id !== latest.current) return
 
-                setGroups(data.groups ?? [])
-                setLive(data.live ?? [])
-                setSearched(true)
-            })
+                    setGroups(data.groups ?? [])
+                    setLive(data.live ?? [])
+                    setLink(data.link ?? null)
+                    setLinkRefused(data.linkRefused ?? false)
+                    setSearched(true)
+                },
+            )
             .catch(() => {
                 if (id !== latest.current) return
 
@@ -185,8 +209,44 @@ export default function AddProduct({
         setTerm('')
         setGroups([])
         setLive([])
+        setLink(null)
+        setLinkRefused(false)
         setSearched(false)
         reset()
+    }
+
+    /*
+     * A barcode the catalogue does not know.
+     *
+     * The digits in the search box after a scan (or typed) that found nothing.
+     * Kept on the hand-written item, so the day a shop we cover sells it the
+     * item turns into that product by itself (LinkBarcodeItems).
+     */
+    const barcode = /^\d{8,14}$/.test(term.trim()) ? term.trim() : null
+
+    /** Save a pasted link as it is, in one tap. The title comes from the page. */
+    function addLink(): void {
+        if (link === null) return
+
+        setError(null)
+        setBusy(true)
+
+        router.post(
+            `${base}/list-items`,
+            {
+                wishlist_id: listId,
+                source: 'manual',
+                url: link.url,
+                title: null,
+                on_list_page: true,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => close(),
+                onError: (errors) => setError(Object.values(errors)[0] ?? null),
+                onFinish: () => setBusy(false),
+            },
+        )
     }
 
     function choose(next: Chosen): void {
@@ -203,7 +263,10 @@ export default function AddProduct({
          * best guess available — they typed it because it is what the thing is
          * called.
          */
-        setTitle(next.kind === 'manual' ? term.trim() : next.hit.title)
+        //
+        // Not for a barcode: "8712345678906" is not what anybody calls the
+        // thing, and the digits are kept separately anyway.
+        setTitle(next.kind === 'manual' ? (barcode === null ? term.trim() : '') : next.hit.title)
     }
 
     function submit(event: React.FormEvent): void {
@@ -241,6 +304,7 @@ export default function AddProduct({
                         ...common,
                         source: 'manual',
                         url: url.trim() || null,
+                        gtin: barcode,
                         /*
                          * Euros in the box, cents on the wire (invariant #7).
                          * A comma is accepted because half our markets write
@@ -283,7 +347,8 @@ export default function AddProduct({
         )
     }
 
-    const nothingFound = searched && !searching && groups.length === 0 && live.length === 0
+    const nothingFound =
+        searched && !searching && groups.length === 0 && live.length === 0 && link === null && !linkRefused
 
     function hitRow(key: string, hit: GroupHit | LiveHit, onPick: () => void, badge?: string) {
         return (
@@ -402,6 +467,36 @@ export default function AddProduct({
                         </p>
                     )}
 
+                    {linkRefused && (
+                        <p className="mt-3 text-sm text-danger">{t('lists.link_refused')}</p>
+                    )}
+
+                    {link !== null && !searching && (
+                        groups.length === 0 && live.length === 0 ? (
+                            <div className="mt-3 rounded-lg bg-cream p-3 text-sm">
+                                <p>{t('lists.add_link_intro', { host: link.host })}</p>
+                                <p className="mt-1 text-xs text-ink-soft">{t('lists.add_link_after')}</p>
+                                <button
+                                    type="button"
+                                    onClick={addLink}
+                                    disabled={busy}
+                                    className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                                >
+                                    {t('lists.add_link_cta')}
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={addLink}
+                                disabled={busy}
+                                className="mt-2 text-sm text-accent underline hover:text-accent-dark disabled:opacity-50"
+                            >
+                                {t('lists.add_link_also')}
+                            </button>
+                        )
+                    )}
+
                     {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
                     {/*
@@ -468,6 +563,10 @@ export default function AddProduct({
                                 {t('lists.add_live_title_note', { shop: chosen.hit.merchant })}
                             </span>
                         </p>
+                    )}
+
+                    {chosen.kind === 'manual' && barcode !== null && (
+                        <p className="text-xs text-ink-soft">{t('lists.gtin_kept', { gtin: barcode })}</p>
                     )}
 
                     {chosen.kind === 'manual' && (

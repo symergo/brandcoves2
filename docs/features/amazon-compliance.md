@@ -123,6 +123,7 @@ email attached, so it collides with both.
 | **Buying guides** | ⚠️ live prices | ✅ | An Amazon item in a guide needs its price fetched at render, not baked into the page |
 | **Gift Whisperer** | ⚠️ live only | ✅ | Scoring may use live data; the giftable index may not store Amazon rows |
 | **Barcode scanner** | ✅ live lookup | ✅ | A live lookup by EAN is exactly the permitted pattern |
+| **A pasted link on a list** | ⚠️ ASIN lookup only | ✅ | `LinkRouter`: an Amazon link is never fetched, not even a short link. The ASIN is looked up in `amazon_products`; a mapped group becomes the item, otherwise the item stays as typed and nothing from Amazon is stored. See [pasted-links.md](pasted-links.md) |
 | **Outbound links** | ✅ direct anchor | ✅ via redirector | `requiresDirectLink()` — see below |
 | **Price "as of" disclaimer** | ✅ shown | n/a | `requiresPriceTimestamp()` |
 | **Search-result caching** | ⚠️ 15 min | ✅ | `maxPriceAgeSeconds()` — well inside the 24-hour limit |

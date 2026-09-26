@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Services\Images\ImageStore;
 use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Enforce the retention windows the privacy policy states.
@@ -129,11 +131,50 @@ class PrunePersonalDataCommand extends Command
             $dry,
         );
 
+        $report['item pictures'] = $this->prunePictures($dry);
+
         foreach ($report as $label => $count) {
             $this->components->twoColumnDetail($label, ($dry ? 'would delete ' : 'deleted ').$count);
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Pictures no list item refers to any more.
+     *
+     * A photo somebody uploaded is their personal data, and it goes when the
+     * item goes. An item deleted on its own takes its picture with it
+     * (WishlistItem::booted), but a list or an account deleted as a whole
+     * removes its items by cascade, in the database, where no model event
+     * fires. This sweep is what catches those.
+     *
+     * A day's grace, so a picture stored a moment before its item is saved is
+     * never mistaken for an orphan.
+     */
+    private function prunePictures(bool $dry): int
+    {
+        $disk = Storage::disk(ImageStore::DISK);
+        $cutoff = now()->subDay()->getTimestamp();
+        $orphans = [];
+
+        foreach ($disk->files('items') as $file) {
+            if ($disk->lastModified($file) > $cutoff) {
+                continue;
+            }
+
+            $used = DB::table('wishlist_items')->where('snapshot_image_url', '/media/'.$file)->exists();
+
+            if (! $used) {
+                $orphans[] = $file;
+            }
+        }
+
+        if (! $dry && $orphans !== []) {
+            $disk->delete($orphans);
+        }
+
+        return count($orphans);
     }
 
     /**

@@ -12,6 +12,8 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Rules\SafeExternalUrl;
 use App\Services\Connectors\Offer;
+use App\Services\Images\ImageStore;
+use App\Services\PageReading\LinkRouter;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use App\Services\Wishlist\DefaultList;
@@ -304,7 +306,7 @@ class WishlistItemController extends Controller
      * be discarded at render (invariant #6), and a field that silently does
      * nothing is worse than an absent one.
      */
-    public function find(Request $request, CurrentMarket $current, SearchService $search): JsonResponse
+    public function find(Request $request, CurrentMarket $current, SearchService $search, LinkRouter $router): JsonResponse
     {
         $term = trim($request->string('q')->toString());
 
@@ -313,6 +315,21 @@ class WishlistItemController extends Controller
         // asked a question with no answer, which costs a request each time.
         if (mb_strlen($term) < 2) {
             return response()->json(['groups' => [], 'live' => []]);
+        }
+
+        /*
+         * A pasted link is not a search term.
+         *
+         * Searching for the literal text of a URL found nothing, which told the
+         * person we do not have a product we may well have. The link goes to
+         * `LinkRouter` instead: an Amazon ASIN, a bol or eBay id, a feed shop's
+         * product page — each answered from our catalogue or a connector, never
+         * by fetching the page in this request. What nothing recognises comes
+         * back as `link`, and the panel offers to add it as it is; the page is
+         * read afterwards, in a queued job (see ItemSaver::saveManual()).
+         */
+        if (preg_match('#^https?://#i', $term)) {
+            return $this->findLink($term, $current, $router);
         }
 
         $result = $search->search(new SearchQuery(
@@ -357,6 +374,46 @@ class WishlistItemController extends Controller
                     : Merchant::withoutCountrySuffix($offer->merchantName),
                 'storable' => $offer->source->allowsCatalogueStorage(),
             ], array_slice($result->liveOffers, 0, 4)),
+            'link' => null,
+        ]);
+    }
+
+    /**
+     * A pasted link, answered from what we hold.
+     *
+     * `link.url` is only offered back when it is one we would store: `https:`
+     * and nothing else (SafeExternalUrl). `link.host` is what the item will be
+     * called until its page has been read.
+     */
+    private function findLink(string $url, CurrentMarket $current, LinkRouter $router): JsonResponse
+    {
+        $safe = WishlistItem::isSafeExternalUrl($url);
+        $route = $safe ? $router->resolve($url, $current->get()) : null;
+        $group = $route?->group;
+        $offer = $route?->offer;
+
+        return response()->json([
+            'groups' => $group === null ? [] : [[
+                'id' => $group->id,
+                'title' => $group->displayTitle(),
+                'image' => $group->image_url,
+                'price' => $group->min_price,
+                'brand' => $group->brand,
+                'merchantCount' => $group->merchant_count,
+            ]],
+            'live' => $offer === null ? [] : [[
+                'source' => $offer->source->value,
+                'externalId' => $offer->externalId,
+                'title' => $offer->title,
+                'image' => $offer->imageUrl,
+                'price' => $offer->price,
+                'merchant' => $offer->merchantName ?? $offer->source->label(),
+                'storable' => $offer->source->allowsCatalogueStorage(),
+            ]],
+            'link' => $safe ? ['url' => trim($url), 'host' => LinkRouter::host($url)] : null,
+            // Why an `http:` link is not offered: saying so is what stops the
+            // panel looking like it ignored the paste.
+            'linkRefused' => ! $safe,
         ]);
     }
 
@@ -390,7 +447,16 @@ class WishlistItemController extends Controller
 
             // For every other source this is a hint the saver may ignore. Here
             // it is the entire item, so it is required and it is what renders.
-            'title' => [$manual ? 'required' : 'nullable', 'string', 'max:500'],
+            //
+            // With a link it may be left out: the item is called after the
+            // shop until its page has been read. See ItemSaver::saveManual().
+            'title' => [$manual ? 'required_without:url' : 'nullable', 'nullable', 'string', 'max:500'],
+
+            // A scanned barcode we did not know yet, kept on a hand-written
+            // item so it can join its product later. Invalid codes are
+            // dropped by Gtin::normalise() rather than refused: the item is
+            // still worth saving.
+            'gtin' => ['nullable', 'string', 'max:20'],
             'image_url' => ['nullable', 'url', 'max:1024'],
             'url' => ['nullable', 'string', 'max:2048', new SafeExternalUrl],
             'price' => ['nullable', 'integer', 'min:0'],
@@ -470,15 +536,17 @@ class WishlistItemController extends Controller
          * Before this, a list could only ever hold things we happen to stock —
          * so the honest answer to "a voucher for the climbing gym" was to leave
          * it off, and a list with the real present missing is a list that gets
-         * abandoned. Nothing is fetched from the link; see `ItemSaver`.
+         * abandoned. A link is looked up afterwards, in a queued job; see
+         * `ItemSaver::saveManual()`.
          */
         if ($validated['source'] === Source::Manual->value) {
             return $this->report($request, $saver->saveManual(
                 list: $list,
-                title: $validated['title'],
+                title: $validated['title'] ?? null,
                 url: $validated['url'] ?? null,
                 price: $validated['price'] ?? null,
                 note: $validated['note'] ?? null,
+                gtin: $validated['gtin'] ?? null,
             ), $list);
         }
 
@@ -584,7 +652,7 @@ class WishlistItemController extends Controller
      * rather than refused: the form does not offer them, so a request carrying
      * them was not sent by the page.
      */
-    public function update(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse
+    public function update(Request $request, CurrentMarket $current, ItemSaver $saver, string $market, string $item): RedirectResponse
     {
         $wishlistItem = $this->findOwned($request, $item);
 
@@ -619,10 +687,65 @@ class WishlistItemController extends Controller
                 $changes['snapshot_url'] = WishlistItem::isSafeExternalUrl($validated['url'])
                     ? trim((string) $validated['url'])
                     : null;
+
+                // A new link gets the same lookup as the first one did.
+                if ($changes['snapshot_url'] !== $wishlistItem->snapshot_url) {
+                    $changes['link_status'] = $changes['snapshot_url'] === null ? null : 'pending';
+                }
             }
         }
 
         $wishlistItem->update($changes);
+        $saver->readLinkOf($wishlistItem);
+
+        return back();
+    }
+
+    /**
+     * A photo of your own, on something you typed.
+     *
+     * Only a hand-written item: a catalogue item shows its product's picture,
+     * and a photo on it would be a second answer to "what does it look like".
+     * The file is decoded and re-encoded (`ImageStore`), which drops the EXIF a
+     * phone writes into it, including where the photo was taken.
+     */
+    public function photo(Request $request, CurrentMarket $current, ImageStore $images, string $market, string $item): RedirectResponse
+    {
+        $wishlistItem = $this->findOwned($request, $item);
+
+        abort_unless($wishlistItem->isManual(), 422);
+
+        $request->validate([
+            'photo' => [
+                'required',
+                'file',
+                'max:'.intdiv((int) config('giftcoves.page_reading.max_image_bytes', 8 * 1024 * 1024), 1024),
+                'mimetypes:image/jpeg,image/png,image/webp,image/gif',
+            ],
+        ]);
+
+        $path = $images->fromUpload($request->file('photo'));
+
+        if ($path === null) {
+            return back()->withErrors(['photo' => __('site.lists.photo_unreadable')]);
+        }
+
+        $images->forget($wishlistItem->snapshot_image_url);
+        $wishlistItem->update(['snapshot_image_url' => $path]);
+        $wishlistItem->wishlist->touch();
+
+        return back();
+    }
+
+    /** Take the photo off again. Only ever one of ours; see ImageStore::isOurs(). */
+    public function removePhoto(Request $request, CurrentMarket $current, ImageStore $images, string $market, string $item): RedirectResponse
+    {
+        $wishlistItem = $this->findOwned($request, $item);
+
+        abort_unless($wishlistItem->isManual(), 422);
+
+        $images->forget($wishlistItem->snapshot_image_url);
+        $wishlistItem->update(['snapshot_image_url' => null]);
 
         return back();
     }

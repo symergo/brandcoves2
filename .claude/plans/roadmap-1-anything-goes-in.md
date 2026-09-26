@@ -2,6 +2,14 @@
 
 Strategy: [docs/strategy.md](../../docs/strategy.md), engine A and B. Written 2026-09-26.
 
+**Status 2026-09-26: built, except section 5.** What shipped is described in
+[docs/features/pasted-links.md](../../docs/features/pasted-links.md). Two changes from the design
+below: `page_reads` became a cache entry per URL (no table, nothing to prune), and **section 5
+(`Source::Web` offers in the catalogue) is deferred**: a price read once from a page cannot sit in
+"cheapest offer", so web offers need to join groups while staying out of the price aggregates, and
+that waits for the matching step. Decisions taken: images on a Coolify volume (`media_data`);
+pasted products stay out of public search.
+
 ## Goal
 
 A visitor can put any product into a Cove by pasting a shop link, scanning a barcode we do not

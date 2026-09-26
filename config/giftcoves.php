@@ -411,6 +411,42 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reading a pasted link
+    |--------------------------------------------------------------------------
+    |
+    | A link somebody pastes into a list is looked up in our catalogue or
+    | through a connector first; only a shop we know nothing about is fetched.
+    | These bound that fetch. It runs in a queued job, so the limits protect the
+    | shops and our worker, not a visitor waiting on a page. See
+    | docs/features/pasted-links.md.
+    */
+    'page_reading' => [
+        // Seconds for the whole request, and for the connection alone. A shop
+        // page that has not answered in five seconds will not be read by a
+        // person either; the item stays as typed and nothing is lost.
+        'timeout' => 5,
+        'connect_timeout' => 3,
+
+        // A product page's HTML is typically 100-600 KB. Two megabytes is room
+        // for a heavy one and a ceiling on a link to something that is not a
+        // page at all.
+        'max_html_bytes' => 2 * 1024 * 1024,
+
+        // Before re-encoding. A phone photo is 2-6 MB.
+        'max_image_bytes' => 8 * 1024 * 1024,
+
+        // Requests per shop per minute, across every visitor. A person pasting
+        // twenty links from one shop is fine; a loop hammering one host is not
+        // something we should be the source of.
+        'per_host_per_minute' => 20,
+
+        // One read serves everyone who pastes the same link for a week. A
+        // price older than that is shown only as "what the page said".
+        'cache_days' => 7,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Gift Whisperer
     |--------------------------------------------------------------------------
     */

@@ -133,6 +133,13 @@ migration surfaces before real visitors meet it — and the whole stack idles at
 | `scheduler` | `php artisan schedule:work` — **exactly one replica** |
 | `postgres`, `redis` | state; both volumes backed up |
 
+**One more volume since 2026-09-26: `media_data`**, mounted at `/app/storage/app/media` on `app`,
+`queue` and `scheduler` (the `x-app` anchor). It holds pictures on list items: photos people upload
+and pictures copied from pasted shop pages ([pasted-links.md](features/pasted-links.md)). Unlike
+everything else in the image it must survive a deploy, and it is personal data: include it in the
+backups next to Postgres. A missing volume does not break the site; pictures stored since the last
+deploy disappear and their items show no picture.
+
 Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 60s` lets
 the in-flight job finish rather than abandoning a half-ingested chunk.
 

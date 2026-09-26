@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Source;
+use App\Services\Images\ImageStore;
+use App\Services\PageReading\LinkRouter;
+use App\Services\Wishlist\ItemLinker;
 use Database\Factories\WishlistItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +30,18 @@ class WishlistItem extends Model
      * and the second was the easy one to forget.
      */
     protected $hidden = ['claimed_by_hash', 'marked_sent_at'];
+
+    /**
+     * A photo somebody uploaded is theirs, and goes with the item.
+     *
+     * Only an Eloquent delete reaches this. A row removed by a cascade (the
+     * whole list, the whole account) does not, which is why
+     * `bc:prune-personal-data` also sweeps pictures nothing refers to.
+     */
+    protected static function booted(): void
+    {
+        static::deleted(fn (self $item) => app(ImageStore::class)->forget($item->snapshot_image_url));
+    }
 
     protected function casts(): array
     {
@@ -109,6 +124,25 @@ class WishlistItem extends Model
      * ask the same question. Three copies of a scheme check is how two of them
      * end up disagreeing.
      */
+    /**
+     * What an item saved from a bare link is called until its page is read.
+     *
+     * The shop's host, without `www.` — "coolblue.nl". True as far as it goes,
+     * and recognisably not a product name, so {@see ItemLinker} can tell it
+     * apart from a title the person typed and replace only this one. Empty
+     * string for no link, which no typed title can equal after trimming.
+     */
+    public static function placeholderTitle(?string $url): string
+    {
+        return LinkRouter::host((string) $url) ?? '';
+    }
+
+    /** Is a pasted link still being looked up? The list page waits on this. */
+    public function isReading(): bool
+    {
+        return $this->link_status === 'pending';
+    }
+
     public static function isSafeExternalUrl(?string $url): bool
     {
         if (! is_string($url) || trim($url) === '') {

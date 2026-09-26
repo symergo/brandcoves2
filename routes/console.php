@@ -8,6 +8,7 @@ use App\Jobs\CheckSearchAlerts;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\LinkBarcodeItems;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
@@ -74,6 +75,13 @@ Schedule::call(function (): void {
     ->name('group-products')
     ->twiceDailyAt(5, 17, 0)
     ->withoutOverlapping()
+    ->onOneServer();
+
+// Scanned barcodes saved before any shop sold them, joined to their product
+// once one does. Half an hour after grouping, so the groups are there.
+Schedule::job(new LinkBarcodeItems)
+    ->name('link-barcode-items')
+    ->twiceDailyAt(5, 17, 30)
     ->onOneServer();
 
 /*

@@ -177,7 +177,11 @@ RUN { \
     } > /usr/local/etc/php/conf.d/opcache.ini
 
 # Writable state. The image is otherwise read-only.
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+#
+# storage/app/media is where the `media_data` volume mounts (pictures on list
+# items, see config/filesystems.php). Created here so a fresh volume starts with
+# this directory's ownership rather than root's.
+RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs storage/app/media/items bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
