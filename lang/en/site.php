@@ -309,6 +309,17 @@ return [
         'hide_shop' => 'Stop showing :shop',
         'in_stock_only' => 'In stock only',
         'discounted_only' => 'Discounted only',
+        // The search page since 2026-09-26 (docs/features/search.md): the Coves a
+        // term matches, what other people keep, and the filter chips.
+        'coves_heading' => 'Coves about this',
+        'card_kept' => 'On :count person\'s list|On :count people\'s lists',
+        'card_in_coves' => 'In :count Cove|In :count Coves',
+        'kept_summary' => 'People keep :count product matching ":term" on their lists|People keep :count products matching ":term" on their lists',
+        'kept_info' => 'Counted in different people, never who, and never what was bought. Shown only once enough people keep these.',
+        'chip_with_out_of_stock' => 'Out of stock too',
+        'chip_min' => 'From :price',
+        'chip_max' => 'Up to :price',
+        'chip_comparable' => 'At several shops',
         /*
          * The hand-off to Amazon, in the sidebar.
          *
@@ -2570,6 +2581,7 @@ return [
         'coves_body4' => 'Press Save on a Cove and choose. Keep it in My Coves to find it again under My Coves, in Saved; it keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change. It is the same Save button as on a product.',
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',
+        'find_search_results' => 'On the results page, Coves about what you searched come first. Filters and sorting sit behind the Filters button, and every filter that is on shows as a chip you can remove. Under a product you can see how many people keep it on a list and how many Coves hold it: a count only, never who.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The country and language button at the top (in the menu on a phone) changes it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
         'find_gift' => 'In Find a gift you first say who it is for: one of your people, or who they are, like your partner or a colleague. Then choose how to look: answer a few questions, choose between two things in This or that, or start from a type of person. Every way ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask other people.',

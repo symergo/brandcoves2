@@ -197,6 +197,15 @@ It is one SQL query with two `EXISTS` subqueries, so it costs one round trip wha
 Community Coves. The UI is one self-contained section at the end of the results
 (`CommunityCoveCards`), so other additions to that page merge cleanly.
 
+## In search results (2026-09-26)
+
+A search term that matches a Community Cove's **public title** shows it in the row of Coves above
+the products (`CommunityCoves::matching()`, called by `CoveMatches`), most saved first, with the
+same rules as the Gift Finder: this market, published and not hidden, three visible things at
+least. Only the public title is searched: the list's own title and description are private, and a
+search that matched on them would confirm what they say. See
+[search.md](search.md#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26).
+
 ## Saving and "Make it my list"
 
 The same two buttons as on an editorial Cove ([saved-coves.md](saved-coves.md)), from the same

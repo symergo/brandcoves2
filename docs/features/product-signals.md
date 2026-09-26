@@ -51,6 +51,14 @@ fits under, linking to search filtered to that maximum. Above €200 there is no
 not a budget anybody searches by. "People who want this also want…" arrives with intent search
 (roadmap step 4, engine G) and gets its own band.
 
+## On the search page (2026-09-26)
+
+`ProductSignals::forResults()` gives the search results the same two counts, people and Coves, for a
+whole page at once in two queries, shown as one small line under each card. It uses
+`list_signals.min_owners` as its threshold (`searchThreshold()`), which the owner named for search,
+not `saved_threshold`; while `GIFT_MIN_OWNERS=1` the two differ. See
+[search.md](search.md#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26).
+
 ## Tests
 
 `ProductSignalsTest`: people not lists, the threshold, anonymous lists counting, unaccepted

@@ -367,6 +367,37 @@ class CommunityCoves
     }
 
     /**
+     * The Community Coves whose public title matches a search term, most saved
+     * first, as cards.
+     *
+     * The public title only: the list's own title and description are never
+     * public (see the table in docs/features/community-coves.md), so they must
+     * not be searchable either, or a search would confirm what a private
+     * title says. Full text in the market's language, like the product
+     * search. A Cove with fewer than three visible things is skipped, as in
+     * the Gift Finder.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function matching(Market $market, string $term, int $limit): array
+    {
+        return $this->query($market)
+            ->whereRaw(
+                "to_tsvector(bc_text_config(?), coalesce(wishlists.public_title, '')) @@ websearch_to_tsquery(bc_text_config(?), ?)",
+                [$market->value, $market->value, $term],
+            )
+            ->orderByDesc('saves_count')
+            ->orderByDesc('published_at')
+            ->limit($limit * 2)
+            ->get()
+            ->filter(fn (Wishlist $list) => $this->publicItems($list)->count() >= self::MIN_ITEMS)
+            ->take($limit)
+            ->map(fn (Wishlist $list) => $this->card($list))
+            ->values()
+            ->all();
+    }
+
+    /**
      * "Coves others made for someone like this": the Community Coves nearest a
      * Gift Finder brief.
      *
