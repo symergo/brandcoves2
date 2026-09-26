@@ -134,6 +134,10 @@ php artisan bc:withdraw-source --market=en --source=bol   # suppress the offers 
                                       # behind after it stopped serving a market. Turning a
                                       # connector off does NOT hide what it already stored.
                                       # --restore is the undo; refuses while the source still serves
+php artisan bc:find-matches --full    # propose products that may be one (same barcode, model
+                                      # number or similar title within a brand) for a person to
+                                      # confirm at /admin, Match review. Nothing merges on its own.
+                                      # Runs 05:40 and 17:40; --full once after the first deploy
 php artisan bc:pull-charts            # pull bestseller charts — the demand signal, never a page
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing
