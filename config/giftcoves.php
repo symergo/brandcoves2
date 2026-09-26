@@ -441,7 +441,10 @@ return [
     'product_signals' => [
         // "Saved by N people" shows only from this many. Below it a count can
         // point at one person somebody knows keeps a list (see ProductSignals).
-        'saved_threshold' => 5,
+        // Follows GIFT_MIN_OWNERS with the list signals, so search and the
+        // product page never disagree about the same count (owner's temporary
+        // lowering, 2026-09-26; see docs/features/crowd-picks.md).
+        'saved_threshold' => (int) env('GIFT_MIN_OWNERS', 5),
     ],
 
     /*

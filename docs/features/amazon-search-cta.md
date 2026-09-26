@@ -7,7 +7,7 @@ date_added: 2026-08-30
 
 # The Amazon search hand-off
 
-One link, in the search sidebar and on every product page with a barcode: **run this same search on
+One link, in the search page's toolbar and on every product page with a barcode: **run this same search on
 Amazon**. Tagged, so the click is attributed.
 
 - Service: [`App\Services\Search\AmazonSearchLink`](../../app/Services/Search/AmazonSearchLink.php)
@@ -93,10 +93,13 @@ middle of a button costs the click.
 
 ## Placement
 
-- **Search:** the foot of the filter rail. It is an alternative to the whole page, not to any
-  product on it; in the grid it would compete with the offers we do carry, which are the ones a
-  click here should be worth *less* than. On a desktop the by-store view has no rail, so it carries
-  no link. On a phone both views open the same filter sheet, which does.
+- **Search:** since 2026-09-26, the right end of the toolbar above the results, opposite the
+  Filters button, as a compact pill (`AmazonSearchCta` with `compact`: the same tagged URL, `rel`,
+  favicon and host, one row high). It used to sit at the foot of the filter rail; the rail went away
+  when the filters moved behind a button ([search.md](search.md#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26)),
+  and the owner asked for it "in the same area". It is still an alternative to the whole page, not
+  to any product on it, so it sits with the page's controls and never among the cards, where it
+  would compete with the offers we do carry. Both views show it now, the by-store view included.
   Only when the URL carries a term. Since 2026-09-12 the page before anything is typed gets no
   link at all: `SearchController` sends null, so neither the rail nor the empty state can offer
   the bare storefront under "try searching on Amazon". The generic label was removed with it.
@@ -106,7 +109,7 @@ middle of a button costs the click.
 - **Product:** directly under the barcode it searches for, below the buy buttons.
 
 **On a page that found nothing**, search and brand both move it into the empty state, in the middle
-of the screen, and drop the copy in the rail — two identical accent buttons on one view is one of
+of the screen, and drop the copy in the toolbar (search) or the rail (brand) — two identical accent buttons on one view is one of
 them being ignored. A dead end is where this link is worth most: we found nothing, the shopper's
 question is still open, and the next thing they do is try the shop we do not carry. Shown even when
 the emptiness is our own filters' doing, where "clear the filters" is the better answer and sits

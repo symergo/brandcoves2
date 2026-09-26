@@ -120,8 +120,10 @@ emptied after it is created.
 ## Temporarily one person (2026-09-26)
 
 The owner lowered the bar to one person for now, while production has too few lists (13) for
-anything to reach five. It is `GIFT_MIN_OWNERS=1` in the environment, read by both
-`giftcoves.list_signals.min_owners` and `giftcoves.offline_ideas.min_owners`; the code's default
+anything to reach five. It is `GIFT_MIN_OWNERS=1` in the environment, read by
+`giftcoves.list_signals.min_owners`, `giftcoves.offline_ideas.min_owners` and (since the search
+page makeover the same day) `giftcoves.product_signals.saved_threshold`, so search and the product page
+never disagree about one count; the code's default
 stays 5, and the tests pin 5 in `phpunit.xml`. While it is 1, the privacy page no longer names a
 number: it still promises only numbers, no list, name or own words shown, and that a person reads
 and rewrites every offline idea. **To restore:** remove `GIFT_MIN_OWNERS` everywhere (local `.env`,

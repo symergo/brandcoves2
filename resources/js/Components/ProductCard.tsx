@@ -19,6 +19,12 @@ export interface GroupCard {
     merchantCount: number
     inStock: boolean
     discountPercent: number | null
+    /**
+     * What other people keep, worded on the server: "On 14 people's lists ·
+     * In 3 Coves". Search results only, and null below the privacy threshold
+     * (ProductSignals::forResults). Never a claim, never who.
+     */
+    kept?: string | null
 }
 
 /**
@@ -159,6 +165,8 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                             ? t('product.across_shops', { count: n(group.merchantCount) })
                             : t('product.one_shop')}
                     </div>
+
+                    {group.kept && <div className="mt-1 text-xs text-ink-soft">{group.kept}</div>}
                 </div>
             </div>
         </article>

@@ -232,6 +232,17 @@ return [
         'hide_shop' => 'Dejar de mostrar :shop',
         'in_stock_only' => 'Solo disponibles',
         'discounted_only' => 'Solo con descuento',
+        // La página de búsqueda desde 2026-09-26 (docs/features/search.md): las
+        // Coves de un término, lo que guardan otros y los filtros activos.
+        'coves_heading' => 'Coves sobre esto',
+        'card_kept' => 'En la lista de :count persona|En las listas de :count personas',
+        'card_in_coves' => 'En :count Cove|En :count Coves',
+        'kept_summary' => 'Hay gente que guarda :count producto con «:term» en sus listas|Hay gente que guarda :count productos con «:term» en sus listas',
+        'kept_info' => 'Contado en personas distintas, nunca quién, y nunca lo que ya se compró. Solo se muestra cuando lo guardan suficientes personas.',
+        'chip_with_out_of_stock' => 'También sin stock',
+        'chip_min' => 'Desde :price',
+        'chip_max' => 'Hasta :price',
+        'chip_comparable' => 'En varias tiendas',
         // Consulta la explicación de estas claves en lang/en/site.php.
         'amazon_search' => 'Busca :term también en Amazon',
         'previous' => 'Anterior',
@@ -2215,6 +2226,7 @@ return [
         'coves_body4' => 'Pulsa Guardar en una Cove y elige. Guardar en Mis Coves la deja en Mis Coves, en Guardadas; se mantiene al día con la Cove. Hacerla mi lista copia sus productos en una lista tuya, que puedes cambiar a tu gusto. Es el mismo botón Guardar que en un producto.',
         'find_title' => 'Encontrar cosas',
         'find_search' => 'Busca por nombre, marca o tipo de cosa, o di para quién es: «regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros». Miramos en muchas tiendas a la vez y comparamos sus precios.',
+        'find_search_results' => 'En la página de resultados, primero aparecen las Coves sobre lo que buscaste. Los filtros y el orden están detrás del botón Filtros, y cada filtro activo se muestra como una etiqueta que puedes quitar. Debajo de un producto ves cuántas personas lo tienen en una lista y en cuántas Coves está: solo un número, nunca quién.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
         'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. El botón de país e idioma de arriba (en el menú, en un móvil) lo cambia cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
         'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, o quién es, como tu pareja o un compañero de trabajo. Luego eliges cómo buscar: responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. Cada camino termina en la misma página de ideas, con ideas sin tienda, Coves que hicieron otros y, al final, Pregunta a otras personas.',

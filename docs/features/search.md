@@ -256,6 +256,9 @@ rather than the shop.
 
 ### The rail folds, and gets out of the way entirely in the by-store view
 
+> Since 2026-09-26 neither view has a rail: the filters sit behind one Filters button in both, as they
+> did in the by-store view below. See [Filters behind a button](#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26).
+
 Brand and shop are up to 15 options each, so the two lists are thirty rows above the switches. Each
 `Facet` is now collapsible, open by default — a filter nobody can see is a filter nobody uses — with
 the count of its active options on the header, so a folded list cannot quietly hold something that is
@@ -474,6 +477,9 @@ was deleted from all four language files with it.
 
 ## The order of the filter rail
 
+> Since 2026-09-26 neither view has a rail: the filters sit behind one Filters button in both, as they
+> did in the by-store view below. See [Filters behind a button](#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26).
+
 *Changed 2026-08-16.* Brand first, then shop, then the two switches — discounted, and in-stock last.
 
 The rail used to open on three switches, with the brand and shop lists below them. On a phone the
@@ -613,6 +619,9 @@ readers. Two indexes were added for the sorts under a market filter, `product_gr
 
 ## Filters are a sheet on a phone (2026-09-06)
 
+> Since 2026-09-26 neither view has a rail: the filters sit behind one Filters button in both, as they
+> did in the by-store view below. See [Filters behind a button](#filters-behind-a-button-coves-above-and-what-others-keep-2026-09-26).
+
 Below `lg` the rail — sort, view, shops, brands, price and the Amazon fallback — was a collapsed
 disclosure that pushed every result down when opened. It is a full-screen sheet now, on the search
 and brand pages both, with "show results" one press away, so the grid stays where it was. The
@@ -685,6 +694,69 @@ tagged with.
 - **Not in the box.** A gift sentence typed into the search box is still read by the intent parser
   and answered by the suggestion engine ([intent-search.md](intent-search.md)); these filters are
   for links.
+
+## Filters behind a button, Coves above, and what others keep (2026-09-26)
+
+The owner's request of 2026-09-26, four parts.
+
+**1. The filters are behind one button, and the results take the whole width.** The grid view had
+a 16rem rail beside the results on a desktop; the by-store view already had its filters behind a
+Filters button with a popover, because lanes cannot give up a column. Both views now work the way the
+by-store one did: a **Filters** button with a count opens a popover on a desktop (floating, so the
+results never move) and a full-screen sheet on a phone ("Show results" closes it; Escape and a press
+outside close the popover). Sort and view are in the same panel. Every filter that is on shows as a
+**chip** above the results, with its own ×: brand, shop, price from and up to, discounted only,
+out of stock too, several shops, and the gift filters (?for=, ?interest=, ?occasion=), which used to
+have their own "Only gifts" row. With two or more, "Clear all filters" follows. The number on the
+button is the number of chips, so a closed panel never hides why a search looks the way it does. The
+by-store view leaves shop chips out of that row: its `ShopChips` row is the same state, drawn as the
+shops. Grid columns: 2, 3 from `sm`, 4 from `lg`, 5 from `xl`. The owner's rule is that content takes
+the full width when nothing belongs in a right column; the rail was that column.
+
+**2. Coves above the products.** `App\Services\Search\CoveMatches` finds the Coves the term matches:
+editorial Coves of every kind (daily, persona, guide, seasonal, advice, shop, brand) and Community
+Coves (published lists), this market only, published only (a Community Cove hidden by an admin is
+out, and one with fewer than three visible things is skipped, as in the Gift Finder). Postgres full
+text in the market's language (`bc_text_config`, the product search's stemming): an editorial Cove's
+title at weight A and blurb at B, ranked by `ts_rank`; a Community Cove by its **public title only**,
+never the list's own title or description, which are private (community-coves.md), most saved first.
+Up to six, with two places kept for Community Coves when there are any, so six editorial matches do
+not hide that people made something too. Each card: the kind ("Buying guide", "Community Cove"), the
+title, and the first pick's picture (a Community Cove's first product picture). One row that scrolls
+sideways when it does not fit, and "All Coves" to `/coves`, the only Cove listing there is (there is
+no Cove search page). Cached per market and term for ten minutes. No index on these columns: a
+market holds hundreds of Coves, so a scan costs milliseconds. Page one only, and not for a gift
+sentence, whose words are a brief rather than a subject. No AI.
+
+**3. What other people keep.** Under each product card, one small line, worded on the server
+because the client's `t()` has no plurals: "Op de lijstjes van 14 mensen · In 3 Coves".
+`ProductSignals::forResults()` answers it for the whole page in **two queries** (people per product,
+Coves per product). Above the results, one line about the term: "Mensen hebben 38 producten met
+"koffie" op hun lijstjes" (`App\Services\Search\SearchSignals`), counted over distinct products and
+distinct people across every product whose words match the term in this market, whatever filters
+are on (the line is about the words, not the filtered page), cached ten minutes per term. The how
+sits behind an info icon.
+- **People, not lists**, as on the product page: one person with three lists is one; an anonymous
+  visitor's list counts; an unaccepted suggestion does not.
+- **A threshold for both**, per card and for the line: `list_signals.min_owners`
+  (`ProductSignals::searchThreshold()`), the setting the owner named. It is 5 unless
+  `GIFT_MIN_OWNERS` lowers it, and production runs it at 1 for now (crowd-picks.md). **Not yet the
+  same as the product page:** its "Saved by N" still reads `product_signals.saved_threshold` (5),
+  so while `GIFT_MIN_OWNERS=1` a product can say "On 2 people's lists" in search and nothing on its
+  own page. Left for the owner to decide whether they should be one setting.
+- **Never claims, never who** (invariant 4). No claim column is read; only counts leave the database.
+- "In N Coves" counts editorial Coves, as the product page does; Community Coves are not in that
+  count yet (they are in the Coves row above).
+
+**4. Amazon in the toolbar.** The hand-off moved from the foot of the rail to the right end of the
+toolbar, as a compact pill: the same server-built, tagged link, `rel="sponsored noopener nofollow"`,
+the storefront's host named. Still only with a term, still not in `en`/`es`, still in the middle of
+the page instead when nothing was found (amazon-search-cta.md). Nothing from Amazon is stored or
+shown as a product (invariant 6).
+
+Tests: `SearchCovesAndSignalsTest` (the Coves row: market, published, matching, public title only,
+page one; the per-card line and the summary: threshold in people, pending suggestions, claims
+changing nothing and never reaching the page; the filter props the button and chips are drawn from).
 
 ## See also
 

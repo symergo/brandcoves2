@@ -94,7 +94,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
 | `Ops/` | config report, market supply |
 | `Pages/` | editable page templates and copy blocks |
-| `Search/` | `SearchService` (687 lines), `SearchQuery`, the gift-intent reading of the search box (`GiftIntentParser`), Amazon links, brand attribution |
+| `Search/` | `SearchService`, `SearchQuery`, the gift-intent reading of the search box (`GiftIntentParser`), Amazon links, brand attribution; the Coves a term matches (`CoveMatches`) and what people keep for it (`SearchSignals`), features/search.md |
 | `Seo/` | meta, OG images, structured data, alternates, legacy redirects |
 | `Settings/` | admin-editable settings backed by the database |
 | `Social/` | friends (`Friends`, `FriendInvites`, `ShareReferral`), sharing a list with a named friend (`ListSharer`), My people (`MyPeople`: saved people and friends on one list); `FollowGraph` is built and unused |

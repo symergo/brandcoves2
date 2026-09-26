@@ -971,3 +971,12 @@ Left alone on purpose:
 - **The registry** ("A registry", "Een geschenkenlijst") is a wish list with an occasion, not a
   kind. In fr and es it was called "liste de cadeaux" / "lista de regalos", which is now the gift
   list's name, so there it became "Une liste pour une occasion" / "Una lista para una ocasión".
+
+## The discussion back beside the items (2026-09-26, later the same day)
+
+The owner reversed one line of "Items first": "put the overleg section next to the list". On your
+own list page the discussion (`ListBoard`) is a sticky right column again from `lg` up, level with
+the add control and the items, exactly as on the shared page; on a phone it follows the items. The
+two columns only appear when there is a discussion to show (`hasBoard`: a board exists and the list
+has a share link); otherwise the items keep the full width, per the owner's layout rule. The rest of
+"Items first" stands.

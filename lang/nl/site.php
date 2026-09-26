@@ -232,6 +232,17 @@ return [
         'hide_shop' => ':shop niet meer tonen',
         'in_stock_only' => 'Alleen op voorraad',
         'discounted_only' => 'Alleen met korting',
+        // De zoekpagina sinds 2026-09-26 (docs/features/search.md): de Coves bij
+        // een zoekterm, wat anderen bewaren, en de filterchips.
+        'coves_heading' => 'Coves hierover',
+        'card_kept' => 'Op het lijstje van :count persoon|Op de lijstjes van :count mensen',
+        'card_in_coves' => 'In :count Cove|In :count Coves',
+        'kept_summary' => 'Mensen hebben :count product met ":term" op hun lijstjes|Mensen hebben :count producten met ":term" op hun lijstjes',
+        'kept_info' => 'Geteld in verschillende mensen, nooit wie, en nooit wat al gekocht is. Alleen getoond als genoeg mensen dit bewaren.',
+        'chip_with_out_of_stock' => 'Ook niet op voorraad',
+        'chip_min' => 'Vanaf :price',
+        'chip_max' => 'Tot :price',
+        'chip_comparable' => 'Bij meerdere winkels',
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'amazon_search' => 'Zoek :term ook op Amazon',
         'previous' => 'Vorige',
@@ -2228,6 +2239,7 @@ return [
         'coves_body4' => 'Klik op Bewaar bij een Cove en kies. Bewaar in Mijn Coves en je vindt hem terug onder Mijn Coves, bij Bewaard; hij verandert mee als wij de Cove bijwerken. Maak er mijn lijst van zet de producten in een eigen lijst, die je zelf kunt aanpassen. Het is dezelfde Bewaar-knop als bij een product.',
         'find_title' => 'Dingen vinden',
         'find_search' => 'Zoek op naam, merk of soort ding, of zeg voor wie het is: "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We kijken in veel winkels tegelijk en vergelijken hun prijzen.',
+        'find_search_results' => 'Op de resultatenpagina staan eerst de Coves over wat je zocht. Filters en sorteren zitten achter de knop Filters, en elk filter dat aan staat zie je als een chip die je weghaalt. Onder een product zie je hoeveel mensen het op een lijstje hebben en in hoeveel Coves het staat: alleen een aantal, nooit wie.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
         'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de knop voor land en taal bovenaan (op een telefoon in het menu) wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
         'find_gift' => 'In Cadeau vinden zeg je eerst voor wie het is: een van je mensen, of wie het is, zoals je partner of een collega. Kies dan hoe je zoekt: beantwoord een paar vragen, kies tussen twee dingen in Dit of dat, of begin bij een type persoon. Elke weg eindigt op dezelfde pagina met ideeën, met daaronder ideeën zonder winkel, Coves die anderen maakten, en onderaan Vraag het aan anderen.',

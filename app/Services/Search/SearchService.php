@@ -86,6 +86,26 @@ class SearchService
             ->all();
     }
 
+    /**
+     * The ids of every product in this market whose words match the term,
+     * whatever the filters: the same full-text and trigram union a search
+     * runs, as a subquery.
+     *
+     * For the line above the results that counts what people keep
+     * (SearchSignals): that line is about the words, not about this
+     * particular filtered page.
+     *
+     * @return Builder<ProductGroup>
+     */
+    public function termMatches(SearchQuery $query): Builder
+    {
+        $groups = ProductGroup::query()->forMarket($query->market)->select('product_groups.id');
+
+        $this->applyTextMatch($groups, $query);
+
+        return $groups;
+    }
+
     /** @return Builder<ProductGroup> */
     private function storedQuery(SearchQuery $query): Builder
     {

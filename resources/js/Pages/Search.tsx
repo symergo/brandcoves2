@@ -6,6 +6,8 @@ import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
+import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
+import InfoTip from '../Components/InfoTip'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
@@ -21,6 +23,18 @@ interface Facets {
     brands: { value: string }[]
     merchants: { id: number; name: string; logo: string | null }[]
     price: { min: number | null; max: number | null }
+}
+
+/** One filter that is on, drawn as a chip above the results. */
+interface FilterChip {
+    key: string
+    /** `merchant` chips are left out of the by-store view, whose shop chips are the same state. */
+    kind: 'brand' | 'merchant' | 'price' | 'switch' | 'tag'
+    label: string
+    /** Removes it through `go()`, keeping everything else. */
+    remove?: () => void
+    /** Or a URL without it, for the gift filters the server words. */
+    href?: string
 }
 
 interface Props {
@@ -75,20 +89,21 @@ interface Props {
     narrative: Narrative | null
     intro: BlockPayload[] | null
     emptyCopy: BlockPayload[] | null
+    /** Coves the term matches, for the row above the products. Empty past page one. See CoveMatches. */
+    coves: SearchCove[]
+    /** Where "All Coves" goes: /{market}/coves. */
+    covesUrl: string
+    /** "People keep 38 products matching …", or null below the privacy threshold. See SearchSignals. */
+    keptSummary: string | null
 }
 
 /**
  * How the results are ordered, and which shape they take.
  *
- * In the rail with the filters rather than above the grid, because all three
- * answer one question - "show me this differently" - and the row above the
- * products was competing with the products for the first line of the page. On a
- * phone that rail is the collapsed panel, so sorting arrives there too, which is
- * where somebody looking for it goes.
- *
- * Rendered in both rails. The grid view and the by-store view each have their
- * own, and a control that existed in only one of them would be a control you
- * lose by using the feature next to it.
+ * In the Filters panel rather than above the grid, because all three answer
+ * one question - "show me this differently" - and a row above the products
+ * competes with the products for the first line of the page. The one panel
+ * serves both views, so switching view never takes the sort away.
  */
 function ResultControls({
     sort,
@@ -167,6 +182,9 @@ export default function Search({
     narrative,
     intro,
     emptyCopy,
+    coves,
+    covesUrl,
+    keptSummary,
 }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -217,26 +235,79 @@ export default function Search({
     }, [])
 
     /*
-     * How many filters are narrowing the results.
-     *
-     * Shown on the collapsed toggle, because a hidden panel must not be able to
-     * conceal the reason a search looks empty. `q`, `view`, `sort` and `page`
-     * are excluded — they are not filters, and counting them would put a badge
-     * on every search anyone ever runs.
-     */
-    /*
      * "Search <term> on Amazon too". The server sends no link at all when the
      * URL carries no term (SearchController), so there is always a term to
      * quote by the time this renders.
      */
     const amazonLabel = t('search.amazon_search', { term: q })
 
-    const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
-        if (['q', 'view', 'sort', 'page'].includes(key)) return false
-        if (Array.isArray(value)) return value.length > 0
+    /*
+     * Every filter that is on, as a chip with its own way off.
+     *
+     * Their number is the count on the Filters button, so a closed panel
+     * cannot hide the reason a search looks empty; `q`, `view`, `sort` and
+     * `page` are not filters and are not counted. Brand and shop come off
+     * through `go()`, which keeps the rest; the gift filters (?for=,
+     * ?interest=, ?occasion=) carry the server's own URL without them.
+     */
+    const brands = ([] as string[]).concat((filters.brand as string[]) ?? [])
+    const shops = ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String)
+    const chips: FilterChip[] = [
+        ...brands.map((brand) => ({
+            key: `brand:${brand}`,
+            kind: 'brand' as const,
+            label: brand,
+            remove: () => go({ brand: brands.filter((b) => b !== brand) }),
+        })),
+        ...shops.map((id) => ({
+            key: `merchant:${id}`,
+            kind: 'merchant' as const,
+            label: facets.merchants.find((m) => String(m.id) === id)?.name ?? t('search.shop'),
+            remove: () => go({ merchant: shops.filter((m) => m !== id) }),
+        })),
+        ...(filters.min
+            ? [{ key: 'min', kind: 'price' as const, label: t('search.chip_min', { price: formatPrice(Math.round(Number(filters.min) * 100), market) }), remove: () => go({ min: null }) }]
+            : []),
+        ...(filters.max
+            ? [{ key: 'max', kind: 'price' as const, label: t('search.chip_max', { price: formatPrice(Math.round(Number(filters.max) * 100), market) }), remove: () => go({ max: null }) }]
+            : []),
+        ...(filters.discounted === '1'
+            ? [{ key: 'discounted', kind: 'switch' as const, label: t('search.discounted_only'), remove: () => go({ discounted: null }) }]
+            : []),
+        ...(filters.in_stock === '0'
+            ? [{ key: 'in_stock', kind: 'switch' as const, label: t('search.chip_with_out_of_stock'), remove: () => go({ in_stock: null }) }]
+            : []),
+        ...(filters.comparable === '1'
+            ? [{ key: 'comparable', kind: 'switch' as const, label: t('search.chip_comparable'), remove: () => go({ comparable: null }) }]
+            : []),
+        ...tagFilters.map((chip) => ({ key: `tag:${chip.without}`, kind: 'tag' as const, label: chip.label, href: chip.without })),
+    ]
 
-        return value !== null && value !== undefined && value !== '' && value !== false
-    }).length
+    /*
+     * The popover closes on Escape anywhere, and on a press outside it on a
+     * desktop. On a phone the sheet covers the page, so there is no outside;
+     * "Show results" closes it.
+     */
+    const panelRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!filtersOpen) return
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setFiltersOpen(false)
+        }
+        const onPress = (e: MouseEvent) => {
+            if (panelRef.current && !panelRef.current.contains(e.target as Node)) setFiltersOpen(false)
+        }
+
+        document.addEventListener('keydown', onKey)
+        document.addEventListener('mousedown', onPress)
+
+        return () => {
+            document.removeEventListener('keydown', onKey)
+            document.removeEventListener('mousedown', onPress)
+        }
+    }, [filtersOpen])
 
     /**
      * Every filter is a link, not a form post.
@@ -441,257 +512,49 @@ export default function Search({
             )}
 
             {/*
-              The by-store view takes the whole width.
-
-              Every other view is a rail plus a grid, and the grid reflows: take
-              16rem off it and the cards get narrower. Lanes do not reflow —
-              they are fixed-width columns that scroll sideways — so the rail
-              costs a whole shop's column, on precisely the view whose entire
-              point is holding several shops side by side. So this view drops
-              the rail and gets its shop filter as a row of chips instead. See
-              ShopChips.
-            */}
-            {/*
-              Before a search, ways in; after one, the grid. The landing has
-              no sidebar and no heading: its sections carry their own.
+              Before a search, ways in; after one, the results. The landing has
+              no filters and no heading: its sections carry their own.
             */}
             {landing ? (
                 <SearchLanding landing={landing} />
             ) : (
-            <div className={`mt-8 grid gap-8 ${view === 'store' ? '' : 'lg:grid-cols-[16rem_1fr]'}`}>
+            <div className="mt-8">
                 {/*
-                  One phone layout for both views (2026-09-14).
+                  The results take the whole width (owner's request,
+                  2026-09-26).
 
-                  The by-store view used to open on a phone with the title
-                  first and a small round "Filters" button beside the shop
-                  chips, opening a popover, while the grid view opened with
-                  the full-width "Filters and sort" bar above the title,
-                  opening a sheet. Same page, two arrangements of the same
-                  two things, and switching views moved them. On a phone the
-                  bar and the sheet serve both views now; the popover is a
-                  desktop idiom (it exists so the lane strip does not move,
-                  and on a phone the sheet covers the strip anyway) and
-                  stays `lg`-only below.
-                */}
-                    <>
-                        {/*
-                          Collapsed on mobile, always open from `lg`.
-
-                          Stacked above the results, the filter rail pushed every
-                          product off a phone screen — the page opened on a column
-                          of switches and you had to scroll past all of them to
-                          see whether the search had found anything.
-                          `activeFilterCount` goes on the button so a collapsed
-                          panel cannot hide that something is filtering.
-                        */}
-                        <button
-                            type="button"
-                            className="flex items-center justify-between rounded border border-line px-4 py-3 text-sm lg:hidden"
-                            aria-expanded={filtersOpen}
-                            aria-controls="search-filters"
-                            onClick={() => setFiltersOpen(!filtersOpen)}
-                        >
-                            <span>
-                                {t('search.filters_and_sort')}
-                                {activeFilterCount > 0 && (
-                                    <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs text-white">
-                                        {n(activeFilterCount)}
-                                    </span>
-                                )}
-                            </span>
-                            <span aria-hidden>{filtersOpen ? '▲' : '▼'}</span>
-                        </button>
-
-                        {/*
-                          A sheet on a phone, a rail on a desktop.
-
-                          Opened in the flow it pushed every result off the
-                          screen, and closed it hid the sort, the shops, the
-                          brands and the Amazon fallback behind one toggle — the
-                          risk docs/TODO.md recorded. As a sheet the grid stays
-                          where it was, and "show results" is one press away.
-                        */}
-                        <aside
-                            id="search-filters"
-                            aria-label={t('search.filters')}
-                            className={`text-sm ${
-                                view === 'store'
-                                    // A sheet on a phone; on a desktop the by-store view has no rail (the shops are the control).
-                                    ? filtersOpen
-                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:hidden'
-                                        : 'hidden'
-                                    : filtersOpen
-                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:block lg:space-y-6 lg:overflow-visible lg:bg-transparent lg:p-0'
-                                        : 'hidden lg:block lg:space-y-6'
-                            }`}
-                        >
-                            <div className="flex items-center justify-between lg:hidden">
-                                <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setFiltersOpen(false)}
-                                    className={buttonClasses('primary', 'sm')}
-                                >
-                                    {t('search.show_results')}
-                                </button>
-                            </div>
-
-                            <ResultControls sort={sort} view={view} go={go} />
-
-                            {/* In the by-store view the chips under the title own the shops. */}
-                            <FilterPanel
-                                facets={facets}
-                                filters={filters}
-                                brandLinks={brandLinks}
-                                go={go}
-                                showShops={view !== 'store'}
-                            />
-
-                            {/*
-                              Separated from the filters by a rule, not just by
-                              space: everything above it changes this page, and
-                              this one leaves it. Two different kinds of control
-                              stacked in one rail need the seam drawn.
-                            */}
-                            {/*
-                              Not on a page with no results — the empty state
-                              carries its own copy of this, in the middle of the
-                              screen where the shopper is already looking. Two
-                              identical accent buttons on one view is one of
-                              them being ignored.
-                            */}
-                            {amazonSearch && results.total > 0 && (
-                                <div className="border-t border-line pt-6">
-                                    <AmazonSearchCta link={amazonSearch} label={amazonLabel} />
-                                </div>
-                            )}
-                        </aside>
-                    </>
-
-                {/*
-                  `min-w-0`, or the whole page scrolls sideways.
-
-                  A grid item's default `min-width: auto` is its content's
-                  intrinsic width, and the lane strip's content is every column
-                  laid end to end. So the track grew to hold all of them, the
-                  strip never became narrower than its contents, and its
-                  `overflow-x-auto` had nothing to scroll — the body did
-                  instead. Measured on a 390px viewport before the fix:
-                  `document.body.scrollWidth` 1204.
+                  The filters used to be a 16rem rail beside the grid on a
+                  desktop, and the by-store view already had them behind a
+                  Filters button because its lanes cannot lose a column. Now
+                  both views work the way the by-store one did: one Filters
+                  button with a count, opening a popover on a desktop and a
+                  sheet on a phone, and every filter that is on shown as a chip
+                  above the results, so a closed panel never hides why a search
+                  looks the way it does. The owner's rule: content takes the
+                  full width when there is nothing for a right column.
                 */}
                 <section className="min-w-0">
                     {/*
                       The heading this template shipped without.
 
-                      Search was the only top-level page with no <h1> — the
-                      highest-volume indexable template on the site, opening at
-                      <h2>, with nothing naming what the page was about. It is
-                      the term itself: a heading over a page of results for
-                      "koptelefoon" has no better thing to say, and dressing it
-                      up as a sentence would only push the first row down.
-
-                      Capitalised because the term arrives as raw user input and
-                      a heading that opens lowercase reads as broken.
+                      Search was the only top-level page with no <h1>, the
+                      highest-volume indexable template on the site. It is the
+                      term itself, capitalised because the term arrives as raw
+                      user input and a heading that opens lowercase reads as
+                      broken.
                     */}
                     <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
                         {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
                     </h1>
 
-                    {/* Watch this search — the intent is expressed here, so the
-                        control is here. Null on the landing, where there is no term. */}
+                    {/* Watch this search. Null on the landing, where there is no term. */}
                     {q && watch && (
                         <div className="mb-4">
                             <WatchSearch term={q} watch={watch} />
                         </div>
                     )}
 
-                    {view === 'store' && (
-                        /*
-                          The shops are the control.
 
-                          A rail of shop checkboxes was answering, in a different
-                          place and a different idiom, exactly the question the
-                          columns beneath it already pose. Here the chip and the
-                          column it governs are the same object, carry the same
-                          mark and sit a few pixels apart — so "drop this shop"
-                          is one click on the thing you want rid of, rather than
-                          a hunt through a list that looks nothing like it.
-
-                          Everything that is not the shop axis — brand, and the
-                          two switches — stays behind the popover on the right,
-                          because none of it belongs to this view in particular.
-                        */
-                        <div className="mb-4 flex flex-wrap items-center gap-2">
-                            <ShopChips
-                                shops={facets.merchants}
-                                selected={([] as string[])
-                                    .concat((filters.merchant as string[]) ?? [])
-                                    .map(String)}
-                                onChange={(next) => go({ merchant: next.length > 0 ? next : null })}
-                            />
-
-                            {/* Desktop only: on a phone the bar above the title opens the sheet instead. */}
-                            <div className="relative ml-auto hidden lg:block">
-                                <button
-                                    type="button"
-                                    className="flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm transition hover:border-ink"
-                                    aria-expanded={filtersOpen}
-                                    aria-controls="search-filters-popover"
-                                    onClick={() => setFiltersOpen(!filtersOpen)}
-                                >
-                                    <span>{t('search.filters')}</span>
-                                    {activeFilterCount > 0 && (
-                                        <span className="rounded-full bg-accent px-1.5 py-0.5 text-xs text-white">
-                                            {n(activeFilterCount)}
-                                        </span>
-                                    )}
-                                    <span aria-hidden className="text-xs text-ink-soft">
-                                        {filtersOpen ? '▲' : '▼'}
-                                    </span>
-                                </button>
-
-                                {/*
-                                  A popover, not a block.
-
-                                  Opened as a block it pushed the whole lane
-                                  strip down the page, so reading a filter cost
-                                  you sight of the thing you were filtering.
-                                  Floating, the columns never move.
-                                */}
-                                <aside
-                                    id="search-filters-popover"
-                                    aria-label={t('search.filters')}
-                                    className={`absolute right-0 top-full z-20 mt-2 w-72 space-y-5 rounded-card border border-line bg-card p-4 text-sm shadow-lg ${filtersOpen ? 'block' : 'hidden'}`}
-                                >
-                                    <ResultControls sort={sort} view={view} go={go} />
-
-                                    <FilterPanel
-                                        facets={facets}
-                                        filters={filters}
-                                        brandLinks={brandLinks}
-                                        go={go}
-                                        showShops={false}
-                                    />
-                                </aside>
-                            </div>
-                        </div>
-                    )}
-
-                    {/*
-                      The vocabulary of the results, above the grid.
-
-                      One row of links where four paragraphs of statistics used
-                      to be. The numbers described the grid directly beneath
-                      them, which is a paragraph nobody reads and most of a phone
-                      screen between a shopper and the first product.
-
-                      The words survived because they are the part that is not a
-                      restatement: they say what kind of thing this page holds,
-                      and each one is a real query. That also makes them the
-                      page's internal links — server-rendered via SSR, so a
-                      crawler receives them as anchors, not as a comma-separated
-                      sentence.
-                    */}
                     {/*
                       An editor's sentence or two, above the products.
 
@@ -702,6 +565,169 @@ export default function Search({
                       Google alike.
                     */}
                     <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
+
+                    {/*
+                      The Coves this term matches, before the products: ours and
+                      the lists people published, as one row of small cards.
+                      Chosen by CoveMatches; page one only.
+                    */}
+                    <SearchCoves coves={coves} allUrl={covesUrl} />
+
+                    {/*
+                      The toolbar: Filters on the left, the Amazon hand-off on
+                      the right.
+
+                      The Amazon link moved here from the foot of the filter
+                      rail when the rail went away. It is still an alternative
+                      to the whole page rather than to any one result, which is
+                      why it sits with the page's controls and not among the
+                      cards, and still not on an empty page, whose own copy of
+                      it sits in the middle of the screen
+                      (docs/features/amazon-search-cta.md).
+                    */}
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <div className="relative" ref={panelRef}>
+                            <button
+                                type="button"
+                                className="flex min-h-10 items-center gap-2 rounded-full border border-line bg-card px-4 py-1.5 text-sm font-medium transition hover:border-ink"
+                                aria-expanded={filtersOpen}
+                                aria-controls="search-filters"
+                                onClick={() => setFiltersOpen(!filtersOpen)}
+                            >
+                                <span>{t('search.filters')}</span>
+                                {chips.length > 0 && (
+                                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-xs text-white">
+                                        {n(chips.length)}
+                                    </span>
+                                )}
+                                <span aria-hidden className="text-xs text-ink-soft">
+                                    {filtersOpen ? '▲' : '▼'}
+                                </span>
+                            </button>
+
+                            {/*
+                              A sheet on a phone, a popover on a desktop.
+
+                              Floating on a desktop so opening it moves nothing:
+                              reading a filter must not cost sight of the
+                              results it filters. On a phone it covers the
+                              screen, and "Show results" is one press away.
+                            */}
+                            <aside
+                                id="search-filters"
+                                aria-label={t('search.filters')}
+                                className={
+                                    filtersOpen
+                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 text-sm lg:absolute lg:top-full lg:right-auto lg:bottom-auto lg:left-0 lg:z-30 lg:mt-2 lg:max-h-[70vh] lg:w-80 lg:space-y-5 lg:rounded-card lg:border lg:border-line lg:bg-card lg:pb-4 lg:shadow-lg'
+                                        : 'hidden'
+                                }
+                            >
+                                <div className="flex items-center justify-between lg:hidden">
+                                    <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFiltersOpen(false)}
+                                        className={buttonClasses('primary', 'sm')}
+                                    >
+                                        {t('search.show_results')}
+                                    </button>
+                                </div>
+
+                                <ResultControls sort={sort} view={view} go={go} />
+
+                                {/* In the by-store view the chips above the lanes own the shops. */}
+                                <FilterPanel
+                                    facets={facets}
+                                    filters={filters}
+                                    brandLinks={brandLinks}
+                                    go={go}
+                                    showShops={view !== 'store'}
+                                />
+                            </aside>
+                        </div>
+
+                        {amazonSearch && results.total > 0 && (
+                            <div className="min-w-0 max-w-full sm:ml-auto">
+                                <AmazonSearchCta link={amazonSearch} label={amazonLabel} compact />
+                            </div>
+                        )}
+                    </div>
+
+                    {/*
+                      Every filter that is on, each with its own way off.
+
+                      The count on the button says that something is filtering;
+                      the chips say what, without opening anything. The by-store
+                      view leaves shops out here: its shop chips below are the
+                      same state, drawn as the shops themselves.
+                    */}
+                    {chips.filter((chip) => view !== 'store' || chip.kind !== 'merchant').length > 0 && (
+                        <ul className="mb-4 flex flex-wrap items-center gap-2" aria-label={t('search.filters')}>
+                            {chips
+                                .filter((chip) => view !== 'store' || chip.kind !== 'merchant')
+                                .map((chip) => (
+                                    <li
+                                        key={chip.key}
+                                        className="inline-flex items-center gap-1 rounded-full border border-line bg-card py-1 pr-1 pl-3 text-sm font-medium"
+                                    >
+                                        {chip.label}
+                                        {chip.href ? (
+                                            <Link
+                                                href={chip.href}
+                                                preserveScroll
+                                                aria-label={t('search.intent_remove', { label: chip.label })}
+                                                title={t('search.intent_remove', { label: chip.label })}
+                                                className="flex h-7 w-7 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
+                                            >
+                                                ×
+                                            </Link>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => chip.remove?.()}
+                                                aria-label={t('search.intent_remove', { label: chip.label })}
+                                                title={t('search.intent_remove', { label: chip.label })}
+                                                className="flex h-7 w-7 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            {chips.length > 1 && (
+                                <li>
+                                    <Link
+                                        href={searchHref(market.key, q)}
+                                        preserveScroll
+                                        className="inline-flex min-h-10 items-center px-2 text-sm text-accent-dark underline hover:text-ink sm:min-h-0"
+                                    >
+                                        {t('search.clear_filters')}
+                                    </Link>
+                                </li>
+                            )}
+                        </ul>
+                    )}
+
+                    {view === 'store' && (
+                        /*
+                          The shops are the control.
+
+                          In the by-store view the chip and the column it
+                          governs are the same object, carry the same mark and
+                          sit a few pixels apart, so "drop this shop" is one
+                          click on the thing you want rid of.
+                        */
+                        <div className="mb-4">
+                            <ShopChips
+                                shops={facets.merchants}
+                                selected={([] as string[])
+                                    .concat((filters.merchant as string[]) ?? [])
+                                    .map(String)}
+                                onChange={(next) => go({ merchant: next.length > 0 ? next : null })}
+                            />
+                        </div>
+                    )}
+
 
                     {/*
                       What is already narrowing this search, and the way off it.
@@ -841,6 +867,22 @@ export default function Search({
 
                     </div>
 
+
+                    {/*
+                      What people keep for this term, in one line: counted over
+                      different products and different people, and sent only
+                      past the privacy threshold (SearchSignals). The how and
+                      the why sit behind the info icon, the site's rule for
+                      explanations.
+                    */}
+                    {keptSummary && (
+                        <p className="mb-4 flex items-center gap-1.5 text-sm text-ink-soft">
+                            <span>{keptSummary}</span>
+                            <InfoTip>{t('search.kept_info')}</InfoTip>
+                        </p>
+                    )}
+
+
                     {/*
                       The reading of a gift search, before its results.
 
@@ -874,18 +916,6 @@ export default function Search({
                             <Link href={intent.asWordsUrl} className="mt-3 inline-block text-sm text-accent-dark underline hover:text-ink">
                                 {t('search.intent_as_words')}
                             </Link>
-                        </div>
-                    )}
-
-                    {/* Gift filters from a link (?for=, ?interest=, ?occasion=), each removable. */}
-                    {tagFilters.length > 0 && (
-                        <div className="mb-6 flex flex-wrap items-center gap-2">
-                            <span className="text-sm text-ink-soft">{t('search.tag_filters_label')}</span>
-                            <ul className="flex flex-wrap items-center gap-2">
-                                {tagFilters.map((chip) => (
-                                    <IntentChip key={chip.without + chip.label} label={chip.label} without={chip.without} removeLabel={t('search.intent_remove', { label: chip.label })} />
-                                ))}
-                            </ul>
                         </div>
                     )}
 
@@ -1120,7 +1150,7 @@ export default function Search({
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                             {results.items.map((g) => (
                                 <ProductCard
                                     key={g.id}
@@ -1182,10 +1212,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 /**
  * Brand, shop and the two switches — whatever this view has not taken over.
  *
- * Extracted so the rail and the by-store popover render the same controls from
- * one definition. `showShops` is false in the store view, where the chip row
- * above the lanes is the shop filter and a second copy in the popover would be
- * two controls for one piece of state.
+ * `showShops` is false in the store view, where the chip row above the lanes
+ * is the shop filter and a second copy in the panel would be two controls for
+ * one piece of state.
  */
 function FilterPanel({
     facets,
