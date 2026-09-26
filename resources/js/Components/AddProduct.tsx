@@ -5,6 +5,7 @@ import type { CurrentMarket } from '../types'
 import { useTranslations } from '../useTranslations'
 import ScanButton from './ScanButton'
 import ToolIcon from './ToolIcon'
+import TheirWishes, { type Wish } from './TheirWishes'
 
 interface GroupHit {
     id: number
@@ -64,6 +65,7 @@ export default function AddProduct({
     defaultOpen = false,
     onListPage = true,
     onClose,
+    theirWishes = null,
 }: {
     base: string
     listId: string
@@ -82,6 +84,12 @@ export default function AddProduct({
     onListPage?: boolean
     /** Told when the panel closes, added or cancelled: a dialog around it closes too. */
     onClose?: () => void
+    /**
+     * On a list about somebody who lets you see a wish list: what is on it,
+     * one tap each (wish-list-for-my-people.md). Shown while nothing has been
+     * searched, since that is when somebody is still deciding what to add.
+     */
+    theirWishes?: { name: string; wishes: Wish[]; onList: Set<number> } | null
 }) {
     const { t } = useTranslations()
 
@@ -551,6 +559,18 @@ export default function AddProduct({
                     )}
 
                     {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+
+                    {theirWishes !== null && !searched && !searching && (
+                        <TheirWishes
+                            base={base}
+                            name={theirWishes.name}
+                            wishes={theirWishes.wishes}
+                            listId={listId}
+                            onList={theirWishes.onList}
+                            market={market}
+                            variant="add"
+                        />
+                    )}
 
                     {/*
                       Always present, never a consolation prize.

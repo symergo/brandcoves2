@@ -57,7 +57,7 @@ class ItemMover
      * time. Two identical hand-written rows are indistinguishable, and refusing
      * the second would silently ignore a deliberate press.
      */
-    public function copy(WishlistItem $item, Wishlist $to): WishlistItem
+    public function copy(WishlistItem $item, Wishlist $to, bool $keepNote = true): WishlistItem
     {
         if ($item->group_id !== null) {
             $existing = $to->allItems()->where('group_id', $item->group_id)->first();
@@ -74,7 +74,9 @@ class ItemMover
             'snapshot_image_url' => $item->snapshot_image_url,
             'snapshot_price' => $item->snapshot_price,
             'snapshot_url' => $item->snapshot_url,
-            'note' => $item->note,
+            // Kept between your own lists; dropped when the row is taken from
+            // somebody else's (ItemTransferController::fromShared).
+            'note' => $keepNote ? $item->note : null,
             'source' => $item->source,
             'external_id' => $item->external_id,
 

@@ -103,6 +103,7 @@ export default function Help({ guides, path }: Props) {
                     title={t('help.share_title')}
                     items={[
                         { icon: 'shared', text: t('help.share_link') },
+                        { icon: 'people', text: t('help.share_people') },
                         { icon: 'suggestions', text: t('help.share_ask') },
                         { icon: 'whisperer', text: t('help.share_like_this') },
                         { icon: 'collab', text: t('help.share_together') },

@@ -16,6 +16,7 @@ import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import OwnItemMenu from '../../Components/OwnItemMenu'
 import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
 import ShareMenu from '../../Components/ShareMenu'
+import TheirWishes, { type Wish } from '../../Components/TheirWishes'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -44,20 +45,8 @@ interface Item {
     reading: boolean
 }
 
-interface Asked {
-    id: number
-    token: string
-    listTitle: string
-    title: string
-    image: string | null
-    price: number | null
-    note: string | null
-    live: boolean
-    url: string | null
-    claimed: boolean
-    claimedByMe: boolean
-    sent: boolean | null
-}
+/** One wish of the person this list is about; see TheirWishes. */
+type Asked = Wish & { url: string | null }
 
 interface Collaborator {
     id: number
@@ -111,6 +100,8 @@ interface Props {
         claimable: boolean
         visibility: string
         shareUrl: string | null
+        /** "Visible to my people"; null where the question does not arise. */
+        visibleToFriends: boolean | null
         recipient: { id: number; name: string } | null
         isDefault: boolean
         handedOver: boolean
@@ -259,6 +250,18 @@ export default function ListShow({
 
     const shared = list.visibility !== 'private'
     const [panel, setPanel] = useState<Panel | null>(null)
+
+    /*
+     * Their wishes, on a list about somebody who lets this giver see a wish
+     * list (wish-list-for-my-people.md). Shown under the items and inside the
+     * add panel, to whoever may add to this list.
+     */
+    const wishes = target !== null && list.kind !== 'mine' && access.canEdit ? asked : []
+    const onList = new Set(items.map((item) => item.groupId).filter((id): id is number => id !== null))
+    const theirWishes =
+        wishes.length > 0 && target !== null
+            ? { name: target.name, wishes, onList }
+            : null
 
 
     const toolProps = {
@@ -437,7 +440,7 @@ export default function ListShow({
                     */}
                     {access.canEdit && (
                         <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
-                            <AddProduct base={base} listId={list.id} market={market} defaultOpen />
+                            <AddProduct base={base} listId={list.id} market={market} defaultOpen theirWishes={theirWishes} />
                         </div>
                     )}
                 </div>
@@ -451,7 +454,7 @@ export default function ListShow({
                     */}
                     {access.canEdit && (
                         <div className="mt-6">
-                            <AddProduct base={base} listId={list.id} market={market} />
+                            <AddProduct base={base} listId={list.id} market={market} theirWishes={theirWishes} />
                         </div>
                     )}
 
@@ -546,6 +549,17 @@ export default function ListShow({
                         ))}
                     </ul>
                 </>
+            )}
+
+            {theirWishes !== null && (
+                <TheirWishes
+                    base={base}
+                    name={theirWishes.name}
+                    wishes={theirWishes.wishes}
+                    listId={list.id}
+                    onList={theirWishes.onList}
+                    market={market}
+                />
             )}
 
             {/*

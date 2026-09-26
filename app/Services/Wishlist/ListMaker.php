@@ -64,7 +64,28 @@ class ListMaker
             'kind' => $kind,
             // Price watching on by default; see ListPriceWatch::DEFAULT_PERCENT.
             'price_watch_percent' => ListPriceWatch::DEFAULT_PERCENT,
+            // A new wish list is visible to your people; see visibleToFriendsByDefault().
+            'visible_to_friends' => self::visibleToFriendsByDefault($owner, $kind),
         ]);
+    }
+
+    /**
+     * Is a list made now visible to the owner's friends from the start?
+     *
+     * Yes for a wish list of your own made by an account (owner's request,
+     * 2026-09-26: "make your wish list available to your circle to be inspired
+     * on what to buy for you"). A wish list exists to be bought from, and the
+     * people most likely to buy from it are the ones you are connected to.
+     * The list page says so in its Share panel, with the names, and one tap
+     * turns it off.
+     *
+     * Never for a list about somebody else or a group list (research about a
+     * third person), and never for an anonymous owner, who has no friends.
+     * Lists that existed before the option keep what they were: false.
+     */
+    public static function visibleToFriendsByDefault(Owner $owner, ListKind $kind): bool
+    {
+        return $kind === ListKind::Mine && $owner->user !== null;
     }
 
     /**

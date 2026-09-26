@@ -107,7 +107,9 @@ class ItemTransferController extends Controller
 
         $source = Wishlist::query()
             ->where('share_token', $token)
-            ->where('visibility', '!=', 'private')
+            // Link holders, and the owner's friends on a wish list shown to
+            // them ("visible to my people"). See Wishlist::scopeReachableBy().
+            ->reachableBy($owner->user)
             ->first();
 
         if ($source === null || $item->wishlist_id !== $source->id) {
@@ -118,7 +120,13 @@ class ItemTransferController extends Controller
 
         $to = $this->destination($validated, $owner, $current);
 
-        $this->mover->copy($item, $to);
+        /*
+         * Without their note. What somebody wrote under an item on their own
+         * list ("size M", "the blue one") is theirs, addressed to the people
+         * reading their list; on the giver's list it would read as the giver's
+         * own words, and it would travel on to whoever the giver shares with.
+         */
+        $this->mover->copy($item, $to, keepNote: false);
 
         return back()->with('success', __('site.lists.copied_to', ['list' => $to->displayTitle()]));
     }

@@ -99,6 +99,45 @@ final readonly class GiftTarget
     }
 
     /**
+     * Their wish lists that this giver may pick from.
+     *
+     * The list about a friend (docs/features/wish-list-for-my-people.md). Not
+     * {@see statedWishes()}, which reads every link-shared wish list of theirs:
+     * being linked to a person is permission to be found, and a wish list
+     * reaches a giver here only by something its owner did for that giver.
+     *
+     * - "Visible to my people" is on and the two are friends; or
+     * - it is shared by link and was shared with this giver by name, or this
+     *   giver opened its link (the two ways it reaches their My people row).
+     *
+     * Their wish lists only, never their research about somebody else. Items
+     * are loaded; claim state on them is for the giver, who is a visitor to
+     * this list, and never reaches its owner (invariant 4).
+     *
+     * @return Collection<int, Wishlist>
+     */
+    public function wishesSeenBy(?User $viewer): Collection
+    {
+        if ($this->person === null || $viewer === null || $viewer->id === $this->person->id) {
+            return new Collection;
+        }
+
+        return Wishlist::query()
+            ->where('owner_user_id', $this->person->id)
+            ->where('kind', ListKind::Mine->value)
+            ->where(fn ($either) => $either
+                ->where(fn ($shown) => $shown->visibleToFriend($viewer))
+                ->orWhere(fn ($given) => $given
+                    ->where('visibility', '!=', ListVisibility::Private->value)
+                    ->where(fn ($q) => $q
+                        ->whereHas('shares', fn ($share) => $share->where('user_id', $viewer->id))
+                        ->orWhereHas('opens', fn ($open) => $open->where('user_id', $viewer->id)))))
+            ->with(['items.group'])
+            ->latest('updated_at')
+            ->get();
+    }
+
+    /**
      * The brief to rank suggestions against.
      *
      * Null when nobody has described them: the engine falls back to a budget

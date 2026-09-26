@@ -101,6 +101,12 @@ class DefaultList
              * it had just made got a null dereference on the first ever visit.
              */
             'visibility' => ListVisibility::Private,
+            /*
+             * Visible to your people, but no link: private to everybody else.
+             * Only for a default list made from now on; one adopted above
+             * keeps whatever its owner had. See ListMaker::visibleToFriendsByDefault().
+             */
+            'visible_to_friends' => ListMaker::visibleToFriendsByDefault($owner, ListKind::Mine),
         ]);
     }
 }

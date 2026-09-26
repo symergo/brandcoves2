@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListKind;
-use App\Enums\ListVisibility;
 use App\Models\ListOpen;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
@@ -55,8 +54,8 @@ class SharedListController extends Controller
         Friends $friends,
         ShareReferral $referral,
     ): Response {
-        $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
+        $list = $this->findShared($token, $owner);
 
         /*
          * Two questions, and they used to be one variable.
@@ -87,7 +86,20 @@ class SharedListController extends Controller
          * most readers never do.
          */
         if (! $isOwner) {
-            ListOpen::record($list, $owner);
+            /*
+             * Not for a friend reaching a wish list the owner shows to their
+             * people. That list is already on the friend's My people row for as
+             * long as the owner keeps it there, and a bookmark would outlive the
+             * owner switching it off: the list would stay under the friend's
+             * lists after the owner had taken it away from them.
+             */
+            $throughPeople = $owner->user !== null
+                && $list->isVisibleToFriends()
+                && Wishlist::query()->whereKey($list->id)->visibleToFriend($owner->user)->exists();
+
+            if (! $throughPeople) {
+                ListOpen::record($list, $owner);
+            }
 
             /*
              * And remember who sent it, so the two people know each other after.
@@ -126,10 +138,11 @@ class SharedListController extends Controller
 
         /*
          * Claiming needs a kind that allows it AND somebody to coordinate with.
-         * The second half is free here — `findShared()` excludes private lists,
-         * so anything reachable through this route is shared by definition —
-         * but it is asked through the model so this page and the owner's page
-         * cannot disagree about it.
+         * The second half is free here — `findShared()` reaches only a list
+         * that is link-shared or shown to the owner's people, so anything
+         * reachable through this route has somebody besides its owner — but it
+         * is asked through the model so this page and the owner's page cannot
+         * disagree about it.
          */
         $claimable = $list->allowsClaiming();
 
@@ -620,8 +633,8 @@ class SharedListController extends Controller
 
     public function claim(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
     {
-        $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
+        $list = $this->findShared($token, $owner);
 
         /*
          * Claiming needs an account, and this is the one guard that says so.
@@ -729,7 +742,7 @@ class SharedListController extends Controller
      */
     public function unclaim(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
     {
-        $list = $this->findShared($token);
+        $list = $this->findShared($token, Owner::fromRequest($request));
         $identity = Owner::fromRequest($request)->claimIdentity();
         abort_if($identity === null, 403);
 
@@ -769,8 +782,8 @@ class SharedListController extends Controller
      */
     public function markSent(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
     {
-        $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
+        $list = $this->findShared($token, $owner);
         $identity = $owner->claimIdentity();
 
         abort_if($identity === null, 403);
@@ -818,14 +831,19 @@ class SharedListController extends Controller
         );
     }
 
-    private function findShared(string $token): Wishlist
+    private function findShared(string $token, Owner $viewer): Wishlist
     {
         $list = Wishlist::query()
             ->with(['recipient', 'owner'])
             ->where('share_token', $token)
-            // A private list is not reachable by token even if the token leaks:
-            // turning sharing off has to actually turn it off.
-            ->where('visibility', '!=', ListVisibility::Private->value)
+            /*
+             * A private list is not reachable by token even if the token leaks:
+             * turning sharing off has to actually turn it off. The one
+             * exception is the owner's own friends while the wish list is
+             * "visible to my people", and it ends the moment that is switched
+             * off or the friendship is removed. See Wishlist::scopeReachableBy().
+             */
+            ->reachableBy($viewer->user)
             ->first();
 
         if ($list === null) {
