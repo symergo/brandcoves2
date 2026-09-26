@@ -2,6 +2,11 @@
 
 Strategy: [docs/strategy.md](../../docs/strategy.md), section 6. Written 2026-09-26.
 
+**Status 2026-09-26: built** ([docs/features/homepage.md](../../docs/features/homepage.md)).
+Changes from the design below: the search card left the page too (the header searches everywhere);
+the Coves band is the existing random shelf as six cards rather than themed picks; Help moved to
+the footer; the illustration is `SharedCoveIllustration` ("A2, round 3"), approved by the owner.
+
 ## Goal
 
 The homepage answers three questions (what is this, why should I care, what can I do now) and gets

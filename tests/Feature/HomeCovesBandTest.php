@@ -84,7 +84,7 @@ class HomeCovesBandTest extends TestCase
     {
         // Drawn at random, but not per request: a visitor who reloads sees
         // the same shelf, and the page does not pay for ORDER BY random() on
-        // every hit. Twelve rows and ten slots, so two draws would almost
+        // every hit. Twelve rows and six slots, so two draws would almost
         // certainly differ.
         foreach (range(1, 12) as $i) {
             $this->cove(CoveKind::Advice, "advies-{$i}", $i);
@@ -98,7 +98,7 @@ class HomeCovesBandTest extends TestCase
         $this->travel(61)->minutes();
 
         $later = $this->band();
-        $this->assertCount(10, $later);
+        $this->assertCount(6, $later);
         // The new Cove is now eligible; the shelf was redrawn from thirteen.
         $this->assertNotSame($first, $later);
     }

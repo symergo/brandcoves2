@@ -9,10 +9,7 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
-use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
-use App\Support\Owner;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,15 +17,16 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     /**
-     * Rows in the Coves shelf. Ten is a band; more is a page, and the archive
-     * is one link away.
+     * Cards in the Coves band. Six fills two rows of three on a desktop and
+     * three of two on a phone; more is a page, and the archive is one link
+     * away. Was ten rows until the 2026-09-26 redesign turned them into cards.
      */
-    private const COVES_SHOWN = 10;
+    private const COVES_SHOWN = 6;
 
     /** How long one draw of the shelf is kept, per market. Seconds. */
     private const COVES_TTL = 3600;
 
-    public function __invoke(Request $request, CurrentMarket $current, WizardOffer $offer): Response
+    public function __invoke(CurrentMarket $current): Response
     {
         /*
          * No catalogue counters.
@@ -49,8 +47,6 @@ class HomeController extends Controller
             canonical: url($current->url()),
         );
 
-        $owner = Owner::fromRequest($request);
-
         return Inertia::render('Home', [
             /*
              * Today's Cove, on the front page.
@@ -63,13 +59,10 @@ class HomeController extends Controller
             'today' => $this->today($current),
 
             /*
-             * The list wizard, on the front page (owner's call, 2026-09-13),
-             * where the Organise band and its counts were. Same shape My
-             * Lists and the Gift Cove send, from the same service, so the
-             * three pages mount one wizard.
+             * No list wizard since the 2026-09-26 redesign. It was mounted here
+             * on 2026-09-13; the new page asks one thing (Create a Cove) and
+             * the wizard is where that button leads, on My Coves.
              */
-            'signedIn' => $owner->isSignedIn(),
-            ...$offer->for($owner, $request->user(), $current->get()),
 
             // The evergreen half. Coves earn their traffic over years, so the
             // front page is where a first-time visitor discovers the archive

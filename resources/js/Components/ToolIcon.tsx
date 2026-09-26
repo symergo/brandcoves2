@@ -27,6 +27,10 @@ export type ToolKey =
     | 'info'
     | 'settings'
     | 'trash'
+    | 'link'
+    | 'barcode'
+    | 'picture'
+    | 'people'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -292,6 +296,38 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <path d="M4 5.5h10v7H8l-3 2.5v-2.5H4z" />
             <path d="M14 9.5h6v6h-1v2.5l-3-2.5h-2v-2" />
+        </>
+    ),
+
+    /*
+     * The ways something gets onto GiftCoves, beside `search`: paste a link,
+     * scan a barcode, add a picture. With `people` for sharing they make the
+     * homepage's "Search anything · Add anything · Share anything" line
+     * (owner-approved 2026-09-26; see docs/features/homepage.md).
+     */
+    link: (
+        <>
+            <rect x="2.5" y="8" width="11" height="8" rx="4" />
+            <rect x="10.5" y="8" width="11" height="8" rx="4" />
+        </>
+    ),
+
+    barcode: <path d="M4 5v14M7.5 5v14M10 5v14M13.5 5v14M16.5 5v14M19 5v14" />,
+
+    picture: (
+        <>
+            <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+            <path d="m3 17 5-5 4 4 3-3 6 6" />
+            <circle cx="16" cy="9" r="1.6" />
+        </>
+    ),
+
+    people: (
+        <>
+            <circle cx="8.5" cy="8" r="3" />
+            <path d="M3 19a5.5 5.5 0 0 1 11 0" />
+            <circle cx="16.5" cy="9" r="2.5" />
+            <path d="M15.5 14a5 5 0 0 1 6 5" />
         </>
     ),
 

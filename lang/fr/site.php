@@ -16,7 +16,7 @@ return [
         'daily' => 'Cove Quotidienne',
         'guides' => "Guides d'achat",
         'surprise' => 'Cove Surprise',
-        'lists' => 'Mes listes de souhaits',
+        'lists' => 'Mes Coves',
         'shared_lists' => 'Pour les autres',
         'group_lists' => 'Listes de groupe',
         'notifications' => 'Notifications',
@@ -82,6 +82,10 @@ return [
         // langues, comme GiftCoves lui-même. Un nom traduit est un second nom.
         'cove' => 'Gift Cove',
         'discover_cove' => 'Discover Cove',
+        'discover' => 'Découvrir',
+        'coves' => 'Coves',
+        'gifts' => 'Cadeaux',
+        'how_it_works' => 'Comment ça marche',
     ],
 
     'market_prompt' => [
@@ -90,18 +94,42 @@ return [
 
     'home' => [
         // Voir l'explication de ces clés dans lang/en/site.php.
-        'seo_description' => "Cherchez sur bol, Amazon et des centaines de boutiques à la fois. Gardez vos listes d'envies, partagez-les, cotisez à plusieurs et organisez un Ami Secret.",
+        'seo_description' => "Une liste d'envies avec tout, de n'importe quelle boutique : partagez-la et trouvez des cadeaux pour chacun. Prix comparés dans des centaines de boutiques.",
         'title' => "GiftCoves : listes d'envies, offrir et recevoir au meilleur prix",
-        'headline_1' => 'Offrez mieux.',
-        'headline_2' => 'Recevez ce que vous voulez vraiment.',
-        // The pitch under the headline and the two buttons. Owner's words,
-        // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne ou en magasin. Partagez-la avec les personnes qui vous offrent des cadeaux.',
-        'cta_wishlist' => 'Créer ma liste d’envies',
+        'hero_title' => 'Trouvez ce qui vaut la peine d’être offert, reçu et partagé.',
+        'hero_intro' => 'GiftCoves est un espace ouvert pour découvrir des produits de boutiques, de marques et de créateurs indépendants, et les garder dans des Coves à conserver, partager ou offrir.',
+        'cta_create' => 'Créer une Cove',
+        'cta_explore' => 'Explorer les Coves',
+        'way_search' => 'Cherchez tout',
+        'way_add' => 'Ajoutez tout',
+        'way_share' => 'Partagez tout',
+        'entries_label' => 'Trois façons de commencer',
+        'entry_gift_title' => 'Vous cherchez un cadeau ?',
+        'entry_gift_body' => 'Dites-nous pour qui, ce que la personne aime et votre budget.',
+        'entry_gift_cta' => 'Trouver un cadeau',
+        'entry_list_title' => 'Vous faites une liste d’envies ?',
+        'entry_list_body' => 'Gardez des choses trouvées partout, réunies dans une seule Cove.',
+        'entry_list_cta' => 'Créer ma Cove',
+        'entry_browse_title' => 'Vous flânez ?',
+        'entry_browse_body' => 'Explorez des Coves pleines d’idées, des guides cadeaux aux thèmes.',
+        'entry_browse_cta' => 'Explorer',
+        'open_title' => 'De partout.',
+        'open_intro' => 'GiftCoves ne se limite pas aux boutiques avec lesquelles nous travaillons.',
+        'open_link' => 'Trouvé quelque chose sur votre site préféré ? Collez le lien.',
+        'open_scan' => 'Vu quelque chose en magasin ? Scannez-le.',
+        'open_search' => 'Vous connaissez le produit ? Cherchez-le.',
+        'open_sources' => 'Grandes boutiques en ligne · Créateurs indépendants · Le magasin du coin',
+        'open_cta' => 'Ajouter quelque chose à GiftCoves',
+        'daily_title' => 'Quelque chose d’intéressant chaque jour : une nouvelle Cove de produits et d’idées.',
+        'trust_title' => 'Ouvert. Utile. Transparent.',
+        'trust_sources' => 'Les produits viennent de boutiques, de marques, de créateurs indépendants et des personnes qui utilisent GiftCoves.',
+        'trust_commission' => 'Certains liens rapportent une commission à GiftCoves. Cela ne change rien à ce que vous payez.',
+        'trust_link' => 'Comment fonctionne GiftCoves',
+        'final_title' => 'Commencez votre première Cove.',
+        'final_body' => 'Ajoutez quelque chose que vous voulez, que vous cherchez, ou qui mérite d’être partagé.',
         'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'search_placeholder_plain' => 'Cherchez un cadeau',
         'recently_viewed' => 'Vous avez regardé',
-        'cta_gift' => 'Trouver un cadeau',
         'today_badge' => 'La Cove du jour',
         'today_cta' => 'Voir les trouvailles du jour',
         /*
@@ -110,7 +138,7 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'Plus de Coves',
+        'coves_heading' => 'Des Coves à explorer',
         'coves_intro' => "Des dossiers autour d'un thème, où chaque marque et chaque produit renvoie vers une recherche en direct.",
         'coves_all' => 'Toutes les Coves',
         // The shape a Cove takes, named on the front page's Coves band.

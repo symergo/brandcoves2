@@ -2,6 +2,28 @@
 
 The site shell: what the header offers, and the two things it did not.
 
+## The header since 2026-09-26: Discover | Coves | Gifts | How it works
+
+The owner's call, with the repositioning ([../strategy.md](../strategy.md), section 6): the header
+stops presenting a dozen features as equal top-level ideas. Everything that was there still is,
+grouped under what it is (`Layouts/SiteLayout.tsx`, `sections` and `nav`):
+
+| Entry | Hub | Under it |
+|---|---|---|
+| **Discover** | `/discover-cove` | Search offers, Surprise Cove, Ask others |
+| **Coves** | `/coves` | Daily Cove, Shop Smarter, All Coves |
+| **Gifts** | `/gift` | Gift Finder, Gift Coves |
+| **How it works** | `/gift-cove/how-it-works` | (a plain link) |
+
+On the right, **My Coves** (`/lists`, `nav.lists`, the same words in all four languages by the
+owner's decision): the visitor's own lists, with Secret Friend, group lists and occasions inside it
+as before. **Help** left the header for the footer, which links it on every page. "Make a list"
+went: My Coves and the homepage's Create a Cove do that job, and its hub `/gift-cove` still
+exists. Brand and Shop Coves stay withheld from the menu, as before.
+
+The phone panel builds from the same `sections`, so it changed with the desktop header. Most of the
+dated sections below describe the header before this change.
+
 ## You could not sign out
 
 `POST /{market}/logout` has existed since magic links went in. Nothing on the site ever linked to

@@ -22,7 +22,7 @@ return [
         'daily' => 'Daily Cove',
         'guides' => 'Guides',
         'surprise' => 'Surprise Cove',
-        'lists' => 'My wish lists',
+        'lists' => 'My Coves',
         'shared_lists' => 'For others',
         'group_lists' => 'Group Lists',
         'notifications' => 'Notifications',
@@ -107,6 +107,11 @@ return [
         // exactly like GiftCoves itself. A translated name is a second name.
         'cove' => 'Gift Cove',
         'discover_cove' => 'Discover Cove',
+        // The header since 2026-09-26: Discover | Coves | Gifts | How it works.
+        'discover' => 'Discover',
+        'coves' => 'Coves',
+        'gifts' => 'Gifts',
+        'how_it_works' => 'How it works',
     ],
 
     'market_prompt' => [
@@ -127,14 +132,47 @@ return [
          * title template in app.tsx skips its own suffix when the name is
          * already there.
          */
-        'seo_description' => 'Search bol, Amazon and hundreds of shops at once. Keep wish lists, share them, club together on one gift, and run a Secret Friend.',
+        'seo_description' => 'Keep a wish list of anything from any shop, share it, and find gifts for anyone. Prices compared across hundreds of shops.',
         'title' => 'GiftCoves wish lists: give and get gifts at the best price',
-        'headline_1' => 'Give better.',
-        'headline_2' => 'Get what you actually want.',
-        // The pitch under the headline and the two buttons. Owner's words,
-        // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Create a wishlist from anything you find online or offline. Share it with the people who buy gifts for you.',
-        'cta_wishlist' => 'Create my wishlist',
+        /*
+         * The homepage since 2026-09-26, in the owner's structure and words
+         * (docs/strategy.md, section 6). Two places deliberately say less
+         * than the owner's draft until the thing exists: `entry_browse_body`
+         * and `coves_heading` do not promise other people's Coves, because
+         * there are none to show until public lists ship (roadmap step 6).
+         */
+        'hero_title' => 'Find things worth giving, getting and sharing.',
+        'hero_intro' => 'GiftCoves is an open place to discover products from shops, brands and independent sellers, and save them in Coves you can keep, share or give.',
+        'cta_create' => 'Create a Cove',
+        'cta_explore' => 'Explore Coves',
+        'way_search' => 'Search anything',
+        'way_add' => 'Add anything',
+        'way_share' => 'Share anything',
+        'entries_label' => 'Three ways to start',
+        'entry_gift_title' => 'Looking for a gift?',
+        'entry_gift_body' => 'Tell us who you are buying for, what they like and your budget.',
+        'entry_gift_cta' => 'Find a gift',
+        'entry_list_title' => 'Building a wish list?',
+        'entry_list_body' => 'Save things from anywhere and keep them in one Cove.',
+        'entry_list_cta' => 'Create my Cove',
+        'entry_browse_title' => 'Just browsing?',
+        'entry_browse_body' => 'Explore Coves full of ideas, from gift guides to themed collections.',
+        'entry_browse_cta' => 'Explore',
+        'open_title' => 'From anywhere.',
+        'open_intro' => "GiftCoves isn't limited to the shops we work with.",
+        'open_link' => 'Found something on your favourite website? Paste the link.',
+        'open_scan' => 'See something in a shop? Scan it.',
+        'open_search' => 'Know the product? Search it.',
+        // Generic on purpose: never other companies' names (owner, 2026-09-26).
+        'open_sources' => 'Big online shops · Independent makers · The shop round the corner',
+        'open_cta' => 'Add something to GiftCoves',
+        'daily_title' => 'Something interesting every day: a new Cove of products and ideas.',
+        'trust_title' => 'Open. Useful. Transparent.',
+        'trust_sources' => 'Products come from retailers, brands, independent sellers and the people who use GiftCoves.',
+        'trust_commission' => "Some links earn GiftCoves a commission. That doesn't change what you pay.",
+        'trust_link' => 'How GiftCoves works',
+        'final_title' => 'Start your first Cove.',
+        'final_body' => 'Add something you want, something you are looking for, or something worth sharing.',
         // Names the second way in, not a third example. The examples this
         // used to carry ("Headphones, a coffee grinder, a brand name…") taught
         // the syntax of a field nobody struggles with; the camera beside it is
@@ -145,7 +183,6 @@ return [
         'search_placeholder' => 'Search for a gift or scan a barcode',
         'search_placeholder_plain' => 'Search for a gift',
         'recently_viewed' => 'You looked at',
-        'cta_gift' => 'Find a gift',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",
         /*
@@ -154,7 +191,7 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'More Coves',
+        'coves_heading' => 'Coves worth exploring',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
         // The shape a Cove takes, named on the front page's Coves band.

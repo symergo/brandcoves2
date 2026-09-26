@@ -7,9 +7,57 @@ date_added: 2026-08-10
 
 # The homepage
 
-Seven bands, in this order (2026-09-13): the pitch, the search card, the list wizard, Today's Cove,
-the Cove signup, what you looked at, and More Coves. The sections below are a dated log; those
-marked superseded describe bands that are gone.
+**Since 2026-09-26: seven sections in the owner's order** (the repositioning in
+[../strategy.md](../strategy.md), section 6): the hero, three ways in, "From anywhere", Coves,
+Daily, trust, and "Start your first Cove". The sections below that are a dated log; everything
+before 2026-09-26 describes a page that has since been replaced.
+
+## The page answers three questions (2026-09-26)
+
+What is this, why should I care, what can I do now. Nothing else. The owner's structure, top to
+bottom (`Pages/Home.tsx`):
+
+1. **Hero.** "Find things worth giving, getting and sharing." across the full width; under it the
+   pitch with **Create a Cove** and **Explore Coves** beside the drawing; across the full width
+   underneath, *Search anything · Add anything · Share anything*, each with the icons of the ways
+   it is done (search; link, barcode, picture; people).
+2. **Three ways in**, one per audience: a gift (Gift Whisperer), a wish list (Create my Cove),
+   browsing (`/coves`).
+3. **From anywhere.** Paste a link, scan it, search it; the sources named generically ("Big online
+   shops · Independent makers · The shop round the corner"), never other companies' names
+   (owner's decision: Amazon's terms restrict the use of its name and marks).
+4. **Coves**: six cards, drawn at random from published non-daily Coves and held for an hour per
+   market (the same shelf as before, as cards rather than ten rows).
+5. **Daily**: today's Cove and the signup, as before, moved down: the owner put it after the
+   Coves on purpose.
+6. **Trust, short**: where products come from, and that a commission never changes the price.
+7. **Start your first Cove**, the page's first question asked again at the end.
+
+**Create a Cove works without an account** (owner's decision, 2026-09-26): it opens
+`/lists?new=mine`, which an anonymous visitor can use; asking for an account first would put a form
+on the first step of the growth loop. `HomePageTest` holds that.
+
+**What left the page, and why.** The list wizard: it is where "Create a Cove" leads, so the page
+stopped repeating the next page (and the controller stopped building its props). The search card:
+the header searches on every page and the hero names it. Recently viewed: a convenience for a
+returning visitor, not an answer to the three questions.
+
+**Two places say less than the owner's draft, on purpose, until the thing exists.** The browsing
+card and the Coves heading do not promise "Coves created by the community" or "what other people
+are collecting": there are no public lists yet (roadmap step 6). The copy switches to the owner's
+wording when there are.
+
+### The drawing
+
+`Components/SharedCoveIllustration.tsx`, chosen by the owner from five sketches on 2026-09-26 (the
+approval page: https://claude.ai/artifact/LAztQwdixhgaG8qLbBxSuK). A web shop, something handmade
+and the shop round the corner drift into one cove, become a gift, and go out the back to two
+people: from anywhere, into a Cove, to the people who matter. Same language as every drawing on
+the site (one stroke, `currentColor`, the accent only as a wash, the logo's orange buoy in the
+cove's mouth). `HomeIllustration` is no longer used on this page.
+
+The icons in the hero's bottom line are `ToolIcon` glyphs added for it: `link`, `barcode`,
+`picture`, `people`.
 
 ## The pitch says who it is for, and that includes you
 

@@ -16,7 +16,7 @@ return [
         'daily' => 'Cove van de dag',
         'guides' => 'Koopgidsen',
         'surprise' => 'Verrassingscove',
-        'lists' => 'Mijn verlanglijsten',
+        'lists' => 'Mijn Coves',
         'shared_lists' => 'Voor anderen',
         'group_lists' => 'Groepslijsten',
         'notifications' => 'Meldingen',
@@ -81,6 +81,10 @@ return [
         // GiftCoves zelf. Een vertaalde naam is een tweede naam.
         'cove' => 'Gift Cove',
         'discover_cove' => 'Discover Cove',
+        'discover' => 'Ontdek',
+        'coves' => 'Coves',
+        'gifts' => 'Cadeaus',
+        'how_it_works' => 'Hoe het werkt',
     ],
 
     'market_prompt' => [
@@ -89,18 +93,42 @@ return [
 
     'home' => [
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
-        'seo_description' => 'Doorzoek bol, Amazon en honderden winkels tegelijk. Hou verlanglijsten bij, deel ze, leg samen in voor één cadeau en organiseer een Geheime Vriend.',
+        'seo_description' => 'Maak een verlanglijst van alles uit elke winkel, deel hem en vind cadeaus voor iedereen. Prijzen vergeleken over honderden winkels.',
         'title' => 'GiftCoves verlanglijsten: cadeaus geven en ontvangen aan de beste prijs',
-        'headline_1' => 'Geef beter.',
-        'headline_2' => 'Krijg wat je écht wilt.',
-        // The pitch under the headline and the two buttons. Owner's words,
-        // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Maak een verlanglijst van alles wat je online én offline vindt. Deel hem met de mensen die cadeaus voor je kopen.',
-        'cta_wishlist' => 'Maak mijn verlanglijst',
+        'hero_title' => 'Vind dingen die het geven, krijgen en delen waard zijn.',
+        'hero_intro' => 'GiftCoves is een open plek om producten te ontdekken van winkels, merken en zelfstandige makers, en ze te bewaren in Coves die je kunt houden, delen of geven.',
+        'cta_create' => 'Maak een Cove',
+        'cta_explore' => 'Ontdek Coves',
+        'way_search' => 'Zoek alles',
+        'way_add' => 'Voeg alles toe',
+        'way_share' => 'Deel alles',
+        'entries_label' => 'Drie manieren om te beginnen',
+        'entry_gift_title' => 'Op zoek naar een cadeau?',
+        'entry_gift_body' => 'Vertel ons voor wie je koopt, wat die persoon leuk vindt en wat je wilt uitgeven.',
+        'entry_gift_cta' => 'Vind een cadeau',
+        'entry_list_title' => 'Een verlanglijst maken?',
+        'entry_list_body' => 'Bewaar dingen van overal en hou ze bij in één Cove.',
+        'entry_list_cta' => 'Maak mijn Cove',
+        'entry_browse_title' => 'Gewoon rondkijken?',
+        'entry_browse_body' => 'Ontdek Coves vol ideeën, van cadeaugidsen tot thema\'s.',
+        'entry_browse_cta' => 'Ontdek',
+        'open_title' => 'Van overal.',
+        'open_intro' => 'GiftCoves is niet beperkt tot de winkels waarmee we samenwerken.',
+        'open_link' => 'Iets gevonden op je favoriete website? Plak de link.',
+        'open_scan' => 'Iets gezien in een winkel? Scan het.',
+        'open_search' => 'Weet je welk product? Zoek het.',
+        'open_sources' => 'Grote webwinkels · Zelfstandige makers · De winkel om de hoek',
+        'open_cta' => 'Voeg iets toe aan GiftCoves',
+        'daily_title' => 'Elke dag iets interessants: een nieuwe Cove vol producten en ideeën.',
+        'trust_title' => 'Open. Nuttig. Transparant.',
+        'trust_sources' => 'Producten komen van winkels, merken, zelfstandige makers en de mensen die GiftCoves gebruiken.',
+        'trust_commission' => 'Sommige links leveren GiftCoves een commissie op. Dat verandert niets aan wat jij betaalt.',
+        'trust_link' => 'Hoe GiftCoves werkt',
+        'final_title' => 'Begin je eerste Cove.',
+        'final_body' => 'Zet er iets op dat je wilt, iets waar je naar zoekt, of iets dat het delen waard is.',
         'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'search_placeholder_plain' => 'Zoek een cadeau',
         'recently_viewed' => 'Je bekeek',
-        'cta_gift' => 'Vind een cadeau',
         'today_badge' => 'Cove van vandaag',
         'today_cta' => 'Bekijk de vondsten van vandaag',
         /*
@@ -109,7 +137,7 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'Meer Coves',
+        'coves_heading' => 'Coves om te ontdekken',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
         'coves_all' => 'Alle Coves',
         // The shape a Cove takes, named on the front page's Coves band.

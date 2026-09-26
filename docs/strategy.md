@@ -409,7 +409,8 @@ Order agreed with the owner on 2026-09-26.
 
 1. **Anything goes in.** Built 2026-09-26 ([pasted-links.md](features/pasted-links.md)); pasted
    pages becoming catalogue offers waits for step 5.
-2. **Front page and navigation.** Section 6: the new homepage and the four-item header.
+2. **Front page and navigation.** Built 2026-09-26 ([homepage.md](features/homepage.md),
+   [navigation.md](features/navigation.md)): the new homepage and the four-item header.
 3. **Product pages.** Section 4: price range, saved by, found in, related.
 4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
    gift pages and Coves, the intent a list passes on to its products, and a person's own list as

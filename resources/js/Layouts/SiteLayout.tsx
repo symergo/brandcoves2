@@ -144,106 +144,32 @@ function Chrome({ children }: PropsWithChildren) {
      * the header was the last surface still calling them something else.
      */
     /*
-     * Three verbs, two of which open.
+     * Four entries: Discover | Coves | Gifts | How it works (owner's call,
+     * 2026-09-26; docs/strategy.md, section 6). The visitor's own lists sit
+     * on the right as My Coves.
      *
-     * Five flat entries described five surfaces and left nine gifting tools and
-     * the whole discovery half reachable only from inside a page you had to know
-     * to open. Grouping under what you came to *do* — organise, discover,
-     * search — means the header describes intents rather than URLs, and the
-     * dropdowns are where the surfaces live.
+     * Before this the header had "Make a list" and "Find a gift" with eight
+     * surfaces under the second, so Daily Cove, Surprise, Shop Smarter, Ask
+     * others and the rest all read as equal top-level ideas. They are grouped
+     * under what they are now: ways to discover, kinds of Cove, ways to find a
+     * gift. Secret Friend, group lists and occasions live inside My Coves.
+     * Help moved to the footer, where every page already links it.
      *
-     * Each verb still points at a hub that explains its section, so the label is
-     * a real destination and not just a menu handle. See NavMenu for why the
-     * chevron is a separate control.
-     *
-     * Scan is deliberately absent, unchanged: it is a way of *entering a query*,
-     * not a section, and the scan button in the search field already opens it.
+     * Each entry still points at a hub page, so the label is a destination and
+     * not just a menu handle. See NavMenu for why the chevron is a separate
+     * control. Scan stays absent: it is a way of entering a query, and the
+     * scan button in the search field opens it.
      */
-    const organise = {
-        href: `${base}/gift-cove`,
-        /*
-         * "Make a list", not "Organise" (changed 2026-09-12). The verb named
-         * the section and told a newcomer nothing about what to press; the
-         * hub it opens starts with the list wizard, so the label now names
-         * the thing you do there. The home page keeps `nav.organise` as the
-         * heading of its band, where a "Make a new list" button already sits
-         * under it and a heading saying the same thing would be the button
-         * twice.
-         */
-        label: t('nav.make_list'),
-        // The wish list mark, which is what the entry makes. Added 2026-09-12
-        // with Discover's compass, at the owner's request.
-        icon: <ToolIcon name="wishlist" className="h-4 w-4" />,
-        /*
-         * No submenu, since 2026-09-12, at the owner's request.
-         *
-         * Four entries hung under it: the three list views (mine, shared
-         * with me, group) and Secret Friend. The hub it opens carries all
-         * four as cards with a sentence each, and a menu that repeats the
-         * page it leads to is a second copy of that page with less on it.
-         * The entry is one thing to press now, which is also what its new
-         * label promises: "Make a list", not "here are your list views".
-         *
-         * Two things follow. On the wide header the entry renders as a plain
-         * link (NavMenu draws no chevron for an empty list), and on the phone
-         * panel the section is a heading with nothing indented under it. My
-         * Lists had been dropped from the panel's account block because it
-         * was in this menu; it is back there now, below.
-         */
-        items: [] as NavMenuItem[],
-    }
-
     const discover = {
         href: `${base}/discover-cove`,
-        /*
-         * "Find a gift", not "Discover" (changed 2026-09-12, at the owner's
-         * request, the same day Organise became "Make a list"). Discover
-         * said what the Coves are for; this says what the visitor came to
-         * do, and pairs with the other entry: make a list, find a gift.
-         * The variable keeps its old name, as `organise` does.
-         */
-        label: t('nav.find_gift'),
+        label: t('nav.discover'),
         icon: <CoveIcon name="compass" className="h-4 w-4" />,
         items: [
-            /*
-             * The Gift Whisperer, first again (owner's call, 2026-09-14).
-             *
-             * It was the first entry for one day (2026-09-12), came out the
-             * next because the suggestions were not good enough to be the
-             * most prominent answer to "Find a gift", and is back because
-             * what it answers changed: a board now spreads across the
-             * interests somebody actually named rather than answering the
-             * first one eight times over, and the cards say what they have
-             * in common with the brief. The same teaser sits under the
-             * search card on the page this menu opens.
-             */
-            {
-                href: `${base}/gift`,
-                label: t('nav.gift'),
-                hint: t('nav.hint_gift'),
-                icon: <CoveIcon name="dial" className="h-5 w-5" />,
-            },
-            /*
-             * Search, first (moved in from the loose links on 2026-09-12,
-             * at the owner's request). It sat outside both menus because it
-             * reads as a control rather than a section; under a menu called
-             * "Find a gift" it is the most direct answer to the label, and
-             * the search field on every page is still the way most people
-             * reach it.
-             */
             {
                 href: `${base}/search`,
-                // "Search offers", not "Search": under this menu it says
-                // what is searched, as the entries around it do.
                 label: t('nav.search_offers'),
                 hint: t('nav.hint_search'),
                 icon: <ToolIcon name="search" className="h-5 w-5" />,
-            },
-            {
-                href: `${base}/${market.coveSegment}`,
-                label: t('nav.daily'),
-                hint: t('nav.hint_daily'),
-                icon: <CoveIcon name="daily" className="h-5 w-5" />,
             },
             {
                 href: `${base}/surprise`,
@@ -252,25 +178,36 @@ function Chrome({ children }: PropsWithChildren) {
                 icon: <CoveIcon name="surprise" className="h-5 w-5" />,
             },
             {
+                href: `${base}/ask`,
+                label: t('ask.title'),
+                hint: t('nav.hint_ask'),
+                icon: <CoveIcon name="ask" className="h-5 w-5" />,
+            },
+        ] as NavMenuItem[],
+    }
+
+    const coves = {
+        href: `${base}/coves`,
+        label: t('nav.coves'),
+        icon: <CoveIcon name="all" className="h-4 w-4" />,
+        items: [
+            {
+                href: `${base}/${market.coveSegment}`,
+                label: t('nav.daily'),
+                hint: t('nav.hint_daily'),
+                icon: <CoveIcon name="daily" className="h-5 w-5" />,
+            },
+            {
                 href: `${base}/guides`,
                 label: t('nav.smart'),
                 hint: t('nav.hint_smart'),
                 icon: <CoveIcon name="idea" className="h-5 w-5" />,
             },
-            {
-                href: `${base}/gift-ideas`,
-                label: t('nav.gift_coves'),
-                hint: t('nav.hint_gift_coves'),
-                icon: <CoveIcon name="persona" className="h-5 w-5" />,
-            },
             /*
-             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld
-             * from this menu for now, deliberately — not removed.
-             *
-             * Both pages exist, are linked from All Coves, and are in the
-             * sitemap; their copy, icons (`brand`, `shop`) and `nav.*_coves`
-             * keys are all in place. Restoring them is putting two entries back
-             * in this list, between Gift Coves and All Coves.
+             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are still
+             * withheld, deliberately, not removed: both pages exist, are
+             * linked from All Coves and are in the sitemap. Restoring them is
+             * two entries here, before All Coves.
              */
             {
                 href: `${base}/coves`,
@@ -278,61 +215,45 @@ function Chrome({ children }: PropsWithChildren) {
                 hint: t('nav.hint_all_coves'),
                 icon: <CoveIcon name="all" className="h-5 w-5" />,
             },
-            {
-                href: `${base}/ask`,
-                label: t('ask.title'),
-                hint: t('nav.hint_ask'),
-                icon: <CoveIcon name="ask" className="h-5 w-5" />,
-            },
-        ],
+        ] as NavMenuItem[],
     }
 
-    /*
-     * The flat links, beside the two section menus.
-     *
-     * Feedback earns a place in the header rather than the footer because it is
-     * the only route a visitor has to report the thing this catalogue gets
-     * wrong most — a stale price, a dead link, a product filed under the wrong
-     * brand. In the footer it is found by people looking for it; here it is
-     * found by people who have just hit the problem, which is the only moment
-     * the report gets written.
-     */
-    const nav = [
-        // Search was here until 2026-09-12; it is under Find a gift now.
-        /*
-          Help, not Feedback.
+    const gifts = {
+        href: `${base}/gift`,
+        label: t('nav.gifts'),
+        icon: <ToolIcon name="whisperer" className="h-4 w-4" />,
+        items: [
+            {
+                href: `${base}/gift`,
+                label: t('nav.gift'),
+                hint: t('nav.hint_gift'),
+                icon: <CoveIcon name="dial" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/gift-ideas`,
+                label: t('nav.gift_coves'),
+                hint: t('nav.hint_gift_coves'),
+                icon: <CoveIcon name="persona" className="h-5 w-5" />,
+            },
+        ] as NavMenuItem[],
+    }
 
-          The menu offered the report form and nothing else, so "how do I do
-          this" had no entry anywhere in the chrome while "this is broken" had a
-          top-level one. `/help` answers both and carries the same form.
-        */
-        { href: `${base}/help`, label: t('help.link'), icon: <ToolIcon name="help" className="h-5 w-5" /> },
+    // The one flat link beside the three menus.
+    const nav = [
+        {
+            href: `${base}/gift-cove/how-it-works`,
+            label: t('nav.how_it_works'),
+            icon: <ToolIcon name="help" className="h-5 w-5" />,
+        },
     ]
 
     /*
-     * The phone gets the same sections, as sections.
-     *
-     * It used to get them flattened — `[organise, ...organise.items, discover,
-     * ...discover.items, ...nav]` — on the reasoning that a dropdown inside an
-     * already-expanded panel is a second thing to open. That half is still
-     * right and nothing here collapses. What it produced, though, was fourteen
-     * links in one column at one weight, where "Organise" and "Secret Friend"
-     * and "Feedback" are the same size and the same distance apart. A reader
-     * cannot tell from that which two of them are hubs, which four belong
-     * under the first, or that the list has an end.
-     *
-     * So the hub is a heading you can press, its surfaces are indented under a
-     * rule, and the two loose links, the account block and the market switcher
-     * are three groups after them. Same links, same order, same single tap to
-     * any of them.
+     * The phone gets the same sections, as sections: the hub is a heading you
+     * can press, its surfaces are indented under a rule, and the flat link,
+     * the account block and the market switcher are groups after them. Same
+     * links, same order, same single tap to any of them.
      */
-    /*
-     * Make a list first, then Find a gift (the owner's call, 2026-09-13;
-     * the two were swapped the other way for a day). Making a list is the
-     * thing the site is for, and the header leads with it; finding a gift
-     * and its menu follow. The phone panel follows the same order.
-     */
-    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [organise, discover]
+    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, coves, gifts]
 
     /*
      * "You are here", in a menu where three entries share a path.
@@ -401,25 +322,18 @@ function Chrome({ children }: PropsWithChildren) {
                         className="hidden items-center gap-4 text-sm text-ink-soft md:flex"
                         aria-label={t('nav.main')}
                     >
-                        <NavMenu
-                            href={organise.href}
-                            label={organise.label}
-                            icon={organise.icon}
-                            items={organise.items}
-                            current={isCurrent(organise.href)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: organise.label })}
-                        />
-
-                        <NavMenu
-                            href={discover.href}
-                            label={discover.label}
-                            icon={discover.icon}
-                            items={discover.items}
-                            current={isCurrent(discover.href)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: discover.label })}
-                        />
+                        {sections.map((section) => (
+                            <NavMenu
+                                key={section.href}
+                                href={section.href}
+                                label={section.label}
+                                icon={section.icon}
+                                items={section.items}
+                                current={isCurrent(section.href)}
+                                isCurrent={isCurrent}
+                                submenuLabel={t('nav.submenu', { section: section.label })}
+                            />
+                        ))}
 
                         {nav.map((item) => (
                             <Link
