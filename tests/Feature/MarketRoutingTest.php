@@ -106,33 +106,106 @@ class MarketRoutingTest extends TestCase
             ->assertSessionHasErrors('path');
     }
 
+    /*
+     * The market bar (2026-09-26). It replaced a dialog that covered the page
+     * on a first visit; see docs/features/market-routing.md.
+     */
+
+    private const BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0 Safari/537.36';
+
     #[Test]
-    public function a_first_visit_is_asked_where_it_shops_and_a_crawler_is_not(): void
+    public function a_first_visit_gets_a_bar_and_no_dialog(): void
     {
-        $browser = ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0 Safari/537.36'];
+        // The browser points at the Netherlands and the page is Dutch: a bar,
+        // and closing it means "yes, that is right", so it may record it.
+        $this->withHeaders(['User-Agent' => self::BROWSER, 'Accept-Language' => 'nl-NL,nl;q=0.9'])
+            ->get('/nl-nl')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->missing('askMarket')
+                ->where('marketBar', ['suggest' => null, 'remember' => true]));
 
-        // No stored choice: ask.
-        $this->withHeaders($browser)->get('/nl-nl')
-            ->assertInertia(fn ($page) => $page->where('askMarket', true));
+        // Nothing a dialog would need reaches the page any more.
+        $this->withHeaders(['User-Agent' => self::BROWSER])
+            ->get('/nl-nl')
+            ->assertDontSee('aria-modal', false)
+            ->assertDontSee('market_prompt', false);
+    }
 
-        // A choice on file: asked once, not once per page.
-        $this->withHeaders($browser)->withCookie(MarketPreference::COOKIE, 'nl-nl')->get('/nl-nl')
-            ->assertInertia(fn ($page) => $page->where('askMarket', false));
+    #[Test]
+    public function a_first_visit_by_a_link_into_another_country_is_offered_its_own(): void
+    {
+        /*
+         * A Belgian browser with no choice on file opens a friend's Dutch
+         * list. The bar offers Belgium first, and closing it must not record
+         * the Netherlands: closing a bar is not choosing a home.
+         */
+        $this->withHeaders(['User-Agent' => self::BROWSER, 'Accept-Language' => 'nl-BE,nl;q=0.9'])
+            ->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-nl', 'remember' => false]));
+    }
 
-        // A crawler is never asked: it keeps no cookie, and the dialog would
-        // sit in every page it renders.
+    #[Test]
+    public function a_shared_link_into_another_country_offers_the_way_back_and_records_nothing(): void
+    {
+        // A choice on file for Belgium, a page in the Netherlands.
+        $response = $this->withHeaders(['User-Agent' => self::BROWSER])
+            ->withCookie(MarketPreference::COOKIE, 'be-fr')
+            ->get('/nl-nl');
+
+        $response->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-fr', 'remember' => false]));
+
+        // Opening it wrote nothing: only the switcher's POST may.
+        $response->assertCookieMissing(MarketPreference::COOKIE);
+    }
+
+    #[Test]
+    public function a_visitor_on_their_chosen_country_sees_no_bar(): void
+    {
+        $this->withHeaders(['User-Agent' => self::BROWSER])
+            ->withCookie(MarketPreference::COOKIE, 'nl-nl')
+            ->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', null));
+
+        // Another language of the same country is the same shops: no bar.
+        $this->withHeaders(['User-Agent' => self::BROWSER])
+            ->withCookie(MarketPreference::COOKIE, 'be-nl')
+            ->get('/be-fr')
+            ->assertInertia(fn ($page) => $page->where('marketBar', null));
+    }
+
+    #[Test]
+    public function a_crawler_never_sees_the_bar(): void
+    {
+        // It keeps no cookie, so the bar would sit in every page it indexes.
         $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
             ->get('/nl-nl')
-            ->assertInertia(fn ($page) => $page->where('askMarket', false));
+            ->assertInertia(fn ($page) => $page->where('marketBar', null));
+    }
+
+    #[Test]
+    public function closing_the_bar_records_the_market_through_the_switcher_route_without_leaving_the_page(): void
+    {
+        // The bar's close button asks for JSON: the cookie, and no redirect
+        // that would reload the page for nothing.
+        $this->postJson('/market', ['market' => 'nl-nl'])
+            ->assertNoContent()
+            ->assertCookie(MarketPreference::COOKIE, 'nl-nl');
+
+        // Still validated like the switcher: an unpublished market is refused.
+        $this->postJson('/market', ['market' => 'es'])
+            ->assertUnprocessable()
+            ->assertCookieMissing(MarketPreference::COOKIE);
     }
 
     #[Test]
     public function keeping_the_market_you_are_on_records_it_and_stays_on_the_page(): void
     {
         /*
-         * The prompt's "keep this one" posts from wherever it was opened,
-         * often a friend's shared list; landing on the home would throw the
-         * link away. Still recorded, so the question does not come back.
+         * Choosing the market you are already on, from wherever you are,
+         * often a friend's shared list (the first-visit dialog's "keep this
+         * one" did this until 2026-09-26): landing on the home would throw
+         * the link away. Still recorded.
          */
         $this->post('/market', ['market' => 'nl-nl', 'path' => '/nl-nl/l/k7m2xq9v4p'])
             ->assertRedirect('/nl-nl/l/k7m2xq9v4p')

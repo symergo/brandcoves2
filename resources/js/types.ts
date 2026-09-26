@@ -99,8 +99,13 @@ export interface SharedProps {
     seoTitle: string | null
     market: CurrentMarket
     markets: SwitcherCountry[]
-    /** Ask where they shop: no stored choice yet, and not a crawler. See MarketPrompt. */
-    askMarket: boolean
+    /**
+     * The market bar above the header, or null for none (a crawler, or a
+     * visitor on their chosen country). `suggest` is a market to offer first;
+     * `remember` says whether closing the bar records this page's market.
+     * See App\Support\MarketPreference::bar() and Components/MarketBar.
+     */
+    marketBar: { suggest: string | null; remember: boolean } | null
     translations: Translations
     translationVersion: string
     unreadCount: number

@@ -6,7 +6,7 @@ is true now.
 
 | Feature | Area | Status |
 |---|---|---|
-| [market-routing.md](market-routing.md) | Core | Active |
+| [market-routing.md](market-routing.md) | Core | Active — first visit gets a bar above the header, not a dialog, since 2026-09-26 |
 | [not-found.md](not-found.md) | Core / Frontend | Active |
 | [list-help.md](list-help.md) | Core / Frontend | Active |
 | [auth.md](auth.md) | Core / Accounts | Active — Google needs credentials per environment |
@@ -15,7 +15,7 @@ is true now.
 | [display-titles.md](display-titles.md) | Catalogue / Editorial | Active |
 | [gift-tags.md](gift-tags.md) | Catalogue / Gifting / Editorial | Active |
 | [localisation.md](localisation.md) | Core / Frontend | Active |
-| [navigation.md](navigation.md) | Core / Frontend | Active |
+| [navigation.md](navigation.md) | Core / Frontend | Active — search field in the desktop header since 2026-09-26 |
 | [homepage.md](homepage.md) | Core / Frontend | Active |
 | [amazon-compliance.md](amazon-compliance.md) | Core / Compliance | Active — rules enforced in `Source`; read before touching Amazon data |
 | [ingestion.md](ingestion.md) | Catalogue | Active |

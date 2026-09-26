@@ -73,20 +73,63 @@ final class MarketPreference
     }
 
     /**
-     * Should this visitor be asked where they shop?
+     * The market bar above the header: whether to show it, and what it says.
      *
-     * Once, and only of a person: no stored choice yet, and a user agent
-     * that is not a crawler. A crawler is never asked, because the answer is
-     * a cookie it will not keep and the dialog would sit in every page it
-     * renders. Read by HandleInertiaRequests into `askMarket`, which is what
-     * shows the first-visit prompt (Components/MarketPrompt). The answer is
-     * written the only way a choice may be, through the switcher's POST, so
-     * asking changes nothing about who may write the cookie.
+     * Replaced a dialog that covered the page on a first visit (2026-09-26):
+     * a phone showed "Where are you?" before anything could be read. The bar
+     * sits in the flow above the header, so the page is readable around it
+     * and ignoring it is allowed. Components/MarketBar draws it.
+     *
+     * Null, no bar, when:
+     * - the visitor is a crawler: it keeps no cookie, so the bar would sit in
+     *   every page it indexes;
+     * - the URL carries no market (the market shown was not read from it);
+     * - a choice is on file and this page is in that country. A language
+     *   difference within one country (be-nl read by a be-fr visitor) is not
+     *   worth a bar: it is the same shops.
+     *
+     * Otherwise two fields:
+     * - `suggest`: a market to offer first. The stored choice when this page
+     *   is in another country (a friend's shared `/nl-nl/...` link opened by
+     *   a Belgian), or, with nothing stored, the market the browser language
+     *   points at when that is not the country on screen.
+     * - `remember`: whether closing the bar records this page's market as the
+     *   choice. Only when nothing is stored *and* this page is the country we
+     *   would have guessed anyway, so closing means "yes, that is right". On a
+     *   link to another country it only hides the bar: closing a bar is not
+     *   saying "this is my home", and letting it write would be exactly the
+     *   silent repointing the switcher rule forbids.
+     *
+     * Every write still goes through MarketPreferenceController, the
+     * switcher's POST; this only decides what the bar offers.
+     *
+     * @return array{suggest: string|null, remember: bool}|null
      */
-    public static function shouldAsk(Request $request): bool
+    public static function bar(Request $request, Market $current): ?array
     {
-        return self::stored($request) === null
-            && ! Crawlers::looksLikeOne($request->userAgent());
+        if (Crawlers::looksLikeOne($request->userAgent())) {
+            return null;
+        }
+
+        if ($request->route()?->hasParameter('market') !== true) {
+            return null;
+        }
+
+        $stored = self::stored($request);
+
+        if ($stored !== null) {
+            return $stored->country() === $current->country()
+                ? null
+                : ['suggest' => $stored->value, 'remember' => false];
+        }
+
+        $guess = Market::fromAcceptLanguage($request->header('Accept-Language'));
+        $guessedThisCountry = $guess->country() === $current->country();
+
+        return [
+            'suggest' => $guessedThisCountry ? null : $guess->value,
+            'remember' => $guessedThisCountry,
+        ];
     }
 
     /**
