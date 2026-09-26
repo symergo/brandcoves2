@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Enums\EventType;
+use App\Enums\Interest;
 use App\Enums\Market;
+use App\Enums\Preference;
+use App\Enums\RecipientType;
 use App\Enums\Vibe;
 use App\Models\Recipient;
 use App\Models\Wishlist;
@@ -121,6 +124,182 @@ final readonly class TasteBrief
         );
     }
 
+    /**
+     * The brief as a plain array, to store (`cove_plans.brief`,
+     * `gift_landings.brief`) or to send over the editorial API.
+     *
+     * Only what describes the person and the present. The market is left out
+     * because whatever holds a brief already has one (a plan, a landing page)
+     * and two copies can disagree; the limit, the exclusions and the ranking
+     * profile are left out because they belong to one run of the engine, not
+     * to the brief. Empty fields are dropped, so a stored brief says only
+     * what somebody decided.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return array_filter([
+            'relationship' => $this->relationship,
+            'interests' => $this->interests,
+            'occasion' => $this->occasion,
+            'ageBand' => $this->ageBand,
+            'budgetMin' => $this->budgetMin,
+            'budgetMax' => $this->budgetMax,
+            'vibe' => $this->vibe?->value,
+            'preferences' => $this->preferences,
+            'values' => $this->values,
+            'avoid' => $this->avoid,
+            'query' => $this->query,
+        ], fn ($v) => $v !== null && $v !== '' && $v !== []);
+    }
+
+    /**
+     * A brief back from {@see toArray()}, or from anyone who wrote one by hand.
+     *
+     * Every closed field is checked against the gift vocabulary and an
+     * unknown value is dropped rather than kept: a stored brief is read by
+     * the engine months later, and a value it does not understand would
+     * quietly match nothing. `problems()` names what would be dropped, for
+     * the callers (the editorial API) that would rather refuse than drop.
+     *
+     * Interests are the closed `Interest` values only. The wizard accepts free
+     * text too, but a stored brief drives a page nobody is watching, and a
+     * typed word there is a guess the engine turns into a text search.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data, Market $market, int $limit = 4): self
+    {
+        $min = self::cents($data['budgetMin'] ?? null);
+        $max = self::cents($data['budgetMax'] ?? null);
+
+        // A budget written the wrong way round means the same band.
+        if ($min !== null && $max !== null && $min > $max) {
+            [$min, $max] = [$max, $min];
+        }
+
+        $query = is_string($data['query'] ?? null) ? trim(mb_substr($data['query'], 0, 100)) : '';
+
+        return new self(
+            market: $market,
+            interests: self::known($data['interests'] ?? [], Interest::values(), 8),
+            vibe: is_string($data['vibe'] ?? null) ? Vibe::tryFrom($data['vibe']) : null,
+            preferences: self::known($data['preferences'] ?? [], Preference::values(), 3),
+            budgetMin: $min,
+            budgetMax: $max,
+            avoid: array_slice(array_values(array_unique(array_filter(array_map(
+                fn ($word) => is_string($word) ? trim(mb_substr($word, 0, 40)) : '',
+                (array) ($data['avoid'] ?? []),
+            )))), 0, 10),
+            values: self::known($data['values'] ?? [], GiftTags::VALUE_OPTIONS, 3),
+            relationship: self::one($data['relationship'] ?? null, RecipientType::values()),
+            occasion: self::one($data['occasion'] ?? null, GiftTags::vocabulary()[GiftTags::OCCASION]),
+            ageBand: self::one($data['ageBand'] ?? null, GiftTags::AGE_BANDS),
+            limit: $limit,
+            query: $query === '' ? null : $query,
+        );
+    }
+
+    /**
+     * What {@see fromArray()} would drop from this array, one line per field.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, string> field => why
+     */
+    public static function problems(array $data): array
+    {
+        $closed = [
+            'relationship' => RecipientType::values(),
+            'occasion' => GiftTags::vocabulary()[GiftTags::OCCASION],
+            'ageBand' => GiftTags::AGE_BANDS,
+            'vibe' => Vibe::values(),
+        ];
+
+        $lists = [
+            'interests' => Interest::values(),
+            'preferences' => Preference::values(),
+            'values' => GiftTags::VALUE_OPTIONS,
+        ];
+
+        $problems = [];
+
+        foreach ($closed as $field => $allowed) {
+            $value = $data[$field] ?? null;
+
+            if ($value !== null && ! in_array(is_string($value) ? mb_strtolower(trim($value)) : $value, $allowed, true)) {
+                $problems[$field] = "`{$field}` takes one of: ".implode(', ', $allowed).'.';
+            }
+        }
+
+        foreach ($lists as $field => $allowed) {
+            $unknown = array_values(array_filter(
+                (array) ($data[$field] ?? []),
+                fn ($v) => ! is_string($v) || ! in_array(mb_strtolower(trim($v)), $allowed, true),
+            ));
+
+            if ($unknown !== []) {
+                $problems[$field] = "`{$field}` has values outside the vocabulary (".implode(', ', array_map('strval', array_filter($unknown, 'is_scalar')))
+                    .'). It takes: '.implode(', ', $allowed).'.';
+            }
+        }
+
+        foreach (['budgetMin', 'budgetMax'] as $field) {
+            $value = $data[$field] ?? null;
+
+            if ($value !== null && (! is_numeric($value) || (int) $value < 0)) {
+                $problems[$field] = "`{$field}` is a whole number of cents, zero or more.";
+            }
+        }
+
+        return $problems;
+    }
+
+    /** Nothing in it that the engine would read as a wish. */
+    public function isEmpty(): bool
+    {
+        return $this->toArray() === [];
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     * @return list<string>
+     */
+    private static function known(mixed $values, array $allowed, int $max): array
+    {
+        $wanted = array_map(
+            fn ($v) => is_string($v) ? mb_strtolower(trim($v)) : '',
+            (array) $values,
+        );
+
+        return array_slice(array_values(array_unique(array_filter(
+            $wanted,
+            fn (string $v) => in_array($v, $allowed, true),
+        ))), 0, $max);
+    }
+
+    /** @param list<string> $allowed */
+    private static function one(mixed $value, array $allowed): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = mb_strtolower(trim($value));
+
+        return in_array($value, $allowed, true) ? $value : null;
+    }
+
+    /** Cents are whole numbers (invariant 7); anything else is not a budget. */
+    private static function cents(mixed $value): ?int
+    {
+        if (! is_numeric($value) || (int) $value < 0) {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
     /** How to rank. Buying for someone else is the default; it is the older path. */
     public function profile(): SuggestionProfile
     {
@@ -158,6 +337,31 @@ final readonly class TasteBrief
     public function withLimit(int $limit): self
     {
         return $this->with(limit: $limit);
+    }
+
+    /**
+     * The same brief with another budget, in cents. Its own method because
+     * `with()` cannot tell "clear it" from "keep it" for a nullable number.
+     */
+    public function withBudget(?int $min, ?int $max): self
+    {
+        return new self(
+            market: $this->market,
+            interests: $this->interests,
+            vibe: $this->vibe,
+            preferences: $this->preferences,
+            budgetMin: $min,
+            budgetMax: $max,
+            avoid: $this->avoid,
+            values: $this->values,
+            relationship: $this->relationship,
+            occasion: $this->occasion,
+            ageBand: $this->ageBand,
+            excludeGroupIds: $this->excludeGroupIds,
+            limit: $this->limit,
+            profile: $this->profile,
+            query: $this->query,
+        );
     }
 
     /**

@@ -441,6 +441,46 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gift landing pages
+    |--------------------------------------------------------------------------
+    |
+    | /gift-ideas/for/{recipient}/{interest}, recorded nightly by
+    | PlanGiftLandingPages. See docs/features/gift-landing-pages.md.
+    */
+    'gift_landings' => [
+        // Distinct products a page needs before it exists. Eight is the
+        // owner's minimum for a Cove, and the same reasoning holds: fewer is
+        // a thin page, and a search engine that finds hundreds of thin pages
+        // starts trusting none of them.
+        'min_products' => 8,
+
+        // Of those, how many must carry the recipient's tag (an editor's or
+        // the crowd's). Zero to start (2026-09-26): recipient tags are still
+        // rare, and the interest is what decides whether a page is useful.
+        // The cost is that "dad who loves cooking" and "mum who loves cooking"
+        // share most of their products, reordered by who they suit. Raise
+        // this once tags are common and the pages will differ more.
+        'min_recipient_matches' => 0,
+
+        // Products on one page, and what the planner asks the engine for.
+        'page_size' => 24,
+
+        // A recipient's own page (/for/papa) is built from their best
+        // interests: the ones with the most products, this many of them.
+        'hub_interests' => 3,
+
+        // Interests that are not a hobby of the person the page is for.
+        // "Kids" is who a present is for, not something dad loves.
+        'excluded_interests' => ['kids'],
+
+        // Seconds a rendered page's product list is cached. A day: the
+        // planner reruns nightly and the key carries its timestamp, so a
+        // fresh plan never waits for this to run out.
+        'cache_ttl' => 86400,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Reading a pasted link
     |--------------------------------------------------------------------------
     |

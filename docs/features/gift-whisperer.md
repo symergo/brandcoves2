@@ -403,3 +403,12 @@ A step after the interests (six steps with a saved person, five without): "How o
 the exact strings an editor tags a product with (`age:13-17`), so `recipient_fit` compares two
 fixed values and nothing is typed or folded. The server refuses anything else. See
 [gift-tags.md](gift-tags.md).
+
+## Open as a page (2026-09-26)
+
+The results are a POST, so nobody could keep, share or find a board again. Under the results the
+Finder now offers **Open as a page**: the gift landing page nearest the brief, a GET address with
+the budget carried as `?budget=`. The first of the brief's interests with a page for that person
+wins, then the person's own page; a saved person's free-text relationship ("mama") is read with the
+search box's word lists. When no page exists the link is not shown. See
+[gift-landing-pages.md](gift-landing-pages.md).

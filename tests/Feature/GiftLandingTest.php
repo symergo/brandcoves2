@@ -1,0 +1,267 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature;
+
+use App\Enums\Availability;
+use App\Enums\Interest;
+use App\Enums\Market;
+use App\Enums\ProductStatus;
+use App\Enums\RecipientType;
+use App\Enums\Source;
+use App\Jobs\PlanGiftLandingPages;
+use App\Models\GiftLanding;
+use App\Models\Merchant;
+use App\Models\Product;
+use App\Models\ProductGroup;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+/**
+ * Gift landing pages (roadmap step 4, part 2): "gift ideas for dad who loves
+ * cooking" exists when the catalogue fills it with eight products, and not
+ * otherwise. See docs/features/gift-landing-pages.md.
+ */
+class GiftLandingTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Two interests walked instead of thirty-nine, so the planner runs
+        // twenty engine passes per market rather than four hundred.
+        config(['giftcoves.gift_landings.excluded_interests' => array_values(array_diff(
+            Interest::values(),
+            [Interest::Cooking->value, Interest::Gardening->value],
+        ))]);
+    }
+
+    #[Test]
+    public function the_planner_records_a_pair_the_catalogue_fills_and_nothing_thinner(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        $this->products(Market::BeNl, 'Snoeischaar', 7, ['interest:gardening']);
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $cooking = GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking);
+
+        $this->assertNotNull($cooking);
+        $this->assertSame(8, $cooking->product_count);
+        $this->assertSame('/be-nl/gift-ideas/for/papa/koken', $cooking->path);
+        $this->assertEquals(['relationship' => 'father', 'interests' => ['cooking']], $cooking->brief);
+
+        // Seven is a thin page.
+        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Gardening));
+
+        // Dad's own page exists because one of his pairs does.
+        $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, null));
+    }
+
+    #[Test]
+    public function a_page_that_falls_under_the_minimum_is_removed_the_next_night(): void
+    {
+        $knives = $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+        $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking));
+
+        $this->travel(1)->days();
+        $knives[0]->update(['in_stock' => false]);
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking));
+        $this->get('/be-nl/gift-ideas/for/papa/koken')->assertNotFound();
+    }
+
+    #[Test]
+    public function a_recorded_page_renders_its_products_under_the_searched_phrase(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 9, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $response = $this->get('/be-nl/gift-ideas/for/papa/koken')->assertOk();
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('GiftIdeas/Landing')
+            ->where('heading', 'Cadeau-ideeën voor papa die van koken houdt')
+            ->where('seoTitle', fn (string $title) => $title === 'Cadeau-ideeën voor papa die van koken houdt' && mb_strlen($title) <= 48)
+            ->where('products', fn ($products) => count($products) >= 8)
+            ->where('isRecipientPage', false));
+
+        // The recipient's own page links on to this one.
+        $this->get('/be-nl/gift-ideas/for/papa')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('heading', 'Cadeau-ideeën voor papa')
+                ->where('moreFor.links.0.url', '/be-nl/gift-ideas/for/papa/koken'));
+    }
+
+    #[Test]
+    public function anything_unrecorded_is_a_404(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $this->get('/be-nl/gift-ideas/for/papa/tuinieren')->assertNotFound();
+        $this->get('/be-nl/gift-ideas/for/papa/onderwatermandvlechten')->assertNotFound();
+        $this->get('/be-nl/gift-ideas/for/nonkel/koken')->assertNotFound();
+        // Recorded in be-nl only.
+        $this->get('/nl-nl/gift-ideas/for/papa/koken')->assertNotFound();
+    }
+
+    #[Test]
+    public function another_languages_words_redirect_to_this_markets(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $this->get('/be-nl/gift-ideas/for/dad/cooking?budget=20-50')
+            ->assertStatus(301)
+            ->assertRedirect('/be-nl/gift-ideas/for/papa/koken?budget=20-50');
+    }
+
+    #[Test]
+    public function a_budget_narrows_the_page_and_the_canonical_stays_bare(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking'], 2500);
+        $this->products(Market::BeNl, 'Gietijzeren pan', 2, ['interest:cooking'], 7500);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $response = $this->get('/be-nl/gift-ideas/for/papa/koken?budget=50-100')->assertOk();
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('budget.current', '50-100')
+            ->where('products', fn ($products) => count($products) === 2
+                && collect($products)->every(fn ($p) => $p['minPrice'] >= 5000 && $p['minPrice'] <= 10000)));
+
+        $response->assertSee('<link rel="canonical" href="'.url('/be-nl/gift-ideas/for/papa/koken').'"', escape: false);
+    }
+
+    #[Test]
+    public function the_sitemap_lists_exactly_the_recorded_pages_with_hreflang_where_both_markets_have_one(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        $this->products(Market::NlNl, 'Koksmes', 8, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+        PlanGiftLandingPages::dispatchSync(Market::NlNl);
+
+        $xml = $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+
+        $recorded = GiftLanding::query()->forMarket(Market::BeNl)->pluck('path');
+        preg_match_all('#<loc>[^<]*(/be-nl/gift-ideas/for/[^<]*)</loc>#', $xml, $listed);
+
+        $this->assertEqualsCanonicalizing($recorded->all(), $listed[1]);
+        $this->assertStringNotContainsString('/be-nl/gift-ideas/for/papa/tuinieren', $xml);
+
+        // be-nl and nl-nl both have dad and cooking; be-fr does not.
+        $this->assertStringContainsString('hreflang="nl-NL" href="'.url('/nl-nl/gift-ideas/for/papa/koken').'"', $xml);
+        $this->assertStringNotContainsString('/be-fr/gift-ideas/for/', $xml);
+
+        $this->get('/be-nl/gift-ideas/for/papa/koken')
+            ->assertSee('hreflang="nl-NL"', escape: false)
+            ->assertDontSee('hreflang="fr-BE"', escape: false);
+    }
+
+    #[Test]
+    public function persona_addresses_are_untouched(): void
+    {
+        $route = fn (string $path) => Route::getRoutes()->match(Request::create($path))->getName();
+
+        $this->assertSame('gift-ideas.persona', $route('/be-nl/gift-ideas/de-thuiskok'));
+        $this->assertSame('gift-ideas.landing', $route('/be-nl/gift-ideas/for/papa'));
+        $this->assertSame('gift-ideas.landing', $route('/be-nl/gift-ideas/for/papa/koken'));
+    }
+
+    #[Test]
+    public function the_gift_finder_offers_the_nearest_page(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        // "papa" is free text on a saved person; it is read as a father.
+        $this->post('/be-nl/gift', ['relationship' => 'papa', 'interests' => ['gardening', 'cooking']])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('pageUrl', '/be-nl/gift-ideas/for/papa/koken'));
+
+        // No recipient: no page to offer.
+        $this->post('/be-nl/gift', ['interests' => ['cooking']])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('pageUrl', null));
+    }
+
+    #[Test]
+    public function the_gift_ideas_shelf_links_each_recipients_page(): void
+    {
+        $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $this->get('/be-nl/gift-ideas')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'forWhom',
+                fn ($links) => collect($links)->contains(fn ($l) => $l['url'] === '/be-nl/gift-ideas/for/papa' && $l['label'] === 'Cadeau-ideeën voor papa'),
+            ));
+    }
+
+    /**
+     * @param  list<string>  $tags
+     * @return list<ProductGroup>
+     */
+    private function products(Market $market, string $title, int $count, array $tags, int $price = 2500): array
+    {
+        $merchant = Merchant::query()->firstOrCreate(
+            ['source' => Source::Awin->value, 'external_id' => 'shop'],
+            ['name' => 'Shop'],
+        );
+
+        $groups = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $name = "{$title} {$i} ".bin2hex(random_bytes(2));
+
+            $group = ProductGroup::create([
+                'market' => $market,
+                'identity_key' => 'k'.bin2hex(random_bytes(6)),
+                'identity_kind' => 'ean',
+                'title' => $name,
+                'slug' => 'p-'.bin2hex(random_bytes(4)),
+                'category' => 'Keuken',
+                'image_url' => 'https://img.test/x.jpg',
+                'min_price' => $price,
+                'merchant_count' => 1,
+                'in_stock' => true,
+                'giftable' => true,
+                'gift_tags' => $tags,
+            ]);
+
+            Product::create([
+                'source' => Source::Awin,
+                'market' => $market,
+                'merchant_id' => $merchant->id,
+                'group_id' => $group->id,
+                'external_id' => 'e'.bin2hex(random_bytes(6)),
+                'identity_kind' => 'ean',
+                'title' => $name,
+                'merchant_category' => 'Keuken',
+                'price' => $price,
+                'currency' => 'EUR',
+                'affiliate_url' => 'https://example.test/buy',
+                'availability' => Availability::InStock,
+                'status' => ProductStatus::Active,
+                'identity_key' => $group->identity_key,
+            ]);
+
+            $groups[] = $group;
+        }
+
+        return $groups;
+    }
+}

@@ -32,6 +32,7 @@ is true now.
 | [search.md](search.md) | Search | Active |
 | [list-signals.md](list-signals.md) | Gifting / Catalogue | Active — crowd tags and product links from lists, nightly; ideas in the same spirit on shared wish lists |
 | [intent-search.md](intent-search.md) | Search / Gifting | Active — the search box reads gift searches (who, interests, occasion, budget) |
+| [gift-landing-pages.md](gift-landing-pages.md) | Gifting / SEO | Active — `/gift-ideas/for/{recipient}/{interest}`, recorded nightly when 8+ products fit; briefs stored and linkable |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |

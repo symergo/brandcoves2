@@ -14,6 +14,8 @@ interface Persona {
 
 interface Props {
     personas: Persona[]
+    /** Gift landing pages for a whole person: "Gift ideas for dad". Only the recorded ones. */
+    forWhom?: { label: string; url: string }[]
 }
 
 /**
@@ -24,7 +26,7 @@ interface Props {
  * written in March is exactly as useful in November, which is the whole reason
  * it has no date on it.
  */
-export default function Index({ personas }: Props) {
+export default function Index({ personas, forWhom = [] }: Props) {
     const { t, n } = useTranslations()
 
     return (
@@ -35,6 +37,24 @@ export default function Index({ personas }: Props) {
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift_ideas.title')}</h1>
                 <p className="mt-2 text-ink-soft">{t('gift_ideas.description')}</p>
             </header>
+
+            {forWhom.length > 0 && (
+                <nav aria-label={t('gift_landing.by_recipient')} className="mt-6">
+                    <h2 className="text-sm font-medium text-ink-soft">{t('gift_landing.by_recipient')}</h2>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                        {forWhom.map((page) => (
+                            <li key={page.url}>
+                                <Link
+                                    href={page.url}
+                                    className="rounded-full border border-line bg-card px-3 py-1 text-sm hover:border-ink/40"
+                                >
+                                    {page.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            )}
 
             {personas.length === 0 ? (
                 <p className="mt-8 text-ink-soft">{t('gift_ideas.empty')}</p>
