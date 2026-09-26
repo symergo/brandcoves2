@@ -304,7 +304,7 @@ Cada uno juega una vez.',
             'sections' => [
                 [
                     'title' => 'Todas las personas a las que compras, en una página',
-                    'body' => '[Mi gente](people) muestra a todas las personas a las que compras, primero el cumpleaños o la ocasión más cercana. A algunas las guardaste tú y solo tú las ves. Otras son amigos en GiftCoves, marcados «en GiftCoves». Para añadir a alguien que solo ves tú, toca «Añadir a alguien»: un nombre y, si quieres, quién es para ti y su cumpleaños.',
+                    'body' => '[Mi gente](people) muestra a todas las personas a las que compras. A algunas las guardaste tú y solo tú las ves. Otras son amigos en GiftCoves, marcados «en GiftCoves». Para añadir a alguien que solo ves tú, toca «Añadir a alguien»: un nombre y, si quieres, quién es para ti y su cumpleaños.',
                     'shot' => 'friends',
                     'alt' => 'La página Mi gente, con los botones para añadir a alguien e invitar a un amigo.',
                 ],

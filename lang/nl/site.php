@@ -2372,7 +2372,7 @@ return [
      */
     'people' => [
         'title' => 'Mijn mensen',
-        'intro' => 'Iedereen voor wie je een cadeau koopt, de eerstvolgende verjaardag of gelegenheid eerst.',
+        'intro' => 'Iedereen voor wie je een cadeau koopt.',
         'intro_tip' => 'Sommige mensen bewaar je alleen voor jezelf: wat je over ze weet, wat je ze gaf, ideeën voor ze. Anderen zitten zelf op GiftCoves: je ziet de lijsten die ze met je delen en de verjaardag die ze tonen. Niemand anders ziet wat jij bewaarde.',
         'guest' => 'Log in en houd iedereen voor wie je een cadeau koopt op één plek bij: hun verjaardag, wat je ze gaf, en ideeën voor ze.',
         'empty' => 'Nog niemand. Voeg iemand toe voor wie je een cadeau koopt, of nodig een vriend uit die op GiftCoves zit.',
@@ -2399,7 +2399,7 @@ return [
         'invite' => 'Nodig uit op GiftCoves',
         'invite_tip' => 'Hun e-mailadres. Hebben ze een account, of maken ze er een, dan zijn jullie verbonden: jij ziet de lijsten die zij met je delen, zij die van jou. We mailen hen niet, dus laat het ze zelf weten.',
         'invite_button' => 'Uitnodigen',
-        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves, de eerstvolgende verjaardag of gelegenheid eerst. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen en de lijsten die ze met je delen.',
+        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen en de lijsten die ze met je delen.',
     ],
 
 ];

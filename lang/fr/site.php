@@ -2361,7 +2361,7 @@ return [
      */
     'people' => [
         'title' => 'Mes proches',
-        'intro' => 'Tous ceux à qui vous offrez, l\'anniversaire ou l\'occasion la plus proche d\'abord.',
+        'intro' => 'Tous ceux à qui vous offrez.',
         'intro_tip' => 'Certaines personnes sont enregistrées pour vous seul : ce que vous savez d\'elles, ce que vous leur avez offert, des idées pour elles. D\'autres sont elles-mêmes sur GiftCoves : vous voyez les listes qu\'elles partagent avec vous et l\'anniversaire qu\'elles affichent. Personne d\'autre ne voit ce que vous avez enregistré.',
         'guest' => 'Connectez-vous pour garder au même endroit tous ceux à qui vous offrez : leur anniversaire, ce que vous leur avez offert, et des idées pour eux.',
         'empty' => 'Personne pour l\'instant. Ajoutez quelqu\'un à qui vous offrez, ou invitez un ami qui est sur GiftCoves.',
@@ -2388,7 +2388,7 @@ return [
         'invite' => 'Inviter sur GiftCoves',
         'invite_tip' => 'Son adresse e-mail. Si la personne a un compte, ou en crée un, vous êtes liés : vous voyez les listes qu\'elle partage avec vous, et elle les vôtres. Nous ne lui envoyons pas d\'e-mail : prévenez-la vous-même.',
         'invite_button' => 'Inviter',
-        'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves, l\'anniversaire ou l\'occasion la plus proche d\'abord. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Pour chaque personne : sa page, Trouver un cadeau pour elle et les listes qu\'elle partage avec vous.',
+        'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Pour chaque personne : sa page, Trouver un cadeau pour elle et les listes qu\'elle partage avec vous.',
     ],
 
 ];

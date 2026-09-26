@@ -304,7 +304,7 @@ Chacun joue une fois.',
             'sections' => [
                 [
                     'title' => 'Tous ceux pour qui vous achetez, sur une page',
-                    'body' => "[Mes proches](people) montre tous ceux pour qui vous achetez, l’anniversaire ou l’occasion la plus proche d’abord. Certains, vous les avez enregistrés vous-même et vous seul les voyez. D’autres sont des amis sur GiftCoves, marqués « sur GiftCoves ». Pour ajouter quelqu’un que vous seul voyez, touchez « Ajouter quelqu'un » : un nom, et si vous voulez qui c’est pour vous et son anniversaire.",
+                    'body' => "[Mes proches](people) montre tous ceux pour qui vous achetez. Certains, vous les avez enregistrés vous-même et vous seul les voyez. D’autres sont des amis sur GiftCoves, marqués « sur GiftCoves ». Pour ajouter quelqu’un que vous seul voyez, touchez « Ajouter quelqu'un » : un nom, et si vous voulez qui c’est pour vous et son anniversaire.",
                     'shot' => 'friends',
                     'alt' => 'La page Mes proches, avec les boutons pour ajouter quelqu’un et pour inviter un ami.',
                 ],

@@ -319,7 +319,7 @@ Iedereen speelt één keer.',
             'sections' => [
                 [
                     'title' => 'Iedereen voor wie je koopt, op één pagina',
-                    'body' => '[Mijn mensen](people) toont iedereen voor wie je koopt, de eerstvolgende verjaardag of gelegenheid eerst. Sommigen bewaarde je zelf en ziet alleen jij. Anderen zijn vrienden op GiftCoves, met “op GiftCoves” erbij. Iemand toevoegen die alleen jij ziet: tik op “Iemand toevoegen” en vul een naam in, en als je wilt wie het voor je is en de verjaardag.',
+                    'body' => '[Mijn mensen](people) toont iedereen voor wie je koopt. Sommigen bewaarde je zelf en ziet alleen jij. Anderen zijn vrienden op GiftCoves, met “op GiftCoves” erbij. Iemand toevoegen die alleen jij ziet: tik op “Iemand toevoegen” en vul een naam in, en als je wilt wie het voor je is en de verjaardag.',
                     'shot' => 'friends',
                     'alt' => 'De pagina Mijn mensen, met de knoppen om iemand toe te voegen en om een vriend uit te nodigen.',
                 ],

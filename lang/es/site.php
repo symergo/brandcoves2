@@ -2359,7 +2359,7 @@ return [
      */
     'people' => [
         'title' => 'Mi gente',
-        'intro' => 'Todas las personas a las que regalas, primero el cumpleaños u ocasión más cercano.',
+        'intro' => 'Todas las personas a las que regalas.',
         'intro_tip' => 'Algunas personas las guardas solo para ti: lo que sabes de ellas, lo que les regalaste, ideas para ellas. Otras están en GiftCoves: ves las listas que comparten contigo y el cumpleaños que muestran. Nadie más ve lo que guardaste.',
         'guest' => 'Inicia sesión para tener en un solo sitio a todas las personas a las que regalas: su cumpleaños, lo que les regalaste e ideas para ellas.',
         'empty' => 'Aún nadie. Añade a alguien a quien regalas, o invita a un amigo que esté en GiftCoves.',
@@ -2386,7 +2386,7 @@ return [
         'invite' => 'Invitar a GiftCoves',
         'invite_tip' => 'Su correo electrónico. Si tiene una cuenta, o crea una, quedáis conectados: ves las listas que comparte contigo, y esa persona las tuyas. No le enviamos ningún correo, así que avísale tú.',
         'invite_button' => 'Invitar',
-        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves, primero el cumpleaños u ocasión más cercano. Añade a alguien que solo tú ves, o invita a alguien por correo. Desde cada persona llegas a su página, a Buscar un regalo para ella y a las listas que comparte contigo.',
+        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Desde cada persona llegas a su página, a Buscar un regalo para ella y a las listas que comparte contigo.',
     ],
 
 ];

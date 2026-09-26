@@ -304,7 +304,7 @@ Everyone plays once.',
             'sections' => [
                 [
                     'title' => 'Everybody you buy for, on one page',
-                    'body' => '[My people](people) lists everybody you buy for, the nearest birthday or occasion first. Some you saved yourself and only you see. Others are friends on GiftCoves, marked “on GiftCoves”. To add someone only you see, tap “Add someone”: a name, and who they are to you and their birthday if you like.',
+                    'body' => '[My people](people) lists everybody you buy for. Some you saved yourself and only you see. Others are friends on GiftCoves, marked “on GiftCoves”. To add someone only you see, tap “Add someone”: a name, and who they are to you and their birthday if you like.',
                     'shot' => 'friends',
                     'alt' => 'The My people page, with the buttons to add someone and to invite a friend.',
                 ],
