@@ -22,11 +22,60 @@ gets its own feature doc in [features/](features/INDEX.md) when it is built.
 | **Coves** | How people and editors organise products | A list of products; an editorial Cove adds writing on top |
 | **People** | The social layer | Create, share, contribute, claim, save, follow, discover |
 
-And three pieces of work that serve them:
+And the pieces of work that serve them:
 
-- **Engine**: make the product and data system underneath open and useful.
-- **Structure**: make Coves the thing everything is organised around, and the thing people share.
-- **Front page**: get the idea across in five seconds and get people into the system.
+- **Engine** (section 1): make the product and data system underneath open and useful.
+- **Structure** (section 2): make Coves the thing everything is organised around, and the thing
+  people share.
+- **Product pages** (section 4): a product is a meeting point of shops, people and Coves.
+- **Search** (section 5): turn what people type into intent, and let that intent drive the site.
+- **Front page** (section 6): get the idea across in five seconds and get people into the system.
+
+### What each part of the business is for
+
+| Layer | What it is |
+|---|---|
+| **Supply** | Affiliate feeds, API connectors, and whatever people paste or scan. Where products come from |
+| **Infrastructure** | The product graph: products, their offers, what they are matched to |
+| **Organising and social** | Coves: what people and editors collect, keep and share |
+| **Acquisition** | Discovery: search engines, social posts and shared links bring people in |
+
+The affiliate catalogue is the supply layer. It is not the product.
+
+### The growth loop
+
+```
+            Google / social / a shared link
+                          ↓
+                      Discover
+                          ↓
+                  a product or a Cove
+                          ↓
+                       Save it
+                          ↓
+                    Create a Cove
+                          ↓
+                        Share
+                     ↙        ↘
+             a gift buyer    a friend
+                     ↘        ↙
+                  visits GiftCoves
+                          ↓
+                   creates a Cove
+                          ↓
+                        Share …
+```
+
+What each arrow needs from the site, and where it stands:
+
+- **Discover → save:** every product and Cove has a save control (`SaveToList`), and saving before
+  signing in is kept and finished after (`PendingSave`). Works.
+- **Save → create a Cove:** a save can create a list in the same step. Works.
+- **Create → share:** share links, share-with-friends, handing a list over. Works.
+- **Share → the reader arrives:** a shared list opens without an account. Works.
+- **The reader creates their own:** the weak arrow. A visitor on somebody's list is asked to claim,
+  not to start a Cove of their own. The front page (section 6) and interoperable Coves ("Add to my
+  Cove", "Save this Cove") are what close it.
 
 ---
 
@@ -60,16 +109,15 @@ This may matter more than the next affiliate feed. A visitor pastes
 Ways in: a link, a barcode, a photo, a typed description, and search. Later perhaps "I saw this in a
 shop, what is it?" from a photo.
 
-**Where we stand.** Search and barcode scanning exist, but the scanner only finds products already
-in the catalogue ([barcode-scanner.md](features/barcode-scanner.md)). A typed item can carry a
-title, link, image URL, price and note ([wishlists.md](features/wishlists.md)). There is no photo
-upload. Page import exists but only for editors, and the reading happens in their browser extension
-([page-import.md](features/page-import.md)).
+**Where we stand (built 2026-09-26, [pasted-links.md](features/pasted-links.md)).** A link pasted
+into a list is looked up and the item fills itself in; a photo of your own can be added; a scanned
+barcode nobody sells yet is kept and becomes the product once a shop sells it. Still missing: what a
+page says does not yet become a catalogue offer, so a pasted shop is not searchable by others (a
+price read once cannot sit in "cheapest offer"; this waits for matching, C below).
 
-**This reverses a rule.** Today the server never requests a link a visitor supplied, on purpose
-(`app/Services/Wishlist/ItemSaver.php`, `app/Services/Search/AmazonLink.php`,
-[gifting-lenses.md](features/gifting-lenses.md)). Reading pasted pages is a deliberate change of
-strategy, not a bug fix, and it comes with conditions:
+**This reversed a rule.** Until then the server never requested a link a visitor supplied, on
+purpose. Reading pasted pages is a deliberate change of strategy, not a bug fix, and it comes with
+conditions, all of them now in the code:
 
 - **Our own data and connectors come first.** A link to a shop we hold in the feed database or
   have an API connector for is resolved through that (an Amazon link by the ASIN in its URL, a bol
@@ -80,8 +128,8 @@ strategy, not a bug fix, and it comes with conditions:
   every redirect), a size cap and a time limit on every request.
 - It reads what the page publishes about itself (Open Graph, JSON-LD product data). No AI in the
   basic path; if AI is used to identify a product, it is queued and capped like every other AI call.
-- An Amazon link is a separate question (see Open questions): Amazon data may not enter the
-  catalogue.
+- An Amazon link is never fetched: its ASIN is looked up in what we already know, and if that finds
+  nothing the item stays as the person typed it. Amazon data does not enter the catalogue.
 
 ### C. Matching products that arrived separately
 
@@ -147,7 +195,57 @@ on a recipient and consumed by the suggestion engine behind the Gift Whisperer
 ([gift-whisperer.md](features/gift-whisperer.md)). Nothing else uses it: not search, not guides,
 not Coves. Gift personas are hand-written Coves, not briefs.
 
-**Missing.** `TasteBrief` behind search filters, guide landing pages and Cove suggestions.
+**Missing.** `TasteBrief` behind search (section 5), guide landing pages and Cove suggestions.
+
+### F. A list's intent teaches the catalogue
+
+The owner's idea (2026-09-26): **when somebody builds a list with an intent, the products on it
+carry that intent for everybody else.** A list called "Dad's 60th", for a recipient who is a father
+and loves cooking, filled from a search for "gift for dad who cooks, €50–€100", is a person saying
+"these things fit that". Summed over many lists, that is a better answer to "what do people give a
+dad who cooks" than any tag an editor can write, and it grows with use.
+
+Where a list's intent comes from, all of it already stored or one step away:
+
+- the recipient: relationship, age band, interests (`recipients`, `TasteBrief::fromRecipient`);
+- the occasion: `wishlists.event_type` (birthday, Christmas, new home…);
+- the search the product was saved from, once search reads intent (section 5): recorded with the
+  save, since that is the moment the intent is known.
+
+How it must work, so it helps and cannot hurt:
+
+- **Counted, not copied.** Each product gets counts per intent tag ("saved for a father 41 times,
+  for cooking 37, for a 60th 12"), kept apart from the editors' `gift_tags`. The suggestion engine
+  and search read both; a person's list never changes what an editor wrote.
+- **A tag shows only when several different people agree** (a threshold such as five distinct list
+  owners), so no single list, and no single person trying to game it, moves anything.
+- **Nothing about a person leaks.** Counts only, with no list or owner behind them. What a list is
+  for is never shown to anyone but the people it is shared with. (Whether private lists count is an
+  open question below.)
+- **No AI.** The intent is what was chosen in a form or read from a search, in the same closed
+  vocabulary (`GiftTags`).
+
+This is also how gift tags reach the tens of thousands of products no editor will ever tag.
+
+### G. A person's own wish list is intent too
+
+The owner's second idea (2026-09-26): **a wish list somebody keeps for themselves says what they
+like, and the products on it are linked through that person.** Two uses, one signal:
+
+- **A gift for somebody who keeps a list.** Their list is the best brief there is. The interests,
+  price band, brands and kinds of thing on it become the intent for a gift for them (a
+  `TasteBrief` derived from the list), so suggestions land near what they asked for without
+  repeating it. Giving somebody something from their list stays the first answer; this is for the
+  second present, or when everything is claimed. The list already knows who it belongs to (a `mine`
+  list, or a recipient linked to the giver's list for them).
+- **Products linked by the people who want them.** When many people keep product A and product B
+  on their own lists, A and B belong together for reasons no category captures: "people who want
+  this also want…". That feeds the product page's Related (section 4), the suggestion engine, and
+  intent search, and like F it grows with use.
+
+The same rules as F: counted over many lists with a threshold of distinct people, never one person's
+list shown to anyone who was not given it, and no AI. Claims play no part (invariant 4): what was
+bought is never a signal, only what was wished for.
 
 ---
 
@@ -218,16 +316,87 @@ Nobody searches for "cove". People search for *wish list*, *verlanglijstje*, *li
 
 ---
 
-## Front page brief
+## 4. Product pages: a node, not a click-out
 
-The front page has one job: get the idea across in five seconds, then get the visitor into the
-system.
+A product page is where a product, its shops, the people who want it and the Coves it is in meet:
 
-- **The idea:** keep anything, from any shop, in Coves you share with the people who matter.
-- **The action:** start a Cove, by searching, pasting a link or scanning.
-- **Starting point:** the current homepage ([homepage.md](features/homepage.md), "Give better. Get
-  what you actually want."), which already sells lists made "from anything you find online or
-  offline". Rewriting the copy is a later change, made against this brief.
+> **LEGO Technic Ferrari** · €89.99–€104.95 · available from 6 shops [View shops]
+> [Add to my Cove] · ❤️ Saved by 342 people · Found in 18 Coves
+> Related: Gifts for car lovers · Gifts under €100 · LEGO Coves
+
+Then it is no longer an affiliate click-out page but a node in a network, and that is much harder
+to copy.
+
+**Where we stand.** The page shows the lowest price, the number of shops, every offer (in stock
+first, then cheapest), a save button, price and stock alerts, sharing and the shop's description
+(`ProductController`, `Pages/Product.tsx`). Missing: the price range (`maxPrice` is sent but not
+shown), how many people saved it, which Coves hold it, and anything related. The data is there:
+`wishlist_items.group_id` (saves) and `daily_picks.group_id` (editorial Coves).
+
+- **"Saved by N"** counts distinct people, never claims, and shows only from a small threshold, so a
+  count of one cannot point at one person's list.
+- **"Found in N Coves"** counts published editorial Coves now, and public lists once they exist.
+- **Related** comes from the Coves holding it, its brand page, a price band, intent (section 5),
+  and the products people keep on their own lists next to this one (engine G).
+
+## 5. Search is a core product
+
+Instead of "Search products…", let people type what they mean:
+
+> Gift for my sister who loves gardening, €30–€50
+
+and answer with the interpretation first, then the results:
+
+> **Sister · gardening · €30–€50**
+
+You don't need generative AI for this. What matters is turning language into structured intent (the
+`TasteBrief` of engine E) and showing it back, editable, so a wrong reading costs one tap. The same
+intent then powers search, gift pages, Coves and recommendations, and it is what a saved product
+passes on to the catalogue (engine F).
+
+**Where we stand.** Search reads the words as they are typed, plus explicit price filters
+(`SearchQuery::fromRequest`). Nothing parses "for my sister", "under 50" or "€30–€50". The vocabulary
+exists (`GiftTags`, `Interest`, `RecipientType`) but has no synonyms per language, and the Gift
+Whisperer takes intent only as a step-by-step form.
+
+**Missing.** A parser (pure, per-language word lists, budget patterns), the interpretation shown as
+removable chips, and the suggestion engine answering when intent was found.
+
+## 6. The front page and the navigation
+
+The homepage should not explain every feature. It answers three questions: what is this, why should
+I care, what can I do now. The owner's structure:
+
+1. **Hero.** "Find things worth giving, getting and sharing." GiftCoves is an open place to discover
+   products from shops, brands and independent sellers, and save them in Coves you can keep, share
+   or give. [Create a Cove] [Explore Coves]. Then: *Search anything · Add anything · Share
+   anything.*
+2. **Three ways in.** 🎁 Looking for a gift? (who, what they like, budget → [Find a gift]) ·
+   ❤️ Building a wish list? (save things from anywhere → [Create my Cove]) · ✨ Just browsing?
+   (Coves by GiftCoves and the community → [Explore]). One per audience.
+3. **The openness.** "From anywhere." GiftCoves isn't limited to the shops we work with: add it from
+   your favourite website, scan it in a shop, search it. A picture of many sources flowing into one
+   Cove, with generic labels ("Big online shops · Independent makers · The shop round the corner"),
+   not other companies' names.
+4. **Coves.** "See what other people are collecting": themed cards (gamers, new home, creatives,
+   Christmas, travel, new baby) → [Explore all Coves]. Where the catalogue becomes discovery.
+5. **Daily.** Only now: "Something interesting every day", today's Cove, and the newsletter.
+6. **Trust, short.** "Open. Useful. Transparent." Products come from retailers, brands, independent
+   sellers or the community. Some links earn GiftCoves a commission; that doesn't change what you
+   pay. [How GiftCoves works →]
+
+**Final call:** "Start your first Cove." [Create a Cove]
+
+**Navigation:** **Discover | Coves | Gifts | How it works**, and on the right the visitor's own
+**My Coves**. Daily Cove, Surprise, Shop Smarter, Ask others, Secret Friend, group lists and
+occasions stop being equal top-level ideas and live inside those.
+
+**Where we stand.** Today's homepage ([homepage.md](features/homepage.md)) has a hero ("Give
+better. Get what you actually want."), a search card, the list wizard, today's Cove, the newsletter,
+recently viewed and "More Coves". The header has Make a list, Find a gift (eight items) and Help.
+Everything the new page links to exists: create a list, `/coves`, the Gift Whisperer, today's Cove,
+the how-it-works page. Community Coves appear once public lists exist; until then that section shows
+editorial Coves.
 
 ---
 
@@ -235,16 +404,20 @@ system.
 
 In order, each step small enough to ship and prove on its own. Each has an implementation plan
 in `.claude/plans/roadmap-N-*.md`, ending with the questions the owner decides before it is built.
+Order agreed with the owner on 2026-09-26.
 
-1. **Anything goes in.** Products in the catalogue that need no feed; reading a pasted link in a
-   queued job; an unknown barcode becomes an item; photo upload.
-2. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
+1. **Anything goes in.** Built 2026-09-26 ([pasted-links.md](features/pasted-links.md)); pasted
+   pages becoming catalogue offers waits for step 5.
+2. **Front page and navigation.** Section 6: the new homepage and the four-item header.
+3. **Product pages.** Section 4: price range, saved by, found in, related.
+4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
+   gift pages and Coves, the intent a list passes on to its products, and a person's own list as
+   the brief for a gift for them.
+5. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
    confirmed by a person; admin merge and split.
-3. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with
+6. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with
    titles that follow the naming rule above).
-4. **Intent everywhere.** `TasteBrief` behind search filters, guide landing pages and Cove
-   suggestions.
-5. **People find each other.** Handles and `/u/{handle}` profiles, following switched on,
+7. **People find each other.** Handles and `/u/{handle}` profiles, following switched on,
    discovery of public Coves, recommendations; saves and shares feed the ranking.
 
 ---
@@ -263,8 +436,9 @@ draws an edge around it:
 
 ## Open questions
 
-- **A visitor pastes an Amazon link.** It cannot enter the catalogue. Does it stay a plain link on
-  that one list item, as today, or is it refused?
+- **Do private lists teach the catalogue (engine F)?** As anonymous counts they reveal nothing, and
+  they are most of the lists. But somebody making a private list may not expect it to count at all.
+  Needs a line in the privacy page either way.
 - **Moderation of public Coves.** Who sees them before search engines do, and what can be reported.
 - **A visitor's product meeting a feed's product.** Can the two merge into one, and who confirms it?
 - **"What is this?" from a photo.** Which model, what daily cap, and what the visitor sees when it

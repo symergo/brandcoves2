@@ -1,7 +1,7 @@
-# Roadmap step 5: people find each other
+# Roadmap step 7: people find each other
 
 Strategy: [docs/strategy.md](../../docs/strategy.md), "People". Written 2026-09-26.
-Builds on step 3 (public lists, `users.public_name`, saved and followed Coves).
+Builds on step 6 (public lists, `users.public_name`, saved and followed Coves).
 
 ## Goal
 
@@ -25,7 +25,7 @@ products; what people save and share starts to count in ranking, without ever ov
 
 - `users.handle` (unique, lowercase, 3-30 characters of `a-z0-9_-`, a reserved list: admin, api,
   giftcoves, the market codes, every first path segment the router uses). Chosen, never derived
-  from the email. `public_name` from step 3 is the display name beside it.
+  from the email. `public_name` from step 6 is the display name beside it.
 - `/{market}/u/{handle}`: public name, avatar, published lists in this market, the user's
   recommendations (below), follower count, Follow button. `noindex` until the profile has at
   least one published list, so empty profiles never reach search engines.
@@ -38,7 +38,7 @@ for the graph itself first: it has none. What following gives you:
 
 - A **From people you follow** feed on the Lists index and in the inbox: their newly published
   lists and recommendations. `friendsLists()` becomes `followedActivity()` and also covers
-  lists published through step 3's `published_status`, not just `visibility = public`.
+  lists published through step 6's `published_status`, not just `visibility = public`.
 - A follow creates a notification for the followed person ("X follows you"), at most one a day,
   batched.
 

@@ -1,4 +1,4 @@
-# Roadmap step 3: interoperable Coves
+# Roadmap step 6: interoperable Coves
 
 Strategy: [docs/strategy.md](../../docs/strategy.md), "Interoperable Coves". Written 2026-09-26.
 
@@ -62,7 +62,7 @@ email per person for those who opted into email. Rate: at most one notification 
   else, who never agreed to be public.
 - **UI:** `ListTools.tsx` sharing section gets a third state: Private / Link / **Public: anyone can
   find it**. Publishing asks for a public name if the user has none (`users.public_name`, new
-  column; step 5 adds the handle on top) and shows what the public page will show.
+  column; step 7 adds the handle on top) and shows what the public page will show.
 - **Moderation:** `wishlists.published_status` (`pending`, `published`, `rejected`) plus
   `published_at`. Publishing sets `pending`; a triage job modelled on `TriageCommunityPost` screens
   title and notes; an admin approves in Filament. Until `published`, the list behaves as a link

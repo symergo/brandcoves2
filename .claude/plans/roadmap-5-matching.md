@@ -1,4 +1,4 @@
-# Roadmap step 2: matching products that arrived separately
+# Roadmap step 5: matching products that arrived separately
 
 Strategy: [docs/strategy.md](../../docs/strategy.md), engine C. Written 2026-09-26.
 
