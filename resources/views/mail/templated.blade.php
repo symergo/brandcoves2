@@ -18,5 +18,9 @@
 {{ $button }}
 </x-mail::button>
 
-<small>{{ __('site.auth.mail_fallback') }}<br>{{ $url }}</small>
+@isset($ideas)
+@include('mail.partials.reminder-ideas')
+@endisset
+
+<small>{{ __('site.auth.mail_fallback') }}<br>{{ $url }}@if (! empty($unsubscribeUrl))<br><a href="{{ $unsubscribeUrl }}">{{ __('site.reminders.mail_stop') }}</a>@endif</small>
 </x-mail::message>

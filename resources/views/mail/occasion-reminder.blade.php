@@ -12,13 +12,17 @@
 {{ __('site.reminders.mail_button') }}
 </x-mail::button>
 
+@include('mail.partials.reminder-ideas')
+
 {{--
-    No products, no prices, no claim state — a date, a lead time and a link.
+    Nothing from any list, no claim state: a date, a lead time and a link.
     This lands in an inbox that may be read on a shared screen or forwarded, and
     on a wish list the person it is addressed to is the one who must not learn
     what has been bought. `mail/list-invitation` refuses product data for the
-    same reason.
+    same reason. The ideas above are the one exception to "no products", and
+    they are not list contents: catalogue suggestions about somebody else,
+    sent about two weeks out (see the partial).
 --}}
 
-<small>{{ __('site.reminders.mail_why') }}</small>
+<small>{{ __('site.reminders.mail_why') }}@if (! empty($unsubscribeUrl)) <a href="{{ $unsubscribeUrl }}">{{ __('site.reminders.mail_stop') }}</a>@endif</small>
 </x-mail::message>

@@ -8,6 +8,7 @@ use App\Enums\TasteSource;
 use App\Models\Event;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
+use App\Services\Gift\GiftHistory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\SuggestionProfile;
@@ -99,14 +100,29 @@ class TasteController extends Controller
         $validated = $request->validate([
             ...$this->choiceRules('required'),
             'for' => ['nullable', 'string', 'in:someone,me'],
+            // Choosing for one of your saved people (`?person=` on the page):
+            // what they were already given is left out of the ideas.
+            'recipient_id' => ['nullable', 'uuid'],
         ]);
 
         $for = $validated['for'] ?? 'someone';
 
+        // Owner-scoped: somebody else's id is ignored, as if it were not sent.
+        $recipient = $for === 'someone' && ! empty($validated['recipient_id'])
+            ? Owner::fromRequest($request)->scope(Recipient::query())->find($validated['recipient_id'])
+            : null;
+
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
             'rounds' => [],
-            'result' => $this->outcome($validated['choices'], $current, $reader, $engine, $for),
+            'result' => $this->outcome(
+                $validated['choices'],
+                $current,
+                $reader,
+                $engine,
+                $for,
+                given: $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient),
+            ),
         ]);
     }
 
@@ -240,9 +256,10 @@ class TasteController extends Controller
      * send them again to keep the result.
      *
      * @param  list<array<string, mixed>>  $raw
+     * @param  list<int>  $given  products the chosen person was already given
      * @return array<string, mixed>
      */
-    private function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true): array
+    private function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true, array $given = []): array
     {
         $choices = $reader->read($raw, $current->get());
         $profile = TasteProfiler::fromConfig()->profile($choices);
@@ -256,7 +273,9 @@ class TasteController extends Controller
         $brief = $profile->brief(
             $current->get(),
             (int) config('giftcoves.gift.results'),
-            $this->shownIds($choices),
+            // The products already shown, and what the person was already
+            // given when they are one of yours (docs/features/gift-history.md).
+            [...$this->shownIds($choices), ...$given],
             $for === 'me' ? SuggestionProfile::forMyself() : SuggestionProfile::forSomeone(),
         );
 

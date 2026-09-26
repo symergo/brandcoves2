@@ -109,6 +109,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '*/track/click',
 
+            // One-click "stop reminder emails" (RFC 8058): the mail client
+            // POSTs with no session. The signed URL is the credential, and
+            // all it can do is turn emails off.
+            '*/reminders/stop/*',
+
             // eBay's account-deletion webhook. A server-to-server POST from
             // outside, so there is no session and no token to carry — and
             // rejecting it would mark the application non compliant in eBay's

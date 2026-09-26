@@ -42,6 +42,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             // casting it as one makes it move across timezones.
             'birthday' => 'date',
             'friends_see_birthday' => 'boolean',
+            'reminder_emails_off_at' => 'datetime',
         ];
     }
 

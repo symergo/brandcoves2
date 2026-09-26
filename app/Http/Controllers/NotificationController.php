@@ -51,6 +51,8 @@ class NotificationController extends Controller
         return Inertia::render('Notifications', [
             'notifications' => $notifications,
             'watching' => $this->watching($request, $current),
+            // Reminder emails on or off (ReminderEmailController).
+            'reminderEmails' => $user->reminder_emails_off_at === null,
         ]);
     }
 

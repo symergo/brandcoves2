@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import InfoTip from '../Components/InfoTip'
 
 interface Notice {
     id: number
@@ -35,9 +36,11 @@ interface Watched {
 interface Props {
     notifications: Notice[]
     watching: Watched[]
+    /** Reminder emails on; off keeps reminders in this inbox only. */
+    reminderEmails?: boolean
 }
 
-export default function Notifications({ notifications, watching }: Props) {
+export default function Notifications({ notifications, watching, reminderEmails = true }: Props) {
     const { market, unreadCount } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -100,6 +103,26 @@ export default function Notifications({ notifications, watching }: Props) {
             <Head title={t('notifications.title')} />
 
             <h1 className="text-xl sm:text-2xl font-semibold">{t('notifications.title')}</h1>
+
+            {/*
+              The switch for reminder emails, the way back on after the stop
+              link in an email. Saved at once, like every switch on this site.
+            */}
+            <label className="mt-4 flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    checked={reminderEmails}
+                    onChange={(e) =>
+                        router.post(
+                            `/${market.key}/notifications/reminder-emails`,
+                            { on: e.target.checked },
+                            { preserveScroll: true },
+                        )
+                    }
+                />
+                <span>{t('reminders.email_toggle')}</span>
+                <InfoTip>{t('reminders.email_toggle_hint')}</InfoTip>
+            </label>
 
             <section className="mt-8">
                 <h2 className="text-sm font-medium text-ink-soft">{t('notifications.recent')}</h2>

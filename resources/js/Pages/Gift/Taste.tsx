@@ -123,7 +123,11 @@ export default function Taste(props: Props) {
 
 function Play({ mode, urls, total, rounds }: Props) {
     const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market } = page.props
+    // `?person=<id>`: choosing for one of your saved people, from their page.
+    // The server leaves out what they were already given (gift-history.md).
+    const person = new URLSearchParams(page.url.split('?')[1] ?? '').get('person')
 
     // The person themselves is always "you"; a giver says who first.
     const [forWhom, setForWhom] = useState<'someone' | 'me' | null>(mode === 'self' ? 'me' : null)
@@ -144,9 +148,13 @@ function Play({ mode, urls, total, rounds }: Props) {
             }
 
             setFinishing(true)
-            router.post(urls.result, { choices: all, for: forWhom ?? 'someone' }, { onFinish: () => setFinishing(false) })
+            router.post(
+                urls.result,
+                { choices: all, for: forWhom ?? 'someone', ...(person ? { recipient_id: person } : {}) },
+                { onFinish: () => setFinishing(false) },
+            )
         },
-        [urls.result, forWhom],
+        [urls.result, forWhom, person],
     )
 
     /*

@@ -68,6 +68,16 @@ class PrunePersonalDataCommand extends Command
         'feedback' => 365,
     ];
 
+    /**
+     * Gift history, in years: a line about what somebody gave one of their
+     * saved people goes when its year is this many years back. Counted in
+     * years because that is all the line records ("given in 2021"). Ten is
+     * long enough for "what did I give her for her 60th", and past it a line
+     * no longer tells anybody what to avoid giving next. Quoted in
+     * `resources/legal/*` as well.
+     */
+    public const GIFT_HISTORY_YEARS = 10;
+
     public function handle(): int
     {
         $dry = (bool) $this->option('dry-run');
@@ -152,6 +162,17 @@ class PrunePersonalDataCommand extends Command
         $report['feedback'] = $this->prune(
             'feedback',
             fn () => DB::table('feedback')->where('created_at', '<', now()->subDays(self::RETENTION['feedback'])),
+            $dry,
+        );
+
+        /*
+         * What somebody noted they gave a person (gift-history.md). Deleted
+         * with the person or the account anyway; this is the ceiling for a
+         * person kept for years.
+         */
+        $report['gift history'] = $this->prune(
+            'recipient_gifts',
+            fn () => DB::table('recipient_gifts')->where('given_year', '<', (int) now()->year - self::GIFT_HISTORY_YEARS),
             $dry,
         );
 

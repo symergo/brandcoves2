@@ -85,6 +85,24 @@ inbox that may be read on a shared screen or forwarded, and on a wish list the
 one person who must not learn what has been bought is the person it is addressed
 to. `ListInvitationMail` refuses product data for the same reason.
 
+## Ideas ready, about two weeks out (2026-09-28)
+
+On the window nearest two weeks (`reminders.ideas_lead_days`, 14; the fifteen-day one with the
+shipped windows), a reminder about somebody else (a saved person's birthday, or the occasion on a
+list about them) carries three gift ideas in the email: their taste, their budget, nothing they
+were already given. Once per person, occasion and year, with `ideas_key` in the notification's
+payload as the ledger. A birthday reminder's in-app link now opens the Gift Finder on that person
+(`/gift?for=<id>`) rather than an empty wizard. The whole design, and why the ideas are not "list
+contents": [gift-history.md](gift-history.md#reminders-with-ideas-ready).
+
+## Anybody can stop the emails (2026-09-28)
+
+`users.reminder_emails_off_at`: set from the signed link in every reminder email (footer and
+`List-Unsubscribe`, one-click POST), or the switch on the notifications page, which also turns them
+back on. It stops every reminder email for that person; the inbox row is still written. Before this
+the only switch was `reminders.email`, for everybody at once, and `mail_why` pointed at an account
+setting that did not exist.
+
 ## Whose date it is decides what the sentence says
 
 On a list **about somebody else** the occasion is the recipient's and the owner
@@ -120,13 +138,21 @@ arriving half in English is the bug all of that prevents.
 | Admin | [app/Filament/Pages/ReminderSettings.php](../../app/Filament/Pages/ReminderSettings.php) — Operations → Reminders |
 | Mail | [app/Mail/OccasionReminderMail.php](../../app/Mail/OccasionReminderMail.php), `resources/views/mail/occasion-reminder.blade.php` |
 | Copy | `site.reminders.*` — one `lead` with `:days`, replacing the per-value `lead_14` / `lead_3` |
-| Tests | [tests/Feature/OccasionReminderTest.php](../../tests/Feature/OccasionReminderTest.php) |
+| Ideas, stop link | [app/Services/Gift/ReminderIdeas.php](../../app/Services/Gift/ReminderIdeas.php), `resources/views/mail/partials/reminder-ideas.blade.php`, [app/Http/Controllers/ReminderEmailController.php](../../app/Http/Controllers/ReminderEmailController.php) |
+| Tests | [tests/Feature/OccasionReminderTest.php](../../tests/Feature/OccasionReminderTest.php), [tests/Feature/ReminderIdeasTest.php](../../tests/Feature/ReminderIdeasTest.php) |
 
 ## See also
 
 - [wishlists.md](wishlists.md) — invariant 4, and why claimers are unreachable
 - [email-templates.md](email-templates.md) — the reminder's wording is editable
 - [secret-santa.md](secret-santa.md) — the exchange date this also watches
+
+## A saved person with a list got no birthday reminder until 2026-09-28
+
+The market was read with Eloquent's `value('market')`, which returns the cast `Market` enum, and
+`(string)` on an enum throws. So the job failed on every saved person somebody had made a list for,
+and on friend birthdays for anybody with a list. `toBase()` reads the raw string. Found by the
+reminder-ideas tests, which all give the person a list.
 
 ## The settings page could not save on production until 2026-09-14
 

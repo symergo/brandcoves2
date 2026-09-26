@@ -43,11 +43,13 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
+use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\PopularSearchesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
+use App\Http\Controllers\ReminderEmailController;
 use App\Http\Controllers\SavedCoveController;
 use App\Http\Controllers\SaveIntentController;
 use App\Http\Controllers\ScanController;
@@ -549,6 +551,23 @@ Route::prefix('{market}')->group(function () {
         Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
         Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
 
+        /*
+         * A saved person's page: gift history, "I gave this", and the next
+         * step after what they were given. The owner's only; see
+         * PersonController and docs/features/gift-history.md.
+         */
+        Route::get('/people/{recipient}', [PersonController::class, 'show'])
+            ->whereUuid('recipient')
+            ->name('people.show');
+        Route::post('/people/{recipient}/gifts', [PersonController::class, 'store'])
+            ->whereUuid('recipient')
+            ->middleware('throttle:30,1')
+            ->name('people.gifts.store');
+        Route::delete('/people/{recipient}/gifts/{gift}', [PersonController::class, 'destroy'])
+            ->whereUuid('recipient')
+            ->whereNumber('gift')
+            ->name('people.gifts.destroy');
+
         // Hand a list to the person it was built for. It stops being research
         // and becomes theirs — which is what makes it claimable.
         Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
@@ -794,6 +813,9 @@ Route::prefix('{market}')->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
         Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])
             ->name('notifications.read');
+        // Reminder emails on or off; see ReminderEmailController.
+        Route::post('/notifications/reminder-emails', [ReminderEmailController::class, 'update'])
+            ->name('reminders.email');
     });
 
     /*
@@ -1054,6 +1076,17 @@ Route::prefix('{market}')->group(function () {
         ->where('token', '[a-f0-9]{64}')
         ->middleware('throttle:30,1')
         ->name('coves.unsubscribe');
+
+    /*
+     * "Stop these reminder emails", from the link in every reminder. Signed
+     * rather than behind a sign-in, so one click works from any device, and
+     * the signature is what stops anybody turning off somebody else's.
+     * Exempt from CSRF in bootstrap/app.php for the RFC 8058 POST.
+     */
+    Route::match(['get', 'post'], '/reminders/stop/{user}', [ReminderEmailController::class, 'stop'])
+        ->whereNumber('user')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('reminders.stop');
 
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')

@@ -13,8 +13,10 @@ use App\Models\Event;
 use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Services\Cove\CommunityCoves;
+use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftLandingLinks;
 use App\Services\Gift\GiftTags;
+use App\Services\Gift\NextSteps;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
@@ -25,6 +27,7 @@ use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,7 +47,7 @@ use Inertia\Response;
  */
 class GiftController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current, RejectionMemory $memory): Response
+    public function show(Request $request, CurrentMarket $current, RejectionMemory $memory, SuggestionEngine $engine): Response
     {
         $this->seo($current);
 
@@ -56,6 +59,23 @@ class GiftController extends Controller
          * says the opposite of that.
          */
         $memory->flush();
+
+        /*
+         * `?for=<person>`: straight to the ideas for somebody already saved,
+         * from the reminder email and the person's page. Only the owner's own
+         * person; anybody else's id opens the empty wizard, as if it were not
+         * there. See docs/features/gift-history.md.
+         */
+        $for = (string) $request->query('for', '');
+        $recipient = Str::isUuid($for) ? $this->recipient($request, ['recipient_id' => $for]) : null;
+
+        if ($recipient !== null) {
+            $validated = $this->withStored(['recipient_id' => $recipient->id], $current, $recipient);
+            $brief = $this->brief($validated, $current, $recipient);
+            $picks = $engine->suggest($brief->excluding($this->given($recipient)));
+
+            return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+        }
 
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
@@ -94,7 +114,7 @@ class GiftController extends Controller
 
         // Everything already rejected for this brief, remembered server-side.
         $key = $memory->key($brief);
-        $picks = $engine->suggest($brief->excluding($memory->all($key)));
+        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient)]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -151,7 +171,7 @@ class GiftController extends Controller
         // the very response that acknowledges it.
         $memory->remember($key, $request->integer('rejected'));
 
-        $picks = $engine->suggest($brief->excluding($memory->all($key)));
+        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient)]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -187,10 +207,11 @@ class GiftController extends Controller
 
         $key = $memory->key($brief);
 
-        $shown = $engine->suggest($brief->excluding($memory->all($key)));
+        $given = $this->given($recipient);
+        $shown = $engine->suggest($brief->excluding([...$memory->all($key), ...$given]));
         $memory->remember($key, ...array_map(fn (Suggestion $pick) => $pick->group->id, $shown));
 
-        $picks = $engine->suggest($brief->excluding($memory->all($key)));
+        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$given]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -233,7 +254,31 @@ class GiftController extends Controller
              * See docs/features/community-coves.md.
              */
             'communityCoves' => app(CommunityCoves::class)->forBrief($brief, $request->user()),
+            /*
+             * "The next step" after what this person was given, and the way to
+             * their gift history. Only with a saved person; the history page
+             * is behind a sign-in. See docs/features/gift-history.md.
+             */
+            'nextSteps' => $recipient === null ? [] : app(NextSteps::class)->cards(
+                $recipient,
+                $current->get(),
+                alsoExclude: array_map(fn (Suggestion $pick) => $pick->group->id, $picks),
+            ),
+            'personUrl' => $recipient !== null && $request->user() !== null
+                ? $current->url("people/{$recipient->id}")
+                : null,
         ]);
+    }
+
+    /**
+     * What this person was already given, never to be suggested again: the
+     * products in their gift history and whatever was merged with them.
+     *
+     * @return list<int>
+     */
+    private function given(?Recipient $recipient): array
+    {
+        return $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient);
     }
 
     /**
@@ -405,20 +450,7 @@ class GiftController extends Controller
     private function brief(array $validated, CurrentMarket $current, ?Recipient $recipient = null): TasteBrief
     {
         if ($recipient !== null) {
-            $stored = TasteBrief::fromRecipient($recipient, $current->get(), (int) config('giftcoves.gift.results'));
-
-            $validated += array_filter([
-                'interests' => $stored->interests ?: null,
-                'vibe' => $stored->vibe?->value,
-                'preferences' => $stored->preferences ?: null,
-                'budget_min' => $stored->budgetMin === null ? null : $stored->budgetMin / 100,
-                'budget_max' => $stored->budgetMax === null ? null : $stored->budgetMax / 100,
-                'avoid' => $stored->avoid ?: null,
-                'values' => $stored->values ?: null,
-                'relationship' => $stored->relationship,
-                'occasion' => $stored->occasion,
-                'age_band' => $stored->ageBand,
-            ], fn ($v) => $v !== null);
+            $validated = $this->withStored($validated, $current, $recipient);
         }
 
         return new TasteBrief(
@@ -435,6 +467,32 @@ class GiftController extends Controller
             ageBand: $validated['age_band'] ?? null,
             limit: (int) config('giftcoves.gift.results'),
         );
+    }
+
+    /**
+     * The answers, with every one the wizard did not post filled from what is
+     * stored on the person. See {@see brief()} for why an absent key, and
+     * only an absent one, is filled.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function withStored(array $validated, CurrentMarket $current, Recipient $recipient): array
+    {
+        $stored = TasteBrief::fromRecipient($recipient, $current->get(), (int) config('giftcoves.gift.results'));
+
+        return $validated + array_filter([
+            'interests' => $stored->interests ?: null,
+            'vibe' => $stored->vibe?->value,
+            'preferences' => $stored->preferences ?: null,
+            'budget_min' => $stored->budgetMin === null ? null : $stored->budgetMin / 100,
+            'budget_max' => $stored->budgetMax === null ? null : $stored->budgetMax / 100,
+            'avoid' => $stored->avoid ?: null,
+            'values' => $stored->values ?: null,
+            'relationship' => $stored->relationship,
+            'occasion' => $stored->occasion,
+            'age_band' => $stored->ageBand,
+        ], fn ($v) => $v !== null);
     }
 
     /**

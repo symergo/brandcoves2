@@ -43,6 +43,17 @@ URL typed into a body is wrong the moment the market changes.
 So an override renders through one generic view. The editor writes the
 sentences; `UsesTemplate` supplies everything that has to work.
 
+The occasion reminder adds two more parts an editor cannot remove (2026-09-28): the three gift
+ideas it carries about two weeks out, and the link that stops reminder emails. `mail/templated`
+includes both under an edited body, exactly as under the shipped one. See
+[gift-history.md](gift-history.md#reminders-with-ideas-ready).
+
+**Until 2026-09-28 an edited reminder changed only its subject.** A Mailable passes its public
+properties to the view over what `content()` passes, and the reminder's public `$body` (the shipped
+sentence) replaced the editor's. A templated mail must not have a public property named like a
+key of `mail.templated` with a different value (`body`); `url` and `language` are harmless because
+they hold the same value.
+
 ## Two emails are deliberately not offered
 
 - **The Cove digest** carries products. A body is not its content — a list of

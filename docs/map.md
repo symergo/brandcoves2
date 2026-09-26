@@ -61,9 +61,10 @@ Grouped by what a visitor is doing, not by file order:
   `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-ideas/for/{recipient}/{interest?}`
   (gift landing pages), `/gift-cove`, `/ask`
 - **Organize** — `/lists`, `/lists/{list}`, `/list-options`, `/saved-items`, `/l/{token}` (shared
-  list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`
+  list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`,
+  `/people/{recipient}` (a saved person's gift history and next step)
 - **Account** — `/login`, `/auth/magic/{token}`, `/auth/google`, `/logout`, `/notifications`,
-  `/alerts`
+  `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email)
 - **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`
 
 ## Services, one line each
@@ -82,7 +83,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Curation/` | the human pass over a drafted plan |
 | `Discovery/` | catalogue-level signals: trends, serendipity, freshness |
 | `Editorial/` | the API's view of products; link checking; allowlist |
-| `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs |
+| `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs; gift history (`GiftHistory`), the next step after a past gift (`NextSteps`, scored by `NextStepScorer`) and the ideas in a reminder (`ReminderIdeas`); see features/gift-history.md |
 | `Guides/` | topic mining and planning |
 | `Ideas/` | offline items people typed by hand, folded (`IdeaKey`), counted nightly from five people (`OfflineIdeaCounter`) and, once a person approved them, matched to a brief (`OfflineIdeaPicker`); see features/offline-ideas.md |
 | `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2; merges, splits and the match rules (`GroupMerger`, `GroupSplitter`, `MatchFinder`, `ModelNumber`) |

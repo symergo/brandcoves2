@@ -291,6 +291,19 @@ export default function ListShow({
                             <p className="mt-2 max-w-prose text-ink-soft">{list.description}</p>
                         )}
                         {/*
+                          The person's own page: what you gave them and the next
+                          step (gift-history.md). The owner's only, and only on a
+                          list about somebody else.
+                        */}
+                        {access.isOwner && list.kind !== 'mine' && list.recipient && (
+                            <Link
+                                href={`${base}/people/${list.recipient.id}`}
+                                className="mt-2 inline-block text-sm text-accent underline"
+                            >
+                                {t('gift_history.link', { name: list.recipient.name })}
+                            </Link>
+                        )}
+                        {/*
                           The quiz, named on the one list it cannot appear on.
 
                           `ListTools` gates the tab on `shared && claimable`, and
