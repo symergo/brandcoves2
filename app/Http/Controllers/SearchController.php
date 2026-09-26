@@ -158,6 +158,11 @@ class SearchController extends Controller
             // The reading of a gift search, shown above its results. Null for
             // every ordinary search.
             'intent' => $gift === null || $intent === null ? null : $this->presentIntent($intent, $current),
+
+            // Who, interest and occasion filters (?for=, ?interest=,
+            // ?occasion=), each a chip that drops itself. Empty for almost
+            // every search: these come from links, not from the box.
+            'tagFilters' => $this->tagFilters($query, $current),
             'lanes' => $query->view === 'store'
                 ? $this->presentLanes($search->storeLanes($query))
                 : null,
@@ -725,6 +730,32 @@ class SearchController extends Controller
             ] : null,
             'words' => $intent->rest,
             'asWordsUrl' => SearchUrl::for($market, $intent->original, ['as' => 'words']),
+        ];
+    }
+
+    /**
+     * The tag filters as chips, each carrying the search without it.
+     *
+     * @return list<array{label: string, without: string}>
+     */
+    private function tagFilters(SearchQuery $query, CurrentMarket $current): array
+    {
+        $market = $current->get();
+        $chip = function (string $kind, string $value, string $label) use ($query, $market): array {
+            $without = $query->withoutTag($kind, $value);
+
+            return ['label' => $label, 'without' => SearchUrl::for($market, $without->term, $without->toArray())];
+        };
+
+        return [
+            ...array_map(fn (string $v) => $chip('for', $v, __('site.search.tag_for', [
+                'who' => (string) trans("site.gift_landing.recipients.{$v}.name", [], $market->language()),
+            ])), $query->recipients),
+            ...array_map(fn (string $v) => $chip('interest', $v, Interest::from($v)->label()), $query->interests),
+            // An occasion outside the list vocabulary (sinterklaas, easter…)
+            // has no translated name yet; its value, made readable, stands in.
+            ...array_map(fn (string $v) => $chip('occasion', $v, EventType::tryFrom($v)?->label($market->language())
+                ?? Str::ucfirst(str_replace('_', ' ', $v))), $query->occasions),
         ];
     }
 

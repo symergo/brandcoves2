@@ -93,6 +93,9 @@ All from templates (`GiftLandingCopy`), never from a model: the page is a web re
 - **One template intro**, no counts in it. The meta description carries the count.
 - **Budget chips** (under 25, 25-50, 50-100, over 100) narrow the page with `?budget=`; the
   canonical stays the bare address, the rule filtered search follows ([search-urls.md](search-urls.md)).
+- **"Search everything tagged for them"** under the products opens the search with the matching
+  filters (`/be-nl/search?for=father&interest=cooking`, [search.md](search.md)): the page is the
+  engine's best 24, the search is every tagged product with sorting and the other filters.
 - **Sideways links only to recorded pages**: the same person's other interests, the same interest
   for other people, and the person's own page. The gift ideas shelf (`/gift-ideas`) links every
   person's page, so a visitor and a crawler find them without the sitemap.

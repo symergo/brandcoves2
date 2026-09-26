@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Enums\Interest;
 use App\Enums\Market;
+use App\Enums\RecipientType;
+use App\Services\Gift\GiftTags;
 use App\Support\Crawlers;
 use Illuminate\Http\Request;
 
@@ -75,6 +78,23 @@ final readonly class SearchQuery
          * for a variant where it would only cost requests.
          */
         public ?string $liveTerm = null,
+
+        /*
+         * Who it is for, what they love, what it is for: `?for=father`,
+         * `?interest=cooking`, `?occasion=christmas` (roadmap step 4, part 3).
+         *
+         * Values of the gift vocabulary only (App\Services\Gift\GiftTags);
+         * anything else is dropped at the parse, so a filter can never be a
+         * string nothing is tagged with. Several values of one kind mean
+         * "any of them"; kinds combine with "and". Matched against the
+         * editors' tags and the crowd's (docs/features/list-signals.md).
+         */
+        /** @var list<string> RecipientType values */
+        public array $recipients = [],
+        /** @var list<string> Interest values */
+        public array $interests = [],
+        /** @var list<string> occasion values from the gift vocabulary */
+        public array $occasions = [],
     ) {}
 
     /** The deepest page a request may ask for. */
@@ -136,6 +156,91 @@ final readonly class SearchQuery
             page: min(self::MAX_PAGE, max(1, (int) $request->query('page', 1))),
             logged: self::fromAPerson($request),
             view: $request->query('view') === 'store' ? 'store' : 'grid',
+            recipients: self::known($request->query('for'), RecipientType::values()),
+            interests: self::known($request->query('interest'), Interest::values()),
+            occasions: self::known($request->query('occasion'), GiftTags::vocabulary()[GiftTags::OCCASION]),
+        );
+    }
+
+    /**
+     * One value or several (`?interest=cooking` or `?interest[]=cooking&interest[]=coffee`),
+     * kept only when the vocabulary knows it.
+     *
+     * @param  list<string>  $allowed
+     * @return list<string>
+     */
+    private static function known(mixed $values, array $allowed): array
+    {
+        $wanted = array_map(
+            fn ($v) => is_string($v) ? mb_strtolower(trim($v)) : '',
+            is_array($values) ? $values : [$values],
+        );
+
+        return array_slice(array_values(array_unique(array_filter(
+            $wanted,
+            fn (string $v) => in_array($v, $allowed, true),
+        ))), 0, 8);
+    }
+
+    /** Whether any who, interest or occasion filter is set. */
+    public function hasTagFilters(): bool
+    {
+        return $this->recipients !== [] || $this->interests !== [] || $this->occasions !== [];
+    }
+
+    /**
+     * The tag filters as fully qualified gift tags, one list per kind.
+     *
+     * @return list<list<string>>
+     */
+    public function tagGroups(): array
+    {
+        return array_values(array_filter([
+            array_map(fn (string $v) => GiftTags::recipient($v), $this->recipients),
+            array_map(fn (string $v) => GiftTags::interest($v), $this->interests),
+            array_map(fn (string $v) => GiftTags::occasion($v), $this->occasions),
+        ]));
+    }
+
+    /**
+     * The same search without one tag filter value: what a chip's × runs.
+     */
+    public function withoutTag(string $kind, string $value): self
+    {
+        $drop = fn (array $values) => array_values(array_filter($values, fn (string $v) => $v !== $value));
+
+        return $this->copy(
+            recipients: $kind === 'for' ? $drop($this->recipients) : $this->recipients,
+            interests: $kind === 'interest' ? $drop($this->interests) : $this->interests,
+            occasions: $kind === 'occasion' ? $drop($this->occasions) : $this->occasions,
+        );
+    }
+
+    /**
+     * @param  list<string>  $recipients
+     * @param  list<string>  $interests
+     * @param  list<string>  $occasions
+     */
+    private function copy(array $recipients, array $interests, array $occasions): self
+    {
+        return new self(
+            market: $this->market,
+            term: $this->term,
+            minPrice: $this->minPrice,
+            maxPrice: $this->maxPrice,
+            merchantIds: $this->merchantIds,
+            brands: $this->brands,
+            inStockOnly: $this->inStockOnly,
+            discountedOnly: $this->discountedOnly,
+            comparableOnly: $this->comparableOnly,
+            sort: $this->sort,
+            page: 1,
+            view: $this->view,
+            logged: $this->logged,
+            liveTerm: $this->liveTerm,
+            recipients: $recipients,
+            interests: $interests,
+            occasions: $occasions,
         );
     }
 
@@ -187,6 +292,9 @@ final readonly class SearchQuery
             // must not start logging because it was narrowed or rewritten.
             logged: $this->logged,
             liveTerm: $liveTerm ?? $this->liveTerm,
+            recipients: $this->recipients,
+            interests: $this->interests,
+            occasions: $this->occasions,
         );
     }
 
@@ -216,6 +324,9 @@ final readonly class SearchQuery
             // Carried, not re-defaulted: a derived query is the same search and
             // must not start logging because it was narrowed or rewritten.
             logged: $this->logged,
+            recipients: $this->recipients,
+            interests: $this->interests,
+            occasions: $this->occasions,
         );
     }
 
@@ -242,6 +353,9 @@ final readonly class SearchQuery
             page: $this->page,
             view: $this->view,
             logged: $this->logged,
+            recipients: $this->recipients,
+            interests: $this->interests,
+            occasions: $this->occasions,
         );
     }
 
@@ -268,7 +382,8 @@ final readonly class SearchQuery
             || $this->merchantIds !== []
             || $this->brands !== []
             || $this->discountedOnly
-            || $this->comparableOnly;
+            || $this->comparableOnly
+            || $this->hasTagFilters();
     }
 
     /**
@@ -315,9 +430,26 @@ final readonly class SearchQuery
             'in_stock' => $this->inStockOnly ? null : '0',
             'discounted' => $this->discountedOnly ? '1' : null,
             'comparable' => $this->comparableOnly ? '1' : null,
+            // One value as a plain parameter (?for=father), several as a list.
+            'for' => self::param($this->recipients),
+            'interest' => self::param($this->interests),
+            'occasion' => self::param($this->occasions),
             'sort' => $this->sort !== 'relevance' ? $this->sort : null,
             'view' => $this->view !== 'grid' ? $this->view : null,
             'page' => $this->page > 1 ? $this->page : null,
         ], fn ($v) => $v !== null);
+    }
+
+    /**
+     * @param  list<string>  $values
+     * @return string|list<string>|null
+     */
+    private static function param(array $values): string|array|null
+    {
+        return match (count($values)) {
+            0 => null,
+            1 => $values[0],
+            default => $values,
+        };
     }
 }

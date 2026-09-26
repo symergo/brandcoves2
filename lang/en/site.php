@@ -232,6 +232,9 @@ return [
         // A gift search, read back (roadmap step 4, 2026-09-26).
         'intent_label' => 'We read this as',
         'intent_remove' => 'Leave out :label',
+        // Who, interest and occasion filters on a search (?for=, ?interest=, ?occasion=).
+        'tag_filters_label' => 'Only gifts',
+        'tag_for' => 'for :who',
         'intent_budget' => 'the budget',
         'intent_under' => 'under :price',
         'intent_as_words' => 'Search the words as typed instead',
@@ -1781,6 +1784,7 @@ return [
         'seo_description' => 'Gift ideas for :recipient :who :interest: :count products from the shops we compare, with every price checked daily.',
         'seo_description_recipient' => 'Gift ideas for :recipient, by what they love: :count products from the shops we compare, with every price checked daily.',
         'by_recipient' => 'Ideas by who it is for',
+        'search_all' => 'Search everything tagged for them',
         'more_for' => 'More for :recipient',
         'same_interest' => 'Also for someone who loves :interest',
         'budget' => 'Budget',
@@ -2231,6 +2235,7 @@ return [
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
+        'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. The Gift Finder links to the one closest to your answers with "Open as a page".',
         'find_product' => 'A product\'s page shows every shop\'s price, how many people keep it on a list, and the Coves it is in.',
         'add_title' => 'Adding anything',

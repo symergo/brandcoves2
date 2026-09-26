@@ -14,6 +14,7 @@ use App\Services\Gift\SuggestionEngine;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -129,6 +130,18 @@ class GiftLandingController extends Controller
                 'links' => $links->sameInterest($marketEnum, $topic, $type),
             ],
             'finderUrl' => $current->url('gift'),
+
+            /*
+             * Everything tagged for this pair, as a filtered search: the
+             * page shows the engine's best 24, the search shows all of them
+             * with the usual filters and sorting. Only products an editor or
+             * enough people's lists tagged, so it can be shorter than the
+             * page, which also matches on words.
+             */
+            'searchUrl' => SearchUrl::for($marketEnum, '', array_filter([
+                'for' => $type->value,
+                'interest' => $topic?->value,
+            ])),
         ]);
     }
 

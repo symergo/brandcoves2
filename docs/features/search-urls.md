@@ -77,6 +77,15 @@ never told the French twin lives at `/be-fr/zoek/...`.
   `Components/SearchCard.tsx`
 - `tests/Feature/SearchUrlTest.php`
 
+## Gift landing pages use the same idea, one level down (2026-09-26)
+
+`/be-nl/gift-ideas/for/papa/koken` puts the searcher's own words in the path the way `/zoek/term`
+does, from word lists per language in `lang/*/site.php`, with another language's words redirected
+(301) rather than served twice. The section word stays `gift-ideas` in every market. See
+[gift-landing-pages.md](gift-landing-pages.md). The search tag filters (`?for=`, `?interest=`,
+`?occasion=`) are the opposite case: they narrow a search, and the page keeps canonicalising to the
+bare term, so the landing pages own those phrases in search engines, not filtered search.
+
 ## See also
 
 - [seo.md](seo.md) — the crawl-budget table these URLs sit in

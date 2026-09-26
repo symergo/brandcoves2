@@ -34,6 +34,8 @@ interface Props {
     }
     sameInterest: { title: string; links: PageLink[] } | null
     finderUrl: string
+    /** Everything tagged for this pair, as a filtered search. */
+    searchUrl?: string
 }
 
 /**
@@ -44,7 +46,7 @@ interface Props {
  * (the server resolves them). Nothing here is written by a model. See
  * docs/features/gift-landing-pages.md.
  */
-export default function Landing({ heading, intro, products, budget, moreFor, sameInterest, finderUrl }: Props) {
+export default function Landing({ heading, intro, products, budget, moreFor, sameInterest, finderUrl, searchUrl }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -105,6 +107,14 @@ export default function Landing({ heading, intro, products, budget, moreFor, sam
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {searchUrl && products.length > 0 && (
+                <p className="mt-4">
+                    <Link href={searchUrl} className="text-sm text-accent-dark underline hover:text-ink">
+                        {t('gift_landing.search_all')}
+                    </Link>
+                </p>
             )}
 
             <section className="mt-10 max-w-2xl rounded-card border border-line bg-card p-5">

@@ -662,6 +662,30 @@ The controller renders it for the bare landing only: no term, no filter, the gri
 empty-state copy, the SEO) one shape with nothing in it, and the page shows the landing in place
 of the sidebar and the grid. A term or a filter is a search and gets the grid as before.
 
+## Filters for who, what they love and the occasion (2026-09-26)
+
+Roadmap step 4, part 3. `?for=father`, `?interest=cooking`, `?occasion=christmas` narrow a search
+to products tagged for them, by an editor (`gift_tags`) or by enough different people's lists
+(`crowd_tags`, [list-signals.md](list-signals.md)). Several values of one kind are *either*
+(`?interest[]=cooking&interest[]=coffee`); kinds combine with *and*. Values outside the gift
+vocabulary are dropped when the request is read, so a filter can never be a string nothing is
+tagged with.
+
+- **SQL**: one `jsonb_exists_any(gift_tags, …) OR jsonb_exists_any(crowd_tags, …)` per kind in
+  `SearchService::storedQuery()`, so the grid and the by-store lanes both obey it. A watched search
+  does not carry these filters (it stores the term and the price filters only). Both columns have a GIN index. The facet counts deliberately ignore it, like every other
+  filter.
+- **Canonical**: the bare term, as for every filtered search ([search-urls.md](search-urls.md)).
+  The phrases these filters stand for ("gifts for dad who cooks") belong to the gift landing pages
+  ([gift-landing-pages.md](gift-landing-pages.md)), not to a filtered search competing with them.
+- **Chips**: each active filter shows above the results with the search without it.
+- **No term needed**: `/be-nl/search?for=father&interest=cooking` is a search. It is the link a
+  landing page offers under its products ("search everything tagged for them"), since the page
+  shows the engine's best 24 and the search shows the lot, with sorting and the other filters.
+- **Not in the box.** A gift sentence typed into the search box is still read by the intent parser
+  and answered by the suggestion engine ([intent-search.md](intent-search.md)); these filters are
+  for links.
+
 ## See also
 
 - [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill

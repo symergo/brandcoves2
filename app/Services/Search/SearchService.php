@@ -143,6 +143,24 @@ class SearchService
                 ->whereColumn('min_price', '<', 'previous_price');
         }
 
+        /*
+         * Who it is for, what they love, what it is for (roadmap step 4).
+         *
+         * An editor's tag or the crowd's: either says the product suits it,
+         * the crowd's only once enough different people agreed
+         * (docs/features/list-signals.md). Any value within one kind, every
+         * kind asked. `jsonb_exists_any` is `?|` spelled as a function,
+         * because a bare `?` is a placeholder to PDO; both columns have a GIN
+         * index it can use.
+         */
+        foreach ($query->tagGroups() as $tags) {
+            $array = '{'.implode(',', array_map(fn (string $t) => '"'.$t.'"', $tags)).'}';
+
+            $groups->where(fn (Builder $either) => $either
+                ->whereRaw('jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$array])
+                ->orWhereRaw('jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$array]));
+        }
+
         return $this->applySort($groups, $query);
     }
 
