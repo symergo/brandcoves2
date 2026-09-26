@@ -16,8 +16,9 @@ Several places ask now, and they are not the same person:
 
 | who | where | how well they know |
 |---|---|---|
-| the giver, naming somebody new | the list wizard (`ListWizard.tsx`), minted by `ListMaker` | guessing |
+| the giver, naming somebody new | posted with the list (`birthday_day`/`month`, minted by `ListMaker`); the one-step screen no longer asks it ([one-step-list.md](one-step-list.md)) | guessing |
 | the giver, for somebody they already have | the list wizard, when the occasion is a birthday and none is stored (`applyWizardSettings`, blank only) | guessing |
+| the giver, on the list page | Settings: occasion Birthday with a date, on a list about somebody with none stored (`WishlistController::update`, blank only; since 2026-09-26) | guessing |
 | a friend | a list made for a friend copies their published birthday, else your note (`recipientForFriend`) | theirs, or your note |
 | the person themselves | `/for/{token}` | exactly |
 

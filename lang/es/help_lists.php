@@ -22,9 +22,9 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Guardar y crear una lista',
-            'blurb' => 'Encontrar algo, guardarlo, abrir tus listas, y crear una lista en tres pasos.',
-            'seo_description' => 'Guarda todo lo que encuentres aquí en una lista de deseos y crea una en tres pasos. Con imágenes.',
-            'intro' => 'No hace falta crear una lista antes. Al guardar se te ofrece, y la portada tiene un botón que crea una en tres pasos.',
+            'blurb' => 'Encontrar algo, guardarlo, abrir tus listas, y crear una lista en un paso.',
+            'seo_description' => 'Guarda todo lo que encuentres aquí en una lista de deseos y crea una en un paso. Con imágenes.',
+            'intro' => 'No hace falta crear una lista antes. Al guardar se te ofrece, y la portada tiene un botón que crea una en un paso.',
             'numbered' => true,
             'sections' => [
                 [
@@ -46,14 +46,14 @@ return [
                     'alt' => 'La página Mis listas, con dos listas y el botón para crear una.',
                 ],
                 [
-                    'title' => 'Crear una lista en tres pasos',
-                    'body' => "1. Toca «Nueva lista» en [Mis listas](lists), o «Crear una lista nueva» en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Toca «Siguiente».\n3. Ponle un nombre y una ocasión a la lista. Toca «Siguiente».\n4. Elige «Privada (o compartir después)» o «Compartir con un enlace», y toca «Crear lista».\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalo en grupo](lists-help/kinds).",
+                    'title' => 'Crear una lista en un paso',
+                    'body' => "1. Toca «Crear una Cove» en [Mis listas](lists) o en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Para otra persona, escribe su nombre o toca a alguien que ya tengas.\n3. Toca «Crear lista». El nombre ya viene puesto; cámbialo antes si quieres.\n\nLa lista se abre con la casilla para añadir ya abierta: pega un enlace o busca. La ocasión, compartir y pedir ideas están en la propia lista, en Ajustes y Compartir.\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalo en grupo](lists-help/kinds).",
                     'shot' => 'wizard',
-                    'alt' => 'El primer paso de una lista nueva, con las tres opciones de para quién es.',
+                    'alt' => 'Una lista nueva: la única pregunta, para quién es.',
                 ],
                 [
                     'title' => 'No hace falta iniciar sesión para empezar',
-                    'body' => 'Los tres pasos funcionan sin cuenta. Al final inicias sesión y la lista está ahí. Lo que rellenaste se guarda un día, así que puedes ausentarte.',
+                    'body' => 'Funciona sin cuenta: el botón te hace iniciar sesión y la lista está ahí. Lo que rellenaste se guarda un día, así que puedes ausentarte.',
                 ],
             ],
         ],
@@ -67,9 +67,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Una elección queda fija',
-                    'body' => 'El primer paso de una [lista nueva](lists-help/saving) pregunta para quién es. Eso decide lo que la lista permite, y es lo único que no se cambia después. El nombre, la ocasión y quién la ve se pueden cambiar siempre.',
+                    'body' => 'La única pregunta de una [lista nueva](lists-help/saving) es para quién es. Eso decide lo que la lista permite, y es lo único que no se cambia después. El nombre, la ocasión y quién la ve se pueden cambiar siempre.',
                     'shot' => 'wizard',
-                    'alt' => 'El primer paso de una lista nueva, con los tres tipos para elegir.',
+                    'alt' => 'Una lista nueva, con los tres tipos para elegir.',
                 ],
                 [
                     'title' => 'Para mí: una lista de deseos',
@@ -240,7 +240,7 @@ Cada uno juega una vez.',
             'sections' => [
                 [
                     'title' => 'Un regalo en grupo',
-                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo [regalo en grupo](lists-help/kinds) de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
+                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien».\n2. Di para quién es; el nombre ya viene puesto.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo [regalo en grupo](lists-help/kinds) de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
                     'shot' => 'group',
                     'alt' => 'La página de un regalo en grupo, con las ideas para votar y la casilla para aportar.',
                 ],
@@ -286,7 +286,7 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Unir mi lista de deseos al grupo',
-                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
+                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en un paso.",
                 ],
                 [
                     'title' => 'Un recordatorio antes',

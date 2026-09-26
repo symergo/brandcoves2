@@ -22,9 +22,9 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Saving and making a list',
-            'blurb' => 'Find something, save it, open your lists, and make a list in three steps.',
-            'seo_description' => 'Save anything you find here to a wish list and make one in three steps. With pictures.',
-            'intro' => 'You do not have to make a list first. Saving offers to create one, and the home page has a button that makes one in three steps.',
+            'blurb' => 'Find something, save it, open your lists, and make a list in one step.',
+            'seo_description' => 'Save anything you find here to a wish list and make one in one step. With pictures.',
+            'intro' => 'You do not have to make a list first. Saving offers to create one, and the home page has a button that makes one in one step.',
             'numbered' => true,
             'sections' => [
                 [
@@ -46,14 +46,14 @@ return [
                     'alt' => 'The My lists page, with two lists and the button that makes one.',
                 ],
                 [
-                    'title' => 'Making a list in three steps',
-                    'body' => "1. Tap “New list” under [My lists](lists), or “Make a new list” on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. Tap “Next”.\n3. Give the list a name and an occasion. Tap “Next”.\n4. Choose “Private (or share later)” or “Share with a link”, and tap “Create list”.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or group gift](lists-help/kinds).",
+                    'title' => 'Making a list in one step',
+                    'body' => "1. Tap “Create a Cove” under [My lists](lists) or on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. For someone else, type their name or tap somebody you already have.\n3. Tap “Create list”. The name is filled in for you; change it first if you like.\n\nThe list opens with the box to add something already open: paste a link or search. The occasion, sharing and asking for ideas are on the list itself, under Settings and Share.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or group gift](lists-help/kinds).",
                     'shot' => 'wizard',
-                    'alt' => 'The first step of a new list, with the three choices of who it is for.',
+                    'alt' => 'A new list: the one question, who it is for.',
                 ],
                 [
                     'title' => 'You do not need to be signed in to start',
-                    'body' => 'The three steps work without an account. At the end you sign in and the list is there. What you filled in is kept for a day, so stepping away is fine.',
+                    'body' => 'This works without an account: the button signs you in and the list is there. What you filled in is kept for a day, so stepping away is fine.',
                 ],
             ],
         ],
@@ -67,9 +67,9 @@ return [
             'sections' => [
                 [
                     'title' => 'One choice is fixed',
-                    'body' => 'The first step of a [new list](lists-help/saving) asks who it is for. That decides what the list can do, and it is the only thing you cannot change later. Name, occasion and who sees it can always be changed.',
+                    'body' => 'The one question a [new list](lists-help/saving) asks is who it is for. That decides what the list can do, and it is the only thing you cannot change later. Name, occasion and who sees it can always be changed.',
                     'shot' => 'wizard',
-                    'alt' => 'The first step of a new list, with the three kinds to choose from.',
+                    'alt' => 'A new list, with the three kinds to choose from.',
                 ],
                 [
                     'title' => 'For myself: a wish list',
@@ -240,7 +240,7 @@ Everyone plays once.',
             'sections' => [
                 [
                     'title' => 'A group gift',
-                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one [group gift](lists-help/kinds) from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
+                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone”.\n2. Say who it is for; the name is filled in for you.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one [group gift](lists-help/kinds) from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
                     'shot' => 'group',
                     'alt' => 'The page of a group gift, with the ideas to vote on and the box to chip in.',
                 ],
@@ -286,7 +286,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Attaching my wish list to the group',
-                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
+                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in one step.",
                 ],
                 [
                     'title' => 'A reminder ahead',

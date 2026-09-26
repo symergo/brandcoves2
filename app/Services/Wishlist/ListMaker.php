@@ -40,26 +40,51 @@ class ListMaker
      * @param  string|null  $recipientId  an existing person of this owner's
      * @param  string|null  $newRecipient  a name to mint a person from, when no id was given
      * @param  bool  $together  several people choosing one gift, rather than one person researching
+     * @param  string|null  $title  blank for the default name of the kind; see defaultTitle()
      * @param  string|null  $birthday  a `Y-m-d` day and month, when the creator knows it
      */
     public function make(
         Owner $owner,
         CurrentMarket $current,
-        string $title,
+        ?string $title,
         ?string $recipientId = null,
         ?string $newRecipient = null,
         bool $together = false,
         ?string $birthday = null,
     ): Wishlist {
         $recipientId = $this->resolveRecipient($owner, $recipientId, $newRecipient, $birthday);
+        $kind = $this->kind($recipientId, $together);
 
         return Wishlist::create([
             ...$owner->attributes(),
-            'title' => $title,
+            'title' => filled($title) ? trim((string) $title) : $this->defaultTitle($kind, $recipientId),
             'market' => $current->get(),
             'recipient_id' => $recipientId,
-            'kind' => $this->kind($recipientId, $together),
+            'kind' => $kind,
         ]);
+    }
+
+    /**
+     * The name a list gets when nobody typed one.
+     *
+     * The one-step create (docs/features/one-step-list.md) fills this in on
+     * the screen and lets the person change it, but does not make them: a
+     * name is a question most people answer with "whatever", and asking it
+     * was a step between them and the list. The screen shows the same words
+     * from the same keys, so what they saw is what they get. Stored as typed
+     * text in the language of the market it was made on, because from here on
+     * it is the owner's to rename; unlike the default list's title (see
+     * DefaultTitle) it is not translated again on read.
+     */
+    private function defaultTitle(ListKind $kind, ?string $recipientId): string
+    {
+        $name = $recipientId === null ? null : Recipient::query()->whereKey($recipientId)->value('name');
+
+        return match (true) {
+            $kind === ListKind::Mine || blank($name) => (string) __('site.wizard.default_mine'),
+            $kind === ListKind::Group => (string) __('site.wizard.default_group', ['name' => $name]),
+            default => (string) __('site.wizard.default_for_someone', ['name' => $name]),
+        };
     }
 
     /**

@@ -399,6 +399,9 @@ described a third of the site and started nothing. A grid of explanations is a r
 arrives wanting a reference: they arrive with a person and an occasion, and the thing to do with those
 is make a list.
 
+*Since 2026-09-26 `ListWizard` asks one question, who the list is for, and the rest moved to the
+list page: see [one-step-list.md](one-step-list.md). What follows describes the three-step version.*
+
 **The hero is the wizard** (`ListWizard`): three questions since 2026-09-07 (four before), each explained before it is asked. *Who for*
 (the three kinds, with what each can do and why it cannot be changed later), *name and occasion* (the
 person, picked from friends or typed; the occasion and date, with what a date does: registry, reminders,

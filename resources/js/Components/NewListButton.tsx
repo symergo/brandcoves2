@@ -1,25 +1,22 @@
 import { useTranslations } from '../useTranslations'
 
 /**
- * The "Make a new list" button, as it looks on the home page.
+ * The "Create a Cove" button: one name for the one way a list is made.
  *
- * One component for the two places it stands — the Organise band on the home
- * page and the header of My Lists — so a reader who learnt it on one page
- * finds the same button on the other. Before 2026-09-12 My Lists had its own,
- * smaller "New list" button with no glyph, and the two looked like two
- * different things that turned out to open the same wizard.
+ * The home page's hero said "Create a Cove" and this button said "Make a new
+ * list", and both led to the same screen, so a reader met one thing under two
+ * names (UX audit, 2026-09-26). It now says what the hero says, from the same
+ * words in every language (`lists.make_new` = `home.cta_create`).
  *
- * It is a disclosure toggle rather than a link: what opens under it is the
- * caller's business (the kind chooser on the home page, the wizard on My
- * Lists), which is why it takes `open`, `onToggle` and the id of what it
- * controls, and nothing else.
+ * A plain button since the one-step create: it had a chevron and read as a
+ * dropdown, a menu of kinds. The kind is now chosen on the screen it opens,
+ * in one question, so there is nothing to drop down. It still says whether
+ * that screen is open (`aria-expanded`), because on My Lists it shows the
+ * screen in place rather than going somewhere.
  *
- * Outlined rather than filled, on both pages: the accent button on the home
- * page is the search, and on My Lists the page under the button is the point.
- *
- * Full width only below `sm`: at 390px an inline button beside nothing looks
- * like it fell off a toolbar, and everything else in those bands is full
- * width anyway. `py-2.5` at 16px keeps the tap target at 44px.
+ * Outlined rather than filled: on My Lists the page under the button is the
+ * point. Full width only below `sm`, where an inline button beside nothing
+ * looks like it fell off a toolbar; `py-2.5` keeps the tap target at 44px.
  */
 export default function NewListButton({
     open,
@@ -53,18 +50,6 @@ export default function NewListButton({
                 <path d="M10 4v12M4 10h12" />
             </svg>
             {t('lists.make_new')}
-            <svg
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-                className={`h-4 w-4 shrink-0 text-ink-soft transition-transform ${open ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            >
-                <path d="m5 8 5 5 5-5" />
-            </svg>
         </button>
     )
 }

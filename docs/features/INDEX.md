@@ -108,6 +108,7 @@ is true now.
 | [saved-coves.md](saved-coves.md) | Coves / Wishlist | Active: save a Cove into My Coves, or copy it into a list of your own |
 | [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by the Gift Finder, admin can hide |
 | [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active |
+| [one-step-list.md](one-step-list.md) | Wishlist / Gifting | Active since 2026-09-26: a list in one question (who for), occasion and sharing moved to the list page; replaces the three-step wizard |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |
