@@ -315,7 +315,7 @@ class CoveItemController extends Controller
             $group = ProductGroup::query()
                 ->forMarket($plan->market)
                 ->where('identity_key', $gtin)
-                ->first();
+                ->first()?->followMerge();
 
             if ($group === null) {
                 throw ValidationException::withMessages([

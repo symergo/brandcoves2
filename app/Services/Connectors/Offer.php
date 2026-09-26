@@ -37,6 +37,13 @@ final readonly class Offer
         public string $currency = 'EUR',
         public Availability $availability = Availability::Unknown,
         public ?float $commissionRate = null,
+        /**
+         * The manufacturer's part number, where a feed sends one (Awin's
+         * `mpn`). Never identity: two manufacturers can use the same one. It
+         * only lets the match finder propose two products as one without
+         * guessing the model number from a title; see ModelNumber::fromMpn().
+         */
+        public ?string $mpn = null,
     ) {}
 
     /**
@@ -72,6 +79,7 @@ final readonly class Offer
             currency: $this->currency,
             availability: $this->availability,
             commissionRate: $this->commissionRate,
+            mpn: $this->mpn,
         );
     }
 

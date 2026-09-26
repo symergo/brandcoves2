@@ -154,7 +154,7 @@ class CatalogueController extends Controller
         $group = ProductGroup::query()
             ->forMarket($market)
             ->where('identity_key', $gtin)
-            ->first();
+            ->first()?->followMerge();
 
         return response()->json([
             'market' => $market->value,

@@ -118,7 +118,7 @@ class ReadItemLink implements ShouldQueue
             $identity = IdentityResolver::resolve($page->gtin, $page->brand, $page->title);
             $group = $identity === null
                 ? null
-                : ProductGroup::query()->forMarket($market)->where('identity_key', $identity->key)->first();
+                : ProductGroup::query()->forMarket($market)->where('identity_key', $identity->key)->first()?->followMerge();
 
             if ($group !== null && $linker->link($item, $group)) {
                 return;

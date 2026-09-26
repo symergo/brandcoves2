@@ -45,6 +45,17 @@ class ProductController extends Controller
             throw new NotFoundHttpException;
         }
 
+        // Merged into another product (GroupMerger): the old id is kept so
+        // shared links, bookmarks and indexed URLs land on the product it is
+        // now part of. Permanent, so search engines move their signals over.
+        if ($productGroup->merged_into_id !== null) {
+            $winner = $productGroup->followMerge();
+
+            if ($winner->id !== $productGroup->id) {
+                return redirect()->to($current->url("p/{$winner->id}/{$winner->slug}"), 301);
+            }
+        }
+
         // The slug is decoration; the id is identity. A stale slug from an old
         // link or a retitled product redirects rather than 404s, so shared and
         // indexed links keep working after an upstream title change.

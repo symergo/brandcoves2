@@ -11,6 +11,7 @@ use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\Ebay\EbayConnector;
 use App\Services\Connectors\Tradedoubler\TradedoublerConnector;
+use App\Services\Identity\MergedProducts;
 use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
@@ -43,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
         // would serve yesterday's answer until the process restarted, quietly
         // linking to brand pages that no longer exist.
         $this->app->scoped(BrandLinker::class);
+
+        // Bound so the container supplies it to CoveMarkup, whose parameter is
+        // optional (its unit tests run without a database): Laravel passes an
+        // optional parameter's default, null, for a class nobody bound, and
+        // merged products would silently stop resolving in prose. Stateless,
+        // so scoped only to match its neighbours.
+        $this->app->scoped(MergedProducts::class);
 
         /*
          * The page templates.

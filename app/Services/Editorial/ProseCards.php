@@ -156,10 +156,14 @@ final class ProseCards
     {
         preg_match_all('/\[\[product:(\d+)/u', $paragraph, $matches);
 
+        // A product merged since this was written pairs with the card of the
+        // product it became, the same way CoveMarkup links it.
+        $mergedTo = $this->markup->mergedIn($paragraph, $this->allowed);
+
         $ids = [];
 
         foreach ($matches[1] as $raw) {
-            $id = (int) $raw;
+            $id = $mergedTo[(int) $raw] ?? (int) $raw;
 
             if (isset($this->allowed['products'][$id]) && ! isset($this->used[$id])) {
                 $this->used[$id] = true;
