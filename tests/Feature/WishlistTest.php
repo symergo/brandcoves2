@@ -1061,4 +1061,30 @@ class WishlistTest extends TestCase
 
         $this->assertDatabaseMissing('wishlist_shares', ['wishlist_id' => $quiet->id]);
     }
+
+    #[Test]
+    public function stopping_sharing_retires_the_link_so_sharing_again_does_not_revive_it(): void
+    {
+        // The confirmation promises "every link you have sent stops working,
+        // and sharing again makes a new one". It used to bring the old one back.
+        $owner = $this->user();
+        $list = Wishlist::create([
+            'owner_user_id' => $owner->id,
+            'title' => 'Shared',
+            'market' => Market::BeNl,
+            'visibility' => 'link',
+        ]);
+        $old = $list->share_token;
+
+        $this->get("/be-nl/l/{$old}")->assertOk();
+
+        $this->actingAs($owner)->patch("/be-nl/lists/{$list->id}", ['visibility' => 'private'])->assertRedirect();
+        $this->actingAs($owner)->patch("/be-nl/lists/{$list->id}", ['visibility' => 'link'])->assertRedirect();
+
+        $new = $list->fresh()->share_token;
+
+        $this->assertNotSame($old, $new);
+        $this->get("/be-nl/l/{$old}")->assertNotFound();
+        $this->get("/be-nl/l/{$new}")->assertOk();
+    }
 }

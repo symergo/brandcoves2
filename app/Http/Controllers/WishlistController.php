@@ -34,6 +34,7 @@ use App\Support\CurrentMarket;
 use App\Support\DayAndMonth;
 use App\Support\ListAccess;
 use App\Support\Owner;
+use App\Support\ShareCode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -1110,6 +1111,23 @@ class WishlistController extends Controller
             $validated['pledge_amount'] = $validated['pledge_amount'] === null
                 ? null
                 : (int) round((float) $validated['pledge_amount'] * 100);
+        }
+
+        /*
+         * Stopping sharing retires the link (2026-09-26).
+         *
+         * The confirmation always promised "every link you have sent stops
+         * working, and sharing again makes a new one", but the token was made
+         * once, with the list, and never changed: sharing again brought the
+         * old link back to life for everyone who ever had it. Somebody who
+         * stops sharing because the wrong person has the link expects that
+         * person to stay out, so the token is replaced the moment sharing goes
+         * off. Friends who see the list through "visible to my people" are
+         * unaffected: they always reach it through the current token.
+         */
+        if (($validated['visibility'] ?? null) === ListVisibility::Private->value
+            && $wishlist->visibility !== ListVisibility::Private) {
+            $validated['share_token'] = ShareCode::make();
         }
 
         $wishlist->update($validated);

@@ -1242,3 +1242,12 @@ results. Adding one goes through `POST /list-items` with `source=manual` and an 
 signed out through `/save-intent`, which now takes an `idea_id` (an id whose wording is read from
 the reviewed idea at sign-in, not free text). Photos are never used. See
 [offline-ideas.md](offline-ideas.md).
+
+## Stopping sharing retires the link (2026-09-26)
+
+The "Stop sharing" confirmation always promised that every link you sent stops working and that
+sharing again makes a new one. The token was made once, with the list, and never changed, so sharing
+again brought the old link back to life for everyone who ever had it. Now `WishlistController::update`
+replaces `share_token` the moment visibility goes to private: old links stay dead, and sharing again
+gives a new link. Friends who see a list through "Zichtbaar voor mijn mensen" always reach it through
+the current token, so they are unaffected. Test: `WishlistTest::stopping_sharing_retires_the_link…`.
