@@ -474,7 +474,7 @@ class WishlistItemController extends Controller
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
 
-            // An approved offline idea from the Gift Finder ("Add to my
+            // An approved offline idea from Find a gift ("Add to my
             // list"). Its wording is read here, never taken from the request.
             // See docs/features/offline-ideas.md.
             'idea_id' => ['nullable', 'integer', $manual ? 'prohibits:url,photo,gtin' : 'prohibited'],

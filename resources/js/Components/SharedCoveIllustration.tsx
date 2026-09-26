@@ -7,8 +7,9 @@
  * from anywhere, into a Cove, to the people who matter. Chosen by the owner
  * from five sketches ("A2, round 3"); see docs/features/homepage.md.
  *
- * Same visual language as `HomeIllustration`, `CoveIllustration` and
- * `ListIllustration`: one stroke weight, `currentColor` for every line, the
+ * Same visual language as `SceneIllustration` (and the Home, Cove and List
+ * illustrations it replaced, removed 2026-09-26 once nothing drew them): one
+ * stroke weight, `currentColor` for every line, the
  * accent only ever as a translucent wash, and the logo's orange buoy in the
  * cove's mouth. The cove's arc is the logo's arc (the same opening angle,
  * 15 → 50 units of radius), turned to face the things arriving.

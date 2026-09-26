@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  *   the families a past gift's title belongs to.
  *
  * Retrieval and arithmetic only, a handful of indexed queries; no AI, so it
- * can run on a page view (the person's page, the Gift Finder) and in the
+ * can run on a page view (the person's page, Find a gift) and in the
  * reminder job alike. See docs/features/gift-history.md.
  */
 final class NextSteps

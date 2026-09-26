@@ -2,7 +2,7 @@
 name: Match review (products that arrived separately)
 area: Catalogue / Admin
 status: Active — rules propose, a person decides every pair; no auto-merge yet
-date_added: 2026-09-27
+date_added: 2026-09-26
 ---
 
 # Match review: products that arrived separately

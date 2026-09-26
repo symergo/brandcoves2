@@ -21,7 +21,7 @@ bottom (`Pages/Home.tsx`):
    pitch with **Create a Cove** and **Explore Coves** beside the drawing; across the full width
    underneath, *Search anything · Add anything · Share anything*, each with the icons of the ways
    it is done (search; link, barcode, picture; people).
-2. **Three ways in**, one per audience: a gift (Gift Whisperer), a wish list (Create my Cove),
+2. **Three ways in**, one per audience: a gift (Find a gift, `/gift`), a wish list (Create my Cove),
    browsing (`/coves`).
 3. **From anywhere.** Paste a link, scan it, search it; the sources named generically ("Big online
    shops · Independent makers · The shop round the corner"), never other companies' names
@@ -38,14 +38,15 @@ bottom (`Pages/Home.tsx`):
 on the first step of the growth loop. `HomePageTest` holds that.
 
 **What left the page, and why.** The list wizard: it is where "Create a Cove" leads, so the page
-stopped repeating the next page (and the controller stopped building its props). The search card:
-the header searches on every page and the hero names it. Recently viewed: a convenience for a
-returning visitor, not an answer to the three questions.
+stopped repeating the next page (and the controller stopped building its props). Recently viewed:
+a convenience for a returning visitor, not an answer to the three questions. The search card left
+too and came back under the hero the same day, at the owner's call (see the last section).
 
 **Two places say less than the owner's draft, on purpose, until the thing exists.** The browsing
 card and the Coves heading do not promise "Coves created by the community" or "what other people
-are collecting": there are no public lists yet (roadmap step 6). The copy switches to the owner's
-wording when there are.
+are collecting": there were no public lists yet (roadmap step 6). They exist since later the same
+day ([community-coves.md](community-coves.md)), and the copy has not been switched yet: that is
+still to do, with the owner's wording.
 
 ### The drawing
 
@@ -54,7 +55,8 @@ approval page: https://claude.ai/artifact/LAztQwdixhgaG8qLbBxSuK). A web shop, s
 and the shop round the corner drift into one cove, become a gift, and go out the back to two
 people: from anywhere, into a Cove, to the people who matter. Same language as every drawing on
 the site (one stroke, `currentColor`, the accent only as a wash, the logo's orange buoy in the
-cove's mouth). `HomeIllustration` is no longer used on this page.
+cove's mouth). `HomeIllustration` is no longer used on this page, and was deleted in the clean-up
+the same day, with `CoveIllustration` and `ListIllustration`, which nothing drew any more.
 
 The icons in the hero's bottom line are `ToolIcon` glyphs added for it: `link`, `barcode`,
 `picture`, `people`.
@@ -243,6 +245,9 @@ deploy, because the band is served from a cache the hourly job writes.
 
 ## The drawing beside the pitch
 
+*History: this section describes `HomeIllustration`, the hero until 2026-09-26. The current
+drawing is under "The drawing" above.*
+
 Added 2026-08-15. The hero is a two-column band above `md`: the headline, the paragraph and the
 search box on the left, and one large drawing on the right.
 
@@ -406,7 +411,7 @@ production-shaped data, check it against production.
 ## Files
 
 - `resources/js/Pages/Home.tsx`
-- `resources/js/Components/HomeIllustration.tsx` — the hero drawing, and the only one carrying the mark
+- `resources/js/Components/SharedCoveIllustration.tsx` — the hero drawing
 - `app/Http/Controllers/HomeController.php`
 - `lang/*/site.php` — the `home.*` block
 
@@ -585,6 +590,7 @@ More Coves.
 
 Owner's call. The hero's drawing took the wider of the two columns (1 : 1.25) and read as the
 page's subject; the words now get the wider column (1.4 : 1) and the drawing is capped at `max-w-sm`.
-And `SearchCard`, the same card as on Discover (field plus the barcode camera on a phone), sits
+And `SearchCard` (field plus the barcode camera on a phone; Discover carried it too until its
+rebuild the same day, so the home page is now its only user) sits
 directly under the hero: somebody who arrives knowing what they want should not have to find the
 header's search first.

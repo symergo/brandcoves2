@@ -57,7 +57,7 @@ class DiscoverCoveHubTest extends TestCase
     }
 
     /**
-     * This or that on the hub (owner, 2026-09-26), in place of the Gift Finder
+     * This or that on the hub (owner, 2026-09-26), in place of Find a gift
      * teaser: the Finder is in the header; choosing between two things is the
      * discovery way to find out what somebody likes.
      */

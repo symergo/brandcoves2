@@ -20,7 +20,7 @@ heeft aan gadgets"*, en in *"waar is het vandaag de moeite om naar te kijken"*.
 
 ## Wat je hier kunt doen
 
-**Een lijstje maken, voor jezelf of voor iemand anders.** In drie stappen. Hou het
+**Een lijstje maken, voor jezelf of voor iemand anders.** In één stap. Hou het
 privé, of deel het met een link of met vrienden. Wie het opent, kan iets kiezen
 om te kopen, terwijl degene voor wie het lijstje is nooit ziet wat er al gekocht
 is, tenzij je dat zelf anders instelt. Zakt de prijs van iets op je lijstje, dan

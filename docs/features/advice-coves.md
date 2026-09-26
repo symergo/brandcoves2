@@ -193,6 +193,16 @@ would bake this article set into the assumptions of every unrelated test
 forever. The behaviour is covered instead by `AdviceCoveSeederTest` against the
 same service the migration calls.
 
+**And both skip a fresh, empty database** (added 2026-09-26). The seeder reads
+today's content file and writes today's row shape, but on a fresh `migrate` it
+ran against the schema of its own date. The content names scenes that
+`daily_pick_sets_scene_check` only accepts from `2026_09_05_000300` on, so a
+fresh `migrate` died in the first of the two with a check violation. An empty
+`daily_pick_sets` is what a fresh database looks like and no deployed one was
+(Dailies existed long before), so the guard changes nothing where these have
+run. **On a new environment, run `php artisan bc:seed-advice-coves` after
+`migrate`.**
+
 ### The bug this flushed out
 
 One of those 32 was not fixture arithmetic. `ContentPromotionTest` hit a unique

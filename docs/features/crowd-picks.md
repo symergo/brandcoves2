@@ -2,7 +2,7 @@
 name: Chosen by others for someone like them (crowd picks)
 area: Gifting
 status: Active — counted nightly with the list signals; shows nothing until five different people agree, which on day one is nowhere
-date_added: 2026-09-27
+date_added: 2026-09-26
 ---
 
 # Chosen by others for someone like them
@@ -13,7 +13,7 @@ similar person. "People shopping for a dad who likes cooking also picked this."
 
 ## What it does
 
-- **Gift Finder** (`/gift`) and **This or that** results: a product that enough people shopping for
+- **Find a gift** (`/gift`) and **This or that** results: a product that enough people shopping for
   the same kind of person keep on their lists ranks higher, and its card says so in one small line:
   "Chosen by others for someone like them" (NL "Gekozen door anderen voor iemand zoals die persoon").
   On This or that for yourself it reads "Chosen by others with the same interests".

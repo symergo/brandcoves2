@@ -45,10 +45,9 @@ interface Props {
  *  7. Start your first Cove.
  *
  * What left, and why: the list wizard (it is where "Create a Cove" leads, so
- * the page no longer repeats the next page), the search card (the header
- * searches on every page, and "Search anything" names it here), and recently
- * viewed (a returning visitor's convenience, not an answer to the three
- * questions).
+ * the page no longer repeats the next page) and recently viewed (a returning
+ * visitor's convenience, not an answer to the three questions). The search
+ * card left too and came back under the hero later the same day; see below.
  */
 export default function Home({ today, coves }: Props) {
     const { market } = usePage<SharedProps>().props
@@ -126,7 +125,7 @@ export default function Home({ today, coves }: Props) {
                         body={t('home.entry_list_body')}
                         cta={t('home.entry_list_cta')}
                         // This card has already answered "for whom": a wish
-                        // list is for yourself, so the wizard skips that step.
+                        // list is for yourself, so the form opens with it chosen.
                         href={`${base}/lists?new=mine`}
                     />
                     <Entry

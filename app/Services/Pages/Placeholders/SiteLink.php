@@ -74,7 +74,7 @@ final readonly class SiteLink implements PlaceholderFunction
             new self('coves_link', 'Link to the Coves', 'coves', 'coves.title', 'Coves'),
             new self('guides_link', 'Link to the buying guides', 'guides', 'nav.guides', 'Gidsen'),
             new self('shops_link', 'Link to the shop directory', 'shops', 'shops.title', 'Winkels'),
-            new self('gift_finder_link', 'Link to the gift finder', 'gift', 'nav.gift', 'Cadeauzoeker'),
+            new self('gift_finder_link', 'Link to Find a gift', 'gift', 'nav.gift', 'Cadeau vinden'),
             new self('search_help_link', 'Link to the search help', 'search-help', 'search_help.link', 'Waarop kun je hier zoeken?'),
         ];
 

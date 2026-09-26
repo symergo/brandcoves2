@@ -150,7 +150,6 @@ export default function SharedList({
     claimNeedsAccount,
     hideClaims,
     claimNames,
-    progress,
     items,
     copyTargets,
     canSuggest,

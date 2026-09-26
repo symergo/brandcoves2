@@ -26,7 +26,7 @@ Four shapes for one idea meant nobody could learn it once. The audit asked for o
 ### On a product
 
 - **Not saved yet: one press saves.** It goes to the list the button's label names ("Bewaar in
-  Camping"): the list the page chose (`into`, e.g. the Gift Finder's person), else the list being
+  Camping"): the list the page chose (`into`, e.g. Find a gift's person), else the list being
   filled in adding mode, else the list used last on this device, else the default list ("Mijn
   verlanglijst"). The toast names the list and offers Undo and "Bekijk lijst". This is unchanged
   from before.
@@ -39,7 +39,7 @@ Four shapes for one idea meant nobody could learn it once. The audit asked for o
 
 **Decision (taken without the owner): the first press still saves.** The audit allowed either. We
 kept one-press saving because the whole product-card design rests on it (the remembered last list,
-adding mode, the Gift Finder's `into`, the toast with Undo), and because a sheet on every press
+adding mode, Find a gift's `into`, the toast with Undo), and because a sheet on every press
 would double the taps for the common case of "keep this". The cost is that choosing a *different*
 list before saving now takes two presses (save, then press again to open the sheet) where the
 desktop chevron took one. We judged that acceptable: the sheet is always exactly one press away, it

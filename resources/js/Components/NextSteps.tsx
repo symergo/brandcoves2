@@ -21,7 +21,7 @@ export interface NextStepCard {
 /**
  * "The next step": products that follow on from what somebody was given.
  *
- * A small row on a saved person's page and under the Gift Finder's results
+ * A small row on a saved person's page and under Find a gift's results
  * when that person is chosen. Each card says which past gift it follows and
  * why, because an idea that names what it follows is one a giver can judge
  * at a glance. See docs/features/gift-history.md.

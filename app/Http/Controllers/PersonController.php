@@ -29,7 +29,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * `/people/{id}`, the owner's only. Shows the gift history (what they noted,
  * and their own claims on lists for this person), the items on their lists for
  * this person with an "I gave this" button, a short "next step" row, and the
- * ways into the Gift Finder and This or that for this person.
+ * ways into Find a gift and This or that for this person.
  *
  * The reminder email lands here too: an idea's "add to the list" link opens
  * this page with `?add=<product>`, and the page shows that product at the top
@@ -159,7 +159,7 @@ class PersonController extends Controller
     /**
      * The list a save from this page lands on: the owner's newest list about
      * this person, made when there is something to save and none exists yet.
-     * The same rule as the Gift Finder's (GiftController::recipientList()).
+     * The same rule as Find a gift's (GiftController::recipientList()).
      *
      * @return array{id: string, title: string}|null
      */

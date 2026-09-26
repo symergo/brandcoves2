@@ -118,7 +118,7 @@ class ReminderIdeasTest extends TestCase
         $this->assertNotContains($onHerList->id, $ids, 'Nor what is already on the list for her.');
         $this->assertEmpty(array_diff($ids, $fresh->pluck('id')->all()));
 
-        // One click to the Gift Finder, one to put an idea on her list.
+        // One click to Find a gift, one to put an idea on her list.
         $this->assertStringEndsWith("/be-nl/gift?for={$this->mum->id}", (string) $mail->ideasUrl);
         $this->assertStringEndsWith("/be-nl/people/{$this->mum->id}?add={$ids[0]}", $mail->ideas[0]['addUrl']);
         $this->assertSame('Mum', $mail->name);

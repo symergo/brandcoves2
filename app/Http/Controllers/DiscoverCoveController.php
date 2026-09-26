@@ -43,7 +43,7 @@ use Inertia\Response;
  * anything they care about; a dozen titles answers that here.
  *
  * Rebuilt 2026-09-26 with the owner (see DiscoverCove.tsx for the layout and
- * why): the search card and the Gift Finder left the top, the explainer tiles
+ * why): the search card and Find a gift left the top, the explainer tiles
  * went, This or that came in, every band shows six at most, and the question
  * board and earlier editions show only with three or more.
  */
@@ -142,7 +142,7 @@ class DiscoverCoveController extends Controller
                 // rather than from us. See docs/features/ask-others.md.
                 'ask' => $current->url('ask'),
                 // This or that (docs/features/taste-discovery.md), and the
-                // Gift Finder for somebody who would rather answer questions.
+                // Find a gift for somebody who would rather answer questions.
                 'taste' => $current->url('gift/taste'),
                 'gift' => $current->url('gift'),
             ],

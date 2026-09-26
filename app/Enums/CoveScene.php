@@ -15,8 +15,8 @@ namespace App\Enums;
  * eight identical rectangles of text.
  *
  * So a Cove names a scene, and the scene is drawn rather than photographed.
- * `SceneIllustration` renders it in the same visual language as
- * `CoveIllustration` and `ListIllustration`: one `160x116` viewBox, one stroke
+ * `SceneIllustration` renders it in the site's one drawing language (that of
+ * the retired `CoveIllustration` and `ListIllustration`): one `160x116` viewBox, one stroke
  * weight, `currentColor` for every line, the accent only as a translucent wash.
  * That is what lets a card change colour on hover and take the drawing with it,
  * and it is why these survive a palette change without being redrawn.
@@ -118,8 +118,8 @@ enum CoveScene: string
     /**
      * A stack of books and a reading lamp.
      *
-     * Not an open book on a shelf — `CoveIllustration`'s `idea` scene is
-     * already that, and it means "the archive of writing" on the homepage. Two
+     * Not an open book on a shelf — `CoveIllustration`'s `idea` scene was
+     * that, and it meant "the archive of writing" on the homepage. Two
      * drawings meaning different things must not be the same drawing.
      */
     case Reading = 'reading';

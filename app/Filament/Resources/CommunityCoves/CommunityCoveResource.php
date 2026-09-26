@@ -26,7 +26,7 @@ use UnitEnum;
  * A list goes on the site the moment its owner publishes it (see
  * docs/features/community-coves.md for why there is no queue in front of it),
  * so this screen is where an admin takes one down: **Hide** removes it from
- * the page, the listing, the Gift Finder and everyone's saved view at once,
+ * the page, the listing, Find a gift and everyone's saved view at once,
  * and the owner cannot republish it. **Show again** undoes a mistake.
  *
  * Reports arrive in Feedback, with the Cove's address as the page they were

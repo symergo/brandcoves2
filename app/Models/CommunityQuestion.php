@@ -37,7 +37,7 @@ class CommunityQuestion extends Model
             'published_at' => 'datetime',
 
             /*
-             * Optional structure, in the Gift Finder's own vocabulary.
+             * Optional structure, in Find a gift's own vocabulary.
              *
              * `interests` holds `Interest` values and `vibe` a `Vibe`, so an
              * answerer's product search can be seeded straight from a question

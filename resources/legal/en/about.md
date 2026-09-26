@@ -21,7 +21,7 @@ gadgets"*, and at *"what is worth looking at today"*.
 
 ## What you can do here
 
-**Build a list, for yourself or for someone else.** Three steps. Keep it private,
+**Build a list, for yourself or for someone else.** One step. Keep it private,
 or share it with a link or with friends. Whoever opens it can pick something to
 buy, while the person it is for never sees what has already been bought, unless
 you choose otherwise. When the price of something on your list drops, the card

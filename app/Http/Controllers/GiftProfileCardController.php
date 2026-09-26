@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * "My gift profile": a card somebody makes about themselves after This or
- * that, with a link they can send. Opening the link lands in the Gift Finder
+ * that, with a link they can send. Opening the link lands in Find a gift
  * with that profile filled in, and invites the visitor to make their own.
  *
  * - **Opt-in.** Nothing is stored until the person presses the button.
@@ -82,7 +82,7 @@ class GiftProfileCardController extends Controller
         ]);
     }
 
-    /** The card, as the Gift Finder with its answers filled in. */
+    /** The card, as Find a gift with its answers filled in. */
     public function show(Request $request, CurrentMarket $current, string $market, string $token): Response
     {
         $card = GiftProfileCard::query()->where('token', $token)->first();

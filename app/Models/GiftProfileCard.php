@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * "My gift profile": what This or that learned about somebody, made into a
- * link they chose to share. Opening it seeds the Gift Finder.
+ * link they chose to share. Opening it seeds Find a gift.
  *
  * Holds the profile only, never the choices it came from, and a name only
  * when the maker typed one. `owner_key_hash` is how an anonymous maker takes

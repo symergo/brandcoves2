@@ -61,12 +61,6 @@ final readonly class GiftTarget
         return new self(name: $name, market: $market, person: $person);
     }
 
-    /** Building your own list: the target is you. */
-    public static function myself(Market $market, ?User $person = null): self
-    {
-        return new self(name: __('site.gift.myself'), market: $market, person: $person);
-    }
-
     public function isLinked(): bool
     {
         return $this->person !== null;

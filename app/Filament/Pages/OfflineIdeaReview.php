@@ -210,7 +210,7 @@ class OfflineIdeaReview extends Page
     }
 
     /**
-     * The tags a reviewer can set, grouped as the Gift Finder asks: what they
+     * The tags a reviewer can set, grouped as Find a gift asks: what they
      * like, who they are, what it is for.
      *
      * @return array<string, array<string, string>>

@@ -25,7 +25,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Ask others — the board where people ask what to buy and other people answer.
  *
  * The gap it fills: every other way into this site assumes you can describe
- * what you want. Search needs a noun, the Gift Finder needs six answers about a
+ * what you want. Search needs a noun, Find a gift needs six answers about a
  * person, a Cove is a theme somebody else chose. "She's turning forty, she has
  * everything, help" is not a query — it is a question for a person.
  *
@@ -94,7 +94,7 @@ class AskController extends Controller
 
             'canAsk' => $user !== null,
 
-            // The same vocabulary the Gift Finder offers, so a question and a
+            // The same vocabulary Find a gift offers, so a question and a
             // brief describe a person the same way.
             'options' => $this->options(),
         ]);
@@ -103,7 +103,7 @@ class AskController extends Controller
     /**
      * What the optional half of the form offers.
      *
-     * Deliberately the Gift Finder's list rather than one of this feature's
+     * Deliberately Find a gift's list rather than one of this feature's
      * own: two boards' worth of interests that mostly overlap is how "cooking"
      * ends up meaning two different things, and it means an answerer can seed a
      * product search from a question with no translation layer.
@@ -142,7 +142,7 @@ class AskController extends Controller
             'budget_max' => ['nullable', 'numeric', 'min:1', 'max:100000'],
 
             /*
-             * Optional structure, in the Gift Finder's own vocabulary.
+             * Optional structure, in Find a gift's own vocabulary.
              *
              * All of it nullable, and it stays that way: somebody who types one
              * sentence and presses Ask must get a question on the board. This

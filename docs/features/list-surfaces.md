@@ -484,7 +484,7 @@ plenty of families here hand out presents on the evening of the 24th.
 The server derives it on the way in, so the date on the list is one answer rather than two, and only
 when the wizard sent none: a date typed by hand always wins. Two things had to arrive for that to
 work. A friend's birthday now travels into the profile made from them (theirs if published, else my
-note, the same order the Friends page reads them), which the reminders wanted anyway. And a birthday
+note, the same order the Friends page read them, and My people reads them since 2026-09-26), which the reminders wanted anyway. And a birthday
 typed for somebody who already has a profile is now kept rather than dropped, filled in only when
 that profile has none.
 

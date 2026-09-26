@@ -42,7 +42,7 @@ class SeedHelpDemoCommand extends Command
 {
     public const EMAIL = 'help-screenshots@giftcoves.test';
 
-    /** The one friend the demo account has, so the friends block and the friends page have something to show. */
+    /** The one friend the demo account has, so the friends block and My people have something to show. */
     public const FRIEND_EMAIL = 'help-screenshots-friend@giftcoves.test';
 
     protected $signature = 'bc:seed-help-demo
@@ -88,7 +88,7 @@ class SeedHelpDemoCommand extends Command
          */
         /*
          * A friend, because the share panel shows its "share with friends"
-         * block only to an account that has one, and a friends page with
+         * block only to an account that has one, and a My people page with
          * nobody on it teaches nothing. Linked the way opening a share link
          * links two people.
          */

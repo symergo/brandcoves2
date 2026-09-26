@@ -64,7 +64,9 @@ See [market-routing.md](market-routing.md).
 - **Two new hints**, because every other entry in the menu has one: "Lists other people shared"
   (`nav.hint_community`) and "By maker or by shop" (`nav.hint_brands_shops`).
 - **Keys deleted:** `nav.search_offers`, `nav.hint_search` (Search left the menu). `nav.friends`
-  and `nav.choose_language` stay, unused by the header, in case the My people page wants them.
+  and `nav.choose_language` were kept for a few hours in case My people wanted them; it did not,
+  and the clean-up of 2026-09-26 deleted them with `nav.feedback`, `nav.hint_gift` and
+  `nav.hint_all_coves`.
 
 ### The width, measured again
 
@@ -203,6 +205,10 @@ in is the one thing we want from a visitor who has built lists in a cookie — t
 anonymous-first and live in that browser until they do.
 
 ## What the header offers, and in what order
+
+*History, 2026-08-15 to 2026-09-26. The header today is described at the top of this document; the
+sections from here to "The header says where you are" record how it got there, and the reasoning
+that still holds (a link and a separate chevron, hints under Cove names, verbs over nouns).*
 
 Changed 2026-08-15. **Three verbs, two of which open.** The header says what you came to *do*; the
 surfaces live underneath.
@@ -513,6 +519,11 @@ the copy moved — the routes, tables and `SecretSanta*` classes keep their name
 
 ## Find a gift opens with the search card (2026-09-13)
 
+*History: the three sections below describe `/discover-cove` before it was rebuilt on 2026-09-26
+(today's Cove, This or that, then six of each; see [discover-cove.md](discover-cove.md)). The search
+card and `GiftWizardCard` left that page then, and `GiftWizardCard` was deleted in the clean-up the
+same day.*
+
 At the owner's request the `/discover-cove` page carries the same `SearchCard` as the home page,
 right under its title and intro, before the four cards. Somebody who chose "Find a gift" in the
 header most often knows what they are looking for, and the field is the shortest way there; the
@@ -698,3 +709,6 @@ separate "Voor anderen" and "Samen geven" entries only repeated it and were remo
 `nav.shared_lists` / `nav.group_lists` strings. The menus now hold My Coves, Saved Coves (somebody
 else's Coves, not lists of yours), Secret Friend and Friends (`myCovesLinks.ts`). The `?view=shared`
 and `?view=group` URLs still work: they scroll My Coves to that section.
+
+Later the same day Friends gave its place to **My people** (`/people`), which lists friends and
+saved people together; the account menus today are described at the top of this document.

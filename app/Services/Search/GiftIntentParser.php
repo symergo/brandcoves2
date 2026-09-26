@@ -140,7 +140,7 @@ class GiftIntentParser
 
     /**
      * Whether a phrase says "someone who has everything", for text that is
-     * not a search: a free-text interest in the Gift Finder ("heeft alles
+     * not a search: a free-text interest in Find a gift ("heeft alles
      * al"), which the wizard would otherwise search for word for word.
      */
     public function saysHasEverything(string $text, Market $market): bool

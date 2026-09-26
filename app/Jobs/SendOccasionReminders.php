@@ -205,7 +205,7 @@ class SendOccasionReminders implements ShouldQueue
                     /*
                      * `toBase()`: Eloquent's `value()` returns the cast, a
                      * Market enum, which `(string)` cannot convert. Until
-                     * 2026-09-28 this threw for every person with a list, so a
+                     * 2026-09-26 this threw for every person with a list, so a
                      * birthday reminder reached only people nobody had made a
                      * list for.
                      */
@@ -307,7 +307,9 @@ class SendOccasionReminders implements ShouldQueue
                         body: $lead === 0
                             ? __('site.reminders.birthday_today', ['name' => $name], $language)
                             : __('site.reminders.lead', ['days' => $lead, 'name' => $name], $language),
-                        url: '/'.$market.'/friends',
+                        // My people, where friends live since 2026-09-26
+                        // (`/friends` only redirects there now).
+                        url: '/'.$market.'/people',
                         language: $language,
                         tokens: ['name' => $name, 'days' => $lead],
                     );
@@ -494,7 +496,7 @@ class SendOccasionReminders implements ShouldQueue
      * Three ideas for this person, or none.
      *
      * None when the email will not go (there is nowhere to show them; the
-     * inbox links to the Gift Finder, which has them live), or when this
+     * inbox links to Find a gift, which has them live), or when this
      * person's ideas already went for this occasion this year.
      *
      * @param  array{recipient: Recipient, occasion: string|null, key: string}  $ideasFor

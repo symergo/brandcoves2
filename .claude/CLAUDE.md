@@ -138,6 +138,11 @@ php artisan bc:find-matches --full    # propose products that may be one (same b
                                       # number or similar title within a brand) for a person to
                                       # confirm at /admin, Match review. Nothing merges on its own.
                                       # Runs 05:40 and 17:40; --full once after the first deploy
+php artisan bc:plan-gift-landings     # record which /gift-ideas/for/{who}/{interest} pages the
+                                      # catalogue can fill (8+ products). Runs nightly at 05:40
+php artisan bc:plan-demand-personas   # draft gift personas from what people search gifts for.
+                                      # Drafts only, for a person to approve. Dry run unless
+                                      # --write; the 06:30 schedule writes
 php artisan bc:pull-charts            # pull bestseller charts — the demand signal, never a page
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing
@@ -158,7 +163,9 @@ php artisan bc:scrub --force          # MANDATORY after restoring a production d
 A fresh deploy has empty discovery surfaces until the next scheduled window, so
 `bc:refresh-discovery` is the first thing to run against a new environment — and `bc:pull-charts`
 second, because the demand signal it collects has no other source and the guide-topic queue is empty
-without it on a market with no search traffic yet.
+without it on a market with no search traffic yet. On a fresh, empty database also run
+`bc:seed-advice-coves`: the two migrations that seed the advice articles skip an empty database,
+because they would run today's content against an old schema (docs/features/advice-coves.md).
 
 ---
 

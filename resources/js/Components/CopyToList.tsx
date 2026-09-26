@@ -1,7 +1,6 @@
 import { router } from '@inertiajs/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import ShareIcon from './ShareIcon'
 import { markSaved } from '../savedItems'
 import { useTranslations } from '../useTranslations'
 

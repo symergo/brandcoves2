@@ -17,7 +17,7 @@ and the search page shows what it understood, then answers it:
 > *Zoek toch gewoon op deze woorden*
 
 Each chip drops that piece and searches again; "search the words as typed" skips the reading
-(`?as=words`). The results come from the suggestion engine behind the Gift Finder, in the same
+(`?as=words`). The results come from the suggestion engine behind Find a gift, in the same
 cards as a search. Measured on the dev server: "cadeau voor mijn papa die graag kookt, tussen 20 en
 60 euro" answered with a chef's knife, a cast-iron pan and a kitchen-machine attachment, all within
 budget.

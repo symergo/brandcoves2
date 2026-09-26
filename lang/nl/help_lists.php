@@ -14,7 +14,7 @@ declare(strict_types=1);
  * is the numbered steps of an instruction. UI labels are quoted with curly
  * quotes and have to match the interface word for word, so a renamed button
  * is a renamed help line too. A link is written [words](path): the path is
- * relative to the market ("lists", "friends", "lists-help/sharing"), and
+ * relative to the market ("lists", "people", "lists-help/sharing"), and
  * "cove" means the market's own Cove segment. The controller turns them
  * into real URLs. Link the words a person would search for, to the page
  * that answers them; that is what the owner asked for on 2026-09-08, and it
@@ -122,7 +122,7 @@ return [
                     'title' => 'Toevoegen vanuit de lijst',
                     'body' => "1. Open je lijst onder [Mijn Coves](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijst.",
                     'shot' => 'add',
-                    'alt' => 'Het zoekvak bovenaan een lijst om een product toe te voegen, met daaronder de link om het er zelf op te zetten.',
+                    'alt' => 'Het zoekvak bovenaan een lijst om een product toe te voegen, met daaronder de link om een offline artikel toe te voegen.',
                 ],
                 [
                     'title' => 'Iets dat hier niet te vinden is',
@@ -164,7 +164,7 @@ return [
                 ],
                 [
                     'title' => 'Met vrienden op naam',
-                    'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](friends) die hem mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en de lijst staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).",
+                    'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](people) die hem mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en de lijst staat bij jouw naam op hun pagina [Mijn mensen](people). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Mijn mensen, verjaardagen en herinneringen](lists-help/friends).",
                     'shot' => 'friends-share',
                     'alt' => 'Het deel van het deelvenster waar je vrienden kiest en de link naar hen verstuurt.',
                 ],
@@ -305,27 +305,31 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Een herinnering vooraf',
-                    'body' => 'Dertig, vijftien en twee dagen voor de datum krijg je een seintje, hier en per mail. Meer bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).',
+                    'body' => 'Dertig, vijftien en twee dagen voor de datum krijg je een seintje, hier en per mail. Meer bij [Mijn mensen, verjaardagen en herinneringen](lists-help/friends).',
                 ],
             ],
         ],
 
         'friends' => [
-            'title' => 'Vrienden, verjaardagen en herinneringen',
-            'blurb' => 'Wie je vrienden zijn, wat zij zien, en wanneer je een seintje krijgt.',
-            'seo_description' => 'Vrienden toevoegen, verjaardagen bewaren, en op tijd een herinnering krijgen voor een verjaardag of een gelegenheid.',
+            'title' => 'Mijn mensen, verjaardagen en herinneringen',
+            'blurb' => 'Iedereen voor wie je koopt, vrienden op GiftCoves, en wanneer je een seintje krijgt.',
+            'seo_description' => 'Iedereen voor wie je koopt op één plek, vrienden worden, verjaardagen bewaren, en op tijd een herinnering krijgen voor een verjaardag of een gelegenheid.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Vrienden worden',
-                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie [vrienden](friends). Iemand zelf toevoegen gaat zo:\n\n1. Ga naar [Vrienden](friends).\n2. Vul onder “Iemand toevoegen” een e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Toevoegen”.\n\nDie persoon krijgt daar geen mail van. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
+                    'title' => 'Iedereen voor wie je koopt, op één pagina',
+                    'body' => '[Mijn mensen](people) toont iedereen voor wie je koopt, de eerstvolgende verjaardag of gelegenheid eerst. Sommigen bewaarde je zelf en ziet alleen jij. Anderen zijn vrienden op GiftCoves, met “op GiftCoves” erbij. Iemand toevoegen die alleen jij ziet: tik op “Iemand toevoegen” en vul een naam in, en als je wilt wie het voor je is en de verjaardag.',
                     'shot' => 'friends',
-                    'alt' => 'De vriendenpagina, met het formulier om iemand toe te voegen op e-mailadres.',
+                    'alt' => 'De pagina Mijn mensen, met de knoppen om iemand toe te voegen en om een vriend uit te nodigen.',
+                ],
+                [
+                    'title' => 'Vrienden worden',
+                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie vrienden. Iemand zelf uitnodigen gaat zo:\n\n1. Ga naar [Mijn mensen](people).\n2. Tik op “Nodig uit op GiftCoves” en vul het e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Uitnodigen”.\n\nDie persoon krijgt daar geen mail van, zeg het dus zelf. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
                 ],
                 [
                     'title' => 'Wat een vriend ziet',
-                    'body' => 'Op de [vriendenpagina](friends) staat per vriend zijn verjaardag, de lijsten die hij met jou deelde en welke van jouw lijsten hij ziet. Wat er gereserveerd is, staat daar nooit. Een vriend verwijderen haalt de band aan beide kanten weg; lijsten en reserveringen blijven staan.',
+                    'body' => 'Op [Mijn mensen](people) toont “Details” bij een vriend zijn verjaardag, de lijsten die hij met jou deelde en welke van jouw lijsten hij ziet. Wat er gereserveerd is, staat daar nooit. Een vriend verwijderen haalt de band aan beide kanten weg; lijsten en reserveringen blijven staan.',
                 ],
                 [
                     'title' => 'Verjaardagen',

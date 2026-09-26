@@ -145,7 +145,7 @@ The shape is **product → its offers**, never **feed → product**.
 
 **Where we stand.** Grouping is still exact: the same GTIN, or the same brand plus the same
 normalised title (`app/Services/Ingestion/ProductGrouper.php`). That favours never merging two
-different things over always merging two copies of the same thing. Since 2026-09-27 rules propose
+different things over always merging two copies of the same thing. Since 2026-09-26 rules propose
 pairs beyond that (a shared barcode, the same model number, similar titles, all within one brand)
 and a person confirms each one at /admin/match-review; merges and splits are kept in identity so
 the grouper follows them. See [match-review.md](features/match-review.md).
@@ -173,7 +173,9 @@ cheapest; gift suggestions rank by fit, surprise and demand. No ranking or filte
 a link earns commission. The one exception has nothing to do with money: Amazon's terms forbid us
 storing its products ([amazon-compliance.md](features/amazon-compliance.md)).
 
-**Missing.** Saves, shares, data quality and engagement as ranking inputs. **Rule from here on:** no
+**Missing.** Shares, data quality and engagement as ranking inputs. Saves are the first one in, since
+2026-09-26: a product on the lists of five or more people for the same kind of person ranks higher
+in Find a gift and This or that ([crowd-picks.md](features/crowd-picks.md)). **Rule from here on:** no
 change may make commission decide whether a product can appear.
 
 ### E. Recommendations start from intent
@@ -240,6 +242,12 @@ How it must work, so it helps and cannot hurt:
 
 This is also how gift tags reach the tens of thousands of products no editor will ever tag.
 
+**Where we stand (built 2026-09-26).** Nightly counts per product and intent tag from lists, shown
+and used only above the distinct-people threshold ([list-signals.md](features/list-signals.md)),
+and "chosen by others for someone like them" in Find a gift and This or that
+([crowd-picks.md](features/crowd-picks.md)). Hand-typed items many people wrote become ideas once
+a person approves them ([offline-ideas.md](features/offline-ideas.md)).
+
 ### G. A person's own wish list is intent too
 
 The owner's second idea (2026-09-26): **a wish list somebody keeps for themselves says what they
@@ -259,6 +267,10 @@ like, and the products on it are linked through that person.** Two uses, one sig
 The same rules as F: counted over many lists with a threshold of distinct people, never one person's
 list shown to anyone who was not given it, and no AI. Claims play no part (invariant 4): what was
 bought is never a signal, only what was wished for.
+
+**Where we stand (built 2026-09-26).** Products kept together on people's own lists are linked
+nightly, and a shared wish list shows ideas "in the same spirit" for a second present
+([list-signals.md](features/list-signals.md)).
 
 ---
 
@@ -289,7 +301,7 @@ whoever made it.
 | like one item in somebody else's Cove | **Add to my Cove** | Works on shared lists ([copying-items.md](features/copying-items.md)) and on editorial Coves |
 | see somebody else's Cove | **Save this Cove** | Works on editorial Coves and on Community Coves, with "Make it my list" ([saved-coves.md](features/saved-coves.md)) |
 | see a brand's Cove, or anyone's | **Follow Cove** | Missing in the app. The only subscription is the Daily Cove by email ([cove-subscriptions.md](features/cove-subscriptions.md)) |
-| make a gift guide or a list worth sharing | **Publish Cove** | Works since 2026-09-26: an owner publishes a list as a Community Cove, browsed under `/coves` and suggested by the Gift Finder ([community-coves.md](features/community-coves.md)) |
+| make a gift guide or a list worth sharing | **Publish Cove** | Works since 2026-09-26: an owner publishes a list as a Community Cove, browsed under `/coves` and suggested by Find a gift ([community-coves.md](features/community-coves.md)) |
 
 Together these are a social layer around product discovery, and they are where a network effect
 would come from.
@@ -304,11 +316,14 @@ recommend products, and discover other people's Coves.
 **Where we stand.** Private sharing is strong: share links, collaborators who can view or edit,
 claims (hidden from the list owner by default, invariant 4), votes, pledges towards one gift,
 suggestions, messages, friends, Secret Santa and Ask others ([sharing.md](features/sharing.md),
-[friends.md](features/friends.md)). Following is built and switched off: the `user_follows` table
-and `app/Services/Social/FollowGraph.php` exist, and no route or page calls them.
+[friends.md](features/friends.md)). Since 2026-09-26 friends and the people you buy for are one
+page, My people at `/people` ([my-people.md](features/my-people.md)), and a list its owner
+publishes is a Community Cove anyone can find, save or copy
+([community-coves.md](features/community-coves.md)). Following is built and switched off: the
+`user_follows` table and `app/Services/Social/FollowGraph.php` exist, and no route or page calls
+them.
 
-**Missing.** Public profiles with a handle, discovering other people's Coves, following, and
-recommendations as their own thing.
+**Missing.** Public profiles with a handle, following, and recommendations as their own thing.
 
 ---
 
@@ -342,9 +357,9 @@ to copy.
 
 **Where we stand.** The page shows the lowest price, the number of shops, every offer (in stock
 first, then cheapest), a save button, price and stock alerts, sharing and the shop's description
-(`ProductController`, `Pages/Product.tsx`). Missing: the price range (`maxPrice` is sent but not
-shown), how many people saved it, which Coves hold it, and anything related. The data is there:
-`wishlist_items.group_id` (saves) and `daily_picks.group_id` (editorial Coves).
+(`ProductController`, `Pages/Product.tsx`). Until 2026-09-26 it lacked the price range, how many
+people saved it, which Coves hold it, and anything related; all four are built now
+([product-signals.md](features/product-signals.md)), with the rules below.
 
 - **"Saved by N"** counts distinct people, never claims, and shows only from a small threshold, so a
   count of one cannot point at one person's list.
@@ -367,13 +382,11 @@ You don't need generative AI for this. What matters is turning language into str
 intent then powers search, gift pages, Coves and recommendations, and it is what a saved product
 passes on to the catalogue (engine F).
 
-**Where we stand.** Search reads the words as they are typed, plus explicit price filters
-(`SearchQuery::fromRequest`). Nothing parses "for my sister", "under 50" or "€30–€50". The vocabulary
-exists (`GiftTags`, `Interest`, `RecipientType`) but has no synonyms per language, and the Gift
-Whisperer takes intent only as a step-by-step form.
-
-**Missing.** A parser (pure, per-language word lists, budget patterns), the interpretation shown as
-removable chips, and the suggestion engine answering when intent was found.
+**Where we stand (built 2026-09-26).** The search box reads who, interests, occasion and budget in
+four languages with per-language word lists and no AI, shows the reading as removable chips, and
+filters by it ([intent-search.md](features/intent-search.md), [search.md](features/search.md)).
+Before that it read the words as typed, plus explicit price filters, and intent went in only
+through the Gift Whisperer's form.
 
 ## 6. The front page and the navigation
 
@@ -404,12 +417,13 @@ I care, what can I do now. The owner's structure:
 **My Coves**. Daily Cove, Surprise, Shop Smarter, Ask others, Secret Friend, group lists and
 occasions stop being equal top-level ideas and live inside those.
 
-**Where we stand.** Today's homepage ([homepage.md](features/homepage.md)) has a hero ("Give
-better. Get what you actually want."), a search card, the list wizard, today's Cove, the newsletter,
-recently viewed and "More Coves". The header has Make a list, Find a gift (eight items) and Help.
-Everything the new page links to exists: create a list, `/coves`, the Gift Whisperer, today's Cove,
-the how-it-works page. Community Coves appear once public lists exist; until then that section shows
-editorial Coves.
+**Where we stand (built 2026-09-26).** The homepage follows this structure
+([homepage.md](features/homepage.md)), with a search card under the hero added at the owner's call.
+The header was built as above and changed by the owner the same evening to **Find a gift |
+Discover ▾ | My Coves** with one country-and-language button: the Coves menu became Discover's
+second group, and How it works moved to the footer and the account menu
+([navigation.md](features/navigation.md)). The Coves band still shows editorial Coves and does not
+yet say "what other people are collecting", although Community Coves now exist.
 
 ---
 
@@ -422,7 +436,8 @@ Order agreed with the owner on 2026-09-26.
 1. **Anything goes in.** Built 2026-09-26 ([pasted-links.md](features/pasted-links.md)); pasted
    pages becoming catalogue offers waits for step 5.
 2. **Front page and navigation.** Built 2026-09-26 ([homepage.md](features/homepage.md),
-   [navigation.md](features/navigation.md)): the new homepage and the four-item header.
+   [navigation.md](features/navigation.md)): the new homepage and the header, which is Find a gift,
+   Discover ▾ and My Coves since the evening of the same day.
 3. **Product pages.** Built 2026-09-26 ([product-signals.md](features/product-signals.md)): price
    range, saved by, found in, related.
 4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
@@ -437,15 +452,19 @@ Order agreed with the owner on 2026-09-26.
    pages, how strictly a page must fit the recipient (`gift_landings.min_recipient_matches`), and
    an AI tagging pass (not built).
 5. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
-   confirmed by a person; admin merge and split. Built 2026-09-27
+   confirmed by a person; admin merge and split. Built 2026-09-26
    ([match-review.md](features/match-review.md), [product-identity.md](features/product-identity.md#merges-and-splits)):
    merges and splits live in identity and survive regrouping, and every proposed pair waits for a
    person. Still to come: the owner's bar for letting a rule merge on its own (the review page
    measures each rule's precision), and whether a visitor's pasted product may meet a feed's.
 6. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with
-   titles that follow the naming rule above).
+   titles that follow the naming rule above). Save this Cove and Publish Cove built 2026-09-26
+   ([saved-coves.md](features/saved-coves.md), [community-coves.md](features/community-coves.md));
+   Follow Cove is not built.
 7. **People find each other.** Handles and `/u/{handle}` profiles, following switched on,
-   discovery of public Coves, recommendations; saves and shares feed the ranking.
+   discovery of public Coves, recommendations; saves and shares feed the ranking. Not built;
+   Community Coves (step 6) are the discovery part so far, and My people
+   ([my-people.md](features/my-people.md)) put friends and saved people on one page.
 
 ---
 

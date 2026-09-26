@@ -37,7 +37,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * A dozen rounds of real products, mostly two at a time, and a taste worked
  * out from what was picked: interests, a price band, what to leave out. Then
  * ideas from the suggestion engine, and the option to keep the result on a
- * person so the Gift Finder starts from it.
+ * person so Find a gift starts from it.
  *
  * Two doors, one page:
  *
@@ -230,7 +230,7 @@ class TasteController extends Controller
     /**
      * Keep what was learned on a person: one of yours, or somebody new.
      *
-     * Written the way the Gift Finder's "remember" writes (GiftController::
+     * Written the way Find a gift's "remember" writes (GiftController::
      * rememberFor): the taste through `describeTaste()`, which refuses when
      * the person has described themselves through their link, and the price
      * band directly, because what you spend on somebody is your fact and not

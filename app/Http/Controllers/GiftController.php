@@ -531,10 +531,7 @@ class GiftController extends Controller
              * meets `recipient:` tags, the gift landing pages and the persona
              * Coves as one value rather than as free text to be read.
              */
-            'relationships' => array_map(fn (RecipientType $type) => [
-                'value' => $type->value,
-                'label' => __("site.gift.relationships.{$type->value}"),
-            ], RecipientType::cases()),
+            'relationships' => RecipientType::options(),
         ];
     }
 

@@ -31,7 +31,7 @@ use Illuminate\Support\Collection;
  * owner's own identity; `whereNotNull('claimed_by_hash')` is never written
  * here. What another giver claimed stays invisible to everyone, and the person
  * the list is about learns nothing: the history is read on pages only the
- * owner can open (the person's page, the Gift Finder, their own reminders).
+ * owner can open (the person's page, Find a gift, their own reminders).
  *
  * Claims are read live rather than copied in. A claim that is handed back
  * leaves the history at once, which is right (they are not getting it after

@@ -120,7 +120,7 @@ class GiftLandingLinks
     }
 
     /**
-     * The landing page closest to a Gift Finder brief, for "Open as a page".
+     * The landing page closest to a Find a gift brief, for "Open as a page".
      *
      * The Finder's answers are a POST, so its results cannot be linked to or
      * bookmarked; a landing page can. The first of the brief's interests with

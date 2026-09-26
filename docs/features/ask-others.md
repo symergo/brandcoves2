@@ -12,7 +12,7 @@ A board where somebody describes who they are buying for and other people sugges
 ## The gap it fills
 
 Every other way into this site assumes you can already describe what you want. Search needs a noun.
-The Gift Finder needs six answers about a person. A Cove is a theme we chose. "She's turning forty,
+Find a gift needs six answers about a person. A Cove is a theme we chose. "She's turning forty,
 she has everything, help" is none of those — it is a question for a person, and until now there was
 nowhere to put one.
 
@@ -105,7 +105,7 @@ Added 2026-08-16. A free-text question is the point of the board — "she has ev
 exactly what search cannot take — but answers are noticeably better when the asker has said
 *coffee, practical, under €40*, and most people will tick that if the ticking is free.
 
-**The vocabulary is the Gift Finder's own.** `interests` holds `Interest` values and `vibe` a
+**The vocabulary is Find a gift's own.** `interests` holds `Interest` values and `vibe` a
 `Vibe`, so an answerer's product search can be seeded from a question with no translation layer, the
 two surfaces cannot drift into two ideas of what "cooking" means, and the structured half of the
 board is localised for free through `label()`.
@@ -153,6 +153,11 @@ better reason to click than a card explaining what a question board is.
 > the "was it just created?" branch all three times and stopped counting after the first. It now
 > asks `wasChanged('status')`, which is the actual question.
 
+> **A raw key on the ask form, 2026-09-14 to 2026-09-26.** The values fieldset is headed by
+> `gift.step_values`, which the Gift Whisperer's rework of 2026-09-14 deleted because its own form
+> stopped asking; the ask form still used it and showed the key. The clean-up of 2026-09-26 put the
+> string back in all four languages.
+
 ## SEO
 
 The board and its questions are indexable, because a question with good answers on it is exactly the
@@ -178,7 +183,7 @@ with a stale slug redirecting rather than 404ing, so retitling never strands a s
 - `app/Filament/Resources/CommunityPosts/` — the two queues, defaulting to pending
 - `database/migrations/2026_08_16_000200_create_the_community_ask_tables.php`
 - `resources/js/Pages/Ask/Index.tsx`, `Show.tsx`
-- `resources/js/Components/CoveIcon.tsx`, `CoveIllustration.tsx` — the `ask` mark
+- `resources/js/Components/CoveIcon.tsx` — the `ask` mark
 - `lang/*/site.php` — `ask.*`
 - `config/giftcoves.php` — `ai.caps.community_triage`
 - `tests/Feature/AskOthersTest.php`, `tests/Feature/CommunityTriageTest.php`

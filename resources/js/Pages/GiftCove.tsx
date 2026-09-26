@@ -1,8 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import ListWizard from '../Components/ListWizard'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
-import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Wishlist {
@@ -56,9 +55,10 @@ interface Props {
     /**
      * What the wizard can offer; empty for a visitor.
      *
-     * One list of friends for both the person picker and the sharing step:
-     * they were two lists for a while, and the picker's copy left out anybody
-     * who already had a profile, which emptied it.
+     * One list of friends for the person picker (it also fed the sharing step
+     * until list creation became one step): they were two lists for a while,
+     * and the picker's copy left out anybody who already had a profile, which
+     * emptied it.
      */
     myLists: { id: string; title: string }[]
     recipients: { id: string; name: string; birthday: string | null }[]
@@ -79,10 +79,11 @@ interface Props {
  * The page used to open on a title and a grid. A grid of sixteen explanations
  * is a reference, and nobody arrives wanting a reference: they arrive with a
  * person and an occasion, and the thing to do with those is make a list. So
- * the top of the page *is* making one — four questions, each explained before
- * it is asked, so that by the end the reader has met every option a list has
- * and has one. The grid underneath is for afterwards: what else is here, each
- * with a button that starts it.
+ * the top of the page *is* making one. It was four questions, each explained
+ * before it was asked; since 2026-09-26 it is the one-step form (who it is
+ * for, then Create, docs/features/one-step-list.md), and the rest is set on
+ * the list itself. The grid underneath is for afterwards: what else is here,
+ * each with a button that starts it.
  *
  * ## Two layers, and why the second one exists
  *
@@ -136,7 +137,6 @@ export default function GiftCove({
     friends,
     occasions,
 }: Props) {
-    const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     /*

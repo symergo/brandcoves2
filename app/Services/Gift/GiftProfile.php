@@ -10,13 +10,13 @@ use App\Enums\Vibe;
 
 /**
  * The profile a gift profile card carries, and the two things made from it:
- * the Gift Finder's answers, and a line of words for the card and its title.
+ * Find a gift's answers, and a line of words for the card and its title.
  *
  * A card keeps the conclusion (interests, a budget, what to leave out), never
  * the choices it came from. The conclusion is worked out on the server from
  * the choices at the moment the card is made, so what a card says is what the
  * catalogue said, not what a request claimed. Every value is checked again on
- * the way out, against the same lists the Gift Finder validates with, so a
+ * the way out, against the same lists Find a gift validates with, so a
  * card stored under yesterday's vocabulary cannot break today's form.
  * See docs/features/gift-profile-card.md.
  */
@@ -46,7 +46,7 @@ final class GiftProfile
     }
 
     /**
-     * Only values the Gift Finder accepts, within its caps.
+     * Only values Find a gift accepts, within its caps.
      *
      * @param  array<string, mixed>  $stored
      * @return array{interests: list<string>, avoid: list<string>, budgetMin: int|null, budgetMax: int|null, vibe: string|null, preferences: list<string>, values: list<string>}
@@ -110,7 +110,7 @@ final class GiftProfile
     }
 
     /**
-     * The Gift Finder's answers, in the shape its page keeps them.
+     * Find a gift's answers, in the shape its page keeps them.
      *
      * Euros for the budget, because the wizard's field is in euros (see
      * GiftController::validateBrief), and an avoided interest in the tag's

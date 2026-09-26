@@ -107,7 +107,7 @@ return [
                     'title' => 'Ajouter depuis la liste',
                     'body' => "1. Ouvrez votre liste sous [Mes Coves](lists).\n2. Touchez « + Ajouter un produit ».\n3. Tapez ce que vous cherchez et appuyez sur Entrée, ou touchez l’icône de scan et visez le code-barres avec votre appareil photo.\n4. Touchez le produit dans les résultats. Il est tout de suite sur votre liste.",
                     'shot' => 'add',
-                    'alt' => 'Le champ de recherche en haut d’une liste pour ajouter un produit, avec en dessous le lien pour l’ajouter vous-même.',
+                    'alt' => 'Le champ de recherche en haut d’une liste pour ajouter un produit, avec en dessous le lien pour ajouter un article hors ligne.',
                 ],
                 [
                     'title' => 'Quelque chose qui n’est pas sur ce site',
@@ -149,7 +149,7 @@ return [
                 ],
                 [
                     'title' => 'Avec des amis par leur nom',
-                    'body' => "1. Touchez « Partager », puis « Partager avec des amis ».\n2. Choisissez les [amis](friends) qui peuvent la voir.\n3. Touchez « Envoyer ».\n\nIls reçoivent un e-mail avec le lien, sans le contenu, et la liste apparaît sur leur [page d’amis](friends). « Ne plus partager avec … » l’en retire ; un lien qu’ils avaient déjà continue de marcher jusqu’à ce que vous arrêtiez le partage. Comment on devient amis est sous [Amis, anniversaires et rappels](lists-help/friends).",
+                    'body' => "1. Touchez « Partager », puis « Partager avec des amis ».\n2. Choisissez les [amis](people) qui peuvent la voir.\n3. Touchez « Envoyer ».\n\nIls reçoivent un e-mail avec le lien, sans le contenu, et la liste apparaît à côté de votre nom sur leur page [Mes proches](people). « Ne plus partager avec … » l’en retire ; un lien qu’ils avaient déjà continue de marcher jusqu’à ce que vous arrêtiez le partage. Comment on devient amis est sous [Mes proches, anniversaires et rappels](lists-help/friends).",
                     'shot' => 'friends-share',
                     'alt' => 'La partie du volet de partage où vous choisissez des amis et leur envoyez le lien.',
                 ],
@@ -290,27 +290,31 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'Un rappel avant',
-                    'body' => 'Trente, quinze et deux jours avant la date, vous recevez un signe, ici et par e-mail. Plus sous [Amis, anniversaires et rappels](lists-help/friends).',
+                    'body' => 'Trente, quinze et deux jours avant la date, vous recevez un signe, ici et par e-mail. Plus sous [Mes proches, anniversaires et rappels](lists-help/friends).',
                 ],
             ],
         ],
 
         'friends' => [
-            'title' => 'Amis, anniversaires et rappels',
-            'blurb' => 'Qui sont vos amis, ce qu’ils voient, et quand vous recevez un signe.',
-            'seo_description' => 'Ajouter des amis, garder les anniversaires, et recevoir un rappel à temps pour un anniversaire ou une occasion.',
+            'title' => 'Mes proches, anniversaires et rappels',
+            'blurb' => 'Tous ceux pour qui vous achetez, vos amis sur GiftCoves, et quand vous recevez un signe.',
+            'seo_description' => 'Tous ceux pour qui vous achetez au même endroit, devenir amis, garder les anniversaires, et recevoir un rappel à temps pour un anniversaire ou une occasion.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Devenir amis',
-                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes [amis](friends). Pour ajouter quelqu’un vous-même :\n\n1. Allez sur [Amis](friends).\n2. Sous « Ajouter une personne », indiquez une adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Ajouter ».\n\nCette personne ne reçoit pas d’e-mail pour cela. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
+                    'title' => 'Tous ceux pour qui vous achetez, sur une page',
+                    'body' => "[Mes proches](people) montre tous ceux pour qui vous achetez, l’anniversaire ou l’occasion la plus proche d’abord. Certains, vous les avez enregistrés vous-même et vous seul les voyez. D’autres sont des amis sur GiftCoves, marqués « sur GiftCoves ». Pour ajouter quelqu’un que vous seul voyez, touchez « Ajouter quelqu'un » : un nom, et si vous voulez qui c’est pour vous et son anniversaire.",
                     'shot' => 'friends',
-                    'alt' => 'La page des amis, avec le formulaire pour ajouter quelqu’un par son adresse e-mail.',
+                    'alt' => 'La page Mes proches, avec les boutons pour ajouter quelqu’un et pour inviter un ami.',
+                ],
+                [
+                    'title' => 'Devenir amis',
+                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes amis. Pour inviter quelqu’un vous-même :\n\n1. Allez sur [Mes proches](people).\n2. Touchez « Inviter sur GiftCoves » et indiquez son adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Inviter ».\n\nCette personne ne reçoit pas d’e-mail pour cela, dites-le-lui vous-même. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
                 ],
                 [
                     'title' => 'Ce qu’un ami voit',
-                    'body' => 'La [page des amis](friends) montre, par ami, son anniversaire, les listes qu’il a partagées avec vous et lesquelles de vos listes il voit. Ce qui est réservé n’y apparaît jamais. Retirer un ami retire le lien des deux côtés ; listes et réservations restent.',
+                    'body' => 'Sur [Mes proches](people), « Détails » sur un ami montre son anniversaire, les listes qu’il a partagées avec vous et lesquelles de vos listes il voit. Ce qui est réservé n’y apparaît jamais. Retirer un ami retire le lien des deux côtés ; listes et réservations restent.',
                 ],
                 [
                     'title' => 'Anniversaires',

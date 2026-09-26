@@ -339,9 +339,9 @@ const scenes: Record<SceneKey, ReactNode> = {
      * A stack of books with a pair of reading glasses on top.
      *
      * Deliberately not an open book against a shelf: `CoveIllustration`'s
-     * `idea` scene is exactly that and means "the archive of writing" on the
-     * homepage. Two drawings that mean different things must not be the same
-     * drawing.
+     * `idea` scene was exactly that and meant "the archive of writing" on the
+     * homepage (that component was removed 2026-09-26, unused). Two drawings
+     * that mean different things must not be the same drawing.
      *
      * The glasses were the fix. Three stacked rectangles and a lamp read as a
      * stack of boxes under a light - the books were only books because the

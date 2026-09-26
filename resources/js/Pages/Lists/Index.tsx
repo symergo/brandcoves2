@@ -177,10 +177,8 @@ function ListCard({ list }: { list: ListSummary }) {
                           What kind of list this is.
 
                           The kind lived only in the section heading, so a card read
-                          out of context — which is how a card is read, and the only
-                          way one is read in the Shared and Group views, where there
-                          are no sections — said nothing about what could be done
-                          with it.
+                          out of context — which is how a card is read — said
+                          nothing about what could be done with it.
                         */}
                         {/*
                           Kind, whose it is, and what you may do — one component,
@@ -360,20 +358,17 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                       the header compete with the page under it.
                     */}
                     {/*
-                      One button for everybody. The wizard behind it is the
-                      same one the Gift Cove opens with: it walks a signed-out
-                      visitor through the four questions as the explanation,
-                      and its last button is the sign-in, which remembers the
-                      answers and replays them on return. Before 2026-09-07 this
-                      opened a one-screen form that asked the same things with
-                      none of the explanation, and a second copy of the picker
-                      that had already been fixed once elsewhere.
+                      One button for everybody. What it opens is the same
+                      `ListWizard` the Gift Cove uses, which since 2026-09-26 is
+                      one question (who it is for) and a Create button; see
+                      docs/features/one-step-list.md. Signed out, the button is
+                      the sign-in, which remembers the answer and replays it on
+                      return.
 
-                      The button is the home page's "Make a new list" button
-                      (`NewListButton`) since 2026-09-12. It was a plain
-                      "New list" here, smaller and without the glyph, and the
-                      two looked like different things that turned out to open
-                      the same wizard.
+                      The button is the home page's `NewListButton` since
+                      2026-09-12. It was a plain "New list" here, smaller and
+                      without the glyph, and the two looked like different things
+                      that turned out to open the same form.
                     */}
                     <NewListButton
                         open={creating}

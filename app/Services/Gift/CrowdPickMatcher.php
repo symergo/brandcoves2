@@ -28,7 +28,7 @@ final class CrowdPickMatcher
     /**
      * Interests of the brief taken into account, in the brief's order.
      *
-     * Four, the Gift Finder's own limit on what it retrieves by, so that a
+     * Four, Find a gift's own limit on what it retrieves by, so that a
      * brief with eight interests does not look up 45 pairs, most of them
      * about interests the page will not show.
      */

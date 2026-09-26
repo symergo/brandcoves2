@@ -85,17 +85,17 @@ inbox that may be read on a shared screen or forwarded, and on a wish list the
 one person who must not learn what has been bought is the person it is addressed
 to. `ListInvitationMail` refuses product data for the same reason.
 
-## Ideas ready, about two weeks out (2026-09-28)
+## Ideas ready, about two weeks out (2026-09-26)
 
 On the window nearest two weeks (`reminders.ideas_lead_days`, 14; the fifteen-day one with the
 shipped windows), a reminder about somebody else (a saved person's birthday, or the occasion on a
 list about them) carries three gift ideas in the email: their taste, their budget, nothing they
 were already given. Once per person, occasion and year, with `ideas_key` in the notification's
-payload as the ledger. A birthday reminder's in-app link now opens the Gift Finder on that person
+payload as the ledger. A birthday reminder's in-app link now opens Find a gift on that person
 (`/gift?for=<id>`) rather than an empty wizard. The whole design, and why the ideas are not "list
 contents": [gift-history.md](gift-history.md#reminders-with-ideas-ready).
 
-## Anybody can stop the emails (2026-09-28)
+## Anybody can stop the emails (2026-09-26)
 
 `users.reminder_emails_off_at`: set from the signed link in every reminder email (footer and
 `List-Unsubscribe`, one-click POST), or the switch on the notifications page, which also turns them
@@ -147,7 +147,7 @@ arriving half in English is the bug all of that prevents.
 - [email-templates.md](email-templates.md) — the reminder's wording is editable
 - [secret-santa.md](secret-santa.md) — the exchange date this also watches
 
-## A saved person with a list got no birthday reminder until 2026-09-28
+## A saved person with a list got no birthday reminder until 2026-09-26
 
 The market was read with Eloquent's `value('market')`, which returns the cast `Market` enum, and
 `(string)` on an enum throws. So the job failed on every saved person somebody had made a list for,

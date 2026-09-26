@@ -30,7 +30,7 @@ features:
 
 | Topic | What it covers |
 |---|---|
-| `saving` | the three steps with screenshots, the wizard, starting signed out |
+| `saving` | save, pick a list, open My Coves, make a list in one step (three steps until 2026-09-26), starting signed out |
 | `kinds` | wish list, gift list, group gift; the one fixed choice; occasions and dates |
 | `items` | the bookmark, adding from the list, own items, copying, price drops, removing |
 | `sharing` | private by default, link, friends by name, who may add, who sees claims, address |
@@ -69,7 +69,9 @@ picture of the screen the steps happen on: "I meant screenshots on all help page
 pictures per language now: the three of the save flow, the wizard's first step, adding a product,
 the share panel and its friends block, a shared list as a visitor sees it with the claim buttons,
 the quiz panel, a group gift with its chip-in box and discussion, a card whose price dropped, the
-occasion panel, the Secret Santa page, the friends page, and following a search.
+occasion panel, the Secret Santa page, the friends page (My people since 2026-09-26: the `friends`
+topic is "My people, birthdays and reminders" and its links go to `/people`), and following a
+search.
 
 ## Keyword anchors
 

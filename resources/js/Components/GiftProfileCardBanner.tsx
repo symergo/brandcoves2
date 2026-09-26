@@ -17,7 +17,7 @@ export interface GiftProfileCardProps {
 }
 
 /**
- * The top of the Gift Finder when it was opened from somebody's gift profile
+ * The top of Find a gift when it was opened from somebody's gift profile
  * card (docs/features/gift-profile-card.md).
  *
  * The answers below are already filled in from the card, so the one thing to

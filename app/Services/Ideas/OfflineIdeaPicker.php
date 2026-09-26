@@ -11,7 +11,7 @@ use App\Services\Gift\TasteBrief;
 
 /**
  * Which approved offline ideas fit a brief: "ideas without a shop" under the
- * Gift Finder's and This or that's results.
+ * Find a gift's and This or that's results.
  *
  * Only approved ideas, only the brief's own market, and only an idea that
  * shares something with the brief: an interest, who it is for, or the

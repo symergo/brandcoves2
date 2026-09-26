@@ -55,6 +55,10 @@ occasion, and everything on it excluded. The shared page of a person's own wish 
 **ideas in the same spirit** to the people it is shared with (never to the owner), cached an hour
 per list version. No brief, no block: a list with no tagged product says too little.
 
+Until the clean-up of 2026-09-26 the block's heading and hint showed as raw keys
+(`lists.like_this_title`): a merge had put the two strings under `gift_cove` in all four languages.
+They live under `lists` now.
+
 ## The rules
 
 - **People, not lists.** Every count is distinct owners (a user or an anonymous identity). One
