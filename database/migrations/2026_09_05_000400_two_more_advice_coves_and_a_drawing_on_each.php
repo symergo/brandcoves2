@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Services\Content\AdviceCoveSeeder;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Re-seed the advice articles: two new subjects, and a scene on all ten.
@@ -53,6 +54,18 @@ return new class extends Migration
     public function up(): void
     {
         if (app()->environment('testing')) {
+            return;
+        }
+
+        /*
+         * Not on a fresh, empty database: the same guard, for the same reason,
+         * as `2026_09_03_000100` (added 2026-09-26). The content file names
+         * scenes this date's CHECK does not allow yet. Every deployed database
+         * held Dailies long before this ran, so nothing changes there.
+         */
+        if (DB::table('daily_pick_sets')->doesntExist()) {
+            echo "  advice-coves: fresh database, skipped. Run bc:seed-advice-coves after migrate.\n";
+
             return;
         }
 

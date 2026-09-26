@@ -75,6 +75,29 @@ return new class extends Migration
             return;
         }
 
+        /*
+         * Not on a fresh, empty database either. Added 2026-09-26.
+         *
+         * The seeder reads today's `advice-coves.php` and writes today's row
+         * shape, but on a fresh `migrate` it runs against the schema as it
+         * stood on 2026-09-03. The content has since gained scenes (a drawing
+         * per article) that `daily_pick_sets_scene_check` only accepts from
+         * `2026_09_05_000300` onward, so a fresh migrate died here with a
+         * check violation.
+         *
+         * An empty `daily_pick_sets` is what a fresh database looks like, and
+         * no deployed database was: production and staging held Dailies long
+         * before this ran, and have already run it. So the guard changes
+         * nothing anywhere this has run. A fresh environment gets its articles
+         * from `php artisan bc:seed-advice-coves` after `migrate`, against the
+         * schema the seeder is written for.
+         */
+        if (DB::table('daily_pick_sets')->doesntExist()) {
+            echo "  advice-coves: fresh database, skipped. Run bc:seed-advice-coves after migrate.\n";
+
+            return;
+        }
+
         $report = app(AdviceCoveSeeder::class)->run();
 
         /*
