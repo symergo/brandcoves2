@@ -166,3 +166,34 @@ values went into the mail theme, the Inertia progress bar and the browser theme 
 places the palette is written out rather than read from the tokens. The dark theme keeps its own
 surfaces and takes the accent as is: 4.0:1 on its ground, the same as before.
 
+## How to name a list in text (2026-09-26, the standard from here on)
+
+The owner: "When you name a list in text, make clear it is a list name by styling it
+consistently as a list name." Nothing limits what somebody calls a list, so a name dropped into a
+sentence as plain text ("Bewaard in voor mama") leaves the reader to find where it starts. Every
+place changed is listed in [list-names-in-text.md](list-names-in-text.md).
+
+- **On the site, a list's name inside a sentence is `<ListName name kind />`**
+  (`resources/js/Components/ListName.tsx`): the kind's small line icon, then the name in medium
+  weight and `ink`. One icon colour (`accent`) for every kind, the icon sized to the text (`1em`),
+  and the icon never separated from the first word by a line break. No kind known (a bookmarked
+  Cove): the plain `list` icon, so the style never goes missing.
+- **A translated sentence with a list in it** goes through `tRich(key, { list: <ListName … /> })`
+  from `useTranslations`, not `t()`. `t()` stays for strings: `title=`, `aria-label=`, share texts
+  and anything else that cannot hold an element.
+- **A sentence the server writes** (a flash, a save answer, a notification) is sent in pieces as
+  well as finished: `App\Support\ListName::mention()` gives `message`, `template` (the sentence
+  with `:list` left in), `name` and `kind`, and the page draws it with `rich(template, …)`. For a
+  flash use `->with(ListName::flash(ListName::mentionList($key, $list)))`, which sets both
+  `success` (the plain sentence, unchanged) and `success_list` (shared as `flash.list`).
+- **Quotes around `:list` in a translation are dropped where the name is drawn**, as a matched
+  pair only: the style does the job the quotes did. The plain sentence keeps them.
+- **In an e-mail the name is bold**, through `ListName::mailSentence()` or `ListName::inMail()`,
+  which also escape it so a name with `*` or `<` in it reads as typed.
+- **Not for a heading or a card that *is* the list's title**, nor a row in a picker: those
+  already say "this is a list" by where they are.
+
+The three kind icons are the ones `ListKindBadge` uses (`kindIcons`). The heart was redrawn the
+same day at nine tenths of its size, so it matches the clipboard and the two figures when they sit
+side by side at text size. The My Coves section headings now carry the same icons.
+

@@ -9,7 +9,8 @@
 @if ($forName)
 {{ __('site.invitations.mail_intro_for', ['name' => $fromName, 'person' => $forName]) }}
 @else
-{{ __('site.invitations.mail_intro', ['name' => $fromName, 'list' => $listTitle]) }}
+{{-- The list's name bold, as every mail names a list: App\Support\ListName. --}}
+{{ \App\Support\ListName::mailSentence('site.invitations.mail_intro', $listTitle, ['name' => $fromName]) }}
 @endif
 
 {{ __('site.invitations.mail_what') }}

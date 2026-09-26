@@ -45,6 +45,7 @@ is true now.
 | [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
 | [design-system.md](design-system.md) | Brand / Frontend | Active — tokens, Button, Badge, the navigation beam; most call sites not yet migrated |
+| [list-names-in-text.md](list-names-in-text.md) | Frontend / Wishlist | Active — a list's name in a sentence is `ListName` (kind icon, medium weight); bold in e-mail |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |

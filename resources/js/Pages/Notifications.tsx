@@ -2,7 +2,9 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect } from 'react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
-import { useTranslations } from '../useTranslations'
+import { rich, useTranslations } from '../useTranslations'
+import type { ListKind } from '../Components/ListKindBadge'
+import ListName from '../Components/ListName'
 import InfoTip from '../Components/InfoTip'
 
 interface Notice {
@@ -16,6 +18,11 @@ interface Notice {
     readAt: string | null
     /** How many, on a watched-search notification. */
     count: number | null
+    /**
+     * The title in pieces when it names a list (`App\Support\ListName`), so
+     * the name is drawn as a list's name. Null on older rows and other kinds.
+     */
+    list?: { template: string; name: string; kind: ListKind | null } | null
     createdAt: string
     /** Day and month, formatted on the server in the market's language. */
     createdAtLabel: string
@@ -107,6 +114,17 @@ export default function Notifications({
         }
 
         return null
+    }
+
+    /**
+     * The title, with a list's name drawn as one where the row says which
+     * part is the name. The rest of the title is already `font-medium`, so
+     * the name is set apart by its icon and colour rather than its weight.
+     */
+    function titleOf(notice: Notice) {
+        return notice.list
+            ? rich(notice.list.template, { list: <ListName name={notice.list.name} kind={notice.list.kind} /> })
+            : notice.title
     }
 
     return (
@@ -220,10 +238,10 @@ export default function Notifications({
                                 <div className="min-w-0 flex-1">
                                     {notice.url ? (
                                         <Link href={notice.url} className="font-medium hover:underline">
-                                            {notice.title}
+                                            {titleOf(notice)}
                                         </Link>
                                     ) : (
-                                        <span className="font-medium">{notice.title}</span>
+                                        <span className="font-medium">{titleOf(notice)}</span>
                                     )}
                                     {/*
                                       A second line, only when there is one.

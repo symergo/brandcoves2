@@ -57,6 +57,19 @@ export interface ListOption {
 export interface SavingTo {
     id: string
     title: string
+    /** What kind of list, for drawing its name in a sentence (`ListName`). */
+    kind?: 'mine' | 'for_someone' | 'group'
+}
+
+/**
+ * A sentence that names a list, in the pieces `App\Support\ListName` sends:
+ * the finished `message`, the same with `:list` left in, and what to put there.
+ */
+export interface ListMention {
+    message: string
+    template: string
+    name: string
+    kind: 'mine' | 'for_someone' | 'group' | null
 }
 
 export interface SharedProps {
@@ -122,6 +135,8 @@ export interface SharedProps {
         status?: string
         /** A way on from the message, shown as a link after it. */
         action?: { label: string; href: string } | null
+        /** The `success` sentence in pieces when it names a list, so the name is drawn as one. */
+        list?: ListMention | null
         savedItem?: number | null
         /** Whom the owner chose to ask for ideas when making this list; `Lists/Show` shows the links once. */
         askForIdeas?: ('recipient' | 'others')[] | null

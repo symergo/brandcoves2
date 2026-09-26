@@ -3,6 +3,7 @@ import { addedCount, subscribe as subscribeToCount } from '../addingMode'
 import { useSyncExternalStore } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import ListName from './ListName'
 
 /**
  * "Adding to Camping · 4 added · Done".
@@ -20,7 +21,7 @@ import { useTranslations } from '../useTranslations'
  */
 export default function AddingToBar() {
     const { savingTo, market } = usePage<SharedProps>().props
-    const { t, n } = useTranslations()
+    const { t, tRich, n } = useTranslations()
 
     // Counted on the client: the server knows how many items the list holds,
     // not how many of them arrived during this run, and "4 added" is only
@@ -33,7 +34,7 @@ export default function AddingToBar() {
         <div className="sticky top-0 z-40 border-b border-sage/40 bg-sage/10">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate">
-                    {t('lists.adding_to', { list: savingTo.title })}
+                    {tRich('lists.adding_to', { list: <ListName name={savingTo.title} kind={savingTo.kind} /> })}
                     {added > 0 && (
                         <span className="text-ink-soft">
                             {' · '}

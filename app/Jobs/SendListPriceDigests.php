@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
+use App\Support\ListName;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -99,7 +100,14 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
                         'title' => $section['title'],
                         'body' => null,
                         'url' => "/{$list->market->value}/lists/{$list->id}",
-                        'payload' => ['list_id' => $list->id, 'count' => $count],
+                        // The title *is* the list's name, so the inbox draws it
+                        // as one (App\Support\ListName): the template is the
+                        // name alone.
+                        'payload' => [
+                            'list_id' => $list->id,
+                            'count' => $count,
+                            'list' => ['template' => ListName::TOKEN, 'name' => $section['title'], 'kind' => $list->kind->value],
+                        ],
                     ]);
                 }
 

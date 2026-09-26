@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\DailyPickSet;
 use App\Services\Cove\SavedCoves;
 use App\Support\CurrentMarket;
+use App\Support\ListName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -43,7 +44,7 @@ class SavedCoveController extends Controller
         $list = $saved->copyToList($request->user(), $this->published($set));
 
         return redirect()->to($current->url("lists/{$list->id}"))
-            ->with('success', __('site.saved_coves.copied', ['list' => $list->title]));
+            ->with(ListName::flash(ListName::mention('site.saved_coves.copied', (string) $list->title, $list->kind)));
     }
 
     /** Only a published Cove can be saved or copied; anything else is a 404. */

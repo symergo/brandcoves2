@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Enums\Market;
+use App\Support\ListName;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -52,6 +53,9 @@ class ListInvitationMail extends Mailable
             'name' => $this->fromName,
             'list' => $this->listTitle,
             'person' => $this->forName ?? '',
+        ], [
+            // Bold in the body, as every mail names a list; plain in the subject.
+            'list' => ListName::inMail($this->listTitle)->toHtml(),
         ]);
     }
 

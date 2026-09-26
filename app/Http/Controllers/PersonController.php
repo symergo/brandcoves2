@@ -161,7 +161,7 @@ class PersonController extends Controller
      * this person, made when there is something to save and none exists yet.
      * The same rule as Find a gift's (GiftController::recipientList()).
      *
-     * @return array{id: string, title: string}|null
+     * @return array{id: string, title: string, kind: string}|null
      */
     private function theirList(Request $request, CurrentMarket $current, Recipient $person, bool $needed): ?array
     {
@@ -186,7 +186,7 @@ class PersonController extends Controller
             );
         }
 
-        return ['id' => $list->id, 'title' => $list->displayTitle()];
+        return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
     }
 
     private function findOwned(Request $request, string $id): Recipient

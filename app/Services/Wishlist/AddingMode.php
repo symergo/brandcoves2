@@ -73,7 +73,7 @@ class AddingMode
      * over — and a mode that outlives permission would send every subsequent
      * save into a 403 with no explanation on screen.
      *
-     * @return array{id: string, title: string}|null
+     * @return array{id: string, title: string, kind: string}|null
      */
     public function current(Owner $owner): ?array
     {
@@ -92,6 +92,6 @@ class AddingMode
             return null;
         }
 
-        return ['id' => $list->id, 'title' => $list->displayTitle()];
+        return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
     }
 }

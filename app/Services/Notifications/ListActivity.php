@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\Wishlist\Board;
+use App\Support\ListName;
 use App\Support\Owner;
 
 /**
@@ -67,9 +68,8 @@ class ListActivity
     /** `Anna shared "Wedding" with you.` */
     public function shared(Wishlist $list, User $from, User $to, string $url): void
     {
-        $this->write($to, $from, 'list.shared', __('site.notifications.list_shared', [
+        $this->write($to, $from, 'list.shared', ListName::mentionList('site.notifications.list_shared', $list, [
             'name' => $from->displayName(),
-            'list' => $list->displayTitle(),
         ]), $url, $list->id);
     }
 
@@ -173,11 +173,11 @@ class ListActivity
             return;
         }
 
-        $title = $item === null
-            ? __("site.notifications.{$key}", ['list' => $list->displayTitle()])
-            : __("site.notifications.{$key}_item", ['list' => $list->displayTitle(), 'item' => $item]);
+        $mention = $item === null
+            ? ListName::mentionList("site.notifications.{$key}", $list)
+            : ListName::mentionList("site.notifications.{$key}_item", $list, ['item' => $item]);
 
-        $this->write($to, $from->user, $kind, $title, $this->ownerUrl($list), $list->id);
+        $this->write($to, $from->user, $kind, $mention, $this->ownerUrl($list), $list->id);
     }
 
     /**
@@ -224,7 +224,10 @@ class ListActivity
      * renders a second line only for the kinds that have one, which is what
      * stopped every list notification reading "dropped to - (was -)".
      */
-    private function write(User $to, ?User $actor, string $kind, string $title, string $url, string $listId): void
+    /**
+     * @param  array{message: string, template: string, name: string, kind: string|null}  $mention
+     */
+    private function write(User $to, ?User $actor, string $kind, array $mention, string $url, string $listId): void
     {
         if ($actor !== null && $actor->id === $to->id) {
             return;
@@ -233,7 +236,7 @@ class ListActivity
         Notification::create([
             'user_id' => $to->id,
             'kind' => $kind,
-            'title' => $title,
+            'title' => $mention['message'],
             'body' => null,
             'url' => $url,
             /*
@@ -242,8 +245,20 @@ class ListActivity
              * today" — and a URL is a string that changes whenever routing does.
              * `SendOccasionReminders` keys its dedupe off `payload->key` for the
              * same reason.
+             *
+             * `list` is the title again in pieces, so the inbox can draw the
+             * list's name as a list's name (App\Support\ListName). The title
+             * keeps its quotes for anything that reads it as text; a row
+             * written before this has no `list` and shows the title as it was.
              */
-            'payload' => ['wishlist_id' => $listId],
+            'payload' => [
+                'wishlist_id' => $listId,
+                'list' => [
+                    'template' => $mention['template'],
+                    'name' => $mention['name'],
+                    'kind' => $mention['kind'],
+                ],
+            ],
         ]);
     }
 }

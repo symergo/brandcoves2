@@ -4,6 +4,7 @@ import SaveToList from '../../Components/SaveToList'
 import type { SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
 import ScanButton from '../../Components/ScanButton'
 import ToolIcon from '../../Components/ToolIcon'
@@ -73,7 +74,7 @@ interface Props {
  */
 export default function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm, into = null }: Props) {
     const { market } = usePage<SharedProps>().props
-    const { t, n } = useTranslations()
+    const { t, tRich, n } = useTranslations()
     const base = `/${market.key}`
 
     const [query, setQuery] = useState(searchTerm)
@@ -149,7 +150,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                 */}
                 {into && (
                     <p className="mt-3 text-sm text-ink-soft">
-                        {t('ask.save_into', { list: into.title })}{' '}
+                        {tRich('ask.save_into', { list: <ListName name={into.title} kind={into.kind} /> })}{' '}
                         <Link href={`${base}/lists/${into.id}`} className="font-medium text-accent-dark underline hover:text-ink">
                             {t('ask.back_to_list')}
                         </Link>

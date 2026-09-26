@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { send } from '../http'
-import { show as showToast } from '../saveToast'
+import { listFrom, show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
 import type { SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
+import type { ListKind } from './ListKindBadge'
 
 export interface OfflineIdea {
     id: number
@@ -16,6 +17,9 @@ interface SaveResult {
     itemId: number
     listId: string
     listTitle: string
+    /** For drawing the list's name in the toast; see App\Support\ListName. */
+    listKind?: ListKind
+    messageTemplate?: string
     message: string
 }
 
@@ -69,7 +73,7 @@ export default function OfflineIdeas({ ideas, into }: { ideas: OfflineIdea[]; in
             })
 
             setAdded((ids) => [...ids, idea.id])
-            showToast({ message: result.message, tone: 'ok', undo: { itemId: result.itemId }, listId: result.listId })
+            showToast({ message: result.message, list: listFrom(result), tone: 'ok', undo: { itemId: result.itemId }, listId: result.listId })
         } catch {
             showToast({ message: t('lists.save_failed'), tone: 'error' })
         } finally {
