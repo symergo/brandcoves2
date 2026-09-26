@@ -79,11 +79,11 @@ Grouped by what a visitor is doing, not by file order:
 | `Community/` | screening user-written posts and answers |
 | `Connectors/` | one subdirectory per vendor; `Offer` is the shared shape |
 | `Content/` | shipped editorial (advice coves), guide folding |
-| `Cove/` | the daily edition: themes, observances, digests, plan slugs, seasonal series, the editorial year |
+| `Cove/` | the daily edition: themes, observances, digests, plan slugs, seasonal series, the editorial year; personas drafted from search demand (`PersonaDemandPlanner`, features/persona-demand.md) |
 | `Curation/` | the human pass over a drafted plan |
 | `Discovery/` | catalogue-level signals: trends, serendipity, freshness |
 | `Editorial/` | the API's view of products; link checking; allowlist |
-| `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs; gift history (`GiftHistory`), the next step after a past gift (`NextSteps`, scored by `NextStepScorer`) and the ideas in a reminder (`ReminderIdeas`); see features/gift-history.md |
+| `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs; gift history (`GiftHistory`), the next step after a past gift (`NextSteps`, scored by `NextStepScorer`) and the ideas in a reminder (`ReminderIdeas`); see features/gift-history.md; gift searches counted as readings (`GiftSearchDemand`), a persona's budget tabs (`PersonaBudgets`), what gets used up or done (`HasEverything`) |
 | `Guides/` | topic mining and planning |
 | `Ideas/` | offline items people typed by hand, folded (`IdeaKey`), counted nightly from five people (`OfflineIdeaCounter`) and, once a person approved them, matched to a brief (`OfflineIdeaPicker`); see features/offline-ideas.md |
 | `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2; merges, splits and the match rules (`GroupMerger`, `GroupSplitter`, `MatchFinder`, `ModelNumber`) |

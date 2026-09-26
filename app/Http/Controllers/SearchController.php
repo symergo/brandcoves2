@@ -7,11 +7,13 @@ namespace App\Http\Controllers;
 use App\Enums\AlertState;
 use App\Enums\EventType;
 use App\Enums\Interest;
+use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
+use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Pages\BlockSections;
@@ -139,6 +141,16 @@ class SearchController extends Controller
         }
 
         $gift = $intent !== null && $intent->isGift ? $this->giftResults($intent, $current) : null;
+
+        /*
+         * Counted as demand for a gift persona (persona-demand.md): only the
+         * reading (who, which interests), per day, never the words or who
+         * typed them. A gift search never reaches `search_log`, so without
+         * this the nightly planner would never see one.
+         */
+        if ($intent !== null && $intent->isGift && ! TrackAnonymousIdentity::isMachine((string) $request->userAgent())) {
+            app(GiftSearchDemand::class)->record($intent, $current->get());
+        }
 
         $result = $landing === null && $gift === null ? $search->search($query) : SearchResult::none($query);
 
@@ -718,6 +730,10 @@ class SearchController extends Controller
 
         if ($intent->occasion !== null) {
             $chips[] = ['label' => EventType::from($intent->occasion)->label($market->language()), 'without' => $url($intent->without('occasion'))];
+        }
+
+        if ($intent->hasEverything) {
+            $chips[] = ['label' => __('site.gift_ideas.has_everything_chip'), 'without' => $url($intent->without('has_everything'))];
         }
 
         return [

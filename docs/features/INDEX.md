@@ -36,6 +36,9 @@ is true now.
 | [offline-ideas.md](offline-ideas.md) | Gifting / Wishlist / Admin | Active — hand-typed items five people wrote, approved by a person, shown under Gift Finder and This or that results |
 | [intent-search.md](intent-search.md) | Search / Gifting | Active — the search box reads gift searches (who, interests, occasion, budget) |
 | [gift-landing-pages.md](gift-landing-pages.md) | Gifting / SEO | Active — `/gift-ideas/for/{recipient}/{interest}`, recorded nightly when 8+ products fit; briefs stored and linkable; Cove plans can carry a brief |
+| [persona-demand.md](persona-demand.md) | Gifting / Content | Active — gift searches counted as readings; nightly (06:30) drafts personas for readings nothing answers yet; drafts only |
+| [persona-budgets.md](persona-budgets.md) | Gifting / Content | Active — tabs around 15, 40 and 100 under a persona's curated shelf, cached a day |
+| [has-everything.md](has-everything.md) | Gifting / Search / Content | Active — a brief flag: used up or done before more things; the search box reads the phrase in four languages |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |

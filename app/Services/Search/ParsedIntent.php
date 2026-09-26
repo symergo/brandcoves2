@@ -30,6 +30,8 @@ final readonly class ParsedIntent
         public ?int $budgetMax = null,
         public string $rest = '',
         public array $phrases = [],
+        // "Who has everything" was said: prefer what gets used up or done.
+        public bool $hasEverything = false,
     ) {}
 
     public function hasBudget(): bool
@@ -54,6 +56,7 @@ final readonly class ParsedIntent
             occasion: $this->occasion,
             limit: $limit,
             query: $this->rest === '' ? null : $this->rest,
+            hasEverything: $this->hasEverything,
         );
     }
 

@@ -13,6 +13,7 @@ use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\LinkBarcodeItems;
 use App\Jobs\PlanGiftLandingPages;
+use App\Jobs\PlanPersonasFromDemand;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
@@ -132,6 +133,20 @@ Schedule::call(function (): void {
 })
     ->name('plan-gift-landing-pages')
     ->dailyAt('05:40')
+    ->onOneServer();
+
+// Gift personas drafted from what people search for: readings searched often
+// enough that no persona or landing page answers yet. Drafts only, for a
+// person to approve. After the landing pages (05:40) so a pair that got its
+// page tonight is not also drafted as a persona.
+// See docs/features/persona-demand.md.
+Schedule::call(function (): void {
+    foreach (Market::published() as $market) {
+        PlanPersonasFromDemand::dispatch($market);
+    }
+})
+    ->name('plan-personas-from-demand')
+    ->dailyAt('06:30')
     ->onOneServer();
 
 /*

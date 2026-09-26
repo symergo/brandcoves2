@@ -22,6 +22,7 @@ use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use App\Services\Ideas\OfflineIdeaPicker;
+use App\Services\Search\GiftIntentParser;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
@@ -453,9 +454,30 @@ class GiftController extends Controller
             $validated = $this->withStored($validated, $current, $recipient);
         }
 
+        /*
+         * "Heeft alles al" typed as an interest is not an interest: searched
+         * word for word it finds titles containing "alles". Read with the
+         * search box's own word lists and turned into the brief's flag, which
+         * prefers what gets used up or done (docs/features/has-everything.md).
+         */
+        $parser = app(GiftIntentParser::class);
+        $interests = [];
+        $hasEverything = false;
+
+        foreach ((array) ($validated['interests'] ?? []) as $interest) {
+            if (is_string($interest) && Interest::tryFrom($interest) === null && $parser->saysHasEverything($interest, $current->get())) {
+                $hasEverything = true;
+
+                continue;
+            }
+
+            $interests[] = $interest;
+        }
+
         return new TasteBrief(
             market: $current->get(),
-            interests: array_values((array) ($validated['interests'] ?? [])),
+            interests: $interests,
+            hasEverything: $hasEverything,
             vibe: isset($validated['vibe']) ? Vibe::tryFrom((string) $validated['vibe']) : null,
             preferences: array_values((array) ($validated['preferences'] ?? [])),
             budgetMin: isset($validated['budget_min']) ? (int) round((float) $validated['budget_min'] * 100) : null,

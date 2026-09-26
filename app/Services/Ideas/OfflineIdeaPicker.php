@@ -6,6 +6,7 @@ namespace App\Services\Ideas;
 
 use App\Models\OfflineIdea;
 use App\Services\Gift\GiftTags;
+use App\Services\Gift\HasEverything;
 use App\Services\Gift\TasteBrief;
 
 /**
@@ -33,6 +34,9 @@ class OfflineIdeaPicker
 
     private const OCCASION = 1;
 
+    /** Done or used up, for someone who has everything: as strong as an interest. */
+    private const USED_UP = 2;
+
     /**
      * Enough to rank a market's approved ideas in PHP. A reviewer approves
      * them one at a time, so a market will hold dozens, not thousands.
@@ -58,9 +62,14 @@ class OfflineIdeaPicker
             $wanted[GiftTags::occasion($brief->occasion)] = self::OCCASION;
         }
 
-        if ($wanted === [] || $limit < 1) {
+        if (($wanted === [] && ! $brief->hasEverything) || $limit < 1) {
             return [];
         }
+
+        // Someone who has everything: an idea that is done or used up (a
+        // workshop, a tasting) fits them whatever it is tagged with, and
+        // weighs as much as a shared interest. See has-everything.md.
+        $usedUp = $brief->hasEverything ? app(HasEverything::class) : null;
 
         // Avoid entries come as interests ("gaming") from the wizard and as
         // tags ("interest:gaming") from a taste profile.
@@ -93,6 +102,10 @@ class OfflineIdeaPicker
 
             foreach ($tags as $tag) {
                 $score += $wanted[$tag] ?? 0;
+            }
+
+            if ($usedUp !== null && $usedUp->matches((string) $idea->title)) {
+                $score += self::USED_UP;
             }
 
             if ($score > 0) {

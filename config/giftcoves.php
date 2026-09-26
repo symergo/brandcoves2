@@ -538,6 +538,96 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gift personas drafted from what people search for
+    |--------------------------------------------------------------------------
+    |
+    | Nightly, per market: gift searches read as briefs ("sister + yoga") that
+    | were searched often enough, and that no persona or landing page answers
+    | yet, become DRAFT persona plans for a person to approve. Nothing here
+    | publishes. See docs/features/persona-demand.md.
+    */
+    'persona_demand' => [
+        // How far back the searches are counted. A quarter: long enough for a
+        // small market to reach the bar, short enough that last year's
+        // Christmas rush does not draft personas in June.
+        'window_days' => 90,
+
+        // A reading needs this many searches in the window... Five is the bar
+        // the list signals and offline ideas use for "several different
+        // people", and a search count is weaker evidence than five owners,
+        // which is why the next rule is there too.
+        'min_searches' => 5,
+
+        // ...spread over at least this many different days. One person, or
+        // one crawler, searching the same thing five times in an afternoon is
+        // not demand; three separate days is somebody coming back, or several
+        // somebodies.
+        'min_days' => 3,
+
+        // Distinct products that must answer the brief before a draft is
+        // written: the owner's minimum of eight for a persona. A draft the
+        // catalogue cannot fill would sit in the planner unbuildable.
+        'min_products' => 8,
+
+        // Drafts per market per night, the most searched first. A cap so a
+        // burst of demand gives an editor a short list to read, not a
+        // planner full of placeholders; the rest wait for the next night.
+        'max_drafts' => 3,
+
+        // Most searched queries read back from search_log per run. A reading
+        // searched once cannot reach the bar, and the long tail is where
+        // crawler-minted strings live.
+        'log_rows' => 2000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Budget bands on a persona page
+    |--------------------------------------------------------------------------
+    |
+    | Under the curated products, a persona offers three tabs: around 15,
+    | around 40 and around 100 (in the market's currency, which is the euro
+    | everywhere today). Each is the suggestion engine's answer to the
+    | persona's brief at that budget, so the page helps whatever somebody
+    | means to spend. See docs/features/persona-budgets.md.
+    */
+    'persona_budgets' => [
+        /*
+         * The three price points, in cents, each with the band it searches.
+         *
+         * 15, 40 and 100 because they are the three amounts people name
+         * when they talk about a present: a small something (a colleague,
+         * a host), a proper present (a friend, a sibling) and a big one (a
+         * partner, a parent, a round birthday). The bands meet with no gap
+         * between them, so no price falls through, and each reaches a bit
+         * above its point: "around 40" that stops at 40 is "up to 40", and
+         * nobody means that. Floors keep the bands apart, so the 100 tab is
+         * not the 40 tab again with a few dearer things mixed in.
+         *
+         * The help page names the three amounts (`help.find_personas` in
+         * four languages): change them there too.
+         */
+        'bands' => [
+            ['around' => 1500, 'min' => 500, 'max' => 2500],
+            ['around' => 4000, 'min' => 2500, 'max' => 6000],
+            ['around' => 10000, 'min' => 6000, 'max' => 15000],
+        ],
+
+        // Products per tab: two rows of three, the persona grid's width.
+        'per_band' => 6,
+
+        // A tab with fewer is left out rather than shown half empty; a page
+        // where no tab reaches it shows no tabs at all.
+        'min_per_band' => 3,
+
+        // Seconds the bands of one persona are cached. A day: the catalogue
+        // changes overnight, and the key carries the edition's last build,
+        // so a rebuilt persona never waits for this.
+        'cache_ttl' => 86400,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Reading a pasted link
     |--------------------------------------------------------------------------
     |

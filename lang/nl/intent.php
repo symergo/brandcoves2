@@ -83,6 +83,11 @@ return [
         'it' => ['computers', 'computer', 'programmeren'],
     ],
 
+    // "Someone who has everything": the brief then prefers what gets used up
+    // or done over more things to keep (docs/features/has-everything.md).
+    // Also a sign that this is a gift search.
+    'has_everything' => ['die alles al heeft', 'dat alles al heeft', 'die al alles heeft', 'heeft alles al', 'heeft al alles', 'alles al heeft', 'al alles heeft', 'die alles heeft', 'heeft alles', 'alles heeft'],
+
     // Budget words: "onder de 50", "tussen 30 en 50".
     'under' => ['onder de', 'onder', 'minder dan', 'tot', 'maximaal', 'max', 'hooguit', 'niet meer dan'],
     'between' => ['tussen'],
