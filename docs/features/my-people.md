@@ -38,7 +38,10 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   **Dit of dat** (`/gift/taste?person=<id>`), and **Dit of dat samen** only while a This-or-that-
   together link is open for them (it goes to the list about them, where that panel lives);
 - for a friend: **Hun lijsten (N)** or **Details**, which opens the old friends-page detail: their
-  lists, which of yours they see, your birthday note about them, and removing the connection;
+  lists, which of yours they see, your birthday note about them, and removing the connection.
+  Since 2026-09-26 "their lists" includes every wish list they made "visible to my people", and
+  "which of yours they see" every one of yours
+  ([wish-list-for-my-people.md](wish-list-for-my-people.md));
 - for a friend nobody saved yet: **Bewaar wat je over [naam] weet**, which creates a saved person
   linked to their account through the existing `POST /recipients` with `friend_id`
   (`RecipientController::store`, which checks the friendship). From then on the row has everything
@@ -101,7 +104,8 @@ requests, that is a change to how friendships are made, not to this page.
 - Saved people are read with `owner_user_id = me`, and nothing else. What a friend saved about you
   never appears, and neither do anybody else's saved people.
 - A friend row carries only what the friend shared: their published birthday (or your own note),
-  and lists they shared with you or whose link you opened, never a private one.
+  and lists they shared with you or whose link you opened, never a private one, plus the wish
+  lists they show to all their people (which may have no link at all; the option is the consent).
 - No claim state (invariant 4). No list items are loaded; nothing counts, orders or labels by what
   has been claimed. A list's occasion date is shown, which the list's page already shows anybody
   who may open it.

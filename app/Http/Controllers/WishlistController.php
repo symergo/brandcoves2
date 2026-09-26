@@ -1015,6 +1015,15 @@ class WishlistController extends Controller
             'visibility' => ['sometimes', 'string', 'in:private,link,public'],
 
             /*
+             * "Visible to my people": the owner's friends may open this wish
+             * list, claim from it and pick from it for a list about the owner.
+             * Independent of `visibility` (the link). Accepted on any list and
+             * kept only on a wish list: the model clears it on every other
+             * kind. See docs/features/wish-list-for-my-people.md.
+             */
+            'visible_to_friends' => ['sometimes', 'boolean'],
+
+            /*
              * The occasion. Not a fourth kind of list — any list of any kind
              * may say what it is for, and the kind still decides everything
              * else. The delivery address is the registry-only half, and the UI
@@ -1242,10 +1251,17 @@ class WishlistController extends Controller
         $identity = $viewer->claimIdentity();
         $hash = $identity === null ? null : WishlistItem::identityHash($identity);
 
-        return $target->statedWishes()
+        /*
+         * Only what they let this giver see: a wish list shown to their people
+         * while the two are friends, or one shared with this giver. See
+         * GiftTarget::wishesSeenBy() and docs/features/wish-list-for-my-people.md.
+         */
+        return $target->wishesSeenBy($viewer->user)
             ->flatMap(fn (Wishlist $list) => $list->items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'token' => $list->share_token,
+                // To say "already on your list" rather than offer it twice.
+                'groupId' => $item->group_id,
                 'listTitle' => $list->displayTitle(),
                 'title' => $item->displayTitle(),
                 'image' => $item->snapshot_image_url,
@@ -1435,6 +1451,15 @@ class WishlistController extends Controller
              */
             'suggestions' => $list->suggestions_count ?? null,
             'visibility' => $list->visibility->value,
+            /*
+             * "Visible to my people", or null where the question does not
+             * arise: a list about somebody else, a group list, an anonymous
+             * owner (who has no friends). The stored value is the answer; there
+             * is no "never asked" to resolve (see the migration).
+             */
+            'visibleToFriends' => $list->kind === ListKind::Mine && $list->owner_user_id !== null
+                ? $list->isVisibleToFriends()
+                : null,
             'itemCount' => $list->items_count ?? $list->items()->count(),
             'recipient' => $list->recipient === null ? null : [
                 'id' => $list->recipient->id,

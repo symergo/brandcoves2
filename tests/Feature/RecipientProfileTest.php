@@ -14,6 +14,7 @@ use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -247,10 +248,18 @@ class RecipientProfileTest extends TestCase
     }
 
     #[Test]
-    public function a_linked_recipients_shared_list_reaches_the_giver(): void
+    public function a_linked_recipients_wish_list_for_their_people_reaches_the_giver(): void
     {
         $owner = User::factory()->create();
         $person = User::factory()->create();
+
+        /*
+         * Since 2026-09-26 a wish list reaches a giver here only by something
+         * its owner did for them: "visible to my people" while the two are
+         * friends, or sharing it with them. Being linked is permission to be
+         * found. See docs/features/wish-list-for-my-people.md.
+         */
+        app(Friends::class)->link($owner, $person);
 
         $recipient = Recipient::factory()->create([
             'owner_user_id' => $owner->id,
@@ -263,6 +272,7 @@ class RecipientProfileTest extends TestCase
             'owner_user_id' => $person->id,
             'kind' => ListKind::Mine,
             'visibility' => ListVisibility::Link,
+            'visible_to_friends' => true,
         ]);
 
         $group = ProductGroup::factory()->create(['market' => Market::BeNl]);

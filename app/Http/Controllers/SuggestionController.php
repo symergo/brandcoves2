@@ -56,8 +56,8 @@ class SuggestionController extends Controller
 {
     public function store(Request $request, CurrentMarket $current, string $market, string $token, ItemSaver $saver): RedirectResponse
     {
-        $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
+        $list = $this->findShared($token, $owner);
 
         abort_unless($owner->exists(), 403);
 
@@ -80,7 +80,8 @@ class SuggestionController extends Controller
          * own list; a `for_someone` list is private research, and suggesting
          * into it would tell a stranger it exists". The premise does not hold:
          * a stranger cannot reach this at all, because `findShared()` refuses a
-         * private list, so anybody here was *sent the link on purpose*. Helping
+         * private list, so anybody here was *sent the link on purpose*, or is
+         * one of the owner's friends on a wish list shown to them. Helping
          * fill a gift list is the reason they were sent it.
          *
          * The list being shared is therefore the whole gate, and it is enforced
@@ -243,11 +244,12 @@ class SuggestionController extends Controller
         return $wishlistItem;
     }
 
-    private function findShared(string $token): Wishlist
+    private function findShared(string $token, Owner $viewer): Wishlist
     {
+        // The same two audiences as reading the list: see Wishlist::scopeReachableBy().
         $list = Wishlist::query()
             ->where('share_token', $token)
-            ->where('visibility', '!=', 'private')
+            ->reachableBy($viewer->user)
             ->first();
 
         if ($list === null) {

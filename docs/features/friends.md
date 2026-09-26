@@ -71,6 +71,12 @@ link", which is the second case.
 
 ### Two settings were tried first, and both were the wrong shape
 
+> **Since 2026-09-26 a per-list switch exists again, on the owner's request:** "Visible to my
+> people", on a wish list of your own only, with the audience named under it. What changed and
+> why the objection below is answered rather than ignored:
+> [wish-list-for-my-people.md](wish-list-for-my-people.md). Everything below about picking names
+> still holds for every other list.
+
 Worth recording, because the pull is to add a switch.
 
 **An account-wide `users.friends_see_lists`.** Removed within a day: the per-list

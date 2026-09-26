@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool|null $pledgers_visible
  * @property int|null $pledge_amount cents, when everybody pays the same
  * @property bool|null $voting_enabled
+ * @property bool $visible_to_friends read through isVisibleToFriends()
  */
 class Wishlist extends Model
 {
@@ -55,6 +56,21 @@ class Wishlist extends Model
              * nothing that 50 bits does not. See App\Support\ShareCode.
              */
             $list->share_token ??= ShareCode::make();
+        });
+
+        /*
+         * "Visible to my people" means something on one kind only.
+         *
+         * A list about somebody else is research about a third person, and a
+         * group list has its own audience (the people sent its link); neither
+         * may be put in front of all of the owner's friends by a switch. The
+         * column is cleared rather than merely ignored, so a list that changes
+         * kind cannot carry the setting back when it changes again.
+         */
+        static::saving(function (self $list): void {
+            if ($list->kind !== null && $list->kind !== ListKind::Mine) {
+                $list->visible_to_friends = false;
+            }
         });
     }
 
@@ -83,6 +99,7 @@ class Wishlist extends Model
             'event_type' => EventType::class,
             'event_date' => 'date',
             'is_default' => 'boolean',
+            'visible_to_friends' => 'boolean',
             'handed_over_at' => 'datetime',
 
             // Published as a Community Cove; see App\Services\Cove\CommunityCoves.
@@ -316,7 +333,65 @@ class Wishlist extends Model
     public function hasCoGivers(): bool
     {
         return ($this->visibility?->isShareable() ?? false)
+            || $this->isVisibleToFriends()
             || $this->collaborators()->exists();
+    }
+
+    /**
+     * May the owner's friends on GiftCoves open this list? ("Visible to my people".)
+     *
+     * Only a wish list of your own, and only with an account behind it: an
+     * anonymous owner has no friends. Independent of `visibility`, which is who
+     * may open the list by its link. A private list with this on is seen by the
+     * owner's friends and by nobody else; see {@see scopeReachableBy()}.
+     */
+    public function isVisibleToFriends(): bool
+    {
+        return $this->kind === ListKind::Mine
+            && $this->owner_user_id !== null
+            && (bool) $this->visible_to_friends;
+    }
+
+    /**
+     * Wish lists the owner shows to their people, as seen by one of those people.
+     *
+     * The friendship is read in the owner's direction (`user_id` = the owner).
+     * Friendships are stored as two rows and written together
+     * (App\Services\Social\Friends), so either direction answers "are these
+     * two connected"; removing a friend deletes both rows, which is what takes
+     * the list away from them at once.
+     *
+     * @param  Builder<Wishlist>  $query
+     */
+    public function scopeVisibleToFriend(Builder $query, User $viewer): void
+    {
+        $query->where('wishlists.kind', ListKind::Mine->value)
+            ->where('wishlists.visible_to_friends', true)
+            ->whereNotNull('wishlists.owner_user_id')
+            ->whereExists(fn ($sub) => $sub
+                ->selectRaw('1')
+                ->from('friendships')
+                ->whereColumn('friendships.user_id', 'wishlists.owner_user_id')
+                ->where('friendships.friend_id', $viewer->id));
+    }
+
+    /**
+     * Lists this viewer may open by their share token.
+     *
+     * Two audiences: anybody holding the link while sharing is on
+     * (`visibility`), and the owner's friends while "visible to my people" is
+     * on. Every endpoint reached through `/l/{token}` asks this, so the two
+     * cannot drift apart between reading a list and claiming from it.
+     *
+     * @param  Builder<Wishlist>  $query
+     */
+    public function scopeReachableBy(Builder $query, ?User $viewer): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->where('wishlists.visibility', '!=', ListVisibility::Private->value)
+            ->when($viewer !== null, fn (Builder $q) => $q->orWhere(
+                fn (Builder $friendly) => $friendly->visibleToFriend($viewer),
+            )));
     }
 
     /**

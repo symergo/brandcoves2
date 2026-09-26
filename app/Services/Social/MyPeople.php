@@ -39,8 +39,9 @@ use Illuminate\Support\Str;
  *   and nothing else.
  * - **A friend** carries only what the friend shared: their published birthday
  *   (or the note you wrote on your own side of the connection), and the lists
- *   they shared with you or sent you the link to. The same rules as the
- *   friends page had; see FriendController and docs/features/friends.md.
+ *   they shared with you, sent you the link to, or show to all their people.
+ *   The same rules as the friends page had, plus that last one; see
+ *   docs/features/friends.md and wish-list-for-my-people.md.
  *
  * Claim state is absent in every form (invariant 4). No list's items are
  * loaded, and nothing here counts, orders or labels by what has been claimed.
@@ -238,11 +239,15 @@ class MyPeople
     }
 
     /**
-     * Their lists: the ones they shared with you, or sent you the link to.
+     * Their lists: the ones they shared with you, sent you the link to, or
+     * show to all their people.
      *
-     * The query the friends page ran, moved here unchanged: both ways in are
-     * acts by the owner, and `visibility != private` stays in front, so a list
-     * whose sharing was turned off leaves this page as its link stops working.
+     * The first two are the query the friends page ran: both ways in are acts
+     * by the owner, and `visibility != private` stays in front of them, so a
+     * list whose sharing was turned off leaves this page as its link stops
+     * working. The third is a wish list with "visible to my people" on
+     * (docs/features/wish-list-for-my-people.md), which needs no link: it
+     * leaves this page when they switch it off or remove you as a friend.
      *
      * @param  Collection<int, Friendship>  $connections
      * @return Collection<int, Collection<int, Wishlist>>
@@ -251,10 +256,13 @@ class MyPeople
     {
         return Wishlist::query()
             ->whereIn('owner_user_id', $connections->pluck('friend_id'))
-            ->where('visibility', '!=', ListVisibility::Private->value)
-            ->where(fn ($q) => $q
-                ->whereHas('shares', fn ($share) => $share->where('user_id', $user->id))
-                ->orWhereHas('opens', fn ($open) => $open->where('user_id', $user->id)))
+            ->where(fn ($either) => $either
+                ->where(fn ($given) => $given
+                    ->where('visibility', '!=', ListVisibility::Private->value)
+                    ->where(fn ($q) => $q
+                        ->whereHas('shares', fn ($share) => $share->where('user_id', $user->id))
+                        ->orWhereHas('opens', fn ($open) => $open->where('user_id', $user->id))))
+                ->orWhere(fn ($shown) => $shown->visibleToFriend($user)))
             ->get()
             ->groupBy('owner_user_id');
     }
@@ -267,9 +275,14 @@ class MyPeople
      */
     private function seenBy(User $user, CurrentMarket $current): callable
     {
+        // Shared by link, or a wish list shown to all your people.
         $mine = Wishlist::query()
             ->where('owner_user_id', $user->id)
-            ->where('visibility', '!=', ListVisibility::Private->value)
+            ->where(fn ($q) => $q
+                ->where('visibility', '!=', ListVisibility::Private->value)
+                ->orWhere(fn ($shown) => $shown
+                    ->where('kind', ListKind::Mine->value)
+                    ->where('visible_to_friends', true)))
             ->latest()
             ->get();
 
@@ -287,8 +300,12 @@ class MyPeople
             ->map(fn ($opens) => $opens->pluck('user_id')->all());
 
         return fn (int $friendId): array => $mine
-            ->filter(fn (Wishlist $list) => in_array($friendId, $reachedBy[$list->id] ?? [], true)
-                || in_array($friendId, $openedBy[$list->id] ?? [], true))
+            // Every friend sees a list shown to all your people; the other two
+            // routes count only while the list is shared by link.
+            ->filter(fn (Wishlist $list) => $list->isVisibleToFriends()
+                || ($list->visibility !== ListVisibility::Private && (
+                    in_array($friendId, $reachedBy[$list->id] ?? [], true)
+                    || in_array($friendId, $openedBy[$list->id] ?? [], true))))
             // Your own page, where you can edit it; the share link is for them.
             ->map(fn (Wishlist $list) => [
                 'title' => $list->displayTitle(),

@@ -124,3 +124,6 @@ keeping both components anyway.
 
 - [wishlists.md](wishlists.md) — invariant 4, and the claim rules
 - [list-surfaces.md](list-surfaces.md) — the Ask panel this feeds
+- [wish-list-for-my-people.md](wish-list-for-my-people.md) — since 2026-09-26 the recipient's
+  wishes are a section under the items ("From Anna's wish list") rather than the Ask panel, and a
+  row copied from somebody else's list arrives **without their note**

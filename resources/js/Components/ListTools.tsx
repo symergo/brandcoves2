@@ -1,14 +1,14 @@
 import { router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
-import { formatPrice } from '../types'
-import CopyToList from './CopyToList'
 import Menu, { MenuItem, MenuSeparator } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
 import TasteTogetherPanel, { type TasteTogetherState } from './TasteTogetherPanel'
 import { invalidate } from '../savedItems'
 import ToolIcon, { type ToolKey } from './ToolIcon'
+import InfoTip from './InfoTip'
+import type { Wish } from './TheirWishes'
 import { useTranslations } from '../useTranslations'
 
 interface Collaborator {
@@ -33,23 +33,10 @@ interface Membership {
 }
 
 /**
- * One thing the recipient put on a list of their own.
- *
- * `token` is that list's share token: claiming here posts to the shared-list
- * endpoint, so there is one claim mechanism and the privacy rule is enforced in
- * one place rather than two.
+ * One thing the recipient lets this giver see on a wish list of theirs. Drawn
+ * by TheirWishes; the tool row only needs to know whether there are any.
  */
-interface Asked {
-    id: number
-    token: string
-    title: string
-    image: string | null
-    price: number | null
-    live: boolean
-    claimed: boolean
-    claimedByMe: boolean
-    sent: boolean | null
-}
+type Asked = Wish
 
 interface Props {
     base: string
@@ -68,6 +55,12 @@ interface Props {
         claimable: boolean
         visibility: string
         shareUrl: string | null
+        /**
+         * "Visible to my people": the owner's friends see this wish list and
+         * can pick from it. Null where the question does not arise (not a wish
+         * list, or an owner without an account).
+         */
+        visibleToFriends: boolean | null
         /** Who this list has already been shared with, by id. */
         sharedWith: number[]
         /** Who the list is for, on a list about somebody else. The id is what the settings form patches. */
@@ -215,7 +208,6 @@ export default function ListTools({
     quizPlays,
     santaMemberships,
     target,
-    asked,
     panel: open,
     onPanel,
     publication = null,
@@ -452,9 +444,13 @@ export default function ListTools({
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div className="min-w-0">
                                         <h3 className="text-sm font-medium">
-                                            {list.shareUrl ? t('lists.sharing_on') : t('lists.sharing_off')}
+                                            {list.shareUrl
+                                                ? t('lists.sharing_on')
+                                                : list.visibleToFriends
+                                                  ? t('lists.sharing_off_people')
+                                                  : t('lists.sharing_off')}
                                         </h3>
-                                        {!list.shareUrl && (
+                                        {!list.shareUrl && !list.visibleToFriends && (
                                             <p className="mt-1 text-xs text-ink-soft">{t('lists.share_hint')}</p>
                                         )}
                                     </div>
@@ -506,6 +502,50 @@ export default function ListTools({
                                     </div>
                                 )}
                             </section>
+
+                            {/*
+                              "Visible to my people" (owner's request,
+                              2026-09-26): all of the owner's friends on
+                              GiftCoves see this wish list and can pick from it
+                              for a list they make for the owner. Independent
+                              of the link above: a private list with this on is
+                              seen by those friends and nobody else.
+
+                              friends.md records why a switch like this was
+                              pulled once: friendships accumulate by opening
+                              links, so "my friends" was an audience nobody
+                              could see. The answer here is to show it: the
+                              names are under the switch, the same names the
+                              picker below offers. See
+                              docs/features/wish-list-for-my-people.md.
+                            */}
+                            {access.isOwner && list.visibleToFriends !== null && (
+                                <section className="mt-6">
+                                    <label
+                                        className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${
+                                            list.visibleToFriends ? 'border-accent bg-accent/5' : 'border-line hover:border-ink/30'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={list.visibleToFriends}
+                                            onChange={() => setting({ visible_to_friends: !list.visibleToFriends })}
+                                            className="mt-0.5 shrink-0"
+                                        />
+                                        <span className="flex min-w-0 flex-1 flex-wrap items-center">
+                                            <span className="text-sm font-medium">{t('lists.visible_to_people')}</span>
+                                            <InfoTip>{t('lists.visible_to_people_tip')}</InfoTip>
+                                            <span className="block w-full text-xs text-ink-soft">
+                                                {friends.length > 0
+                                                    ? t('lists.visible_to_people_who', {
+                                                          names: friends.map((friend) => friend.name).join(', '),
+                                                      })
+                                                    : t('lists.visible_to_people_nobody')}
+                                            </span>
+                                        </span>
+                                    </label>
+                                </section>
+                            )}
 
                             {/*
                               Share with friends: names you pick, not a switch.
@@ -817,12 +857,13 @@ export default function ListTools({
                     */}
 
                     {/*
-                      What they actually asked for.
+                      Asking the person, on a list about them.
 
-                      The payoff of linking a recipient to an account. Claiming
-                      here hits the same endpoint as the shared-list page — one
-                      claim mechanism, so the privacy rule is enforced in one
-                      place. They never see any of this on their own list.
+                      Not linked to an account: the link to their own page,
+                      where they say what they like. Linked: what they let this
+                      giver see of their wish lists is a section under the
+                      items since 2026-09-26 (TheirWishes), and this panel only
+                      says when there is nothing yet.
 
                       A tab of its own since 2026-09-01. It was a full-width
                       section stacked between the pot and the list itself, which
@@ -882,117 +923,17 @@ export default function ListTools({
                                         </>
                                     )}
                                 </>
-                            ) : asked.length === 0 ? (
+                            ) : (
+                                /*
+                                  Linked, and nothing of theirs to show this
+                                  giver. When there is, it is a section under
+                                  the list's items ("From Anna's wish list",
+                                  TheirWishes) and this tool is not offered:
+                                  picking from it moved there on 2026-09-26.
+                                */
                                 <p className="text-sm text-ink-soft">
                                     {t('lists.asked_none', { name: target.name })}
                                 </p>
-                            ) : (
-                                <ul className="divide-y divide-line">
-                                    {asked.map((entry) => (
-                                        <li
-                                            key={entry.id}
-                                            className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
-                                        >
-                                            {entry.image && (
-                                                <img
-                                                    src={entry.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="h-14 w-14 shrink-0 object-contain"
-                                                />
-                                            )}
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">
-                                                    {entry.title}
-                                                </p>
-                                                {entry.price !== null && !entry.live && (
-                                                    <p className="text-sm text-ink-soft">
-                                                        {formatPrice(entry.price, market)}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/*
-                                              Put what they asked for onto the
-                                              list you asked from.
-
-                                              The payoff of this whole panel.
-                                              Their list was readable here and
-                                              nothing else — a giver could see
-                                              "she wants the green kettle" and
-                                              then had to go and find it again
-                                              on their own list by hand.
-                                              Everything below this is about
-                                              *claiming* it, which is a
-                                              different act by a different
-                                              person.
-
-                                              A copy, never a move: the source
-                                              is somebody else's wishlist, and
-                                              a giver has no business taking a
-                                              row off it. Their list is
-                                              unchanged; `ItemTransferController::
-                                              fromShared` enforces that.
-
-                                              Labelled "add to my list" rather
-                                              than "copy to another list": from
-                                              here it is not another list, it is
-                                              the one you are working from.
-                                            */}
-                                            <CopyToList
-                                                action={`${base}/l/${entry.token}/items/${entry.id}/copy`}
-                                                targets={[{ id: list.id, title: list.title }]}
-                                                label={t('lists.add_to_my_list')}
-                                            />
-
-                                            {entry.claimedByMe ? (
-                                                <div className="flex shrink-0 items-center gap-2">
-                                                    <span className="text-sm text-sage">
-                                                        {t('lists.claimed')}
-                                                    </span>
-                                                    {entry.sent === false && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                router.post(
-                                                                    `${base}/l/${entry.token}/sent/${entry.id}`,
-                                                                    {},
-                                                                    { preserveScroll: true },
-                                                                )
-                                                            }
-                                                            className="rounded-lg border border-line px-3 py-1.5 text-sm"
-                                                        >
-                                                            {t('lists.mark_sent')}
-                                                        </button>
-                                                    )}
-                                                    {entry.sent && (
-                                                        <span className="text-sm text-ink-soft">
-                                                            {t('lists.sent')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            ) : entry.claimed ? (
-                                                <span className="shrink-0 text-sm text-ink-soft">
-                                                    {t('lists.claimed_by_someone')}
-                                                </span>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        router.post(
-                                                            `${base}/l/${entry.token}/claim/${entry.id}`,
-                                                            {},
-                                                            { preserveScroll: true },
-                                                        )
-                                                    }
-                                                    className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm"
-                                                >
-                                                    {t('lists.claim')}
-                                                </button>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
                             )}
                         </div>
                     )}
@@ -1449,8 +1390,14 @@ export function ListToolsBar({
             key: 'ask',
             icon: 'suggestions',
             label: target !== null ? t('lists.ask_tab', { name: target.name }) : t('lists.ask_chip'),
-            show: access.isOwner && target !== null && (list.kind === 'for_someone' || list.kind === 'group'),
-            set: asked.length > 0,
+            // Not for a linked person with wishes to show: those are a section
+            // under the items now (TheirWishes), which is where picking happens.
+            show:
+                access.isOwner &&
+                target !== null &&
+                (list.kind === 'for_someone' || list.kind === 'group') &&
+                !(target.isLinked && asked.length > 0),
+            set: false,
         },
         /*
          * This or that, played by the others about the list's person
@@ -1497,7 +1444,9 @@ export function ListToolsBar({
             ? { href: `${base}/people/${list.recipient.id}`, label: t('gift_history.link', { name: list.recipient.name }) }
             : null
 
-    const shareOn = shared && Boolean(list.shareUrl)
+    // Lit when anybody else can see the list: by its link, or as one of the
+    // owner's people.
+    const shareOn = (shared && Boolean(list.shareUrl)) || Boolean(list.visibleToFriends)
 
     if (!access.isOwner) {
         return null
