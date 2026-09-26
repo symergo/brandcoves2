@@ -96,16 +96,24 @@ export default function Menu({
         if (open) position()
     }, [open, position])
 
+    // Radio items too: the market button's rows are a choice of one
+    // (`menuitemradio`, 2026-09-26), and they move with the arrows like any other.
     const items = () =>
-        Array.from(panel.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [])
+        Array.from(
+            panel.current?.querySelectorAll<HTMLElement>(
+                '[role="menuitem"]:not([disabled]), [role="menuitemradio"]:not([disabled])',
+            ) ?? [],
+        )
 
     const placed = place !== null
 
-    // Focus the first item when the menu opens, and again when it changes screen.
+    // Focus the first item when the menu opens, and again when it changes screen;
+    // in a choice of one, the item already chosen.
     useEffect(() => {
         if (!open || !placed) return
 
-        items()[0]?.focus()
+        const all = items()
+        ;(all.find((item) => item.getAttribute('aria-checked') === 'true') ?? all[0])?.focus()
     }, [open, placed, view])
 
     useEffect(() => {
@@ -127,9 +135,15 @@ export default function Menu({
                 return
             }
 
+            // The arrow press that opened the menu from its button reaches this
+            // listener too, after focus has already moved into the menu, and
+            // would move it one row further. It belongs to the button.
+            if (trigger.current?.contains(e.target as Node) && e.key !== 'Tab') return
+
             const active = document.activeElement as HTMLElement | null
             const inside = panel.current?.contains(active) ?? false
-            const onItem = inside && active?.getAttribute('role') === 'menuitem'
+            const role = active?.getAttribute('role')
+            const onItem = inside && (role === 'menuitem' || role === 'menuitemradio')
 
             // Tab leaves the menu, as it leaves any other popup. Not from a
             // form inside it (naming a new list), where Tab reaches its button.

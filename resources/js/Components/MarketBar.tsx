@@ -37,7 +37,7 @@ const HIDDEN_KEY = 'bc_market_bar_hidden'
  *   itself into a choice (docs/features/market-routing.md).
  *
  * Choosing a country is the switcher's full-page POST, exactly as the header
- * flags do, so there is still one way a choice is written down.
+ * country button does, so there is still one way a choice is written down.
  */
 export default function MarketBar() {
     const { marketBar, market, markets } = usePage<SharedProps>().props
@@ -77,8 +77,9 @@ export default function MarketBar() {
     /*
      * The other countries, the suggested one first. A country is entered in
      * the language the visitor is reading where it has it (Belgium in French
-     * stays French), the same rule as the header's flags; a suggested market
-     * is entered as named, because that is the one they chose.
+     * stays French), the rule the header's flags followed until they became
+     * one button on 2026-09-26 that lists every market by name. A suggested
+     * market is entered as named, because that is the one they chose.
      */
     const suggestedCountry = marketBar.suggest
         ? markets.find((c) => c.languages.some((l) => l.market === marketBar.suggest))

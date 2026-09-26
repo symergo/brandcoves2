@@ -41,7 +41,7 @@ return [
          *
          * El calificativo se traduce, el nombre no — véase localisation.md.
          */
-        'gift_coves' => 'Coves de Regalo',
+        'gift_ideas' => 'Ideas de regalo por perfil',
         'brand_coves' => 'Coves de Marca',
 
         /*
@@ -67,8 +67,14 @@ return [
         'hint_gift_coves' => 'Ideas construidas en torno a una persona',
         'hint_all_coves' => 'Todo lo que hemos publicado',
         'hint_ask' => 'Deja que otros sugieran algo',
-        'search_offers' => 'Buscar ofertas',
-        'hint_search' => 'Por nombre, marca o categoría',
+        'hint_community' => 'Listas que otros compartieron',
+        'hint_brands_shops' => 'Por marca o por tienda',
+        'every_day' => 'Cada día',
+        'brands_shops' => 'Marcas y tiendas',
+        'all_coves' => 'Todas las Coves',
+        'people' => 'Mi gente',
+        'help' => 'Ayuda',
+        'market_button' => 'País e idioma: :current',
 
         'santa' => 'Amigo invisible',
 
@@ -2295,7 +2301,7 @@ return [
         'find_title' => 'Encontrar cosas',
         'find_search' => 'Busca por nombre, marca o tipo de cosa, o di para quién es: «regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros». Miramos en muchas tiendas a la vez y comparamos sus precios.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
-        'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. Las banderas del menú lo cambian cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
+        'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. El botón de país e idioma de arriba (en el menú, en un móvil) lo cambia cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
         'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, o quién es, como tu pareja o un compañero de trabajo. Luego eliges cómo buscar: responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. Cada camino termina en la misma página de ideas, con ideas sin tienda, Coves que hicieron otros y, al final, Pregunta a otras personas.',
         'find_history' => 'Lleva la cuenta de lo que le regalaste a alguien en su página (ábrela desde una lista para esa persona o desde «Encontrar un regalo»). Apúntalo, o pulsa «Lo regalé» junto a algo de su lista. Lo que marcaste con «Yo lo regalo» en sus listas también cuenta, nunca lo que marcaron otros. Después lo dejamos fuera de las nuevas ideas para esa persona y proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en «Encontrar un regalo» o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',

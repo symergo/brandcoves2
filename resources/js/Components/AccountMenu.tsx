@@ -1,13 +1,28 @@
 import { Link, router, usePage } from '@inertiajs/react'
+import type { ReactNode } from 'react'
+import Menu from './Menu'
 import SignInLink from './SignInLink'
-import ToolIcon from './ToolIcon'
+import ToolIcon, { type ToolKey } from './ToolIcon'
 import { myCovesLinks } from './myCovesLinks'
-import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
+const itemClass =
+    'flex w-full items-center gap-2.5 rounded px-3 py-2 text-left text-sm outline-none hover:bg-line/40 focus-visible:bg-line/60 focus-visible:ring-2 focus-visible:ring-accent/40'
+
+function Row({ icon, children }: { icon: ToolKey; children: ReactNode }) {
+    return (
+        <>
+            <span className="shrink-0 text-accent">
+                <ToolIcon name={icon} className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">{children}</span>
+        </>
+    )
+}
+
 /**
- * Who you are signed in as, and how to stop being them.
+ * Who you are signed in as, your own things, and how to stop being them.
  *
  * The `logout` route has existed since magic links went in and nothing on the
  * site ever linked to it — so signing out was impossible without clearing
@@ -17,29 +32,20 @@ import { useTranslations } from '../useTranslations'
  * It also answers "am I signed in?", which the header could not previously be
  * asked: the only difference between the two states was whether a bell was
  * there, and a visitor does not read the absence of an icon.
+ *
+ * The rows, since 2026-09-26 (owner): My Coves, My people, Saved Coves, Secret
+ * Friend (`myCovesLinks`, shared with the phone's `AccountSheet`), then
+ * Notifications with its count, Help, Admin, Sign out. Help moved here from
+ * the header's top row.
+ *
+ * Built on `Menu` since the same day, so it behaves like the site's other
+ * menus from the keyboard: the arrows move between rows, Escape closes and
+ * returns focus to the button, Tab out closes it.
  */
 export default function AccountMenu() {
-    const { auth, market } = usePage<SharedProps>().props
+    const { auth, market, unreadCount } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const [open, setOpen] = useState(false)
-    const wrap = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        if (!open) return
-
-        const away = (e: MouseEvent) => {
-            if (!wrap.current?.contains(e.target as Node)) setOpen(false)
-        }
-        const escape = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-
-        document.addEventListener('mousedown', away)
-        document.addEventListener('keydown', escape)
-
-        return () => {
-            document.removeEventListener('mousedown', away)
-            document.removeEventListener('keydown', escape)
-        }
-    }, [open])
+    const base = `/${market.key}`
 
     if (auth.user === null) {
         // A button, not a text link. Signing in is the one thing we want a
@@ -59,89 +65,71 @@ export default function AccountMenu() {
     // @ — which is what people recognise as themselves, and short enough to sit
     // in a header.
     const label = auth.user.name?.trim() || auth.user.email.split('@')[0]
+    const email = auth.user.email
+    const isAdmin = auth.user.isAdmin
 
     return (
-        <div className="relative" ref={wrap}>
-            <button
-                type="button"
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-                aria-haspopup="menu"
-                className="flex items-center gap-2 rounded-lg border border-line px-2 py-1.5 text-sm hover:border-ink"
-            >
-                <span
-                    aria-hidden
-                    className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white"
-                >
-                    {label.slice(0, 1).toUpperCase()}
-                </span>
-                <span className="max-w-[9rem] truncate">{label}</span>
-            </button>
-
-            {open && (
-                <div
-                    role="menu"
-                    className="absolute right-0 z-50 mt-2 w-60 rounded-card border border-line bg-card p-1 shadow-xl"
-                >
-                    <p className="truncate px-3 py-2 text-xs text-ink-soft" title={auth.user.email}>
-                        {auth.user.email}
+        <Menu
+            label={`${t('nav.account')}: ${label}`}
+            width={240}
+            buttonClassName="account-button flex items-center gap-2 rounded-lg border border-line px-2 py-1.5 text-sm hover:border-ink"
+            button={
+                <>
+                    <span
+                        aria-hidden
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white"
+                    >
+                        {label.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="max-w-[9rem] truncate">{label}</span>
+                </>
+            }
+        >
+            {(close) => (
+                <>
+                    <p className="truncate px-3 py-2 text-xs text-ink-soft" title={email}>
+                        {email}
                     </p>
 
                     {/* The same links as the phone sheet, from one list: see myCovesLinks. */}
-                    {myCovesLinks(`/${market.key}`, t, true).map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            role="menuitem"
-                            onClick={() => setOpen(false)}
-                            className="block rounded px-3 py-2 text-sm hover:bg-line/40"
-                        >
-                            <span className="flex items-center gap-2.5">
-                                <span className="text-accent"><ToolIcon name={link.icon} className="h-5 w-5" /></span>
-                                {link.label}
-                            </span>
+                    {myCovesLinks(base, t, true).map((link) => (
+                        <Link key={link.href} href={link.href} role="menuitem" tabIndex={-1} onClick={close} className={itemClass}>
+                            <Row icon={link.icon}>{link.label}</Row>
                         </Link>
                     ))}
-                    <Link
-                        href={`/${market.key}/notifications`}
-                        role="menuitem"
-                        onClick={() => setOpen(false)}
-                        className="block rounded px-3 py-2 text-sm hover:bg-line/40"
-                    >
-                        <span className="flex items-center gap-2.5">
-                            <span className="text-accent"><ToolIcon name="alerts" className="h-5 w-5" /></span>
-                            {t('nav.notifications')}
-                        </span>
+                    <Link href={`${base}/notifications`} role="menuitem" tabIndex={-1} onClick={close} className={itemClass}>
+                        <Row icon="alerts">
+                            {unreadCount > 0 ? `${t('nav.notifications')} (${unreadCount})` : t('nav.notifications')}
+                        </Row>
+                    </Link>
+                    <Link href={`${base}/help`} role="menuitem" tabIndex={-1} onClick={close} className={itemClass}>
+                        <Row icon="help">{t('nav.help')}</Row>
                     </Link>
 
-                    {auth.user.isAdmin && (
-                        <a
-                            href="/admin"
-                            role="menuitem"
-                            className="block rounded px-3 py-2 text-sm hover:bg-line/40"
-                        >
-                            <span className="flex items-center gap-2.5">
-                                <span className="text-accent"><ToolIcon name="admin" className="h-5 w-5" /></span>
-                                {t('nav.admin')}
-                            </span>
+                    {/* A plain link: /admin is Filament, not an Inertia page. */}
+                    {isAdmin && (
+                        <a href="/admin" role="menuitem" tabIndex={-1} className={itemClass}>
+                            <Row icon="admin">{t('nav.admin')}</Row>
                         </a>
                     )}
 
+                    <div role="separator" className="my-1 border-t border-line" />
                     <button
                         type="button"
                         role="menuitem"
+                        tabIndex={-1}
                         // A POST, because a link that ends a session can be
                         // fired by any image tag on any page on the internet.
-                        onClick={() => router.post(`/${market.key}/logout`)}
-                        className="mt-1 block w-full rounded border-t border-line px-3 py-2 text-left text-sm hover:bg-line/40"
+                        onClick={() => {
+                            close()
+                            router.post(`${base}/logout`)
+                        }}
+                        className={itemClass}
                     >
-                        <span className="flex items-center gap-2.5">
-                            <span className="text-accent"><ToolIcon name="signout" className="h-5 w-5" /></span>
-                            {t('nav.sign_out')}
-                        </span>
+                        <Row icon="signout">{t('nav.sign_out')}</Row>
                     </button>
-                </div>
+                </>
             )}
-        </div>
+        </Menu>
     )
 }

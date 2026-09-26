@@ -57,8 +57,12 @@ return [
          *
          * The qualifier translates and the noun does not, per the rule in
          * localisation.md: Gift Coves / Cadeau Coves / Coves Cadeau.
+         *
+         * `gift_ideas` was `gift_coves` ("Gift Coves") until 2026-09-26. The
+         * owner's Discover menu names /gift-ideas as its page does ("Gift
+         * ideas, by person", `gift_ideas.title`), so the page has one name.
          */
-        'gift_coves' => 'Gift Coves',
+        'gift_ideas' => 'Gift ideas by person',
         'brand_coves' => 'Brand Coves',
 
         /*
@@ -93,14 +97,28 @@ return [
         'hint_gift_coves' => 'Ideas built around a person',
         'hint_all_coves' => 'Everything we have published',
         'hint_ask' => 'Let other people suggest something',
-        'search_offers' => 'Search offers',
-        'hint_search' => 'By name, brand or category',
+        'hint_community' => 'Lists other people shared',
+        'hint_brands_shops' => 'By maker or by shop',
+
+        /*
+         * The header since 2026-09-26 (docs/features/navigation.md): Find a
+         * gift | Discover ▾ | My Coves, one country-and-language button, the
+         * account. Discover holds two groups, "Every day" and "Coves", then
+         * "All Coves". "My people" (/people) is in the account menu, where
+         * Friends was; "Help" is /help's entry there, the owner's word for it
+         * in a menu of your own things.
+         */
+        'every_day' => 'Every day',
+        'brands_shops' => 'Brands & shops',
+        'all_coves' => 'All Coves',
+        'people' => 'My people',
+        'help' => 'Help',
+        'market_button' => 'Country and language: :current',
 
         'santa' => 'Secret Friend',
 
         // Names, not words: a Cove is called the same thing in every language,
         // exactly like GiftCoves itself. A translated name is a second name.
-        // The header since 2026-09-26: Discover | Coves | Gifts | How it works.
         'discover' => 'Discover',
         'coves' => 'Coves',
         'how_it_works' => 'How it works',
@@ -2553,7 +2571,7 @@ return [
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
-        'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The flags in the menu change it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
+        'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The country and language button at the top (in the menu on a phone) changes it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
         'find_gift' => 'In Find a gift you first say who it is for: one of your people, or who they are, like your partner or a colleague. Then choose how to look: answer a few questions, choose between two things in This or that, or start from a type of person. Every way ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask other people.',
         'find_history' => 'Keep track of what you gave someone on their page (open it from a list for them or from Find a gift). Write it down, or press "I gave this" beside something on their list. What you marked "I\'ll get this" on lists for them counts too, never what anybody else marked. We then leave those things out of new ideas for them and suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in Find a gift or add them to their list. Stop the emails from the link in any reminder.',

@@ -41,7 +41,7 @@ return [
          *
          * Le qualificatif se traduit, le nom non — voir localisation.md.
          */
-        'gift_coves' => 'Coves Cadeaux',
+        'gift_ideas' => 'Idées cadeaux par profil',
         'brand_coves' => 'Coves Marques',
 
         /*
@@ -68,8 +68,14 @@ return [
         'hint_gift_coves' => "Des idées construites autour d'une personne",
         'hint_all_coves' => 'Tout ce que nous avons publié',
         'hint_ask' => "Laissez d'autres proposer quelque chose",
-        'search_offers' => 'Chercher des offres',
-        'hint_search' => 'Par nom, marque ou catégorie',
+        'hint_community' => "Des listes partagées par d'autres",
+        'hint_brands_shops' => 'Par marque ou par boutique',
+        'every_day' => 'Chaque jour',
+        'brands_shops' => 'Marques & boutiques',
+        'all_coves' => 'Toutes les Coves',
+        'people' => 'Mes proches',
+        'help' => 'Aide',
+        'market_button' => 'Pays et langue : :current',
 
         'santa' => 'Ami Secret',
 
@@ -2297,7 +2303,7 @@ return [
         'find_title' => 'Trouver',
         'find_search' => 'Cherchez par nom, marque ou type de chose, ou dites pour qui c\'est : « cadeau pour ma sœur qui aime le jardinage, 30 à 50 € ». Nous regardons dans de nombreuses boutiques à la fois et comparons leurs prix.',
         'find_scan' => 'Scannez un code-barres avec l\'appareil photo de votre téléphone pour voir le produit et son prix ailleurs.',
-        'find_country' => 'Les prix et les boutiques dépendent de votre pays. Lors d\'une première visite, une barre en haut indique le pays choisi, avec les autres à un clic ; fermez-la pour le garder. Les drapeaux du menu le changent à tout moment. Nous retenons votre choix, et ouvrir le lien de quelqu\'un vers un autre pays ne le change pas.',
+        'find_country' => 'Les prix et les boutiques dépendent de votre pays. Lors d\'une première visite, une barre en haut indique le pays choisi, avec les autres à un clic ; fermez-la pour le garder. Le bouton pays et langue en haut (dans le menu sur un téléphone) le change à tout moment. Nous retenons votre choix, et ouvrir le lien de quelqu\'un vers un autre pays ne le change pas.',
         'find_gift' => 'Dans « Trouver un cadeau », dites d\'abord pour qui c\'est : l\'un de vos proches, ou qui c\'est, comme votre partenaire ou un collègue. Choisissez ensuite comment chercher : répondez à quelques questions, choisissez entre deux choses dans Ceci ou cela, ou partez d\'un type de personne. Chaque chemin mène à la même page d\'idées, avec des idées hors boutique, des Coves faites par d\'autres, et tout en bas Demandez à d\'autres.',
         'find_history' => 'Notez ce que vous avez offert à quelqu’un sur sa page (ouvrez-la depuis une liste pour cette personne ou depuis « Trouver un cadeau »). Écrivez-le, ou appuyez sur « Je l’ai offert » à côté d’un article de sa liste. Ce que vous avez marqué « Je m’en occupe » sur ses listes compte aussi, jamais ce que d’autres ont marqué. Nous retirons ensuite ces articles des nouvelles idées pour cette personne et proposons l’étape suivante, comme du café en grains après une cafetière italienne.',
         'find_reminders' => 'Enregistrez un anniversaire ou une occasion pour quelqu’un et nous vous envoyons un rappel par e-mail. Environ deux semaines avant, le rappel apporte trois idées adaptées à la personne, à son budget et à ce que vous avez déjà offert, avec un clic pour les voir dans « Trouver un cadeau » ou les ajouter à sa liste. Arrêtez les e-mails depuis le lien de n’importe quel rappel.',

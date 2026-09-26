@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react'
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 
 export type NavMenuItem = {
     href: string
@@ -9,14 +9,22 @@ export type NavMenuItem = {
 }
 
 /**
+ * A labelled run of entries inside a menu: "Every day" and "Coves" under
+ * Discover since 2026-09-26. A group without a label is just its entries.
+ */
+export type NavMenuGroup = {
+    label?: string
+    items: NavMenuItem[]
+}
+
+/**
  * A header section that is both a destination and a menu.
  *
- * Organise and Discover each have a landing page that explains what is behind
- * them, and three-to-nine surfaces behind that. Making the section *only* a
- * menu hides the explanation, which is the page that exists because these tools
- * are not self-evident. Making it *only* a link hides the surfaces, and puts the
- * Daily Cove — the one thing that brings somebody back tomorrow — two clicks
- * deep.
+ * Discover has a landing page that explains what is behind it, and a handful
+ * of surfaces behind that. Making the section *only* a menu hides the
+ * explanation, which is the page that exists because these tools are not
+ * self-evident. Making it *only* a link hides the surfaces, and puts the Daily
+ * Cove — the one thing that brings somebody back tomorrow — two clicks deep.
  *
  * So the label is a `Link` and the chevron is a separate `button`. Pressing the
  * word goes to the hub; pressing the chevron opens the list. A single control
@@ -28,29 +36,34 @@ export type NavMenuItem = {
  * "Discover, button" one after another describes two controls by one word and
  * says nothing about what the second does.
  *
- * With no items at all there is nothing to open, so only the link renders: no
- * chevron, no empty panel. Make a list became such an entry on 2026-09-12,
- * when its four sub-entries were dropped in favour of the hub page that
- * already lists them.
+ * Keyboard: Enter or Space on the chevron opens it, and so does the down
+ * arrow, which also moves to the first entry; the arrows then move between
+ * entries, Escape closes and puts focus back on the chevron, and tabbing out
+ * of the panel closes it, so an open panel is never left behind the focus.
+ *
+ * With no entries at all there is nothing to open, so only the link renders:
+ * no chevron, no empty panel.
  */
 export default function NavMenu({
     href,
     label,
     icon,
-    items,
+    groups,
+    footer,
     current,
     isCurrent,
     submenuLabel,
 }: {
     href: string
     label: string
-    /**
-     * A mark before the label, in the accent. Both header entries carry one
-     * since 2026-09-12 at the owner's request; the loose links (Search, Help)
-     * do not, which is what tells the two sections apart from them.
-     */
+    /** A mark before the label, in the accent. */
     icon?: ReactNode
-    items: NavMenuItem[]
+    groups: NavMenuGroup[]
+    /**
+     * One link under the groups, set apart by a rule: "All Coves →". A link to
+     * the page that holds everything the groups sample.
+     */
+    footer?: { href: string; label: string }
     current: boolean
     isCurrent: (href: string) => boolean
     submenuLabel: string
@@ -59,10 +72,20 @@ export default function NavMenu({
     const id = useId()
     const wrapper = useRef<HTMLDivElement>(null)
     const toggle = useRef<HTMLButtonElement>(null)
+    const panel = useRef<HTMLDivElement>(null)
+    // Set when the menu was opened from the keyboard, so focus goes in.
+    const focusFirst = useRef(false)
+
+    const links = () => Array.from(panel.current?.querySelectorAll<HTMLElement>('a') ?? [])
 
     useEffect(() => {
-        if (! open) {
+        if (!open) {
             return
+        }
+
+        if (focusFirst.current) {
+            focusFirst.current = false
+            links()[0]?.focus()
         }
 
         const onKey = (e: KeyboardEvent) => {
@@ -78,7 +101,7 @@ export default function NavMenu({
         }
 
         const onPointerDown = (e: MouseEvent) => {
-            if (! wrapper.current?.contains(e.target as Node)) {
+            if (!wrapper.current?.contains(e.target as Node)) {
                 setOpen(false)
             }
         }
@@ -96,7 +119,7 @@ export default function NavMenu({
         <Link
             href={href}
             aria-current={current ? 'page' : undefined}
-            className={`inline-flex items-center gap-1.5 ${
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap ${
                 current
                     ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
                     : 'hover:text-ink'
@@ -107,12 +130,34 @@ export default function NavMenu({
         </Link>
     )
 
-    if (items.length === 0) {
+    if (groups.every((group) => group.items.length === 0)) {
         return link
     }
 
+    // Up and down between the entries, wrapping; Home and End to either end.
+    const onPanelKey = (e: ReactKeyboardEvent) => {
+        const all = links()
+        const at = all.indexOf(document.activeElement as HTMLElement)
+        const go = (i: number) => {
+            e.preventDefault()
+            all[(i + all.length) % all.length]?.focus()
+        }
+
+        if (e.key === 'ArrowDown') go(at + 1)
+        else if (e.key === 'ArrowUp') go(at <= 0 ? all.length - 1 : at - 1)
+        else if (e.key === 'Home') go(0)
+        else if (e.key === 'End') go(all.length - 1)
+    }
+
     return (
-        <div ref={wrapper} className="relative flex items-center gap-1">
+        <div
+            ref={wrapper}
+            className="relative flex items-center gap-1"
+            // Tabbing out of the panel closes it.
+            onBlur={(e) => {
+                if (open && !wrapper.current?.contains(e.relatedTarget as Node | null)) setOpen(false)
+            }}
+        >
             {link}
 
             <button
@@ -120,7 +165,15 @@ export default function NavMenu({
                 type="button"
                 aria-expanded={open}
                 aria-controls={id}
-                onClick={() => setOpen(! open)}
+                onClick={() => setOpen(!open)}
+                onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        focusFirst.current = true
+                        if (open) links()[0]?.focus()
+                        else setOpen(true)
+                    }
+                }}
                 className="rounded p-0.5 text-ink-soft hover:text-ink"
             >
                 <svg
@@ -140,29 +193,57 @@ export default function NavMenu({
             </button>
 
             {open && (
-                <ul
+                <div
+                    ref={panel}
                     id={id}
-                    className="absolute top-full left-0 z-40 mt-2 w-72 rounded-lg border border-line bg-white p-2 shadow-lg"
+                    onKeyDown={onPanelKey}
+                    className="absolute top-full left-0 z-40 mt-2 w-80 rounded-lg border border-line bg-white p-2 shadow-lg"
                 >
-                    {items.map((item) => (
-                        <li key={item.href}>
-                            <Link
-                                href={item.href}
-                                aria-current={isCurrent(item.href) ? 'page' : undefined}
-                                onClick={() => setOpen(false)}
-                                className="flex gap-3 rounded-md px-3 py-2 hover:bg-sand"
-                            >
-                                {item.icon ? <span className="mt-0.5 shrink-0 text-accent">{item.icon}</span> : null}
-                                <span>
-                                    <span className="block font-medium text-ink">{item.label}</span>
-                                    {item.hint ? (
-                                        <span className="block text-xs text-ink-soft">{item.hint}</span>
-                                    ) : null}
-                                </span>
-                            </Link>
-                        </li>
+                    {groups.map((group, g) => (
+                        <div key={group.label ?? g} className={g > 0 ? 'mt-2 border-t border-line pt-2' : ''}>
+                            {group.label ? (
+                                <p className="px-3 pt-1 pb-1 text-2xs font-semibold tracking-wide text-ink-soft uppercase">
+                                    {group.label}
+                                </p>
+                            ) : null}
+                            <ul aria-label={group.label}>
+                                {group.items.map((item) => (
+                                    <li key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            aria-current={isCurrent(item.href) ? 'page' : undefined}
+                                            onClick={() => setOpen(false)}
+                                            className="flex gap-3 rounded-md px-3 py-2 outline-none hover:bg-sand focus-visible:bg-sand focus-visible:ring-2 focus-visible:ring-accent/40"
+                                        >
+                                            {item.icon ? (
+                                                <span className="mt-0.5 shrink-0 text-accent">{item.icon}</span>
+                                            ) : null}
+                                            <span>
+                                                <span className="block font-medium text-ink">{item.label}</span>
+                                                {item.hint ? (
+                                                    <span className="block text-xs text-ink-soft">{item.hint}</span>
+                                                ) : null}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     ))}
-                </ul>
+
+                    {footer ? (
+                        <div className="mt-2 border-t border-line pt-2">
+                            <Link
+                                href={footer.href}
+                                aria-current={isCurrent(footer.href) ? 'page' : undefined}
+                                onClick={() => setOpen(false)}
+                                className="flex rounded-md px-3 py-2 font-medium text-accent outline-none hover:bg-sand focus-visible:bg-sand focus-visible:ring-2 focus-visible:ring-accent/40"
+                            >
+                                {footer.label} →
+                            </Link>
+                        </div>
+                    ) : null}
+                </div>
             )}
         </div>
     )

@@ -2,7 +2,91 @@
 
 The site shell: what the header offers, and the two things it did not.
 
-## The header since 2026-09-26: Discover ▾ | Coves ▾ | Gift Finder | How it works
+## The header now: Find a gift | Discover ▾ | My Coves (2026-09-26, evening)
+
+The owner's menu structure, approved the same day. It replaces the version described in the next
+section (Discover ▾ | Coves ▾ | Find a gift | How it works, three flags and a language dropdown).
+
+**Desktop, left to right** (`Layouts/SiteLayout.tsx`): logo · search field · **Find a gift**
+(`/gift`, a plain link: it is one flow) · **Discover ▾** · **My Coves** (`/lists`, a plain link) ·
+one **country-and-language button** · the bell when something is unread · the account.
+
+**Discover ▾** is the only menu. Its label still goes to the Discover page (`/discover-cove`); the
+chevron opens two labelled groups and a link under a rule (`Components/NavMenu.tsx`, which now takes
+`groups` and a `footer`):
+
+| Group | Entry | Goes to |
+|---|---|---|
+| Every day (`nav.every_day`) | Daily Cove | `/tips` |
+| | Surprise Cove | `/surprise` |
+| Coves (`nav.coves`) | Gift ideas by person (`nav.gift_ideas`) | `/gift-ideas` |
+| | Shop Smarter | `/guides` |
+| | Community Coves (`community.index_heading`) | `/coves/community` |
+| | Brands & shops (`nav.brands_shops`) | `/brands` |
+| | All Coves → (`nav.all_coves`) | `/coves` |
+
+What left the top row, and where it went:
+
+- **Search** is no longer a menu entry: the field in the header is search.
+- **Ask others** left the menu: it is the last step of Find a gift and has its card on the Discover
+  page.
+- **How it works** left the top row. It stays in the footer and on the home page, and it is in the
+  account menu as **Help** (`nav.help`), the owner's word for it in a menu of your own things. That
+  is two names for `/help` (footer "How it works", account menu "Help"), the owner's decision.
+- **The Coves menu** merged into Discover as its second group.
+
+**The account menu** (desktop `AccountMenu`, phone `AccountSheet`, both from `myCovesLinks.ts`): My
+Coves · **My people** (`/people`, `nav.people`: Mijn mensen / My people / Mes proches / Mi gente) ·
+Saved Coves · Secret Friend · Notifications with its count · Help · Admin · Sign out. **Friends left
+the menu**: My people is one page for friends and the people you keep lists for, built in a
+separate change; `/friends` keeps working. The desktop menu is built on `Menu` now, so it answers
+the arrow keys, Escape (focus back to the button) and Tab like the site's other menus. It also
+shows the unread count beside Notifications, as the phone sheet already did.
+
+**The phone:** logo, search icon, account, ☰. The ☰ panel: Find a gift, Discover with both groups
+and All Coves, My Coves, then the country-and-language list, then Help.
+
+**One country-and-language button.** It shows the flag and the language code and opens a list of
+the markets: one row per country, and a heading with a row per language where a country has two
+(Belgium). Every row is the same POST to `/market` as before, still the only writer of `bc_market`.
+See [market-routing.md](market-routing.md).
+
+### Decisions taken without the owner
+
+- **"Surprise Cove", not "Verrassing".** The owner's sketch said "Verrassing"; the page and every
+  other surface call it Verrassingscove / Surprise Cove (`nav.surprise`), and one page keeps one
+  name. Changing it is one string per language.
+- **"Gift ideas by person" is the page's own title** (`gift_ideas.title`, "Cadeau-ideeën, per type")
+  without the comma. The key `nav.gift_coves` ("Cadeau Coves") was renamed `nav.gift_ideas` with it,
+  so no key holds a name the site no longer uses.
+- **"Brands & shops" goes to `/brands`.** No page lists both; the brands index now links on to the
+  shops (`/shops`) under its intro, and All Coves shows both bands.
+- **Two new hints**, because every other entry in the menu has one: "Lists other people shared"
+  (`nav.hint_community`) and "By maker or by shop" (`nav.hint_brands_shops`).
+- **Keys deleted:** `nav.search_offers`, `nav.hint_search` (Search left the menu). `nav.friends`
+  and `nav.choose_language` stay, unused by the header, in case the My people page wants them.
+
+### The width, measured again
+
+With Playwright against the worktree, signed out and signed in, the header row is still the page
+column (1152px) at 1280 and 1440. Before, Belgian French and Spanish got only the magnifier; now
+every language gets a real field and nothing overflows:
+
+| Market | Before (signed out) | After (signed out) | After (signed in) |
+|---|---|---|---|
+| en | 256px field | 384px (the cap) | 384px |
+| nl-nl | 206px | 378px | 375px |
+| be-nl | 141px | 378px | 375px |
+| be-fr | magnifier | 306px | 334px |
+| es | magnifier | 336px | 363px |
+
+The field's cap went from 16rem to 24rem, and it sits beside the logo, the menus to its right
+(`ml-auto` on the nav). The magnifier fallback under 7rem stays for narrow cases (the search page
+itself has no header field at all).
+
+## The header earlier on 2026-09-26: Discover ▾ | Coves ▾ | Gift Finder | How it works
+
+*Replaced the same evening by the section above; kept for the reasoning.*
 
 The owner's call, with the repositioning ([../strategy.md](../strategy.md), section 6): the header
 stops presenting a dozen features as equal top-level ideas. Everything that was there still is,
@@ -515,9 +599,13 @@ has given up on a search and moved on has left both behind. See
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
 - `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
 - `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
+- `resources/js/Components/MarketSwitcher.tsx` — `MarketButton` (header), `MarketList` (phone)
+- `tests/Feature/HeaderMenuTest.php` — every menu destination answers; every string the menus use
+  exists in all four languages
 - `lang/*/site.php` — `nav.discover`, `nav.coves`, `nav.gift`, `nav.how_it_works`, `nav.lists`,
-  `nav.search_offers`, `nav.daily`, `nav.smart`, `nav.gift_coves`, `nav.shared_lists`,
-  `nav.group_lists`, `nav.santa`, `nav.sign_out`, `nav.admin`, `nav.account`
+  `nav.every_day`, `nav.daily`, `nav.smart`, `nav.gift_ideas`, `nav.brands_shops`, `nav.all_coves`,
+  `nav.people`, `nav.help`, `nav.market_button`, `nav.santa`, `nav.sign_out`, `nav.admin`,
+  `nav.account`
 
 ## See also
 
