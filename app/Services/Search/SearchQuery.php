@@ -219,6 +219,32 @@ final readonly class SearchQuery
         );
     }
 
+    /**
+     * The same search with a price range, in cents.
+     *
+     * Used when the words themselves carried a budget ("koptelefoon onder
+     * 100"): GiftIntentParser takes it out of the term and it lands here, as
+     * the same filter the price boxes set.
+     */
+    public function withPrices(?int $min, ?int $max): self
+    {
+        return new self(
+            market: $this->market,
+            term: $this->term,
+            minPrice: $min,
+            maxPrice: $max,
+            merchantIds: $this->merchantIds,
+            brands: $this->brands,
+            inStockOnly: $this->inStockOnly,
+            discountedOnly: $this->discountedOnly,
+            comparableOnly: $this->comparableOnly,
+            sort: $this->sort,
+            page: $this->page,
+            view: $this->view,
+            logged: $this->logged,
+        );
+    }
+
     public function hasTerm(): bool
     {
         return $this->term !== '';

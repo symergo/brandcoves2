@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\AlertState;
+use App\Enums\EventType;
+use App\Enums\Interest;
 use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
+use App\Services\Gift\Suggestion;
+use App\Services\Gift\SuggestionEngine;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\GiftIntentParser;
+use App\Services\Search\ParsedIntent;
 use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
@@ -34,6 +40,9 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
+    /** Suggestions a gift search shows: two rows of the grid at desktop width. */
+    private const GIFT_RESULTS = 24;
+
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
 
@@ -110,7 +119,28 @@ class SearchController extends Controller
             ? null
             : app(SearchLanding::class)->for(Owner::fromRequest($request), $current);
 
-        $result = $landing === null ? $search->search($query) : SearchResult::none($query);
+        /*
+         * What the words mean, read before they are searched (roadmap step 4).
+         *
+         * "Cadeau voor mijn zus die van tuinieren houdt, €30–€50" is a gift
+         * brief, not a string to match: the page shows the reading back as
+         * chips and the suggestion engine answers it. A budget on a plain
+         * product search ("koptelefoon onder 100") becomes the price filter.
+         * `?as=words` searches the words as they were typed, for when the
+         * reading was wrong. No AI: see GiftIntentParser.
+         */
+        $intent = $landing === null && $query->hasTerm() && $request->query('as') !== 'words'
+            ? app(GiftIntentParser::class)->parse($query->term, $current->get())
+            : null;
+
+        if ($intent !== null && ! $intent->isGift && $intent->hasBudget() && $intent->rest !== ''
+            && $query->minPrice === null && $query->maxPrice === null) {
+            $query = $query->withTerm($intent->rest)->withPrices($intent->budgetMin, $intent->budgetMax);
+        }
+
+        $gift = $intent !== null && $intent->isGift ? $this->giftResults($intent, $current) : null;
+
+        $result = $landing === null && $gift === null ? $search->search($query) : SearchResult::none($query);
 
         $this->seo($query, $result, $current);
 
@@ -123,7 +153,11 @@ class SearchController extends Controller
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
-            'results' => $this->present($result),
+            'results' => $gift ?? $this->present($result),
+
+            // The reading of a gift search, shown above its results. Null for
+            // every ordinary search.
+            'intent' => $gift === null || $intent === null ? null : $this->presentIntent($intent, $current),
             'lanes' => $query->view === 'store'
                 ? $this->presentLanes($search->storeLanes($query))
                 : null,
@@ -132,7 +166,10 @@ class SearchController extends Controller
              * own. What used to sit here was four paragraphs of statistics.
              */
             'terms' => $this->terms($query, $result, $current),
-            'activeTerms' => $this->activeTerms($query, $current),
+            // Not for a gift search: its words are a sentence, and pills to
+            // drop "voor" or "mijn" one at a time are noise. Its chips do that
+            // job, piece by piece.
+            'activeTerms' => $gift === null ? $this->activeTerms($query, $current) : [],
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
 
             /*
@@ -140,7 +177,8 @@ class SearchController extends Controller
              * Null without a term: there is nothing to watch on the landing.
              * See docs/features/search-alerts.md.
              */
-            'watch' => $this->watch($request, $query, $current),
+            // A sentence is not a search worth watching for new products.
+            'watch' => $gift === null ? $this->watch($request, $query, $current) : null,
 
             /*
              * The one shop we do not carry, offered on purpose.
@@ -158,7 +196,9 @@ class SearchController extends Controller
              * question we could not; with no question, there is nothing to
              * hand off.
              */
-            'amazonSearch' => $query->hasTerm()
+            // Not the whole sentence of a gift search: Amazon would search
+            // "cadeau voor mijn papa die graag kookt" word for word.
+            'amazonSearch' => $query->hasTerm() && $gift === null
                 ? AmazonSearchLink::for($current->get(), $query->term)?->toArray()
                 : null,
 
@@ -627,6 +667,67 @@ class SearchController extends Controller
     }
 
     /** @return array<string, mixed> */
+    /**
+     * A gift search, answered by the suggestion engine in the same cards as a
+     * search. Null when the engine finds nothing, so the words are searched
+     * instead and the page never comes back empty for having understood.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function giftResults(ParsedIntent $intent, CurrentMarket $current): ?array
+    {
+        $suggestions = app(SuggestionEngine::class)->suggest($intent->toBrief($current->get(), self::GIFT_RESULTS));
+
+        if ($suggestions === []) {
+            return null;
+        }
+
+        return [
+            'total' => count($suggestions),
+            'currentPage' => 1,
+            'lastPage' => 1,
+            'items' => array_map(fn (Suggestion $s) => $this->card($s->group), $suggestions),
+        ];
+    }
+
+    /**
+     * The reading, as chips: each says what was understood and carries the
+     * search without it, so a wrong piece costs one tap.
+     *
+     * @return array<string, mixed>
+     */
+    private function presentIntent(ParsedIntent $intent, CurrentMarket $current): array
+    {
+        $market = $current->get();
+        $url = fn (string $term): string => $term === '' ? $current->url('search') : SearchUrl::for($market, $term);
+
+        $chips = [];
+
+        if ($intent->relationship !== null) {
+            $chips[] = ['label' => Str::ucfirst($intent->phrases['recipient'] ?? $intent->relationship), 'without' => $url($intent->without('recipient'))];
+        }
+
+        foreach ($intent->interests as $interest) {
+            $chips[] = ['label' => Interest::from($interest)->label(), 'without' => $url($intent->without('interest:'.$interest))];
+        }
+
+        if ($intent->occasion !== null) {
+            $chips[] = ['label' => EventType::from($intent->occasion)->label($market->language()), 'without' => $url($intent->without('occasion'))];
+        }
+
+        return [
+            'chips' => $chips,
+            // Formatted on the client, like every other price on the page.
+            'budget' => $intent->hasBudget() ? [
+                'min' => $intent->budgetMin,
+                'max' => $intent->budgetMax,
+                'without' => $url($intent->without('budget')),
+            ] : null,
+            'words' => $intent->rest,
+            'asWordsUrl' => SearchUrl::for($market, $intent->original, ['as' => 'words']),
+        ];
+    }
+
     private function present(SearchResult $result): array
     {
         return [

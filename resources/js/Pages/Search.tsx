@@ -37,6 +37,17 @@ interface Props {
     }
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
     emptyBecauseOfFilters: boolean
+    /**
+     * A gift search, read (roadmap step 4): what was understood, each piece
+     * with the search without it. Null for every ordinary search. See
+     * GiftIntentParser.
+     */
+    intent: {
+        chips: { label: string; without: string }[]
+        budget: { min: number | null; max: number | null; without: string } | null
+        words: string
+        asWordsUrl: string
+    } | null
     /** Ways in, before a search: recent searches, your brands, the tools. Null once there is a term or a filter. */
     landing: Landing | null
     /** Set when the search box held an Amazon URL rather than a search term. */
@@ -142,6 +153,7 @@ export default function Search({
     results,
     lanes,
     emptyBecauseOfFilters,
+    intent,
     landing,
     amazonSearch,
     watch,
@@ -826,6 +838,42 @@ export default function Search({
 
                     </div>
 
+                    {/*
+                      The reading of a gift search, before its results.
+
+                      Shown back so a wrong reading costs one tap: each chip
+                      drops that piece and searches again, and "search the
+                      words instead" skips the reading altogether. The results
+                      below come from the suggestion engine for this brief.
+                    */}
+                    {intent && (
+                        <div className="mb-6 rounded-card border border-accent/30 bg-accent/5 p-4">
+                            <p className="text-xs font-medium tracking-wide text-ink-soft uppercase">{t('search.intent_label')}</p>
+                            <ul className="mt-2 flex flex-wrap items-center gap-2">
+                                {intent.chips.map((chip) => (
+                                    <IntentChip key={chip.without + chip.label} label={chip.label} without={chip.without} removeLabel={t('search.intent_remove', { label: chip.label })} />
+                                ))}
+                                {intent.budget && (
+                                    <IntentChip
+                                        label={
+                                            intent.budget.min !== null && intent.budget.max !== null
+                                                ? `${formatPrice(intent.budget.min, market)} – ${formatPrice(intent.budget.max, market)}`
+                                                : t('search.intent_under', { price: formatPrice(intent.budget.max ?? 0, market) })
+                                        }
+                                        without={intent.budget.without}
+                                        removeLabel={t('search.intent_remove', { label: t('search.intent_budget') })}
+                                    />
+                                )}
+                                {intent.words !== '' && (
+                                    <li className="text-sm text-ink-soft">+ “{intent.words}”</li>
+                                )}
+                            </ul>
+                            <Link href={intent.asWordsUrl} className="mt-3 inline-block text-sm text-accent-dark underline hover:text-ink">
+                                {t('search.intent_as_words')}
+                            </Link>
+                        </div>
+                    )}
+
                     {results.total === 0 ? (
                         <div className="rounded-card border border-line bg-card p-8 text-center">
                             {/*
@@ -1425,5 +1473,22 @@ function Facet({
                 ))}
             </ul>
         </div>
+    )
+}
+
+/** One understood piece of a gift search, and the way to drop it. */
+function IntentChip({ label, without, removeLabel }: { label: string; without: string; removeLabel: string }) {
+    return (
+        <li className="inline-flex items-center gap-1 rounded-full border border-line bg-card py-1 pr-1 pl-3 text-sm font-medium">
+            {label}
+            <Link
+                href={without}
+                aria-label={removeLabel}
+                title={removeLabel}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
+            >
+                ×
+            </Link>
+        </li>
     )
 }

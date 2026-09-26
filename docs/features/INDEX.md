@@ -30,6 +30,7 @@ is true now.
 | [product-signals.md](product-signals.md) | Catalogue / Discovery | Active — price range, saved by (from 5 people), found in Coves, related |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
+| [intent-search.md](intent-search.md) | Search / Gifting | Active — the search box reads gift searches (who, interests, occasion, budget) |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |
