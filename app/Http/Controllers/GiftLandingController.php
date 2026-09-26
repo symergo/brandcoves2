@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Services\Gift\BriefUrl;
 use App\Services\Gift\GiftLandingCopy;
 use App\Services\Gift\GiftLandingLinks;
+use App\Services\Gift\GiftResults;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Seo\PageMeta;
@@ -85,11 +86,24 @@ class GiftLandingController extends Controller
             $brief = $brief->withBudget($budget[0], $budget[1]);
         }
 
-        $ids = Cache::remember(
-            sprintf('bc:gift-landing:%d:%d:%s', $page->id, $page->checked_at->getTimestamp(), BriefUrl::budgetParam($budget[0] ?? null, $budget[1] ?? null) ?? 'all'),
+        /*
+         * The engine's verdict, cached: which products, in which order, what
+         * each has in common with the page's brief and whether other people
+         * chose it for someone like this. `v2` since the cards became the
+         * Find-a-gift results' cards (2026-09-26), which need the last two;
+         * the old key held ids only.
+         */
+        $verdicts = Cache::remember(
+            sprintf('bc:gift-landing:v2:%d:%d:%s', $page->id, $page->checked_at->getTimestamp(), BriefUrl::budgetParam($budget[0] ?? null, $budget[1] ?? null) ?? 'all'),
             (int) config('giftcoves.gift_landings.cache_ttl', 86400),
-            fn (): array => array_map(fn (Suggestion $s) => $s->group->id, $engine->suggest($brief)),
+            fn (): array => array_map(fn (Suggestion $s) => [
+                'id' => $s->group->id,
+                'fits' => $s->fits(),
+                'chosenByOthers' => $s->chosenByOthers(),
+            ], $engine->suggest($brief)),
         );
+
+        $ids = array_map(fn (array $v) => (int) $v['id'], $verdicts);
 
         $groups = ProductGroup::query()
             ->forMarket($marketEnum)
@@ -98,18 +112,41 @@ class GiftLandingController extends Controller
             ->get()
             ->keyBy('id');
 
-        // In the engine's order: the best fit first.
-        $products = array_values(array_filter(array_map(fn (int $id) => $groups->get($id), $ids)));
+        // In the engine's order: the best fit first. A product gone since
+        // the cache was filled drops out rather than showing stale.
+        $results = app(GiftResults::class);
+        $picks = [];
+
+        foreach ($verdicts as $verdict) {
+            $group = $groups->get((int) $verdict['id']);
+
+            if ($group !== null) {
+                $picks[] = $results->card($group, $current, $verdict['fits'], (bool) $verdict['chosenByOthers']);
+            }
+        }
 
         $copy = new GiftLandingCopy($marketEnum, $type, $topic);
 
-        $this->seo($copy, $page, $current, $canonical, $links, count($products));
+        $this->seo($copy, $page, $current, $canonical, $links, count($picks));
 
         return Inertia::render('GiftIdeas/Landing', [
             'heading' => $copy->heading(),
             'intro' => $copy->intro(),
             'isRecipientPage' => $topic === null,
-            'products' => array_map($this->card(...), $products),
+            /*
+             * Drawn by the same results component as "Find a gift", so a
+             * landing page looks and behaves like the board the questions
+             * end on: the same cards, the ideas without a shop, Coves others
+             * made, and "Ask others". No "Open as a page": this is the page.
+             */
+            'picks' => $picks,
+            ...$results->extras(
+                $brief,
+                $current,
+                $request->user(),
+                shownIds: array_map(fn (array $pick) => (int) $pick['id'], $picks),
+                withPageUrl: false,
+            ),
             'budget' => [
                 'current' => BriefUrl::budgetParam($budget[0] ?? null, $budget[1] ?? null),
                 'anyUrl' => $canonical,
@@ -174,28 +211,5 @@ class GiftLandingController extends Controller
         $trail[] = ['name' => $copy->heading(), 'url' => url($canonical)];
 
         $meta->addJsonLd(StructuredData::breadcrumbs($trail));
-    }
-
-    /**
-     * The same card as a search result, so the page reads like the rest of
-     * the site. Cents cross the wire as stored; the client formats them.
-     *
-     * @return array<string, mixed>
-     */
-    private function card(ProductGroup $group): array
-    {
-        return [
-            'id' => $group->id,
-            'title' => $group->displayTitle(),
-            'slug' => $group->slug,
-            'brand' => $group->brand,
-            'image' => $group->image_url,
-            'minPrice' => $group->min_price,
-            'maxPrice' => $group->max_price,
-            'offerCount' => $group->offer_count,
-            'merchantCount' => $group->merchant_count,
-            'inStock' => $group->in_stock,
-            'discountPercent' => $group->discountPercent(),
-        ];
     }
 }

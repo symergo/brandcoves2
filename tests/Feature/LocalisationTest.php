@@ -128,11 +128,11 @@ class LocalisationTest extends TestCase
     public function each_market_is_served_in_its_own_language(): void
     {
         $expected = [
-            'be-nl' => 'Cadeauzoeker',
-            'nl-nl' => 'Cadeauzoeker',
+            'be-nl' => 'Cadeau vinden',
+            'nl-nl' => 'Cadeau vinden',
             'be-fr' => 'Trouver un cadeau',
-            'es' => 'Buscador de regalos',
-            'en' => 'Gift Finder',
+            'es' => 'Encontrar un regalo',
+            'en' => 'Find a gift',
         ];
 
         foreach ($expected as $market => $phrase) {

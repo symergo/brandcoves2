@@ -179,7 +179,10 @@ If abuse appears, the first step is to put a `pending` state in front (the plan'
 ## The Gift Finder: "Coves others made for someone like this"
 
 Under the Gift Finder's results, up to three Community Coves nearest the brief
-(`CommunityCoves::forBrief()`), in the same market, never the viewer's own:
+(`CommunityCoves::forBrief()`), in the same market, never the viewer's own. Since 2026-09-26 the
+same section sits under This or that's result (a giver's) and on the gift landing pages, which all
+draw the one Find-a-gift results page ([find-a-gift.md](find-a-gift.md)); with a kind of person
+chosen in "Who is it for?", the relationship match works on all of them.
 
 - A Cove **qualifies** when it is for the same kind of person (the brief's relationship equals the
   recipient's closed relationship) **or** holds a product tagged with one of the brief's interests,

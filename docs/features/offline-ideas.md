@@ -101,6 +101,8 @@ wording or tags, or **Withdraw**, which rejects it).
   ([persona-budgets.md](persona-budgets.md)). For someone who has everything, an approved idea whose
   wording is done or used up ("a cooking workshop") fits whatever it is tagged with
   ([has-everything.md](has-everything.md)).
+- **Gift landing pages** (2026-09-26), under the cards, from the page's brief, since they draw the
+  one Find-a-gift results page ([find-a-gift.md](find-a-gift.md)).
 
 At most three (`giftcoves.offline_ideas.shown`), in the brief's market only. An idea shows when it
 shares something with the brief: an interest (weighs 2), who it is for or the occasion (1 each).

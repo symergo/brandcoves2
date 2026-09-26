@@ -98,7 +98,7 @@ cached query per market. No AI anywhere.
 | Rules | `App\Services\Gift\CrowdPickMatcher`, `CrowdPick` |
 | Engine | `SuggestionEngine::withCrowdPicks()`, the `crowd` signal, `Suggestion::chosenByOthers()` |
 | Deck | `TasteDeck::proven()` |
-| Pages | `Gift/Wizard.tsx`, `Gift/Taste.tsx` (the `chosenByOthers` line), `Help.tsx` |
+| Pages | `Components/GiftResults.tsx` (the `chosenByOthers` line), drawn by `Gift/Wizard.tsx`, `Gift/Taste.tsx` and the gift landing pages since 2026-09-26 ([find-a-gift.md](find-a-gift.md)); `Help.tsx` |
 | Copy | `site.gift.chosen_by_others`, `site.gift.chosen_by_others_me`, `site.help.find_crowd` |
 | Tests | `tests/Unit/CrowdPickMatcherTest.php`, `tests/Feature/CrowdPicksTest.php` |
 

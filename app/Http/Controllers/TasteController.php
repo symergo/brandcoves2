@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecipientType;
 use App\Enums\TasteSource;
 use App\Models\Event;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Services\Gift\GiftHistory;
-use App\Services\Gift\Suggestion;
+use App\Services\Gift\GiftResults;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\SuggestionProfile;
+use App\Services\Gift\TasteBrief;
 use App\Services\Gift\TasteChoice;
 use App\Services\Gift\TasteChoiceReader;
 use App\Services\Gift\TasteDeck;
@@ -23,6 +25,8 @@ use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -67,9 +71,39 @@ class TasteController extends Controller
 
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
+            'carried' => $this->carried($request, $current),
             'rounds' => $this->firstRounds($deck, $current),
             'result' => null,
         ]);
+    }
+
+    /**
+     * Who "Find a gift" already said this is for, so the page does not ask.
+     *
+     * `?person=<id>` is one of the visitor's own people (owner-scoped: any
+     * other id is ignored, as if it were not there); `?relationship=mother`
+     * is one of the closed vocabulary. Either one means "someone else", so
+     * the page's own "for someone or for yourself?" is skipped. Neither is
+     * a description of the person, only who they are, so both may sit in a
+     * URL where the answers may not. See docs/features/find-a-gift.md.
+     *
+     * @return array{person: array{id: string, name: string}|null, relationship: string|null}
+     */
+    private function carried(Request $request, CurrentMarket $current): array
+    {
+        $id = (string) $request->query('person', '');
+        $recipient = Str::isUuid($id)
+            ? Owner::fromRequest($request)->scope(Recipient::query())->find($id)
+            : null;
+
+        $relationship = $recipient !== null
+            ? app(GiftResults::class)->relationshipType($recipient->relationship, $current->get())
+            : RecipientType::tryFrom((string) $request->query('relationship', ''));
+
+        return [
+            'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
+            'relationship' => $relationship?->value,
+        ];
     }
 
     /** The next few rounds, for both doors. JSON: the page keeps its own state. */
@@ -103,6 +137,8 @@ class TasteController extends Controller
             // Choosing for one of your saved people (`?person=` on the page):
             // what they were already given is left out of the ideas.
             'recipient_id' => ['nullable', 'uuid'],
+            // Who "Find a gift" said this is for, without a saved person.
+            'relationship' => ['nullable', 'string', Rule::in(RecipientType::values())],
         ]);
 
         $for = $validated['for'] ?? 'someone';
@@ -112,18 +148,83 @@ class TasteController extends Controller
             ? Owner::fromRequest($request)->scope(Recipient::query())->find($validated['recipient_id'])
             : null;
 
+        $relationship = $for !== 'someone' ? null : ($recipient !== null
+            ? app(GiftResults::class)->relationshipType($recipient->relationship, $current->get())
+            : RecipientType::tryFrom((string) ($validated['relationship'] ?? '')));
+
+        $outcome = $this->outcome(
+            $validated['choices'],
+            $current,
+            $reader,
+            $engine,
+            $for,
+            given: $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient),
+            relationship: $relationship,
+            brief: $brief,
+        );
+
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
+            'carried' => [
+                'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
+                'relationship' => $relationship?->value,
+            ],
             'rounds' => [],
-            'result' => $this->outcome(
-                $validated['choices'],
-                $current,
-                $reader,
-                $engine,
-                $for,
-                given: $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient),
-            ),
+            'result' => [
+                ...$outcome,
+                /*
+                 * The rest of the one results page, as the questions end on
+                 * it: Open as a page, Coves others made, the next step for a
+                 * saved person, Ask others, and the person's own list for a
+                 * save. See App\Services\Gift\GiftResults.
+                 */
+                ...$this->giverExtras($request, $current, $outcome, $brief, $recipient),
+            ],
         ]);
+    }
+
+    /**
+     * What only a giver's result carries, beside the ideas.
+     *
+     * @param  array<string, mixed>  $outcome
+     * @return array<string, mixed>
+     */
+    private function giverExtras(Request $request, CurrentMarket $current, array $outcome, TasteBrief $brief, ?Recipient $recipient): array
+    {
+        $results = app(GiftResults::class);
+
+        $extras = $results->extras(
+            $brief,
+            $current,
+            $request->user(),
+            $recipient,
+            array_map(fn (array $pick) => (int) $pick['id'], $outcome['picks']),
+        );
+
+        return [
+            ...$extras,
+            // Already in the outcome, from the same brief.
+            'offlineIdeas' => $outcome['offlineIdeas'],
+            'into' => $results->recipientList(Owner::fromRequest($request), $recipient, $current),
+            /*
+             * "Refine with the questions": what was learned, as the answers
+             * the questions post, so the same board opens with Adjust, Eight
+             * more and "Something else" beside it. Avoided interests keep
+             * their tag spelling (`interest:gaming`), as when saved on a
+             * person. POSTed from the page, never put in a URL.
+             */
+            'refine' => array_filter([
+                'interests' => $brief->interests,
+                'vibe' => $brief->vibe?->value,
+                'preferences' => $brief->preferences,
+                'values' => $brief->values,
+                'avoid' => $brief->avoid,
+                'budget_min' => $brief->budgetMin === null ? null : $brief->budgetMin / 100,
+                'budget_max' => $brief->budgetMax === null ? null : $brief->budgetMax / 100,
+                'relationship' => $brief->relationship,
+                'recipient_id' => $recipient?->id,
+            ], fn ($v) => $v !== null && $v !== []),
+        ];
     }
 
     /**
@@ -257,10 +358,20 @@ class TasteController extends Controller
      *
      * @param  list<array<string, mixed>>  $raw
      * @param  list<int>  $given  products the chosen person was already given
+     * @param  TasteBrief|null  $brief  set to the brief the ideas came from, for a caller that builds more on it
      * @return array<string, mixed>
      */
-    protected function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true, array $given = []): array
-    {
+    protected function outcome(
+        array $raw,
+        CurrentMarket $current,
+        TasteChoiceReader $reader,
+        SuggestionEngine $engine,
+        string $for,
+        bool $withIdeas = true,
+        array $given = [],
+        ?RecipientType $relationship = null,
+        ?TasteBrief &$brief = null,
+    ): array {
         $choices = $reader->read($raw, $current->get());
         $profile = TasteProfiler::fromConfig()->profile($choices);
 
@@ -277,6 +388,9 @@ class TasteController extends Controller
             // given when they are one of yours (docs/features/gift-history.md).
             [...$this->shownIds($choices), ...$given],
             $for === 'me' ? SuggestionProfile::forMyself() : SuggestionProfile::forSomeone(),
+            // Who "Find a gift" said it is for: an editor's `recipient:` tag
+            // scores, and Coves others made for the same kind of person match.
+            $relationship?->value,
         );
 
         $picks = $engine->suggest($brief);
@@ -292,17 +406,8 @@ class TasteController extends Controller
         return [
             'profile' => $profile->toArray(),
             'thin' => $profile->answered < TasteDeck::EXPLORE,
-            'picks' => array_map(fn (Suggestion $pick) => [
-                'id' => $pick->group->id,
-                'title' => $pick->group->displayTitle(),
-                'brand' => $pick->group->brand,
-                'image' => $pick->group->image_url,
-                'price' => $pick->group->min_price,
-                'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
-                'fits' => $pick->fits(),
-                // Five or more different people's lists (crowd-picks.md).
-                'chosenByOthers' => $pick->chosenByOthers(),
-            ], $picks),
+            // The same cards as the questions' results (GiftResults::cards).
+            'picks' => app(GiftResults::class)->cards($picks, $current),
             'choices' => array_values($raw),
             'for' => $for,
             /*
