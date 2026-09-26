@@ -7,6 +7,7 @@ namespace App\Services\Wishlist;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\Wishlist;
+use App\Services\Alerts\ListPriceWatch;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 
@@ -89,6 +90,8 @@ class DefaultList
             'market' => $current->get(),
             'kind' => ListKind::Mine,
             'is_default' => true,
+            // Price watching on by default; see ListPriceWatch::DEFAULT_PERCENT.
+            'price_watch_percent' => ListPriceWatch::DEFAULT_PERCENT,
             /*
              * Stated, not inherited from the column default.
              *

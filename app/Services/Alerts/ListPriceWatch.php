@@ -49,6 +49,18 @@ final class ListPriceWatch
      */
     public const PERCENTAGES = [5, 10, 15, 20, 30];
 
+    /**
+     * On for every new list, at 10% (owner's call, 2026-09-26: "zet 'volg
+     * prijzen op deze lijst' standaard aan"). A list is where somebody keeps
+     * what they mean to buy or be given, so a drop on it is news they want;
+     * off meant almost nobody found the switch. 10% is the smallest drop on
+     * this list that reads as a real sale rather than a price wobble. Existing
+     * lists keep what their owner set; this only fills in a new one, and the
+     * owner turns it off in the list's settings. A list with no signed-in
+     * owner has nobody to mail, so the digest skips it anyway.
+     */
+    public const DEFAULT_PERCENT = 10;
+
     public function __construct(private readonly AlertEligibility $eligibility) {}
 
     /**

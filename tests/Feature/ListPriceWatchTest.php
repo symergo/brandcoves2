@@ -340,4 +340,20 @@ class ListPriceWatchTest extends TestCase
         $this->assertSame(24999, $item->watch_reference_price);
         $this->assertNotNull($item->watch_seeded_at);
     }
+
+    #[Test]
+    public function a_new_list_watches_its_prices_at_ten_percent_until_its_owner_says_otherwise(): void
+    {
+        // Owner's call, 2026-09-26: on by default. See ListPriceWatch::DEFAULT_PERCENT.
+        $user = $this->user();
+
+        $this->actingAs($user)->post('/be-nl/lists', ['title' => 'Camping', 'recipient_id' => null])->assertRedirect();
+        $this->actingAs($user)->get('/be-nl/lists')->assertOk();
+
+        $lists = Wishlist::query()->where('owner_user_id', $user->id)->get();
+
+        $this->assertNotEmpty($lists);
+        $this->assertTrue($lists->every(fn (Wishlist $list) => $list->price_watch_percent === ListPriceWatch::DEFAULT_PERCENT));
+        $this->assertSame(10, ListPriceWatch::DEFAULT_PERCENT);
+    }
 }

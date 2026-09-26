@@ -111,7 +111,7 @@ return [
                 ],
                 [
                     'title' => 'Something that is not on this site',
-                    'body' => "1. Tap “+ Add a product”.\n2. Under the search field, choose “Write it in yourself”.\n3. Fill in what it is. A link, a price and a note such as “size M, in blue” may go with it.\n4. Save it.\n\nYour own items can be changed later: tap “⋯” on the item, then “Edit”. Catalogue products cannot: their title and price come from the shop.",
+                    'body' => "1. Tap “+ Add a product”.\n2. Under the search field, choose “Add an offline item”.\n3. Fill in what it is. A link, a price and a note such as “size M, in blue” may go with it.\n4. Save it.\n\nYour own items can be changed later: tap “⋯” on the item, then “Edit”. Catalogue products cannot: their title and price come from the shop.",
                 ],
                 [
                     'title' => 'Copying, not moving',

@@ -1319,7 +1319,7 @@ return [
         'back_heading' => 'De nouveau disponible',
         'mail_button' => 'Ouvrir votre liste',
         'mail_button_lists' => 'Ouvrir vos listes',
-        'mail_why' => 'Vous avez activé le suivi des prix pour cette liste. Vous pouvez le désactiver dans les options de la liste.',
+        'mail_why' => 'Cette liste suit les prix ; c’est activé par défaut. Vous pouvez le désactiver dans les options de la liste.',
     ],
 
     'notifications' => [

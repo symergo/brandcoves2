@@ -110,3 +110,15 @@ than as a drop from a number we may not hold. See [amazon-compliance.md](amazon-
 - `resources/js/Components/ListTools.tsx`, `resources/js/Pages/Notifications.tsx`
 - `database/migrations/2026_09_12_000100_watching_the_prices_on_a_list.php`
 - `tests/Feature/ListPriceWatchTest.php`
+
+## On by default (2026-09-26)
+
+The owner's call: "zet 'volg prijzen op deze lijst' standaard aan". Every new list, including the
+default list made on a first visit, starts with `price_watch_percent = 10`
+(`ListPriceWatch::DEFAULT_PERCENT`, set in `ListMaker` and `DefaultList`). A list is where somebody
+keeps what they mean to buy or be given, so a drop on it is news; while it was off, almost nobody
+found the switch. 10% is the smallest offered drop that reads as a real sale rather than a price
+wobble. Existing lists keep what their owner set: nothing was switched on retroactively. The digest
+mail's reason line no longer says "you switched it on" but "this list watches its prices; new lists
+do unless you switch it off", in all four languages. A list with no signed-in owner has nobody to
+mail, so nothing changes for guests.

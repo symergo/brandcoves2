@@ -1509,7 +1509,7 @@ return [
         'back_heading' => 'Available again',
         'mail_button' => 'Open your list',
         'mail_button_lists' => 'Open your lists',
-        'mail_why' => 'You switched on price watching for this list. Switch it off in the list’s options.',
+        'mail_why' => 'This list watches its prices; new lists do unless you switch it off. Switch it off in the list’s options.',
     ],
 
     'notifications' => [

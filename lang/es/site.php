@@ -1318,7 +1318,7 @@ return [
         'back_heading' => 'Disponible de nuevo',
         'mail_button' => 'Abrir tu lista',
         'mail_button_lists' => 'Abrir tus listas',
-        'mail_why' => 'Activaste el seguimiento de precios para esta lista. Puedes desactivarlo en las opciones de la lista.',
+        'mail_why' => 'Esta lista sigue los precios; viene activado por defecto. Puedes desactivarlo en las opciones de la lista.',
     ],
 
     'notifications' => [

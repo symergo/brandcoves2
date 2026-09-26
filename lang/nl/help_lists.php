@@ -126,7 +126,7 @@ return [
                 ],
                 [
                     'title' => 'Iets dat hier niet te vinden is',
-                    'body' => "1. Tik op “+ Product toevoegen”.\n2. Kies onder het zoekvak “Zet het er zelf op”.\n3. Vul in wat het is. Een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij.\n4. Bewaar het.\n\nEigen items kun je later aanpassen: tik op “⋯” bij het item en dan op “Aanpassen”. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.",
+                    'body' => "1. Tik op “+ Product toevoegen”.\n2. Kies onder het zoekvak “Voeg een offline artikel toe”.\n3. Vul in wat het is. Een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij.\n4. Bewaar het.\n\nEigen items kun je later aanpassen: tik op “⋯” bij het item en dan op “Aanpassen”. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.",
                 ],
                 [
                     'title' => 'Kopiëren, niet verplaatsen',

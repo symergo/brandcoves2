@@ -7,6 +7,7 @@ namespace App\Services\Wishlist;
 use App\Enums\ListKind;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Services\Alerts\ListPriceWatch;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 
@@ -61,6 +62,8 @@ class ListMaker
             'market' => $current->get(),
             'recipient_id' => $recipientId,
             'kind' => $kind,
+            // Price watching on by default; see ListPriceWatch::DEFAULT_PERCENT.
+            'price_watch_percent' => ListPriceWatch::DEFAULT_PERCENT,
         ]);
     }
 

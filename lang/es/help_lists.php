@@ -111,7 +111,7 @@ return [
                 ],
                 [
                     'title' => 'Algo que no está en este sitio',
-                    'body' => "1. Toca «+ Añadir un producto».\n2. Bajo el campo de búsqueda, elige «Añádelo tú mismo».\n3. Escribe qué es. Puede llevar un enlace, un precio y una nota como «talla M, en azul».\n4. Guárdalo.\n\nTus propios artículos se pueden cambiar después: toca «⋯» en el artículo y luego «Editar». Los del catálogo no: su título y precio vienen de la tienda.",
+                    'body' => "1. Toca «+ Añadir un producto».\n2. Bajo el campo de búsqueda, elige «Añadir un artículo offline».\n3. Escribe qué es. Puede llevar un enlace, un precio y una nota como «talla M, en azul».\n4. Guárdalo.\n\nTus propios artículos se pueden cambiar después: toca «⋯» en el artículo y luego «Editar». Los del catálogo no: su título y precio vienen de la tienda.",
                 ],
                 [
                     'title' => 'Copiar, no mover',

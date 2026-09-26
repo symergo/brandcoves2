@@ -1322,7 +1322,7 @@ return [
         'back_heading' => 'Weer beschikbaar',
         'mail_button' => 'Open je lijst',
         'mail_button_lists' => 'Open je lijsten',
-        'mail_why' => 'Je zette prijzen volgen aan voor deze lijst. Uitzetten kan bij de opties van de lijst.',
+        'mail_why' => 'Deze lijst volgt de prijzen; dat staat standaard aan. Uitzetten kan bij de opties van de lijst.',
     ],
 
     'notifications' => [

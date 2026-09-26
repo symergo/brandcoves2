@@ -111,7 +111,7 @@ return [
                 ],
                 [
                     'title' => 'Quelque chose qui n’est pas sur ce site',
-                    'body' => "1. Touchez « + Ajouter un produit ».\n2. Sous le champ de recherche, choisissez « Ajoutez-le vous-même ».\n3. Indiquez ce que c’est. Un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner.\n4. Enregistrez.\n\nVos propres articles se modifient plus tard : touchez « ⋯ » sur l’article, puis « Modifier ». Les produits du catalogue non : leur titre et leur prix viennent de la boutique.",
+                    'body' => "1. Touchez « + Ajouter un produit ».\n2. Sous le champ de recherche, choisissez « Ajouter un article hors ligne ».\n3. Indiquez ce que c’est. Un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner.\n4. Enregistrez.\n\nVos propres articles se modifient plus tard : touchez « ⋯ » sur l’article, puis « Modifier ». Les produits du catalogue non : leur titre et leur prix viennent de la boutique.",
                 ],
                 [
                     'title' => 'Copier, pas déplacer',
