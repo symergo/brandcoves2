@@ -205,7 +205,7 @@ class SendOccasionReminders implements ShouldQueue
                     /*
                      * `toBase()`: Eloquent's `value()` returns the cast, a
                      * Market enum, which `(string)` cannot convert. Until
-                     * 2026-09-28 this threw for every person with a list, so a
+                     * 2026-09-26 this threw for every person with a list, so a
                      * birthday reminder reached only people nobody had made a
                      * list for.
                      */

@@ -123,6 +123,12 @@ renders a broken page when somebody refreshes it, or opens it from their history
 `/for/{token}/suggest?q=…` is a real address and has to stand on its own, so `page()` builds the
 whole payload and both routes use it.
 
+**Standing on its own took one more fix (2026-09-26).** The page read its token as the URL's last
+segment, which at `/for/{token}/suggest` is "suggest", so every claim, profile save and second
+search sent from the suggestions page went to `/for/suggest/…` and 404'd. It now takes the segment
+after `for`. And the controller's `suggestTerm` (what was typed) was sent and never read, so a
+direct visit to `?q=koptelefoon` showed an empty box; the box now starts from it.
+
 **And the questions were in the wrong person.** The page reused `gift.step_interests` and its two
 siblings — copy written for the Gift Whisperer, where you describe *somebody else* — so it asked the
 reader "what are **they** into?" about themselves. `recipients.step_*` is a second set in the second

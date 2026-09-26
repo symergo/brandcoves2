@@ -145,7 +145,7 @@ cast to `App\Enums\CoveScene` on both models.
 **The cover is a drawing, not a product photograph** — why, in [cove-scenes.md](cove-scenes.md).
 
 `SceneIllustration` draws it instead, in the same language as `CoveIllustration` and
-`ListIllustration` — one `160x116` viewBox, one stroke weight, `currentColor` for every line, the
+`ListIllustration` (both removed 2026-09-26, unused) — one `160x116` viewBox, one stroke weight, `currentColor` for every line, the
 accent only as a translucent wash. That is what lets the card change colour on hover and take the
 drawing with it, and it is why these survive a palette change without being redrawn.
 

@@ -3,7 +3,7 @@
 The people you share lists with. Made by following somebody's share link and having an account at
 the end of it, or by adding an address on the page.
 
-**Status:** Active
+**Status:** Active — the page itself is part of My people (`/people`) since 2026-09-26; the friendship model, sharing by name and the actions below are unchanged
 
 > **Since 2026-09-26 friends have no page of their own.** They are on "My people"
 > (`/{market}/people`, [my-people.md](my-people.md)) with the people you saved, one row per
@@ -260,7 +260,7 @@ random pair of test users pretending to know each other — and nulls `users.bir
 | Adding by email | [`App\Services\Social\FriendInvites`](../../app/Services/Social/FriendInvites.php) |
 | A birthday with no year | [`App\Support\DayAndMonth`](../../app/Support/DayAndMonth.php) |
 | Applied at sign-in | [`App\Listeners\LinkSharerAsFriend`](../../app/Listeners/LinkSharerAsFriend.php) |
-| The page | [`FriendController`](../../app/Http/Controllers/FriendController.php), `resources/js/Pages/Friends/Index.tsx` |
+| The page | Since 2026-09-26 [My people](my-people.md): `PeopleController`, `resources/js/Pages/People/Index.tsx`, `App\Services\Social\MyPeople`. [`FriendController`](../../app/Http/Controllers/FriendController.php) keeps the actions (add, remove, settings) and redirects `GET /friends` there; `Pages/Friends/Index.tsx` is deleted |
 | Where a friendship is made | [`SharedListController::show()`](../../app/Http/Controllers/SharedListController.php) |
 | Sharing with a named friend | `wishlist_shares`, written by `App\Services\Social\ListSharer` via `WishlistController::shareWithFriends()` / `unshareFromFriend()` |
 | Tests | [`FriendsTest`](../../tests/Feature/FriendsTest.php) |

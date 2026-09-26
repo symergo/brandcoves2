@@ -1,13 +1,20 @@
 ---
 name: Gift Whisperer
 area: Gifting
-status: Active
+status: Active — the engine and the questions of Find a gift since 2026-09-26; no page of its own
 date_added: 2026-08-08
 ---
 
 # Gift Whisperer
 
 Describe someone, get eight suggestions, each showing what it has in common with the brief.
+
+> **Since 2026-09-26 this is not a page of its own.** The engine below (`SuggestionEngine`) serves
+> [Find a gift](find-a-gift.md), and its questions are the first of the three ways in there. The
+> name "Gift Whisperer" survives in code and in these docs; nothing a visitor sees says it any
+> more, and it is not in the header. Sections dated before 2026-09-26 that describe the page, its
+> header entry or the teaser card on `/discover-cove` are history; the pipeline sections still
+> describe the code.
 
 Gifting is **anti-search**: a shopper knows the product and needs the price; a gift-giver knows the
 person and has no idea what the product is. Every part of this feature exists because the search box

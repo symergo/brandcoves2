@@ -28,7 +28,7 @@ suggestion engine answers. Two things make it something a page can be built from
   `problems()` names them, for the editorial API, which refuses instead.
 - **It has an address.** `App\Services\Gift\BriefUrl`. The path carries the two things a page is
   *about*, recipient and interest, in the market's own words (`papa`, `koken`); the budget is
-  `?budget=50-100` in euros. Everything else (age, style, things to avoid) is the Gift Finder's
+  `?budget=50-100` in euros. Everything else (age, style, things to avoid) is Find a gift's
   job, not an address.
 
 ## Why these URLs
@@ -55,7 +55,7 @@ suggestion engine answers. Two things make it something a page can be built from
 `php artisan bc:plan-gift-landings --market=be-nl`) walks every recipient × interest, asks the
 suggestion engine for 24 products and counts the ones that **fit the interest** by the engine's own
 verdict (`Suggestion::matchedInterests`). "The engine returned something" is not enough: with
-nothing matching it falls back to a budget browse, so the Gift Finder never comes back empty, and
+nothing matching it falls back to a budget browse, so Find a gift never comes back empty, and
 a page of that would be "for dad who loves fishing" showing a candle.
 
 - **Eight or more** (`giftcoves.gift_landings.min_products`, the owner's minimum for a Cove) and the
@@ -123,7 +123,7 @@ chosen by others) rather than ids alone, so the page still runs the engine once 
 the products themselves are loaded fresh, and one gone since drops out. The ideas and the Coves are
 read per request: both are one small query, and the Coves leave out the viewer's own.
 
-## The Gift Finder's "Open as a page"
+## Find a gift's "Open as a page"
 
 The Finder's results are a POST: nobody can bookmark, share or find them again. Under the results
 a link opens the landing page nearest the brief (`GiftLandingLinks::pageFor()`): the first of its

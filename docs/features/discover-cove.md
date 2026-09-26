@@ -14,7 +14,7 @@ look at, and ways to find out what somebody likes. Controller `DiscoverCoveContr
 ## The order, and why (owner's review, 2026-09-26)
 
 The page had grown to eight bands, nine phone screens long. It opened with a search card and the
-Gift Finder, both already in the header and both for somebody who already knows what they want.
+Find a gift, both already in the header and both for somebody who already knows what they want.
 Five explainer tiles then repeated the sections below them word for word. The rebuild:
 
 1. **Title and one line.** "Ontdek", not "Ontdek - manieren om iets te vinden".

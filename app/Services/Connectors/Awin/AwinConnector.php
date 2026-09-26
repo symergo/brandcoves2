@@ -291,7 +291,7 @@ class AwinConnector implements FeedConnector
      *
      * `mpn` is deliberately excluded. Some advertisers copy the EAN into it, but
      * it is a manufacturer part number by definition, and two manufacturers can
-     * legitimately use the same one. Since 2026-09-27 it is kept on the offer
+     * legitimately use the same one. Since 2026-09-26 it is kept on the offer
      * (`products.mpn`) for the match finder, which only ever proposes a pair
      * to a person, within one brand.
      *

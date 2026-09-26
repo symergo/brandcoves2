@@ -61,7 +61,7 @@ than per visitor, and a rebuilt persona never waits for the cache.
 ## Ideas without a shop
 
 The same brief also asks `OfflineIdeaPicker` for approved offline ideas
-([offline-ideas.md](offline-ideas.md)), shown under the tabs with the Gift Finder's block. For most
+([offline-ideas.md](offline-ideas.md)), shown under the tabs with Find a gift's block. For most
 personas that is ideas sharing the interest; for someone who has everything it is the ideas that are
 done or used up (a workshop, a tasting).
 

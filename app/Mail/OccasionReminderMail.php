@@ -57,7 +57,7 @@ class OccasionReminderMail extends Mailable
          * `content()` passed. So an edited template's body (`with['body']`)
          * was replaced by this, the shipped sentence, in every email sent, and
          * rewording the reminder in the admin changed only the subject. Found
-         * 2026-09-28 by rendering one (ReminderIdeasTest).
+         * 2026-09-26 by rendering one (ReminderIdeasTest).
          */
         protected readonly string $body,
         public readonly string $url,

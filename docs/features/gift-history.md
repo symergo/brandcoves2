@@ -2,7 +2,7 @@
 name: Gift history and reminders with ideas
 area: Gifting / Notifications
 status: Active
-date_added: 2026-09-28
+date_added: 2026-09-26
 ---
 
 # "Last year the moka pot, this year the grinder"
@@ -14,7 +14,7 @@ Two requests from the owner, 2026-09-26, built together because the second needs
    on from a past gift.
 2. **Reminders with ideas ready.** About two weeks before a saved person's birthday or the
    occasion on a list about them, email three ideas that fit them, their budget and their history,
-   with one click to the Gift Finder or onto their list.
+   with one click to Find a gift or onto their list.
 
 A "saved person" is a `recipients` row: somebody a user buys for (see
 [gifting-lenses.md](gifting-lenses.md)). They had no page of their own until now.
@@ -28,9 +28,9 @@ A "saved person" is a `recipients` row: somebody a user buys for (see
 - **"I gave this"**: a line typed by hand (words and a year), or a button beside each item on your
   own lists about this person;
 - **The next step**: up to four products that follow on from what they were given;
-- buttons to the Gift Finder and This or that for this person.
+- buttons to Find a gift and This or that for this person.
 
-Linked from a list about somebody (under the description, owner only), from the Gift Finder's
+Linked from a list about somebody (under the description, owner only), from Find a gift's
 results when a saved person is chosen, from the reminder email, and since 2026-09-26 from **My
 people** (`/{market}/people`, [my-people.md](my-people.md)), the page that lists every saved person
 together with your friends on GiftCoves. Before that there was no list of saved people anywhere.
@@ -76,7 +76,7 @@ answer and nothing reads. `given_year`, CHECKed to a sane range.
 
 ## Never the same thing again
 
-The Gift Finder (every action: suggest, swap, more, and `/gift?for=<person>`) and This or that
+Find a gift (every action: suggest, swap, more, and `/gift?for=<person>`) and This or that
 (when played with `?person=<id>`) add the person's past gifts to the brief's exclusions. **Merged
 products count as the same gift**: a merge keeps the old product row pointing at the new one
 (`GroupMerger`), so the exclusion adds both the product a past gift was merged into and anything
@@ -140,7 +140,7 @@ extended, not duplicated.
   exchange. A saved person's `occasion` field ("christmas") carries no date and does not start a
   reminder of its own; a list about them dated at Christmas does.
 - **Which ideas.** `ReminderIdeas`: the best next step first when there is one, then the
-  SuggestionEngine with the brief the Gift Finder would build from the saved person, the occasion
+  SuggestionEngine with the brief Find a gift would build from the saved person, the occasion
   set to the reminder's, and past gifts and whatever is on their lists excluded. Three in all. No AI
   (the engine is retrieval and arithmetic); the tests mock `AiClient` to refuse.
 - **Once per person, occasion and year.** The key `{person}:{occasion}:{year}` is written into the
@@ -150,7 +150,7 @@ extended, not duplicated.
 - **Only in the email, only when it goes.** No email (off everywhere, off for this user, no address)
   means no ideas are chosen and no key is written. The in-app row links to `/gift?for=<person>`,
   which shows the ideas live.
-- **One click.** "More ideas in the Gift Finder" opens `/gift?for=<person>`, which runs the Gift
+- **One click.** "More ideas in Find a gift" opens `/gift?for=<person>`, which runs the Gift
   Finder on the saved person straight away. Each idea's "Add to the list for Mum" opens the person's
   page with `?add=<product>`, the product shown on top with its save button: one press there.
   **Not a GET that adds**: mail scanners open every link in a message, and would put all three ideas
@@ -207,7 +207,7 @@ Recipients and in the retention table. Claims add no new storage.
 | History | `app/Services/Gift/GiftHistory.php`, `PastGift.php`, `app/Models/RecipientGift.php` |
 | Next step | `app/Services/Gift/NextSteps.php`, `NextStepScorer.php`, `NextStep.php`, `NextStepCandidate.php`, `resources/content/gift-complements.php` |
 | Reminder ideas | `app/Services/Gift/ReminderIdeas.php`, `app/Jobs/SendOccasionReminders.php`, `app/Mail/OccasionReminderMail.php`, `resources/views/mail/partials/reminder-ideas.blade.php` |
-| Pages | `PersonController` → `Recipients/Show.tsx`; `Components/NextSteps.tsx`; Gift Finder (`GiftController`, `Gift/Wizard.tsx`); This or that (`TasteController::result`, `?person=` in `Gift/Taste.tsx`) |
+| Pages | `PersonController` → `Recipients/Show.tsx`; `Components/NextSteps.tsx`; Find a gift (`GiftController`, `Gift/Wizard.tsx`); This or that (`TasteController::result`, `?person=` in `Gift/Taste.tsx`) |
 | Stop link, switch | `ReminderEmailController`, `Notifications.tsx` |
 | Copy | `site.gift_history.*`, `site.reminders.*` (ideas, stop), `site.help.find_history`, `site.help.find_reminders` |
 | Config | `giftcoves.reminders.ideas`, `giftcoves.reminders.ideas_lead_days` |

@@ -9,7 +9,7 @@ date_added: 2026-09-26
 
 The owner's request of 2026-09-26: *use the gifts created by others as suggestions for others.* This
 is the part of it where **a list its owner chooses to publish becomes a Cove other people can find,
-save and copy**, and where the Gift Finder suggests "Coves others made for someone like this".
+save and copy**, and where Find a gift suggests "Coves others made for someone like this".
 
 A *Community Cove* is a list (a `wishlists` row) with `published_at` set. It is the "Publish Cove"
 verb of roadmap step 6 ([strategy.md](../strategy.md), "Interoperable Coves";
@@ -31,7 +31,7 @@ come back and take it down. A collaborator, even an editor, cannot publish someb
 ## What a stranger sees, and what never reaches them
 
 `App\Services\Cove\CommunityCoves` is the only place that decides this. The page, the listing, the
-band on `/coves`, the Gift Finder, the saved view and "Make it my list" all go through it, so there is
+band on `/coves`, Find a gift, the saved view and "Make it my list" all go through it, so there is
 one answer to "does this leak?" rather than six.
 
 | Shown | Never shown |
@@ -90,7 +90,7 @@ by this feature; reusing it would have tied publishing to the share link, which 
 coupling the owner's privacy depends on not having.
 
 **Unpublishing is immediate.** `published_at` goes back to null. The address answers **410 Gone**
-(so search engines drop it), the Cove leaves the listing, the Gift Finder and everyone's saved view,
+(so search engines drop it), the Cove leaves the listing, Find a gift and everyone's saved view,
 and bookmarks are kept so they come back if the owner publishes again. The slug is kept too, so the
 address comes back with it.
 
@@ -116,7 +116,7 @@ the giver, which would otherwise have put the new owner's name on it.
   edited later does not move an address somebody saved. The suffix means two lists called "Birthday
   dad" never collide, and the address says nothing about how many Community Coves exist.
 - **Market-scoped.** A Community Cove lives in the market its list was made in (`wishlists.market`).
-  The same slug under another market is a 404, and each market's listing and Gift Finder show only
+  The same slug under another market is a 404, and each market's listing and Find a gift show only
   its own. A list may hold products from several markets (see wishlists.md); each product links to
   its own market's page, and no offer is ever merged across markets (invariant 2).
 
@@ -177,9 +177,9 @@ If abuse appears, the first step is to put a `pending` state in front (the plan'
 - Each card: the public title, "For a dad · Birthday · 9 ideas", one product image, "Saved by 3
   people". Plurals are worded on the server (`trans_choice`), because the client's `t()` has none.
 
-## The Gift Finder: "Coves others made for someone like this"
+## Find a gift: "Coves others made for someone like this"
 
-Under the Gift Finder's results, up to three Community Coves nearest the brief
+Under Find a gift's results, up to three Community Coves nearest the brief
 (`CommunityCoves::forBrief()`), in the same market, never the viewer's own. Since 2026-09-26 the
 same section sits under This or that's result (a giver's) and on the gift landing pages, which all
 draw the one Find-a-gift results page ([find-a-gift.md](find-a-gift.md)); with a kind of person

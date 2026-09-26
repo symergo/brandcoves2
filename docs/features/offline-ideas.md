@@ -92,7 +92,7 @@ wording or tags, or **Withdraw**, which rejects it).
 
 ## Where approved ideas show (`App\Services\Ideas\OfflineIdeaPicker`)
 
-- **Gift Finder results**, as a small **Ideas without a shop** block (NL "Ideeën zonder winkel", FR
+- **Find a gift results**, as a small **Ideas without a shop** block (NL "Ideeën zonder winkel", FR
   "Idées hors boutique", ES "Ideas sin tienda") under the product cards, with an explanation behind
   the info icon.
 - **This or that results**, on the giver's page only. The person choosing through their own link is
@@ -112,7 +112,7 @@ the budget (overlap, not containment: a Mid idea fits a 20 to 40 euro brief).
 ## Add to my list
 
 "Add to my list" posts `source=manual, idea_id` to `POST /list-items`, the same path and the same
-`ItemSaver::saveManual()` as typing an offline item, and lands on the Gift Finder's chosen person's
+`ItemSaver::saveManual()` as typing an offline item, and lands on Find a gift's chosen person's
 list when there is one. **The wording is read from the idea on the server**, never taken from the
 request, and only an approved idea can be added.
 

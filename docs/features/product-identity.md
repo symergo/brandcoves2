@@ -57,7 +57,7 @@ Guards against bad merges:
 
 ## Merges and splits
 
-Added 2026-09-27 (roadmap step 5). The two exact paths above leave some products apart that are
+Added 2026-09-26 (roadmap step 5). The two exact paths above leave some products apart that are
 one ("LEGO Technic Ferrari 488" and "LEGO Ferrari 488 #42125"), and very occasionally put an offer
 in a product it does not belong to. A person can now correct both, in the admin (Catalogue >
 Products, and the queue at Catalogue > Match review, see [match-review.md](match-review.md)).

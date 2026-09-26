@@ -1,7 +1,7 @@
 ---
 name: Someone who has everything
 area: Gifting / Search / Content
-status: Active — a brief flag the engine, the search box, the Gift Finder, personas and offline ideas understand
+status: Active — a brief flag the engine, the search box, Find a gift, personas and offline ideas understand
 date_added: 2026-09-26
 ---
 
@@ -27,7 +27,7 @@ reads it:
   (`lang/*/intent.php`, `has_everything`). It is a sign of a gift search on its own, it is taken out
   of the words so "alles" is not searched for, and it shows as a chip ("Heeft alles al") that drops
   itself.
-- **The Gift Finder**: "heeft alles al" typed as a free-text interest becomes the flag rather than
+- **Find a gift**: "heeft alles al" typed as a free-text interest becomes the flag rather than
   a search for titles containing "alles".
 - **Offline ideas**: for a has-everything brief, an approved idea whose wording is done or used up
   ("Een workshop koken") fits whatever it is tagged with, and weighs as much as a shared interest.

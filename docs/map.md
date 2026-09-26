@@ -2,7 +2,7 @@
 
 **Read this before grepping.** It exists because the transcripts show the same twelve entry points
 being rediscovered session after session — `ls docs/features/` in 36 separate sessions, `ls tests/`
-in 38, `grep -n "public function"` in 34, and [routes/web.php](../routes/web.php) (817 lines) opened
+in 38, `grep -n "public function"` in 34, and [routes/web.php](../routes/web.php) (then 817 lines) opened
 cold in 31. None of that found anything that wasn't already knowable. This file is the answer to
 "where does this change go", so the first tool call of a session can be the edit.
 
@@ -22,7 +22,7 @@ read once you know which feature you are in.
 | chrome shared by every page | [resources/js/Layouts/SiteLayout.tsx](../resources/js/Layouts/SiteLayout.tsx) |
 | props every page receives | [app/Http/Middleware/HandleInertiaRequests.php](../app/Http/Middleware/HandleInertiaRequests.php) |
 | a business rule | `app/Services/<Area>/` — never a controller, never a job |
-| a knob, cap, weight or threshold | [config/giftcoves.php](../config/giftcoves.php) (1,074 lines) |
+| a knob, cap, weight or threshold | [config/giftcoves.php](../config/giftcoves.php) (1,713 lines) |
 | the admin panel | `app/Filament/Resources/<Thing>/` or `app/Filament/Pages/<Thing>.php` |
 | a market | [app/Enums/Market.php](../app/Enums/Market.php) — the single source of truth |
 | a merchant or feed source | [app/Enums/Source.php](../app/Enums/Source.php) + `app/Services/Connectors/<Vendor>/` |
@@ -56,6 +56,9 @@ Grouped by what a visitor is doing, not by file order:
 - **Find** — `/search`, `/search-help`, `/scan`, `/scan/{barcode}`, `/brands`, `/brand/{slug}`,
   `/shops`, `/shops/{slug}`, `/p/{group}/{slug?}`, `/go/{offer}` (every outbound link),
   `/track/click`
+- **Find a gift** — `/gift` (one flow: who, then questions, This or that or a type; see
+  features/find-a-gift.md), `/gift/taste` (This or that), `/gift/card/{token}` (a gift profile
+  card), `/t/{token}` (This or that together)
 - **Discover** — `/daily`, `/daily/{date}`, `/discover-cove`, `/surprise`,
   `/coves`, `/coves/community`, `/coves/community/{slug}` (lists people published),
   `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-ideas/for/{recipient}/{interest?}`
@@ -91,16 +94,21 @@ Grouped by what a visitor is doing, not by file order:
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
 | `Ops/` | config report, market supply |
 | `Pages/` | editable page templates and copy blocks |
-| `Search/` | `SearchService` (668 lines), `SearchQuery`, Amazon links, brand attribution |
+| `Search/` | `SearchService` (687 lines), `SearchQuery`, the gift-intent reading of the search box (`GiftIntentParser`), Amazon links, brand attribution |
 | `Seo/` | meta, OG images, structured data, alternates, legacy redirects |
 | `Settings/` | admin-editable settings backed by the database |
-| `Social/` | the follow graph |
-| `Wishlist/` | saving, claim visibility (`ClaimView` — see invariant 4), invitations |
+| `Social/` | friends (`Friends`, `FriendInvites`, `ShareReferral`), sharing a list with a named friend (`ListSharer`), My people (`MyPeople`: saved people and friends on one list); `FollowGraph` is built and unused |
+| `Wishlist/` | saving (`ItemSaver`), making a list in one step (`ListMaker`, `DefaultTitle`), claim visibility (`ClaimView` — see invariant 4), the group-gift board |
+| `PageReading/` | a pasted link, read in a queued job: known sources first (`LinkRouter`), then Iframely or the page itself through `SafeFetch` (private addresses refused); see features/pasted-links.md |
+| `Images/` | a picture copied to our own storage and re-encoded (`ImageStore`) |
+| `Notifications/` | the inbox rows list activity writes (`ListActivity`) |
+| `Mail/` | admin-editable email templates (`MailTemplates`) |
+| `Shops/` | the shop directory |
 
 ## Copy and translation
 
-`lang/{en,nl,fr,es}/site.php` — one flat PHP array each, 1,400–1,650 lines. English is the longest
-because it is written first.
+`lang/{en,nl,fr,es}/site.php` — one PHP array each, 2,300–2,600 lines (2026-09-26). English is the
+longest because it is written first and carries the comments.
 
 **A key added to one file must be added to all four.** `tests/Feature/LocalisationTest.php` is the
 gate, and it is the test to run after any copy change. The React side reads them through
@@ -113,12 +121,15 @@ Editable-in-admin copy is a different system: `app/Services/Pages/` plus the `Pa
 
 Filament 5 at `/admin`, gated on `users.is_admin`.
 
-- **Resources** (CRUD over a model): AiUsage, ApiTokens, CommunityPosts, CoveEditorials, CovePlans,
+- **Resources** (CRUD over a model): AiUsage, ApiTokens, CommunityCoves (published lists, hide or
+  show), CommunityPosts, CoveEditorials, CovePlans,
   Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, ProductGroups (Catalogue >
   Products: merge and split), Products (the offers), PromptTemplates, Users (Operations > Accounts:
   find a person, grant or remove panel access, delete an account)
-- **Pages** (custom): AiSettings, DiscoverAwinFeeds, EditPageTemplate, MarketSupply, MarketTrends,
-  MatchReview (the queue of products that may be one), Migration
+- **Pages** (custom): AffiliateSettings, AiSettings, Automation, CoveCalendar, DiscoverAwinFeeds,
+  EditPageTemplate, EmailTemplates, MarketSupply, MarketTrends, MatchReview (the queue of products
+  that may be one), Migration, OfflineIdeaReview (hand-typed ideas waiting for a person),
+  ReminderSettings
 
 Styling gotcha, and it looks exactly like a page nobody styled: Filament's prebuilt stylesheet ships
 **no** Tailwind utilities. `resources/css/filament/admin/theme.css` supplies them, scanned from
@@ -127,7 +138,7 @@ Styling gotcha, and it looks exactly like a page nobody styled: Filament's prebu
 
 ## Tests
 
-161 files in `tests/Feature/` (2026-09-14), named after the feature rather than the class — `SearchTest`,
+196 files in `tests/Feature/` (2026-09-26), named after the feature rather than the class — `SearchTest`,
 `BrandPageTest`, `LocalisationTest`, `AdminPanelTest`, `SaveToListTest`, `MarketSupplyTest`. So the
 filter you want is usually the feature's name, guessed correctly on the first try:
 
@@ -136,8 +147,9 @@ php artisan test --filter=BrandPageTest           # Bash tool
 php artisan test --% --filter=BrandPageTest       # PowerShell tool needs --%
 ```
 
-Reach for the narrowest filter that covers the edit, and say which one ran. The full suite is for one
-moment only — before a push to `main`. `tests/TestCase.php` holds the shared setup; `tests/Unit/`
+Reach for the narrowest filter that covers the edit, and say which one ran. The full suite runs in CI
+on every push; run it locally only when asked, or when a change touches migrations or shared services
+(see [testing.md](testing.md)). `tests/TestCase.php` holds the shared setup; `tests/Unit/`
 holds the pure ones, including `ConfigContractTest`, which fails the build when a config key cannot
 reach a container.
 
@@ -145,9 +157,9 @@ reach a container.
 
 | File | Lines | Read it for |
 |---|---|---|
-| [lang/en/site.php](../lang/en/site.php) | 1,649 | every visible string |
-| [config/giftcoves.php](../config/giftcoves.php) | 1,074 | caps, weights, feature keys, market config |
-| [routes/web.php](../routes/web.php) | 817 | the whole URL surface, heavily commented |
+| [lang/en/site.php](../lang/en/site.php) | 2,596 | every visible string |
+| [config/giftcoves.php](../config/giftcoves.php) | 1,713 | caps, weights, feature keys, market config |
+| [routes/web.php](../routes/web.php) | 1,311 | the whole URL surface, heavily commented |
 | [app/Services/Search/SearchService.php](../app/Services/Search/SearchService.php) | 668 | ranking, trigram fallback, market filtering |
 | [resources/js/Layouts/SiteLayout.tsx](../resources/js/Layouts/SiteLayout.tsx) | 658 | nav, footer, mobile menu |
 

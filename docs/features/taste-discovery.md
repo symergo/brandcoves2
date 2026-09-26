@@ -15,9 +15,9 @@ A dozen rounds of real products, mostly two at a time ("which would they rather 
 one a single card ("would they like this?"). From the choices, with no AI, we work out the person's
 interests, a price band, interests to leave out, and where the tags allow it a vibe, taste poles and
 values. Then eight ideas from the suggestion engine, and the result can be kept on a person so the
-Gift Finder starts from it next time.
+Find a gift starts from it next time.
 
-Why it exists: the Gift Finder asks "what are they into?", and a giver who does not know is stuck on
+Why it exists: Find a gift asks "what are they into?", and a giver who does not know is stuck on
 the first question. Recognising something is easier than naming it. The same goes for the person
 themselves on their own page: picking between two things is quicker than filling in a form about
 yourself.
@@ -27,7 +27,7 @@ yourself.
 | | |
 |---|---|
 | Page | `/{market}/gift/taste` (a giver, or yourself), `/{market}/for/{token}/taste` (the person themselves) |
-| Doors | the Gift Finder's interests step ("Not sure what they are into?"), the "Or show us by choosing" button on `/for/{token}`, the help page |
+| Doors | Find a gift's interests step ("Not sure what they are into?"), the "Or show us by choosing" button on `/for/{token}`, the help page |
 | Controller | `App\Http\Controllers\TasteController` |
 | Services | `App\Services\Gift\TasteDeck` (which rounds), `TasteProfiler` (choices to a profile), `TasteProfile`, `TasteCard`, `TasteChoice`, `TasteChoiceReader` |
 | Page | `resources/js/Pages/Gift/Taste.tsx`; icon `taste` in `ToolIcon` |
@@ -100,7 +100,7 @@ An interest key cannot go in as a plain word: "art" would remove every title con
 own spelling, `interest:gaming`, and the engine excludes products *tagged* with it (editors' or
 crowd tags) and never matches it against a title (`TasteBrief::avoidWords()` and
 `avoidedInterests()`, `SuggestionEngine::pool()`). Nobody types `interest:` by hand, so words people
-wrote behave exactly as before. The Gift Finder shows such entries by the interest's name and
+wrote behave exactly as before. Find a gift shows such entries by the interest's name and
 removes them with a tap rather than through the word box.
 
 ## Nothing is stored while choosing
@@ -116,7 +116,7 @@ interests found, no person, like `gift.suggest`.
 
 ## Keeping the result
 
-- **On one of your people, or somebody new** (`POST /gift/taste/save`), the way the Gift Finder's
+- **On one of your people, or somebody new** (`POST /gift/taste/save`), the way Find a gift's
   "remember" writes: the taste through `describeTaste()` as a guess, which is refused when the person
   described their own taste through their link, and the price band directly, because what you spend
   is your fact and not their taste. Either way it **adds** to what is stored rather than replacing it:
@@ -180,7 +180,7 @@ coverage: twelve rounds of two cannot show forty interests.
 
 ## A way in from the Cadeauzoeker (2026-09-26)
 
-The owner asked for This or that in the Gift Finder itself. A banner above the first question offers
+The owner asked for This or that in Find a gift itself. A banner above the first question offers
 it ("Liever kiezen dan vragen beantwoorden? Speel Dit of dat") for somebody who cannot say what the
 person likes. It shows only before anything is answered; once somebody is into the questions it
 would distract. The small link on the interests step stays, and is hidden when the banner already
@@ -203,7 +203,7 @@ ways after "Who is it for?", and the banner is gone.
   people*. *Refine with the questions* posts what was learned (`result.refine`) to the questions.
   The person's own page and a shared "help me find out" link still get the ideas only.
 
-## Proven gifts in the deck, and labelled ideas (2026-09-27)
+## Proven gifts in the deck, and labelled ideas (2026-09-26)
 
 A tenth of each draw (16 of 160) is kept for products at least five different people keep on a list
 for somebody, drawn at random from the market's 200 most kept, counted against the tagged half. They
@@ -223,7 +223,7 @@ Two things now store something, each by choice and each in its own table, so the
   See [taste-together.md](taste-together.md).
 - **Gift profile card**: after choosing for yourself ("Me", or the person's own
   `/for/{token}/taste`), "Make my card" keeps the profile (never the choices) behind a link that
-  opens the Gift Finder filled in. See [gift-profile-card.md](gift-profile-card.md).
+  opens Find a gift filled in. See [gift-profile-card.md](gift-profile-card.md).
 
 Both have retention windows in `bc:prune-personal-data` and a line on the privacy page.
 `TasteController::outcome()`, `firstRounds()` and `choiceRules()` are `protected` so

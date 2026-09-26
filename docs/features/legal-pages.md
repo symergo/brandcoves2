@@ -108,7 +108,7 @@ every page of a market that has an Associates tag. The terms pages keep their co
 ## The about page was brought up to date on 2026-09-08
 
 The text dated from 2026-08-09 and described the site as it was then. It now names what was built
-since: the three-step list wizard, sharing with friends and by name, birthdays and notifications,
+since: the three-step list wizard (one step since 2026-09-26, and the page says so), sharing with friends and by name, birthdays and notifications,
 gift ideas by persona, the advice guides ("Slim kopen"), saved searches, and the price drop a list
 card shows. The paragraph on AI-assisted writing was reworded to say that a person writes and
 reads through the Coves, the personas and the guides, and that a model, where it drafts, is

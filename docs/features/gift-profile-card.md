@@ -8,7 +8,7 @@ date_added: 2026-09-26
 # Gift profile card: "My gift profile: coffee, walking, around €30 to €60"
 
 The owner's request (2026-09-26): after somebody plays [This or that](taste-discovery.md) about
-themselves, offer a card with a public link. Opening the link lands in the Gift Finder filled in
+themselves, offer a card with a public link. Opening the link lands in Find a gift filled in
 with that profile, no account needed, and invites the visitor to make their own card. Opt-in,
 revocable, no name unless the owner types one, not indexed.
 
@@ -24,8 +24,8 @@ card".
 | Offered | the result of This or that when choosing for yourself: "Me" at `/gift/taste`, and the person's own `/for/{token}/taste` (`MakeCard` in `Gift/Taste.tsx`) |
 | Routes | `POST /{market}/gift/card` (make, `throttle:10,1`), `GET` and `DELETE /{market}/gift/card/{token}` |
 | Controller | `App\Http\Controllers\GiftProfileCardController` |
-| Service | `App\Services\Gift\GiftProfile` (what is stored, the Gift Finder's answers, the summary line) |
-| Page | the Gift Finder (`Gift/Wizard.tsx`) with a `card` prop, rendered by `GiftProfileCardBanner` |
+| Service | `App\Services\Gift\GiftProfile` (what is stored, Find a gift's answers, the summary line) |
+| Page | Find a gift (`Gift/Wizard.tsx`) with a `card` prop, rendered by `GiftProfileCardBanner` |
 | Table | `gift_profile_cards` |
 | Copy | `site.gift.card.*`, `site.help.find_taste_card`, four languages |
 | Tests | `tests/Feature/GiftProfileCardTest.php`, `tests/Unit/GiftProfileTest.php` |
@@ -40,14 +40,14 @@ card".
 - **The conclusion, never the choices.** The row holds interests, what to leave out, a budget, and
   where the tags gave one a vibe, taste poles and values (`GiftProfile::fromProfile`). No product
   ids, no scores, no round count. Every value is checked again on the way out against the lists the
-  Gift Finder validates with (`GiftProfile::clean`), so a card stored under yesterday's vocabulary
+  Find a gift validates with (`GiftProfile::clean`), so a card stored under yesterday's vocabulary
   cannot break today's form.
-- **Opening seeds the wizard with a GET.** `/gift/card/{token}` renders the Gift Finder with its
+- **Opening seeds the wizard with a GET.** `/gift/card/{token}` renders Find a gift with its
   answers filled in (`brief`), euros for the budget as the wizard's field is, and an avoided
   interest in its tag spelling `interest:gaming` so the engine excludes it by tag
   ([taste-discovery.md](taste-discovery.md)). The visitor's own saved people are not offered on
   this page (`recipients` is empty): they are looking at somebody else's card. "See ideas" posts
-  the answers the ordinary way; the Gift Finder's own rule, that a brief travels in a POST and not
+  the answers the ordinary way; Find a gift's own rule, that a brief travels in a POST and not
   in a URL, is kept for everything the visitor changes. The card's token is in the URL, and that
   is what the maker chose to share.
 - **Not indexed.** `noindex, nofollow` in the server's meta and in the page's head. It is somebody's

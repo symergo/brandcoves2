@@ -98,7 +98,7 @@ class BarcodeColumnTest extends TestCase
     #[Test]
     public function the_mpn_column_is_kept_for_matching_and_never_used_as_identity(): void
     {
-        // Kept since 2026-09-27 so the match finder can propose two products
+        // Kept since 2026-09-26 so the match finder can propose two products
         // by part number; identity still comes from the barcode columns only.
         $product = Product::query()->where('external_id', '2001')->firstOrFail();
 

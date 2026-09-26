@@ -33,7 +33,7 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   by hand shows as typed, and one that equals the name is not repeated;
 - the next date: the nearest of their birthday and the occasion date on a list about them, with
   "vandaag", "morgen" or "over N dagen";
-- for a saved person: **Cadeau vinden** (`/gift?for=<id>`, the Gift Finder straight on their ideas),
+- for a saved person: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on their ideas),
   **Hun pagina** (`/people/{id}`; on a phone the name is the link, to keep the buttons on one line),
   **Dit of dat** (`/gift/taste?person=<id>`), and **Dit of dat samen** only while a This-or-that-
   together link is open for them (it goes to the list about them, where that panel lives);
@@ -67,8 +67,8 @@ does not vanish from the date order for three years in four. Decided without the
 
 Two buttons at the top, one form open at a time:
 
-- **Iemand toevoegen**: name, relationship (the Gift Finder's closed vocabulary, stored as its value
-  so the Gift Finder and landing pages read it), optional day and month. `POST /recipients`, the
+- **Iemand toevoegen**: name, relationship (Find a gift's closed vocabulary, stored as its value
+  so Find a gift and landing pages read it), optional day and month. `POST /recipients`, the
   same endpoint and validation as everywhere else. No year: the birthday is stored under
   `Recipient::BIRTHDAY_YEAR`.
 - **Nodig uit op GiftCoves**: email and optional birthday, `POST /friends`

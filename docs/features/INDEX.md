@@ -26,14 +26,14 @@ is true now.
 | [tradedoubler-connector.md](tradedoubler-connector.md) | Catalogue | Merged, unverified — supplied token is rejected, see [TODO](../TODO.md) |
 | [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
 | [source-switch.md](source-switch.md) | Catalogue / Operations | Active |
-| [product-identity.md](product-identity.md) | Catalogue | Active — merges and splits live in identity (aliases, overrides) since 2026-09-27 |
+| [product-identity.md](product-identity.md) | Catalogue | Active — merges and splits live in identity (aliases, overrides) since 2026-09-26 |
 | [match-review.md](match-review.md) | Catalogue / Admin | Active — rules propose, a person decides every pair at /admin/match-review; no auto-merge yet |
 | [product-signals.md](product-signals.md) | Catalogue / Discovery | Active — price range, saved by (from 5 people), found in Coves, related |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
 | [list-signals.md](list-signals.md) | Gifting / Catalogue | Active — crowd tags and product links from lists, nightly; ideas in the same spirit on shared wish lists |
-| [crowd-picks.md](crowd-picks.md) | Gifting | Active — "chosen by others for someone like them": products on 5+ people's lists for the same kind of person rank higher in the Gift Finder and This or that; nothing shows until then |
-| [offline-ideas.md](offline-ideas.md) | Gifting / Wishlist / Admin | Active — hand-typed items five people wrote, approved by a person, shown under Gift Finder and This or that results |
+| [crowd-picks.md](crowd-picks.md) | Gifting | Active — "chosen by others for someone like them": products on 5+ people's lists for the same kind of person rank higher in Find a gift and This or that; nothing shows until then |
+| [offline-ideas.md](offline-ideas.md) | Gifting / Wishlist / Admin | Active — hand-typed items five people wrote, approved by a person, shown under Find a gift and This or that results |
 | [intent-search.md](intent-search.md) | Search / Gifting | Active — the search box reads gift searches (who, interests, occasion, budget) |
 | [gift-landing-pages.md](gift-landing-pages.md) | Gifting / SEO | Active — `/gift-ideas/for/{recipient}/{interest}`, recorded nightly when 8+ products fit; briefs stored and linkable; Cove plans can carry a brief |
 | [persona-demand.md](persona-demand.md) | Gifting / Content | Active — gift searches counted as readings; nightly (06:30) drafts personas for readings nothing answers yet; drafts only |
@@ -58,10 +58,10 @@ is true now.
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect works for ASINs imported with a barcode (page import) |
 | [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |
 | [find-a-gift.md](find-a-gift.md) | Gifting | Active — `/gift` as one flow: who first, then three ways (questions, This or that, a type), all ending on one results page (`GiftResults`) that the landing pages draw too |
-| [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — board of eight; back in the header since 2026-09-14; the questions of Find a gift since 2026-09-26 |
+| [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — the engine behind Find a gift; its questions are the first way in since 2026-09-26 |
 | [taste-discovery.md](taste-discovery.md) | Gifting | Active — This or that: a dozen choices between products become a taste, a budget and ideas; can be kept on a person |
 | [taste-together.md](taste-together.md) | Gifting / Lists | Active — This or that played by several people about one person through a link; the giver sees a count and the combined result and can add it to the person |
-| [gift-profile-card.md](gift-profile-card.md) | Gifting | Active — after This or that about yourself, a card with a link that opens the Gift Finder filled in; opt-in, removable, noindex |
+| [gift-profile-card.md](gift-profile-card.md) | Gifting | Active — after This or that about yourself, a card with a link that opens Find a gift filled in; opt-in, removable, noindex |
 | [discover-cove.md](discover-cove.md) | Core / Discovery | Active, rebuilt 2026-09-26: today's Cove, This or that, then six of each |
 | [giftability.md](giftability.md) | Gifting / Catalogue | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
@@ -69,7 +69,7 @@ is true now.
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
 | [sharing.md](sharing.md) | Gifting / Growth | Active |
 | [list-board.md](list-board.md) | Gifting / Coordination | Active |
-| [occasion-reminders.md](occasion-reminders.md) | Gifting / Notifications | Active — four dates; windows editable in admin (friend birthdays on fixed ones); ideas about two weeks out; a per-person stop link since 2026-09-28 |
+| [occasion-reminders.md](occasion-reminders.md) | Gifting / Notifications | Active — four dates; windows editable in admin (friend birthdays on fixed ones); ideas about two weeks out; a per-person stop link since 2026-09-26 |
 | [gift-history.md](gift-history.md) | Gifting / Notifications | Active — `/people/{id}`: what you gave (noted, and your own claims only), never suggested again, the next step after it; three ideas in the reminder about two weeks out |
 | [recipient-birthday.md](recipient-birthday.md) | Gifting / Notifications | Active — day and month, never a year |
 | [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
@@ -109,7 +109,7 @@ is true now.
 | [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built; invitations retired 2026-09-14; the views became sections of one page 2026-09-26 |
 | [saved-coves.md](saved-coves.md) | Coves / Wishlist | Active: save a Cove into My Coves, or copy it into a list of your own |
 | [save-button.md](save-button.md) | Wishlist / Coves / UI | Active: one Save button and one panel for products and Coves; the "▾" is gone |
-| [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by the Gift Finder, admin can hide |
+| [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by Find a gift, admin can hide |
 | [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active — your own list opens on its items; Share plus a More menu in the header, a "⋯" per item; My Coves on one page and one word per list kind (2026-09-26) |
 | [one-step-list.md](one-step-list.md) | Wishlist / Gifting | Active since 2026-09-26: a list in one question (who for), occasion and sharing moved to the list page; replaces the three-step wizard |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |

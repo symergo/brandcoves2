@@ -191,7 +191,7 @@ the account first and the decision second, which is the wrong order.
 `wishlists.visibility` is the permission: private, link or public, and it decides who can reach a
 list at all. "Share with friends" sits beside it on the same panel and does something narrower —
 it writes a `wishlist_shares` row per person you picked, emails them the link, and makes the list
-appear on their friends page. Un-picking somebody takes it off that page and leaves their link
+appear on their My people page (the friends page until 2026-09-26). Un-picking somebody takes it off that page and leaves their link
 working.
 
 The distinction is worth keeping sharp, because a control on the same panel that reads "share"
@@ -1237,7 +1237,7 @@ only fills a missing picture.
 ## Offline items as ideas for others (2026-09-26)
 
 What many different people type by hand can become a gift idea for others: at least five people,
-then a person approves the wording before it shows under the Gift Finder's and This or that's
+then a person approves the wording before it shows under Find a gift's and This or that's
 results. Adding one goes through `POST /list-items` with `source=manual` and an `idea_id`, and
 signed out through `/save-intent`, which now takes an `idea_id` (an id whose wording is read from
 the reviewed idea at sign-in, not free text). Photos are never used. See

@@ -26,7 +26,7 @@ it is there to show.
 | Browser tab | `giftcoves.svg` first, `favicon.ico` as the fallback ([app.blade.php](../../resources/views/app.blade.php)) |
 | Home screen | `apple-touch-icon`, the 512 PNG |
 | Site header | The SVG next to the wordmark ([SiteLayout.tsx](../../resources/js/Layouts/SiteLayout.tsx)) |
-| Homepage hero | Drawn into the illustration beside the pitch, at 44 of its 64 units ([HomeIllustration.tsx](../../resources/js/Components/HomeIllustration.tsx)) — the arc around it is this file's arc at four times the radius, so a change to the geometry here changes both |
+| Homepage hero | The orange buoy in the cove's mouth of [SharedCoveIllustration.tsx](../../resources/js/Components/SharedCoveIllustration.tsx), whose cove is the logo's arc turned to face the things arriving. Until 2026-09-26 it was the whole mark inside `HomeIllustration` (removed that day, unused) |
 | Admin | Filament `brandLogo` and `favicon` |
 | Social cards | A drawn 1200×630 card, see [social-cards.md](social-cards.md) |
 
