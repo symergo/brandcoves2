@@ -107,7 +107,7 @@ return [
                     'title' => 'Adding from the list itself',
                     'body' => "1. Open your list under [My Coves](lists).\n2. Tap “+ Add a product”.\n3. Type what you are looking for and press Enter, or tap the scan icon and point your camera at the barcode.\n4. Tap the product in the results. It is on your list straight away.",
                     'shot' => 'add',
-                    'alt' => 'The search field at the top of a list for adding a product, with the link below it to write something in yourself.',
+                    'alt' => 'The search field at the top of a list for adding a product, with the link below it to add an offline item.',
                 ],
                 [
                     'title' => 'Something that is not on this site',
@@ -149,7 +149,7 @@ return [
                 ],
                 [
                     'title' => 'With friends by name',
-                    'body' => "1. Tap “Share”, then “Share with friends”.\n2. Pick the [friends](friends) who may see it.\n3. Tap “Send”.\n\nThey get an email with the link, without the contents, and the list appears on their [friends page](friends). “Stop sharing with …” takes it off there; a link they already had keeps working until you stop sharing. How you become friends is under [Friends, birthdays and reminders](lists-help/friends).",
+                    'body' => "1. Tap “Share”, then “Share with friends”.\n2. Pick the [friends](people) who may see it.\n3. Tap “Send”.\n\nThey get an email with the link, without the contents, and the list appears next to your name on their [My people](people) page. “Stop sharing with …” takes it off there; a link they already had keeps working until you stop sharing. How you become friends is under [My people, birthdays and reminders](lists-help/friends).",
                     'shot' => 'friends-share',
                     'alt' => 'The part of the share panel where you pick friends and send them the link.',
                 ],
@@ -290,27 +290,31 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'A reminder ahead',
-                    'body' => 'Thirty, fifteen and two days before the date you get a nudge, here and by email. More under [Friends, birthdays and reminders](lists-help/friends).',
+                    'body' => 'Thirty, fifteen and two days before the date you get a nudge, here and by email. More under [My people, birthdays and reminders](lists-help/friends).',
                 ],
             ],
         ],
 
         'friends' => [
-            'title' => 'Friends, birthdays and reminders',
-            'blurb' => 'Who your friends are, what they see, and when you get a nudge.',
-            'seo_description' => 'Add friends, keep birthdays, and get a reminder in time for a birthday or an occasion.',
+            'title' => 'My people, birthdays and reminders',
+            'blurb' => 'Everybody you buy for, friends on GiftCoves, and when you get a nudge.',
+            'seo_description' => 'Keep everybody you buy for in one place, connect with friends, keep birthdays, and get a reminder in time for a birthday or an occasion.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Becoming friends',
-                    'body' => "When someone opens your share link while signed in, you are [friends](friends). To add someone yourself:\n\n1. Go to [Friends](friends).\n2. Under “Add a person”, fill in an email address, and the birthday if you like.\n3. Tap “Add”.\n\nThey get no email about it. If they already have an account you are connected at once; otherwise as soon as they sign in.",
+                    'title' => 'Everybody you buy for, on one page',
+                    'body' => '[My people](people) lists everybody you buy for, the nearest birthday or occasion first. Some you saved yourself and only you see. Others are friends on GiftCoves, marked “on GiftCoves”. To add someone only you see, tap “Add someone”: a name, and who they are to you and their birthday if you like.',
                     'shot' => 'friends',
-                    'alt' => 'The friends page, with the form to add someone by email address.',
+                    'alt' => 'The My people page, with the buttons to add someone and to invite a friend.',
+                ],
+                [
+                    'title' => 'Becoming friends',
+                    'body' => "When someone opens your share link while signed in, you are friends. To invite someone yourself:\n\n1. Go to [My people](people).\n2. Tap “Invite on GiftCoves” and fill in their email address, and the birthday if you like.\n3. Tap “Invite”.\n\nThey get no email about it, so tell them yourself. If they already have an account you are connected at once; otherwise as soon as they sign in.",
                 ],
                 [
                     'title' => 'What a friend sees',
-                    'body' => 'The [friends page](friends) shows, per friend, their birthday, the lists they shared with you and which of your lists they see. What has been reserved never appears there. Removing a friend removes the connection on both sides; lists and reservations stay.',
+                    'body' => 'On [My people](people), “Details” on a friend shows their birthday, the lists they shared with you and which of your lists they see. What has been reserved never appears there. Removing a friend removes the connection on both sides; lists and reservations stay.',
                 ],
                 [
                     'title' => 'Birthdays',

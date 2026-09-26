@@ -107,7 +107,7 @@ return [
                     'title' => 'Añadir desde la lista',
                     'body' => "1. Abre tu lista en [Mis Coves](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
                     'shot' => 'add',
-                    'alt' => 'El campo de búsqueda al principio de una lista para añadir un producto, con debajo el enlace para añadirlo tú mismo.',
+                    'alt' => 'El campo de búsqueda al principio de una lista para añadir un producto, con debajo el enlace para añadir un artículo offline.',
                 ],
                 [
                     'title' => 'Algo que no está en este sitio',
@@ -149,7 +149,7 @@ return [
                 ],
                 [
                     'title' => 'Con amigos por su nombre',
-                    'body' => "1. Toca «Compartir» y luego «Compartir con amigos».\n2. Elige los [amigos](friends) que pueden verla.\n3. Toca «Enviar».\n\nReciben un correo con el enlace, sin el contenido, y la lista aparece en su [página de amigos](friends). «Dejar de compartir con …» la quita de ahí; un enlace que ya tuvieran sigue funcionando hasta que dejes de compartir. Cómo hacerse amigos está en [Amigos, cumpleaños y recordatorios](lists-help/friends).",
+                    'body' => "1. Toca «Compartir» y luego «Compartir con amigos».\n2. Elige los [amigos](people) que pueden verla.\n3. Toca «Enviar».\n\nReciben un correo con el enlace, sin el contenido, y la lista aparece junto a tu nombre en su página [Mi gente](people). «Dejar de compartir con …» la quita de ahí; un enlace que ya tuvieran sigue funcionando hasta que dejes de compartir. Cómo hacerse amigos está en [Mi gente, cumpleaños y recordatorios](lists-help/friends).",
                     'shot' => 'friends-share',
                     'alt' => 'La parte del panel de compartir donde eliges amigos y les envías el enlace.',
                 ],
@@ -290,27 +290,31 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Un recordatorio antes',
-                    'body' => 'Treinta, quince y dos días antes de la fecha recibes un aviso, aquí y por correo. Más en [Amigos, cumpleaños y recordatorios](lists-help/friends).',
+                    'body' => 'Treinta, quince y dos días antes de la fecha recibes un aviso, aquí y por correo. Más en [Mi gente, cumpleaños y recordatorios](lists-help/friends).',
                 ],
             ],
         ],
 
         'friends' => [
-            'title' => 'Amigos, cumpleaños y recordatorios',
-            'blurb' => 'Quiénes son tus amigos, qué ven, y cuándo recibes un aviso.',
-            'seo_description' => 'Añadir amigos, guardar cumpleaños, y recibir un recordatorio a tiempo para un cumpleaños o una ocasión.',
+            'title' => 'Mi gente, cumpleaños y recordatorios',
+            'blurb' => 'Todas las personas a las que compras, tus amigos en GiftCoves, y cuándo recibes un aviso.',
+            'seo_description' => 'Todas las personas a las que compras en un solo sitio, hacerse amigos, guardar cumpleaños, y recibir un recordatorio a tiempo para un cumpleaños o una ocasión.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Hacerse amigos',
-                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois [amigos](friends). Para añadir a alguien tú mismo:\n\n1. Ve a [Amigos](friends).\n2. En «Añadir a alguien», escribe un correo, y el cumpleaños si quieres.\n3. Toca «Añadir».\n\nEsa persona no recibe ningún correo por ello. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
+                    'title' => 'Todas las personas a las que compras, en una página',
+                    'body' => '[Mi gente](people) muestra a todas las personas a las que compras, primero el cumpleaños o la ocasión más cercana. A algunas las guardaste tú y solo tú las ves. Otras son amigos en GiftCoves, marcados «en GiftCoves». Para añadir a alguien que solo ves tú, toca «Añadir a alguien»: un nombre y, si quieres, quién es para ti y su cumpleaños.',
                     'shot' => 'friends',
-                    'alt' => 'La página de amigos, con el formulario para añadir a alguien por su correo.',
+                    'alt' => 'La página Mi gente, con los botones para añadir a alguien e invitar a un amigo.',
+                ],
+                [
+                    'title' => 'Hacerse amigos',
+                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois amigos. Para invitar a alguien tú mismo:\n\n1. Ve a [Mi gente](people).\n2. Toca «Invitar a GiftCoves» y escribe su correo, y el cumpleaños si quieres.\n3. Toca «Invitar».\n\nEsa persona no recibe ningún correo por ello, así que díselo tú. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
                 ],
                 [
                     'title' => 'Qué ve un amigo',
-                    'body' => 'La [página de amigos](friends) muestra, por amigo, su cumpleaños, las listas que compartió contigo y cuáles de tus listas ve. Lo reservado nunca aparece ahí. Quitar a un amigo quita la conexión por ambos lados; listas y reservas se quedan.',
+                    'body' => 'En [Mi gente](people), «Detalles» en un amigo muestra su cumpleaños, las listas que compartió contigo y cuáles de tus listas ve. Lo reservado nunca aparece ahí. Quitar a un amigo quita la conexión por ambos lados; listas y reservas se quedan.',
                 ],
                 [
                     'title' => 'Cumpleaños',

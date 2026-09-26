@@ -307,7 +307,9 @@ class SendOccasionReminders implements ShouldQueue
                         body: $lead === 0
                             ? __('site.reminders.birthday_today', ['name' => $name], $language)
                             : __('site.reminders.lead', ['days' => $lead, 'name' => $name], $language),
-                        url: '/'.$market.'/friends',
+                        // My people, where friends live since 2026-09-26
+                        // (`/friends` only redirects there now).
+                        url: '/'.$market.'/people',
                         language: $language,
                         tokens: ['name' => $name, 'days' => $lead],
                     );
