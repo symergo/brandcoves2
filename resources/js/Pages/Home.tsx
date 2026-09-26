@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import SaveToList from '../Components/SaveToList'
+import SearchCard from '../Components/SearchCard'
 import SharedCoveIllustration from '../Components/SharedCoveIllustration'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import { buttonClasses } from '../Components/Button'
@@ -75,7 +76,9 @@ export default function Home({ today, coves }: Props) {
                     {t('home.hero_title')}
                 </h1>
 
-                <div className="mt-6 grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] md:gap-12">
+                {/* The drawing smaller than the words since 2026-09-26 (owner): it
+                    illustrates the promise, it is not the promise. */}
+                <div className="mt-6 grid items-center gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
                         <p className="max-w-xl text-lg text-ink-soft">{t('home.hero_intro')}</p>
 
@@ -89,7 +92,7 @@ export default function Home({ today, coves }: Props) {
                         </div>
                     </div>
 
-                    <SharedCoveIllustration className="h-auto w-full max-w-md text-ink md:max-w-none" />
+                    <SharedCoveIllustration className="h-auto w-full max-w-xs justify-self-center text-ink md:max-w-sm" />
                 </div>
 
                 <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-4 text-sm text-ink-soft">
@@ -98,6 +101,14 @@ export default function Home({ today, coves }: Props) {
                     <Way icons={['people']} label={t('home.way_share')} />
                 </ul>
             </section>
+
+            {/*
+              The search card, right under the hero (owner, 2026-09-26): the
+              same card as on Discover, with the barcode camera one tap away.
+              Somebody who arrives knowing what they want should not have to
+              find the header's search first.
+            */}
+            <SearchCard className="mt-10" />
 
             {/* 2. One way in per audience. */}
             <section className="mt-14 sm:mt-20" aria-label={t('home.entries_label')}>

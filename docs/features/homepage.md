@@ -580,3 +580,11 @@ list does not have. Blurbs are flattened to their labels the way the archive doe
 longer reaches the page: the persona shelf's only remaining door here was the Discover card. The
 order after the hero is: search card, the list wizard, Today's Cove, signup, what you looked at,
 More Coves.
+
+## A smaller drawing, and the search card back under the hero (2026-09-26)
+
+Owner's call. The hero's drawing took the wider of the two columns (1 : 1.25) and read as the
+page's subject; the words now get the wider column (1.4 : 1) and the drawing is capped at `max-w-sm`.
+And `SearchCard`, the same card as on Discover (field plus the barcode camera on a phone), sits
+directly under the hero: somebody who arrives knowing what they want should not have to find the
+header's search first.
