@@ -12,6 +12,7 @@ use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Services\Alerts\AlertEligibility;
 use App\Services\Catalogue\ProductDescription;
+use App\Services\Catalogue\ProductSignals;
 use App\Services\Catalogue\ProductTitle;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
@@ -110,6 +111,10 @@ class ProductController extends Controller
              * the wrong shape for the most-crawled page on the site.
              */
             'description' => ProductDescription::pick($offers, $productGroup->title)?->toArray(),
+
+            // People and Coves around the product: saved by, found in, where
+            // next. See ProductSignals and docs/features/product-signals.md.
+            'signals' => app(ProductSignals::class)->for($productGroup, $current),
             'alert' => $this->alertState($productGroup),
 
             /*

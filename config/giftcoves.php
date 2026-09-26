@@ -411,6 +411,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | The product page's signals
+    |--------------------------------------------------------------------------
+    */
+    'product_signals' => [
+        // "Saved by N people" shows only from this many. Below it a count can
+        // point at one person somebody knows keeps a list (see ProductSignals).
+        'saved_threshold' => 5,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Reading a pasted link
     |--------------------------------------------------------------------------
     |

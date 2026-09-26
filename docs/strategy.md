@@ -411,7 +411,8 @@ Order agreed with the owner on 2026-09-26.
    pages becoming catalogue offers waits for step 5.
 2. **Front page and navigation.** Built 2026-09-26 ([homepage.md](features/homepage.md),
    [navigation.md](features/navigation.md)): the new homepage and the four-item header.
-3. **Product pages.** Section 4: price range, saved by, found in, related.
+3. **Product pages.** Built 2026-09-26 ([product-signals.md](features/product-signals.md)): price
+   range, saved by, found in, related.
 4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
    gift pages and Coves, the intent a list passes on to its products, and a person's own list as
    the brief for a gift for them.

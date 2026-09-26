@@ -12,6 +12,8 @@ import { record as recordView } from '../recentlyViewed'
 import SaveToList from '../Components/SaveToList'
 import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
+import ToolIcon from '../Components/ToolIcon'
+import CoveIcon from '../Components/CoveIcon'
 
 interface Offer {
     id: number
@@ -61,6 +63,17 @@ interface Props {
      * offer on this group carries one worth a section — see ProductDescription.
      */
     description: { paragraphs: string[]; merchant: string } | null
+    /**
+     * People and Coves around the product (roadmap step 3). `savedBy` is null
+     * below the threshold that stops a count pointing at one person's list;
+     * see ProductSignals.
+     */
+    signals: {
+        savedBy: number | null
+        coveCount: number
+        coves: { title: string; url: string }[]
+        band: { euros: number; url: string } | null
+    }
 }
 
 /**
@@ -88,7 +101,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, alert, amazonSearch, description }: Props) {
+export default function Product({ product, offers, alert, amazonSearch, description, signals }: Props) {
     const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -192,10 +205,27 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                         </div>
                     )}
 
+                    {/*
+                      The range and the shops, then the way down to them. The
+                      big number above stays the lowest price: it is the answer
+                      to "what does it cost". The range says the rest.
+                    */}
                     <p className="mt-2 text-sm text-ink-soft">
-                        {product.merchantCount > 1
-                            ? t('product.compare', { count: n(offers.length) })
-                            : t('product.one_shop')}
+                        {product.merchantCount > 1 ? (
+                            <>
+                                {product.maxPrice !== null && product.minPrice !== null && product.maxPrice > product.minPrice && (
+                                    <span className="tabular-nums">
+                                        {formatPrice(product.minPrice, market)} – {formatPrice(product.maxPrice, market)} ·{' '}
+                                    </span>
+                                )}
+                                {t('product.from_shops', { count: n(product.merchantCount) })} ·{' '}
+                                <a href="#offers" className="font-medium text-accent-dark hover:text-ink">
+                                    {t('product.view_shops')}
+                                </a>
+                            </>
+                        ) : (
+                            t('product.one_shop')
+                        )}
                     </p>
 
                     <div className="mt-5 flex flex-wrap items-start gap-3">
@@ -209,6 +239,50 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                         */}
                         <ShareMenu url={canonical} text={product.title} label={t('nav.share')} />
                     </div>
+
+                    {/*
+                      The people and the Coves: what makes this page a place
+                      rather than a click-out. Each line only when it has
+                      something true to say.
+                    */}
+                    {(signals.savedBy !== null || signals.coveCount > 0) && (
+                        <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-soft">
+                            {signals.savedBy !== null && (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <ToolIcon name="wishlist" className="h-4 w-4 text-accent" />
+                                    {t('product.saved_by', { count: n(signals.savedBy) })}
+                                </span>
+                            )}
+                            {signals.coveCount > 0 && (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <CoveIcon name="all" className="h-4 w-4 text-accent" />
+                                    {signals.coveCount === 1
+                                        ? t('product.found_in_one')
+                                        : t('product.found_in', { count: n(signals.coveCount) })}
+                                </span>
+                            )}
+                        </p>
+                    )}
+
+                    {(signals.coves.length > 0 || product.brandUrl || signals.band) && (
+                        <div className="mt-4">
+                            <p className="text-xs font-medium tracking-wide text-ink-soft uppercase">{t('product.related')}</p>
+                            <ul className="mt-2 flex flex-wrap gap-2">
+                                {signals.coves.map((cove) => (
+                                    <RelatedChip key={cove.url} href={cove.url} label={cove.title} />
+                                ))}
+                                {product.brandUrl && product.brand && (
+                                    <RelatedChip href={product.brandUrl} label={t('product.more_from', { brand: product.brand })} />
+                                )}
+                                {signals.band && (
+                                    <RelatedChip
+                                        href={signals.band.url}
+                                        label={t('product.under', { price: formatPrice(signals.band.euros * 100, market) })}
+                                    />
+                                )}
+                            </ul>
+                        </div>
+                    )}
 
                     {product.ean && (
                         <p className="mt-6 text-xs text-ink-soft">
@@ -243,7 +317,7 @@ export default function Product({ product, offers, alert, amazonSearch, descript
             {/*
               The offer table IS the product. Everything above gives it context.
             */}
-            <section className="mt-12">
+            <section id="offers" className="mt-12 scroll-mt-8">
                 <h2 className="mb-4 text-xl font-semibold">{t('product.all_offers')}</h2>
 
                 {offers.length === 0 ? (
@@ -364,5 +438,18 @@ export default function Product({ product, offers, alert, amazonSearch, descript
             {/* What this visitor looked at before this one. Client-side only. */}
             <RecentlyViewed excludeId={product.id} className="mt-12" />
         </>
+    )
+}
+
+function RelatedChip({ href, label }: { href: string; label: string }) {
+    return (
+        <li>
+            <Link
+                href={href}
+                className="inline-flex min-h-9 items-center rounded-full border border-line bg-card px-3 text-sm hover:border-ink"
+            >
+                {label}
+            </Link>
+        </li>
     )
 }

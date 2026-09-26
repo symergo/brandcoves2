@@ -27,6 +27,7 @@ is true now.
 | [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
 | [source-switch.md](source-switch.md) | Catalogue / Operations | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
+| [product-signals.md](product-signals.md) | Catalogue / Discovery | Active — price range, saved by (from 5 people), found in Coves, related |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
