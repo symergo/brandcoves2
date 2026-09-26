@@ -1,168 +1,204 @@
 import { usePage } from '@inertiajs/react'
 import FlagIcon, { type FlagCountry } from './FlagIcon'
+import Menu from './Menu'
 import { chooseMarket } from '../marketChoice'
-import type { SharedProps } from '../types'
+import type { SharedProps, SwitcherCountry } from '../types'
 import { useTranslations } from '../useTranslations'
 
 /**
- * Two controls, because a visitor thinks in two things: where they buy, and
- * what they read.
+ * Where you shop and what you read: one button in the header, one list in the
+ * phone's menu.
  *
- * It replaced one dropdown listing "BE/NL, BE/FR, EU/EN, NL/NL". Those are
- * market keys with a slash in them — nobody has ever wanted "BE/FR", they have
- * wanted Belgium, in French — and the list grows multiplicatively with every
- * country added while saying less each time.
+ * ## One button since 2026-09-26
  *
- * **The country is flags, the language is a dropdown.** There are three
- * countries, so they all fit on one row and the current one can be *seen*
- * rather than opened; a language is a word, not a picture, and a `<select>`
- * cannot hold an SVG anyway, which settles which control gets the flags.
+ * The header had three flags and, in Belgium, a language dropdown beside
+ * them (below). The owner replaced them with one button that says where you
+ * are, the flag and the language ("🇧🇪 NL ▾"), and opens a short list of the
+ * markets. Three reasons: the flags plus the dropdown took about 150px of a
+ * header that could not fit a search field in French; a row of three flags
+ * read as decoration more than as a control; and the choice is made once, so
+ * it does not need to be on screen all the time, only findable.
  *
- * **The dropdown appears only where there is a choice to make** — Belgium, and
- * nowhere else today. A select holding one option is a control that cannot be
- * operated. It is counted from the country's markets rather than hardcoded to
- * BE, so a second bilingual country would get its dropdown without anyone
- * remembering that this rule exists.
+ * **The list is countries, and languages where a country has two.** A country
+ * read in one language is one row (the Netherlands, Europe). Belgium is a
+ * heading with Nederlands and Français under it. The rows are counted from the
+ * markets rather than hardcoded to Belgium, so a second bilingual country gets
+ * its two rows without anyone remembering this rule exists.
  *
- * **English is the European flag.** There is one English market and its country
- * is EU, so English is a market choice here and not a language choice; it is
- * always one click away because that flag is always on screen. Padding every
- * country's language list with it would have offered a language by quietly
- * moving the visitor to another catalogue.
+ * **English is Europe.** There is one English market and its "country" is EU,
+ * so English is a market here, not a language under every country. Padding
+ * each country with it would offer a language by quietly moving the visitor
+ * to another catalogue.
  *
- * **Clicking a flag keeps your language where the country has it.** Belgium in
- * French → the Netherlands lands on Dutch, because there is no French market
- * there; Belgium in Dutch → the Netherlands stays Dutch.
+ * ## What choosing does (unchanged)
  *
- * **The choice sticks.** Either control posts to `/market`, which records the
- * market in a cookie before redirecting — so the bare domain sends you back to
- * the market you picked instead of re-guessing from your browser's language
- * every time. See App\Support\MarketPreference.
+ * Every row posts to `/market` (`chooseMarket`), which records the choice in
+ * the `bc_market` cookie and redirects. This is the only control that writes
+ * that cookie: a guess must never become a choice, and only the switcher
+ * chooses (docs/features/market-routing.md). A real form submit and a full page
+ * load, because the market changes the catalogue, the currency and the
+ * language at once, and a client-side swap would leave the last market's
+ * prices on screen while the new copy arrived.
  *
- * A full page load, both controls, exactly as the single dropdown did before.
- * Switching either changes the catalogue, the currency and the language, and a
- * client-side swap would leave the last market's prices on screen while the new
- * copy arrived.
+ * ## Before (kept for the reasoning)
+ *
+ * It replaced one dropdown listing "BE/NL, BE/FR, EU/EN, NL/NL": market keys
+ * with a slash in them. Nobody has ever wanted "BE/FR"; they have wanted
+ * Belgium, in French. Then came flags for the country and a dropdown for the
+ * language, the dropdown shown only where there was a choice to make.
  */
-export default function MarketSwitcher({
-    id,
-    withNames = false,
-    className,
-}: {
-    id: string
-    withNames?: boolean
-    className?: string
-}) {
+
+/** The country this page is in, from the market it is on. */
+function currentCountry(markets: SwitcherCountry[], marketKey: string): SwitcherCountry | null {
+    /*
+     * Derived from the market rather than shipped as a prop, so one fact on
+     * the wire cannot disagree with itself. Null for `/es/`, which routes but
+     * is not offered: the button then shows only the language.
+     */
+    return markets.find((c) => c.languages.some((l) => l.market === marketKey)) ?? null
+}
+
+function Check() {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true" className="h-4 w-4 shrink-0 text-accent">
+            <path d="m5 12 5 5 9-10" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    )
+}
+
+/**
+ * The header's country-and-language button. A menu button (`Menu`): it opens
+ * with Enter, Space or the arrows, the arrows move between the rows, Escape
+ * closes and returns focus to it.
+ */
+export default function MarketButton() {
     const { market, markets } = usePage<SharedProps>().props
     const { t } = useTranslations()
+    const country = currentCountry(markets, market.key)
+    const language = country?.languages.find((l) => l.market === market.key)
 
-    /*
-     * Which country we are in is derived from the market we are on rather than
-     * shipped as a third prop — one fact on the wire cannot disagree with
-     * itself. The fallback is unreachable for a published market and exists so
-     * that `/es/`, which routes but is not in this list, renders a switcher
-     * instead of throwing.
-     */
-    const current = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? markets[0]
+    // "België, Nederlands": the button's spoken name and its tooltip, since
+    // what it shows is a flag and two letters.
+    const where = [country?.name, language?.name].filter(Boolean).join(', ')
 
-    if (!current) {
-        return null
-    }
+    const row = (marketKey: string, text: string, flag: string | null, indent: boolean) => {
+        const chosen = marketKey === market.key
 
-    const currentLanguage = current.languages.find((l) => l.market === market.key)
-
-    /*
-     * POST to /market rather than navigating to /${marketKey}, so the choice is
-     * written down as well as acted on. Before this, switching worked until you
-     * next opened the bare domain, which re-guessed from Accept-Language and
-     * sent you back — a Belgian browser reporting "nl-NL" returned to the Dutch
-     * catalogue every single time, and the switcher looked like it had no
-     * effect.
-     *
-     * A real form submit, not fetch and not an Inertia visit, because this is
-     * still the full page load it always was: the market changes the catalogue,
-     * the currency and the language at once, and anything short of a document
-     * load risks the previous market's prices sitting under the new copy.
-     */
-    const go = chooseMarket
-
-    const chooseCountry = (country: string) => {
-        const next = markets.find((c) => c.country === country)
-
-        if (!next) {
-            return
-        }
-
-        const sameLanguage = next.languages.find((l) => l.language === currentLanguage?.language)
-
-        go((sameLanguage ?? next.languages[0]).market)
+        return (
+            <button
+                key={marketKey}
+                type="button"
+                role="menuitemradio"
+                aria-checked={chosen}
+                tabIndex={-1}
+                onClick={() => chooseMarket(marketKey)}
+                className={`flex w-full items-center gap-2.5 rounded py-2 pr-3 text-left text-sm outline-none hover:bg-line/40 focus-visible:bg-line/60 focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                    indent ? 'pl-11' : 'pl-3'
+                } ${chosen ? 'font-medium text-ink' : ''}`}
+            >
+                {flag !== null && (
+                    <FlagIcon country={flag as FlagCountry} className="block h-4 w-6 shrink-0 rounded-[2px] ring-1 ring-line" />
+                )}
+                <span className="min-w-0 flex-1">{text}</span>
+                {chosen && <Check />}
+            </button>
+        )
     }
 
     return (
-        <div className={className ?? 'flex items-center gap-3'}>
-            <fieldset className="min-w-0">
-                <legend className="sr-only">{t('nav.choose_market')}</legend>
-
-                <div className="flex items-center gap-1.5">
-                    {markets.map((country) => (
-                        <label
-                            key={country.country}
-                            title={country.name}
-                            // With names it is a row in the phone sheet, so it
-                            // gets the 44px a finger expects; in the header it
-                            // is a flag beside other flags.
-                            className={`flex cursor-pointer items-center gap-1.5 ${withNames ? 'min-h-11 pr-2' : ''}`}
-                        >
-                            <input
-                                type="radio"
-                                name={`${id}-country`}
-                                value={country.country}
-                                checked={country.country === current.country}
-                                onChange={() => chooseCountry(country.country)}
-                                className="peer sr-only"
-                            />
-                            <span className="block rounded-[3px] opacity-50 ring-1 ring-line transition peer-checked:opacity-100 peer-checked:ring-2 peer-checked:ring-accent peer-focus-visible:ring-2 peer-focus-visible:ring-ink">
-                                <FlagIcon country={country.country as FlagCountry} className="block h-4 w-6 rounded-[2px]" />
-                            </span>
-                            {withNames ? (
-                                <span className="text-sm text-ink-soft peer-checked:text-ink">{country.name}</span>
-                            ) : (
-                                <span className="sr-only">{country.name}</span>
-                            )}
-                        </label>
-                    ))}
-                </div>
-            </fieldset>
-
-            {current.languages.length > 1 && (
+        <Menu
+            label={t('nav.market_button', { current: where || market.language.toUpperCase() })}
+            width={232}
+            buttonClassName="market-button flex h-9 items-center gap-1.5 rounded-lg border border-line px-2 text-sm font-medium text-ink hover:border-ink"
+            button={
                 <>
-                    <label className="sr-only" htmlFor={`${id}-language`}>
-                        {t('nav.choose_language')}
-                    </label>
-                    <select
-                        id={`${id}-language`}
-                        className="min-w-0 rounded-card border border-line bg-card px-2 py-1 text-sm"
-                        value={currentLanguage?.market ?? current.languages[0].market}
-                        onChange={(e) => go(e.target.value)}
-                    >
-                        {/*
-                          In the header the language is its two-letter code,
-                          NL or FR, beside the Belgian flag; the phone sheet
-                          (`withNames`) spells it out. "Français" took 115px
-                          of a header that had to find room for a search
-                          field in French (2026-09-26); the code takes about
-                          55 and is what a Belgian site's language toggle
-                          usually says. The option carries the full name as
-                          its title.
-                        */}
-                        {current.languages.map((language) => (
-                            <option key={language.language} value={language.market} title={language.name}>
-                                {withNames ? language.name : language.language.toUpperCase()}
-                            </option>
-                        ))}
-                    </select>
+                    {country && (
+                        <FlagIcon country={country.country as FlagCountry} className="block h-4 w-6 rounded-[2px] ring-1 ring-line" />
+                    )}
+                    <span>{market.language.toUpperCase()}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" className="h-3.5 w-3.5 text-ink-soft">
+                        <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                 </>
-            )}
-        </div>
+            }
+        >
+            {() =>
+                markets.map((c) =>
+                    c.languages.length === 1 ? (
+                        row(c.languages[0].market, c.name, c.country, false)
+                    ) : (
+                        <div key={c.country} role="group" aria-label={c.name}>
+                            {/* The country as a heading over its languages: a
+                                choice between the two is the only thing to
+                                press here. */}
+                            <p aria-hidden="true" className="flex items-center gap-2.5 px-3 pt-2 pb-1 text-sm text-ink-soft">
+                                <FlagIcon country={c.country as FlagCountry} className="block h-4 w-6 shrink-0 rounded-[2px] ring-1 ring-line" />
+                                {c.name}
+                            </p>
+                            {c.languages.map((l) => row(l.market, l.name, null, true))}
+                        </div>
+                    ),
+                )
+            }
+        </Menu>
+    )
+}
+
+/**
+ * The same choice in the phone's menu, laid out rather than behind a button:
+ * the menu is already open, and a button inside it would be a second thing to
+ * open. Country names are spelled out, since a flag on its own is a guess and
+ * the tooltip that names it on a desktop does not exist on a phone. Every row
+ * is 44px.
+ */
+export function MarketList() {
+    const { market, markets } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+
+    const choice = (marketKey: string, text: string, flag: string | null) => {
+        const chosen = marketKey === market.key
+
+        return (
+            <button
+                key={marketKey}
+                type="button"
+                aria-pressed={chosen}
+                onClick={() => chooseMarket(marketKey)}
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 text-left ${
+                    chosen ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'
+                }`}
+            >
+                {flag !== null && (
+                    <FlagIcon country={flag as FlagCountry} className="block h-4 w-6 shrink-0 rounded-[2px] ring-1 ring-line" />
+                )}
+                <span>{text}</span>
+                {chosen && <Check />}
+            </button>
+        )
+    }
+
+    return (
+        <section aria-labelledby="market-list-heading" className="text-sm">
+            <h2 id="market-list-heading" className="mb-1 text-base font-semibold text-ink">
+                {t('nav.choose_market')}
+            </h2>
+            <ul className="border-l border-line pl-1">
+                {markets.map((c) => (
+                    <li key={c.country}>
+                        {c.languages.length === 1 ? (
+                            choice(c.languages[0].market, c.name, c.country)
+                        ) : (
+                            <div className="flex flex-wrap items-center gap-x-1">
+                                <span className="flex min-h-11 items-center gap-2.5 px-2 text-ink-soft">
+                                    <FlagIcon country={c.country as FlagCountry} className="block h-4 w-6 shrink-0 rounded-[2px] ring-1 ring-line" />
+                                    {c.name}:
+                                </span>
+                                {c.languages.map((l) => choice(l.market, l.name, null))}
+                            </div>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </section>
     )
 }

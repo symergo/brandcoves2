@@ -133,7 +133,7 @@ bar would meet it again on the next visit, and the only way to stop it would be 
 were already on.
 
 **How it writes.** Choosing a country is the switcher's full-page POST (`chooseMarket`), as the
-header flags do. Closing-to-keep is the same POST by `fetch` (`rememberMarket`), asked for as JSON,
+header's country button does. Closing-to-keep is the same POST by `fetch` (`rememberMarket`), asked for as JSON,
 and `MarketPreferenceController` answers `204` with the cookie instead of redirecting: nothing on
 the page changes, so a reload would only lose the visitor's place (and the query string, which the
 posted `path` never carries). It is still the one CSRF-checked route, with the same validation, so
@@ -340,3 +340,15 @@ same country — be-nl to be-fr, the same catalogue — `MarketPreferenceControl
 twin, or any switch across a border, lands on the market home as before. The path is only ever
 resolved through `Alternates`, never redirected to as given, so it cannot send anybody off the
 site; `MarketRoutingTest` pins both.
+
+## The switcher is one button (2026-09-26)
+
+In the header, the three flags and Belgium's language dropdown became one button that shows where
+you are, the flag and the language (Belgian flag, "NL ▾"), and opens a short list: a country read
+in one language is one row, and Belgium is a heading with Nederlands and Français under it
+(`MarketButton` in `Components/MarketSwitcher.tsx`, built on `Menu`, so the arrows, Escape and Tab
+work as in the site's other menus). The phone menu lays the same list out without a button
+(`MarketList`). What a choice does has not changed: every row is the same `chooseMarket` POST to
+`/market`, and this is still the only thing that writes `bc_market`. The rule "a flag keeps your
+language where the country has it" went with the flags, because the list now names each market
+outright. Why the owner asked for it: [navigation.md](navigation.md).

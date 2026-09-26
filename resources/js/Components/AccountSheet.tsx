@@ -102,9 +102,11 @@ export default function AccountSheet({
 
             <nav aria-label={t('nav.account')}>
                 {/*
-                  Your lists first, in the three views My Lists offers, then
-                  the people and the mail. The order is how often each is
+                  My Coves first, then your people, what you saved and Secret
+                  Friend, then the mail and Help (2026-09-26, owner; the same
+                  order as the desktop menu). The order is how often each is
                   wanted: a person opening this is usually after a list.
+                  Signed out: My Coves, Help, Sign in.
                 */}
                 <ul className="border-l border-line pl-3">
                     {myCovesLinks(base, t, auth.user !== null).map((link) => (
@@ -116,6 +118,7 @@ export default function AccountSheet({
                             'alerts',
                             unreadCount > 0 ? `${t('nav.notifications')} (${unreadCount})` : t('nav.notifications'),
                         )}
+                    {row(`${base}/help`, 'help', t('nav.help'))}
                     {auth.user?.isAdmin && (
                         <li>
                             <a href="/admin" className="flex min-h-11 items-center gap-2.5 py-2">

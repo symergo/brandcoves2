@@ -172,7 +172,8 @@ If abuse appears, the first step is to put a `pending` state in front (the plan'
 
 - A **Community Coves** band on `/coves`, last, after everything the site wrote: newest twelve.
 - `/coves/community`: all of a market's Community Coves, **newest** first or **most saved** first
-  (`?sort=saved`), 24 a page.
+  (`?sort=saved`), 24 a page. In the header's Discover menu under Coves since 2026-09-26, with the
+  hint "Lists other people shared" ([navigation.md](navigation.md)).
 - Each card: the public title, "For a dad · Birthday · 9 ideas", one product image, "Saved by 3
   people". Plurals are worded on the server (`trans_choice`), because the client's `t()` has none.
 

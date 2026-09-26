@@ -1,4 +1,5 @@
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
+import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
  */
 export default function Brands({ brands }: Props) {
     const { t, n } = useTranslations()
+    const { market } = usePage<SharedProps>().props
 
     // Non-letter initials (numbers, "3M") collect under "#" rather than each
     // getting a heading of their own.
@@ -41,6 +43,13 @@ export default function Brands({ brands }: Props) {
 
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('brand.index_title')}</h1>
             <p className="mt-3 max-w-2xl text-ink-soft">{t('brand.index_intro')}</p>
+            {/* The header's "Brands & shops" lands here (2026-09-26), and
+                there is no page holding both, so the shops are one link on. */}
+            <p className="mt-2 text-sm">
+                <Link href={`/${market.key}/shops`} className="font-medium text-accent hover:underline">
+                    {t('shops.title')} →
+                </Link>
+            </p>
 
             {letters.length === 0 ? (
                 /*

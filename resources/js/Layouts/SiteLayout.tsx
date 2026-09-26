@@ -9,8 +9,8 @@ import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
 import MarketBar from '../Components/MarketBar'
-import MarketSwitcher from '../Components/MarketSwitcher'
-import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
+import MarketButton, { MarketList } from '../Components/MarketSwitcher'
+import NavMenu, { type NavMenuGroup } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
 import { type PropsWithChildren, type ReactNode, useEffect, useState } from 'react'
 import { isCleanTerm, searchHref } from '../searchUrl'
@@ -31,20 +31,24 @@ import { useTranslations } from '../useTranslations'
  *
  * Elastic, because the header's width is fixed (the page column, 1152px, at
  * 1280 and 1440 alike) and what else it holds depends on the language: the
- * field takes the room the menus leave, capped at 16rem. Where that room is
+ * field takes the room the menus leave, capped at 24rem. Where that room is
  * under 7rem, a field would be a slot too narrow to read what you typed, so
  * it becomes the phone's magnifier instead, a link to the search page: still
  * one click to search. A container query decides, so the answer is measured
- * rather than guessed per language. Measured 2026-09-26: a field in English,
- * Dutch and Belgian Dutch; the magnifier in Belgian French, whose menu words
- * and flags plus language choice leave about 40px (docs/features/navigation.md).
+ * rather than guessed per language.
+ *
+ * It sits beside the logo since the header was regrouped (2026-09-26, Find a
+ * gift | Discover | My Coves and one country-and-language button), and that
+ * regrouping is what gave French a field: the three flags and the language
+ * dropdown had taken about 150px, and Belgian French used to get only the
+ * magnifier. Measurements in docs/features/navigation.md.
  */
 function HeaderSearch({ marketKey }: { marketKey: string }) {
     const { t } = useTranslations()
     const label = t('nav.search')
 
     return (
-        <div className="@container ml-auto hidden max-w-64 min-w-9 flex-1 xl:block">
+        <div className="@container hidden max-w-sm min-w-9 flex-1 xl:block">
             <form
                 action={`/${marketKey}/search`}
                 method="get"
@@ -79,7 +83,7 @@ function HeaderSearch({ marketKey }: { marketKey: string }) {
                 href={`/${marketKey}/search`}
                 aria-label={label}
                 title={label}
-                className="ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-ink @min-[7rem]:hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-ink @min-[7rem]:hidden"
             >
                 <ToolIcon name="search" className="h-4 w-4" />
             </Link>
@@ -202,121 +206,163 @@ function Chrome({ children }: PropsWithChildren) {
     const isCurrent = (href: string) => path === href || path.startsWith(`${href}/`)
 
     /*
-     * Discover ▾ | Coves ▾ | Gift Finder | How it works, and My Coves on the
-     * right (owner's calls, 2026-09-26; docs/features/navigation.md).
+     * Find a gift | Discover ▾ | My Coves, then one country-and-language
+     * button and the account (owner, 2026-09-26; docs/features/navigation.md).
      *
-     * Two rules shape it. **One name per page**: the entry for `/gift` says
-     * Gift Finder because the page does, and `/help` is How it works in the
-     * header and the footer alike. **A heading is never its own first item**:
-     * Coves already goes to `/coves`, so All Coves is not repeated under it,
-     * and Gift Finder has nothing under it, so it is a plain link.
+     * **Find a gift** is a plain link: it is one flow, and its page is where
+     * every way in starts. **Discover** is the one menu, in two labelled
+     * groups, "Every day" (the Daily Cove, Surprise) and "Coves" (the kinds
+     * we and other people make), then All Coves under a rule. Its label goes
+     * to the Discover page, which explains all of it; see NavMenu for why the
+     * chevron is a separate control. **My Coves** is a plain link too: lists
+     * work before signing up, so a visitor with no account must reach theirs
+     * without opening a menu that is about having one.
      *
-     * Each menu heading points at a hub page, so the label is a destination
-     * and not just a handle; see NavMenu for why the chevron is a separate
-     * control. Scan stays absent: it is a way of entering a query, and the
-     * scan button in the search field opens it. Secret Friend, group lists and
-     * occasions live under My Coves, in the account menus.
+     * Gone from the top row: Search (the header's own field is search), Ask
+     * others (the last step of Find a gift, and on the Discover page), and How
+     * it works, which is in the footer, on the home page, and in the account
+     * menu as Help. Scan stays absent: the scan button in the search field
+     * opens it.
      */
+    const gift = {
+        href: `${base}/gift`,
+        label: t('nav.gift'),
+        icon: <ToolIcon name="whisperer" className="h-5 w-5" />,
+    }
+
     const discover = {
         href: `${base}/discover-cove`,
         label: t('nav.discover'),
-        icon: <CoveIcon name="compass" className="h-4 w-4" />,
-        items: [
+        icon: <CoveIcon name="compass" className="h-5 w-5" />,
+        groups: [
             {
-                href: `${base}/search`,
-                label: t('nav.search_offers'),
-                hint: t('nav.hint_search'),
-                icon: <ToolIcon name="search" className="h-5 w-5" />,
+                label: t('nav.every_day'),
+                items: [
+                    {
+                        href: `${base}/${market.coveSegment}`,
+                        label: t('nav.daily'),
+                        hint: t('nav.hint_daily'),
+                        icon: <CoveIcon name="daily" className="h-5 w-5" />,
+                    },
+                    {
+                        href: `${base}/surprise`,
+                        label: t('nav.surprise'),
+                        hint: t('nav.hint_surprise'),
+                        icon: <CoveIcon name="surprise" className="h-5 w-5" />,
+                    },
+                ],
             },
             {
-                href: `${base}/surprise`,
-                label: t('nav.surprise'),
-                hint: t('nav.hint_surprise'),
-                icon: <CoveIcon name="surprise" className="h-5 w-5" />,
+                label: t('nav.coves'),
+                items: [
+                    // Named as the page is named ("Gift ideas, by person").
+                    {
+                        href: `${base}/gift-ideas`,
+                        label: t('nav.gift_ideas'),
+                        hint: t('nav.hint_gift_coves'),
+                        icon: <CoveIcon name="persona" className="h-5 w-5" />,
+                    },
+                    {
+                        href: `${base}/guides`,
+                        label: t('nav.smart'),
+                        hint: t('nav.hint_smart'),
+                        icon: <CoveIcon name="idea" className="h-5 w-5" />,
+                    },
+                    // The same mark All Coves gives this band: what you read
+                    // there comes from people, like Ask others.
+                    {
+                        href: `${base}/coves/community`,
+                        label: t('community.index_heading'),
+                        hint: t('nav.hint_community'),
+                        icon: <CoveIcon name="ask" className="h-5 w-5" />,
+                    },
+                    /*
+                     * The brands index. There is no page listing brands and
+                     * shops together; /brands links on to the shops (/shops),
+                     * and All Coves shows both bands.
+                     */
+                    {
+                        href: `${base}/brands`,
+                        label: t('nav.brands_shops'),
+                        hint: t('nav.hint_brands_shops'),
+                        icon: <CoveIcon name="brand" className="h-5 w-5" />,
+                    },
+                ],
             },
-            {
-                href: `${base}/ask`,
-                label: t('ask.title'),
-                hint: t('nav.hint_ask'),
-                icon: <CoveIcon name="ask" className="h-5 w-5" />,
-            },
-        ] as NavMenuItem[],
+        ] as NavMenuGroup[],
+        footer: { href: `${base}/coves`, label: t('nav.all_coves') },
     }
 
-    const coves = {
-        href: `${base}/coves`,
-        label: t('nav.coves'),
-        icon: <CoveIcon name="all" className="h-4 w-4" />,
-        items: [
-            {
-                href: `${base}/${market.coveSegment}`,
-                label: t('nav.daily'),
-                hint: t('nav.hint_daily'),
-                icon: <CoveIcon name="daily" className="h-5 w-5" />,
-            },
-            {
-                href: `${base}/guides`,
-                label: t('nav.smart'),
-                hint: t('nav.hint_smart'),
-                icon: <CoveIcon name="idea" className="h-5 w-5" />,
-            },
-            // Under Coves, not beside the Gift Finder: a Gift Cove is a kind
-            // of Cove, a set of products around a person.
-            {
-                href: `${base}/gift-ideas`,
-                label: t('nav.gift_coves'),
-                hint: t('nav.hint_gift_coves'),
-                icon: <CoveIcon name="persona" className="h-5 w-5" />,
-            },
-            /*
-             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld,
-             * deliberately, not removed: both pages exist, are linked from All
-             * Coves and are in the sitemap. Restoring them is two entries here.
-             */
-        ] as NavMenuItem[],
+    const myCoves = {
+        href: `${base}/lists`,
+        label: t('nav.lists'),
+        icon: <ToolIcon name="wishlist" className="h-5 w-5" />,
     }
 
-    // The flat links beside the two menus, each named as its page is.
-    const nav = [
-        {
-            href: `${base}/gift`,
-            label: t('nav.gift'),
-            icon: <ToolIcon name="whisperer" className="h-5 w-5" />,
-        },
-        {
-            href: `${base}/help`,
-            label: t('nav.how_it_works'),
-            icon: <ToolIcon name="help" className="h-5 w-5" />,
-        },
+    const help = {
+        href: `${base}/help`,
+        label: t('nav.help'),
+        icon: <ToolIcon name="help" className="h-5 w-5" />,
+    }
+
+    const discoverHrefs = [
+        discover.href,
+        ...discover.groups.flatMap((group) => group.items.map((item) => item.href)),
+        discover.footer.href,
     ]
 
     /*
-     * The phone gets the same sections, as sections: the hub is a heading you
-     * can press, its surfaces are indented under a rule, and the flat links,
-     * the account block and the market switcher are groups after them. Same
-     * links, same order, same single tap to any of them.
-     */
-    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, coves]
-
-    /*
-     * "You are here", in a menu where three entries share a path.
+     * "You are here", in a menu where two entries share a path.
      *
-     * `isCurrent` compares paths, deliberately, so a product opened from Search
-     * still reads as Search. The three list views differ only by `?view=`,
-     * which breaks that both ways: a path match lights all three at once, and
-     * comparing the full URL lights none of the entries that carry no query.
+     * `isCurrent` compares paths, deliberately, so a product opened from a
+     * Cove still reads as that Cove. My Coves and Saved Coves differ only by
+     * `?view=`, which breaks that both ways: a path match lights both at
+     * once, and comparing the full URL lights none of the entries that carry
+     * no query.
      *
-     * So: if any entry in the menu matches the URL exactly, that one is the
-     * answer and nothing else is. Otherwise fall back to the prefix match. On
-     * `/lists?view=shared` that marks Shared Lists alone rather than it and My
-     * Lists together; on `/lists/{id}` nothing matches exactly, so My Lists
-     * lights by prefix, which is right.
+     * So: if any entry matches the URL exactly, that one is the answer and
+     * nothing else is. Otherwise fall back to the prefix match.
      */
     const exact = (href: string) => (page.url ?? '') === href
-    const anyExact = [
-        ...sections.flatMap((section) => [section.href, ...section.items.map((item) => item.href)]),
-        ...nav.map((item) => item.href),
-    ].some(exact)
+    const anyExact = [gift.href, ...discoverHrefs, myCoves.href, help.href, `${base}/lists?view=saved`].some(exact)
+
+    // A plain entry in the wide header: Find a gift, My Coves.
+    const flatLink = (item: { href: string; label: string; icon: ReactNode }) => (
+        <Link
+            href={item.href}
+            aria-current={isCurrent(item.href) ? 'page' : undefined}
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap ${
+                isCurrent(item.href)
+                    ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
+                    : 'hover:text-ink'
+            }`}
+        >
+            <span className="shrink-0 text-accent">{item.icon}</span>
+            {item.label}
+        </Link>
+    )
+
+    // A heading-weight row in the phone menu: Find a gift, My Coves, Help.
+    const phoneRow = (item: { href: string; label: string; icon: ReactNode }) => (
+        <div className="mb-4 border-b border-line pb-4">
+            <Link
+                href={item.href}
+                aria-current={isHere(item.href) ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
+                className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
+                    isHere(item.href) ? 'text-accent' : 'text-ink'
+                }`}
+            >
+                <span className="flex items-center gap-2.5">
+                    <span className="shrink-0 text-accent">{item.icon}</span>
+                    {item.label}
+                </span>
+                <span aria-hidden className="text-xs text-ink-soft">
+                    →
+                </span>
+            </Link>
+        </div>
+    )
 
     const isHere = (href: string) => (anyExact ? exact(href) : isCurrent(href))
 
@@ -338,11 +384,9 @@ function Chrome({ children }: PropsWithChildren) {
 
             <header className="border-b border-line">
                 {/* Tighter from xl (2026-09-26): gap-4 here rather than
-                    gap-6, and gap-2 between the menus and between the items
-                    on the right, rather than gap-4 and gap-3. Belgian French
-                    overflowed this row by 55px before the search field came,
-                    and the 60px these give back is what makes it fit with
-                    the search magnifier (docs/features/navigation.md). */}
+                    gap-6. The row is the page column (1152px) at 1280 and
+                    1440 alike, and every language has to fit in it with a
+                    search field (docs/features/navigation.md). */}
                 <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4 xl:gap-4">
                     {/*
                       The name at the mark's height. It was 18px beside a 28px
@@ -372,46 +416,36 @@ function Chrome({ children }: PropsWithChildren) {
                         GiftCoves
                     </Link>
 
+                    {/* Beside the logo since 2026-09-26, and not on the search
+                        page, whose own field is the first thing on it: two
+                        search boxes a few pixels apart ask which one is the
+                        real one. */}
+                    {page.component !== 'Search' && <HeaderSearch marketKey={market.key} />}
+
                     <nav
-                        className="hidden items-center gap-2 text-sm text-ink-soft xl:flex"
+                        className="ml-auto hidden items-center gap-4 text-sm text-ink-soft xl:flex"
                         aria-label={t('nav.main')}
                     >
-                        {sections.map((section) => (
-                            <NavMenu
-                                key={section.href}
-                                href={section.href}
-                                label={section.label}
-                                icon={section.icon}
-                                items={section.items}
-                                current={isCurrent(section.href) || section.items.some((item) => isCurrent(item.href))}
-                                isCurrent={isCurrent}
-                                submenuLabel={t('nav.submenu', { section: section.label })}
-                            />
-                        ))}
-
-                        {nav.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                aria-current={isCurrent(item.href) ? 'page' : undefined}
-                                className={
-                                    isCurrent(item.href)
-                                        ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
-                                        : 'hover:text-ink'
-                                }
-                            >
-                                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                                    <span className="hidden text-accent xl:inline">{item.icon}</span>
-                                    {item.label}
-                                </span>
-                            </Link>
-                        ))}
+                        {flatLink(gift)}
+                        <NavMenu
+                            href={discover.href}
+                            label={discover.label}
+                            icon={discover.icon}
+                            groups={discover.groups}
+                            footer={discover.footer}
+                            current={discoverHrefs.some(isCurrent)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: discover.label })}
+                        />
+                        {/*
+                          Lists are anonymous-first — that is the whole design:
+                          save a product, build a list, share it, all before
+                          signing up. Hiding this link behind `auth.user` meant a
+                          visitor who had done exactly that had no way back to
+                          their own list, and the feature looked absent.
+                        */}
+                        {flatLink(myCoves)}
                     </nav>
-
-                    {/* Not on the search page, whose own field is the first
-                        thing on it: two search boxes a few pixels apart ask
-                        which one is the real one. */}
-                    {page.component !== 'Search' && <HeaderSearch marketKey={market.key} />}
 
                     {/*
                       The mobile entry point.
@@ -480,8 +514,11 @@ function Chrome({ children }: PropsWithChildren) {
                         </button>
                     </div>
 
-                    <div className="ml-auto hidden shrink-0 items-center gap-2 xl:flex">
-                        <MarketSwitcher id="header" className="flex items-center gap-2" />
+                    <div className="hidden shrink-0 items-center gap-2 xl:flex">
+                        {/* One button for country and language since
+                            2026-09-26, where three flags and a language
+                            dropdown were; see Components/MarketSwitcher. */}
+                        <MarketButton />
 
                         {auth.user && unreadCount > 0 && (
                             <Link
@@ -495,21 +532,6 @@ function Chrome({ children }: PropsWithChildren) {
                                 </span>
                             </Link>
                         )}
-
-                        {/*
-                          Lists are anonymous-first — that is the whole design:
-                          save a product, build a list, share it, all before
-                          signing up. Hiding this link behind `auth.user` meant a
-                          visitor who had done exactly that had no way back to
-                          their own list, and the feature looked absent.
-                        */}
-                        <Link
-                            href={`${base}/lists`}
-                            aria-current={isCurrent(`${base}/lists`) ? 'page' : undefined}
-                            className={`hidden whitespace-nowrap text-sm lg:block ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
-                        >
-                            {t('nav.lists')}
-                        </Link>
 
                         <AccountMenu />
                     </div>
@@ -571,133 +593,107 @@ function Chrome({ children }: PropsWithChildren) {
                             </button>
                         </div>
 
+                        {/*
+                          The same entries as the wide header, in its order
+                          (2026-09-26): Find a gift, Discover with both its
+                          groups, My Coves; then country and language, then
+                          Help. Nothing collapses: a dropdown inside an open
+                          panel is a second thing to open.
+                        */}
                         <nav className="text-sm" aria-label={t('nav.main')}>
-                            {sections.map((section) => (
-                                <div key={section.href} className="mb-4 border-b border-line pb-4">
-                                    {/*
-                                      The hub is the heading and the heading is
-                                      a link. Both halves matter: the page
-                                      explains a section that is not
-                                      self-evident, and a heading that cannot be
-                                      pressed puts it out of reach on the one
-                                      device where there is no hover to reveal
-                                      anything.
-                                    */}
-                                    <Link
-                                        href={section.href}
-                                        aria-current={isHere(section.href) ? 'page' : undefined}
-                                        onClick={() => setMenuOpen(false)}
-                                        className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
-                                            isHere(section.href) ? 'text-accent' : 'text-ink'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2.5">
-                                            <span className="shrink-0 text-accent">{section.icon}</span>
-                                            {section.label}
-                                        </span>
-                                        <span aria-hidden className="text-xs text-ink-soft">
-                                            →
-                                        </span>
-                                    </Link>
+                            {phoneRow(gift)}
 
-                                    {/* Indented under a rule, which is the
-                                        cheapest way to say "these belong to
-                                        that" without a control to expand.
-                                        Nothing at all under a section with no
-                                        items: a rule beside empty space reads
-                                        as a list that failed to load. */}
-                                    {section.items.length > 0 && (
-                                    <ul className="mt-1 border-l border-line pl-3">
-                                        {section.items.map((item) => (
-                                            <li key={item.href}>
-                                                <Link
-                                                    href={item.href}
-                                                    aria-current={isHere(item.href) ? 'page' : undefined}
-                                                    // Close on navigate: an
-                                                    // Inertia visit keeps the
-                                                    // layout mounted, so a menu
-                                                    // left open would cover the
-                                                    // page just arrived at.
-                                                    onClick={() => setMenuOpen(false)}
-                                                    className={`flex min-h-11 items-center gap-2.5 py-2 ${
-                                                        isHere(item.href) ? 'font-medium text-accent' : ''
-                                                    }`}
-                                                >
-                                                    {item.icon ? (
-                                                        <span className="shrink-0 text-accent">
-                                                            {item.icon}
+                            <div className="mb-4 border-b border-line pb-4">
+                                {/*
+                                  The hub is the heading and the heading is a
+                                  link. Both halves matter: the page explains a
+                                  section that is not self-evident, and a
+                                  heading that cannot be pressed puts it out of
+                                  reach on the one device where there is no
+                                  hover to reveal anything.
+                                */}
+                                <Link
+                                    href={discover.href}
+                                    aria-current={isHere(discover.href) ? 'page' : undefined}
+                                    onClick={() => setMenuOpen(false)}
+                                    className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
+                                        isHere(discover.href) ? 'text-accent' : 'text-ink'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2.5">
+                                        <span className="shrink-0 text-accent">{discover.icon}</span>
+                                        {discover.label}
+                                    </span>
+                                    <span aria-hidden className="text-xs text-ink-soft">
+                                        →
+                                    </span>
+                                </Link>
+
+                                {/* Each group under its small heading, its
+                                    entries indented under a rule: the cheapest
+                                    way to say "these belong to that" without a
+                                    control to expand. */}
+                                {discover.groups.map((group) => (
+                                    <div key={group.label} className="mt-2">
+                                        <p className="pl-3 text-2xs font-semibold tracking-wide text-ink-soft uppercase">
+                                            {group.label}
+                                        </p>
+                                        <ul aria-label={group.label} className="mt-1 border-l border-line pl-3">
+                                            {group.items.map((item) => (
+                                                <li key={item.href}>
+                                                    <Link
+                                                        href={item.href}
+                                                        aria-current={isHere(item.href) ? 'page' : undefined}
+                                                        // Close on navigate: an Inertia visit keeps the
+                                                        // layout mounted, so a menu left open would cover
+                                                        // the page just arrived at.
+                                                        onClick={() => setMenuOpen(false)}
+                                                        className={`flex min-h-11 items-center gap-2.5 py-2 ${
+                                                            isHere(item.href) ? 'font-medium text-accent' : ''
+                                                        }`}
+                                                    >
+                                                        <span className="shrink-0 text-accent">{item.icon}</span>
+                                                        <span>
+                                                            <span className="block">{item.label}</span>
+                                                            {/* Kept on a phone for the reason they
+                                                                exist at all: entries differing by one
+                                                                word cannot be told apart the first
+                                                                time. */}
+                                                            {item.hint ? (
+                                                                <span className="block text-xs text-ink-soft">{item.hint}</span>
+                                                            ) : null}
                                                         </span>
-                                                    ) : null}
-                                                    <span>
-                                                        <span className="block">{item.label}</span>
-                                                        {/* Kept on a phone for
-                                                            the reason they exist
-                                                            at all: four Cove
-                                                            entries differing by
-                                                            one word cannot be
-                                                            told apart the first
-                                                            time. */}
-                                                        {item.hint ? (
-                                                            <span className="block text-xs text-ink-soft">
-                                                                {item.hint}
-                                                            </span>
-                                                        ) : null}
-                                                    </span>
-                                                </Link>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    )}
-                                </div>
-                            ))}
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
 
-                            {/*
-                              The flat links (Gift Finder, How it works),
-                              drawn like the section headings above: an icon
-                              in the accent, a label, 44px, and an arrow. Each
-                              is its own heading-weight row rather than a
-                              heading over indented rows, because a heading
-                              over one row that repeats its word is a box
-                              around nothing.
-                            */}
-                            {nav.map((item) => (
-                                <div key={item.href} className="mb-4 border-b border-line pb-4">
-                                    <Link
-                                        href={item.href}
-                                        aria-current={isHere(item.href) ? 'page' : undefined}
-                                        onClick={() => setMenuOpen(false)}
-                                        className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
-                                            isHere(item.href) ? 'text-accent' : 'text-ink'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2.5">
-                                            <span className="shrink-0 text-accent">{item.icon}</span>
-                                            {item.label}
-                                        </span>
-                                        <span aria-hidden className="text-xs text-ink-soft">
-                                            →
-                                        </span>
-                                    </Link>
-                                </div>
-                            ))}
+                                <Link
+                                    href={discover.footer.href}
+                                    aria-current={isHere(discover.footer.href) ? 'page' : undefined}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="mt-2 flex min-h-11 items-center pl-3 font-medium text-accent"
+                                >
+                                    {discover.footer.label} →
+                                </Link>
+                            </div>
 
-                            {/* No account block here since 2026-09-13: it is
-                                the person button's own sheet, `AccountSheet`,
-                                where My Lists and the rest are one tap from
-                                the header instead of a scroll to the foot. */}
+                            {phoneRow(myCoves)}
                         </nav>
 
                         {/*
-                          Country names spelled out here, unlike the header.
-                          There is room in an open menu, and a flag on its own is
-                          a guess — the tooltip that carries the name on a
-                          desktop does not exist on the device this menu is for.
+                          Where you shop and what you read, laid out: the menu
+                          is already open, so a button in it would be a second
+                          thing to open. It is also the only way to change the
+                          market on a phone.
                         */}
-                        <MarketSwitcher
-                            id="mobile"
-                            withNames
-                            className="mt-4 flex flex-col gap-3"
-                        />
+                        <div className="mb-4 border-b border-line pb-4">
+                            <MarketList />
+                        </div>
+
+                        {phoneRow(help)}
 
                         {/* A way out at the end as well as the start: the ✕ in
                             the header is a screen away by the time the switcher

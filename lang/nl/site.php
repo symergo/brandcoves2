@@ -41,7 +41,7 @@ return [
          * Het bijvoeglijk naamwoord vertaalt, de naam niet — zie
          * localisation.md.
          */
-        'gift_coves' => 'Cadeau Coves',
+        'gift_ideas' => 'Cadeau-ideeën per type',
         'brand_coves' => 'Merk Coves',
 
         /*
@@ -67,8 +67,14 @@ return [
         'hint_gift_coves' => 'Ideeën rond één persoon',
         'hint_all_coves' => 'Alles wat we gepubliceerd hebben',
         'hint_ask' => 'Laat anderen iets voorstellen',
-        'search_offers' => 'Zoek aanbiedingen',
-        'hint_search' => 'Op naam, merk of categorie',
+        'hint_community' => 'Lijstjes die anderen deelden',
+        'hint_brands_shops' => 'Per merk of per winkel',
+        'every_day' => 'Elke dag',
+        'brands_shops' => 'Merken & winkels',
+        'all_coves' => 'Alle Coves',
+        'people' => 'Mijn mensen',
+        'help' => 'Help',
+        'market_button' => 'Land en taal: :current',
 
         'santa' => 'Geheime Vriend',
 
@@ -2308,7 +2314,7 @@ return [
         'find_title' => 'Dingen vinden',
         'find_search' => 'Zoek op naam, merk of soort ding, of zeg voor wie het is: "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We kijken in veel winkels tegelijk en vergelijken hun prijzen.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
-        'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de vlaggen in het menu wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
+        'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de knop voor land en taal bovenaan (op een telefoon in het menu) wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
         'find_gift' => 'In Cadeau vinden zeg je eerst voor wie het is: een van je mensen, of wie het is, zoals je partner of een collega. Kies dan hoe je zoekt: beantwoord een paar vragen, kies tussen twee dingen in Dit of dat, of begin bij een type persoon. Elke weg eindigt op dezelfde pagina met ideeën, met daaronder ideeën zonder winkel, Coves die anderen maakten, en onderaan Vraag het aan anderen.',
         'find_history' => 'Hou bij wat je iemand gaf op de pagina van die persoon (open ze vanuit een lijstje voor hen of vanuit Cadeau vinden). Schrijf het op, of druk op "Dit gaf ik" bij iets op hun lijstje. Wat jij met "Ik koop dit" aanduidde op lijstjes voor hen telt ook mee, nooit wat iemand anders aanduidde. Die dingen laten we dan weg uit nieuwe ideeën voor hen, en we stellen de volgende stap voor, zoals koffiebonen na een moka-potje.',
         'find_reminders' => 'Bewaar een verjaardag of een gelegenheid voor iemand en we sturen je een herinnering per e-mail. Zo’n twee weken vooraf brengt die drie ideeën mee die passen bij de persoon, het budget en wat je eerder gaf, met één klik om ze in Cadeau vinden te bekijken of op hun lijstje te zetten. Stoppen kan via de link in elke herinnering.',
