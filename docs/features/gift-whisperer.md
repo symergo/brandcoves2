@@ -419,3 +419,11 @@ the budget carried as `?budget=`. The first of the brief's interests with a page
 wins, then the person's own page; a saved person's free-text relationship ("mama") is read with the
 search box's word lists. When no page exists the link is not shown. See
 [gift-landing-pages.md](gift-landing-pages.md).
+
+## Coves others made for someone like this (2026-09-26)
+
+Below the results, up to three **Community Coves**: lists other people published for the same kind
+of person, or holding products tagged with one of the brief's interests, in the same market and never
+the visitor's own. The occasion only breaks ties. One query, one self-contained section
+(`communityCoves`, drawn by `CommunityCoveCards`). See
+[community-coves.md](community-coves.md#the-gift-finder-coves-others-made-for-someone-like-this).

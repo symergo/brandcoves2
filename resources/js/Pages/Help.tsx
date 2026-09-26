@@ -96,6 +96,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'whisperer', text: t('help.share_like_this') },
                         { icon: 'collab', text: t('help.share_together') },
                         { icon: 'santa', text: t('help.share_santa') },
+                        { icon: 'people', text: t('help.share_publish') },
                     ]}
                 />
 

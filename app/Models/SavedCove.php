@@ -28,9 +28,25 @@ class SavedCove extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return BelongsTo<DailyPickSet, $this> */
+    /**
+     * The editorial Cove, when this bookmark is on one. Exactly one of this and
+     * {@see list()} is set (the `saved_coves_one_target` CHECK).
+     *
+     * @return BelongsTo<DailyPickSet, $this>
+     */
     public function cove(): BelongsTo
     {
         return $this->belongsTo(DailyPickSet::class, 'set_id');
+    }
+
+    /**
+     * The Community Cove, when this bookmark is on a list somebody published.
+     * See docs/features/community-coves.md.
+     *
+     * @return BelongsTo<Wishlist, $this>
+     */
+    public function list(): BelongsTo
+    {
+        return $this->belongsTo(Wishlist::class, 'wishlist_id');
     }
 }

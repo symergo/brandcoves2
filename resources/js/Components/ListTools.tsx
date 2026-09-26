@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import CopyToList from './CopyToList'
+import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
 import { invalidate } from '../savedItems'
 import ToolIcon, { type ToolKey } from './ToolIcon'
@@ -120,6 +121,8 @@ interface Props {
      */
     panel: Panel | null
     onPanel: (panel: Panel | null) => void
+    /** Publishing as a Community Cove; the owner's alone, null for anybody else. */
+    publication?: Publication | null
 }
 
 export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa'
@@ -210,6 +213,7 @@ export default function ListTools({
     asked,
     panel: open,
     onPanel,
+    publication = null,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -1460,6 +1464,10 @@ export default function ListTools({
                     )}
 
 
+
+                    {open === 'share' && publication && (
+                        <PublishCove base={base} listId={list.id} state={publication} />
+                    )}
 
                     {open === 'share' && canHandOver && (
                         <div className="mt-6">

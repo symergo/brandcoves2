@@ -6,8 +6,20 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export interface SaveCoveState {
-    coveId: number
+    /** An editorial Cove's id. Absent on a Community Cove, which sends its addresses instead. */
+    coveId?: number
     isSaved: boolean
+    /*
+     * A Community Cove (a list somebody published) posts to other addresses
+     * and stashes another intent for a guest; see
+     * docs/features/community-coves.md. Left out, the editorial Cove's
+     * addresses are built from `coveId` as before.
+     */
+    saveUrl?: string
+    copyUrl?: string
+    intent?: Record<string, string | number>
+    /** The owner looking at their own Community Cove: nothing to save. */
+    isOwn?: boolean
 }
 
 /**
@@ -29,11 +41,13 @@ export default function SaveCove({ state }: { state: SaveCoveState }) {
     const [busy, setBusy] = useState(false)
     const base = `/${market.key}`
     const saved = state.isSaved
+    const saveUrl = state.saveUrl ?? `${base}/coves/${state.coveId}/save`
+    const copyUrl = state.copyUrl ?? `${base}/coves/${state.coveId}/copy`
 
     async function asGuest(action: 'save' | 'copy'): Promise<void> {
         try {
             await send(`${base}/save-intent`, 'POST', {
-                cove_id: state.coveId,
+                ...(state.intent ?? { cove_id: state.coveId ?? 0 }),
                 cove_action: action,
                 return_to: window.location.pathname + window.location.search,
             })
@@ -55,9 +69,9 @@ export default function SaveCove({ state }: { state: SaveCoveState }) {
         const options = { preserveScroll: true, onFinish: () => setBusy(false) }
 
         if (saved) {
-            router.delete(`${base}/coves/${state.coveId}/save`, options)
+            router.delete(saveUrl, options)
         } else {
-            router.post(`${base}/coves/${state.coveId}/save`, {}, options)
+            router.post(saveUrl, {}, options)
         }
     }
 
@@ -69,7 +83,11 @@ export default function SaveCove({ state }: { state: SaveCoveState }) {
         }
 
         setBusy(true)
-        router.post(`${base}/coves/${state.coveId}/copy`, {}, { onFinish: () => setBusy(false) })
+        router.post(copyUrl, {}, { onFinish: () => setBusy(false) })
+    }
+
+    if (state.isOwn) {
+        return null
     }
 
     return (

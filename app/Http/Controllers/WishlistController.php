@@ -17,6 +17,7 @@ use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftTarget;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\Friends;
@@ -213,17 +214,46 @@ class WishlistController extends Controller
             return [];
         }
 
+        $community = app(CommunityCoves::class);
+
+        /*
+         * Editorial Coves and Community Coves (lists somebody published) in
+         * one view, newest save first. Each row carries the addresses its own
+         * buttons post to, so the page does not have to know which is which.
+         * A Community Cove its owner unpublished, or an admin hid, is left out
+         * the same way an unpublished editorial Cove is.
+         */
         return SavedCove::query()
             ->where('user_id', $owner->user->id)
-            ->whereHas('cove', fn ($q) => $q->published())
-            ->with(['cove.picks.group'])
+            ->where(fn ($q) => $q
+                ->whereHas('cove', fn ($c) => $c->published())
+                ->orWhereHas('list', fn ($l) => $l->communityCoves()))
+            ->with(['cove.picks.group', 'list.recipient', 'list.items.group'])
             ->orderByDesc('created_at')
             ->get()
-            ->map(function (SavedCove $saved): array {
+            ->map(function (SavedCove $saved) use ($community): array {
+                if ($saved->list !== null) {
+                    $list = $saved->list;
+                    $card = $community->card($list);
+                    $base = '/'.$list->market->value.'/coves/community/'.$list->public_slug;
+
+                    return [
+                        'id' => 'l'.$list->public_slug,
+                        'title' => $card['title'],
+                        'kind' => 'community',
+                        'url' => $card['url'],
+                        'image' => $card['image'],
+                        'savedAt' => $saved->created_at?->toDateString(),
+                        'saveUrl' => "{$base}/save",
+                        'copyUrl' => "{$base}/copy",
+                    ];
+                }
+
                 $cove = $saved->cove;
+                $base = '/'.$cove->market->value.'/coves/'.$cove->id;
 
                 return [
-                    'id' => $cove->id,
+                    'id' => (string) $cove->id,
                     'title' => (string) $cove->theme_title,
                     'kind' => $cove->kind->value,
                     'url' => '/'.$cove->market->value.'/'.$cove->kind->path(
@@ -234,6 +264,8 @@ class WishlistController extends Controller
                     ),
                     'image' => $cove->picks->first(fn ($pick) => $pick->group?->image_url !== null)?->group?->image_url,
                     'savedAt' => $saved->created_at?->toDateString(),
+                    'saveUrl' => "{$base}/save",
+                    'copyUrl' => "{$base}/copy",
                 ];
             })
             ->values()
@@ -731,6 +763,14 @@ class WishlistController extends Controller
              * feature read as a broken one. The address is asked for at the
              * point of handing over instead.
              */
+            /*
+             * Publishing this list as a Community Cove (docs/features/community-coves.md).
+             * The owner's alone, and only an owner with an account: somebody has
+             * to be able to come back and take it down. Null for everybody else,
+             * so the section is simply not drawn.
+             */
+            'publication' => $this->publication($wishlist, $owner),
+
             'canHandOver' => ListAccess::isOwner($wishlist, $owner)
                 && $wishlist->kind === ListKind::ForSomeone
                 && $wishlist->handed_over_at === null,
@@ -1289,6 +1329,35 @@ class WishlistController extends Controller
                 'ownerName' => $owned ? null : ($list->owner?->name ?? $list->owner?->email),
                 'role' => $owned ? null : $list->collaborators->first()?->role->value,
             ]);
+    }
+
+    /**
+     * The owner's view of publishing: what is on the site now, and what the
+     * public page would say.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function publication(Wishlist $list, Owner $owner): ?array
+    {
+        if (! $owner->isSignedIn() || $list->owner_user_id !== $owner->user->id) {
+            return null;
+        }
+
+        $coves = app(CommunityCoves::class);
+
+        return [
+            'published' => $list->published_at !== null,
+            'hidden' => $list->public_hidden_at !== null,
+            'url' => $list->public_slug === null ? null : $coves->url($list),
+            'title' => $list->public_title ?? $coves->suggestedTitle($list),
+            'showsOwner' => (bool) $list->public_shows_owner,
+            'firstName' => CommunityCoves::firstName($owner->user),
+            // What the page will say about who it is for, so the owner sees it
+            // before pressing: "For a dad · Birthday".
+            'about' => $coves->describe($list),
+            'itemCount' => $coves->publicItems($list)->count(),
+            'minItems' => CommunityCoves::MIN_ITEMS,
+        ];
     }
 
     /** @return array<string, mixed> */

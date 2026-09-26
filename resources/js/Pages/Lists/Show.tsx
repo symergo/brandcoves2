@@ -4,6 +4,7 @@ import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
+import type { Publication } from '../../Components/PublishCove'
 import { type ListKind } from '../../Components/ListKindBadge'
 import EditManualItem from '../../Components/EditManualItem'
 import SaveToList from '../../Components/SaveToList'
@@ -144,6 +145,8 @@ interface Props {
      * control renders nothing rather than a dead button.
      */
     copyTargets: CopyTarget[]
+    /** Publishing as a Community Cove: the owner's alone, null for anybody else. */
+    publication: Publication | null
 }
 
 export default function ListShow({
@@ -167,6 +170,7 @@ export default function ListShow({
     santaMemberships,
     board,
     copyTargets,
+    publication = null,
 }: Props) {
     const { market, flash } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -363,6 +367,7 @@ export default function ListShow({
                         asked={asked}
                         panel={panel}
                         onPanel={setPanel}
+                        publication={publication}
                     />
 
                     {/*

@@ -4,6 +4,7 @@ import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ChipInput from '../../Components/ChipInput'
+import CommunityCoveCards, { type CommunityCoveCard } from '../../Components/CommunityCoveCards'
 import InfoTip from '../../Components/InfoTip'
 import SaveToList from '../../Components/SaveToList'
 import ToolIcon from '../../Components/ToolIcon'
@@ -69,6 +70,8 @@ interface Props {
     recipientList: SavingTo | null
     /** The gift landing page nearest this brief: a link that can be kept and shared. */
     pageUrl?: string | null
+    /** "Coves others made for someone like this"; see docs/features/community-coves.md. */
+    communityCoves?: CommunityCoveCard[]
 }
 
 /*
@@ -85,7 +88,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, communityCoves = [] }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -459,6 +462,15 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                             </Link>
                         )}
                     </div>
+
+                    {communityCoves.length > 0 && (
+                        <section className="mt-10">
+                            <h2 className="text-lg font-medium">{t('community.finder_heading')}</h2>
+                            <div className="mt-4">
+                                <CommunityCoveCards coves={communityCoves} />
+                            </div>
+                        </section>
+                    )}
                 </section>
             ) : (
                 <>

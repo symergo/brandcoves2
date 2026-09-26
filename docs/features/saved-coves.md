@@ -44,6 +44,15 @@ Published Coves only, newest save first, each linking in its own market. An unpu
 hidden, not deleted: the bookmark comes back if the Cove is published again. Unsaving works whatever
 state the Cove is in. Saving or copying an unpublished Cove is a 404.
 
+## Community Coves, 2026-09-26
+
+A list somebody published ([community-coves.md](community-coves.md)) can be saved and copied the
+same way. `saved_coves` gained a nullable `wishlist_id` beside a now-nullable `set_id`, with a CHECK
+that exactly one is set, so the Saved view stays one query over one table. Each saved row now sends
+the addresses its Remove and "Make it my list" buttons post to (`saveUrl`, `copyUrl`), because the two
+kinds live at different routes. `SaveCove.tsx` takes the same addresses, and falls back to the
+editorial Cove's when given only a `coveId`.
+
 ## Files
 
 - `database/migrations/2026_09_26_000300_a_cove_can_be_saved.php`, `app/Models/SavedCove.php`

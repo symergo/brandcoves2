@@ -898,6 +898,11 @@ A share link resolves from **any** market prefix. The link gets pasted into a me
 someone whose browser lands them elsewhere; 404ing them would be a bug, not a feature. The list is
 the same list wherever it is read.
 
+**Publishing is not sharing (2026-09-26).** An owner may also publish a list as a Community Cove: a
+read-only public page at `/{market}/coves/community/{slug}` that anybody can find. It is a separate
+switch with separate columns (`published_at`, `public_title`, ...), never turned on by sharing, and
+it grants nothing the share link grants. See [community-coves.md](community-coves.md).
+
 ---
 
 ## Alerts

@@ -10,7 +10,7 @@ interface Cove {
 }
 
 interface Section {
-    key: 'daily' | 'gift' | 'smart' | 'brand' | 'shop'
+    key: 'daily' | 'gift' | 'smart' | 'brand' | 'shop' | 'community'
     url: string
     coves: Cove[]
 }
@@ -33,6 +33,9 @@ const icons: Record<Section['key'], CoveKey> = {
     smart: 'idea',
     brand: 'brand',
     shop: 'shop',
+    // Lists other visitors published: the same mark as Ask others, the other
+    // place on the site where what you read comes from people.
+    community: 'ask',
 }
 
 /**

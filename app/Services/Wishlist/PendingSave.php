@@ -9,6 +9,7 @@ use App\Enums\Source;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Cove\SavedCoves;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -131,6 +132,10 @@ class PendingSave
             return $this->replayCove($user, $current, (int) $payload['cove_id'], (string) ($payload['cove_action'] ?? 'save'));
         }
 
+        if (! empty($payload['community_cove'])) {
+            return $this->replayCommunityCove($user, $current, (string) $payload['community_cove'], (string) ($payload['cove_action'] ?? 'save'));
+        }
+
         $list = $lists->for($owner, $current);
 
         // A group id is only meaningful inside its own market — `product_groups`
@@ -203,5 +208,35 @@ class PendingSave
         $saved->save($user, $cove);
 
         return ['title' => (string) $cove->theme_title, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
+    }
+
+    /**
+     * The same, for a Community Cove (a list somebody published). Only while
+     * it is still on the site: an owner may have taken it down in between.
+     *
+     * @return array{title: string, language: string, message: string}|null
+     */
+    private function replayCommunityCove(User $user, CurrentMarket $current, string $slug, string $action): ?array
+    {
+        $list = app(CommunityCoves::class)->find($current->get(), $slug);
+
+        if ($list === null) {
+            return null;
+        }
+
+        $saved = app(SavedCoves::class);
+        $language = $current->get()->language();
+        $title = (string) $list->public_title;
+
+        if ($action === 'copy') {
+            $copy = $saved->copyListToList($user, $list);
+            $this->session->put('url.intended', $current->url("lists/{$copy->id}"));
+
+            return ['title' => $title, 'language' => $language, 'message' => 'site.saved_coves.copied'];
+        }
+
+        $saved->saveList($user, $list);
+
+        return ['title' => $title, 'language' => $language, 'message' => 'site.saved_coves.saved_flash'];
     }
 }
