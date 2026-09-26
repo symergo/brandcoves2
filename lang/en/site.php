@@ -2675,7 +2675,7 @@ return [
         'button' => 'Accept the invitation',
         'nothing_to_do' => 'Not interested? Then there is nothing to do.',
         'why' => 'You are getting this email because :name entered your address on GiftCoves.',
-        'not_wanted' => 'Not asked for? This is spam',
+        'not_wanted' => 'Not asked for? Let us know',
         'page_title' => 'Invitations through GiftCoves',
         'ask' => 'Stop receiving invitations through GiftCoves? Then nobody can invite you by email any more.',
         'stop' => 'Send me no more invitations',

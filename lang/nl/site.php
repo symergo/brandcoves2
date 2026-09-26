@@ -2417,7 +2417,7 @@ return [
         'button' => 'Uitnodiging aannemen',
         'nothing_to_do' => 'Geen interesse? Dan hoef je niets te doen.',
         'why' => 'Je krijgt deze e-mail omdat :name je e-mailadres op GiftCoves invulde.',
-        'not_wanted' => 'Niet gevraagd? Dit is spam',
+        'not_wanted' => 'Niet gevraagd? Laat het ons weten',
         'page_title' => 'Uitnodigingen via GiftCoves',
         'ask' => 'Wil je geen uitnodigingen meer krijgen via GiftCoves? Dan kan niemand je nog per e-mail uitnodigen.',
         'stop' => 'Stuur me geen uitnodigingen meer',

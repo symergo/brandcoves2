@@ -48,7 +48,7 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
 | Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Dit is spam" is het bezwaar |
-| Verzoeken om geen uitnodigingen meer en klachten "Dit is spam", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
+| Verzoeken om geen uitnodigingen meer en meldingen "Niet gevraagd", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
 
 ### Een woord over de bezoekerscookie
 
@@ -114,7 +114,7 @@ hen voor het laatst uitnodigde. We houden ook 90 dagen bij dat je een uitnodigin
 stuurde, met een eenrichtingscode gemaakt van het adres in plaats van het adres:
 dat is wat de twee grenzen tellen.
 
-Elke uitnodiging per e-mail heeft een link "Niet gevraagd? Dit is spam" die zonder
+Elke uitnodiging per e-mail heeft een link "Niet gevraagd? Laat het ons weten" die zonder
 account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail,
 en dat telt als één klacht tegen het lid dat ze stuurde. Daarvoor bewaren we
 alleen de eenrichtingscode, nooit het adres: het verzoek zolang het geldt (de
@@ -219,7 +219,7 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
 | Een uitnodiging die nog niemand aannam (het uitgenodigde adres) | Tot die persoon inlogt, of 365 dagen nadat het lid hen voor het laatst uitnodigde |
 | Overzicht van de uitnodigingen die een lid stuurde (een eenrichtingscode, niet het adres) | 90 dagen |
-| Klacht "Dit is spam" over een uitnodiging | 365 dagen |
+| Melding "Niet gevraagd" over een uitnodiging | 365 dagen |
 | Verzoek om geen uitnodigingen meer (een eenrichtingscode, niet het adres) | Tot het ongedaan wordt gemaakt |
 | Serverlogs | 30 dagen |
 | Analyticscookie, als je die toestond | 13 maanden |

@@ -47,7 +47,7 @@ you have the right to object, and section *Your rights* explains how.
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
 | An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "This is spam" link is the objection |
-| "No more invitations" requests and "This is spam" complaints, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
+| "No more invitations" requests and "Not asked for" reports, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
 
 ### A note on the visitor cookie
 
@@ -108,7 +108,7 @@ for 365 days after you last invited them. We also keep a record that you sent an
 invitation, with a one-way code made from the address instead of the address,
 for 90 days: it is what the two limits count.
 
-Every invitation email has a "Not asked for? This is spam" link that works
+Every invitation email has a "Not asked for? Let us know" link that works
 without an account. Pressing it means no invitation from anybody is emailed to
 that address again, and counts one complaint against the member who sent it.
 For that we keep only the one-way code, never the address: the request for as
@@ -211,7 +211,7 @@ safeguards above.
 | Gift profile card | Until you remove it, or 365 days after anyone last opened it |
 | An invitation nobody has accepted yet (the invited address) | Until that person signs in, or 365 days after the member last invited them |
 | Record of the invitations a member sent (a one-way code, not the address) | 90 days |
-| "This is spam" complaint about an invitation | 365 days |
+| "Not asked for" report about an invitation | 365 days |
 | "No more invitations" request (a one-way code, not the address) | Until it is undone |
 | Server logs | 30 days |
 | Analytics cookie, if you allowed it | 13 months |
