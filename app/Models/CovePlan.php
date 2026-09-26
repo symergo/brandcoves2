@@ -9,6 +9,7 @@ use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
+use App\Services\Gift\TasteBrief;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property list<string> $queries
  * @property list<int> $pinned_group_ids
+ * @property array<string, mixed>|null $brief
  */
 class CovePlan extends Model
 {
@@ -98,7 +100,25 @@ class CovePlan extends Model
             // Article kinds only — a guide's FAQ, decided before it is written
             // rather than invented during. See App\Enums\CoveKind.
             'faq' => 'array',
+            // Who the Cove is for, as a gift brief (TasteBrief::toArray()).
+            // Null on every plan that chooses by search terms instead.
+            'brief' => 'array',
         ];
+    }
+
+    /**
+     * The plan's gift brief, ready for the suggestion engine, or null when
+     * it has none (or one that says nothing the engine would read).
+     */
+    public function tasteBrief(int $limit): ?TasteBrief
+    {
+        if (! is_array($this->brief) || $this->brief === []) {
+            return null;
+        }
+
+        $brief = TasteBrief::fromArray($this->brief, $this->market, $limit);
+
+        return $brief->isEmpty() ? null : $brief;
     }
 
     /**

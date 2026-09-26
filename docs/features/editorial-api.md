@@ -376,6 +376,38 @@ A pleasant consequence: **a Cove written through this API costs nothing in AI sp
 one part that used a model is the part the author supplied. See [ai-invariant.md](ai-invariant.md) —
 nothing in any handler here touches `AiClient`, and builds are dispatched to the queue.
 
+### A Cove can be chosen by who it is for (2026-09-26)
+
+`brief` on `POST /coves` and `PATCH /coves/{id}`: a **gift brief** (who the Cove is for, what they
+love, the budget), not the writing brief `GET /coves/{id}/brief` returns. Roadmap step 4, part 4.
+
+```json
+"brief": {"relationship": "father", "interests": ["cooking"], "budgetMax": 6000}
+```
+
+- **What it does.** Stored on `cove_plans.brief` (the `TasteBrief::toArray()` shape). When a plan
+  has one, `EditionBuilder` puts the curated shortlist first and fills the open slots from the gift
+  suggestion engine with that brief, instead of searching the plan's `queries`. Only products that
+  answer one of the brief's interests count: with nothing matching the engine browses by budget,
+  and a Cove padded with strangers is the page the SurpriseSelector note warns about. What the
+  brief cannot fill falls to the usual selector, so `queries` still tops up a thin brief.
+- **No AI.** The engine is retrieval and arithmetic; `CoveGiftBriefTest` builds a persona with a
+  brief against a live-looking AI client and asserts nothing was sent.
+- **Kinds.** Daily, persona, shop and brand. A guide, a seasonal guide or an advice article is a
+  comparison (one per brand, in a price ladder) and never reads a brief, so sending one is a 422,
+  not a silent drop.
+- **Refused, not trimmed.** A value outside the gift vocabulary (`relationship: "uncle"`, an
+  interest the site does not know) is a 422 naming `brief.<field>`.
+- **The whole-plan contract holds.** `POST /coves` resets every field it is not sent, and the brief
+  is one of them: re-sending a plan without its brief says the plan has none. `PATCH` changes it
+  alone; `"brief": null` clears it, leaving it out leaves it.
+- **Dailies lose the repeat memory on the brief path.** SurpriseSelector keeps recently shown
+  products off the next edition; the engine does not know about that memory. Personas, the first
+  users, have no such rotation, so it was left out; a Daily with a brief can repeat a product.
+
+"The keen cook" as a persona is now `{"interests": ["cooking"]}` rather than a list of product
+words, and the shortlist the author curates still leads.
+
 ### The plan is linked but not consumed
 
 The builder sets `cove_plans.edition_id` and deliberately leaves `status` alone. Marking it `used` is

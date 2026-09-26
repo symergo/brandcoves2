@@ -104,6 +104,25 @@ time rather than as a silently skipped pick at build time.
   "queries": ["hondenmand"],          // max 12, max 60 chars; product words
   "buildInstructions": "…",           // max 1000; direction for the whole piece
 
+  // The GIFT brief: who the Cove is for (not the writing brief of
+  // GET /coves/{id}/brief). Daily, persona, shop, brand only; a guide,
+  // seasonal or advice plan refuses it (422). With one, the builder fills
+  // the slots the shortlist leaves open from the gift suggestion engine
+  // (no AI) instead of searching `queries`; `queries` still tops up what
+  // the brief cannot fill. Values outside the gift vocabulary are a 422
+  // naming the field (brief.relationship, brief.interests, …).
+  "brief": {
+    "relationship": "father",         // partner|mother|father|grandparent|child|
+                                      // friend|colleague|sibling|teacher|host
+    "interests": ["cooking"],         // Interest values, max 8
+    "occasion": "birthday",           // EventType values + sinterklaas, easter, …
+    "ageBand": "50-64",               // 0-2|3-5|6-9|10-12|13-17|18-29|30-49|50-64|65+
+    "budgetMin": 2000,                // cents
+    "budgetMax": 6000,                // cents
+    "vibe": "…", "preferences": ["…"], "values": ["handmade"],
+    "avoid": ["alcohol"]              // matched against titles, hard filter
+  },
+
   // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere:
   "focusKeyphrase": "…",              // max 120
   "metaDescription": "…",             // max 160
@@ -192,7 +211,7 @@ all of these and is authoritative; this is the map.
 | **approve** | `POST /coves/{id}/approve` |
 | **build** | `POST /coves/{id}/build` · read back with `GET /coves/{id}/edition` |
 | **any, in bulk** | `POST /coves/stages/{curate\|approve\|build}` with a selector, `dryRun` supported |
-| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase` |
+| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase`, `brief` (`null` clears it; left out, untouched) |
 
 Two things to know before writing anything:
 
@@ -203,8 +222,8 @@ any copy of the rules, including this file.
 **`POST /coves` no longer wipes a shortlist.** It replaces items when a list is sent and
 leaves them alone when none is; `items: []` still clears. Previously a prose-only write
 there deleted the curation. It still resets every other field (editorial, blurb,
-pickMode, writer) to what the body carries, so send the plan whole or use
-`PATCH /coves/{id}`.
+pickMode, writer, and the gift `brief`) to what the body carries, so send the plan
+whole or use `PATCH /coves/{id}`.
 
 ## The state vocabulary
 

@@ -23,6 +23,8 @@ use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\HouseStyle;
+use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\TasteBrief;
 use App\Services\Guides\CoveMarkup;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -64,6 +66,7 @@ class EditionBuilder
         private readonly GuideWriter $writer,
         private readonly PromptBank $prompts,
         private readonly CovePrompt $prompt,
+        private readonly SuggestionEngine $engine,
     ) {}
 
     /**
@@ -874,6 +877,19 @@ class EditionBuilder
         }
 
         /*
+         * A plan that says who it is for is filled by the gift engine.
+         *
+         * `cove_plans.brief` (roadmap step 4, part 4): "the keen cook" as
+         * interests: cooking rather than a list of search terms. The curated
+         * lead stays first; the open slots are the engine's picks for that
+         * brief. Not for the article kinds: a guide is a comparison, one per
+         * brand in a price ladder, and a brief does not describe that.
+         */
+        if ($plan !== null && ! $plan->kind->isArticle() && ($brief = $plan->tasteBrief($count)) !== null) {
+            return $this->briefFinds($plan, $brief, $curated, $count, $exclude);
+        }
+
+        /*
          * Everything below the curated lead is chosen per kind.
          *
          * A column wants surprise and category variety; a guide wants one
@@ -892,6 +908,51 @@ class EditionBuilder
         ]);
 
         return $this->selectors->for($plan->kind)->select($plan, $curated, $count, $exclude);
+    }
+
+    /**
+     * The curated lead, then the suggestion engine's answer to the plan's brief.
+     *
+     * Retrieval and arithmetic only: no model is asked anything here, which
+     * `CoveBriefTest` pins with a live-looking AI client that must stay
+     * silent. Only picks that answer one of the brief's interests count: the
+     * engine falls back to a budget browse when nothing matches, and "the keen
+     * cook" padded with a candle is the page a Cove must not be (see the
+     * SurpriseSelector note on stopping when the theme runs out). What the
+     * brief cannot fill is left to the kind's own selector, around what was
+     * chosen, so a thin brief still reaches the edition floor when the plan
+     * also carries search terms.
+     *
+     * @param  Collection<int, ProductGroup>  $curated
+     * @param  list<int>  $exclude
+     * @return list<ProductGroup>
+     */
+    private function briefFinds(CovePlan $plan, TasteBrief $brief, Collection $curated, int $count, array $exclude): array
+    {
+        $lead = $curated->take($count)->values();
+        $open = $count - $lead->count();
+
+        $picked = [];
+
+        if ($open > 0) {
+            $suggestions = $this->engine->suggest(
+                $brief->withLimit($open)->excluding([...$lead->pluck('id')->all(), ...$exclude]),
+            );
+
+            foreach ($suggestions as $suggestion) {
+                if ($brief->interests === [] || $suggestion->matchedInterests !== []) {
+                    $picked[] = $suggestion->group;
+                }
+            }
+        }
+
+        $chosen = collect([...$lead->all(), ...$picked]);
+
+        if ($chosen->count() >= $count) {
+            return $chosen->take($count)->values()->all();
+        }
+
+        return $this->selectors->for($plan->kind)->select($plan, $chosen, $count, $exclude);
     }
 
     /**

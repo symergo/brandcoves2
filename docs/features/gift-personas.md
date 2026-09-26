@@ -101,6 +101,11 @@ insert — at 06:00, with a constraint violation and no other symptom.
   three, so neither can shadow the other. The shelf lists each recipient's landing page above the
   personas. See [gift-landing-pages.md](gift-landing-pages.md).
 
+**A persona can be a brief (2026-09-26).** A persona plan can carry a gift brief
+(`cove_plans.brief`) instead of search terms: "the keen cook" as *interests: cooking*, and the
+builder fills the slots the shortlist leaves open from the suggestion engine with it. See
+[editorial-api.md](editorial-api.md#a-cove-can-be-chosen-by-who-it-is-for-2026-09-26).
+
 **Not `/coves/{slug}`.** `/coves/subscribe`, `/coves/confirm/{token}` and `/coves/unsubscribe/{token}`
 already live under that prefix, and a slug catch-all beside them would shadow all three the first
 time somebody named a persona "subscribe".
