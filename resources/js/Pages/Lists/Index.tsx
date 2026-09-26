@@ -45,12 +45,16 @@ type ListsView = 'mine' | 'shared' | 'group' | 'saved'
 
 /** A Cove somebody saved into My Coves; see docs/features/saved-coves.md. */
 interface SavedCoveRow {
-    id: number
+    id: string
     title: string
+    /** A Cove kind, or `community` for a list somebody published (community-coves.md). */
     kind: string
     url: string
     image: string | null
     savedAt: string | null
+    /** Where Remove (DELETE) and Make it my list (POST) go; they differ per kind. */
+    saveUrl: string
+    copyUrl: string
 }
 
 /**
@@ -551,14 +555,14 @@ function SavedCoves({ coves, base }: { coves: SavedCoveRow[]; base: string }) {
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3">
                         <button
                             type="button"
-                            onClick={() => router.post(`${base}/coves/${cove.id}/copy`)}
+                            onClick={() => router.post(cove.copyUrl)}
                             className="text-sm font-medium text-accent-dark underline hover:text-ink"
                         >
                             {t('saved_coves.copy')}
                         </button>
                         <button
                             type="button"
-                            onClick={() => router.delete(`${base}/coves/${cove.id}/save`, { preserveScroll: true })}
+                            onClick={() => router.delete(cove.saveUrl, { preserveScroll: true })}
                             className="text-sm text-ink-soft hover:text-danger"
                         >
                             {t('saved_coves.unsave')}

@@ -10,6 +10,8 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\CommunityQuestion;
 use App\Models\GiftLanding;
+use App\Models\Wishlist;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftLandingLinks;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
@@ -222,6 +224,36 @@ class SitemapController extends Controller
                             'loc' => url("/{$resolved->value}/shops/{$cove->slug}"),
                             'lastmod' => $cove->updated_at ? Carbon::parse($cove->updated_at)->toAtomString() : null,
                             'priority' => '0.6',
+                            'changefreq' => 'weekly',
+                        ];
+                    });
+
+                /*
+                 * Community Coves that have earned indexing: a week on the
+                 * site, eight things on them, saved by three people. The SQL
+                 * narrows to the candidates and `isIndexable()` decides, the
+                 * same call the page's robots tag makes, so the sitemap never
+                 * names a page that then says noindex.
+                 * See docs/features/community-coves.md.
+                 */
+                $community = app(CommunityCoves::class);
+
+                Wishlist::query()
+                    ->communityCoves()
+                    ->where('market', $resolved->value)
+                    ->where('published_at', '<=', now()->subDays(CommunityCoves::INDEX_AFTER_DAYS))
+                    ->has('saves', '>=', CommunityCoves::INDEX_MIN_SAVES)
+                    ->withCount('saves')
+                    ->with(['items.group'])
+                    ->orderByDesc('published_at')
+                    ->limit(1000)
+                    ->get()
+                    ->filter(fn (Wishlist $list) => $community->isIndexable($list))
+                    ->each(function (Wishlist $list) use (&$urls, $community): void {
+                        $urls[] = [
+                            'loc' => url($community->url($list)),
+                            'lastmod' => $list->updated_at?->toAtomString(),
+                            'priority' => '0.4',
                             'changefreq' => 'weekly',
                         ];
                     });

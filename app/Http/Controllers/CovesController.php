@@ -10,6 +10,7 @@ use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
@@ -100,6 +101,7 @@ class CovesController extends Controller
                 $this->brands($current),
                 // The writing if there is any, the directory of shops if not.
                 $this->shopCoves($current) ?? $this->shops($current, $registry),
+                $this->community($current),
             ])),
         ]);
     }
@@ -230,6 +232,30 @@ class CovesController extends Controller
                 'url' => $current->url($cove->kind->path((string) $cove->slug, $current->get())),
                 'date' => null,
             ])->all(),
+        ];
+    }
+
+    /**
+     * Community Coves: lists people chose to publish, newest first.
+     *
+     * Last, after everything we wrote: this page is the shelf of what the site
+     * made, and the band says plainly that these come from other visitors.
+     * See docs/features/community-coves.md.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function community(CurrentMarket $current): ?array
+    {
+        $coves = app(CommunityCoves::class)->newest($current->get(), self::PER_SECTION);
+
+        if ($coves === []) {
+            return null;
+        }
+
+        return [
+            'key' => 'community',
+            'url' => $current->url('coves/community'),
+            'coves' => $coves,
         ];
     }
 

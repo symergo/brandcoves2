@@ -128,6 +128,12 @@ class HandoverController extends Controller
                 // is not a gift.
                 'is_default' => false,
                 'handed_over_at' => now(),
+                // Off the site: the giver published it, the new owner never
+                // agreed to a public page, and "show my first name" was the
+                // giver's choice about the giver. The address answers 410.
+                // See docs/features/community-coves.md.
+                'published_at' => null,
+                'public_shows_owner' => null,
             ]);
         });
 

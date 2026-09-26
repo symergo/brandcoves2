@@ -12,6 +12,7 @@ use App\Enums\Vibe;
 use App\Models\Event;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftLandingLinks;
 use App\Services\Gift\GiftTags;
 use App\Services\Gift\RejectionMemory;
@@ -226,6 +227,12 @@ class GiftController extends Controller
             // lists and a person approved. Id and wording only.
             // See docs/features/offline-ideas.md.
             'offlineIdeas' => app(OfflineIdeaPicker::class)->forBrief($brief),
+            /*
+             * "Coves others made for someone like this": lists other people
+             * published for the same kind of person or the same interests.
+             * See docs/features/community-coves.md.
+             */
+            'communityCoves' => app(CommunityCoves::class)->forBrief($brief, $request->user()),
         ]);
     }
 

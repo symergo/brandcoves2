@@ -287,9 +287,9 @@ whoever made it.
 |---|---|---|
 | find a product | **Add to Cove** | Works: save to a list from search, product pages and editorial Coves (`SaveToList`) |
 | like one item in somebody else's Cove | **Add to my Cove** | Works on shared lists ([copying-items.md](features/copying-items.md)) and on editorial Coves |
-| see somebody else's Cove | **Save this Cove** | Missing |
+| see somebody else's Cove | **Save this Cove** | Works on editorial Coves and on Community Coves, with "Make it my list" ([saved-coves.md](features/saved-coves.md)) |
 | see a brand's Cove, or anyone's | **Follow Cove** | Missing in the app. The only subscription is the Daily Cove by email ([cove-subscriptions.md](features/cove-subscriptions.md)) |
-| make a gift guide or a list worth sharing | **Publish Cove** | Half built: lists have a `public` setting (`ListVisibility`), but nothing shows or indexes public lists |
+| make a gift guide or a list worth sharing | **Publish Cove** | Works since 2026-09-26: an owner publishes a list as a Community Cove, browsed under `/coves` and suggested by the Gift Finder ([community-coves.md](features/community-coves.md)) |
 
 Together these are a social layer around product discovery, and they are where a network effect
 would come from.

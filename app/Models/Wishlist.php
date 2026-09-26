@@ -15,6 +15,7 @@ use App\Support\ListAccess;
 use App\Support\Owner;
 use App\Support\ShareCode;
 use Database\Factories\WishlistFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -83,6 +84,11 @@ class Wishlist extends Model
             'event_date' => 'date',
             'is_default' => 'boolean',
             'handed_over_at' => 'datetime',
+
+            // Published as a Community Cove; see App\Services\Cove\CommunityCoves.
+            'published_at' => 'datetime',
+            'public_shows_owner' => 'boolean',
+            'public_hidden_at' => 'datetime',
 
             /*
              * A home address is the most sensitive thing this application
@@ -163,6 +169,33 @@ class Wishlist extends Model
     public function suggestions(): HasMany
     {
         return $this->hasMany(WishlistItem::class)->whereNull('accepted_at');
+    }
+
+    /**
+     * Lists published as Community Coves and not taken down by an admin: the
+     * only lists a stranger may find. See docs/features/community-coves.md.
+     *
+     * @param  Builder<Wishlist>  $query
+     */
+    public function scopeCommunityCoves(Builder $query): void
+    {
+        $query->whereNotNull('wishlists.published_at')->whereNull('wishlists.public_hidden_at');
+    }
+
+    /** Is this list on the site as a Community Cove right now? */
+    public function isCommunityCove(): bool
+    {
+        return $this->published_at !== null && $this->public_hidden_at === null;
+    }
+
+    /**
+     * The bookmarks people keep on this list as a Community Cove.
+     *
+     * @return HasMany<SavedCove, $this>
+     */
+    public function saves(): HasMany
+    {
+        return $this->hasMany(SavedCove::class);
     }
 
     /** @return BelongsTo<Recipient, $this> */

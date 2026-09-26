@@ -94,6 +94,7 @@ What that means in code:
 | Product, with or without a buyable offer | none | itself |
 | Guide with an empty shortlist | none | itself |
 | Previews, shared lists, Secret Santa, quiz, taste profile, magic link, an unanswered or held board question, 404 | **noindex** | — |
+| A Community Cove until it has been up a week, holds eight things and three people saved it (2026-09-26, [community-coves.md](community-coves.md#indexing-not-at-first)) | **noindex, follow** | itself |
 
 The last row is the exception the rule allows for: those pages are private or
 transient, not thin. `robots.txt` keeps `/*/go/` (an outbound affiliate hop is not a page, and

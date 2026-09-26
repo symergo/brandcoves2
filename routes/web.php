@@ -11,6 +11,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ClaimIntentController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\CommunityCoveController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListHelpController;
 use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
+use App\Http\Controllers\ListPublishController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\MediaController;
@@ -408,6 +410,31 @@ Route::prefix('{market}')->group(function () {
             ->whereNumber('set')
             ->middleware('throttle:20,1')
             ->name('coves.copy');
+
+        /*
+         * Community Coves: the same Save and "Make it my list" on a list
+         * somebody published, and the owner's switch that publishes it. See
+         * CommunityCoveController, ListPublishController and
+         * docs/features/community-coves.md.
+         */
+        Route::post('/coves/community/{slug}/save', [CommunityCoveController::class, 'save'])
+            ->where('slug', '[a-z0-9-]+')
+            ->middleware('throttle:60,1')
+            ->name('community.save');
+        Route::delete('/coves/community/{slug}/save', [CommunityCoveController::class, 'unsave'])
+            ->where('slug', '[a-z0-9-]+')
+            ->name('community.unsave');
+        Route::post('/coves/community/{slug}/copy', [CommunityCoveController::class, 'copy'])
+            ->where('slug', '[a-z0-9-]+')
+            ->middleware('throttle:20,1')
+            ->name('community.copy');
+        Route::post('/lists/{list}/publish', [ListPublishController::class, 'store'])
+            ->whereUuid('list')
+            ->middleware('throttle:20,1')
+            ->name('lists.publish');
+        Route::delete('/lists/{list}/publish', [ListPublishController::class, 'destroy'])
+            ->whereUuid('list')
+            ->name('lists.unpublish');
 
         /*
          * The people you share lists with.
@@ -986,6 +1013,17 @@ Route::prefix('{market}')->group(function () {
     | personas are at /gift-ideas rather than here in the first place.
     */
     Route::get('/coves', CovesController::class)->name('coves');
+
+    /*
+     * Community Coves: lists their owners chose to publish. Two literal
+     * segments before the slug, so nothing a person calls their Cove can
+     * shadow /coves/subscribe or the other routes beside it. See
+     * docs/features/community-coves.md.
+     */
+    Route::get('/coves/community', [CommunityCoveController::class, 'index'])->name('community');
+    Route::get('/coves/community/{slug}', [CommunityCoveController::class, 'show'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('community.show');
 
     /*
     |----------------------------------------------------------------------

@@ -74,6 +74,14 @@ shadow all three the first time somebody named a Cove "subscribe".
 shelf and delivered a third of it. It points here now. Two links reading the same words and landing
 in different places is the drift this codebase keeps writing about.
 
+## Community Coves, the last band (2026-09-26)
+
+Lists other visitors published ([community-coves.md](community-coves.md)) get a band of their own,
+the newest twelve, **after** everything the site wrote: this page is first the shelf of what we made,
+and the band's own line says these come from other people. It links to `/coves/community`, which
+has them all, newest or most saved first. That index sits under `/coves` as a literal segment, with
+the slug a level below it, so the rule above (never a `/coves/{slug}` catch-all) still holds.
+
 ## Sitemap
 
 Listed at priority 0.5 — lower than any index it links to, because it holds no text of its own and a
