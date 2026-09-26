@@ -81,8 +81,11 @@ return [
         'how_it_works' => 'Hoe het werkt',
     ],
 
-    'market_prompt' => [
-        'title' => 'Waar ben je?',
+    'market_bar' => [
+        'label' => 'Je land',
+        'showing' => 'Winkels en prijzen voor :country.',
+        'keep' => ':country houden',
+        'hide' => 'Verbergen',
     ],
 
     'home' => [
@@ -2254,6 +2257,7 @@ return [
         'find_title' => 'Dingen vinden',
         'find_search' => 'Zoek op naam, merk of soort ding, of zeg voor wie het is: "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We kijken in veel winkels tegelijk en vergelijken hun prijzen.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
+        'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de vlaggen in het menu wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
         'find_gift' => 'Vertel de Cadeauzoeker voor wie het is, wat die persoon leuk vindt en wat je wilt uitgeven, en kies uit de ideeën.',
         'find_history' => 'Hou bij wat je iemand gaf op de pagina van die persoon (open ze vanuit een lijstje voor hen of vanuit de Cadeauzoeker). Schrijf het op, of druk op "Dit gaf ik" bij iets op hun lijstje. Wat jij met "Ik koop dit" aanduidde op lijstjes voor hen telt ook mee, nooit wat iemand anders aanduidde. Die dingen laten we dan weg uit nieuwe ideeën voor hen, en we stellen de volgende stap voor, zoals koffiebonen na een moka-potje.',
         'find_reminders' => 'Bewaar een verjaardag of een gelegenheid voor iemand en we sturen je een herinnering per e-mail. Zo’n twee weken vooraf brengt die drie ideeën mee die passen bij de persoon, het budget en wat je eerder gaf, met één klik om ze in de Cadeauzoeker te bekijken of op hun lijstje te zetten. Stoppen kan via de link in elke herinnering.',

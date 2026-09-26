@@ -50,6 +50,42 @@ admin and signing in or out itself.
 The phone panel builds from the same `sections` and `nav`, so it changed with the desktop header.
 Most of the dated sections below describe the header before these changes.
 
+### A search field in the desktop header (2026-09-26)
+
+From the owner's UX audit. The phone header has had a magnifier since 2026-09-07; the desktop
+header (from `xl`, 1280px) had nothing, so searching from any page but the home meant opening
+Discover and choosing Search offers. `HeaderSearch` in `Layouts/SiteLayout.tsx` is a compact field
+between the menus and the flags. It submits exactly as the home page's search card does: a real
+GET form to `/{market}/search` (it works without JavaScript), and with JavaScript a clean term goes
+to its readable address through `searchHref()` (`/be-nl/zoek/lego-duplo`), so one search never has
+two URLs ([search-urls.md](search-urls.md)). It is left out on the search page itself, whose own
+field is the first thing on it.
+
+**The width problem, measured.** The header row is the page column, 1152px, at 1280 *and* at 1440
+(`max-w-6xl`), so a wider screen does not help. Measured with Playwright, signed out: Belgian French
+already overflowed that row by **55px before the field existed** (the menus take 556px in French,
+and Belgium adds a language dropdown beside its flags). Three things give room back:
+
+- tighter gaps from `xl`: the row's gap 24 to 16px, between the menus 16 to 8px, on the right 12 to
+  8px, and between the flags and the language dropdown 12 to 8px;
+- the header's language dropdown says **NL / FR** rather than Nederlands / Français (115px to 57px);
+  the phone sheet still spells the names out, and each option carries the full name as its title;
+- the field is elastic: it takes what the menus leave, capped at 16rem, and under 7rem it turns
+  into the phone's magnifier, a link to the search page, by a container query. A slot narrower
+  than that cannot show what was typed.
+
+The result at 1280 and 1440, no overflow in any of them: English a 253px field, Belgian Dutch
+145px, Belgian French and Spanish the magnifier (about 40px is what French leaves; Spanish is
+measured on the unpublished `es` market, whose header borrows Belgium's flags and dropdown, so a
+real Spanish market without a dropdown would get a field). The field's
+placeholder is the short word (Search, Zoek, Rechercher, Buscar) rather than the card's sentence,
+because at 7rem a sentence is cut in half.
+
+**Not done, for the owner to choose:** a field in French too needs about 80px more, and every way
+to get it changes something the owner decided: a header row wider than the page column
+(`xl:max-w-7xl` gives 96px but moves the logo out of line with the content), shorter French menu
+words ("Comment ça marche" is 164px), or an icon for Sign in.
+
 ## You could not sign out
 
 `POST /{market}/logout` has existed since magic links went in. Nothing on the site ever linked to

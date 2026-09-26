@@ -145,9 +145,19 @@ export default function MarketSwitcher({
                         value={currentLanguage?.market ?? current.languages[0].market}
                         onChange={(e) => go(e.target.value)}
                     >
+                        {/*
+                          In the header the language is its two-letter code,
+                          NL or FR, beside the Belgian flag; the phone sheet
+                          (`withNames`) spells it out. "Français" took 115px
+                          of a header that had to find room for a search
+                          field in French (2026-09-26); the code takes about
+                          55 and is what a Belgian site's language toggle
+                          usually says. The option carries the full name as
+                          its title.
+                        */}
                         {current.languages.map((language) => (
-                            <option key={language.language} value={language.market}>
-                                {language.name}
+                            <option key={language.language} value={language.market} title={language.name}>
+                                {withNames ? language.name : language.language.toUpperCase()}
                             </option>
                         ))}
                     </select>

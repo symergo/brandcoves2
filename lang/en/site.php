@@ -108,8 +108,13 @@ return [
         'how_it_works' => 'How it works',
     ],
 
-    'market_prompt' => [
-        'title' => 'Where are you?',
+    // The bar above the header on a first visit, or on another country's
+    // page (Components/MarketBar). :country is a name from the switcher.
+    'market_bar' => [
+        'label' => 'Your country',
+        'showing' => 'Shops and prices for :country.',
+        'keep' => 'Keep :country',
+        'hide' => 'Hide',
     ],
 
     'home' => [
@@ -2497,6 +2502,7 @@ return [
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
+        'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The flags in the menu change it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
         'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
         'find_history' => 'Keep track of what you gave someone on their page (open it from a list for them or from the Gift Finder). Write it down, or press "I gave this" beside something on their list. What you marked "I\'ll get this" on lists for them counts too, never what anybody else marked. We then leave those things out of new ideas for them and suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in the Gift Finder or add them to their list. Stop the emails from the link in any reminder.',

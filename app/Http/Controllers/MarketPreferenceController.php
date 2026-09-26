@@ -9,6 +9,7 @@ use App\Services\Seo\Alternates;
 use App\Support\MarketPreference;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 
 /**
@@ -35,7 +36,7 @@ use Illuminate\Validation\Rule;
  */
 class MarketPreferenceController extends Controller
 {
-    public function __invoke(Request $request): RedirectResponse
+    public function __invoke(Request $request): RedirectResponse|Response
     {
         $validated = $request->validate([
             // Published only, and enforced server-side rather than trusted from
@@ -51,6 +52,17 @@ class MarketPreferenceController extends Controller
         ]);
 
         $market = Market::from($validated['market']);
+
+        /*
+         * The market bar's close button: "keep what you guessed", recorded
+         * without leaving the page. Asked for as JSON by a fetch, so it gets
+         * the cookie and nothing else; a redirect would make the browser load
+         * the page again for nobody. Still this route and still a CSRF-checked
+         * POST, so the switcher's route remains the only writer of the choice.
+         */
+        if ($request->expectsJson()) {
+            return response()->noContent()->withCookie(MarketPreference::cookie($market));
+        }
 
         return redirect($this->destination($market, $validated['path'] ?? null), 302)
             ->withCookie(MarketPreference::cookie($market));

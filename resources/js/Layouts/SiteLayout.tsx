@@ -8,14 +8,84 @@ import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
-import MarketPrompt from '../Components/MarketPrompt'
+import MarketBar from '../Components/MarketBar'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
 import { type PropsWithChildren, type ReactNode, useEffect, useState } from 'react'
+import { isCleanTerm, searchHref } from '../searchUrl'
 import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+
+/**
+ * The desktop header's search field (owner's UX audit, 2026-09-26).
+ *
+ * From `xl` up the header had no way to search at all: the phone has its
+ * magnifier button, and a desktop visitor had to open Discover and pick
+ * Search offers, two moves for the site's first action. This is the same
+ * search the home page's card and the search page run: a real GET form to
+ * `/{market}/search` (so it works without JavaScript), and with JavaScript a
+ * clean term goes to its readable address (`/be-nl/zoek/lego`) exactly as
+ * the card sends it, so one search never has two URLs.
+ *
+ * Elastic, because the header's width is fixed (the page column, 1152px, at
+ * 1280 and 1440 alike) and what else it holds depends on the language: the
+ * field takes the room the menus leave, capped at 16rem. Where that room is
+ * under 7rem, a field would be a slot too narrow to read what you typed, so
+ * it becomes the phone's magnifier instead, a link to the search page: still
+ * one click to search. A container query decides, so the answer is measured
+ * rather than guessed per language. Measured 2026-09-26: a field in English,
+ * Dutch and Belgian Dutch; the magnifier in Belgian French, whose menu words
+ * and flags plus language choice leave about 40px (docs/features/navigation.md).
+ */
+function HeaderSearch({ marketKey }: { marketKey: string }) {
+    const { t } = useTranslations()
+    const label = t('nav.search')
+
+    return (
+        <div className="@container ml-auto hidden max-w-64 min-w-9 flex-1 xl:block">
+            <form
+                action={`/${marketKey}/search`}
+                method="get"
+                role="search"
+                onSubmit={(e) => {
+                    const q = new FormData(e.currentTarget).get('q')
+                    if (typeof q !== 'string' || !isCleanTerm(q)) return
+                    e.preventDefault()
+                    router.get(searchHref(marketKey, q))
+                }}
+                className="relative hidden @min-[7rem]:block"
+            >
+                {/* The short word ("Search", "Rechercher") rather than the
+                    card's sentence: at its narrowest the field is 7rem, and a
+                    placeholder cut in half reads as a fault. */}
+                <input
+                    type="search"
+                    name="q"
+                    aria-label={label}
+                    placeholder={label}
+                    className="h-9 w-full rounded-full border border-line bg-cream pr-9 pl-4 text-sm text-ink placeholder:text-ink-soft focus:border-ink"
+                />
+                <button
+                    type="submit"
+                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-full text-ink-soft hover:text-ink"
+                >
+                    <ToolIcon name="search" className="h-4 w-4" />
+                    <span className="sr-only">{label}</span>
+                </button>
+            </form>
+            <Link
+                href={`/${marketKey}/search`}
+                aria-label={label}
+                title={label}
+                className="ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-ink @min-[7rem]:hidden"
+            >
+                <ToolIcon name="search" className="h-4 w-4" />
+            </Link>
+        </div>
+    )
+}
 
 /**
  * A beam along the top edge while a page is on its way.
@@ -261,8 +331,19 @@ function Chrome({ children }: PropsWithChildren) {
 
             <NavigationBeam />
 
+            {/* Above the header and in the flow, so it covers nothing: which
+                country's shops this is, the others one tap away. Replaced the
+                first-visit dialog on 2026-09-26; see Components/MarketBar. */}
+            <MarketBar />
+
             <header className="border-b border-line">
-                <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
+                {/* Tighter from xl (2026-09-26): gap-4 here rather than
+                    gap-6, and gap-2 between the menus and between the items
+                    on the right, rather than gap-4 and gap-3. Belgian French
+                    overflowed this row by 55px before the search field came,
+                    and the 60px these give back is what makes it fit with
+                    the search magnifier (docs/features/navigation.md). */}
+                <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4 xl:gap-4">
                     {/*
                       The name at the mark's height. It was 18px beside a 28px
                       mark, which made the mark the logo and the word its
@@ -292,7 +373,7 @@ function Chrome({ children }: PropsWithChildren) {
                     </Link>
 
                     <nav
-                        className="hidden items-center gap-3 text-sm text-ink-soft xl:flex xl:gap-4"
+                        className="hidden items-center gap-2 text-sm text-ink-soft xl:flex"
                         aria-label={t('nav.main')}
                     >
                         {sections.map((section) => (
@@ -326,6 +407,11 @@ function Chrome({ children }: PropsWithChildren) {
                             </Link>
                         ))}
                     </nav>
+
+                    {/* Not on the search page, whose own field is the first
+                        thing on it: two search boxes a few pixels apart ask
+                        which one is the real one. */}
+                    {page.component !== 'Search' && <HeaderSearch marketKey={market.key} />}
 
                     {/*
                       The mobile entry point.
@@ -394,8 +480,8 @@ function Chrome({ children }: PropsWithChildren) {
                         </button>
                     </div>
 
-                    <div className="ml-auto hidden shrink-0 items-center gap-2 xl:flex xl:gap-3">
-                        <MarketSwitcher id="header" />
+                    <div className="ml-auto hidden shrink-0 items-center gap-2 xl:flex">
+                        <MarketSwitcher id="header" className="flex items-center gap-2" />
 
                         {auth.user && unreadCount > 0 && (
                             <Link
@@ -773,10 +859,6 @@ function Chrome({ children }: PropsWithChildren) {
             </footer>
 
             <CookieBanner />
-            {/* Over everything, including the cookie bar: a first visit
-                answers the country first, then the page loads again with
-                the choice made and the bar gets its turn. */}
-            <MarketPrompt />
         </div>
     )
 }

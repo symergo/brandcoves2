@@ -81,8 +81,11 @@ return [
         'how_it_works' => 'Cómo funciona',
     ],
 
-    'market_prompt' => [
-        'title' => '¿Dónde estás?',
+    'market_bar' => [
+        'label' => 'Tu país',
+        'showing' => 'Tiendas y precios: :country.',
+        'keep' => 'Mantener :country',
+        'hide' => 'Ocultar',
     ],
 
     'home' => [
@@ -2241,6 +2244,7 @@ return [
         'find_title' => 'Encontrar cosas',
         'find_search' => 'Busca por nombre, marca o tipo de cosa, o di para quién es: «regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros». Miramos en muchas tiendas a la vez y comparamos sus precios.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
+        'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. Las banderas del menú lo cambian cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
         'find_gift' => 'Dile al Buscador de regalos para quién es, qué le gusta y tu presupuesto, y elige entre las ideas.',
         'find_history' => 'Lleva la cuenta de lo que le regalaste a alguien en su página (ábrela desde una lista para esa persona o desde el Buscador de regalos). Apúntalo, o pulsa «Lo regalé» junto a algo de su lista. Lo que marcaste con «Yo lo regalo» en sus listas también cuenta, nunca lo que marcaron otros. Después lo dejamos fuera de las nuevas ideas para esa persona y proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en el Buscador de regalos o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',

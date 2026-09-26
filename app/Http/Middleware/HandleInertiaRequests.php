@@ -194,12 +194,15 @@ class HandleInertiaRequests extends Middleware
             'markets' => app(MarketSwitcher::class)->payload(),
 
             /*
-             * Ask a first-time visitor where they shop. True until a choice
-             * is stored, and never for a crawler; see MarketPreference and
-             * Components/MarketPrompt. Not lazy: it is one cookie read, and
-             * the prompt has to be in the first paint or it is a flash.
+             * The market bar: which country this page is, offered beside the
+             * others, for a visitor who has not chosen or who is looking at
+             * another country than the one they chose. Null for a crawler and
+             * for a visitor at home; see MarketPreference::bar() and
+             * Components/MarketBar. Not lazy: a cookie read and a header
+             * parse, and the bar has to be in the first paint or the page
+             * jumps down when it arrives.
              */
-            'askMarket' => MarketPreference::shouldAsk($request),
+            'marketBar' => MarketPreference::bar($request, $market),
 
             /*
              * Site copy for the current market's language.

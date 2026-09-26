@@ -92,7 +92,65 @@ It redirects to the market **home**, not to the equivalent of the current page. 
 market-scoped, so the same path under another market is usually a 404; `Alternates` resolves genuine
 equivalents, but only for pages that have one and only for crawlers.
 
-### A first visit is asked (2026-09-13)
+### A bar, not a dialog (2026-09-26)
+
+The owner's UX audit: on a first visit, and worst on a phone, the "Where are you?" dialog below
+covered the page before a word of it could be read. The question stayed; the way it is asked
+changed. `Components/MarketBar` is one line **above the header, in the flow**: it pushes the header
+down instead of covering anything, so the page is readable around it and ignoring it is allowed. It
+sits at the top rather than the bottom because the cookie banner already owns the bottom edge, and
+two bars stacked there would cover a phone's thumb zone. Being in the flow, it needs no safe-area
+padding (the viewport meta has no `viewport-fit=cover`, so the browser keeps the page inside the
+safe area already).
+
+It says which country's shops and prices this page shows, with the other countries as one-tap
+buttons (flag and name) and a close button. `MarketPreference::bar()` decides whether it shows and
+what closing it means, and hands the answer to the page as the shared prop `marketBar`
+(`askMarket` is gone):
+
+| Visitor | Bar | Offered first | Closing it |
+|---|---|---|---|
+| Crawler | none | | |
+| URL without a market | none | | |
+| Choice on file, this page in that country | none | | |
+| Choice on file for be-nl, reading be-fr (same country) | none: the same shops | | |
+| No choice, and this page is the country the browser language points at | yes | nothing | **records** this market: it means "yes, that is right" |
+| No choice, and this page is another country (a Belgian opening a friend's `/nl-nl/...` link) | yes | the browser's country | only hides it, for this browser session |
+| Choice on file for Belgium, page in the Netherlands (the same shared link, a returning visitor) | yes | the chosen market | only hides it, for this browser session |
+
+**Why closing does not always record.** The old dialog treated Escape as "keep what you guessed"
+and wrote the cookie, wherever the visitor was. That was harmless when the dialog only ever
+appeared after the root redirect had guessed from the browser. A bar that also appears on a link
+someone sent you is different: a Belgian closing the bar on a Dutch list is saying "not now", not
+"the Netherlands is my home". Recording it would be the silent repointing the rule above forbids,
+merely with a click in front of it. So closing records only when there is nothing on file and the
+page is the country we would have guessed anyway; everywhere else it hides the bar in
+`sessionStorage` (per market, a per-browser convenience the server never sees), and the bar offers
+the visitor's own country first.
+
+**Why the other case does record.** Without it, a visitor who agrees with the guess and closes the
+bar would meet it again on the next visit, and the only way to stop it would be to pick a flag they
+were already on.
+
+**How it writes.** Choosing a country is the switcher's full-page POST (`chooseMarket`), as the
+header flags do. Closing-to-keep is the same POST by `fetch` (`rememberMarket`), asked for as JSON,
+and `MarketPreferenceController` answers `204` with the cookie instead of redirecting: nothing on
+the page changes, so a reload would only lose the visitor's place (and the query string, which the
+posted `path` never carries). It is still the one CSRF-checked route, with the same validation, so
+nothing new can write the cookie. A failed fetch is swallowed: the bar is already gone, and it
+comes back on the next page, which is the honest result of a choice that was not recorded.
+
+**The SSR paint.** The prop is computed on the server and is not lazy, so the bar is in the first
+paint and the page does not jump when it arrives. A bar hidden in `sessionStorage` is read after
+hydration, so it can show for one frame on a full page load; the alternative was a server-side flag,
+which is state that only the switcher may write.
+
+`MarketRoutingTest` pins it: no dialog and no `askMarket` on a first visit, the three cases above,
+the crawler, the JSON close, and that opening a foreign-market page sets no cookie.
+
+### A first visit is asked (2026-09-13, replaced 2026-09-26)
+
+*History: the dialog this section describes is gone; see the section above.*
 
 At the owner's request, a visitor with no `bc_market` cookie is asked "Where are you?", once: a
 dialog over the page with the three flags, Belgium, the Netherlands and Europe, the guessed one
@@ -221,6 +279,8 @@ page view would be a needless load on the primary.
   for a request whose URL does not carry one
 - `app/Http/Controllers/MarketPreferenceController.php`
 - `resources/js/Components/MarketSwitcher.tsx`
+- `resources/js/Components/MarketBar.tsx` and `resources/js/marketChoice.ts` — the bar, and the
+  two ways a choice is sent (form POST, and the JSON POST for "keep this one")
 - `app/Http/Middleware/SetMarket.php`
 - `app/Services/Seo/Alternates.php` — hreflang, published only
 - `app/Http/Controllers/SitemapController.php` — sitemap index and `robots.txt`
