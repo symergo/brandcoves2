@@ -79,4 +79,14 @@ class HomePageTest extends TestCase
             $this->assertContains($status, [200, 301, 302], "{$url} answered {$status}.");
         }
     }
+
+    #[Test]
+    public function what_others_collect_is_sent_and_empty_until_somebody_publishes_a_list(): void
+    {
+        // Owner, 2026-09-26: "add what others collect". The band is drawn only
+        // when there is at least one Community Cove.
+        $this->get('/be-nl')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('collected', 0));
+    }
 }

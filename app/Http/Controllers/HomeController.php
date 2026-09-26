@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Services\Cove\CommunityCoves;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
@@ -68,6 +69,15 @@ class HomeController extends Controller
             // front page is where a first-time visitor discovers the archive
             // exists at all.
             'coves' => $this->coves($current),
+
+            /*
+             * What others collect (owner, 2026-09-26): the newest Community
+             * Coves, lists people chose to publish. The home page left this
+             * out while public lists did not exist; they do now. Empty in a
+             * market where nobody published one, and then the band is not
+             * drawn. See docs/features/community-coves.md.
+             */
+            'collected' => app(CommunityCoves::class)->newest($current->get(), 6),
         ]);
     }
 

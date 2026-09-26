@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import SaveToList from '../Components/SaveToList'
+import CommunityCoveCards, { type CommunityCoveCard } from '../Components/CommunityCoveCards'
 import SearchCard from '../Components/SearchCard'
 import SharedCoveIllustration from '../Components/SharedCoveIllustration'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
@@ -17,6 +18,8 @@ interface Cove {
 }
 
 interface Props {
+    /** The newest Community Coves; empty means no band. */
+    collected?: CommunityCoveCard[]
     today: {
         theme: string
         blurb: string | null
@@ -49,7 +52,7 @@ interface Props {
  * visitor's convenience, not an answer to the three questions). The search
  * card left too and came back under the hero later the same day; see below.
  */
-export default function Home({ today, coves }: Props) {
+export default function Home({ today, coves, collected = [] }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -194,6 +197,27 @@ export default function Home({ today, coves }: Props) {
                             </li>
                         ))}
                     </ul>
+                </section>
+            )}
+
+            {/*
+              4b. What others collect: the newest Community Coves (owner,
+              2026-09-26). The same small cards the Gift Finder results use.
+            */}
+            {collected.length > 0 && (
+                <section className="mt-14 sm:mt-20" aria-labelledby="collected-heading">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2 id="collected-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                            {t('home.collected_heading')}
+                        </h2>
+                        <Link href={`${base}/coves/community`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                            {t('home.collected_all')} →
+                        </Link>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-ink-soft">{t('home.collected_intro')}</p>
+                    <div className="mt-6">
+                        <CommunityCoveCards coves={collected} />
+                    </div>
                 </section>
             )}
 

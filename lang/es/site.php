@@ -106,7 +106,7 @@ return [
         'entry_list_body' => 'Guarda cosas de cualquier sitio y tenlas juntas en una Cove.',
         'entry_list_cta' => 'Crear mi Cove',
         'entry_browse_title' => '¿Solo mirando?',
-        'entry_browse_body' => 'Explora Coves llenas de ideas, de guías de regalos a temas.',
+        'entry_browse_body' => 'Descubre Coves llenas de ideas, y lo que otros coleccionan.',
         'entry_browse_cta' => 'Explorar',
         'open_title' => 'Desde cualquier sitio.',
         'open_intro' => 'GiftCoves no se limita a las tiendas con las que trabajamos.',
@@ -135,6 +135,9 @@ return [
 
         'coves_heading' => 'Coves para explorar',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
+        'collected_heading' => 'Lo que otros coleccionan',
+        'collected_intro' => 'Listas que la gente hizo públicas: para un tipo de persona, una ocasión o una pasión. Guarda una, o hazla tu propia lista.',
+        'collected_all' => 'Todas las Community Coves',
         'coves_all' => 'Todas las Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Cove del día',

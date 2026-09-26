@@ -106,7 +106,7 @@ return [
         'entry_list_body' => 'Bewaar dingen van overal en hou ze bij in één Cove.',
         'entry_list_cta' => 'Maak mijn Cove',
         'entry_browse_title' => 'Gewoon rondkijken?',
-        'entry_browse_body' => 'Ontdek Coves vol ideeën, van cadeaugidsen tot thema\'s.',
+        'entry_browse_body' => 'Ontdek Coves vol ideeën, en wat anderen verzamelen.',
         'entry_browse_cta' => 'Ontdek',
         'open_title' => 'Van overal.',
         'open_intro' => 'GiftCoves is niet beperkt tot de winkels waarmee we samenwerken.',
@@ -135,6 +135,9 @@ return [
 
         'coves_heading' => 'Coves om te ontdekken',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
+        'collected_heading' => 'Wat anderen verzamelen',
+        'collected_intro' => 'Lijstjes die mensen openbaar maakten: voor een soort persoon, een gelegenheid of een passie. Bewaar er een, of maak er je eigen lijst van.',
+        'collected_all' => 'Alle Community Coves',
         'coves_all' => 'Alle Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Dagelijkse Cove',

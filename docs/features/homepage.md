@@ -594,3 +594,13 @@ And `SearchCard` (field plus the barcode camera on a phone; Discover carried it 
 rebuild the same day, so the home page is now its only user) sits
 directly under the hero: somebody who arrives knowing what they want should not have to find the
 header's search first.
+
+## What others collect (2026-09-26)
+
+The owner: "add what others collect". The home page left out other people's collections while public
+lists did not exist; Community Coves do now (community-coves.md). A band **"Wat anderen verzamelen"**
+sits under "Coves om te ontdekken": the six newest Community Coves as the same small cards the Find a
+gift results use, with "Alle Community Coves →". It is drawn only when a market has at least one,
+per the owner's no-empty-blocks rule. The "Gewoon rondkijken?" card now says "Ontdek Coves vol
+ideeën, en wat anderen verzamelen." (`HomeController` sends `collected` from
+`CommunityCoves::newest()`.)
