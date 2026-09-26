@@ -16,6 +16,10 @@ decides the buying ran in a window with none of the facts in it.
 A short thread in a rail beside the list, on both pages a list has —
 `/lists/{id}` for its owner and `/l/{token}` for everybody holding the link.
 
+**On the owner's page it sits under the items since 2026-09-26**, not in a right column: the
+rail cut the items to two-thirds of the page, and the owner's audit asked for the list first and
+full width. The shared page keeps its rail. See list-surfaces.md, "Items first".
+
 ## Who may read it is the claim gate
 
 A board is free text written by the people doing the buying, and *"I've got the

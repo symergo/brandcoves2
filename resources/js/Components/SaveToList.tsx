@@ -26,6 +26,7 @@ import { show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
 import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import ToolIcon from './ToolIcon'
 
 interface SaveResult {
     itemId: number
@@ -795,9 +796,16 @@ export default function SaveToList({
                         aria-expanded={open}
                         aria-haspopup="menu"
                         aria-label={t('lists.save_to_list')}
-                        className="-ml-px hidden h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink lg:flex"
+                        title={t('lists.save_to_list')}
+                        className="-ml-px hidden h-9 w-6 items-center justify-center rounded-r-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink lg:flex"
                     >
-                        ▾
+                        {/*
+                          A drawn chevron, not the ▾ character: at the font's
+                          10px it rendered as a short bar and read as a minus
+                          sign, as if the half beside the bookmark took the
+                          product off (owner's audit, 2026-09-26).
+                        */}
+                        <ToolIcon name="chevron" className="h-3.5 w-3.5" />
                     </button>
                 </span>
                 {panel}
@@ -833,9 +841,10 @@ export default function SaveToList({
                 aria-expanded={open}
                 aria-haspopup="menu"
                 aria-label={t('lists.save_to_list')}
-                className="-ml-px rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink"
+                title={t('lists.save_to_list')}
+                className="-ml-px flex items-center rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink"
             >
-                ▾
+                <ToolIcon name="chevron" className="h-4 w-4" />
             </button>
             {panel}
         </div>

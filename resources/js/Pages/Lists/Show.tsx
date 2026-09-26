@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
-import ListTools, { type Panel } from '../../Components/ListTools'
+import ListTools, { ListToolsBar, type Panel } from '../../Components/ListTools'
 import type { Publication } from '../../Components/PublishCove'
 import { type ListKind } from '../../Components/ListKindBadge'
 import EditManualItem from '../../Components/EditManualItem'
@@ -12,8 +12,8 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
-import ToolIcon from '../../Components/ToolIcon'
-import TasteTogetherPanel, { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
+import OwnItemMenu from '../../Components/OwnItemMenu'
+import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
 import ShareMenu from '../../Components/ShareMenu'
 import { useTranslations } from '../../useTranslations'
 
@@ -260,459 +260,327 @@ export default function ListShow({
     const [panel, setPanel] = useState<Panel | null>(null)
 
 
+    const toolProps = {
+        base,
+        list,
+        access,
+        quizUrl,
+        santaMemberships,
+        target,
+        asked,
+        panel,
+        onPanel: setPanel,
+        tasteTogether,
+    }
+
     return (
         <>
             <Head title={list.title} />
 
-                <header className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                        <Link href={`${base}/lists`} className="text-sm text-ink-soft hover:text-ink">
-                            ← {t('lists.title')}
-                        </Link>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <h1 className="text-xl sm:text-2xl font-semibold">{list.title}</h1>
-                            {/*
-                              What kind of list this is — the fact that decides who
-                              may claim, who may vote and who sees the money, and
-                              which this page has never said out loud.
+            {/*
+              The page, top to bottom, since the owner's audit of 2026-09-26:
+              the title with Share and More beside it, whichever tool was just
+              opened, the add control and the items, and then what is about
+              the list rather than on it (the pot, the discussion).
 
-                              Only the kind. "Anyone can add" and "Shared" were
-                              pills here too, and both said something the row of
-                              tools underneath already shows: Share lights up when
-                              the list has a live link, and the add-a-product
-                              control is there or it is not. Two badges restating
-                              two controls was the header captioning the row.
-                            */}
-                            <ListPills kind={list.kind as ListKind} role={role} ownerName={ownerName} />
-                        </div>
+              It used to open on features: a row of five or six tool chips, the
+              This-or-that-together card, the link to the person's page and a
+              discussion column on the right, with the items last. On a phone
+              the first screen held no item at all. See list-surfaces.md,
+              "Items first".
+            */}
+            <header>
+                <Link href={`${base}/lists`} className="text-sm text-ink-soft hover:text-ink">
+                    ← {t('lists.title')}
+                </Link>
+                <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        <h1 className="text-xl font-semibold sm:text-2xl">{list.title}</h1>
                         {/*
-                          The owner's note, under the name. Read-only here: it is
-                          written in the tools row, under Settings, next to the
-                          title it belongs to. The shared page renders the same
-                          line for the people the link was sent to.
+                          What kind of list this is — the fact that decides who
+                          may claim, who may vote and who sees the money. Only
+                          the kind: "Shared" is what the lit Share button says.
                         */}
-                        {list.description && (
-                            <p className="mt-2 max-w-prose text-ink-soft">{list.description}</p>
-                        )}
-                        {/*
-                          The person's own page: what you gave them and the next
-                          step (gift-history.md). The owner's only, and only on a
-                          list about somebody else.
-                        */}
-                        {access.isOwner && list.kind !== 'mine' && list.recipient && (
-                            <Link
-                                href={`${base}/people/${list.recipient.id}`}
-                                className="mt-2 inline-block text-sm text-accent underline"
-                            >
-                                {t('gift_history.link', { name: list.recipient.name })}
-                            </Link>
-                        )}
-                        {/*
-                          The quiz, named on the one list it cannot appear on.
-
-                          `ListTools` gates the tab on `shared && claimable`, and
-                          rightly — a quiz publishes what is on the list, so it must
-                          not exist over a private one. The consequence was that the
-                          feature invented to solve "nobody fills in a wishlist" was
-                          invisible on exactly the wishlist nobody had filled in. The
-                          gate does not move; the sentence is how you learn the tab
-                          is there to be earned.
-                        */}
-                        {!shared && list.kind === 'mine' && (
-                            <p className="mt-1 max-w-prose text-sm text-ink-soft">
-                                {t('lists.quiz_unlocks')}
-                            </p>
-                        )}
+                        <ListPills kind={list.kind as ListKind} role={role} ownerName={ownerName} />
                     </div>
 
-                </header>
+                    {/*
+                      Share, and a More menu for everything else. The owner's:
+                      for anybody else it renders nothing.
+                    */}
+                    <ListToolsBar {...toolProps} />
+                </div>
+                {/*
+                  The owner's note, under the name. Read-only here: it is
+                  written in Settings. The shared page renders the same line
+                  for the people the link was sent to.
+                */}
+                {list.description && <p className="mt-2 max-w-prose text-ink-soft">{list.description}</p>}
+                {/*
+                  The quiz, named on the one list it cannot appear on.
+
+                  The quiz is offered only over a shared wish list (a quiz
+                  publishes what is on the list), which made the feature
+                  invented to solve "nobody fills in a wishlist" invisible on
+                  exactly the wishlist nobody had filled in. The gate does not
+                  move; the sentence is how you learn it is there to be earned.
+                */}
+                {access.isOwner && !shared && list.kind === 'mine' && (
+                    <p className="mt-1 max-w-prose text-sm text-ink-soft">{t('lists.quiz_unlocks')}</p>
+                )}
+            </header>
 
             {/*
-              Two columns from `lg` up, one below it — and the header is not in
-              them.
-
-              The board is a conversation *about* the list, so it stands beside
-              the list rather than under it. The title, the badges, who it is
-              for and the note under them are about the whole page: capped to
-              the left column they ran to two-thirds width and stopped under a
-              sidebar that has nothing to do with them, so they sit above the
-              grid and take the full measure.
-
-              The whole list goes in the left column so that column is the
-              taller of the two whatever the conversation does; a rail longer
-              than the thing it is beside is what makes a sticky sidebar run on
-              past the end of the page.
-
-              No rail at all when there is no board — `board` is null for
-              anybody who may not see one, which on a wish list of your own is
-              you, because a board is claim state in prose. See
-              App\Services\Wishlist\Board.
+              Whichever tool was opened from the header, directly under it, and
+              the suggestions somebody sent, which stay in the open: a message
+              behind a button is a message missed.
             */}
-            <div
-                className={
-                    board !== null
-                        ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10'
-                        : ''
-                }
-            >
-                <div className="min-w-0">
+            <ListTools
+                {...toolProps}
+                friends={friends}
+                collaborators={collaborators}
+                suggestions={suggestions}
+                canHandOver={canHandOver}
+                handoverEmail={handoverEmail}
+                registryOptions={registryOptions}
+                deliveryAddress={deliveryAddress}
+                quizPlays={quizPlays}
+                publication={publication}
+            />
 
-                    {/*
-                      Straight under the title, above everything else on the page.
+            {/*
+              The links to send, right after the list was made with "ask for
+              ideas" chosen in the wizard. Once: it answers the choice just
+              made, and Share stays for every visit after. The person's own
+              page is where they say what they like without seeing this list;
+              the list's link lets others suggest, and suggestions wait for
+              the owner.
+            */}
+            {askForIdeas.length > 0 && (
+                <div className="mt-6 space-y-4 rounded-card border border-accent/40 bg-accent/5 p-4 sm:p-5">
+                    <p className="font-medium">{t('wizard.ask_card_title')}</p>
 
-                      The row of tools is what you do *to* a list, and it was sitting
-                      below the group pot — so on the one kind of list that has a pot,
-                      the controls started a card and a half down. Directly under the
-                      heading it is the same place on every kind, which is what makes it
-                      learnable.
-                    */}
-                    <ListTools
-                        base={base}
-                        list={list}
-                        friends={friends}
-                        access={access}
-                        collaborators={collaborators}
-                        suggestions={suggestions}
-                        canHandOver={canHandOver}
-                        handoverEmail={handoverEmail}
-                        registryOptions={registryOptions}
-                        deliveryAddress={deliveryAddress}
-                        quizUrl={quizUrl}
-                        quizPlays={quizPlays}
-                        santaMemberships={santaMemberships}
-                        target={target}
-                        asked={asked}
-                        panel={panel}
-                        onPanel={setPanel}
-                        publication={publication}
-                    />
-
-                    {/*
-                      The links to send, right after the list was made with
-                      "ask for ideas" chosen in the wizard. Once: it answers
-                      the choice just made, and the share controls above stay
-                      for every visit after. The person's own page is where
-                      they say what they like without seeing this list; the
-                      list's link lets others suggest, and suggestions wait
-                      for the owner.
-                    */}
-                    {askForIdeas.length > 0 && (
-                        <div className="mt-6 space-y-4 rounded-card border border-accent/40 bg-accent/5 p-4 sm:p-5">
-                            <p className="font-medium">{t('wizard.ask_card_title')}</p>
-
-                            {askForIdeas.includes('recipient') && target?.askUrl && (
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="max-w-md text-sm text-ink-soft">
-                                        {t('wizard.ask_card_recipient', { name: target.name })}
-                                    </p>
-                                    <ShareMenu
-                                        url={target.askUrl}
-                                        text={t('wizard.ask_message_recipient')}
-                                        label={t('wizard.ask_card_send', { name: target.name })}
-                                    />
-                                </div>
-                            )}
-
-                            {askForIdeas.includes('others') && list.shareUrl && (
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="max-w-md text-sm text-ink-soft">
-                                        {t('wizard.ask_card_others')}
-                                    </p>
-                                    <ShareMenu
-                                        url={list.shareUrl}
-                                        text={t('wizard.ask_message_others', { title: list.title })}
-                                        label={t('wizard.ask_card_share')}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/*
-                      The pot, on the page the organiser actually works from.
-
-                      Contributions are made through the share link, because that is
-                      where the endpoint is mounted and where the members are — but
-                      reading the running total should not mean opening your own list as
-                      though you were a visitor to it.
-                    */}
-                    {pot !== null && (
-                        <div className="mt-6 rounded-card border border-line bg-card p-4">
-                            <Pledge
-                                action={list.shareUrl ? `${list.shareUrl}/pledge` : ''}
-                                contributions={pot}
-                                canContribute={list.shareUrl !== null}
-                                price={null}
+                    {askForIdeas.includes('recipient') && target?.askUrl && (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="max-w-md text-sm text-ink-soft">
+                                {t('wizard.ask_card_recipient', { name: target.name })}
+                            </p>
+                            <ShareMenu
+                                url={target.askUrl}
+                                text={t('wizard.ask_message_recipient')}
+                                label={t('wizard.ask_card_send', { name: target.name })}
                             />
                         </div>
                     )}
 
-                    {/*
-                      "Find out together what :name likes": This or that, played by
-                      the others about the person this list is for, the answers
-                      combined (docs/features/taste-together.md). The owner's only.
-                    */}
-                    {tasteTogether !== null && list.recipient !== null && (
-                        <TasteTogetherPanel name={list.recipient.name} state={tasteTogether} />
-                    )}
-
-                    {/*
-                      "The list" used to head the items here, on a list about somebody
-                      else. It was a divider rather than a title: "what :name asked for"
-                      ran above it, and the heading existed to say which of the two
-                      lists of products you were now looking at. That section is a tab
-                      of its own now — see `ListTools`, panel `asked` — so there is one
-                      list on the page again, and a page with one list does not need a
-                      heading telling you which it is.
-                    */}
-                    {items.length === 0 ? (
-                        <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                            <p className="line-clamp-3 font-medium">{t('lists.empty_list')}</p>
-
-                            {/*
-                              What happens next, in three steps, per kind.
-
-                              The worst screen in the product after this pass was a
-                              fresh group list: no items, no members, no votes, no
-                              money, and one sentence saying it was empty. A group list
-                              is the one kind that does nothing at all until other
-                              people are on it, so "add things" is not the whole
-                              instruction — and it is the only kind where none of the
-                              steps is optional.
-
-                              The `mine` steps stay deliberately soft. A personal list
-                              of saved things is a finished, legitimate use of this
-                              page, and an empty state that reads as a to-do list tells
-                              most owners they have done it wrong.
-                            */}
-                            <ol className="mx-auto mt-4 max-w-md space-y-2 text-left">
-                                {[1, 2, 3].map((step) => (
-                                    <li key={step} className="flex gap-3 text-sm text-ink-soft">
-                                        <span
-                                            aria-hidden
-                                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-2xs font-medium text-ink"
-                                        >
-                                            {step}
-                                        </span>
-                                        {t(`lists.empty_${list.kind}_step${step}`)}
-                                    </li>
-                                ))}
-                            </ol>
-                            {/*
-                              One control here too. An empty list is exactly where
-                              somebody discovers their present is not something we
-                              stock, and the panel carries that path without making it a
-                              second button to choose between.
-                            */}
-                            {access.canEdit && (
-                                <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
-                                    <AddProduct base={base} listId={list.id} market={market} defaultOpen />
-                                </div>
-                            )}
+                    {askForIdeas.includes('others') && list.shareUrl && (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="max-w-md text-sm text-ink-soft">{t('wizard.ask_card_others')}</p>
+                            <ShareMenu
+                                url={list.shareUrl}
+                                text={t('wizard.ask_message_others', { title: list.title })}
+                                label={t('wizard.ask_card_share')}
+                            />
                         </div>
-                    ) : (
-                        <>
-                            {/*
-                              Directly on top of the thing it fills.
-
-                              It sat in the header beside Share and Delete, which is a
-                              row about the list as a whole — renaming it, giving it
-                              away, getting rid of it. Adding to it is not that: it is
-                              the ordinary thing you came to do, and it belongs against
-                              the items rather than filed with the administration.
-
-                              Once, not also below. Two of the same control on one
-                              screen is not twice as findable.
-                            */}
-                            {access.canEdit && (
-                                <div className="mt-8">
-                                    <AddProduct base={base} listId={list.id} market={market} />
-                                </div>
-                            )}
-
-                            {/*
-                              The same grid of cards the shared page uses.
-
-                              This was a column of rows inside one bordered box,
-                              with 56px thumbnails, while `/l/{code}` showed the
-                              identical items as 80px cards in two columns.
-                              Nothing chose that — the two pages were written
-                              months apart and drifted — and a person meets both
-                              sides of their own list within minutes of sharing
-                              it, so the mismatch reads as two different lists.
-
-                              `ListItemCard` holds the product half. The actions
-                              stay here, because the owner's two are genuinely
-                              not the visitor's four.
-                            */}
-                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4">
-                                {items.map((item) => (
-                                    <ListItemCard
-                                        key={item.id}
-                                        innerRef={item.id === fresh ? freshRow : undefined}
-                                        className={
-                                            item.id === fresh
-                                                ? 'bg-sage/15 transition-colors duration-1000'
-                                                : 'transition-colors duration-1000'
-                                        }
-                                        title={item.title}
-                                        image={item.image}
-                                        url={item.url}
-                                        externalUrl={item.externalUrl}
-                                        note={item.note}
-                                        price={item.currentPrice}
-                                        was={item.price}
-                                        market={market}
-                                        aside={
-                                            <>
-                                                {/*
-                                                  Put it on another of my lists.
-
-                                                  The save picker when there is a
-                                                  product behind the row — the same
-                                                  control as every product card and
-                                                  as the shared page, so it is one
-                                                  habit rather than three.
-
-                                                  `CopyToList` only for a
-                                                  hand-written item, which has no
-                                                  `group_id` to save and must have
-                                                  the row itself copied. Same
-                                                  bookmark, same menu; a different
-                                                  endpoint underneath.
-                                                */}
-                                                {access.canEdit && (
-                                                    item.groupId !== null ? (
-                                                        <SaveToList groupId={item.groupId} compact />
-                                                    ) : (
-                                                        <CopyToList
-                                                            action={`${base}/lists/${list.id}/items/${item.id}/copy`}
-                                                            targets={copyTargets}
-                                                            groupId={null}
-                                                        />
-                                                    )
-                                                )}
-
-                                                {/*
-                                                  `isOwner`, not `canEdit`.
-
-                                                  A contributor adds; only the owner
-                                                  takes things off. `canEdit` is also
-                                                  true for a legacy editor collaborator,
-                                                  and a helper able to delete is a list
-                                                  that quietly loses items — including
-                                                  ones somebody has already claimed and
-                                                  bought. Mirrored, never trusted:
-                                                  `WishlistItemController::destroy()`
-                                                  asks the same question again.
-                                                */}
-                                                {/*
-                                                  Correct what you typed.
-
-                                                  Only on a hand-written item:
-                                                  on a catalogue one those
-                                                  columns record what the feed
-                                                  said, and the price history is
-                                                  measured against them.
-                                                  `update()` drops the fields
-                                                  server-side for such an item,
-                                                  so this is the reason that
-                                                  branch is never reached rather
-                                                  than the thing preventing it.
-                                                */}
-                                                {access.isOwner && item.manual && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setEditingItem(
-                                                                editingItem === item.id ? null : item.id,
-                                                            )
-                                                        }
-                                                        aria-label={t('lists.edit_item')}
-                                                        title={t('lists.edit_item')}
-                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-ink hover:text-accent lg:h-9 lg:w-9"
-                                                    >
-                                                        ✎
-                                                    </button>
-                                                )}
-
-                                                {/*
-                                                  Remove, for a hand-written item.
-
-                                                  A catalogue item is removed from
-                                                  its bookmark's menu (SaveToList),
-                                                  which is why the ✕ went on
-                                                  2026-09-12. A hand-written one,
-                                                  and every pasted link is one, has
-                                                  the copy menu instead, which does
-                                                  not remove: from that day it could
-                                                  not be deleted at all (owner's
-                                                  report, 2026-09-26). The owner
-                                                  only, as `destroy()` checks.
-                                                */}
-                                                {access.isOwner && item.manual && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            router.delete(`${base}/list-items/${item.id}`, {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                        aria-label={t('lists.remove_item')}
-                                                        title={t('lists.remove_item')}
-                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-danger hover:text-danger lg:h-9 lg:w-9"
-                                                    >
-                                                        <ToolIcon name="trash" className="h-4 w-4" />
-                                                    </button>
-                                                )}
-
-                                                {/*
-                                                  No ✕ any more. The bookmark beside it is a
-                                                  toggle whose menu offers to take the item
-                                                  off this list, so the ✕ was the same act a
-                                                  second time, one that asked a question the
-                                                  toggle answers with an undo instead. On a
-                                                  group list it also crowded the vote button
-                                                  into the corner. Removed 2026-09-12.
-                                                */}
-                                            </>
-                                        }
-                                    >
-                                        {item.reading && (
-                                            <p className="mt-1 text-xs text-ink-soft" aria-live="polite">
-                                                {t('lists.reading_link')}
-                                            </p>
-                                        )}
-
-                                        {editingItem === item.id && (
-                                            <EditManualItem
-                                                action={`${base}/list-items/${item.id}`}
-                                                title={item.title}
-                                                url={item.externalUrl}
-                                                price={item.price}
-                                                image={item.image}
-                                                onDone={() => setEditingItem(null)}
-                                            />
-                                        )}
-                                    </ListItemCard>
-                                ))}
-                            </ul>
-                        </>
                     )}
                 </div>
+            )}
 
-                {board !== null && list.shareUrl !== null && (
-                    <aside className="mt-10 lg:sticky lg:top-6 lg:mt-0">
-                        {/*
-                          Posted through the share token, like every other write
-                          on a shared list — `shareUrl` already is that address.
-                          The owner's page has no endpoint of its own for this:
-                          one route means one gate, and the gate is the token.
-                        */}
-                        <ListBoard board={board} action={`${list.shareUrl}/messages`} />
-                    </aside>
-                )}
-            </div>
+            {items.length === 0 ? (
+                <div className="mt-6 rounded-card border border-line bg-card p-8 text-center">
+                    <p className="line-clamp-3 font-medium">{t('lists.empty_list')}</p>
+
+                    {/*
+                      What happens next, in three steps, per kind.
+
+                      The worst screen in the product after this pass was a
+                      fresh group list: no items, no members, no votes, no
+                      money, and one sentence saying it was empty. A group list
+                      is the one kind that does nothing at all until other
+                      people are on it, so "add things" is not the whole
+                      instruction — and it is the only kind where none of the
+                      steps is optional.
+
+                      The `mine` steps stay deliberately soft. A personal list
+                      of saved things is a finished, legitimate use of this
+                      page, and an empty state that reads as a to-do list tells
+                      most owners they have done it wrong.
+                    */}
+                    <ol className="mx-auto mt-4 max-w-md space-y-2 text-left">
+                        {[1, 2, 3].map((step) => (
+                            <li key={step} className="flex gap-3 text-sm text-ink-soft">
+                                <span
+                                    aria-hidden
+                                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-2xs font-medium text-ink"
+                                >
+                                    {step}
+                                </span>
+                                {t(`lists.empty_${list.kind}_step${step}`)}
+                            </li>
+                        ))}
+                    </ol>
+                    {/*
+                      One control here too. An empty list is exactly where
+                      somebody discovers their present is not something we
+                      stock, and the panel carries that path without making it a
+                      second button to choose between.
+                    */}
+                    {access.canEdit && (
+                        <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
+                            <AddProduct base={base} listId={list.id} market={market} defaultOpen />
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <>
+                    {/*
+                      Directly on top of the thing it fills, and the first thing
+                      under the title: adding to the list is the ordinary thing
+                      you came to do. Once, not also below. Two of the same
+                      control on one screen is not twice as findable.
+                    */}
+                    {access.canEdit && (
+                        <div className="mt-6">
+                            <AddProduct base={base} listId={list.id} market={market} />
+                        </div>
+                    )}
+
+                    {/*
+                      The same grid of cards the shared page uses, so a person
+                      who meets both sides of their own list within minutes of
+                      sharing it sees one list, not two. `ListItemCard` holds
+                      the product half; the actions stay here, because the
+                      owner's are genuinely not the visitor's.
+                    */}
+                    <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4">
+                        {items.map((item) => (
+                            <ListItemCard
+                                key={item.id}
+                                innerRef={item.id === fresh ? freshRow : undefined}
+                                className={
+                                    item.id === fresh
+                                        ? 'bg-sage/15 transition-colors duration-1000'
+                                        : 'transition-colors duration-1000'
+                                }
+                                title={item.title}
+                                image={item.image}
+                                url={item.url}
+                                externalUrl={item.externalUrl}
+                                note={item.note}
+                                price={item.currentPrice}
+                                was={item.price}
+                                market={market}
+                                aside={
+                                    access.isOwner ? (
+                                        /*
+                                          Your own list: one "⋯" with edit, copy
+                                          and remove, instead of a bookmark that
+                                          was always filled (every item here is
+                                          saved, on this list) beside a pencil
+                                          and a bin on some items and not on
+                                          others. See OwnItemMenu.
+                                        */
+                                        <OwnItemMenu
+                                            base={base}
+                                            listId={list.id}
+                                            itemId={item.id}
+                                            title={item.title}
+                                            groupId={item.groupId}
+                                            manual={item.manual}
+                                            targets={copyTargets}
+                                            onEdit={() => setEditingItem(editingItem === item.id ? null : item.id)}
+                                        />
+                                    ) : access.canEdit ? (
+                                        /*
+                                          Somebody who may add to a list that is
+                                          not theirs (a legacy editor
+                                          collaborator): put it on one of *my*
+                                          lists, the same control as every
+                                          product card. The save picker when
+                                          there is a product behind the row;
+                                          `CopyToList` for a hand-written item,
+                                          which has no `group_id` to save and
+                                          must have the row itself copied. They
+                                          do not remove: only the owner takes
+                                          things off, and `destroy()` asks again.
+                                        */
+                                        item.groupId !== null ? (
+                                            <SaveToList groupId={item.groupId} compact />
+                                        ) : (
+                                            <CopyToList
+                                                action={`${base}/lists/${list.id}/items/${item.id}/copy`}
+                                                targets={copyTargets}
+                                                groupId={null}
+                                            />
+                                        )
+                                    ) : undefined
+                                }
+                            >
+                                {item.reading && (
+                                    <p className="mt-1 text-xs text-ink-soft" aria-live="polite">
+                                        {t('lists.reading_link')}
+                                    </p>
+                                )}
+
+                                {editingItem === item.id && (
+                                    <EditManualItem
+                                        action={`${base}/list-items/${item.id}`}
+                                        title={item.title}
+                                        url={item.externalUrl}
+                                        price={item.price}
+                                        image={item.image}
+                                        onDone={() => setEditingItem(null)}
+                                    />
+                                )}
+                            </ListItemCard>
+                        ))}
+                    </ul>
+                </>
+            )}
+
+            {/*
+              The pot, on the page the organiser actually works from, under the
+              items it is collecting for.
+
+              Contributions are made through the share link, because that is
+              where the endpoint is mounted and where the members are — but
+              reading the running total should not mean opening your own list
+              as though you were a visitor to it.
+            */}
+            {pot !== null && (
+                <div className="mt-8 rounded-card border border-line bg-card p-4">
+                    <Pledge
+                        action={list.shareUrl ? `${list.shareUrl}/pledge` : ''}
+                        contributions={pot}
+                        canContribute={list.shareUrl !== null}
+                        price={null}
+                    />
+                </div>
+            )}
+
+            {/*
+              The discussion, under the list rather than beside it.
+
+              It was a sticky column on the right from `lg` up, which cut the
+              items to two-thirds of the page on every shared list, and put a
+              conversation level with the title — above the list it is about,
+              on a phone. Under the items it is still one scroll away, and the
+              items take the full width (owner's rule: content is full width
+              when nothing is in a right column). Capped to a reading measure,
+              because it is prose.
+
+              Absent when `board` is null: for anybody who may not see one,
+              which on a wish list of your own is you, because a board is claim
+              state in prose. See App\Services\Wishlist\Board.
+
+              Posted through the share token, like every other write on a
+              shared list — `shareUrl` already is that address.
+            */}
+            {board !== null && list.shareUrl !== null && (
+                <div className="mt-10 max-w-2xl">
+                    <ListBoard board={board} action={`${list.shareUrl}/messages`} />
+                </div>
+            )}
         </>
     )
 }

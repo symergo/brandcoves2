@@ -126,11 +126,11 @@ return [
                 ],
                 [
                     'title' => 'Iets dat hier niet te vinden is',
-                    'body' => "1. Tik op “+ Product toevoegen”.\n2. Kies onder het zoekvak “Zet het er zelf op”.\n3. Vul in wat het is. Een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij.\n4. Bewaar het.\n\nEigen items kun je later aanpassen met “Aanpassen”. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.",
+                    'body' => "1. Tik op “+ Product toevoegen”.\n2. Kies onder het zoekvak “Zet het er zelf op”.\n3. Vul in wat het is. Een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij.\n4. Bewaar het.\n\nEigen items kun je later aanpassen: tik op “⋯” bij het item en dan op “Aanpassen”. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.",
                 ],
                 [
                     'title' => 'Kopiëren, niet verplaatsen',
-                    'body' => 'Elk item heeft “Kopieer naar een andere lijst”. Op een [gedeelde lijst](lists-help/claiming) van iemand anders heet dat “Zet op mijn lijst”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
+                    'body' => 'Op je eigen lijst staat “Kopieer naar een andere lijst” onder “⋯” bij elk item. Op een [gedeelde lijst](lists-help/claiming) van iemand anders heet dat “Zet op mijn lijst”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
                 ],
                 [
                     'title' => 'Als de prijs zakt',
@@ -140,7 +140,7 @@ return [
                 ],
                 [
                     'title' => 'Verwijderen',
-                    'body' => 'Tik op het kruisje bij het item en bevestig. Verwijderen kan alleen wie de lijst beheert. Het nieuwste staat bovenaan.',
+                    'body' => 'Tik op “⋯” bij het item en kies “Van deze lijst halen”. Verwijderen kan alleen wie de lijst beheert. Het nieuwste staat bovenaan.',
                 ],
             ],
         ],
@@ -225,7 +225,7 @@ return [
                 [
                     'title' => 'Een quiz maken',
                     'body' => '1. Open je lijst. Het moet [gedeeld](lists-help/sharing) zijn en minstens vijf items hebben.
-2. Tik op “Quiz”.
+2. Tik op “Meer” en dan op “Quiz”.
 3. Tik op “Maak een quiz van deze lijst”.
 4. Stuur de link rond.',
                     'shot' => 'quiz',
@@ -269,7 +269,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Overleggen',
-                    'body' => 'Naast de lijst staat “Overleg”, een gesprek voor iedereen met de link. Degene voor wie de lijst is, leest niet mee. Je plaatst een bericht met je naam; je eigen berichten kun je weghalen, de beheerder alle. Op een privé lijst is er geen overleg.',
+                    'body' => 'Onder de lijst staat “Overleg”, een gesprek voor iedereen met de link. Degene voor wie de lijst is, leest niet mee. Je plaatst een bericht met je naam; je eigen berichten kun je weghalen, de beheerder alle. Op een privé lijst is er geen overleg.',
                 ],
             ],
         ],
@@ -301,7 +301,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in drie stappen.",
+                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Meer”, dan op “Geheime Vriend” en op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in drie stappen.",
                 ],
                 [
                     'title' => 'Een herinnering vooraf',

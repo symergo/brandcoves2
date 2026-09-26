@@ -34,7 +34,16 @@ export interface TasteTogetherState {
  * never who chose what. "Add this to :name" writes it to the person the way
  * This or that's "Save for" does; the players never write anything.
  */
-export default function TasteTogetherPanel({ name, state }: { name: string; state: TasteTogetherState }) {
+export default function TasteTogetherPanel({
+    name,
+    state,
+    className = 'mt-6',
+}: {
+    name: string
+    state: TasteTogetherState
+    /** Spacing from the caller: the list page opens it as a panel, with a close button in the corner. */
+    className?: string
+}) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const [busy, setBusy] = useState<string | null>(null)
@@ -74,7 +83,7 @@ export default function TasteTogetherPanel({ name, state }: { name: string; stat
               : t('gift.together.players_many', { count: state.players })
 
     return (
-        <section className="mt-6 rounded-card border border-line bg-card p-4 sm:p-5">
+        <section className={`rounded-card border border-line bg-card p-4 sm:p-5 ${className}`}>
             <div className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                     <ToolIcon name="taste" className="h-5 w-5" />

@@ -111,11 +111,11 @@ return [
                 ],
                 [
                     'title' => 'Something that is not on this site',
-                    'body' => "1. Tap “+ Add a product”.\n2. Under the search field, choose “Write it in yourself”.\n3. Fill in what it is. A link, a price and a note such as “size M, in blue” may go with it.\n4. Save it.\n\nYour own items can be changed later with “Edit”. Catalogue products cannot: their title and price come from the shop.",
+                    'body' => "1. Tap “+ Add a product”.\n2. Under the search field, choose “Write it in yourself”.\n3. Fill in what it is. A link, a price and a note such as “size M, in blue” may go with it.\n4. Save it.\n\nYour own items can be changed later: tap “⋯” on the item, then “Edit”. Catalogue products cannot: their title and price come from the shop.",
                 ],
                 [
                     'title' => 'Copying, not moving',
-                    'body' => 'Every item has “Copy to another list”. On someone else’s [shared list](lists-help/claiming) it is “Add to my list”. The original stays; the note and the price come along, whoever is buying it does not.',
+                    'body' => 'On your own list, “Copy to another list” is under “⋯” on each item. On someone else’s [shared list](lists-help/claiming) it is “Add to my list”. The original stays; the note and the price come along, whoever is buying it does not.',
                 ],
                 [
                     'title' => 'When the price drops',
@@ -125,7 +125,7 @@ return [
                 ],
                 [
                     'title' => 'Removing',
-                    'body' => 'Tap the cross on the item and confirm. Only whoever manages the list can remove an item. The newest is at the top.',
+                    'body' => 'Tap “⋯” on the item and choose “Remove from this list”. Only whoever manages the list can remove an item. The newest is at the top.',
                 ],
             ],
         ],
@@ -210,7 +210,7 @@ return [
                 [
                     'title' => 'Making a quiz',
                     'body' => '1. Open your list. It has to be [shared](lists-help/sharing) and have at least five items.
-2. Tap “Quiz”.
+2. Tap “More”, then “Quiz”.
 3. Tap “Make a quiz from this list”.
 4. Pass the link round.',
                     'shot' => 'quiz',
@@ -254,7 +254,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Talking it over',
-                    'body' => 'Beside the list is “Discussion”, a thread for everyone with the link. The person the list is for does not read along. You post with your name; you can remove your own posts, the manager any. A private list has no discussion.',
+                    'body' => 'Under the list is “Discussion”, a thread for everyone with the link. The person the list is for does not read along. You post with your name; you can remove your own posts, the manager any. A private list has no discussion.',
                 ],
             ],
         ],
@@ -286,7 +286,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Attaching my wish list to the group',
-                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
+                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “More”, then “Secret Friend”, and “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
                 ],
                 [
                     'title' => 'A reminder ahead',

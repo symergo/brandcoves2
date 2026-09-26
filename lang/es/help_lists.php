@@ -111,11 +111,11 @@ return [
                 ],
                 [
                     'title' => 'Algo que no está en este sitio',
-                    'body' => "1. Toca «+ Añadir un producto».\n2. Bajo el campo de búsqueda, elige «Añádelo tú mismo».\n3. Escribe qué es. Puede llevar un enlace, un precio y una nota como «talla M, en azul».\n4. Guárdalo.\n\nTus propios artículos se pueden cambiar después con «Editar». Los del catálogo no: su título y precio vienen de la tienda.",
+                    'body' => "1. Toca «+ Añadir un producto».\n2. Bajo el campo de búsqueda, elige «Añádelo tú mismo».\n3. Escribe qué es. Puede llevar un enlace, un precio y una nota como «talla M, en azul».\n4. Guárdalo.\n\nTus propios artículos se pueden cambiar después: toca «⋯» en el artículo y luego «Editar». Los del catálogo no: su título y precio vienen de la tienda.",
                 ],
                 [
                     'title' => 'Copiar, no mover',
-                    'body' => 'Cada artículo tiene «Copiar a otra lista». En la [lista compartida](lists-help/claiming) de otra persona es «Añadir a mi lista». El original se queda; la nota y el precio van con él, quien lo compra no.',
+                    'body' => 'En tu propia lista, «Copiar a otra lista» está bajo «⋯» en cada artículo. En la [lista compartida](lists-help/claiming) de otra persona es «Añadir a mi lista». El original se queda; la nota y el precio van con él, quien lo compra no.',
                 ],
                 [
                     'title' => 'Cuando baja el precio',
@@ -125,7 +125,7 @@ return [
                 ],
                 [
                     'title' => 'Quitar',
-                    'body' => 'Toca la cruz del artículo y confirma. Solo quien gestiona la lista puede quitar un artículo. Lo más nuevo está arriba.',
+                    'body' => 'Toca «⋯» en el artículo y elige «Quitar de esta lista». Solo quien gestiona la lista puede quitar un artículo. Lo más nuevo está arriba.',
                 ],
             ],
         ],
@@ -210,7 +210,7 @@ return [
                 [
                     'title' => 'Crear un quiz',
                     'body' => '1. Abre tu lista. Tiene que estar [compartida](lists-help/sharing) y tener al menos cinco artículos.
-2. Toca «Quiz».
+2. Toca «Más» y luego «Quiz».
 3. Toca «Crear un quiz con esta lista».
 4. Pasa el enlace.',
                     'shot' => 'quiz',
@@ -254,7 +254,7 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Hablarlo',
-                    'body' => 'Junto a la lista está «Conversación», un hilo para todos los que tienen el enlace. La persona para quien es la lista no lo lee. Publicas con tu nombre; puedes quitar tus propios mensajes, quien gestiona la lista todos. Una lista privada no tiene conversación.',
+                    'body' => 'Debajo de la lista está «Conversación», un hilo para todos los que tienen el enlace. La persona para quien es la lista no lo lee. Publicas con tu nombre; puedes quitar tus propios mensajes, quien gestiona la lista todos. Una lista privada no tiene conversación.',
                 ],
             ],
         ],
@@ -286,7 +286,7 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Unir mi lista de deseos al grupo',
-                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
+                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Más», luego «Amigo invisible» y «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
                 ],
                 [
                     'title' => 'Un recordatorio antes',

@@ -27,6 +27,10 @@ export type ToolKey =
     | 'info'
     | 'settings'
     | 'trash'
+    | 'more'
+    | 'chevron'
+    | 'edit'
+    | 'copy'
     | 'link'
     | 'barcode'
     | 'picture'
@@ -125,6 +129,36 @@ const paths: Record<ToolKey, ReactNode> = {
             <path d="M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2" />
             <path d="M7 7v11.5A1.5 1.5 0 0 0 8.5 20h7a1.5 1.5 0 0 0 1.5-1.5V7" />
             <path d="M10 11v5M14 11v5" />
+        </>
+    ),
+
+    /*
+     * The list page's menus (2026-09-26): three dots for "more things you can
+     * do", a chevron for "this opens a choice", a pencil and two sheets for the
+     * item menu. The chevron replaces a ▾ character that rendered at 10px and
+     * read as a minus sign beside the bookmark.
+     */
+    more: (
+        <>
+            <circle cx="5.5" cy="12" r="1.3" fill="currentColor" />
+            <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+            <circle cx="18.5" cy="12" r="1.3" fill="currentColor" />
+        </>
+    ),
+
+    chevron: <path d="m6 9.5 6 6 6-6" />,
+
+    edit: (
+        <>
+            <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z" />
+            <path d="m14 8 3 3" />
+        </>
+    ),
+
+    copy: (
+        <>
+            <rect x="8.5" y="8.5" width="11" height="11" rx="2" />
+            <path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" />
         </>
     ),
 
