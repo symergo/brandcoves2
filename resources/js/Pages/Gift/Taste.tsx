@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import Button, { buttonClasses } from '../../Components/Button'
+import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
@@ -56,6 +57,8 @@ interface Result {
     picks: Pick[]
     choices: Choice[]
     for: 'someone' | 'me'
+    /** Approved ideas nobody sells here, matching the taste. Empty on the person's own page. */
+    offlineIdeas?: OfflineIdea[]
 }
 
 interface Props {
@@ -610,6 +613,8 @@ function Outcome({ mode, person, urls, result, recipients, canCreate }: Props & 
                     ))}
                 </ul>
             )}
+
+            {mode === 'giver' && <OfflineIdeas ideas={result.offlineIdeas ?? []} />}
 
             <div className="mt-8 flex flex-wrap gap-3">
                 <a href={urls.restart} className={buttonClasses('secondary')}>

@@ -18,6 +18,7 @@ use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
+use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
@@ -221,6 +222,10 @@ class GiftController extends Controller
              * See docs/features/gift-landing-pages.md.
              */
             'pageUrl' => $picks === [] ? null : app(GiftLandingLinks::class)->pageFor($brief),
+            // Ideas nobody sells here, from what other people typed onto their
+            // lists and a person approved. Id and wording only.
+            // See docs/features/offline-ideas.md.
+            'offlineIdeas' => app(OfflineIdeaPicker::class)->forBrief($brief),
         ]);
     }
 

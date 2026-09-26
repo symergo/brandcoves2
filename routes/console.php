@@ -7,6 +7,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Jobs\CheckSearchAlerts;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\CountListSignals;
+use App\Jobs\CountOfflineIdeas;
 use App\Jobs\FindMatchCandidates;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
@@ -108,6 +109,16 @@ Schedule::job(new LinkBarcodeItems)
 Schedule::job(new CountListSignals)
     ->name('count-list-signals')
     ->dailyAt('03:50')
+    ->onOneServer();
+
+// Offline items people typed by hand, proposed as gift ideas for others once
+// five different people wrote the same thing; a person approves each before
+// it shows. After the list signals, in the same quiet hour, and after the
+// prune (03:20) so deleted items no longer count.
+// See docs/features/offline-ideas.md.
+Schedule::job(new CountOfflineIdeas)
+    ->name('count-offline-ideas')
+    ->dailyAt('04:00')
     ->onOneServer();
 
 // Which gift landing pages exist (/gift-ideas/for/papa/koken): the pairs the

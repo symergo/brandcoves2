@@ -16,6 +16,7 @@ use App\Services\Gift\TasteChoiceReader;
 use App\Services\Gift\TasteDeck;
 use App\Services\Gift\TasteProfile;
 use App\Services\Gift\TasteProfiler;
+use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -197,7 +198,7 @@ class TasteController extends Controller
         return Inertia::render('Gift/Taste', [
             ...$this->selfPage($current, $recipient, $token),
             'rounds' => [],
-            'result' => $this->outcome($validated['choices'], $current, $reader, $engine, 'me'),
+            'result' => $this->outcome($validated['choices'], $current, $reader, $engine, 'me', withIdeas: false),
         ]);
     }
 
@@ -241,7 +242,7 @@ class TasteController extends Controller
      * @param  list<array<string, mixed>>  $raw
      * @return array<string, mixed>
      */
-    private function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for): array
+    private function outcome(array $raw, CurrentMarket $current, TasteChoiceReader $reader, SuggestionEngine $engine, string $for, bool $withIdeas = true): array
     {
         $choices = $reader->read($raw, $current->get());
         $profile = TasteProfiler::fromConfig()->profile($choices);
@@ -252,12 +253,14 @@ class TasteController extends Controller
          * otherwise. The products already shown are left out: they have been
          * seen, and the ideas should be new.
          */
-        $picks = $engine->suggest($profile->brief(
+        $brief = $profile->brief(
             $current->get(),
             (int) config('giftcoves.gift.results'),
             $this->shownIds($choices),
             $for === 'me' ? SuggestionProfile::forMyself() : SuggestionProfile::forSomeone(),
-        ));
+        );
+
+        $picks = $engine->suggest($brief);
 
         // Append-only, no personal data: how many rounds, and what was found.
         Event::record('gift.taste', [
@@ -281,6 +284,13 @@ class TasteController extends Controller
             ], $picks),
             'choices' => array_values($raw),
             'for' => $for,
+            /*
+             * Ideas nobody sells here, from what other people typed onto
+             * their lists and a person approved. Only on the giver's page:
+             * the person choosing through their own link is describing
+             * themselves, not shopping. See docs/features/offline-ideas.md.
+             */
+            'offlineIdeas' => $withIdeas ? app(OfflineIdeaPicker::class)->forBrief($brief) : [],
         ];
     }
 

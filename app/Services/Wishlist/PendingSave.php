@@ -7,6 +7,7 @@ namespace App\Services\Wishlist;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Models\DailyPickSet;
+use App\Models\OfflineIdea;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Cove\SavedCoves;
@@ -132,6 +133,21 @@ class PendingSave
         }
 
         $list = $lists->for($owner, $current);
+
+        // An approved offline idea, pressed before signing in. Its wording is
+        // read now, from the idea: the session held only its id, and an idea
+        // withdrawn in the meantime is simply not added.
+        if (! empty($payload['idea_id'])) {
+            $idea = OfflineIdea::query()->approved()->find((int) $payload['idea_id']);
+
+            if ($idea === null) {
+                return null;
+            }
+
+            $saver->saveManual($list, $idea->title);
+
+            return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
+        }
 
         // A group id is only meaningful inside its own market — `product_groups`
         // is unique on (market, identity_key), so the same product in two

@@ -60,6 +60,12 @@ per list version. No brief, no block: a list with no tagged product says too lit
 - **The crowd cannot feed on itself**: only editors' tags are read back into a list's intent.
 - **No AI**: word lists and SQL.
 
+## Offline items
+
+Items typed by hand, with no product behind them, cannot earn a tag or a link. What they can
+teach, ideas nobody sells here, is counted separately and needs a person's approval before it
+shows: [offline-ideas.md](offline-ideas.md).
+
 ## Not yet
 
 The intent of the search a product was saved from is not recorded with the save; a list's own

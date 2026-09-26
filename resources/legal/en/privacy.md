@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
-updated: 2026-09-17
+updated: 2026-09-26
 ---
 
 ## The short version
@@ -76,6 +76,12 @@ they are often chosen for, for which occasion, and which products often sit on
 lists together. Only as numbers, only once enough different people do the same,
 and without any list, name or anything you wrote showing anywhere else. Who
 bought what never counts.
+
+Something you add to a list by hand, like a workshop or a day out, can become a
+gift idea for other people. Only once at least five different people wrote the
+same thing, and only after one of us has read it and written it in our own
+words. Who wrote it, how many did, and your own words are never shown. Photos
+are never used.
 
 ## Where your data goes
 

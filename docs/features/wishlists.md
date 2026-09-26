@@ -1224,3 +1224,12 @@ That form now takes a photo too, sent with the item in the same request (`photo`
 that is not a picture refuses the whole add, so an item never lands without the photo it came
 with. The person's photo wins over one read later from a pasted page, because `ItemLinker::fill()`
 only fills a missing picture.
+
+## Offline items as ideas for others (2026-09-26)
+
+What many different people type by hand can become a gift idea for others: at least five people,
+then a person approves the wording before it shows under the Gift Finder's and This or that's
+results. Adding one goes through `POST /list-items` with `source=manual` and an `idea_id`, and
+signed out through `/save-intent`, which now takes an `idea_id` (an id whose wording is read from
+the reviewed idea at sign-in, not free text). Photos are never used. See
+[offline-ideas.md](offline-ideas.md).
