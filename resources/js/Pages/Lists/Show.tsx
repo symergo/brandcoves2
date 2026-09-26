@@ -274,6 +274,11 @@ export default function ListShow({
         tasteTogether,
     }
 
+    // Absent when `board` is null: for anybody who may not see one, which on
+    // a wish list of your own is you, because a board is claim state in
+    // prose (App\Services\Wishlist\Board). Posted through the share token.
+    const hasBoard = board !== null && list.shareUrl !== null
+
     return (
         <>
             <Head title={list.title} />
@@ -396,6 +401,14 @@ export default function ListShow({
                 </div>
             )}
 
+            {/*
+              The items with the discussion beside them (owner, 2026-09-26: "put
+              the overleg section next to the list"), the same layout the shared
+              page uses. Two columns only when there is a discussion to show;
+              without one the items keep the full width (owner's rule).
+            */}
+            <div className={hasBoard ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10' : ''}>
+            <div className="min-w-0">
             {items.length === 0 ? (
                 <div className="mt-6 rounded-card border border-line bg-card p-8 text-center">
                     <p className="line-clamp-3 font-medium">{t('lists.empty_list')}</p>
@@ -568,29 +581,14 @@ export default function ListShow({
                 </div>
             )}
 
-            {/*
-              The discussion, under the list rather than beside it.
+            </div>
 
-              It was a sticky column on the right from `lg` up, which cut the
-              items to two-thirds of the page on every shared list, and put a
-              conversation level with the title — above the list it is about,
-              on a phone. Under the items it is still one scroll away, and the
-              items take the full width (owner's rule: content is full width
-              when nothing is in a right column). Capped to a reading measure,
-              because it is prose.
-
-              Absent when `board` is null: for anybody who may not see one,
-              which on a wish list of your own is you, because a board is claim
-              state in prose. See App\Services\Wishlist\Board.
-
-              Posted through the share token, like every other write on a
-              shared list — `shareUrl` already is that address.
-            */}
-            {board !== null && list.shareUrl !== null && (
-                <div className="mt-10 max-w-2xl">
-                    <ListBoard board={board} action={`${list.shareUrl}/messages`} />
-                </div>
+            {hasBoard && (
+                <aside className="mt-10 lg:sticky lg:top-6 lg:mt-6">
+                    <ListBoard board={board!} action={`${list.shareUrl}/messages`} />
+                </aside>
             )}
+            </div>
         </>
     )
 }
