@@ -991,6 +991,17 @@ return [
          * turning email off never loses the record.
          */
         'email' => true,
+
+        /*
+         * Three gift ideas in the reminder about somebody else's birthday or
+         * occasion, on the window nearest `ideas_lead_days` (with the windows
+         * above, the fifteen-day one). Not a window of its own: the ideas join
+         * a reminder that is going out anyway, so nobody gets a fourth email.
+         * Two weeks because that is the owner's ask (2026-09-26): time to
+         * choose and still have it delivered. See docs/features/gift-history.md.
+         */
+        'ideas' => true,
+        'ideas_lead_days' => 14,
     ],
 
     /*

@@ -69,6 +69,14 @@ iemand die jij niet bent en die nergens mee ingestemd heeft. Voor die gegevens
 handel je voor eigen rekening, dus houd het bij wat je nodig hebt. Ze verdwijnen
 samen met je account.
 
+Noteer je wat je iemand gaf (hun cadeaugeschiedenis), dan bewaren we het product
+of de woorden die je typte en het jaar, zodat we dat weglaten uit ideeën voor die
+persoon en kunnen voorstellen wat erop kan volgen. Wat jij zelf met "Ik koop
+dit" aanduidde op lijstjes voor die persoon telt ook mee; wat anderen aanduidden
+wordt daarvoor nooit gelezen. Alleen jij ziet het. Je kunt een regel altijd verwijderen, alles
+verdwijnt als je de persoon of je account verwijdert, en een regel wordt gewist
+zodra het jaar ervan 10 jaar terug ligt.
+
 ### Geen geautomatiseerde besluitvorming
 
 Niets hier neemt een besluit met rechtsgevolgen voor jou of dat jou in
@@ -154,6 +162,7 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Interactielog | 90 dagen |
 | Zoektermen | 12 maanden, van meet af aan samengevoegd en losgekoppeld |
 | Account, lijstjes, ontvangers | Tot je ze verwijdert |
+| Cadeaugeschiedenis (wat je noteerde dat je iemand gaf) | Tot je ze verwijdert, of 10 jaar na het jaar waarin je het gaf |
 | Prijsgeschiedenis | 90 dagen |
 | Inschrijving nieuwsbrief | Tot je je uitschrijft |
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |

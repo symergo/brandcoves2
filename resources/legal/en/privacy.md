@@ -65,6 +65,13 @@ name, a note, sometimes a birthday. That is personal data about a person who is
 not you and who has not agreed to anything. For that data you are acting on your
 own account, so please keep it to what you need. It is deleted with your account.
 
+If you note what you gave somebody (their gift history), we keep the product or
+the words you typed and the year, so we can leave those out of ideas for them and
+suggest what could come next. What you yourself marked "I'll get this" on lists
+for that person counts too; what anybody else marked is never read for it. Only you see it. You can remove a line
+at any time, it goes when you delete the person or your account, and a line is
+deleted once its year is 10 years back.
+
 ### No automated decision-making
 
 Nothing here makes a decision that produces legal effects for you or similarly
@@ -149,6 +156,7 @@ safeguards above.
 | Interaction log | 90 days |
 | Search terms | 12 months, aggregated and unlinked from the start |
 | Account, lists, recipients | Until you delete them |
+| Gift history (what you noted you gave someone) | Until you delete it, or 10 years after the year you gave it |
 | Price history | 90 days |
 | Newsletter subscription | Until you unsubscribe |
 | Unconfirmed subscription | Deleted after 30 days |

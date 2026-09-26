@@ -65,7 +65,8 @@ is true now.
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
 | [sharing.md](sharing.md) | Gifting / Growth | Active |
 | [list-board.md](list-board.md) | Gifting / Coordination | Active |
-| [occasion-reminders.md](occasion-reminders.md) | Gifting / Notifications | Active — four dates; windows editable in admin (friend birthdays on fixed ones) |
+| [occasion-reminders.md](occasion-reminders.md) | Gifting / Notifications | Active — four dates; windows editable in admin (friend birthdays on fixed ones); ideas about two weeks out; a per-person stop link since 2026-09-28 |
+| [gift-history.md](gift-history.md) | Gifting / Notifications | Active — `/people/{id}`: what you gave (noted, and your own claims only), never suggested again, the next step after it; three ideas in the reminder about two weeks out |
 | [recipient-birthday.md](recipient-birthday.md) | Gifting / Notifications | Active — day and month, never a year |
 | [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
 | [serendipity.md](serendipity.md) | Discovery | Active |

@@ -8,10 +8,12 @@ use App\Enums\Market;
 use App\Mail\OccasionReminderMail;
 use App\Models\Friendship;
 use App\Models\Notification;
+use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Services\Gift\ReminderIdeas;
 use App\Services\Settings\ReminderSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
@@ -21,6 +23,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Number;
 
 /**
  * "Your mother's birthday is in two weeks."
@@ -65,6 +69,23 @@ use Illuminate\Support\Facades\Mail;
  * `app.locale` says, which is English. So each `__()` here is passed the
  * language of the market the reminder is about — a reminder about a Dutch list
  * arriving in English is the bug that prevents.
+ *
+ * ## Ideas ready, about two weeks out
+ *
+ * On the window nearest two weeks (`reminders.ideas_lead_days`, 14; with the
+ * shipped windows that is the fifteen-day one), a reminder about somebody
+ * else, a saved person's birthday or the occasion on a list about them,
+ * carries three ideas for that person: their taste, their budget, and nothing
+ * they were already given ({@see ReminderIdeas}). Only in the email, only when
+ * the email will go, and once per person, occasion and year: the key is
+ * written into the notification's payload as `ideas_key`, so a birthday and a
+ * birthday list for the same person on the same day send the ideas once.
+ * No AI anywhere in it; the engine is retrieval and arithmetic.
+ *
+ * ## Whoever turned the emails off gets none
+ *
+ * `users.reminder_emails_off_at`, set from the link in every reminder email
+ * or the switch on the notifications page. The inbox row is still written.
  */
 class SendOccasionReminders implements ShouldQueue
 {
@@ -137,6 +158,32 @@ class SendOccasionReminders implements ShouldQueue
             ->all();
     }
 
+    /**
+     * The window the ideas ride on: the configured lead nearest two weeks.
+     *
+     * Not a window of its own. A fourth email a day before or after the
+     * fifteen-day one would be the over-notifying this job is careful to
+     * avoid, so the ideas join the reminder that is going out anyway. A tie
+     * goes to the earlier window, which leaves more time to order.
+     */
+    private function ideasLead(): ?int
+    {
+        if (! config('giftcoves.reminders.ideas', true)) {
+            return null;
+        }
+
+        $wanted = (int) config('giftcoves.reminders.ideas_lead_days', 14);
+        $best = null;
+
+        foreach ($this->leadDays() as $lead) {
+            if ($best === null || abs($lead - $wanted) < abs($best - $wanted)) {
+                $best = $lead;
+            }
+        }
+
+        return $best;
+    }
+
     /** A market key to the language its copy is written in. */
     private static function languageOf(string $market): string
     {
@@ -155,7 +202,14 @@ class SendOccasionReminders implements ShouldQueue
             ])
             ->chunkById(200, function ($recipients) use ($target, $lead): void {
                 foreach ($recipients as $recipient) {
-                    $market = (string) ($recipient->wishlists()->value('market') ?? 'en');
+                    /*
+                     * `toBase()`: Eloquent's `value()` returns the cast, a
+                     * Market enum, which `(string)` cannot convert. Until
+                     * 2026-09-28 this threw for every person with a list, so a
+                     * birthday reminder reached only people nobody had made a
+                     * list for.
+                     */
+                    $market = (string) ($recipient->wishlists()->toBase()->value('market') ?? 'en');
                     $language = self::languageOf($market);
 
                     $this->notifyOnce(
@@ -164,9 +218,16 @@ class SendOccasionReminders implements ShouldQueue
                         key: $recipient->id.':'.$target->year.':'.$lead,
                         title: __('site.reminders.birthday_title', ['name' => $recipient->name], $language),
                         body: __('site.reminders.lead', ['days' => $lead, 'name' => $recipient->name], $language),
-                        url: '/'.$market.'/gift',
+                        // Straight to the ideas for this person, not an empty
+                        // wizard (docs/features/gift-history.md).
+                        url: '/'.$market.'/gift?for='.$recipient->id,
                         language: $language,
                         tokens: ['name' => $recipient->name, 'days' => $lead],
+                        ideasFor: $lead === $this->ideasLead() ? [
+                            'recipient' => $recipient,
+                            'occasion' => 'birthday',
+                            'key' => $recipient->id.':birthday:'.$target->year,
+                        ] : null,
                     );
                 }
             });
@@ -222,8 +283,10 @@ class SendOccasionReminders implements ShouldQueue
                         continue;
                     }
 
+                    // `toBase()`, for the reason given in remindBirthdays().
                     $market = (string) (Wishlist::query()
                         ->where('owner_user_id', $friendship->user_id)
+                        ->toBase()
                         ->value('market') ?? 'en');
                     $language = self::languageOf($market);
                     $name = $friend->displayName();
@@ -359,6 +422,16 @@ class SendOccasionReminders implements ShouldQueue
                             'occasion' => $occasion,
                             'days' => $lead,
                         ],
+                        /*
+                         * Ideas only on a list about somebody else: on a wish
+                         * list of your own the occasion is yours, and the
+                         * reminder is about your list, not a present.
+                         */
+                        ideasFor: $list->recipient !== null && $lead === $this->ideasLead() ? [
+                            'recipient' => $list->recipient,
+                            'occasion' => $list->event_type?->value,
+                            'key' => $list->recipient->id.':'.($list->event_type?->value ?? 'list-'.$list->id).':'.$target->year,
+                        ] : null,
                     );
                 }
             });
@@ -371,6 +444,11 @@ class SendOccasionReminders implements ShouldQueue
      * The row is the ledger for both channels. Sending mail outside the "did we
      * just create it" branch would re-send the whole backlog the first morning
      * after email was switched on.
+     *
+     * `$ideasFor` names the person the ideas are for, when this reminder
+     * carries them (the window nearest two weeks, about somebody else).
+     *
+     * @param  array{recipient: Recipient, occasion: string|null, key: string}|null  $ideasFor
      */
     private function notifyOnce(
         int $userId,
@@ -381,6 +459,7 @@ class SendOccasionReminders implements ShouldQueue
         string $url,
         string $language,
         array $tokens = [],
+        ?array $ideasFor = null,
     ): void {
         $exists = Notification::query()
             ->where('user_id', $userId)
@@ -392,16 +471,70 @@ class SendOccasionReminders implements ShouldQueue
             return;
         }
 
+        $market = Market::tryFrom((string) explode('/', ltrim($url, '/'))[0]) ?? Market::En;
+        $ideas = $ideasFor === null ? [] : $this->ideas($userId, $ideasFor, $market);
+
         DB::transaction(fn () => Notification::create([
             'user_id' => $userId,
             'kind' => $kind,
             'title' => $title,
             'body' => $body,
             'url' => $url,
-            'payload' => ['key' => $key],
+            'payload' => ['key' => $key] + ($ideas === [] ? [] : [
+                // The ledger for "ideas once per person, occasion and year".
+                'ideas_key' => $ideasFor['key'],
+                'ideas' => array_map(fn (ProductGroup $g) => $g->id, $ideas),
+            ]),
         ]));
 
-        $this->email($userId, $title, $body, $url, $language, $tokens);
+        $this->email($userId, $title, $body, $url, $language, $tokens, $market, $ideas, $ideasFor['recipient'] ?? null);
+    }
+
+    /**
+     * Three ideas for this person, or none.
+     *
+     * None when the email will not go (there is nowhere to show them; the
+     * inbox links to the Gift Finder, which has them live), or when this
+     * person's ideas already went for this occasion this year.
+     *
+     * @param  array{recipient: Recipient, occasion: string|null, key: string}  $ideasFor
+     * @return list<ProductGroup>
+     */
+    private function ideas(int $userId, array $ideasFor, Market $market): array
+    {
+        if ($this->emailableUser($userId) === null) {
+            return [];
+        }
+
+        $sent = Notification::query()
+            ->where('user_id', $userId)
+            ->whereRaw("payload->>'ideas_key' = ?", [$ideasFor['key']])
+            ->exists();
+
+        if ($sent) {
+            return [];
+        }
+
+        return app(ReminderIdeas::class)->for($ideasFor['recipient'], $market, $ideasFor['occasion'], 3);
+    }
+
+    /**
+     * The account to email, or null when reminder email is off: for
+     * everyone (`reminders.email`), or for this person, who turned it off.
+     */
+    private function emailableUser(int $userId): ?User
+    {
+        if (! config('giftcoves.reminders.email', true)) {
+            return null;
+        }
+
+        $user = User::query()->find($userId);
+
+        if ($user === null || blank($user->email) || $user->reminder_emails_off_at !== null) {
+            return null;
+        }
+
+        return $user;
     }
 
     /**
@@ -416,26 +549,53 @@ class SendOccasionReminders implements ShouldQueue
      * mail transport that hangs would otherwise stall the whole morning's
      * reminders behind one address.
      */
-    /** @param array<string, string|int> $tokens */
-    private function email(int $userId, string $title, string $body, string $url, string $language, array $tokens = []): void
-    {
-        if (! config('giftcoves.reminders.email', true)) {
+    /**
+     * @param  array<string, string|int>  $tokens
+     * @param  list<ProductGroup>  $ideas
+     */
+    private function email(
+        int $userId,
+        string $title,
+        string $body,
+        string $url,
+        string $language,
+        array $tokens,
+        Market $market,
+        array $ideas = [],
+        ?Recipient $about = null,
+    ): void {
+        $user = $this->emailableUser($userId);
+
+        if ($user === null) {
             return;
         }
 
-        $user = User::query()->find($userId);
-
-        if ($user === null || blank($user->email)) {
-            return;
-        }
+        // Absolute: an email has no origin to resolve a path against.
+        $base = rtrim((string) config('app.url'), '/');
 
         Mail::to($user->email)->queue(new OccasionReminderMail(
             heading: $title,
             body: $body,
-            // Absolute: an email has no origin to resolve a path against.
-            url: rtrim((string) config('app.url'), '/').$url,
+            url: $base.$url,
             language: $language,
             tokens: $tokens,
+            ideas: $about === null ? [] : array_map(fn (ProductGroup $group) => [
+                'title' => $group->displayTitle(),
+                'image' => $group->image_url,
+                'price' => $group->min_price === null
+                    ? null
+                    : (string) Number::currency($group->min_price / 100, $market->currency(), $market->hrefLang()),
+                'url' => $base.$group->path(),
+                // To the person's page with this idea on top and the save
+                // button beside it: one click from there, never a GET that
+                // adds (mail scanners open every link in a message).
+                'addUrl' => $base.'/'.$market->value."/people/{$about->id}?add={$group->id}",
+            ], $ideas),
+            ideasUrl: $about === null || $ideas === [] ? null : $base.'/'.$market->value.'/gift?for='.$about->id,
+            name: $about?->name,
+            // Permanent, like the Cove digest's: an unsubscribe link that
+            // expires fails exactly when somebody is annoyed enough to use it.
+            unsubscribeUrl: URL::signedRoute('reminders.stop', ['market' => $market->value, 'user' => $user->id]),
         ));
     }
 }

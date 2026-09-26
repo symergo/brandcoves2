@@ -6,6 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import ChipInput from '../../Components/ChipInput'
 import CommunityCoveCards, { type CommunityCoveCard } from '../../Components/CommunityCoveCards'
 import InfoTip from '../../Components/InfoTip'
+import NextSteps, { type NextStepCard } from '../../Components/NextSteps'
 import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
 import ToolIcon from '../../Components/ToolIcon'
@@ -80,6 +81,10 @@ interface Props {
     communityCoves?: CommunityCoveCard[]
     /** Opened from somebody's gift profile card: the answers above come from it. */
     card?: GiftProfileCardProps | null
+    /** What could follow what the chosen person was given; see docs/features/gift-history.md. */
+    nextSteps?: NextStepCard[]
+    /** The chosen person's page (gift history), signed in only. */
+    personUrl?: string | null
 }
 
 /*
@@ -96,7 +101,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [], card = null }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [], card = null, nextSteps = [], personUrl = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -447,6 +452,16 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                     )}
 
                     <OfflineIdeas ideas={offlineIdeas} into={recipientList} />
+
+                    {recipient && <NextSteps steps={nextSteps} name={recipient.name} into={recipientList} />}
+
+                    {recipient && personUrl && (
+                        <p className="mt-6 text-sm">
+                            <Link href={personUrl} className="text-accent underline">
+                                {t('gift_history.link', { name: recipient.name })}
+                            </Link>
+                        </p>
+                    )}
 
                     <div className="mt-8 flex flex-wrap gap-3">
                         <button

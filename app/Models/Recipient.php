@@ -100,6 +100,17 @@ class Recipient extends Model
         return $this->hasMany(Wishlist::class);
     }
 
+    /**
+     * What the owner noted they gave this person. Claims are read live, not
+     * from here: see App\Services\Gift\GiftHistory.
+     *
+     * @return HasMany<RecipientGift, $this>
+     */
+    public function gifts(): HasMany
+    {
+        return $this->hasMany(RecipientGift::class);
+    }
+
     /** @return BelongsTo<User, $this> */
     public function owner(): BelongsTo
     {
