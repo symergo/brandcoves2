@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $title the feed's title, rewritten by the grouper on every run
  * @property string|null $display_title a hand-written title, or null for "not written yet"
  * @property list<string>|null $gift_tags `interest:coffee`, `occasion:christmas`, `recipient:mother`; see GiftTags
+ * @property int|null $merged_into_id the product this one was merged into; see GroupMerger
  */
 class ProductGroup extends Model
 {
@@ -138,6 +139,41 @@ class ProductGroup extends Model
     public function bestOffer(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'best_offer_id');
+    }
+
+    /** @return BelongsTo<ProductGroup, $this> */
+    public function mergedInto(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'merged_into_id');
+    }
+
+    /**
+     * The product this one lives on as, after merges: itself when it was
+     * never merged.
+     *
+     * A merged product is kept rather than deleted so its old URL and the
+     * `[[product:N]]` tokens in published prose still resolve, which means
+     * anything that finds a product by id or by barcode can land on one. The
+     * merger keeps chains one hop long (it repoints products merged into a
+     * loser), so the loop is a guard, not the normal path; five hops is far
+     * more than a correct history can produce, and stopping there turns a
+     * corrupted cycle into a stale page rather than a hung request.
+     */
+    public function followMerge(): self
+    {
+        $group = $this;
+
+        for ($hop = 0; $hop < 5 && $group->merged_into_id !== null; $hop++) {
+            $next = self::query()->find($group->merged_into_id);
+
+            if ($next === null) {
+                break;
+            }
+
+            $group = $next;
+        }
+
+        return $group;
     }
 
     /** @return HasMany<WishlistItem, $this> */

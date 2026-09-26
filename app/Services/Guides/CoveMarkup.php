@@ -6,6 +6,7 @@ namespace App\Services\Guides;
 
 use App\Enums\CoveScene;
 use App\Enums\Market;
+use App\Services\Identity\MergedProducts;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
@@ -167,7 +168,43 @@ class CoveMarkup
      * A constructor parameter says the dependency out loud and lets a caller
      * that already knows its brand URLs supply them.
      */
-    public function __construct(private readonly BrandLinker $brands) {}
+    public function __construct(
+        private readonly BrandLinker $brands,
+        /*
+         * Optional for the same reason the brand linker is injected: the unit
+         * tests build this class with no database, and a product token there
+         * must not reach for one. The container always supplies it.
+         */
+        private readonly ?MergedProducts $merged = null,
+    ) {}
+
+    /**
+     * Product ids in this text that were merged into a product the page holds.
+     *
+     * A Cove written before a merge still says `[[product:123|…]]`, while its
+     * item list moved to the product 123 was merged into (GroupMerger). Only
+     * ids the allowlist does not know are looked up, so the usual text costs
+     * no query at all.
+     *
+     * @param  array{products?: array<int, array{slug: string, title: string}>}  $allowed
+     * @return array<int, int> id in the text => id to link instead
+     */
+    public function mergedIn(string $text, array $allowed): array
+    {
+        if ($this->merged === null || ! preg_match_all('/\[\[product:\s*(\d+)/u', $text, $m)) {
+            return [];
+        }
+
+        $unknown = array_values(array_filter(
+            array_map('intval', $m[1]),
+            fn (int $id) => ! isset($allowed['products'][$id]),
+        ));
+
+        return array_filter(
+            $this->merged->winners($unknown),
+            fn (int $winner) => isset($allowed['products'][$winner]),
+        );
+    }
 
     /**
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
@@ -191,12 +228,20 @@ class CoveMarkup
         // with the space before it so the words on either side close up.
         $escaped = e(preg_replace(self::INLINE_FIGURE, '', $text) ?? $text);
 
+        $mergedTo = $this->mergedIn($text, $allowed);
+
         $html = preg_replace_callback(
             self::TOKEN,
-            function (array $m) use ($allowed, $base, $brandUrls, $market, &$links, &$rejected): string {
+            function (array $m) use ($allowed, $base, $brandUrls, $market, $mergedTo, &$links, &$rejected): string {
                 $kind = $m[1];
                 // The token survived escaping, so its contents are escaped too.
                 $value = html_entity_decode($m[2], ENT_QUOTES);
+
+                // A product merged since the prose was written links to the
+                // product it is now part of, silently.
+                if ($kind === 'product' && isset($mergedTo[(int) trim($value)])) {
+                    $value = (string) $mergedTo[(int) trim($value)];
+                }
                 $label = isset($m[3])
                     ? html_entity_decode($m[3], ENT_QUOTES)
                     : $this->fallbackLabel($kind, $value, $allowed);
@@ -280,11 +325,17 @@ class CoveMarkup
             return '';
         }
 
+        $mergedTo = $this->mergedIn($text, $allowed);
+
         $text = (string) preg_replace_callback(
             self::TOKEN,
             // The label if one was given, the same fallback render() uses
             // otherwise — which for a product means its title, never its id.
-            fn (array $m): string => $m[3] ?? $this->fallbackLabel($m[1], $m[2], $allowed),
+            fn (array $m): string => $m[3] ?? $this->fallbackLabel(
+                $m[1],
+                $m[1] === 'product' && isset($mergedTo[(int) trim($m[2])]) ? (string) $mergedTo[(int) trim($m[2])] : $m[2],
+                $allowed,
+            ),
             $text,
         );
 

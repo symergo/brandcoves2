@@ -305,7 +305,7 @@ class SearchController extends Controller
         $group = ProductGroup::query()
             ->forMarket($current->get())
             ->where('identity_key', $known->identity_key)
-            ->first();
+            ->first()?->followMerge();
 
         return $group === null
             ? null

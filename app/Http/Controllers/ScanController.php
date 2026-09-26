@@ -70,7 +70,7 @@ class ScanController extends Controller
         $group = ProductGroup::query()
             ->forMarket($current->get())
             ->where('identity_key', $gtin)
-            ->first();
+            ->first()?->followMerge();
 
         Event::record('scan', [
             'market' => $current->value(),

@@ -48,7 +48,7 @@ class LinkBarcodeItems implements ShouldBeUnique, ShouldQueue
                     $group = ProductGroup::query()
                         ->forMarket($item->wishlist->market)
                         ->where('identity_key', $item->gtin)
-                        ->first();
+                        ->first()?->followMerge();
 
                     if ($group !== null) {
                         $linker->link($item, $group);

@@ -99,15 +99,33 @@ class IncomingGrouper
                 p.brand, p.image_url, p.merchant_category, now(), now(), now()
             FROM products p
             WHERE p.source = ? AND p.market = ? AND p.external_id = ANY(?) AND p.identity_key IS NOT NULL
+              -- A merged or split offer already has its product; see below.
+              AND NOT EXISTS (SELECT 1 FROM identity_overrides o WHERE o.product_id = p.id)
+              AND NOT EXISTS (SELECT 1 FROM identity_aliases a WHERE a.market = p.market AND a.from_key = p.identity_key)
             ORDER BY p.identity_key, (p.image_url IS NOT NULL) DESC, p.price ASC NULLS LAST, p.id
             ON CONFLICT (market, identity_key) DO NOTHING
         SQL, [$source, $market->value, $ids]);
 
+        /*
+         * Linked by the effective key, the same order ProductGrouper uses: a
+         * split (override) first, then a merge (alias) of that key, then the
+         * offer's own key. Without it a merged product's offer arriving from a
+         * live search would rejoin the product it was merged out of until the
+         * next nightly run moved it back. Correlated subqueries are fine here:
+         * this touches one search's worth of rows, not a market.
+         */
         DB::statement(<<<'SQL'
             UPDATE products p SET group_id = g.id
             FROM product_groups g
             WHERE p.source = ? AND p.market = ? AND p.external_id = ANY(?)
-              AND g.market = p.market AND g.identity_key = p.identity_key
+              AND g.market = p.market
+              AND g.identity_key = COALESCE(
+                  (SELECT a.to_key FROM identity_aliases a
+                   WHERE a.market = p.market
+                     AND a.from_key = COALESCE((SELECT o.forced_key FROM identity_overrides o WHERE o.product_id = p.id), p.identity_key)),
+                  (SELECT o.forced_key FROM identity_overrides o WHERE o.product_id = p.id),
+                  p.identity_key
+              )
               AND p.group_id IS DISTINCT FROM g.id
         SQL, [$source, $market->value, $ids]);
 
