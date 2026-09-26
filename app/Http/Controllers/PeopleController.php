@@ -36,15 +36,12 @@ class PeopleController extends Controller
             'people' => $user === null ? [] : $people->for($user, $current),
             'settings' => $user === null ? null : $people->settings($user),
             /*
-             * The closed vocabulary for "who is it to you", the same one the
-             * Gift Finder offers. Stored as its value ("mother") so the Gift
-             * Finder and the gift landing pages read it without guessing;
-             * a relationship typed elsewhere as free text still shows as typed.
+             * The closed vocabulary for "who is it to you", the same one Find
+             * a gift offers. Stored as its value ("mother") so Find a gift and
+             * the gift landing pages read it without guessing; a relationship
+             * typed elsewhere as free text still shows as typed.
              */
-            'relationships' => array_map(fn (RecipientType $type) => [
-                'value' => $type->value,
-                'label' => __("site.gift.relationships.{$type->value}"),
-            ], RecipientType::cases()),
+            'relationships' => RecipientType::options(),
         ]);
     }
 }

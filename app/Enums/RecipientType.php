@@ -43,4 +43,24 @@ enum RecipientType: string
     {
         return array_map(fn (self $t) => $t->value, self::cases());
     }
+
+    /** "mother" as "Mama": the name of the relationship in the current language. */
+    public function label(): string
+    {
+        return (string) __("site.gift.relationships.{$this->value}");
+    }
+
+    /**
+     * The "who is it to you" picker, as Find a gift and My people both offer
+     * it. One list, so the two screens cannot drift apart.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    public static function options(): array
+    {
+        return array_map(fn (self $type) => [
+            'value' => $type->value,
+            'label' => $type->label(),
+        ], self::cases());
+    }
 }

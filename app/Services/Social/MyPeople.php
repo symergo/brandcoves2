@@ -391,7 +391,7 @@ class MyPeople
 
         $type = RecipientType::tryFrom(mb_strtolower($relationship));
 
-        return $type === null ? $relationship : __("site.gift.relationships.{$type->value}");
+        return $type === null ? $relationship : $type->label();
     }
 
     /**
