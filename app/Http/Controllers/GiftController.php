@@ -468,7 +468,7 @@ class GiftController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function options(): array
+    public function options(): array
     {
         return [
             'interests' => array_map(fn (Interest $i) => [

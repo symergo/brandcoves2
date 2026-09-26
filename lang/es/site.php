@@ -1433,6 +1433,54 @@ return [
             'finder_title' => '¿Prefieres elegir a responder preguntas?',
             'finder_cta' => 'Jugar a Esto o aquello',
         ],
+        // Esto o aquello en grupo (TasteTogetherController): varias personas
+        // juegan sobre una misma persona, y quien regala ve el resultado
+        // conjunto, nunca quién eligió qué. docs/features/taste-together.md
+        'together' => [
+            'title' => '¿Qué le gustaría a :name?',
+            'subtitle' => 'Ayuda a descubrir qué le gusta a :name: elige una docena de veces entre dos cosas, lo que :name preferiría recibir.',
+            'privacy' => 'No necesitas cuenta. Tus elecciones se suman a las de los demás, y quien te envió este enlace solo ve lo que encontrasteis juntos, nunca tu nombre ni tus propias respuestas.',
+            'full' => 'Ya han jugado suficientes personas para :name. Gracias por querer ayudar.',
+            'recorded' => 'Gracias. Tus elecciones se suman a las de los demás, y quien envió el enlace ve lo que encontrasteis juntos.',
+            'not_recorded' => 'Gracias por jugar. Ya han jugado suficientes personas para :name, así que tus elecciones no se han añadido.',
+            'opened' => 'El enlace para :name está listo para enviar.',
+            'stopped' => 'El enlace está detenido. Lo que se eligió con él sigue aquí.',
+            'panel_title' => 'Descubrid juntos qué le gusta a :name',
+            'panel_hint' => 'Envía un enlace a los demás. Cada uno juega a Esto o aquello sobre :name, sin cuenta. Tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué.',
+            'make' => 'Crear un enlace',
+            'make_new' => 'Crear un enlace nuevo',
+            'stop' => 'Detener el enlace',
+            'share_text' => '¿Me ayudas a descubrir qué le gustaría a :name? Elige una docena de veces entre dos regalos.',
+            'players_none' => 'Todavía no ha jugado nadie.',
+            'players_one' => 'Ha jugado una persona.',
+            'players_many' => 'Han jugado :count personas.',
+            'full_note' => 'El enlace admite :max personas. Ya está completo.',
+            'stopped_note' => 'El enlace está detenido. Las respuestas ya dadas siguen aquí.',
+            'result' => 'Lo que encontraron juntos',
+            'nothing' => 'Todavía no hay un favorito claro.',
+            'apply' => 'Añadir a :name',
+            'apply_hint' => 'Se suma a lo que ya sabes de :name. Si :name describió sus propios gustos, sus respuestas se mantienen.',
+            'applied' => 'Añadido a :name. Si lo añades otra vez, se incluyen las respuestas más recientes.',
+        ],
+
+        // «Mi perfil de regalo» (GiftProfileCardController): una tarjeta sobre
+        // ti con un enlace que abre el Buscador de regalos ya rellenado.
+        // docs/features/gift-profile-card.md
+        'card' => [
+            'title_anonymous' => 'Un perfil de regalo',
+            'title_named' => 'El perfil de regalo de :name',
+            'prefilled' => 'Las preguntas de abajo están rellenadas con esta tarjeta. Mira ideas enseguida o cambia antes alguna respuesta.',
+            'see_ideas' => 'Ver ideas',
+            'make_own' => 'Crea tu propia tarjeta',
+            'remove' => 'Eliminar esta tarjeta',
+            'make_title' => 'Comparte tu perfil de regalo',
+            'make_hint' => 'Crea una tarjeta con un enlace para quien te hace regalos. Abre el Buscador de regalos con tus gustos ya rellenados. No muestra ningún nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',
+            'name_label' => 'Tu nombre en la tarjeta (opcional)',
+            'name_placeholder' => 'Tu nombre (opcional)',
+            'make' => 'Crear mi tarjeta',
+            'made' => 'Tu tarjeta: :summary. Envía el enlace a quien te hace regalos.',
+            'share_text' => 'Mi perfil de regalo: :summary.',
+        ],
     ],
 
     'ask' => [
@@ -2126,6 +2174,8 @@ return [
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
         'find_gift' => 'Dile al Buscador de regalos para quién es, qué le gusta y tu presupuesto, y elige entre las ideas.',
         'find_taste' => '¿No sabes qué le gusta a alguien? En Esto o aquello eliges una docena de veces entre dos productos. Averiguamos sus gustos y un presupuesto, te mostramos ideas y puedes guardar el resultado en una persona.',
+        'find_taste_together' => '¿No sabes qué le gusta a alguien, y los demás tampoco? En la lista para esa persona, crea un enlace de Esto o aquello y compártelo. Cada uno juega sobre esa persona sin cuenta, y tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué. Añádelo a la persona con un solo clic.',
+        'find_taste_card' => '¿Has jugado a Esto o aquello para ti? Crea una tarjeta de perfil de regalo, como «café, senderismo, entre 30 € y 60 €», y envía su enlace a quien te hace regalos. Abre el Buscador de regalos con tus gustos ya rellenados. Sin nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',
         'find_offline_ideas' => 'Debajo de las ideas del Buscador de regalos y de Esto o aquello verás a veces Ideas sin tienda: cosas que muchas personas distintas apuntaron a mano en sus listas, como un taller o una salida. Solo mostramos una después de revisarla, nunca quién la escribió, y Añadir a mi lista la pone en la tuya como artículo offline.',
         'find_browse' => 'Explora las Coves: una nueva cada día, ideas de regalo por persona y guías de compra.',
         'find_filters' => 'Desde una página de ideas de regalo, busca todo lo pensado para esa persona y esa afición. Los filtros aparecen encima de los resultados y cada uno se quita con un toque.',

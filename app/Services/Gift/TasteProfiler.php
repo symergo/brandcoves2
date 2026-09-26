@@ -115,6 +115,27 @@ final class TasteProfiler
     }
 
     /**
+     * Several people's runs about the same person, as one profile.
+     *
+     * Every run's choices go into one tally, as if one person had played all
+     * the rounds. That is deliberate, and the rules above already say why it
+     * works: an interest needs two good rounds, so two friends who each
+     * picked cooking once agree on it where neither alone would; avoid needs
+     * two bad rounds and no good one, so one friend's dislike is not enough
+     * and one friend's pick overrules everybody's; and the price band is the
+     * middle half of everything anyone picked, so one generous friend widens
+     * it rather than moving it. No friend counts for more than the rounds they
+     * played, and a run is capped at the rounds a page can send
+     * (TasteDeck::ROUNDS * 2).
+     *
+     * @param  list<list<TasteChoice>>  $runs
+     */
+    public function combined(array $runs): TasteProfile
+    {
+        return $this->profile(array_merge([], ...array_values($runs)));
+    }
+
+    /**
      * Net score, good rounds and bad rounds per value of one vocabulary.
      *
      * @param  list<TasteChoice>  $choices

@@ -66,6 +66,10 @@ class PrunePersonalDataCommand extends Command
         // An identity seen on one day only, which owns nothing (2026-09-26).
         'anonymous_identities_single_visit' => 30,
         'feedback' => 365,
+        // This or that together: a run, then a link with no runs left (2026-09-26).
+        'taste_runs' => 180,
+        // A gift profile card nobody has opened for this long (2026-09-26).
+        'gift_profile_cards' => 365,
     ];
 
     public function handle(): int
@@ -152,6 +156,42 @@ class PrunePersonalDataCommand extends Command
         $report['feedback'] = $this->prune(
             'feedback',
             fn () => DB::table('feedback')->where('created_at', '<', now()->subDays(self::RETENTION['feedback'])),
+            $dry,
+        );
+
+        /*
+         * This or that together (docs/features/taste-together.md). A run is
+         * somebody's guesses about a real person, kept for the occasion it was
+         * played for; six months covers a birthday planned well ahead and is
+         * past any one occasion. A link goes once it is that old and has no
+         * runs left, so a link still being played is never cut off mid-use.
+         * What the giver added to the person stays on the person, with the
+         * rest of what they keep there ("until you delete them").
+         */
+        $report['this or that runs'] = $this->prune(
+            'taste_runs',
+            fn () => DB::table('taste_runs')->where('updated_at', '<', now()->subDays(self::RETENTION['taste_runs'])),
+            $dry,
+        );
+
+        $report['this or that links'] = $this->prune(
+            'taste_invites',
+            fn () => DB::table('taste_invites')
+                ->where('created_at', '<', now()->subDays(self::RETENTION['taste_runs']))
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('taste_runs')->whereColumn('taste_runs.taste_invite_id', 'taste_invites.id')),
+            $dry,
+        );
+
+        /*
+         * Gift profile cards (docs/features/gift-profile-card.md). A card is
+         * meant to be opened: its maker sent the link to people who buy for
+         * them. One nobody has opened for a year has done its job or never
+         * will, and a taste from a year ago is out of date anyway. Opening a
+         * card keeps it (at most one write a day).
+         */
+        $report['gift profile cards'] = $this->prune(
+            'gift_profile_cards',
+            fn () => DB::table('gift_profile_cards')->where('last_opened_at', '<', now()->subDays(self::RETENTION['gift_profile_cards'])),
             $dry,
         );
 

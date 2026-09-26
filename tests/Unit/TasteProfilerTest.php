@@ -290,4 +290,55 @@ class TasteProfilerTest extends TestCase
         $this->assertSame(['vintage', 'quirky'], $merged['preferences']);
         $this->assertSame(['handmade'], $merged['values']);
     }
+
+    /**
+     * This or that together (docs/features/taste-together.md): two people who
+     * each picked cooking once agree on it, where neither alone would.
+     */
+    #[Test]
+    public function two_runs_that_each_pick_an_interest_once_agree_on_it(): void
+    {
+        $run = function (string $other): array {
+            $cooking = $this->card(['interest:cooking']);
+            $music = $this->card(['interest:music']);
+
+            return [
+                TasteChoice::pair($cooking, $this->card(["interest:{$other}"]), $cooking->id),
+                TasteChoice::pair($music, $this->card(['interest:reading']), $music->id),
+            ];
+        };
+
+        $first = $run('gaming');
+        $second = $run('fitness');
+
+        $this->assertSame(['cooking', 'music'], $this->profiler()->profile($first)->interests, 'one run alone is a thin reading');
+        $this->assertSame(2, $this->profiler()->profile($first)->answered);
+
+        $together = $this->profiler()->combined([$first, $second]);
+
+        $this->assertSame(['cooking', 'music'], $together->interests);
+        $this->assertSame(2.0, $together->scores['cooking']);
+        $this->assertSame(4, $together->answered);
+    }
+
+    #[Test]
+    public function one_players_pick_overrules_the_others_dislikes(): void
+    {
+        $dislike = fn () => [TasteChoice::single($this->card(['interest:gaming']), TasteChoice::DISLIKE)];
+
+        // Two people disliked gaming: avoided.
+        $this->assertSame(['gaming'], $this->profiler()->combined([$dislike(), $dislike()])->avoid);
+
+        // A third picked it once: never avoided, whatever else happened to it.
+        $gaming = $this->card(['interest:gaming']);
+        $picked = [TasteChoice::pair($gaming, $this->card(['interest:yoga']), $gaming->id)];
+
+        $this->assertSame([], $this->profiler()->combined([$dislike(), $dislike(), $picked])->avoid);
+    }
+
+    #[Test]
+    public function no_runs_is_an_empty_profile(): void
+    {
+        $this->assertTrue($this->profiler()->combined([])->isEmpty());
+    }
 }

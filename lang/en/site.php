@@ -1622,6 +1622,54 @@ return [
             'finder_title' => 'Rather choose than answer questions?',
             'finder_cta' => 'Play This or that',
         ],
+        // This or that together (TasteTogetherController): several people play
+        // about one person, and the giver sees the combined result, never who
+        // chose what. docs/features/taste-together.md
+        'together' => [
+            'title' => 'What would :name like?',
+            'subtitle' => 'Help find out what :name likes: choose between two things a dozen times, picking what :name would rather get.',
+            'privacy' => 'No account needed. Your choices are added to everybody else\'s, and the person who sent you this link sees only what you found together, never your name or your own answers.',
+            'full' => 'Enough people have already played for :name. Thanks for wanting to help.',
+            'recorded' => 'Thanks. Your choices are added to the others, and whoever sent the link sees what you found together.',
+            'not_recorded' => 'Thanks for playing. Enough people have already played for :name, so your choices were not added.',
+            'opened' => 'The link for :name is ready to send.',
+            'stopped' => 'The link is stopped. What was chosen through it stays here.',
+            'panel_title' => 'Find out together what :name likes',
+            'panel_hint' => 'Send a link to the others. Each of them plays This or that about :name, no account needed. You see how many played and what they found together, never who chose what.',
+            'make' => 'Make a link',
+            'make_new' => 'Make a new link',
+            'stop' => 'Stop the link',
+            'share_text' => 'Help me find out what :name would like: choose between two presents a dozen times.',
+            'players_none' => 'Nobody has played yet.',
+            'players_one' => 'One person played.',
+            'players_many' => ':count people played.',
+            'full_note' => 'The link takes :max people. It is full now.',
+            'stopped_note' => 'The link is stopped. The answers already given are still here.',
+            'result' => 'What they found together',
+            'nothing' => 'No clear favourite yet.',
+            'apply' => 'Add this to :name',
+            'apply_hint' => 'It adds to what you already know about :name. If :name described their own taste, their answers stay.',
+            'applied' => 'Added to :name. Adding again brings in newer answers.',
+        ],
+
+        // "My gift profile" (GiftProfileCardController): a card about yourself
+        // with a link that opens the Gift Finder filled in.
+        // docs/features/gift-profile-card.md
+        'card' => [
+            'title_anonymous' => 'A gift profile',
+            'title_named' => ':name\'s gift profile',
+            'prefilled' => 'The questions below are filled in from this card. See ideas straight away, or change an answer first.',
+            'see_ideas' => 'See ideas',
+            'make_own' => 'Make your own card',
+            'remove' => 'Remove this card',
+            'make_title' => 'Share your gift profile',
+            'make_hint' => 'Make a card with a link for whoever buys for you. It opens the Gift Finder with your taste filled in. It shows no name unless you type one, and you can remove it any time.',
+            'name_label' => 'Your name on the card (optional)',
+            'name_placeholder' => 'Your first name (optional)',
+            'make' => 'Make my card',
+            'made' => 'Your card: :summary. Send the link to whoever buys for you.',
+            'share_text' => 'My gift profile: :summary.',
+        ],
     ],
 
     /*
@@ -2382,6 +2430,8 @@ return [
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
+        'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
+        'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens the Gift Finder with your taste filled in. No name unless you type one, and you can remove it any time.',
         'find_offline_ideas' => 'Under the Gift Finder\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Add to my list puts it on yours as an offline item.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',

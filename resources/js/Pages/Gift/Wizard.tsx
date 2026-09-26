@@ -9,6 +9,7 @@ import InfoTip from '../../Components/InfoTip'
 import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
 import ToolIcon from '../../Components/ToolIcon'
+import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 
 interface Option {
     value: string
@@ -77,6 +78,8 @@ interface Props {
     offlineIdeas?: OfflineIdea[]
     /** "Coves others made for someone like this"; see docs/features/community-coves.md. */
     communityCoves?: CommunityCoveCard[]
+    /** Opened from somebody's gift profile card: the answers above come from it. */
+    card?: GiftProfileCardProps | null
 }
 
 /*
@@ -93,7 +96,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [] }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [], card = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -296,12 +299,16 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
 
     return (
         <>
-            <Head title={t('gift.title')} />
+            <Head title={card?.title ?? t('gift.title')}>
+                {card && <meta name="robots" content="noindex, nofollow" />}
+            </Head>
 
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift.title')}</h1>
                 <p className="mt-2 text-ink-soft">{t('gift.subtitle')}</p>
             </header>
+
+            {card && !showResults && <GiftProfileCardBanner card={card} onSeeIdeas={submit} />}
 
             {showResults ? (
                 <section className="mt-8">
@@ -493,7 +500,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                   small link on the interests step stays for the moment they
                   get stuck there.
                 */}
-                {step === 0 && !editing && (
+                {step === 0 && !editing && !card && (
                     <Link
                         href={`/${market.key}/gift/taste`}
                         className="mt-6 flex max-w-2xl items-center gap-3 rounded-card border border-line bg-accent/5 p-4 transition hover:border-ink"

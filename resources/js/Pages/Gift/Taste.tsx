@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import Button, { buttonClasses } from '../../Components/Button'
 import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
+import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
@@ -61,18 +62,27 @@ interface Result {
     for: 'someone' | 'me'
     /** Approved ideas nobody sells here, matching the taste. Empty on the person's own page. */
     offlineIdeas?: OfflineIdea[]
+    /** Played through a "help me find out" link: whether this run was kept with the others. */
+    recorded?: boolean
 }
 
 interface Props {
-    /** `giver` at /gift/taste; `self` at /for/{token}/taste, the person themselves. */
-    mode: 'giver' | 'self'
+    /**
+     * `giver` at /gift/taste; `self` at /for/{token}/taste, the person
+     * themselves; `together` at /t/{token}, one of several people playing
+     * about somebody (docs/features/taste-together.md).
+     */
+    mode: 'giver' | 'self' | 'together'
     person: { name: string } | null
-    urls: { next: string; result: string; save: string; restart: string; finder: string }
+    /** `card` makes a gift profile card; empty where there is none to make. */
+    urls: { next: string; result: string; save: string; restart: string; finder: string; card?: string }
     total: number
     rounds: Round[]
     result: Result | null
     recipients: { id: string; name: string }[]
     canCreate: boolean
+    /** A "help me find out" link that already has as many players as it takes. */
+    full?: boolean
 }
 
 /** Rounds answered (not skipped) before "Show the result" is offered. */
@@ -101,7 +111,7 @@ export default function Taste(props: Props) {
     return (
         <>
             <Head title={t('gift.taste.title')}>
-                {props.mode === 'self' && <meta name="robots" content="noindex, nofollow" />}
+                {props.mode !== 'giver' && <meta name="robots" content="noindex, nofollow" />}
             </Head>
 
             <header className="max-w-2xl">
@@ -112,11 +122,24 @@ export default function Taste(props: Props) {
                     <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift.taste.title')}</h1>
                 </div>
                 <p className="mt-2 text-ink-soft">
-                    {t(props.mode === 'self' ? 'gift.taste.self_subtitle' : 'gift.taste.subtitle')}
+                    {props.mode === 'together'
+                        ? t('gift.together.subtitle', { name: props.person?.name ?? '' })
+                        : t(props.mode === 'self' ? 'gift.taste.self_subtitle' : 'gift.taste.subtitle')}
                 </p>
+                {props.mode === 'together' && !props.result && (
+                    <p className="mt-2 text-sm text-ink-soft">{t('gift.together.privacy')}</p>
+                )}
             </header>
 
-            {props.result ? <Outcome {...props} result={props.result} /> : <Play {...props} />}
+            {props.result ? (
+                <Outcome {...props} result={props.result} />
+            ) : props.full ? (
+                <p className="mt-8 max-w-2xl rounded-card border border-line bg-card p-5 text-ink-soft">
+                    {t('gift.together.full', { name: props.person?.name ?? '' })}
+                </p>
+            ) : (
+                <Play {...props} />
+            )}
         </>
     )
 }
@@ -125,8 +148,11 @@ function Play({ mode, urls, total, rounds }: Props) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
 
-    // The person themselves is always "you"; a giver says who first.
-    const [forWhom, setForWhom] = useState<'someone' | 'me' | null>(mode === 'self' ? 'me' : null)
+    // The person themselves is always "you", a player on a shared link always
+    // "they"; a giver says who first.
+    const [forWhom, setForWhom] = useState<'someone' | 'me' | null>(
+        mode === 'self' ? 'me' : mode === 'together' ? 'someone' : null,
+    )
     const [queue, setQueue] = useState<Round[]>(rounds)
     const [index, setIndex] = useState(0)
     const [choices, setChoices] = useState<Choice[]>([])
@@ -569,7 +595,24 @@ function Outcome({ mode, person, urls, result, recipients, canCreate }: Props & 
                 {result.thin && !learnedNothing && <p className="mt-3 text-sm text-ink-soft">{t('gift.taste.thin')}</p>}
             </div>
 
+            {mode === 'together' && (
+                <p role="status" className="mt-5 max-w-2xl rounded-card border border-sage/40 bg-sage/10 p-4 text-sm">
+                    {t(result.recorded ? 'gift.together.recorded' : 'gift.together.not_recorded', {
+                        name: person?.name ?? '',
+                    })}
+                </p>
+            )}
+
             {mode === 'self' && !learnedNothing && <SelfSave urls={urls} choices={result.choices} name={person?.name ?? ''} />}
+
+            {/*
+              "My gift profile" (docs/features/gift-profile-card.md): only about
+              yourself, only on request, and only when there is something to
+              put on it.
+            */}
+            {me && mode !== 'together' && !learnedNothing && urls.card && (
+                <MakeCard url={urls.card} choices={result.choices} />
+            )}
 
             {mode === 'giver' && !me && !learnedNothing && (
                 <KeepOnPerson urls={urls} choices={result.choices} recipients={recipients} canCreate={canCreate} />
@@ -768,6 +811,95 @@ function SelfSave({ urls, choices, name }: { urls: Props['urls']; choices: Choic
             </Button>
             {failed && (
                 <p role="alert" className="text-sm text-danger">
+                    {t('gift.taste.save_failed')}
+                </p>
+            )}
+        </div>
+    )
+}
+
+/**
+ * "My gift profile": a link to what you just found, for somebody who buys for
+ * you. Opt-in, a name only when typed, and removable from here or from the
+ * card itself. The choices go to the server, never the profile: the card is
+ * worked out there, as a saved result is.
+ */
+function MakeCard({ url, choices }: { url: string; choices: Choice[] }) {
+    const { t } = useTranslations()
+    const [name, setName] = useState('')
+    const [busy, setBusy] = useState(false)
+    const [failed, setFailed] = useState(false)
+    const [card, setCard] = useState<{ url: string; summary: string; remove: string; key: string } | null>(null)
+
+    const make = () => {
+        setBusy(true)
+        setFailed(false)
+        send<{ url: string; summary: string; remove: string; key: string }>(url, 'POST', {
+            choices,
+            name: name.trim() === '' ? null : name.trim(),
+        })
+            .then(setCard)
+            .catch(() => setFailed(true))
+            .finally(() => setBusy(false))
+    }
+
+    const remove = () => {
+        if (!card) {
+            return
+        }
+
+        setBusy(true)
+        setFailed(false)
+        send(card.remove, 'DELETE', { key: card.key })
+            .then(() => setCard(null))
+            .catch(() => setFailed(true))
+            .finally(() => setBusy(false))
+    }
+
+    return (
+        <div className="mt-5 max-w-2xl rounded-card border border-line bg-card p-5">
+            <h3 className="font-medium">{t('gift.card.make_title')}</h3>
+
+            {card ? (
+                <>
+                    <p className="mt-1 text-sm text-ink-soft">{t('gift.card.made', { summary: card.summary })}</p>
+                    <div className="mt-3">
+                        <ShareRow url={card.url} text={t('gift.card.share_text', { summary: card.summary })} />
+                    </div>
+                    <Button variant="ghost" size="sm" busy={busy} onClick={remove}>
+                        {t('gift.card.remove')}
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <p className="mt-1 text-sm text-ink-soft">{t('gift.card.make_hint')}</p>
+                    <form
+                        className="mt-4 flex flex-wrap gap-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            make()
+                        }}
+                    >
+                        <label htmlFor="taste-card-name" className="sr-only">
+                            {t('gift.card.name_label')}
+                        </label>
+                        <input
+                            id="taste-card-name"
+                            value={name}
+                            maxLength={40}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder={t('gift.card.name_placeholder')}
+                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2"
+                        />
+                        <Button type="submit" busy={busy}>
+                            {t('gift.card.make')}
+                        </Button>
+                    </form>
+                </>
+            )}
+
+            {failed && (
+                <p role="alert" className="mt-3 text-sm text-danger">
                     {t('gift.taste.save_failed')}
                 </p>
             )}

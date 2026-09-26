@@ -13,6 +13,7 @@ import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import ToolIcon from '../../Components/ToolIcon'
+import TasteTogetherPanel, { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
 import ShareMenu from '../../Components/ShareMenu'
 import { useTranslations } from '../../useTranslations'
 
@@ -147,6 +148,8 @@ interface Props {
     copyTargets: CopyTarget[]
     /** Publishing as a Community Cove: the owner's alone, null for anybody else. */
     publication: Publication | null
+    /** This or that together about the list's person: the owner's alone, null otherwise. */
+    tasteTogether?: TasteTogetherState | null
 }
 
 export default function ListShow({
@@ -171,6 +174,7 @@ export default function ListShow({
     board,
     copyTargets,
     publication = null,
+    tasteTogether = null,
 }: Props) {
     const { market, flash } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -428,6 +432,15 @@ export default function ListShow({
                                 price={null}
                             />
                         </div>
+                    )}
+
+                    {/*
+                      "Find out together what :name likes": This or that, played by
+                      the others about the person this list is for, the answers
+                      combined (docs/features/taste-together.md). The owner's only.
+                    */}
+                    {tasteTogether !== null && list.recipient !== null && (
+                        <TasteTogetherPanel name={list.recipient.name} state={tasteTogether} />
                     )}
 
                     {/*

@@ -190,3 +190,19 @@ card. The ideas at the end come from the suggestion engine, so a product people 
 with the same interests picked ranks higher there and carries the line "Chosen by others for someone
 like them" (or "with the same interests" for yourself). Until five people agree on anything, which
 on production is still the case, nothing of this shows. See [crowd-picks.md](crowd-picks.md).
+
+## Played together, and shared as a card (2026-09-26)
+
+Two things now store something, each by choice and each in its own table, so the rule above
+("nothing is stored while choosing") still holds for the tool itself:
+
+- **Together**: a giver makes a link for one of their people and several people play about them;
+  each finished run's choices are kept, and the combined profile is worked out from all of them.
+  See [taste-together.md](taste-together.md).
+- **Gift profile card**: after choosing for yourself ("Me", or the person's own
+  `/for/{token}/taste`), "Make my card" keeps the profile (never the choices) behind a link that
+  opens the Gift Finder filled in. See [gift-profile-card.md](gift-profile-card.md).
+
+Both have retention windows in `bc:prune-personal-data` and a line on the privacy page.
+`TasteController::outcome()`, `firstRounds()` and `choiceRules()` are `protected` so
+`TasteTogetherController` can reuse them.
