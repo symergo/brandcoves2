@@ -11,6 +11,7 @@ use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\Ebay\EbayConnector;
 use App\Services\Connectors\Tradedoubler\TradedoublerConnector;
+use App\Services\Gift\InterestGuesser;
 use App\Services\Identity\MergedProducts;
 use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandLinker;
@@ -51,6 +52,10 @@ class AppServiceProvider extends ServiceProvider
         // merged products would silently stop resolving in prose. Stateless,
         // so scoped only to match its neighbours.
         $this->app->scoped(MergedProducts::class);
+
+        // Reads its word lists once per request; scoped so an edited
+        // resources/content/interest-words.php applies without a restart.
+        $this->app->scoped(InterestGuesser::class);
 
         /*
          * The page templates.

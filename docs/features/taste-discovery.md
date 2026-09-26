@@ -147,3 +147,28 @@ page scrolling under a finger. "Show the result" is offered after three answered
 
 A random draw, a few pairing rules and arithmetic. The feature test mocks `AiClient` and asserts it
 is never called on any of these routes (invariant 1).
+
+## Learning from every product, not only tagged ones (2026-09-26)
+
+The owner found the tool "not very adapted", and it wasn't: it learns from interest tags, and the
+local catalogue had none while production had some 700 per market out of about 150,000 giftable
+products. So twelve rounds taught it a price band and little else, and the pairs were random
+`giftable` products: a cooker-hood part against a phone case, a blood-pressure meter, a kettle.
+
+- **`InterestGuesser`** reads a product's own title and category against word lists per interest
+  (`resources/content/interest-words.php`, every language in one list because eBay's categories
+  arrive in English, German or Italian on any market). A guess counts at **0.75**, the crowd
+  tag's weight: at 0.5 a guessed interest needed three good rounds, which twelve rounds over forty
+  interests rarely give, and the tool went back to learning nothing. A tag on the same interest
+  overrides the guess. Measured on a production copy: 51 to 73% of giftable products get an
+  interest this way.
+- **Not gifts are left out** of the pairs: parts, refills, cases, cables, household supplies (10 to
+  19% of `giftable`), by the same file's `not_gifts` list. So is any product with no interest at
+  all, which could teach only a price.
+- **The pool is at most half tagged products.** Tagged-only pools were the same 700 items, heavy on
+  fitness and wellness, and showed one music product in twelve rounds.
+- **Among equally fresh cards, the one touching more interests wins**, so each round covers more.
+
+Simulated on the production copy (a person who picks their interest whenever it is shown, at
+random otherwise): the right interest was learned in 6 of 10 runs, from close to none. The rest is
+coverage: twelve rounds of two cannot show forty interests.

@@ -39,7 +39,8 @@ final class TasteChoiceReader
         $cards = ProductGroup::query()
             ->forMarket($market)
             ->whereIn('id', array_values(array_unique($ids)))
-            ->get(['id', 'gift_tags', 'crowd_tags', 'min_price'])
+            // Title and category too: they are what InterestGuesser reads.
+            ->get(['id', 'title', 'category', 'gift_tags', 'crowd_tags', 'min_price'])
             ->mapWithKeys(fn (ProductGroup $group) => [(int) $group->id => TasteCard::fromGroup($group)]);
 
         $choices = [];

@@ -245,7 +245,10 @@ final class TasteDeck
         $bestKey = null;
 
         foreach ($pool as $position => $card) {
-            $key = [$this->staleness($card, $exposure), $position];
+            // Among equally fresh cards, the one touching more interests: a
+            // gaming headset teaches about gaming, music and tech in one round,
+            // and twelve rounds cannot show forty interests one at a time.
+            $key = [$this->staleness($card, $exposure), -min(3, count($card->interests())), $position];
 
             if ($bestKey === null || $key < $bestKey) {
                 $best = $card;
@@ -314,24 +317,58 @@ final class TasteDeck
      */
     private function draw(Market $market, array $exclude): Collection
     {
+        return $this->worthChoosing($this->drawRaw($market, $exclude));
+    }
+
+    /**
+     * Only what can teach something and what somebody would unwrap.
+     *
+     * Before 2026-09-26 a pair could be a cooker-hood part against a phone
+     * case: `giftable` lets through parts, cases, cables and supplies, and a
+     * product with no interest teaches nothing but a price. What the owner
+     * saw was "not adapted": a vacuum nozzle, a blood-pressure meter, an
+     * insect killer. Both tests read the product's own words (InterestGuesser).
+     *
+     * @param  Collection<int, ProductGroup>  $groups
+     * @return Collection<int, ProductGroup>
+     */
+    private function worthChoosing(Collection $groups): Collection
+    {
+        $guesser = app(InterestGuesser::class);
+
+        return $groups
+            ->reject(fn (ProductGroup $group) => $guesser->isNotAGift((string) $group->title, $group->category))
+            ->filter(fn (ProductGroup $group) => TasteCard::fromGroup($group)->interests() !== [])
+            ->values();
+    }
+
+    /**
+     * @param  list<int>  $exclude
+     * @return Collection<int, ProductGroup>
+     */
+    private function drawRaw(Market $market, array $exclude): Collection
+    {
         $tagged = $this->base($market, $exclude)
             ->where(fn (Builder $q) => $q
                 ->whereRaw('product_groups.gift_tags::text like ?', ['%"interest:%'])
                 ->orWhereRaw('product_groups.crowd_tags::text like ?', ['%"interest:%']))
             ->inRandomOrder()
-            ->limit(self::POOL)
+            // At most half the pool. Tagged products are the surest evidence,
+            // but on production they are some 700 per market, heavy on a few
+            // interests (fitness, wellness), and a pool of only those showed
+            // one music product in twelve rounds (simulated 2026-09-26).
+            ->limit(intdiv(self::POOL, 2))
             ->get();
 
-        if ($tagged->count() >= self::BATCH * 4) {
-            return $tagged;
-        }
-
+        // Twice what is missing: about half of the untagged have no
+        // recognisable interest or are not a gift (measured 2026-09-26), and
+        // worthChoosing() drops those.
         $untagged = $this->base($market, [...$exclude, ...$tagged->pluck('id')->all()])
             ->inRandomOrder()
-            ->limit(self::POOL - $tagged->count())
+            ->limit(2 * (self::POOL - $tagged->count()))
             ->get();
 
-        return $tagged->concat($untagged)->values();
+        return $tagged->concat($untagged)->shuffle()->values();
     }
 
     /**
