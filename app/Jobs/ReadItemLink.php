@@ -7,7 +7,9 @@ namespace App\Jobs;
 use App\Models\ProductGroup;
 use App\Models\WishlistItem;
 use App\Services\Identity\IdentityResolver;
+use App\Services\Images\ImageStore;
 use App\Services\PageReading\FetchRefused;
+use App\Services\PageReading\IframelyReader;
 use App\Services\PageReading\LinkRouter;
 use App\Services\PageReading\PageProduct;
 use App\Services\PageReading\PageReader;
@@ -39,7 +41,7 @@ class ReadItemLink implements ShouldQueue
 
     public function __construct(public readonly int $itemId) {}
 
-    public function handle(LinkRouter $router, PageReader $reader, ItemLinker $linker): void
+    public function handle(LinkRouter $router, PageReader $reader, ItemLinker $linker, IframelyReader $iframely, ImageStore $images): void
     {
         $item = WishlistItem::query()->with('wishlist')->find($this->itemId);
 
@@ -83,7 +85,26 @@ class ReadItemLink implements ShouldQueue
                 return;
             }
 
-            $page = $reader->read($url);
+            try {
+                $page = $reader->read($url);
+            } catch (FetchRefused $e) {
+                /*
+                 * The shop's bot protection said no (403, 429, a timeout).
+                 * Before waiting to ask again, ask Iframely, which shops let
+                 * through the way they let WhatsApp's link previews through.
+                 * Our own per-shop limit ("busy") and a refusal that will not
+                 * change (a 404) are not a reason to spend a call.
+                 */
+                $page = PageReader::isPassing($e) && $e->reason !== 'busy' ? $iframely->read($url) : null;
+
+                if ($page === null) {
+                    throw $e;
+                }
+            }
+
+            // Read, but no product on it that we could make out: a page built
+            // by script, or one without the tags shops publish for Google.
+            $page ??= $iframely->read($url);
 
             if ($page === null) {
                 $this->giveUp($item, $url);
@@ -104,6 +125,7 @@ class ReadItemLink implements ShouldQueue
             }
 
             $linker->fill($item, $page, $market->currency());
+            $this->pictureThroughIframely($item, $url, $iframely, $images);
         } catch (FetchRefused $e) {
             /*
              * Our own per-shop limit, or a shop's bot protection answering
@@ -118,6 +140,25 @@ class ReadItemLink implements ShouldQueue
 
             Log::info('pasted link not read', ['item' => $item->id, 'reason' => $e->getMessage()]);
             $this->giveUp($item, $url);
+        }
+    }
+
+    /**
+     * The page named a picture but its server would not give it to us (de
+     * Bijenkorf's refuses us as its pages do). Iframely's thumbnail endpoint
+     * sends the image itself, which is stored as ours like any other.
+     */
+    private function pictureThroughIframely(WishlistItem $item, string $url, IframelyReader $iframely, ImageStore $images): void
+    {
+        if ($item->snapshot_image_url !== null || ! $iframely->enabled()) {
+            return;
+        }
+
+        $bytes = $iframely->thumbnail($url);
+        $stored = $bytes === null ? null : $images->store($bytes);
+
+        if ($stored !== null) {
+            $item->forceFill(['snapshot_image_url' => $stored])->save();
         }
     }
 

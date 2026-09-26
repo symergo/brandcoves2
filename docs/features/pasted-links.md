@@ -90,6 +90,30 @@ request answered 403, 200, 403, 200), and Coolblue refuses too. So:
   percolator 6 kops". Codes and ids are dropped; a link that carries no words gives nothing. The
   picture and the price are only on the page, so they stay empty.
 
+### Through Iframely, when the shop still says no (2026-09-26)
+
+The owner asked why WhatsApp can show a Bijenkorf link's name and picture when we cannot. Shops let
+the big link-preview fetchers in; they refuse an unknown reader. We will not pretend to be WhatsApp
+(a lie, and shops that check where the request comes from refuse it anyway). Instead we pay a
+preview service that shops do let in: **Iframely** (`IframelyReader`, owner's choice).
+
+- It is asked from the queued job only, and only when our own read is refused with a status that
+  may pass (403, 429, 5xx, a timeout) or reads a page with no product on it. A 404 and our own
+  per-shop limit are not a reason to spend a call.
+- Only the link is sent (`url` and our `key`), never who pasted it or onto which list.
+- The picture comes through Iframely's `thumbnail` endpoint, which returns the image itself:
+  de Bijenkorf's picture server refuses us as its pages do. The bytes go through `ImageStore` like
+  any picture, so the stored copy is ours and the rule below still holds. The same fallback runs
+  when a page we *could* read names a picture its server will not hand over.
+- Costs: one answer per link is cached for everybody (7 days; a miss for a day), and at most
+  `IFRAMELY_PER_DAY` calls (200) are made a day. `IFRAMELY_KEY` is Iframely's hashed `key`, not the
+  raw `api_key`; blank turns all of this off, and the test suite runs with it blank.
+- A title guessed from the link after a failed read (`SlugTitle`) counts as ours, not typed, so a
+  later successful read replaces it with the shop's own name.
+
+Measured 2026-09-26 on the Bialetti link: title, brand, €33.95, in stock and the picture, where our
+reader and the picture server both answered 403.
+
 `ProductPageParser` reads JSON-LD `Product` first (what shops publish for Google), then Open Graph,
 then `<title>`. No AI, and no guessing a price out of prose. Prices go to cents without float
 arithmetic (invariant 7). Measured on a real Shopify page on 2026-09-26: title, brand, image, price,

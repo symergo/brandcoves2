@@ -141,6 +141,68 @@ class PastedLinkTest extends TestCase
     }
 
     #[Test]
+    public function a_shop_that_refuses_us_is_read_through_iframely_picture_and_all(): void
+    {
+        config(['giftcoves.page_reading.iframely_key' => 'test-key']);
+        [$owner, $list] = $this->list();
+
+        $page = 'https://www.debijenkorf.be/d/bialetti-moka-express-percolator-6-kops-8834090013-883409001300000';
+
+        Http::fake([
+            // The shop and its picture server both refuse us, as de Bijenkorf's did.
+            'https://www.debijenkorf.be/*' => Http::response('no', 403, ['Content-Type' => 'text/html']),
+            'https://cdn-1.debijenkorf.be/*' => Http::response('no', 403, ['Content-Type' => 'text/html']),
+            'https://iframe.ly/api/iframely*' => Http::response([
+                'meta' => [
+                    'title' => 'Bialetti Moka Express percolator 6-kops - Zwart',
+                    'brand' => 'Bialetti',
+                    'price' => 33.95,
+                    'currency' => 'EUR',
+                    'availability' => 'https://schema.org/InStock',
+                ],
+                'links' => ['thumbnail' => [['href' => 'https://cdn-1.debijenkorf.be/default/moka.jpg']]],
+            ]),
+            'https://iframe.ly/api/thumbnail*' => Http::response($this->png(), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'url' => $page,
+        ]);
+
+        $item = WishlistItem::query()->sole();
+
+        $this->assertSame('read', $item->link_status);
+        $this->assertSame('Bialetti Moka Express percolator 6-kops - Zwart', $item->snapshot_title);
+        $this->assertSame(3395, $item->snapshot_price);
+        $this->assertMatchesRegularExpression('#^/media/items/[0-9a-f-]{36}\.webp$#', (string) $item->snapshot_image_url);
+
+        // Only the link goes to Iframely: nothing about who pasted it.
+        Http::assertSent(fn ($request) => str_starts_with($request->url(), 'https://iframe.ly/api/iframely')
+            && $request['url'] === $page
+            && array_keys($request->data()) === ['url', 'key']);
+    }
+
+    #[Test]
+    public function iframely_is_not_asked_past_its_daily_cap(): void
+    {
+        config(['giftcoves.page_reading.iframely_key' => 'test-key', 'giftcoves.page_reading.iframely_per_day' => 0]);
+        [$owner, $list] = $this->list();
+
+        // A 404 would not ask Iframely anyway; a 403 would, and the cap stops it.
+        Http::fake(['https://www.debijenkorf.be/*' => Http::response('no', 403, ['Content-Type' => 'text/html'])]);
+
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'url' => 'https://www.debijenkorf.be/d/bialetti-moka-express-percolator-6-kops-8834090013-883409001300000',
+        ]);
+
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'iframe.ly'));
+    }
+
+    #[Test]
     public function a_refusal_that_may_pass_is_not_remembered(): void
     {
         [$owner, $list] = $this->list();

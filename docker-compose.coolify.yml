@@ -119,6 +119,10 @@ x-app: &app
     # same trap as the line above: added to config on 2026-09-26 without this
     # passthrough, which ConfigContractTest caught the same day.
     FEEDBACK_NOTIFY_EMAIL: ${FEEDBACK_NOTIFY_EMAIL:-}
+    # Link previews through Iframely when a shop refuses our reader. The
+    # queue asks, so it has to reach the queue; blank means off.
+    IFRAMELY_KEY: ${IFRAMELY_KEY:-}
+    IFRAMELY_PER_DAY: ${IFRAMELY_PER_DAY:-200}
 
     # Kept so switching back is an env change rather than a redeploy of this
     # file. Unused while MAIL_MAILER is smtp.

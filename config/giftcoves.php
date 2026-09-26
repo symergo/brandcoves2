@@ -473,6 +473,17 @@ return [
         // One read serves everyone who pastes the same link for a week. A
         // price older than that is shown only as "what the page said".
         'cache_days' => 7,
+
+        // Iframely, asked when a shop refuses our reader (owner's call,
+        // 2026-09-26; see IframelyReader). This is Iframely's hashed `key`,
+        // the form their dashboard gives for use outside a server, not the
+        // raw `api_key`. Blank turns it off.
+        'iframely_key' => env('IFRAMELY_KEY'),
+
+        // Calls per day, reads and pictures together. A paid plan is billed
+        // per call; a loop of refused links must not run up the bill. Each
+        // link costs at most two calls, and its answer is cached for all.
+        'iframely_per_day' => (int) env('IFRAMELY_PER_DAY', 200),
     ],
 
     /*

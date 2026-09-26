@@ -66,6 +66,7 @@
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="5432"/>
         <env name="DB_DATABASE" value="brandcoves_test"/>
+        <env name="IFRAMELY_KEY" value=""/>
         <env name="DB_USERNAME" value="brandcoves"/>
         <env name="DB_PASSWORD" value="brandcoves"/>
         <env name="DB_URL" value=""/>

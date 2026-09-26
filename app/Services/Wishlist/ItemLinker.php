@@ -9,6 +9,7 @@ use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
 use App\Services\Images\ImageStore;
 use App\Services\PageReading\PageProduct;
+use App\Services\PageReading\SlugTitle;
 
 /**
  * Fill in a hand-written item from what we found out about it.
@@ -110,6 +111,11 @@ class ItemLinker
      */
     private function keepsTypedTitle(WishlistItem $item): bool
     {
-        return trim((string) $item->snapshot_title) !== WishlistItem::placeholderTitle($item->snapshot_url);
+        $title = trim((string) $item->snapshot_title);
+
+        // The name read from the link after a failed read (SlugTitle) is ours
+        // too: a later read, or one through Iframely, should replace it.
+        return $title !== WishlistItem::placeholderTitle($item->snapshot_url)
+            && $title !== SlugTitle::fromUrl((string) $item->snapshot_url);
     }
 }
