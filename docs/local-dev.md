@@ -137,3 +137,13 @@ Running `composer dev` by hand in a terminal still works and is fine for a focus
 stop the task first, or the two will fight over the ports.
 
 `storage/logs/*.log` is already gitignored via the root `*.log` rule.
+
+### Vite must not watch `.claude/`
+
+Fixed 2026-09-26, after `localhost:8000` went down in the middle of a session.
+
+Agent worktrees live in `.claude/worktrees/`, and each one holds a linked `vendor/`. Vite's file
+watcher tried to `readlink` that link, Windows answered `EINVAL`, and the error went unhandled: vite
+exited, and `concurrently --kill-others` took the server, queue and ssr down with it. The supervisor
+did not bring the stack back either. `vite.config.js` now ignores `.claude`. If the site dies while
+agents are running, look for `EINVAL` or `readlink` in `storage/logs/devserver.out.log`.

@@ -34,7 +34,11 @@ export default defineConfig({
     },
     server: {
         watch: {
-            ignored: ['**/storage/framework/views/**', '**/vendor/**'],
+            // .claude/ holds agent worktrees, each with a linked vendor/ that
+            // the watcher cannot readlink on Windows (EINVAL). The unhandled
+            // error killed vite, and concurrently took the whole stack down
+            // with it (2026-09-26).
+            ignored: ['**/storage/framework/views/**', '**/vendor/**', '**/.claude', '**/.claude/**'],
         },
     },
 });
