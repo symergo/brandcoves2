@@ -60,6 +60,15 @@ final class GiftLandingCopy
         return $this->t('title_bare');
     }
 
+    /**
+     * "Dad who loves cooking" alone, whatever its length: the placeholder
+     * title of a persona drafted from search demand (PersonaDemandPlanner).
+     */
+    public function bare(): string
+    {
+        return $this->t('title_bare');
+    }
+
     public function intro(): string
     {
         return $this->interest === null ? $this->t('intro_recipient') : $this->t('intro');

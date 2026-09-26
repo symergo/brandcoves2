@@ -106,6 +106,12 @@ insert — at 06:00, with a constraint violation and no other symptom.
 builder fills the slots the shortlist leaves open from the suggestion engine with it. See
 [editorial-api.md](editorial-api.md#a-cove-can-be-chosen-by-who-it-is-for-2026-09-26).
 
+**Drafted from demand, three budgets, and someone who has everything (2026-09-26).** Gift
+searches that nothing answers yet become draft personas ([persona-demand.md](persona-demand.md));
+every persona page carries tabs around 15, 40 and 100 under its curated shelf
+([persona-budgets.md](persona-budgets.md)); and a brief can say the person has everything, which
+prefers what gets used up or done ([has-everything.md](has-everything.md)).
+
 **Not `/coves/{slug}`.** `/coves/subscribe`, `/coves/confirm/{token}` and `/coves/unsubscribe/{token}`
 already live under that prefix, and a slug catch-all beside them would shadow all three the first
 time somebody named a persona "subscribe".

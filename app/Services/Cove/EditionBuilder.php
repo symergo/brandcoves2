@@ -940,7 +940,9 @@ class EditionBuilder
             );
 
             foreach ($suggestions as $suggestion) {
-                if ($brief->interests === [] || $suggestion->matchedInterests !== []) {
+                // A has-everything brief also takes what gets used up or done
+                // when it answers none of the interests (has-everything.md).
+                if ($brief->interests === [] || $suggestion->matchedInterests !== [] || $suggestion->consumable) {
                     $picked[] = $suggestion->group;
                 }
             }

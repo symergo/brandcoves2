@@ -97,6 +97,10 @@ wording or tags, or **Withdraw**, which rejects it).
   the info icon.
 - **This or that results**, on the giver's page only. The person choosing through their own link is
   describing themselves, not shopping, so their page gets none.
+- **Persona pages** (2026-09-26), under the budget tabs, from the persona's brief
+  ([persona-budgets.md](persona-budgets.md)). For someone who has everything, an approved idea whose
+  wording is done or used up ("a cooking workshop") fits whatever it is tagged with
+  ([has-everything.md](has-everything.md)).
 
 At most three (`giftcoves.offline_ideas.shown`), in the brief's market only. An idea shows when it
 shares something with the brief: an interest (weighs 2), who it is for or the occasion (1 each).

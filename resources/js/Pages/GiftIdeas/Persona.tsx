@@ -8,6 +8,8 @@ import CoveRail, { type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
+import PersonaBudgets, { type BudgetBand } from '../../Components/PersonaBudgets'
+import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 
 interface Find {
     id: number
@@ -49,6 +51,10 @@ interface Props {
     } | null
     /** The Gift Cove, the other personas, and more of what this one is about. */
     rail: Rail
+    /** Around 15, 40 and 100: only the bands the server could fill. */
+    budgets: BudgetBand[]
+    /** Approved ideas without a shop that fit this persona's brief. */
+    offlineIdeas: OfflineIdea[]
 }
 
 /**
@@ -66,7 +72,16 @@ interface Props {
  * no longer ends in a single link back to the shelf: a persona found from
  * search used to be the narrowest dead end of the three Cove pages.
  */
-export default function Persona({ preview = false, persona, finds, guide, rail, saveCove }: Props) {
+export default function Persona({
+    preview = false,
+    persona,
+    finds,
+    guide,
+    rail,
+    saveCove,
+    budgets = [],
+    offlineIdeas = [],
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -229,6 +244,10 @@ export default function Persona({ preview = false, persona, finds, guide, rail, 
                             </ul>
                         </section>
                     )}
+
+                    {/* Additional to the curated shelf above, never instead of it. */}
+                    <PersonaBudgets bands={budgets} />
+                    <OfflineIdeas ideas={offlineIdeas} />
 
                     {guide && (
                         <section className="mt-10 rounded-lg border border-line p-5">

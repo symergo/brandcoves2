@@ -1748,6 +1748,17 @@ return [
         'empty' => "Rien ici pour l'instant. Ils sont écrits un par un ; le premier arrive.",
         'finds_title' => 'Quoi lui offrir',
         'find_count' => ':count idées',
+
+        // Budget tabs on a persona page, and the has-everything persona
+        // (docs/features/persona-budgets.md, has-everything.md). The two
+        // has_everything titles are placeholders a drafted persona wears
+        // until a person renames it.
+        'budgets_title' => 'Par budget',
+        'budgets_hint' => 'D\'autres idées pour cette personne, choisies par le site autour de chaque montant. Les produits ci-dessus ont été choisis à la main ; ceux-ci non, et ils changent avec les boutiques.',
+        'budget_around' => 'Autour de :price',
+        'has_everything_chip' => 'A déjà tout',
+        'has_everything_title' => 'Pour qui a déjà tout',
+        'has_everything_title_for' => ':Recipient, qui a déjà tout',
     ],
 
     'daily' => [
@@ -2129,6 +2140,7 @@ return [
         'find_gift' => 'Dans « Trouver un cadeau », dites pour qui c\'est, ce que la personne aime et votre budget, et choisissez parmi les idées.',
         'find_taste' => 'Vous ne savez pas ce que quelqu’un aime ? Dans Ceci ou cela, vous choisissez une douzaine de fois entre deux produits. Nous en tirons ses goûts et un budget, montrons des idées, et vous pouvez garder le résultat pour une personne.',
         'find_offline_ideas' => 'Sous les idées de « Trouver un cadeau » et de Ceci ou cela, vous verrez parfois des Idées hors boutique : des choses que beaucoup de personnes différentes ont notées elles-mêmes sur leur liste, comme un atelier ou une sortie. Nous n\'en montrons une qu\'après l\'avoir relue, jamais qui l\'a écrite, et Ajouter à ma liste la met sur la vôtre comme article hors ligne.',
+        'find_personas' => 'Une idée cadeau autour d\'un type de personne (le cuisinier, celui qui a déjà tout) propose aussi, sous ses produits choisis, des onglets autour de 15, 40 et 100 euros. Pour qui a déjà tout, nous cherchons ce qui se consomme ou se vit, comme une dégustation, un atelier ou une recharge ; tapez « qui a déjà tout » dans la recherche et nous cherchons ainsi aussi.',
         'find_browse' => 'Parcourez les Coves : une nouvelle chaque jour, des idées cadeaux par personne, et des guides d\'achat.',
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',
         'find_pages' => 'Des idées cadeaux selon la personne et ce qu\'elle aime, comme « idées cadeaux pour papa qui aime la cuisine », chacune sur sa propre page. Trouver un cadeau renvoie à la plus proche de vos réponses avec « Ouvrir en page ».',

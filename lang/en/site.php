@@ -1905,6 +1905,17 @@ return [
         'empty' => 'Nothing here yet. These are written one at a time, and the first is on its way.',
         'finds_title' => 'What to get them',
         'find_count' => ':count ideas',
+
+        // Budget tabs on a persona page, and the has-everything persona
+        // (docs/features/persona-budgets.md, has-everything.md). The two
+        // has_everything titles are placeholders a drafted persona wears
+        // until a person renames it.
+        'budgets_title' => 'By budget',
+        'budgets_hint' => 'More ideas for this person, chosen by the site around each amount. The products above were picked by hand; these are not, and they change as the shops do.',
+        'budget_around' => 'Around :price',
+        'has_everything_chip' => 'Has everything',
+        'has_everything_title' => 'Someone who has everything',
+        'has_everything_title_for' => ':Recipient, who has everything',
     ],
 
     /*
@@ -2383,6 +2394,7 @@ return [
         'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_offline_ideas' => 'Under the Gift Finder\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Add to my list puts it on yours as an offline item.',
+        'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. The Gift Finder links to the one closest to your answers with "Open as a page".',

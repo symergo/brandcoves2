@@ -112,6 +112,20 @@ class CovePlan extends Model
      */
     public function tasteBrief(int $limit): ?TasteBrief
     {
+        /*
+         * A persona drawn as "has everything", with no brief and no search
+         * terms, is that brief: what gets used up or done. It is how an
+         * editor makes one in the planner, which has no brief field
+         * (docs/features/has-everything.md). Only with no terms, so the
+         * personas written with search terms keep choosing by them.
+         */
+        if ((! is_array($this->brief) || $this->brief === [])
+            && $this->kind === CoveKind::Persona
+            && $this->scene === CoveScene::HasEverything
+            && array_filter((array) $this->queries) === []) {
+            return new TasteBrief(market: $this->market, limit: $limit, hasEverything: true);
+        }
+
         if (! is_array($this->brief) || $this->brief === []) {
             return null;
         }

@@ -120,7 +120,10 @@ time rather than as a silently skipped pick at build time.
     "budgetMin": 2000,                // cents
     "budgetMax": 6000,                // cents
     "vibe": "…", "preferences": ["…"], "values": ["handmade"],
-    "avoid": ["alcohol"]              // matched against titles, hard filter
+    "avoid": ["alcohol"],             // matched against titles, hard filter
+    "hasEverything": true             // someone who has everything: tasting boxes,
+                                      // workshops, refills before more things to keep
+                                      // (docs/features/has-everything.md)
   },
 
   // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere:

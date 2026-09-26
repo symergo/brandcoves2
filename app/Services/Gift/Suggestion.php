@@ -21,6 +21,8 @@ final readonly class Suggestion
      * @param  list<string>  $matchedQueries  angle queries this product answered
      * @param  list<string>  $matchedInterests  interests it answered, strongest slot first
      * @param  list<array{kind: string, value: string}>  $matchedTastes  vibe, preference and values poles it sits at
+     * @param  bool  $consumable  used up or done rather than kept (a tasting box, a workshop); only
+     *                            set for a has-everything brief, see HasEverything
      */
     public function __construct(
         public ProductGroup $group,
@@ -31,6 +33,7 @@ final readonly class Suggestion
         public array $matchedInterests = [],
         public array $matchedTastes = [],
         public ?CrowdPick $crowd = null,
+        public bool $consumable = false,
     ) {}
 
     /**

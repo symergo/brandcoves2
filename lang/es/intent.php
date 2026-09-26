@@ -77,6 +77,11 @@ return [
         'it' => ['informática', 'informatica', 'ordenador', 'programación'],
     ],
 
+    // "Someone who has everything": the brief then prefers what gets used up
+    // or done over more things to keep (docs/features/has-everything.md).
+    // Also a sign that this is a gift search.
+    'has_everything' => ['que ya lo tiene todo', 'que lo tiene todo', 'que ya tiene todo', 'ya lo tiene todo', 'lo tiene todo', 'que tiene de todo', 'tiene de todo'],
+
     'under' => ['menos de', 'hasta', 'máximo', 'maximo', 'max', 'no más de', 'por debajo de'],
     'between' => ['entre'],
     'and' => ['y', 'a'],

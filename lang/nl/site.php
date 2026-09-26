@@ -1751,6 +1751,17 @@ return [
         'empty' => 'Nog niets. Ze worden een voor een geschreven; de eerste komt eraan.',
         'finds_title' => 'Wat je voor ze koopt',
         'find_count' => ':count ideeën',
+
+        // Budget tabs on a persona page, and the has-everything persona
+        // (docs/features/persona-budgets.md, has-everything.md). The two
+        // has_everything titles are placeholders a drafted persona wears
+        // until a person renames it.
+        'budgets_title' => 'Per budget',
+        'budgets_hint' => 'Meer ideeën voor deze persoon, door de site gekozen rond elk bedrag. De producten hierboven zijn met de hand gekozen; deze niet, en ze veranderen mee met de winkels.',
+        'budget_around' => 'Rond :price',
+        'has_everything_chip' => 'Heeft alles al',
+        'has_everything_title' => 'Wie alles al heeft',
+        'has_everything_title_for' => ':Recipient, die alles al heeft',
     ],
 
     'daily' => [
@@ -2140,6 +2151,7 @@ return [
         'find_gift' => 'Vertel de Cadeauzoeker voor wie het is, wat die persoon leuk vindt en wat je wilt uitgeven, en kies uit de ideeën.',
         'find_taste' => 'Weet je niet goed wat iemand leuk vindt? In Dit of dat kies je een tiental keer tussen twee producten. Zo vinden we hun smaak en een budget, tonen we ideeën, en kun je het resultaat bij een persoon bewaren.',
         'find_offline_ideas' => 'Onder de ideeën van de Cadeauzoeker en Dit of dat zie je soms Ideeën zonder winkel: dingen die veel verschillende mensen zelf op hun lijst schreven, zoals een workshop of een dagje uit. We tonen er pas een nadat we het zelf nalazen, nooit wie het schreef, en Op mijn lijst zet het als offline artikel op de jouwe.',
+        'find_personas' => 'Een cadeau-idee over een type persoon (de thuiskok, wie alles al heeft) heeft onder de gekozen producten ook tabbladen rond 15, 40 en 100 euro. Voor wie alles al heeft zoeken we dingen die opgaan of die je doet, zoals een proeverij, een workshop of een navulling; typ "die alles al heeft" in het zoekvak en we zoeken ook zo.',
         'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeau-ideeën per persoon, en koopgidsen.',
         'find_filters' => 'Zoek vanaf een pagina met cadeau-ideeën alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',
         'find_pages' => 'Cadeau-ideeën per persoon en wat die graag doet, zoals "cadeau-ideeën voor papa die van koken houdt", elk op een eigen pagina. De Cadeauzoeker linkt naar de pagina die het dichtst bij je antwoorden ligt, met "Open als pagina".',

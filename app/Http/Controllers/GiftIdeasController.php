@@ -10,6 +10,7 @@ use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Cove\SavedCoves;
 use App\Services\Gift\GiftLandingCopy;
+use App\Services\Gift\PersonaBudgets;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -128,7 +129,13 @@ class GiftIdeasController extends Controller
 
         $this->seo($persona, $current);
 
+        // Around 15, 40 and 100, and ideas without a shop: under the curated
+        // shelf, never instead of it. See docs/features/persona-budgets.md.
+        $budgets = app(PersonaBudgets::class)->for($persona, $current);
+
         return Inertia::render('GiftIdeas/Persona', [
+            'budgets' => $budgets['bands'],
+            'offlineIdeas' => $budgets['ideas'],
             // Save into My Coves; see docs/features/saved-coves.md.
             'saveCove' => app(SavedCoves::class)->button($persona->id),
             'preview' => $preview && ! $persona->isPublished(),

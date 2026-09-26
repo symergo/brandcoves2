@@ -79,6 +79,8 @@ class SuggestionEngine
      */
     private const CROWD_POOL = 40;
 
+    private ?HasEverything $hasEverythingWords = null;
+
     public function __construct(
         private readonly AngleMap $angles,
         private readonly ChartDemand $demand,
@@ -121,7 +123,42 @@ class SuggestionEngine
             ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
 
+        if ($brief->hasEverything) {
+            return $this->usedUpFirst($scored, $brief->limit, $profile);
+        }
+
         return $this->diversify($scored, $brief->limit, $profile);
+    }
+
+    /**
+     * For someone who has everything: what gets used up or done first, and
+     * other things only to fill the seats those leave.
+     *
+     * A preference rather than a filter, so a thin market still answers; but
+     * a strict one, not a score bonus. A bonus is weighed against price and
+     * surprise and loses to a well-priced gadget, which is the one present
+     * this person does not need. See docs/features/has-everything.md.
+     *
+     * @param  Collection<int, Suggestion>  $scored
+     * @return list<Suggestion>
+     */
+    private function usedUpFirst(Collection $scored, int $limit, SuggestionProfile $profile): array
+    {
+        [$usedUp, $kept] = $scored->partition(fn (Suggestion $pick) => $pick->consumable);
+
+        $picked = $this->diversify($usedUp->values(), $limit, $profile);
+
+        if (count($picked) < $limit) {
+            $picked = [...$picked, ...$this->diversify($kept->values(), $limit - count($picked), $profile)];
+        }
+
+        return $picked;
+    }
+
+    /** The has-everything word lists, read once per engine. */
+    private function hasEverythingWords(): HasEverything
+    {
+        return $this->hasEverythingWords ??= app(HasEverything::class);
     }
 
     /**
@@ -155,6 +192,24 @@ class SuggestionEngine
             ), fn (array $slot) => $slot['queries'] !== []));
 
             array_unshift($slots, ['interest' => $typed, 'queries' => [$typed]]);
+        }
+
+        /*
+         * Someone who has everything: the things that get used up or done
+         * retrieve first, behind a typed query and ahead of any interest.
+         * The slot names no interest (''), so a card never shows it as one.
+         * Capped at twelve words when interests follow, or it would take the
+         * whole MAX_QUERIES budget and the interests would retrieve nothing.
+         */
+        if ($brief->hasEverything) {
+            $words = $this->hasEverythingWords()->searchWords($brief->market);
+            $slot = ['interest' => '', 'queries' => $brief->interests === [] ? $words : array_slice($words, 0, 12)];
+
+            if ($brief->query !== null) {
+                array_splice($slots, 1, 0, [$slot]);
+            } else {
+                array_unshift($slots, $slot);
+            }
         }
 
         $budget = self::MAX_QUERIES;
@@ -637,6 +692,8 @@ class SuggestionEngine
             matchedInterests: array_values(array_unique($interests)),
             matchedTastes: $this->matchedTastes($haystack, $brief, $tags),
             crowd: $crowdPick,
+            // Only asked for a has-everything brief; false says nothing otherwise.
+            consumable: $brief->hasEverything && $this->hasEverythingWords()->matches($group->title, $group->category),
         );
     }
 

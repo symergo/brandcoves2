@@ -1747,6 +1747,17 @@ return [
         'empty' => 'Todavía no hay nada. Se escriben uno a uno; el primero está en camino.',
         'finds_title' => 'Qué regalarle',
         'find_count' => ':count ideas',
+
+        // Budget tabs on a persona page, and the has-everything persona
+        // (docs/features/persona-budgets.md, has-everything.md). The two
+        // has_everything titles are placeholders a drafted persona wears
+        // until a person renames it.
+        'budgets_title' => 'Por presupuesto',
+        'budgets_hint' => 'Más ideas para esta persona, elegidas por la web alrededor de cada importe. Los productos de arriba se eligieron a mano; estos no, y cambian con las tiendas.',
+        'budget_around' => 'Unos :price',
+        'has_everything_chip' => 'Lo tiene todo',
+        'has_everything_title' => 'Para quien lo tiene todo',
+        'has_everything_title_for' => ':Recipient, que lo tiene todo',
     ],
 
     'daily' => [
@@ -2127,6 +2138,7 @@ return [
         'find_gift' => 'Dile al Buscador de regalos para quién es, qué le gusta y tu presupuesto, y elige entre las ideas.',
         'find_taste' => '¿No sabes qué le gusta a alguien? En Esto o aquello eliges una docena de veces entre dos productos. Averiguamos sus gustos y un presupuesto, te mostramos ideas y puedes guardar el resultado en una persona.',
         'find_offline_ideas' => 'Debajo de las ideas del Buscador de regalos y de Esto o aquello verás a veces Ideas sin tienda: cosas que muchas personas distintas apuntaron a mano en sus listas, como un taller o una salida. Solo mostramos una después de revisarla, nunca quién la escribió, y Añadir a mi lista la pone en la tuya como artículo offline.',
+        'find_personas' => 'Una idea de regalo sobre un tipo de persona (quien cocina en casa, quien lo tiene todo) tiene también pestañas de unos 15, 40 y 100 euros bajo sus productos elegidos. Para quien lo tiene todo buscamos cosas que se gastan o se viven, como una cata, un taller o una recarga; escribe «que lo tiene todo» en el buscador y buscamos así también.',
         'find_browse' => 'Explora las Coves: una nueva cada día, ideas de regalo por persona y guías de compra.',
         'find_filters' => 'Desde una página de ideas de regalo, busca todo lo pensado para esa persona y esa afición. Los filtros aparecen encima de los resultados y cada uno se quita con un toque.',
         'find_pages' => 'Ideas de regalo según la persona y lo que le gusta, como «ideas de regalo para papá amante de la cocina», cada una en su propia página. El Buscador de regalos enlaza con la más cercana a tus respuestas con «Abrir como página».',

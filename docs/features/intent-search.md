@@ -51,6 +51,12 @@ box is not offered (it would search the sentence word for word), and there is no
 (a sentence is not a search worth watching). If the engine finds nothing, the words are searched
 as usual and no chips are shown: the page never comes back empty for having understood. Gift
 searches are not written to `search_log`, because they never reach `SearchService::search()`.
+Since 2026-09-26 their *reading* is counted instead (who, which interests, per day; never the
+words or the visitor) in `gift_search_demand`, which drafts personas for repeated readings nothing
+answers yet ([persona-demand.md](persona-demand.md)).
+
+"Die alles al heeft" / "who has everything" is read too, as the brief's has-everything flag, with
+a chip of its own ([has-everything.md](has-everything.md)).
 
 ## The rest of step 4
 

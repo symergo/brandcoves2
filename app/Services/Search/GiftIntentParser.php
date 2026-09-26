@@ -33,6 +33,9 @@ use Illuminate\Support\Facades\Lang;
  *   searches for headphones with a maximum of €100.
  * - **One recipient**, the first and longest phrase found; interests as many
  *   as are named.
+ * - **"Die alles al heeft"** ("who has everything") sets the brief's
+ *   has-everything flag and is itself a sign of a gift search
+ *   (docs/features/has-everything.md).
  *
  * See docs/features/intent-search.md.
  */
@@ -76,6 +79,21 @@ class GiftIntentParser
             }
         }
 
+        /*
+         * "Die alles al heeft": read before the recipient, so "mijn man die
+         * alles al heeft" still finds the man, and taken out of the text so
+         * "alles" is not searched for. A sign of a gift search on its own.
+         */
+        $hasEverything = false;
+
+        foreach ($this->longestFirst(array_fill_keys($words['has_everything'] ?? [], true)) as $phrase => $unused) {
+            if ($this->contains($s, (string) $phrase)) {
+                $hasEverything = true;
+                $phrases['has_everything'] ??= (string) $phrase;
+                $s = $this->remove($s, (string) $phrase);
+            }
+        }
+
         [$relationship, $recipientPhrase] = $this->first($s, $this->vocabulary($words['recipients'] ?? [], RecipientType::values()));
 
         if ($recipientPhrase !== null) {
@@ -102,7 +120,7 @@ class GiftIntentParser
             }
         }
 
-        $isGift = $giftContext || $trigger || $relationship !== null || $occasion !== null;
+        $isGift = $giftContext || $trigger || $hasEverything || $relationship !== null || $occasion !== null;
 
         return new ParsedIntent(
             original: $original,
@@ -116,7 +134,18 @@ class GiftIntentParser
             budgetMax: $budgetMax,
             rest: $isGift ? $this->rest($s, $words['filler'] ?? []) : $this->rest($this->restore($original, $budgetPhrase), []),
             phrases: $isGift ? $phrases : array_intersect_key($phrases, ['budget' => true]),
+            hasEverything: $hasEverything,
         );
+    }
+
+    /**
+     * Whether a phrase says "someone who has everything", for text that is
+     * not a search: a free-text interest in the Gift Finder ("heeft alles
+     * al"), which the wizard would otherwise search for word for word.
+     */
+    public function saysHasEverything(string $text, Market $market): bool
+    {
+        return $this->parse($text, $market, giftContext: true)->hasEverything;
     }
 
     /**

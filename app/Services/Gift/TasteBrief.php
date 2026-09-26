@@ -34,6 +34,9 @@ final readonly class TasteBrief
      * @param  list<string>  $values  'sustainable', 'local', 'handmade'
      * @param  list<int>  $excludeGroupIds  already shown, swapped away, or on the list
      * @param  string|null  $query  a typed search, when the person also knows what they want
+     * @param  bool  $hasEverything  "someone who has everything": prefer things that get used up or
+     *                               done (tasting boxes, refills, workshops) over more things to keep.
+     *                               See docs/features/has-everything.md
      */
     public function __construct(
         public Market $market,
@@ -51,6 +54,7 @@ final readonly class TasteBrief
         public int $limit = 4,
         public ?SuggestionProfile $profile = null,
         public ?string $query = null,
+        public bool $hasEverything = false,
     ) {}
 
     public static function fromRecipient(Recipient $recipient, Market $market, int $limit = 4): self
@@ -197,6 +201,8 @@ final readonly class TasteBrief
             'values' => $this->values,
             'avoid' => $this->avoid,
             'query' => $this->query,
+            // Only when set: a stored brief says only what somebody decided.
+            'hasEverything' => $this->hasEverything ?: null,
         ], fn ($v) => $v !== null && $v !== '' && $v !== []);
     }
 
@@ -244,6 +250,7 @@ final readonly class TasteBrief
             ageBand: self::one($data['ageBand'] ?? null, GiftTags::AGE_BANDS),
             limit: $limit,
             query: $query === '' ? null : $query,
+            hasEverything: filter_var($data['hasEverything'] ?? false, FILTER_VALIDATE_BOOLEAN),
         );
     }
 
@@ -407,6 +414,7 @@ final readonly class TasteBrief
             limit: $this->limit,
             profile: $this->profile,
             query: $this->query,
+            hasEverything: $this->hasEverything,
         );
     }
 
@@ -467,6 +475,7 @@ final readonly class TasteBrief
             limit: $limit ?? $this->limit,
             profile: $profile ?? $this->profile,
             query: $query ?? $this->query,
+            hasEverything: $this->hasEverything,
         );
     }
 }
