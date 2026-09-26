@@ -70,12 +70,11 @@ leads.
 
 ## Decide before building
 
-1. "Create a Cove" for a signed-out visitor: today `/lists?new=mine` works without an account (an
-   anonymous owner). Keep that, or ask for sign-in first? Recommended: keep; it is the growth
-   loop's first arrow.
-2. Whether "My Coves" is the label in all four languages or only where "Cove" reads naturally
-   (Dutch "Mijn Coves").
-3. Hero illustration: keep `HomeIllustration` or replace with the sources-to-Cove drawing.
+Decided 2026-09-26:
+
+1. "Create a Cove" works **without an account**, as `/lists?new=mine` does today.
+2. **"My Coves"** is the label in all four languages.
+3. A **new hero illustration**, shown to the owner for approval before it is built.
 
 ## Files
 

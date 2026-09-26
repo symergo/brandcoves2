@@ -220,8 +220,9 @@ How it must work, so it helps and cannot hurt:
 - **A tag shows only when several different people agree** (a threshold such as five distinct list
   owners), so no single list, and no single person trying to game it, moves anything.
 - **Nothing about a person leaks.** Counts only, with no list or owner behind them. What a list is
-  for is never shown to anyone but the people it is shared with. (Whether private lists count is an
-  open question below.)
+  for is never shown to anyone but the people it is shared with. **Private lists count too** (the
+  owner's decision, 2026-09-26): they are most of the lists, and as anonymous counts above a
+  threshold they reveal nothing. The privacy page says so.
 - **No AI.** The intent is what was chosen in a form or read from a search, in the same closed
   vocabulary (`GiftTags`).
 
@@ -436,9 +437,6 @@ draws an edge around it:
 
 ## Open questions
 
-- **Do private lists teach the catalogue (engine F)?** As anonymous counts they reveal nothing, and
-  they are most of the lists. But somebody making a private list may not expect it to count at all.
-  Needs a line in the privacy page either way.
 - **Moderation of public Coves.** Who sees them before search engines do, and what can be reported.
 - **A visitor's product meeting a feed's product.** Can the two merge into one, and who confirms it?
 - **"What is this?" from a photo.** Which model, what daily cap, and what the visitor sees when it

@@ -130,8 +130,9 @@ users: "the keen cook" becomes a brief, not a list of search terms.
 2. Which combinations to open first. Recommended: recipient × interest only, then occasions.
 3. Gift tags are written only by editors today, so coverage limits every page here. B and C are
    the no-AI answer that grows with use; is a tagging pass (AI, queued, capped) still wanted on top?
-4. Do private lists count in B and C? As anonymous counts above a threshold they reveal nothing,
-   but the privacy page has to say so either way.
+4. ~~Do private lists count in B and C?~~ Decided 2026-09-26: **yes**. Add a sentence to the
+   privacy page (all four languages) saying lists count, anonymously, towards what products are
+   known to suit.
 5. The distinct-owner threshold for a tag or a link to count (5 suggested).
 
 ## Files
