@@ -403,3 +403,10 @@ A step after the interests (six steps with a saved person, five without): "How o
 the exact strings an editor tags a product with (`age:13-17`), so `recipient_fit` compares two
 fixed values and nothing is typed or folded. The server refuses anything else. See
 [gift-tags.md](gift-tags.md).
+
+## Not sure what they are into? (2026-09-26)
+
+The interests step links to This or that ([taste-discovery.md](taste-discovery.md)), where choosing
+between products works the interests out. What it learns can be kept on a saved person, and then
+fills this wizard. An interest it learned to leave out arrives in `avoid` as `interest:gaming`, which
+the engine excludes by tag and never by title; the avoid step shows it by name, removable with a tap.

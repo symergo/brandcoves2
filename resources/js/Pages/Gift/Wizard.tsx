@@ -6,6 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import ChipInput from '../../Components/ChipInput'
 import InfoTip from '../../Components/InfoTip'
 import SaveToList from '../../Components/SaveToList'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Option {
     value: string
@@ -245,6 +246,18 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const interestLabel = (value: string) =>
         options.interests.find((o) => o.value === value)?.label ?? value
 
+    /*
+      An avoided *interest*, as This or that learns it ("not gaming"), is kept
+      in the tag's spelling, `interest:gaming`, so the engine leaves out the
+      tag and never a title word (TasteBrief::avoidedInterests). It reads as
+      the interest's name, and it is removed with a tap rather than typed.
+    */
+    const LEARNED = 'interest:'
+    const avoidLabel = (word: string) =>
+        word.startsWith(LEARNED) ? interestLabel(word.slice(LEARNED.length)) : word
+    const learnedAvoid = avoid.filter((word) => word.startsWith(LEARNED))
+    const typedAvoid = avoid.filter((word) => !word.startsWith(LEARNED))
+
     const chip = (selected: boolean, disabled = false) =>
         `rounded-full border px-3 py-1.5 text-sm ${
             selected ? 'border-accent bg-accent text-white' : 'border-line hover:bg-card'
@@ -323,7 +336,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                         </span>
                         {avoid.map((word) => (
                             <span key={word} className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft">
-                                {t('gift.summary_avoid', { word })}
+                                {t('gift.summary_avoid', { word: avoidLabel(word) })}
                             </span>
                         ))}
                         {values.map((value) => (
@@ -523,6 +536,19 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                         />
                                     </div>
                                 </div>
+
+                                {/*
+                                  The other way to answer this step: choose
+                                  between products and let the choices say it
+                                  (This or that, docs/features/taste-discovery.md).
+                                */}
+                                <Link
+                                    href={`/${market.key}/gift/taste`}
+                                    className="mt-5 inline-flex items-center gap-2 text-sm text-accent underline"
+                                >
+                                    <ToolIcon name="taste" className="h-4 w-4" />
+                                    {t('gift.taste.from_finder')}
+                                </Link>
                             </div>
                         )}
 
@@ -647,12 +673,27 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                         {steps[step] === 'avoid' && (
                             <div>
                                 <ChipInput
-                                    value={avoid}
-                                    onChange={setAvoid}
+                                    value={typedAvoid}
+                                    onChange={(words) => setAvoid([...learnedAvoid, ...words])}
                                     placeholder={t('gift.avoid_placeholder')}
                                     addLabel={t('gift.add')}
-                                    max={10}
+                                    max={10 - learnedAvoid.length}
                                 />
+                                {learnedAvoid.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {learnedAvoid.map((word) => (
+                                            <button
+                                                key={word}
+                                                type="button"
+                                                className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft hover:border-ink"
+                                                onClick={() => setAvoid(avoid.filter((w) => w !== word))}
+                                            >
+                                                {t('gift.summary_avoid', { word: avoidLabel(word) })}{' '}
+                                                <span aria-hidden>×</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                                 <p className="mt-2 text-xs text-ink-soft">{t('gift.avoid_hint')}</p>
                                 {/* The last step, so this is where keeping the answers is offered. */}
                                 {recipient && <div className="mt-5">{rememberBox(setRemember)}</div>}

@@ -47,10 +47,14 @@ const PAGES = [
     ['how-it-works', `/${MARKET}/gift-cove/how-it-works`],
     ['discover', `/${MARKET}/discover-cove`],
     ['search', `/${MARKET}/search?q=koptelefoon`],
+    ['help', `/${MARKET}/help`],
+    ['gift', `/${MARKET}/gift`],
+    ['taste', `/${MARKET}/gift/taste`],
     ['shared-mine', T.mine && `/${MARKET}/l/${T.mine}`],
     ['shared-gift', T.forSomeone && `/${MARKET}/l/${T.forSomeone}`],
     ['shared-group', T.group && `/${MARKET}/l/${T.group}`],
     ['self-describe', T.recipient && `/${MARKET}/for/${T.recipient}`],
+    ['self-taste', T.recipient && `/${MARKET}/for/${T.recipient}/taste`],
 
     // Signed in, so these come last — the magic link is consumed just before.
     ['my-lists', MAGIC && `/${MARKET}/lists`],

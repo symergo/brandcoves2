@@ -57,6 +57,7 @@ use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\ShopsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SuggestionController;
+use App\Http\Controllers\TasteController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
@@ -664,6 +665,10 @@ Route::prefix('{market}')->group(function () {
         Route::post('/for/{token}', [RecipientProfileController::class, 'update'])->name('recipients.self.update');
         Route::post('/for/{token}/claim', [RecipientProfileController::class, 'claim'])->name('recipients.self.claim');
         Route::get('/for/{token}/suggest', [RecipientProfileController::class, 'suggest'])->name('recipients.self.suggest');
+        // This or that, chosen by the person themselves (TasteController).
+        Route::get('/for/{token}/taste', [TasteController::class, 'selfShow'])->name('recipients.self.taste');
+        Route::post('/for/{token}/taste', [TasteController::class, 'selfResult'])->name('recipients.self.taste.result');
+        Route::post('/for/{token}/taste/save', [TasteController::class, 'selfSave'])->name('recipients.self.taste.save');
     });
 
     /*
@@ -809,10 +814,20 @@ Route::prefix('{market}')->group(function () {
     Route::get('/discover-cove', DiscoverCoveController::class)->name('discover-cove');
 
     Route::get('/gift', [GiftController::class, 'show'])->name('gift');
+    Route::get('/gift/taste', [TasteController::class, 'show'])->name('gift.taste');
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
         Route::post('/gift/more', [GiftController::class, 'more'])->name('gift.more');
+
+        /*
+         * This or that: taste discovery by choosing. The page holds the
+         * rounds and the choices; these only ever read the catalogue, except
+         * `save`, which keeps a result on one of the visitor's own people.
+         */
+        Route::post('/gift/taste', [TasteController::class, 'result'])->name('gift.taste.result');
+        Route::post('/gift/taste/next', [TasteController::class, 'next'])->name('gift.taste.next');
+        Route::post('/gift/taste/save', [TasteController::class, 'save'])->name('gift.taste.save');
     });
 
     /*

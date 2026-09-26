@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Enums\EventType;
+use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\Vibe;
 use App\Models\Recipient;
@@ -119,6 +120,52 @@ final readonly class TasteBrief
             excludeGroupIds: $groups->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             limit: $limit,
         );
+    }
+
+    /**
+     * The words to keep out of titles: everything in `avoid` except whole
+     * interests.
+     *
+     * @return list<string>
+     */
+    public function avoidWords(): array
+    {
+        return array_values(array_filter(
+            $this->avoid,
+            fn (string $entry) => ! str_starts_with(mb_strtolower(trim($entry)), GiftTags::INTEREST.':'),
+        ));
+    }
+
+    /**
+     * Whole interests to leave out, written in `avoid` as `interest:gaming`.
+     *
+     * Taste discovery learns "not gaming" from choices (TasteProfiler), and an
+     * interest key cannot go into `avoid` as a plain word: `avoid` is matched
+     * against titles with ILIKE, so "art" would remove every title containing
+     * "smart" or "party", and "gaming" would miss every Dutch title. So an
+     * avoided interest is written in the tag's own spelling and excluded by
+     * the tag, never by the title. Nobody types `interest:` by hand, so this
+     * changes nothing for a word somebody wrote.
+     *
+     * @return list<string>
+     */
+    public function avoidedInterests(): array
+    {
+        $interests = [];
+
+        foreach ($this->avoid as $entry) {
+            $entry = mb_strtolower(trim($entry));
+
+            if (str_starts_with($entry, GiftTags::INTEREST.':')) {
+                $value = substr($entry, strlen(GiftTags::INTEREST) + 1);
+
+                if (Interest::tryFrom($value) !== null) {
+                    $interests[] = $value;
+                }
+            }
+        }
+
+        return array_values(array_unique($interests));
     }
 
     /** How to rank. Buying for someone else is the default; it is the older path. */
