@@ -123,6 +123,8 @@ x-app: &app
     # queue asks, so it has to reach the queue; blank means off.
     IFRAMELY_KEY: ${IFRAMELY_KEY:-}
     IFRAMELY_PER_DAY: ${IFRAMELY_PER_DAY:-200}
+    # The privacy bar for list signals and offline ideas; 5 unless set.
+    GIFT_MIN_OWNERS: ${GIFT_MIN_OWNERS:-5}
 
     # Kept so switching back is an env change rather than a redeploy of this
     # file. Unused while MAIL_MAILER is smtp.

@@ -73,14 +73,12 @@ products you are shown, not anything about you.
 
 Lists count, private ones included, towards what we know about products: who
 they are often chosen for, for which occasion, and which products often sit on
-lists together. Only as numbers, only once enough different people do the same,
-and without any list, name or anything you wrote showing anywhere else. Who
-bought what never counts.
+lists together. Only as numbers, and without any list, name or anything you
+wrote showing anywhere else. Who bought what never counts.
 
 Something you add to a list by hand, like a workshop or a day out, can become a
-gift idea for other people. Only once at least five different people wrote the
-same thing, and only after one of us has read it and written it in our own
-words. Who wrote it, how many did, and your own words are never shown. Photos
+gift idea for other people. Only after one of us has read it and written it in
+our own words. Who wrote it, how many did, and your own words are never shown. Photos
 are never used.
 
 ## Where your data goes

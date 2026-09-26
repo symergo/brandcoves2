@@ -459,7 +459,12 @@ return [
         // by others for someone like them" (docs/features/crowd-picks.md):
         // below five, a product on a list for "a father who likes cooking"
         // could point at one person's list. Never lower it to fill a page.
-        'min_owners' => 5,
+        //
+        // TEMPORARILY 1 wherever GIFT_MIN_OWNERS=1 is set (owner's call,
+        // 2026-09-26, while production has too few lists for anything to
+        // reach five). Remove the variable to restore five, and restore the
+        // privacy page's wording with it (docs/features/crowd-picks.md).
+        'min_owners' => (int) env('GIFT_MIN_OWNERS', 5),
 
         // How much a crowd tag weighs against an editor's tag of the same
         // kind (1.0) in the suggestion engine. Less: an editor looked at the
@@ -482,8 +487,9 @@ return [
         // five strangers writing the same words cannot. The same bar as the
         // list signals above, for the same reason. Lowering it weakens the
         // promise on the privacy page, so it is the owner's decision, not a
-        // tuning knob.
-        'min_owners' => 5,
+        // tuning knob. Temporarily lowered by GIFT_MIN_OWNERS, as above; a
+        // person still reads and rewrites every idea before it is shown.
+        'min_owners' => (int) env('GIFT_MIN_OWNERS', 5),
 
         // Ideas shown under the Gift Finder's and This or that's results. A
         // few: they are a side note to the products, not a second board.

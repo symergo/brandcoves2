@@ -67,6 +67,8 @@
         <env name="DB_PORT" value="5432"/>
         <env name="DB_DATABASE" value="brandcoves_test"/>
         <env name="IFRAMELY_KEY" value=""/>
+        <!-- The tests check the real privacy bar, whatever a local .env lowers it to. -->
+        <env name="GIFT_MIN_OWNERS" value="5"/>
         <env name="DB_USERNAME" value="brandcoves"/>
         <env name="DB_PASSWORD" value="brandcoves"/>
         <env name="DB_URL" value=""/>

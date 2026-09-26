@@ -116,3 +116,14 @@ emptied after it is created.
 - The label does not say *which* kind of person ("for a dad who likes cooking"). The generic line
   was chosen to keep the card small; the facts are on `CrowdPick::$tags` if the owner wants them
   named.
+
+## Temporarily one person (2026-09-26)
+
+The owner lowered the bar to one person for now, while production has too few lists (13) for
+anything to reach five. It is `GIFT_MIN_OWNERS=1` in the environment, read by both
+`giftcoves.list_signals.min_owners` and `giftcoves.offline_ideas.min_owners`; the code's default
+stays 5, and the tests pin 5 in `phpunit.xml`. While it is 1, the privacy page no longer names a
+number: it still promises only numbers, no list, name or own words shown, and that a person reads
+and rewrites every offline idea. **To restore:** remove `GIFT_MIN_OWNERS` everywhere (local `.env`,
+both Coolify apps) and put back the privacy page sentences about "enough different people" and
+"at least five different people" (en and nl), from git history before this date.
