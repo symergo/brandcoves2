@@ -118,7 +118,7 @@ export default function Persona({
 
                       Stacked it would push the first paragraph under the fold on a
                       phone for a picture that says less than the sentence beside it —
-                      the same trade `HomeIllustration` is hidden below `md` to avoid.
+                      the same trade the old homepage drawing was hidden below `md` to avoid.
                       Here it is small enough to sit alongside at every width.
                     */}
                     <header className="flex max-w-2xl items-start gap-4 sm:gap-6">

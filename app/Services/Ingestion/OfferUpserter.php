@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Ingestion;
 
 use App\Enums\ProductStatus;
-use App\Enums\Source;
 use App\Models\Feed;
 use App\Models\Merchant;
 use App\Services\Connectors\Offer;

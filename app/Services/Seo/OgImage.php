@@ -309,18 +309,6 @@ class OgImage
         }
     }
 
-    private function roundedRectangle(GdImage $canvas, int $x1, int $y1, int $x2, int $y2, int $radius, int $colour): void
-    {
-        imagefilledrectangle($canvas, $x1 + $radius, $y1, $x2 - $radius, $y2, $colour);
-        imagefilledrectangle($canvas, $x1, $y1 + $radius, $x2, $y2 - $radius, $colour);
-
-        $d = $radius * 2;
-        imagefilledellipse($canvas, $x1 + $radius, $y1 + $radius, $d, $d, $colour);
-        imagefilledellipse($canvas, $x2 - $radius, $y1 + $radius, $d, $d, $colour);
-        imagefilledellipse($canvas, $x1 + $radius, $y2 - $radius, $d, $d, $colour);
-        imagefilledellipse($canvas, $x2 - $radius, $y2 - $radius, $d, $d, $colour);
-    }
-
     /** @param array{int, int, int} $rgb */
     private function colour(GdImage $canvas, array $rgb): int
     {

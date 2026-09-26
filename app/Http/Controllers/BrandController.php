@@ -10,7 +10,6 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
-use App\Services\Connectors\Offer;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
 use App\Services\Editorial\Allowlist;

@@ -9,7 +9,6 @@ use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
 use App\Enums\PublishStatus;
-use App\Enums\Source;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\DailyPick;
@@ -21,7 +20,6 @@ use App\Services\Ai\PromptBank;
 use App\Services\Cove\Selectors\Selectors;
 use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
-use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
@@ -1364,37 +1362,6 @@ class EditionBuilder
      * any more. That is the point, and it means a market with an empty planner
      * eventually has no guide to feature.
      */
-    /**
-     * A name for this edition that nothing in this market has taken.
-     *
-     * The slug namespace is unique per market across every kind, and a theme
-     * recurs — "moederdag" comes round every year — so a collision is the normal
-     * case rather than the exception. Suffixed with a counter, which reads
-     * better in a URL than a date does and keeps the first year's edition on the
-     * clean address.
-     */
-    private function freeSlug(Market $market, string $theme, CarbonImmutable $date): string
-    {
-        $base = Str::slug($theme) ?: 'cove-'.$date->toDateString();
-
-        $taken = fn (string $candidate): bool => DailyPickSet::query()
-            ->where('market', $market->value)
-            ->where('slug', $candidate)
-            ->exists();
-
-        if (! $taken($base)) {
-            return $base;
-        }
-
-        $n = 2;
-
-        while ($taken($base.'-'.$n)) {
-            $n++;
-        }
-
-        return $base.'-'.$n;
-    }
-
     private function featured(Market $market): ?DailyPickSet
     {
         return DailyPickSet::query()

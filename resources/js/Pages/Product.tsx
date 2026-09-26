@@ -119,8 +119,6 @@ export default function Product({ product, offers, alert, amazonSearch, descript
         })
     }, [market.key, product.id, product.title, product.image, product.minPrice])
 
-    const buyable = offers.filter((o) => o.isBuyable)
-
     return (
         <>
             {/*

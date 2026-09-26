@@ -68,7 +68,6 @@ class SearchService
         );
     }
 
-    /** @return Builder<ProductGroup> */
     /**
      * The ids the stored catalogue would return for this query, and nothing else.
      *
@@ -78,12 +77,6 @@ class SearchService
      *
      * @return list<int>
      */
-    /** Candidates the seeded landing keeps: five pages of the grid. */
-    private const SEEDED_CANDIDATES = 120;
-
-    /** Products of a saved brand added beside them, most-shopped first. */
-    private const SEEDED_BRAND_CANDIDATES = 24;
-
     public function matchingGroupIds(SearchQuery $query, int $limit): array
     {
         return $this->storedQuery($query)
@@ -93,6 +86,7 @@ class SearchService
             ->all();
     }
 
+    /** @return Builder<ProductGroup> */
     private function storedQuery(SearchQuery $query): Builder
     {
         $groups = ProductGroup::query()

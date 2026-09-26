@@ -1,8 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import ListWizard from '../Components/ListWizard'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
-import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Wishlist {
@@ -136,7 +135,6 @@ export default function GiftCove({
     friends,
     occasions,
 }: Props) {
-    const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     /*

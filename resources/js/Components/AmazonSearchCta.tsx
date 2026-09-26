@@ -1,4 +1,3 @@
-import { useTranslations } from '../useTranslations'
 
 export interface AmazonSearch {
     /** The storefront the visitor lands on, e.g. `www.amazon.nl`. */
@@ -62,8 +61,6 @@ export default function AmazonSearchCta({
     /** What is being searched, when that is not obvious from the label. */
     detail?: string | null
 }) {
-    const { t } = useTranslations()
-
     if (link === null) {
         return null
     }

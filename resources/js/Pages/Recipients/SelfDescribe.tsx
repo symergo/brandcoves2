@@ -57,6 +57,7 @@ interface Props {
     items: Item[]
     listId: string | null
     suggestions?: Suggestion[]
+    suggestTerm?: string
 }
 
 /**
@@ -75,17 +76,24 @@ export default function SelfDescribe({
     items,
     listId,
     suggestions = [],
+    suggestTerm = '',
 }: Props) {
     const page = usePage<SharedProps>()
     const { market, auth } = page.props
     const { t } = useTranslations()
-    // See the note in Lists/Shared: `window` is absent on the server.
-    const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
+    /*
+     * The token is the segment after `for`, not the last one: this page is also
+     * served at `/for/{token}/suggest`, where the last segment is "suggest".
+     * Taking the last one (until 2026-09-26) sent every claim, save and second
+     * search from the suggestions page to `/for/suggest/...`, which is a 404.
+     * `page.url` rather than `window` because `window` is absent on the server.
+     */
+    const segments = page.url.split('?')[0].split('/').filter(Boolean)
+    const token = segments[segments.indexOf('for') + 1]
     const base = `/${market.key}/for/${token}`
 
-    // The sign-in dialog, so saying "this is me" does not cost the page.
-
-    const [query, setQuery] = useState('')
+    // What they typed, still in the box when `/suggest?q=` is opened directly.
+    const [query, setQuery] = useState(suggestTerm)
 
     /*
      * Describing yourself needs only the link; keeping products needs an

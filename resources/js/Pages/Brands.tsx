@@ -18,7 +18,7 @@ interface Props {
  * five-hundred-item alphabetical column is a page nobody scans.
  */
 export default function Brands({ brands }: Props) {
-    const { t, n } = useTranslations()
+    const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
 
     // Non-letter initials (numbers, "3M") collect under "#" rather than each
