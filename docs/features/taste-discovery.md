@@ -180,3 +180,13 @@ it ("Liever kiezen dan vragen beantwoorden? Speel Dit of dat") for somebody who 
 person likes. It shows only before anything is answered; once somebody is into the questions it
 would distract. The small link on the interests step stays, and is hidden when the banner already
 shows on the same screen (signed out, the interests step is the first).
+
+## Proven gifts in the deck, and labelled ideas (2026-09-27)
+
+A tenth of each draw (16 of 160) is kept for products at least five different people keep on a list
+for somebody, drawn at random from the market's 200 most kept, counted against the tagged half. They
+pass the same price window and "is this a gift" test, and the pairing rules treat them like any other
+card. The ideas at the end come from the suggestion engine, so a product people shopping for someone
+with the same interests picked ranks higher there and carries the line "Chosen by others for someone
+like them" (or "with the same interests" for yourself). Until five people agree on anything, which
+on production is still the case, nothing of this shows. See [crowd-picks.md](crowd-picks.md).

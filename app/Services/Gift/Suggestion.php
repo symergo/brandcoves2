@@ -30,7 +30,19 @@ final readonly class Suggestion
         public ?string $primaryInterest = null,
         public array $matchedInterests = [],
         public array $matchedTastes = [],
+        public ?CrowdPick $crowd = null,
     ) {}
+
+    /**
+     * Whether the card may say "chosen by others for someone like them":
+     * enough different people shopping for this kind of person keep it on a
+     * list, and the kind is a person and not just an occasion
+     * ({@see CrowdPick::isAboutThePerson()}). docs/features/crowd-picks.md.
+     */
+    public function chosenByOthers(): bool
+    {
+        return $this->crowd?->isAboutThePerson() ?? false;
+    }
 
     /**
      * What this present has in common with the brief, for the card.

@@ -32,6 +32,7 @@ is true now.
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
 | [list-signals.md](list-signals.md) | Gifting / Catalogue | Active — crowd tags and product links from lists, nightly; ideas in the same spirit on shared wish lists |
+| [crowd-picks.md](crowd-picks.md) | Gifting | Active — "chosen by others for someone like them": products on 5+ people's lists for the same kind of person rank higher in the Gift Finder and This or that; nothing shows until then |
 | [intent-search.md](intent-search.md) | Search / Gifting | Active — the search box reads gift searches (who, interests, occasion, budget) |
 | [gift-landing-pages.md](gift-landing-pages.md) | Gifting / SEO | Active — `/gift-ideas/for/{recipient}/{interest}`, recorded nightly when 8+ products fit; briefs stored and linkable; Cove plans can carry a brief |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |

@@ -453,8 +453,12 @@ return [
     | the lists they share. See docs/features/list-signals.md.
     */
     'list_signals' => [
-        // Different people who must agree before a tag or a link counts. One
-        // person, or a few friends, cannot move what everybody else sees.
+        // Different people who must agree before a tag, a link or a crowd
+        // pick counts. One person, or a few friends, cannot move what
+        // everybody else sees. It is also the privacy guarantee of "chosen
+        // by others for someone like them" (docs/features/crowd-picks.md):
+        // below five, a product on a list for "a father who likes cooking"
+        // could point at one person's list. Never lower it to fill a page.
         'min_owners' => 5,
 
         // How much a crowd tag weighs against an editor's tag of the same
@@ -652,6 +656,15 @@ return [
                      * one.
                      */
                     'demand' => 0,
+                    /*
+                     * Enough different people shopping for someone like
+                     * this kept it on a list (docs/features/crowd-picks.md).
+                     * Ten, as much as vibe: a present five givers chose for
+                     * the same kind of person is better evidence than a
+                     * title word, and still not enough to beat a product
+                     * that answers the interests on its own.
+                     */
+                    'crowd' => 10,
                 ],
                 'mmr_lambda' => 0.65,
                 'budget_shape' => 'sweet_spot',
@@ -682,6 +695,10 @@ return [
                     'demand' => 5,
                     // No other person to be for.
                     'recipient_fit' => 0,
+                    // Half the gift case: people with your interests kept
+                    // it, which breaks ties on your own list rather than
+                    // choosing for you.
+                    'crowd' => 5,
                 ],
                 // Slightly stronger diversification: a wishlist of four
                 // variations on one thing is less useful than a gift page of

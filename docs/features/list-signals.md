@@ -40,6 +40,13 @@ Products on the same lists, wish lists and gift lists alike, counted in differen
 within one market (invariant 2): `product_links`. The product page shows the top four as **Often on
 the same lists** ([product-signals.md](product-signals.md)).
 
+## Crowd picks
+
+The same count also writes `crowd_picks`: per product, the kinds of person (one fact or a pair,
+"a father who likes cooking") that five or more people shopping for keep it on a list. The Gift
+Finder and This or that use it to rank and label "chosen by others for someone like them". See
+[crowd-picks.md](crowd-picks.md).
+
 ## A wish list as a brief
 
 `TasteBrief::fromList()`: the three interests the list's products are most tagged with (editors' and

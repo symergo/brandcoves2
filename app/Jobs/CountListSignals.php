@@ -8,6 +8,7 @@ use App\Enums\EventType;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\RecipientType;
+use App\Services\Gift\CrowdPicks;
 use App\Services\Gift\GiftTags;
 use App\Services\Search\GiftIntentParser;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -33,6 +34,11 @@ use Illuminate\Support\Facades\DB;
  *    carrying that tag hold it.
  * 2. **Product links** (`product_links`): products that sit on the same lists,
  *    counted in different people. "Often on the same lists as this."
+ * 3. **Crowd picks** (`crowd_picks`): what people shopping for a kind of
+ *    person keep on their lists, per single fact ("a father") and per pair
+ *    ("a father who likes cooking"). A tag says a product suits a father;
+ *    only a pair counted on the same lists says it suits a father who cooks.
+ *    See docs/features/crowd-picks.md.
  *
  * ## The rules that keep it safe
  *
@@ -80,9 +86,13 @@ class CountListSignals implements ShouldBeUnique, ShouldQueue
         DB::transaction(function () use ($minOwners): void {
             $this->writeCrowdTags($minOwners);
             $this->writeLinks($minOwners);
+            $this->writeCrowdPicks($minOwners);
         });
 
         DB::statement('DROP TABLE IF EXISTS list_intent');
+
+        // Tonight's counts replace every cached lookup of last night's.
+        CrowdPicks::forgetCached();
     }
 
     /** Who a list is for, and what for. */
@@ -181,6 +191,10 @@ class CountListSignals implements ShouldBeUnique, ShouldQueue
     private function writeCrowdTags(int $minOwners): void
     {
         DB::statement('CREATE TEMPORARY TABLE IF NOT EXISTS earned_tags (group_id bigint PRIMARY KEY, tags jsonb) ON COMMIT DROP');
+        // Empty even when it survived: inside an outer transaction (a test,
+        // or a second run in one connection) the transaction above is only a
+        // savepoint, ON COMMIT never fires, and last run's rows would collide.
+        DB::statement('TRUNCATE earned_tags');
 
         DB::insert(
             <<<'SQL'
@@ -238,6 +252,66 @@ class CountListSignals implements ShouldBeUnique, ShouldQueue
                 HAVING count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text)) >= ?
             SQL,
             [$minOwners],
+        );
+    }
+
+    /**
+     * What people shopping for a kind of person picked.
+     *
+     * A list's context is every fact of its intent (list_intent, above) and
+     * every pair of them, so a list for "papa" with a cooking interest counts
+     * for `recipient:father`, `interest:cooking` and
+     * `interest:cooking+recipient:father`. Pairs are what crowd tags cannot
+     * say: five people's lists for a father and five other people's cooking
+     * lists make both tags, and not one of them was shopping for a father who
+     * cooks. Pairs are joined in byte order (COLLATE "C"), the order
+     * CrowdPicks builds its keys in, because a locale's collation skips
+     * punctuation and would sort `age:30-49` differently from PHP.
+     *
+     * Also read here, and only here: interests the crowd's own tags give two
+     * or more products on the list (the way TasteBrief::fromList() reads a
+     * list). Safe because this table is never read back into list_intent or
+     * crowd_tags, so the crowd still cannot feed on itself.
+     *
+     * Same market on both sides (invariant 2): a list's context speaks for
+     * the shoppers of its own market.
+     */
+    private function writeCrowdPicks(int $minOwners): void
+    {
+        DB::table('crowd_picks')->delete();
+
+        DB::insert(
+            <<<'SQL'
+                INSERT INTO crowd_picks (market, context, group_id, owners)
+                WITH intent AS (
+                    SELECT DISTINCT wishlist_id, tag FROM list_intent
+                    UNION
+                    SELECT wi.wishlist_id, t.tag
+                    FROM wishlist_items wi
+                    JOIN product_groups g ON g.id = wi.group_id
+                    CROSS JOIN LATERAL jsonb_array_elements_text(g.crowd_tags) AS t(tag)
+                    WHERE wi.accepted_at IS NOT NULL AND t.tag LIKE 'interest:%'
+                    GROUP BY wi.wishlist_id, t.tag
+                    HAVING count(DISTINCT wi.group_id) >= ?
+                ),
+                contexts AS (
+                    SELECT wishlist_id, tag AS context FROM intent
+                    UNION
+                    SELECT a.wishlist_id, a.tag || '+' || b.tag
+                    FROM intent a
+                    JOIN intent b ON b.wishlist_id = a.wishlist_id AND a.tag COLLATE "C" < b.tag COLLATE "C"
+                )
+                SELECT g.market, c.context, wi.group_id,
+                       count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text))
+                FROM contexts c
+                JOIN wishlists w ON w.id = c.wishlist_id
+                JOIN wishlist_items wi ON wi.wishlist_id = w.id
+                JOIN product_groups g ON g.id = wi.group_id AND g.market = w.market
+                WHERE wi.accepted_at IS NOT NULL
+                GROUP BY g.market, c.context, wi.group_id
+                HAVING count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text)) >= ?
+            SQL,
+            [self::SHARED_PRODUCT_TAG, $minOwners],
         );
     }
 
