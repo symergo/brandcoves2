@@ -15,8 +15,6 @@ return [
         'surprise' => 'Verrassingscove',
         'lists' => 'Mijn Coves',
         'saved_coves' => 'Bewaarde Coves',
-        'shared_lists' => 'Voor anderen',
-        'group_lists' => 'Samen geven',
         'notifications' => 'Meldingen',
         'sign_in' => 'Inloggen',
         'sign_out' => 'Uitloggen',

@@ -15,8 +15,6 @@ return [
         'surprise' => 'Cove Sorpresa',
         'lists' => 'Mis Coves',
         'saved_coves' => 'Coves guardadas',
-        'shared_lists' => 'Para otros',
-        'group_lists' => 'Regalar juntos',
         'notifications' => 'Avisos',
         'sign_in' => 'Iniciar sesión',
         'sign_out' => 'Cerrar sesión',

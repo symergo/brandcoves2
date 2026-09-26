@@ -7,15 +7,16 @@ export interface AccountLink {
 }
 
 /**
- * Your own things, in the order both account menus show them: My Coves, then
- * three of its sections in the order the page shows them (For others, Give
- * together, Saved), then Secret Friend and your people.
+ * Your own things, in the order both account menus show them: My Coves, the
+ * Coves you saved, then Secret Friend and your people.
  *
- * Since 2026-09-26 My Coves is one page with every section on it, so the
- * section entries are shortcuts rather than the only way in: `?view=` scrolls
- * the page to that section and marks it for a moment (see `Lists/Index.tsx`).
- * They stay `?view=` rather than `#anchors` because the menus mark "you are
- * here" by comparing URLs, and a fragment is not part of `page.url`.
+ * One entry for all your lists (owner, 2026-09-26: "mijn coves zijn
+ * verlanglijsten, cadeaulijsten en groepslijsten in 1"). My Coves is one page
+ * with every kind on it, so the menu entries per kind ("Voor anderen", "Samen
+ * geven") only repeated it. Saved Coves keeps its entry: those are somebody
+ * else's Coves, not lists of yours. It stays `?view=saved` rather than an
+ * anchor because the menus mark "you are here" by comparing URLs, and a
+ * fragment is not part of `page.url`.
  *
  * One list for `AccountMenu` (desktop) and `AccountSheet` (phone). Until
  * 2026-09-26 each had its own, and the desktop one lacked For others, Group
@@ -28,8 +29,6 @@ export function myCovesLinks(base: string, t: (key: string) => string, signedIn:
         { href: `${base}/lists`, icon: 'wishlist', label: t('nav.lists') },
         ...(signedIn
             ? ([
-                  { href: `${base}/lists?view=shared`, icon: 'shared', label: t('nav.shared_lists') },
-                  { href: `${base}/lists?view=group`, icon: 'collab', label: t('nav.group_lists') },
                   { href: `${base}/lists?view=saved`, icon: 'wishlist', label: t('nav.saved_coves') },
                   { href: `${base}/santa`, icon: 'santa', label: t('nav.santa') },
                   { href: `${base}/friends`, icon: 'friends', label: t('nav.friends') },

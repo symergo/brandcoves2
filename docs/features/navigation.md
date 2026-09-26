@@ -601,3 +601,12 @@ where the name belongs. The header wordmark went from 18px to 28px the same day,
 mark beside it, with the line height pulled in so the header does not grow. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
 desktop. Nothing was removed and nothing was added; the disclosure sentence is the one the law
 requires and is untouched.
+
+## One "Mijn Coves" entry for all lists (2026-09-26)
+
+The owner: "mijn coves zijn verlanglijsten, cadeaulijsten en groepslijsten in 1". My Coves became one
+page with every kind of list on it the same day (list-surfaces.md), so the account menus'
+separate "Voor anderen" and "Samen geven" entries only repeated it and were removed, with their
+`nav.shared_lists` / `nav.group_lists` strings. The menus now hold My Coves, Saved Coves (somebody
+else's Coves, not lists of yours), Secret Friend and Friends (`myCovesLinks.ts`). The `?view=shared`
+and `?view=group` URLs still work: they scroll My Coves to that section.

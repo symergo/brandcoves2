@@ -21,8 +21,6 @@ return [
         'surprise' => 'Surprise Cove',
         'lists' => 'My Coves',
         'saved_coves' => 'Saved Coves',
-        'shared_lists' => 'For others',
-        'group_lists' => 'Give together',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',
         'sign_out' => 'Sign out',
