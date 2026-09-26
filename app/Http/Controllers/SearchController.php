@@ -13,6 +13,7 @@ use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
+use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
@@ -21,12 +22,14 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\CoveMatches;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Search\ParsedIntent;
 use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Search\SearchSignals;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
@@ -156,6 +159,8 @@ class SearchController extends Controller
 
         $this->seo($query, $result, $current);
 
+        $results = $this->withSignals($gift ?? $this->present($result), $current);
+
         return Inertia::render('Search', [
             'q' => $query->term,
             // What the grid was seeded from, so the page can say so: 'lists'
@@ -165,7 +170,27 @@ class SearchController extends Controller
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
-            'results' => $gift ?? $this->present($result),
+            'results' => $results,
+
+            /*
+             * The Coves this term matches, as a row of small cards above the
+             * products: ours and the lists people published, this market,
+             * published only (CoveMatches). Page one only, where a reader
+             * starts; not for a gift sentence, whose words are a brief rather
+             * than a subject.
+             */
+            'coves' => $landing === null && $gift === null && $query->page === 1
+                ? app(CoveMatches::class)->for($current->get(), $query->term)
+                : [],
+            'covesUrl' => $current->url('coves'),
+
+            /*
+             * "People keep 38 products matching “koffie” on their lists": one
+             * line above the results, only past the privacy threshold
+             * (SearchSignals). Worded here because the client's t() has no
+             * plurals.
+             */
+            'keptSummary' => $landing === null && $gift === null ? $this->keptSummary($query) : null,
 
             // The reading of a gift search, shown above its results. Null for
             // every ordinary search.
@@ -773,6 +798,44 @@ class SearchController extends Controller
             ...array_map(fn (string $v) => $chip('occasion', $v, EventType::tryFrom($v)?->label($market->language())
                 ?? Str::ucfirst(str_replace('_', ' ', $v))), $query->occasions),
         ];
+    }
+
+    /**
+     * Each card's line about what other people keep: "On 14 people's lists ·
+     * In 3 Coves". One batch for the page (ProductSignals::forResults), two
+     * queries whatever the number of cards; a card with nothing to say gets
+     * null and draws no line.
+     *
+     * @param  array<string, mixed>  $results
+     * @return array<string, mixed>
+     */
+    private function withSignals(array $results, CurrentMarket $current): array
+    {
+        $ids = array_map(fn (array $card) => (int) $card['id'], $results['items']);
+        $signals = app(ProductSignals::class)->forResults($ids, $current->get());
+
+        $results['items'] = array_map(function (array $card) use ($signals): array {
+            $signal = $signals[$card['id']] ?? null;
+
+            $card['kept'] = $signal === null ? null : implode(' · ', array_filter([
+                $signal['savedBy'] === null ? null : trans_choice('site.search.card_kept', $signal['savedBy'], ['count' => $signal['savedBy']]),
+                $signal['coveCount'] === 0 ? null : trans_choice('site.search.card_in_coves', $signal['coveCount'], ['count' => $signal['coveCount']]),
+            ]));
+
+            return $card;
+        }, $results['items']);
+
+        return $results;
+    }
+
+    private function keptSummary(SearchQuery $query): ?string
+    {
+        $summary = app(SearchSignals::class)->summary($query);
+
+        return $summary === null ? null : trans_choice('site.search.kept_summary', $summary['products'], [
+            'count' => $summary['products'],
+            'term' => $query->term,
+        ]);
     }
 
     private function present(SearchResult $result): array

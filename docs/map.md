@@ -91,7 +91,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
 | `Ops/` | config report, market supply |
 | `Pages/` | editable page templates and copy blocks |
-| `Search/` | `SearchService` (668 lines), `SearchQuery`, Amazon links, brand attribution |
+| `Search/` | `SearchService` (668 lines), `SearchQuery`, Amazon links, brand attribution; the Coves a term matches (`CoveMatches`) and what people keep for it (`SearchSignals`), features/search.md |
 | `Seo/` | meta, OG images, structured data, alternates, legacy redirects |
 | `Settings/` | admin-editable settings backed by the database |
 | `Social/` | the follow graph |

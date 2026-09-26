@@ -1,5 +1,3 @@
-import { useTranslations } from '../useTranslations'
-
 export interface AmazonSearch {
     /** The storefront the visitor lands on, e.g. `www.amazon.nl`. */
     host: string
@@ -55,17 +53,50 @@ export default function AmazonSearchCta({
     link,
     label,
     detail = null,
+    compact = false,
 }: {
     link: AmazonSearch | null
     /** Already translated — the two pages ask the question differently. */
     label: string
     /** What is being searched, when that is not obvious from the label. */
     detail?: string | null
+    /**
+     * One row the height of a button, for the search page's toolbar beside
+     * the Filters button (2026-09-26). The same link, rel, tag and favicon;
+     * the storefront's host moves into the label's line instead of under it.
+     */
+    compact?: boolean
 }) {
-    const { t } = useTranslations()
-
     if (link === null) {
         return null
+    }
+
+    if (compact) {
+        return (
+            <a
+                href={link.url}
+                rel="sponsored noopener nofollow"
+                target="_blank"
+                className="group inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-accent"
+            >
+                <img
+                    src={link.icon}
+                    alt=""
+                    width={16}
+                    height={16}
+                    loading="lazy"
+                    className="h-4 w-4 shrink-0 rounded-sm bg-white"
+                    onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                    }}
+                />
+                <span className="min-w-0 truncate font-medium">{label}</span>
+                <span className="hidden shrink-0 text-xs text-ink-soft sm:inline">{link.host}</span>
+                <span aria-hidden className="shrink-0 transition group-hover:translate-x-0.5">
+                    →
+                </span>
+            </a>
+        )
     }
 
     return (
