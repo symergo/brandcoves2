@@ -1542,6 +1542,8 @@ return [
             'self_saved' => 'Thanks. That is now part of what you like.',
             'self_back' => 'Back to your page',
             'from_finder' => 'Not sure what they are into? Find out by choosing',
+            'finder_title' => 'Rather choose than answer questions?',
+            'finder_cta' => 'Play This or that',
         ],
     ],
 

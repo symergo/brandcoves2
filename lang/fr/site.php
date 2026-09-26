@@ -1359,6 +1359,8 @@ return [
             'self_saved' => 'Merci. Cela fait maintenant partie de ce que vous aimez.',
             'self_back' => 'Retour à votre page',
             'from_finder' => 'Vous ne savez pas ce que la personne aime ? Découvrez-le en choisissant',
+            'finder_title' => 'Plutôt choisir que répondre à des questions ?',
+            'finder_cta' => 'Jouer à Ceci ou cela',
         ],
     ],
 

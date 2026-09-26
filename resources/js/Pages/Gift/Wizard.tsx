@@ -461,6 +461,33 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                     </div>
                 </section>
             ) : (
+                <>
+                {/*
+                  The other way in (owner's request, 2026-09-26): somebody who
+                  cannot say what the person likes chooses between products
+                  instead. Only while nothing has been answered yet; once
+                  somebody is into the questions it would be a distraction. The
+                  small link on the interests step stays for the moment they
+                  get stuck there.
+                */}
+                {step === 0 && !editing && (
+                    <Link
+                        href={`/${market.key}/gift/taste`}
+                        className="mt-6 flex max-w-2xl items-center gap-3 rounded-card border border-line bg-accent/5 p-4 transition hover:border-ink"
+                    >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-card text-accent">
+                            <ToolIcon name="taste" className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium text-ink">{t('gift.taste.finder_title')}</span>
+                            <span className="block text-sm text-ink-soft">{t('gift.taste.subtitle')}</span>
+                        </span>
+                        <span className="hidden shrink-0 text-sm font-medium text-accent-dark sm:inline">
+                            {t('gift.taste.finder_cta')} →
+                        </span>
+                    </Link>
+                )}
+
                 <section className="mt-8 max-w-2xl">
                     <div className="flex items-baseline justify-between gap-3">
                         <p className="text-xs text-ink-soft">
@@ -554,13 +581,16 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                   between products and let the choices say it
                                   (This or that, docs/features/taste-discovery.md).
                                 */}
-                                <Link
-                                    href={`/${market.key}/gift/taste`}
-                                    className="mt-5 inline-flex items-center gap-2 text-sm text-accent underline"
-                                >
-                                    <ToolIcon name="taste" className="h-4 w-4" />
-                                    {t('gift.taste.from_finder')}
-                                </Link>
+                                {/* Not twice on one screen: on the first step the banner above says it. */}
+                                {(step !== 0 || editing) && (
+                                    <Link
+                                        href={`/${market.key}/gift/taste`}
+                                        className="mt-5 inline-flex items-center gap-2 text-sm text-accent underline"
+                                    >
+                                        <ToolIcon name="taste" className="h-4 w-4" />
+                                        {t('gift.taste.from_finder')}
+                                    </Link>
+                                )}
                             </div>
                         )}
 
@@ -760,6 +790,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                         )}
                     </div>
                 </section>
+                </>
             )}
         </>
     )

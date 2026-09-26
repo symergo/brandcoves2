@@ -1362,6 +1362,8 @@ return [
             'self_saved' => 'Bedankt. Dat hoort nu bij wat je leuk vindt.',
             'self_back' => 'Terug naar je pagina',
             'from_finder' => 'Weet je niet goed waar die persoon van houdt? Ontdek het door te kiezen',
+            'finder_title' => 'Liever kiezen dan vragen beantwoorden?',
+            'finder_cta' => 'Speel Dit of dat',
         ],
     ],
 

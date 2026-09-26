@@ -172,3 +172,11 @@ products. So twelve rounds taught it a price band and little else, and the pairs
 Simulated on the production copy (a person who picks their interest whenever it is shown, at
 random otherwise): the right interest was learned in 6 of 10 runs, from close to none. The rest is
 coverage: twelve rounds of two cannot show forty interests.
+
+## A way in from the Cadeauzoeker (2026-09-26)
+
+The owner asked for This or that in the Gift Finder itself. A banner above the first question offers
+it ("Liever kiezen dan vragen beantwoorden? Speel Dit of dat") for somebody who cannot say what the
+person likes. It shows only before anything is answered; once somebody is into the questions it
+would distract. The small link on the interests step stays, and is hidden when the banner already
+shows on the same screen (signed out, the interests step is the first).

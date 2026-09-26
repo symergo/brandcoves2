@@ -1358,6 +1358,8 @@ return [
             'self_saved' => 'Gracias. Ahora forma parte de lo que te gusta.',
             'self_back' => 'Volver a tu página',
             'from_finder' => '¿No sabes qué le gusta? Descúbrelo eligiendo',
+            'finder_title' => '¿Prefieres elegir a responder preguntas?',
+            'finder_cta' => 'Jugar a Esto o aquello',
         ],
     ],
 
