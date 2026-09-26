@@ -94,6 +94,10 @@ coupling the owner's privacy depends on not having.
 and bookmarks are kept so they come back if the owner publishes again. The slug is kept too, so the
 address comes back with it.
 
+**Handing a list over unpublishes it** (`HandoverController`). The giver published it; the recipient
+who now owns it never agreed to a public page, and "show my first name" was the giver's choice about
+the giver, which would otherwise have put the new owner's name on it.
+
 ## The address: `/{market}/coves/community/{slug}`
 
 - **Under `/coves`**, because a Community Cove is a Cove and `/coves` is where Coves are browsed

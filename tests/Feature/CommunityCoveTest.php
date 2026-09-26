@@ -248,6 +248,22 @@ class CommunityCoveTest extends TestCase
     }
 
     #[Test]
+    public function handing_a_published_list_over_takes_it_off_the_site(): void
+    {
+        $list = $this->publish($this->list(), showOwner: true);
+        User::factory()->create(['email' => 'emma@example.com']);
+
+        $this->actingAs($this->owner)
+            ->post("/be-nl/lists/{$list->id}/handover", ['email' => 'emma@example.com'])
+            ->assertRedirect();
+
+        // The new owner never agreed to a public page, nor to the giver's name on it.
+        $this->assertNull($list->refresh()->published_at);
+        $this->assertNull($list->public_shows_owner);
+        $this->get("/be-nl/coves/community/{$list->public_slug}")->assertStatus(410);
+    }
+
+    #[Test]
     public function a_community_cove_lives_in_its_own_market_only(): void
     {
         $list = $this->publish($this->list());
