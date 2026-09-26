@@ -12,18 +12,18 @@ return [
         'title' => 'Comment fonctionnent les listes',
         'seo_title' => 'Comment fonctionnent les listes',
         'seo_description' => 'Tout ce qu’une liste permet : enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Pas à pas, en images.',
-        'intro' => 'Une [liste de souhaits](lists) garde ce que vous [trouvez](search) ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire et comment, sujet par sujet, en images. Commencez par le premier si vous n’avez encore rien enregistré.',
+        'intro' => 'Une [liste d’envies](lists) garde ce que vous [trouvez](search) ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire et comment, sujet par sujet, en images. Commencez par le premier si vous n’avez encore rien enregistré.',
         'back' => 'Tous les sujets',
         'next' => 'Suivant',
         'cta_search' => 'Trouver quelque chose à enregistrer',
-        'cta_lists' => 'Vers mes listes',
+        'cta_lists' => 'Vers Mes Coves',
     ],
 
     'topics' => [
         'saving' => [
             'title' => 'Enregistrer et créer une liste',
             'blurb' => 'Trouver, enregistrer, ouvrir ses listes, et créer une liste en trois étapes.',
-            'seo_description' => 'Enregistrez tout ce que vous trouvez ici dans une liste de souhaits et créez-en une en trois étapes. En images.',
+            'seo_description' => 'Enregistrez tout ce que vous trouvez ici dans une liste d’envies et créez-en une en trois étapes. En images.',
             'intro' => 'Pas besoin de créer une liste d’abord. L’enregistrement le propose, et la page d’accueil a un bouton qui en crée une en trois étapes.',
             'numbered' => true,
             'sections' => [
@@ -41,13 +41,13 @@ return [
                 ],
                 [
                     'title' => 'Ouvrez vos listes',
-                    'body' => 'Tout ce que vous avez enregistré est sous [Mes listes](lists). Chaque liste montre ce qu’elle contient, si elle est privée et pour qui elle est. Quand un prix baisse, la fiche le dit.',
+                    'body' => 'Tout ce que vous avez enregistré est sous [Mes Coves](lists), sur une seule page : Listes d’envies, Pour les autres, Offrir ensemble et Enregistrées, chacune avec son nombre. Chaque liste montre ce qu’elle contient, si elle est privée et pour qui elle est. Quand un prix baisse, la fiche le dit.',
                     'shot' => 'lists',
-                    'alt' => 'La page Mes listes, avec deux listes et le bouton pour en créer une.',
+                    'alt' => 'La page Mes Coves, avec deux listes et le bouton pour en créer une.',
                 ],
                 [
                     'title' => 'Créer une liste en trois étapes',
-                    'body' => "1. Touchez « Nouvelle liste » sous [Mes listes](lists), ou « Créer une nouvelle liste » sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Touchez « Suivant ».\n3. Donnez un nom et une occasion à la liste. Touchez « Suivant ».\n4. Choisissez « Privée (ou partager plus tard) » ou « Partager par un lien », et touchez « Créer la liste ».\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste de souhaits, liste cadeau ou cadeau de groupe](lists-help/kinds).",
+                    'body' => "1. Touchez « Nouvelle liste » sous [Mes Coves](lists), ou « Créer une nouvelle liste » sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Touchez « Suivant ».\n3. Donnez un nom et une occasion à la liste. Touchez « Suivant ».\n4. Choisissez « Privée (ou partager plus tard) » ou « Partager par un lien », et touchez « Créer la liste ».\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste d’envies, liste de cadeaux ou offrir ensemble](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'La première étape d’une nouvelle liste, avec les trois choix de pour qui elle est.',
                 ],
@@ -59,9 +59,9 @@ return [
         ],
 
         'kinds' => [
-            'title' => 'Liste de souhaits, liste cadeau ou cadeau de groupe',
+            'title' => 'Liste d’envies, liste de cadeaux ou offrir ensemble',
             'blurb' => 'Le seul choix qui est fixé, et ce que chaque sorte de liste permet.',
-            'seo_description' => 'Trois sortes de listes : une liste de souhaits pour soi, une liste cadeau pour quelqu’un d’autre, ou un cadeau de groupe. Ce que chacune permet et ce qui est fixé.',
+            'seo_description' => 'Trois sortes de listes : une liste d’envies pour soi, une liste de cadeaux pour quelqu’un d’autre, ou une liste pour offrir ensemble. Ce que chacune permet et ce qui est fixé.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -72,15 +72,15 @@ return [
                     'alt' => 'La première étape d’une nouvelle liste, avec les trois sortes au choix.',
                 ],
                 [
-                    'title' => 'Pour moi : une liste de souhaits',
+                    'title' => 'Pour moi : une liste d’envies',
                     'body' => 'Ce que vous aimeriez. [Partagez-la](lists-help/sharing) et les autres peuvent cocher ce qu’ils achètent, sans que vous voyiez quoi ni qui. La surprise tient. Si vous préférez savoir, activez-le pour cette liste.',
                 ],
                 [
-                    'title' => 'Pour quelqu’un d’autre : une liste cadeau',
+                    'title' => 'Pour quelqu’un d’autre : une liste de cadeaux',
                     'body' => 'Des idées pour quelqu’un qui n’ouvre jamais la liste lui-même. Ceux avec qui vous la partagez cochent ce qu’ils [achètent](lists-help/claiming), pour que personne n’achète deux fois. Vous le voyez, puisque vous offrez aussi.',
                 ],
                 [
-                    'title' => 'À plusieurs, pour quelqu’un : un cadeau de groupe',
+                    'title' => 'À plusieurs, pour quelqu’un : offrir ensemble',
                     'body' => 'Un cadeau, plusieurs donateurs. Toute personne avec le lien peut ajouter des idées, voter et dire ce qu’elle met. Aucun argent ne circule ici ; vous réglez cela entre vous. Plus sous [Offrir un cadeau à plusieurs](lists-help/group).',
                 ],
                 [
@@ -105,7 +105,7 @@ return [
                 ],
                 [
                     'title' => 'Ajouter depuis la liste',
-                    'body' => "1. Ouvrez votre liste sous [Mes listes](lists).\n2. Touchez « + Ajouter un produit ».\n3. Tapez ce que vous cherchez et appuyez sur Entrée, ou touchez l’icône de scan et visez le code-barres avec votre appareil photo.\n4. Touchez le produit dans les résultats. Il est tout de suite sur votre liste.",
+                    'body' => "1. Ouvrez votre liste sous [Mes Coves](lists).\n2. Touchez « + Ajouter un produit ».\n3. Tapez ce que vous cherchez et appuyez sur Entrée, ou touchez l’icône de scan et visez le code-barres avec votre appareil photo.\n4. Touchez le produit dans les résultats. Il est tout de suite sur votre liste.",
                     'shot' => 'add',
                     'alt' => 'Le champ de recherche en haut d’une liste pour ajouter un produit, avec en dessous le lien pour l’ajouter vous-même.',
                 ],
@@ -133,7 +133,7 @@ return [
         'sharing' => [
             'title' => 'Partager une liste',
             'blurb' => 'Par un lien ou avec des amis par leur nom, qui voit quoi, et comment arrêter.',
-            'seo_description' => 'Partager une liste de souhaits par un lien ou avec des amis, décider qui peut ajouter et qui voit ce qui a été acheté, et arrêter le partage.',
+            'seo_description' => 'Partager une liste d’envies par un lien ou avec des amis, décider qui peut ajouter et qui voit ce qui a été acheté, et arrêter le partage.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -159,11 +159,11 @@ return [
                 ],
                 [
                     'title' => 'Qui voit ce qui a été acheté',
-                    'body' => 'Sur une [liste de souhaits](lists-help/kinds), vous ne voyez pas ce qui est réservé. C’est désactivé par défaut et vous l’activez par liste avec « Montrez-moi ce qui est réservé ». Sur une liste cadeau c’est activé, puisque vous offrez aussi. Les noms de qui achète quoi sont cachés par défaut ; si vous les activez, cela vaut pour les nouvelles réservations seulement.',
+                    'body' => 'Sur une [liste d’envies](lists-help/kinds), vous ne voyez pas ce qui est réservé. C’est désactivé par défaut et vous l’activez par liste avec « Montrez-moi ce qui est réservé ». Sur une liste de cadeaux c’est activé, puisque vous offrez aussi. Les noms de qui achète quoi sont cachés par défaut ; si vous les activez, cela vaut pour les nouvelles réservations seulement.',
                 ],
                 [
                     'title' => 'Adresse de livraison',
-                    'body' => 'Sur votre propre liste de souhaits, vous pouvez garder une adresse de livraison. Elle est stockée chiffrée et n’apparaît qu’à qui a [réservé](lists-help/claiming) quelque chose. Si cette personne lâche la réservation, elle disparaît de nouveau.',
+                    'body' => 'Sur votre propre liste d’envies, vous pouvez garder une adresse de livraison. Elle est stockée chiffrée et n’apparaît qu’à qui a [réservé](lists-help/claiming) quelque chose. Si cette personne lâche la réservation, elle disparaît de nouveau.',
                 ],
             ],
         ],
@@ -171,7 +171,7 @@ return [
         'claiming' => [
             'title' => 'Acheter sur une liste partagée',
             'blurb' => 'Réserver, lâcher, marquer acheté, proposer quelque chose, et le quiz.',
-            'seo_description' => 'Ce que vous pouvez faire sur une liste de souhaits qu’on a partagée avec vous : réserver ce que vous achetez, proposer quelque chose, et jouer au quiz.',
+            'seo_description' => 'Ce que vous pouvez faire sur une liste d’envies qu’on a partagée avec vous : réserver ce que vous achetez, proposer quelque chose, et jouer au quiz.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -199,13 +199,13 @@ return [
         'quiz' => [
             'title' => 'Le quiz : les connaissez-vous bien ?',
             'blurb' => 'Un jeu fait de votre liste partagée : quatre produits, un seul y est vraiment.',
-            'seo_description' => 'Créez un quiz à partir de votre liste de souhaits : qui vous connaît le mieux ? Cinq manches, un score à partager.',
+            'seo_description' => 'Créez un quiz à partir de votre liste d’envies : qui vous connaît le mieux ? Cinq manches, un score à partager.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Ce qu’est le quiz',
-                    'body' => 'Un jeu fait d’une [liste de souhaits](lists-help/kinds) partagée. Cinq manches, quatre produits à chaque fois dont un seul est vraiment sur la liste, et à la fin un score à partager. La personne qui gère la liste crée le quiz ; qui reçoit le lien joue.',
+                    'body' => 'Un jeu fait d’une [liste d’envies](lists-help/kinds) partagée. Cinq manches, quatre produits à chaque fois dont un seul est vraiment sur la liste, et à la fin un score à partager. La personne qui gère la liste crée le quiz ; qui reçoit le lien joue.',
                 ],
                 [
                     'title' => 'Créer un quiz',
@@ -233,16 +233,16 @@ Chacun joue une fois.',
 
         'group' => [
             'title' => 'Offrir un cadeau à plusieurs',
-            'blurb' => 'Cadeau de groupe, votes, contributions, et discussion avec ceux qui participent.',
+            'blurb' => 'Offrir ensemble, votes, contributions, et discussion avec ceux qui participent.',
             'seo_description' => 'Acheter un cadeau à plusieurs : réunir des idées, voter, convenir de qui met quoi, et en discuter.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Un cadeau de groupe',
-                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul [cadeau de groupe](lists-help/kinds) de vous tous. Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
+                    'title' => 'Offrir ensemble',
+                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau que vous [offrez ensemble](lists-help/kinds). Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
                     'shot' => 'group',
-                    'alt' => 'La page d’un cadeau de groupe, avec les idées à voter et la case pour contribuer.',
+                    'alt' => 'La page d’une liste pour offrir ensemble, avec les idées à voter et la case pour contribuer.',
                 ],
                 [
                     'title' => 'Voter',
@@ -262,7 +262,7 @@ Chacun joue une fois.',
         'santa' => [
             'title' => 'Ami secret',
             'blurb' => 'Tirer les noms au sort sans papiers : un groupe, un budget, une date, et chacun reçoit un nom.',
-            'seo_description' => 'Tirer les noms au sort pour un Ami secret ou Secret Santa : créez un groupe, invitez tout le monde par un lien, tirez, et rattachez une liste de souhaits.',
+            'seo_description' => 'Tirer les noms au sort pour un Ami secret ou Secret Santa : créez un groupe, invitez tout le monde par un lien, tirez, et rattachez une liste d’envies.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -285,8 +285,8 @@ Chacun joue une fois.',
                     'body' => 'Retirez cette personne du groupe, ou choisissez « Retirer au sort pour cette personne ». Seules les paires concernées sont retirées au sort, et seules ces personnes reçoivent un nouvel e-mail.',
                 ],
                 [
-                    'title' => 'Rattacher ma liste de souhaits au groupe',
-                    'body' => "Choisissez votre liste sous « Votre liste de souhaits » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste de souhaits](lists) et touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
+                    'title' => 'Rattacher ma liste d’envies au groupe',
+                    'body' => "Choisissez votre liste sous « Votre liste d’envies » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste d’envies](lists) et touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
                 ],
                 [
                     'title' => 'Un rappel avant',

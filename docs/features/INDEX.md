@@ -104,10 +104,10 @@ is true now.
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — claiming needs an account |
 | [pasted-links.md](pasted-links.md) | Wishlist / Ingestion | Active — links looked up (catalogue and connectors first), own photos, unknown barcodes; needs the `media_data` volume |
 | [friends.md](friends.md) | Wishlist / Accounts | Active |
-| [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built; invitations retired 2026-09-14 |
+| [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built; invitations retired 2026-09-14; the views became sections of one page 2026-09-26 |
 | [saved-coves.md](saved-coves.md) | Coves / Wishlist | Active: save a Cove into My Coves, or copy it into a list of your own |
 | [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by the Gift Finder, admin can hide |
-| [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active |
+| [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active; My Coves on one page and one word per list kind, 2026-09-26 |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |

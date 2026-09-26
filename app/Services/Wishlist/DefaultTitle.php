@@ -34,6 +34,10 @@ class DefaultTitle
      * are no longer in any language file — nothing renders "Saved items" any
      * more, but rows created before the rename still carry it.
      *
+     * The second group went on 2026-09-26, when each list kind got one word
+     * per language: the default list was "Mijn wenslijst" while its badge said
+     * "Verlanglijst". Rows keep the old string; it renders as the new one.
+     *
      * @var list<string>
      */
     private const RETIRED = [
@@ -41,6 +45,10 @@ class DefaultTitle
         'Bewaard',
         'Enregistrés',
         'Guardados',
+
+        'Mijn wenslijst',
+        'My wishlist',
+        'Ma liste de souhaits',
     ];
 
     /**

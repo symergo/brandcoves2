@@ -11,7 +11,9 @@ A **Cove** is a collection of products on one page: a Daily, a gift-idea page, a
 advice article, a brand or shop page. Until 2026-09-26 a reader could share one but not keep it.
 Now every published Cove has two buttons:
 
-- **Save** puts a bookmark in *My Coves*, under **Saved Coves** (`/lists?view=saved`).
+- **Save** puts a bookmark in *My Coves*, in its **Saved** section (`/lists?view=saved` scrolls there;
+  since 2026-09-26 every section of My Coves is on the one page, see
+  [list-surfaces.md](list-surfaces.md#one-page-four-sections-2026-09-26)).
 - **Make it my list** copies the Cove's products into a new list of the reader's own.
 
 ## A bookmark, not a copy
@@ -38,7 +40,7 @@ is: the press is stored with `/save-intent` (`cove_id`, `cove_action`), the sign
 `ReplayPendingSave` finishes the action after sign-in (`PendingSave::replayCove()`). After a copy the
 reader lands on the new list.
 
-## What the saved view shows
+## What the Saved section shows
 
 Published Coves only, newest save first, each linking in its own market. An unpublished Cove is
 hidden, not deleted: the bookmark comes back if the Cove is published again. Unsaving works whatever
@@ -58,6 +60,6 @@ editorial Cove's when given only a `coveId`.
 - `database/migrations/2026_09_26_000300_a_cove_can_be_saved.php`, `app/Models/SavedCove.php`
 - `app/Services/Cove/SavedCoves.php`: save, unsave, isSaved, the button state, copyToList
 - `app/Http/Controllers/SavedCoveController.php`: `POST|DELETE /coves/{id}/save`, `POST /coves/{id}/copy`
-- `WishlistController::savedCoves()`, the `saved` view in `resources/js/Pages/Lists/Index.tsx`
+- `WishlistController::savedCoves()`, the Saved section in `resources/js/Pages/Lists/Index.tsx`
 - `resources/js/Components/SaveCove.tsx`, placed on Daily, Persona, Guide and Entity pages
 - Test: `tests/Feature/SavedCoveTest.php`

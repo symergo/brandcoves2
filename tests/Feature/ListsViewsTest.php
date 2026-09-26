@@ -7,20 +7,27 @@ namespace Tests\Feature;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
+use App\Enums\PublishStatus;
+use App\Models\DailyPickSet;
 use App\Models\Recipient;
+use App\Models\SavedCove;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The lists page's three views, by whom the lists are for (2026-09-13).
+ * My Coves: one page, four sections (2026-09-26).
  *
- * "My wish lists" is my own lists of what I want and nothing else. "For
- * others" is everything about giving: my lists about a person, and the wish
- * lists and gift lists others shared with me. "Group lists" is one present
- * bought together, mine and the ones I was let into.
+ * Wish lists (my own lists of what I want), For others (my lists about a
+ * person, and the wish lists and gift lists others shared with me), Give
+ * together (group lists, mine and the ones I was let into) and Saved (Coves I
+ * bookmarked). From 2026-09-13 these were separate `?view=` views and the
+ * plain page showed only the first, so somebody with lists of two kinds saw
+ * half of them and thought the rest had gone. `?view=` now only says which
+ * section to scroll to.
  */
 class ListsViewsTest extends TestCase
 {
@@ -41,17 +48,26 @@ class ListsViewsTest extends TestCase
         ]);
     }
 
-    /** @return list<string> */
-    private function titles(User $user, string $view = ''): array
+    /** @return array<string, mixed> */
+    private function props(User $user, string $query = ''): array
     {
-        return array_column(
-            $this->actingAs($user)->get('/be-nl/lists'.$view)->assertOk()->viewData('page')['props']['lists'],
-            'title',
-        );
+        return $this->actingAs($user)->get('/be-nl/lists'.$query)->assertOk()->viewData('page')['props'];
     }
 
-    #[Test]
-    public function each_view_holds_the_lists_it_is_named_for(): void
+    /** @return array<string, list<string>> section => titles */
+    private function sections(array $props): array
+    {
+        $sections = [];
+
+        foreach ($props['lists'] as $row) {
+            $sections[$row['section']][] = $row['title'];
+        }
+
+        return $sections;
+    }
+
+    /** A user with lists of every kind, three shared with them, and a saved Cove. */
+    private function everything(): User
     {
         $me = User::factory()->create();
         $friend = User::factory()->create();
@@ -69,22 +85,97 @@ class ListsViewsTest extends TestCase
             $this->actingAs($me)->get("/be-nl/l/{$shared->share_token}")->assertOk();
         }
 
-        $mine = $this->titles($me);
-        $this->assertContains('My wishes', $mine);
-        foreach (['Ideas for Dad', 'A bike for Sam', 'What Anna wants', 'Ideas for Anna and mum', 'A trip for Anna'] as $title) {
-            $this->assertNotContains($title, $mine, "$title does not belong under my wish lists");
+        $cove = DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => '2026-08-08',
+            'theme_title' => 'Rond de tafel',
+            'theme_blurb' => 'Voor avonden zonder scherm.',
+            'theme_slug' => 'theme-board-games',
+            'theme_source' => 'theme',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+        SavedCove::create(['user_id' => $me->id, 'set_id' => $cove->id]);
+
+        return $me;
+    }
+
+    #[Test]
+    public function the_plain_page_holds_every_section_and_each_list_once(): void
+    {
+        $props = $this->props($this->everything());
+        $sections = $this->sections($props);
+
+        // The default list is created on the first visit, so it is here too.
+        $this->assertContains('My wishes', $sections['mine']);
+        $this->assertEqualsCanonicalizing(['Ideas for Dad', 'Ideas for Anna and mum', 'What Anna wants'], $sections['shared']);
+        $this->assertEqualsCanonicalizing(['A bike for Sam', 'A trip for Anna'], $sections['group']);
+
+        // Every row in exactly one section.
+        $ids = array_column($props['lists'], 'id');
+        $this->assertSame(count($ids), count(array_unique($ids)));
+
+        $this->assertCount(1, $props['savedCoves']);
+        $this->assertSame('Rond de tafel', $props['savedCoves'][0]['title']);
+        $this->assertNull($props['view']);
+    }
+
+    #[Test]
+    public function for_others_lists_my_own_gift_lists_first(): void
+    {
+        $sections = $this->sections($this->props($this->everything()));
+
+        $this->assertSame('Ideas for Dad', $sections['shared'][0]);
+    }
+
+    #[Test]
+    public function a_section_with_nothing_in_it_sends_nothing(): void
+    {
+        // Only the default list: no rows for the other sections, and no
+        // saved Coves, so the page draws one section and no empty headings.
+        $props = $this->props(User::factory()->create());
+
+        $this->assertSame(['mine'], array_keys($this->sections($props)));
+        $this->assertSame([], $props['savedCoves']);
+    }
+
+    #[Test]
+    public function every_view_link_still_lands_on_the_whole_page(): void
+    {
+        $me = $this->everything();
+        $whole = array_column($this->props($me)['lists'], 'id');
+
+        foreach (['mine', 'shared', 'group', 'saved'] as $view) {
+            $props = $this->props($me, "?view={$view}");
+
+            $this->assertSame($view, $props['view'], "?view={$view} names the section to scroll to");
+            $this->assertEqualsCanonicalizing($whole, array_column($props['lists'], 'id'), "?view={$view} hides nothing");
+            $this->assertCount(1, $props['savedCoves']);
         }
 
-        $others = $this->titles($me, '?view=shared');
-        foreach (['Ideas for Dad', 'What Anna wants', 'Ideas for Anna and mum'] as $title) {
-            $this->assertContains($title, $others, "$title belongs under for others");
-        }
-        $this->assertNotContains('My wishes', $others);
-        $this->assertNotContains('A trip for Anna', $others, 'a group list shared with me belongs under group lists');
+        // An unknown value scrolls nowhere rather than failing.
+        $this->assertNull($this->props($me, '?view=nonsense')['view']);
+    }
 
-        $group = $this->titles($me, '?view=group');
-        $this->assertContains('A bike for Sam', $group);
-        $this->assertContains('A trip for Anna', $group);
-        $this->assertNotContains('My wishes', $group);
+    #[Test]
+    public function the_page_leaks_no_claim_on_my_own_wish_list(): void
+    {
+        // Invariant 4: a wish list hides what was bought from its owner by
+        // default. Putting every section on one page must not change that.
+        $me = User::factory()->create();
+        $list = $this->list($me, ListKind::Mine, 'My wishes');
+        $hash = hash('sha256', 'the-buyer');
+        WishlistItem::factory()->claimedBy($hash)->create(['wishlist_id' => $list->id]);
+
+        $response = $this->actingAs($me)->get('/be-nl/lists')->assertOk();
+
+        $this->assertStringNotContainsString($hash, $response->getContent());
+
+        $row = collect($response->viewData('page')['props']['lists'])->firstWhere('id', $list->id);
+        $this->assertSame('mine', $row['section']);
+        $this->assertFalse($row['ownerSeesClaims']);
+        foreach (array_keys($row) as $key) {
+            $this->assertStringNotContainsStringIgnoringCase('claimed', $key, "the index row carries {$key}");
+        }
     }
 }
