@@ -1305,7 +1305,7 @@ return [
             'title' => 'Ceci ou cela',
             'subtitle' => 'Choisissez une douzaine de fois entre deux choses, et nous trouvons ce que la personne aime et combien dépenser.',
             'self_subtitle' => 'Choisissez une douzaine de fois entre deux choses, et nous trouvons ce que vous aimez.',
-            'seo_description' => 'Vous ne savez pas ce que quelqu’un aime ? Choisissez une douzaine de fois entre deux cadeaux et obtenez ses goûts, un budget et des idées qui lui correspondent.',
+            'seo_description' => 'Vous ne savez pas ce que quelqu’un aime ? Choisissez une douzaine de fois entre deux cadeaux : vous obtenez ses goûts, un budget et des idées pour lui.',
             'who_title' => 'Pour qui choisissez-vous ?',
             'for_someone' => 'Quelqu’un d’autre',
             'for_someone_hint' => 'Choisissez ce que la personne préférerait recevoir.',
