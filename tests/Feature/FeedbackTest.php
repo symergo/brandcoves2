@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Console\Commands\PrunePersonalDataCommand;
+use App\Mail\FeedbackMail;
 use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -62,6 +64,67 @@ class FeedbackTest extends TestCase
 
         $this->assertSame($user->id, $row->user_id);
         $this->assertSame('reporter@example.test', $row->email);
+    }
+
+    /**
+     * A report nobody is told about is a report thrown away politely. Until
+     * 2026-09-26 the form only wrote a row, and the owner heard nothing.
+     */
+    #[Test]
+    public function the_owner_is_mailed_each_report_and_can_reply_to_it(): void
+    {
+        Mail::fake();
+        config(['giftcoves.feedback.notify' => 'owner@example.test']);
+
+        $this->post('/be-nl/feedback', [
+            'message' => 'The Dutch translation on the gift finder reads like a machine wrote it.',
+            'email' => 'reporter@example.test',
+            'path' => '/be-nl/gift-finder',
+        ])->assertRedirect();
+
+        Mail::assertQueued(FeedbackMail::class, function (FeedbackMail $mail) {
+            $mail->assertSeeInHtml('reads like a machine wrote it');
+            $mail->assertSeeInHtml('/be-nl/gift-finder');
+
+            return $mail->hasTo('owner@example.test')
+                && $mail->hasReplyTo('reporter@example.test');
+        });
+    }
+
+    /** Set up once for registrations, the same person reads the reports. */
+    #[Test]
+    public function it_falls_back_to_the_registrations_address(): void
+    {
+        Mail::fake();
+        config([
+            'giftcoves.feedback.notify' => '',
+            'giftcoves.registrations.notify' => 'owner@example.test',
+        ]);
+
+        $this->post('/be-nl/feedback', [
+            'message' => 'No address left, but still worth reading.',
+        ])->assertRedirect();
+
+        Mail::assertQueued(FeedbackMail::class, fn (FeedbackMail $mail) => $mail->hasTo('owner@example.test')
+            && ! $mail->hasReplyTo('owner@example.test'));
+    }
+
+    /** Nothing configured, nothing sent; and a swallowed submission is not mailed either. */
+    #[Test]
+    public function it_mails_nobody_it_was_not_told_about_and_nothing_it_did_not_store(): void
+    {
+        Mail::fake();
+        config(['giftcoves.feedback.notify' => null, 'giftcoves.registrations.notify' => null]);
+
+        $this->post('/be-nl/feedback', ['message' => 'A report with nobody to send it to.']);
+        Mail::assertNothingQueued();
+
+        config(['giftcoves.feedback.notify' => 'owner@example.test']);
+        $this->post('/be-nl/feedback', [
+            'message' => 'Buy cheap watches at this completely unrelated address.',
+            'website' => 'http://spam.test',
+        ]);
+        Mail::assertNothingQueued();
     }
 
     /** A scrap is not a report, and the form says so before it is sent. */

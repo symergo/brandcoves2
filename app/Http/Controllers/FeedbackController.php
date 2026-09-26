@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Mail\FeedbackMail;
 use App\Models\Feedback;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -44,6 +46,13 @@ use Illuminate\Support\Facades\RateLimiter;
  * script which of its attempts landed is how it learns to tune itself, and a
  * human who has hit the limit is better served by "thanks" than by an error
  * about a quota they did not know existed.
+ *
+ * ## Somebody is told
+ *
+ * Each stored report is mailed to the owner (FeedbackMail, queued, so a slow
+ * mail server never slows the visitor). A row in a queue nobody opens is a
+ * report thrown away politely. Only stored reports are mailed: the honeypot
+ * and the rate limit stop before the row, so they stop the mail too.
  */
 class FeedbackController extends Controller
 {
@@ -76,7 +85,7 @@ class FeedbackController extends Controller
 
         RateLimiter::hit($key, 3600);
 
-        Feedback::query()->create([
+        $feedback = Feedback::query()->create([
             'market' => $current->get()->value,
             'message' => $validated['message'],
             'email' => $validated['email'] ?? null,
@@ -84,6 +93,21 @@ class FeedbackController extends Controller
             'path' => $validated['path'] ?? null,
         ]);
 
+        $this->notifyOwner($feedback);
+
         return back()->with('status', __('site.feedback.thanks'));
+    }
+
+    private function notifyOwner(Feedback $feedback): void
+    {
+        foreach (['giftcoves.feedback.notify', 'giftcoves.registrations.notify'] as $key) {
+            $to = config($key);
+
+            if (is_string($to) && trim($to) !== '') {
+                Mail::to(trim($to))->queue(new FeedbackMail($feedback));
+
+                return;
+            }
+        }
     }
 }

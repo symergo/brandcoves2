@@ -54,9 +54,9 @@ sentences; `UsesTemplate` supplies everything that has to work.
 
 The admin screen says both out loud rather than quietly omitting them.
 
-Three more are not wired, and not by decision: `AlertMail` (a price alert), `ListPriceDigestMail`
-(the morning list digest), and `NewRegistrationMail`, which goes to the site owner rather than to a
-visitor.
+Four more are not wired, and not by decision: `AlertMail` (a price alert), `ListPriceDigestMail`
+(the morning list digest), and the two that go to the site owner rather than to a visitor,
+`NewRegistrationMail` and `FeedbackMail`.
 
 `MailTemplates::KEYS` is an **allowlist**, so a stray row for an undeclared
 template cannot reach an email — asserted by

@@ -925,6 +925,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Feedback
+    |--------------------------------------------------------------------------
+    |
+    | Who is mailed each report from the form on /help (App\Mail\FeedbackMail,
+    | queued). Falls back to the registrations address, because the person who
+    | wants to hear about new accounts is the person reading the reports, and
+    | an environment that already names one should not go silent for want of
+    | a second variable. Null or empty on both means nobody is mailed. The
+    | fallback is applied in FeedbackController, not with env()'s default:
+    | a present-but-empty `FEEDBACK_NOTIFY_EMAIL=` returns '' and would skip it.
+    */
+    'feedback' => [
+        'notify' => env('FEEDBACK_NOTIFY_EMAIL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Editable page copy
     |--------------------------------------------------------------------------
     |

@@ -15,6 +15,7 @@ you like. No account, one required field.
   `Pages/Feedback.tsx` is gone and `GET /feedback` 301s to `/help`.
 - Model / table: [`Feedback`](../../app/Models/Feedback.php), `feedback`
 - Admin queue: [`FeedbackResource`](../../app/Filament/Resources/Feedback/FeedbackResource.php)
+- Email to the owner: [`FeedbackMail`](../../app/Mail/FeedbackMail.php), `resources/views/mail/feedback.blade.php`
 - Tests: [`FeedbackTest`](../../tests/Feature/FeedbackTest.php)
 
 ## Why the site needs one
@@ -148,3 +149,28 @@ feedback yet. The options now come from `Market::cases()` with their labels, as 
 filter in the panel does. `AdminPanelTest::the_content_and_operations_pages_render` now seeds a
 report and opens the page. It is the same trap that test already records for the community queues:
 Filament code that only runs once a row exists.
+
+## Each report is emailed to the owner (2026-09-26)
+
+Reported as "emails from the help page do not arrive". There had never been one: the form wrote a
+row to `feedback` and nothing else, and the admin queue is not a screen anybody opens daily, so
+reports sat unread while the visitor had been told somebody reads them. Every stored report is now
+emailed to the owner by `FeedbackMail`, queued so a slow mail server never slows the visitor.
+
+- **Who gets it:** `FEEDBACK_NOTIFY_EMAIL`, and when that is empty, `REGISTRATION_NOTIFY_EMAIL`. The
+  person who wants to hear about new accounts is the person reading the reports, and an environment
+  that already names one address should not stay silent for want of a second variable. Both empty
+  means nobody is mailed. The fallback is written in `FeedbackController`, not as `env()`'s default,
+  because a present-but-empty `FEEDBACK_NOTIFY_EMAIL=` line returns `''` and would skip it.
+- **Reply-To is the visitor's address** when they left one, so answering is pressing Reply. That is
+  the only use the form promises for the address, and the email is that use.
+- **Only stored reports are mailed.** The honeypot and the rate limit stop before the row is
+  written, so they stop the email too: a flood fills neither the table nor the inbox.
+- **English, unlocalised,** like `NewRegistrationMail`: one known reader.
+- **Personal data by email.** The message and the address leave the database for the owner's
+  mailbox. The 365-day retention covers the table; the inbox is the owner's to keep in line, the same
+  as the registration notice.
+
+Tests: `FeedbackTest::the_owner_is_mailed_each_report_and_can_reply_to_it`,
+`it_falls_back_to_the_registrations_address`,
+`it_mails_nobody_it_was_not_told_about_and_nothing_it_did_not_store`.
