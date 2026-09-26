@@ -71,6 +71,10 @@ upload. Page import exists but only for editors, and the reading happens in thei
 [gifting-lenses.md](features/gifting-lenses.md)). Reading pasted pages is a deliberate change of
 strategy, not a bug fix, and it comes with conditions:
 
+- **Our own data and connectors come first.** A link to a shop we hold in the feed database or
+  have an API connector for is resolved through that (an Amazon link by the ASIN in its URL, a bol
+  or eBay link by its product id, a feed merchant's link by its stored deep link). Only a link
+  nothing recognises is fetched and read.
 - It runs in a queued job, never inside the visitor's request.
 - The URL is hostile input: `https:` only, no private or internal addresses (checked again after
   every redirect), a size cap and a time limit on every request.
@@ -229,7 +233,8 @@ system.
 
 ## Roadmap
 
-In order, each step small enough to ship and prove on its own.
+In order, each step small enough to ship and prove on its own. Each has an implementation plan
+in `.claude/plans/roadmap-N-*.md`, ending with the questions the owner decides before it is built.
 
 1. **Anything goes in.** Products in the catalogue that need no feed; reading a pasted link in a
    queued job; an unknown barcode becomes an item; photo upload.
