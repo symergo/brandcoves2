@@ -48,6 +48,8 @@ interface Pick {
     price: Cents | null
     url: string
     fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
+    /** On the lists of at least five people shopping for someone like this (crowd-picks.md). */
+    chosenByOthers?: boolean
 }
 
 interface Result {
@@ -598,6 +600,11 @@ function Outcome({ mode, person, urls, result, recipients, canCreate }: Props & 
                                         </li>
                                     ))}
                                 </ul>
+                            )}
+                            {pick.chosenByOthers && (
+                                <p className="mt-2 text-xs text-ink-soft">
+                                    {t(me ? 'gift.chosen_by_others_me' : 'gift.chosen_by_others')}
+                                </p>
                             )}
                             <div className="mt-auto flex items-center justify-between gap-3 pt-4">
                                 <span className="font-semibold">

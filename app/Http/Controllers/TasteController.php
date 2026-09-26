@@ -278,6 +278,8 @@ class TasteController extends Controller
                 'price' => $pick->group->min_price,
                 'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
                 'fits' => $pick->fits(),
+                // Five or more different people's lists (crowd-picks.md).
+                'chosenByOthers' => $pick->chosenByOthers(),
             ], $picks),
             'choices' => array_values($raw),
             'for' => $for,

@@ -37,6 +37,8 @@ interface Pick {
     url: string
     /** What this present has in common with the brief. Interests first, then the taste. */
     fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
+    /** On the lists of at least five people shopping for someone like this (crowd-picks.md). */
+    chosenByOthers?: boolean
 }
 
 interface Brief {
@@ -405,6 +407,10 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                                 </li>
                                             ))}
                                         </ul>
+                                    )}
+
+                                    {pick.chosenByOthers && (
+                                        <p className="mt-2 text-xs text-ink-soft">{t('gift.chosen_by_others')}</p>
                                     )}
 
                                     <div className="mt-auto space-y-2 pt-4">

@@ -449,6 +449,9 @@ class GiftController extends Controller
              * typed themselves still shows in their own words.
              */
             'fits' => $pick->fits(),
+            // "Chosen by others for someone like them": five or more different
+            // people's lists, never fewer (docs/features/crowd-picks.md).
+            'chosenByOthers' => $pick->chosenByOthers(),
         ], $picks);
     }
 

@@ -41,7 +41,8 @@ use Illuminate\Support\Collection;
  * never see the same deck and nothing favours a well-stocked shop. When a
  * market has too few tagged products the draw is topped up with untagged
  * ones: they still teach the price band, and a page that shows nothing is
- * worse.
+ * worse. A tenth of the pool is kept for proven gifts, products enough
+ * different people keep on their lists (see PROVEN), once there are any.
  */
 final class TasteDeck
 {
@@ -59,6 +60,18 @@ final class TasteDeck
 
     /** Random draw per request. Plenty for four rounds with room to be choosy. */
     private const POOL = 160;
+
+    /**
+     * Proven gifts in each draw: products at least five different people keep
+     * on a list for somebody (docs/features/crowd-picks.md). A tenth of the
+     * pool, so they turn up a little more often than chance, and never so
+     * many that the deck becomes the same few dozen popular things. They
+     * count against the tagged half, and they pass the same filters.
+     */
+    private const PROVEN = 16;
+
+    /** The proven gifts that share is drawn from at random, the most kept first. */
+    private const PROVEN_CANDIDATES = 200;
 
     private const EXPLORE_MIN_RATIO = 1.5;
 
@@ -348,6 +361,9 @@ final class TasteDeck
      */
     private function drawRaw(Market $market, array $exclude): Collection
     {
+        $proven = $this->proven($market, $exclude);
+        $exclude = [...$exclude, ...$proven->pluck('id')->all()];
+
         $tagged = $this->base($market, $exclude)
             ->where(fn (Builder $q) => $q
                 ->whereRaw('product_groups.gift_tags::text like ?', ['%"interest:%'])
@@ -357,7 +373,7 @@ final class TasteDeck
             // but on production they are some 700 per market, heavy on a few
             // interests (fitness, wellness), and a pool of only those showed
             // one music product in twelve rounds (simulated 2026-09-26).
-            ->limit(intdiv(self::POOL, 2))
+            ->limit(max(0, intdiv(self::POOL, 2) - $proven->count()))
             ->get();
 
         // Twice what is missing: about half of the untagged have no
@@ -365,10 +381,35 @@ final class TasteDeck
         // worthChoosing() drops those.
         $untagged = $this->base($market, [...$exclude, ...$tagged->pluck('id')->all()])
             ->inRandomOrder()
-            ->limit(2 * (self::POOL - $tagged->count()))
+            ->limit(2 * (self::POOL - $tagged->count() - $proven->count()))
             ->get();
 
-        return $tagged->concat($untagged)->shuffle()->values();
+        return $proven->concat($tagged)->concat($untagged)->shuffle()->values();
+    }
+
+    /**
+     * A random few of the market's proven gifts (see PROVEN). None at all
+     * until five people agree on anything, which on day one is the case.
+     *
+     * @param  list<int>  $exclude
+     * @return Collection<int, ProductGroup>
+     */
+    private function proven(Market $market, array $exclude): Collection
+    {
+        $ids = array_values(array_diff(
+            app(CrowdPicks::class)->provenGifts($market, self::PROVEN_CANDIDATES),
+            $exclude,
+        ));
+
+        if ($ids === []) {
+            return new Collection;
+        }
+
+        shuffle($ids);
+
+        return $this->base($market, $exclude)
+            ->whereIn('id', array_slice($ids, 0, self::PROVEN))
+            ->get();
     }
 
     /**

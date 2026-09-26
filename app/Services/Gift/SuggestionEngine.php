@@ -71,9 +71,18 @@ class SuggestionEngine
      */
     private const DEMAND_POOL_SHARE = 0.16;
 
+    /**
+     * Products people shopping for someone like this picked, added to the
+     * pool when retrieval missed them: at most this many, strongest first.
+     * A proven gift whose title shares no word with the brief is still an
+     * answer, and it still passes every filter the pool applies.
+     */
+    private const CROWD_POOL = 40;
+
     public function __construct(
         private readonly AngleMap $angles,
         private readonly ChartDemand $demand,
+        private readonly CrowdPicks $crowdPicks,
     ) {}
 
     /** @return list<Suggestion> */
@@ -93,6 +102,11 @@ class SuggestionEngine
             $candidates = $this->retrieve($brief, []);
         }
 
+        // What people shopping for someone like this picked (crowd-picks.md).
+        // Nothing until five different people agree, so usually nothing yet.
+        $crowd = $this->crowdPicks->forBrief($brief);
+        $candidates = $this->withCrowdPicks($candidates, $brief, $crowd);
+
         $matches = $this->matches($brief, $queries, $candidates->pluck('id')->all());
 
         $scored = $candidates
@@ -102,6 +116,7 @@ class SuggestionEngine
                 $slots,
                 $matches[$group->id] ?? [],
                 $profile,
+                $crowd[$group->id] ?? null,
             ))
             ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
@@ -475,12 +490,37 @@ class SuggestionEngine
     }
 
     /**
+     * Add the crowd's picks that retrieval did not find.
+     *
+     * Through the same `pool()` filters as everything else, so budget, avoid,
+     * exclusions and giftability hold for them too; added, never replacing.
+     *
+     * @param  Collection<int, ProductGroup>  $pool
+     * @param  array<int, CrowdPick>  $crowd
+     * @return Collection<int, ProductGroup>
+     */
+    private function withCrowdPicks(Collection $pool, TasteBrief $brief, array $crowd): Collection
+    {
+        if ($crowd === []) {
+            return $pool;
+        }
+
+        $missing = array_slice(array_values(array_diff(array_keys($crowd), $pool->pluck('id')->all())), 0, self::CROWD_POOL);
+
+        if ($missing === []) {
+            return $pool;
+        }
+
+        return $pool->concat($this->pool($brief, [])->whereIn('id', $missing)->get())->values();
+    }
+
+    /**
      * Weighted score out of 100, with every contribution recorded.
      *
      * @param  list<array{interest: string, queries: list<string>}>  $slots
      * @param  array<int, float>  $matches  query index => strength, from {@see matches()}
      */
-    private function score(ProductGroup $group, TasteBrief $brief, array $slots, array $matches, SuggestionProfile $profile): Suggestion
+    private function score(ProductGroup $group, TasteBrief $brief, array $slots, array $matches, SuggestionProfile $profile, ?CrowdPick $crowdPick = null): Suggestion
     {
         $haystack = mb_strtolower($group->title.' '.($group->category ?? ''));
 
@@ -578,6 +618,14 @@ class SuggestionEngine
              * This is the difference SuggestionProfile exists to hold.
              */
             'demand' => $this->demand->score($brief->market, $group->id) * $profile->weight('demand', 0),
+            /*
+             * People shopping for someone like this kept it on their lists.
+             *
+             * Only ever a lift: no count is no evidence against, since most
+             * good presents are on nobody's list yet. The weight is in the
+             * profile; see docs/features/crowd-picks.md.
+             */
+            'crowd' => ($crowdPick?->strength ?? 0.0) * $profile->weight('crowd', 0),
         ];
 
         return new Suggestion(
@@ -588,6 +636,7 @@ class SuggestionEngine
             primaryInterest: $matched[0] ?? null,
             matchedInterests: array_values(array_unique($interests)),
             matchedTastes: $this->matchedTastes($haystack, $brief, $tags),
+            crowd: $crowdPick,
         );
     }
 
