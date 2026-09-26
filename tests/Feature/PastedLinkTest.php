@@ -14,7 +14,9 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\PageReading\FetchRefused;
 use App\Services\PageReading\HostResolver;
+use App\Services\PageReading\PageReader;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -114,6 +116,51 @@ class PastedLinkTest extends TestCase
         // host the owner chose (a tracking pixel).
         $this->assertMatchesRegularExpression('#^/media/items/[0-9a-f-]{36}\.webp$#', (string) $item->snapshot_image_url);
         Storage::disk('media')->assertExists(substr((string) $item->snapshot_image_url, strlen('/media/')));
+    }
+
+    #[Test]
+    public function a_page_the_shop_will_not_show_still_gives_the_name_in_its_link(): void
+    {
+        // A 404 does not pass (a 403 is retried first; the sync queue in
+        // tests does not retry): the item keeps the link, and the host as a
+        // title is replaced by the product's name from the address.
+        [$owner, $list] = $this->list();
+
+        Http::fake(['https://www.debijenkorf.be/*' => Http::response('gone', 404, ['Content-Type' => 'text/html'])]);
+
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'url' => 'https://www.debijenkorf.be/d/bialetti-moka-express-percolator-6-kops-8834090013-883409001300000',
+        ]);
+
+        $item = WishlistItem::query()->sole();
+
+        $this->assertSame('failed', $item->link_status);
+        $this->assertSame('Bialetti moka express percolator 6 kops', $item->snapshot_title);
+    }
+
+    #[Test]
+    public function a_refusal_that_may_pass_is_not_remembered(): void
+    {
+        [$owner, $list] = $this->list();
+
+        // Bot protection refuses at random: the first try is refused, the
+        // next one is let through and must actually be made.
+        Http::fake(['https://shop.example/*' => Http::sequence()
+            ->push('no', 403, ['Content-Type' => 'text/html'])
+            ->push($this->productPage(['name' => 'Linnen schort']), 200, ['Content-Type' => 'text/html'])]);
+
+        $reader = app(PageReader::class);
+
+        try {
+            $reader->read('https://shop.example/schort');
+            $this->fail('The 403 was not thrown.');
+        } catch (FetchRefused $e) {
+            $this->assertTrue(PageReader::isPassing($e));
+        }
+
+        $this->assertSame('Linnen schort', $reader->read('https://shop.example/schort')?->title);
     }
 
     #[Test]

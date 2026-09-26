@@ -51,7 +51,17 @@ class PageReader
                 (int) config('giftcoves.page_reading.max_html_bytes', 2 * 1024 * 1024),
             );
         } catch (FetchRefused $e) {
-            Cache::put($key, [], now()->addDay());
+            /*
+             * Remember a refusal only when it will not change: a private
+             * address, a file that is not a page, a 404. A 403, a 429, a 5xx
+             * or a timeout is a shop's bot protection or a bad minute, and
+             * de Bijenkorf lets about half of the same requests through
+             * (2026-09-26), so the job tries again rather than remembering
+             * "no" for a day.
+             */
+            if (! self::isPassing($e)) {
+                Cache::put($key, [], now()->addDay());
+            }
 
             throw $e;
         }
@@ -61,5 +71,21 @@ class PageReader
         Cache::put($key, $product?->toArray() ?? [], now()->addDays((int) config('giftcoves.page_reading.cache_days', 7)));
 
         return $product;
+    }
+
+    /** Is this refusal worth asking again about in a minute? */
+    public static function isPassing(FetchRefused $e): bool
+    {
+        if ($e->reason === 'unreachable' || $e->reason === 'busy') {
+            return true;
+        }
+
+        if ($e->reason !== 'status') {
+            return false;
+        }
+
+        $status = (int) substr($e->getMessage(), strlen('status: '));
+
+        return in_array($status, [403, 408, 425, 429], true) || $status >= 500;
     }
 }

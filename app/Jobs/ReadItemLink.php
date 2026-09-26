@@ -11,6 +11,7 @@ use App\Services\PageReading\FetchRefused;
 use App\Services\PageReading\LinkRouter;
 use App\Services\PageReading\PageProduct;
 use App\Services\PageReading\PageReader;
+use App\Services\PageReading\SlugTitle;
 use App\Services\Wishlist\ItemLinker;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -85,7 +86,7 @@ class ReadItemLink implements ShouldQueue
             $page = $reader->read($url);
 
             if ($page === null) {
-                $item->forceFill(['link_status' => 'failed'])->save();
+                $this->giveUp($item, $url);
 
                 return;
             }
@@ -104,25 +105,47 @@ class ReadItemLink implements ShouldQueue
 
             $linker->fill($item, $page, $market->currency());
         } catch (FetchRefused $e) {
-            if ($e->reason === 'busy') {
-                // This shop has had its share this minute. Try again shortly;
-                // the item stays pending, which is the truth.
-                $this->release(30);
+            /*
+             * Our own per-shop limit, or a shop's bot protection answering
+             * 403/429 at random: ask again in 30 s, then 60 s. The item stays
+             * pending, which is the truth. See PageReader::isPassing().
+             */
+            if (PageReader::isPassing($e) && $this->attempts() < $this->tries) {
+                $this->release(30 * $this->attempts());
 
                 return;
             }
 
             Log::info('pasted link not read', ['item' => $item->id, 'reason' => $e->getMessage()]);
-            $item->forceFill(['link_status' => 'failed'])->save();
+            $this->giveUp($item, $url);
         }
+    }
+
+    /**
+     * The page could not be read. Keep what the person typed, but a title that
+     * is still the shop's host gets the product's name from the link itself
+     * when the link carries one ("Bialetti moka express percolator 6 kops").
+     */
+    private function giveUp(WishlistItem $item, string $url): void
+    {
+        $changes = ['link_status' => 'failed'];
+
+        if (trim((string) $item->snapshot_title) === WishlistItem::placeholderTitle($item->snapshot_url)
+            && ($title = SlugTitle::fromUrl($url)) !== null) {
+            $changes['snapshot_title'] = $title;
+        }
+
+        $item->forceFill($changes)->save();
+        $item->wishlist?->touch();
     }
 
     /** After the last try: stop the list page waiting on it. */
     public function failed(?Throwable $e): void
     {
-        WishlistItem::query()
-            ->whereKey($this->itemId)
-            ->where('link_status', 'pending')
-            ->update(['link_status' => 'failed']);
+        $item = WishlistItem::query()->whereKey($this->itemId)->where('link_status', 'pending')->first();
+
+        if ($item !== null) {
+            $this->giveUp($item, (string) $item->snapshot_url);
+        }
     }
 }

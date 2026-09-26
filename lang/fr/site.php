@@ -603,6 +603,7 @@ return [
         'group_subtitle' => 'Un cadeau, choisi ensemble. Chacun vote, et ce que vous mettez reste entre vous et l’organisateur.',
         'default_title' => 'Ma liste de souhaits',
         'default_badge' => 'Par défaut',
+        'remove_item' => 'Retirer de cette liste',
         'shared_short' => 'Partagée',
         'private_short' => 'Privée',
         'tool_on' => 'activé',

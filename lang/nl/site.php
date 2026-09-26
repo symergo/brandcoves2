@@ -606,6 +606,7 @@ return [
         'group_subtitle' => 'Eén cadeau, samen gekozen. Iedereen stemt, en wat je bijdraagt blijft tussen jou en de organisator.',
         'default_title' => 'Mijn wenslijst',
         'default_badge' => 'Standaard',
+        'remove_item' => 'Van deze lijst halen',
         'shared_short' => 'Gedeeld',
         'private_short' => 'Privé',
         'tool_on' => 'aan',

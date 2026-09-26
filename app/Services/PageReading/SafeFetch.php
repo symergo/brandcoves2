@@ -64,10 +64,20 @@ class SafeFetch
                     },
                 ])
                     ->withHeaders([
-                        // Says who we are. A shop that wants to know why we
-                        // came can find us; one that blocks us is answered by
-                        // the item staying as it was typed.
-                        'User-Agent' => 'GiftCovesBot/1.0 (+'.rtrim((string) config('app.url'), '/').')',
+                        /*
+                         * Says who we are, in the form every well-behaved
+                         * crawler uses ("Mozilla/5.0 (compatible; Name/1.0;
+                         * +url)", as Googlebot and Bingbot do). The bare
+                         * "GiftCovesBot/1.0 (+url)" was refused outright by
+                         * shops' bot protection (de Bijenkorf and Coolblue
+                         * answered 403, 2026-09-26) while this same honest
+                         * name in the conventional form was let in. We never
+                         * pretend to be a browser: that is blocked anyway, and
+                         * it would be a lie. A shop that still refuses us is
+                         * answered by the item staying as it was typed.
+                         */
+                        'User-Agent' => 'Mozilla/5.0 (compatible; GiftCovesBot/1.0; +'.rtrim((string) config('app.url'), '/').')',
+                        'Accept-Language' => 'nl-BE,nl;q=0.9,fr;q=0.8,en;q=0.7',
                         'Accept' => implode(', ', $contentTypes),
                     ])
                     ->timeout((int) config('giftcoves.page_reading.timeout', 5))

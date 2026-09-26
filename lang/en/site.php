@@ -735,6 +735,7 @@ return [
         'group_subtitle' => 'One gift, chosen together. Everyone votes, and what each of you puts in stays between you and the organiser.',
         'default_title' => 'My wishlist',
         'default_badge' => 'Default',
+        'remove_item' => 'Remove from this list',
         'shared_short' => 'Shared',
         'private_short' => 'Private',
         'tool_on' => 'on',

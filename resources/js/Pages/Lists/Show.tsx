@@ -11,6 +11,7 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
+import ToolIcon from '../../Components/ToolIcon'
 import ShareMenu from '../../Components/ShareMenu'
 import { useTranslations } from '../../useTranslations'
 
@@ -601,6 +602,36 @@ export default function ListShow({
                                                         className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-ink hover:text-accent lg:h-9 lg:w-9"
                                                     >
                                                         ✎
+                                                    </button>
+                                                )}
+
+                                                {/*
+                                                  Remove, for a hand-written item.
+
+                                                  A catalogue item is removed from
+                                                  its bookmark's menu (SaveToList),
+                                                  which is why the ✕ went on
+                                                  2026-09-12. A hand-written one,
+                                                  and every pasted link is one, has
+                                                  the copy menu instead, which does
+                                                  not remove: from that day it could
+                                                  not be deleted at all (owner's
+                                                  report, 2026-09-26). The owner
+                                                  only, as `destroy()` checks.
+                                                */}
+                                                {access.isOwner && item.manual && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            router.delete(`${base}/list-items/${item.id}`, {
+                                                                preserveScroll: true,
+                                                            })
+                                                        }
+                                                        aria-label={t('lists.remove_item')}
+                                                        title={t('lists.remove_item')}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-danger hover:text-danger lg:h-9 lg:w-9"
+                                                    >
+                                                        <ToolIcon name="trash" className="h-4 w-4" />
                                                     </button>
                                                 )}
 

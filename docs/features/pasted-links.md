@@ -68,8 +68,25 @@ the one before:
 - 5 s, 2 MB for a page, 8 MB for a picture; HTML only for a page, JPEG/PNG/WebP/GIF for a picture.
 - 20 requests per shop per minute across everyone; one read is cached for 7 days (a refusal for one
   day), so a popular link costs the shop one request a week.
-- A `GiftCovesBot/1.0` User-Agent with our address. A shop that blocks it (coolblue.nl answers 403)
-  simply leaves the item as typed.
+- We say who we are, in the form every well-behaved crawler uses: `Mozilla/5.0 (compatible;
+  GiftCovesBot/1.0; +https://giftcoves.com)`. The bare `GiftCovesBot/1.0 (+url)` was refused
+  outright by big shops' bot protection; the same name in the conventional form gets through at
+  least some of the time. We never pretend to be a browser: that is blocked anyway, and it would be
+  a lie.
+
+### When a shop refuses (2026-09-26)
+
+De Bijenkorf's bot protection refuses about half of all requests at random (measured: the same
+request answered 403, 200, 403, 200), and Coolblue refuses too. So:
+
+- A refusal that may pass (403, 408, 425, 429, 5xx, a timeout) is **not remembered**, and the job
+  tries again after 30 s and then 60 s (three tries in all). A refusal that will not change (404,
+  a private address, a file that is not a page) is remembered for a day, as before.
+- If every try is refused, the item keeps what the person typed. If its title is still the shop's
+  host, it gets the product's name **from the link itself** (`SlugTitle`):
+  `…/bialetti-moka-express-percolator-6-kops-8834090013-…` becomes "Bialetti moka express
+  percolator 6 kops". Codes and ids are dropped; a link that carries no words gives nothing. The
+  picture and the price are only on the page, so they stay empty.
 
 `ProductPageParser` reads JSON-LD `Product` first (what shops publish for Google), then Open Graph,
 then `<title>`. No AI, and no guessing a price out of prose. Prices go to cents without float

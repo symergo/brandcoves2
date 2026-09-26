@@ -602,6 +602,7 @@ return [
         'group_subtitle' => 'Un regalo, elegido entre todos. Cada uno vota, y lo que pones queda entre tú y quien lo organiza.',
         'default_title' => 'Mi lista de deseos',
         'default_badge' => 'Predeterminada',
+        'remove_item' => 'Quitar de esta lista',
         'shared_short' => 'Compartida',
         'private_short' => 'Privada',
         'tool_on' => 'activado',
