@@ -345,12 +345,26 @@ class SuggestionEngine
          * because the exclusion has to catch the word wherever it sits,
          * including inside a Dutch compound.
          */
-        foreach ($brief->avoid as $avoid) {
+        foreach ($brief->avoidWords() as $avoid) {
             $avoid = trim($avoid);
 
             if ($avoid !== '') {
                 $groups->where('title', 'not ilike', '%'.$this->escapeLike($avoid).'%');
             }
+        }
+
+        /*
+         * A whole interest to leave out ("not gaming", learned by taste
+         * discovery), excluded by the tag and never by the title: see
+         * TasteBrief::avoidedInterests(). The crowd's tags count as well as
+         * the editors', since a product five people saved for gaming is a
+         * gaming product to somebody who does not want one.
+         */
+        $avoidedTags = array_map(fn (string $i) => GiftTags::interest($i), $brief->avoidedInterests());
+
+        if ($avoidedTags !== []) {
+            $groups->whereRaw('not jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$this->pgTextArray($avoidedTags)])
+                ->whereRaw('not jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$this->pgTextArray($avoidedTags)]);
         }
 
         if ($queries !== []) {
