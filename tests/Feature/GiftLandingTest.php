@@ -93,7 +93,10 @@ class GiftLandingTest extends TestCase
             ->component('GiftIdeas/Landing')
             ->where('heading', 'Cadeau-ideeën voor papa die van koken houdt')
             ->where('seoTitle', fn (string $title) => $title === 'Cadeau-ideeën voor papa die van koken houdt' && mb_strlen($title) <= 48)
-            ->where('products', fn ($products) => count($products) >= 8)
+            // `picks` since the page draws the Find-a-gift results' cards (2026-09-26).
+            ->where('picks', fn ($picks) => count($picks) >= 8)
+            ->where('askUrl', '/be-nl/ask')
+            ->where('pageUrl', null)
             ->where('isRecipientPage', false));
 
         // The recipient's own page links on to this one.
@@ -139,8 +142,8 @@ class GiftLandingTest extends TestCase
 
         $response->assertInertia(fn ($page) => $page
             ->where('budget.current', '50-100')
-            ->where('products', fn ($products) => count($products) === 2
-                && collect($products)->every(fn ($p) => $p['minPrice'] >= 5000 && $p['minPrice'] <= 10000)));
+            ->where('picks', fn ($picks) => count($picks) === 2
+                && collect($picks)->every(fn ($p) => $p['price'] >= 5000 && $p['price'] <= 10000)));
 
         $response->assertSee('<link rel="canonical" href="'.url('/be-nl/gift-ideas/for/papa/koken').'"', escape: false);
     }

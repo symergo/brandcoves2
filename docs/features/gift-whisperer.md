@@ -439,3 +439,14 @@ a phone; only on the questions, since the results need the full width.
 The owner's rule with it: **when there is nothing for a right column, the content takes the full
 width.** A market with no persona gets no second column, and the questions are no longer capped at
 `max-w-2xl`.
+
+## The questions of "Find a gift" (2026-09-26, later the same day)
+
+The wizard is now one of three ways in [find-a-gift.md](find-a-gift.md). "Who is it for?" left the
+questions and became the flow's first step, with kinds of person beside the saved people; the
+persona column became the third way, "Start from a type"; the This-or-that banner became the second
+way. The questions are five steps for everybody. The results are drawn by the shared
+`GiftResults` component and built by `App\Services\Gift\GiftResults` (the cards, "Open as a page",
+the ideas without a shop, Coves others made, the next steps, the person's list), and end on
+"Ask other people". The page and its tests keep their props' names; only `askUrl` is new.
+The name changed with it: Cadeau vinden / Find a gift.

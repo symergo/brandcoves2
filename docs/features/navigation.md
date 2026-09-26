@@ -18,6 +18,10 @@ grouped under what it is (`Layouts/SiteLayout.tsx`, `sections` and `nav`):
 On the right, **My Coves** (`/lists`), the same words in all four languages by the owner's
 decision, and the `/lists` page's own heading since the same day.
 
+Later the same day the `/gift` entry was renamed with its page: **Cadeau vinden** / Find a gift /
+Trouver un cadeau / Encontrar un regalo (`nav.gift`, `gift.title`), when the page became one flow
+with three ways in ([find-a-gift.md](find-a-gift.md)). Only the label changed here.
+
 ### Two rules, from a review the same afternoon
 
 The first version of this header (Discover | Coves | Gifts | How it works) broke the rule this doc

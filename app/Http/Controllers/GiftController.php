@@ -5,28 +5,23 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Interest;
-use App\Enums\ListKind;
 use App\Enums\Preference;
+use App\Enums\RecipientType;
 use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use App\Models\DailyPickSet;
 use App\Models\Event;
 use App\Models\Recipient;
-use App\Models\Wishlist;
-use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftHistory;
-use App\Services\Gift\GiftLandingLinks;
+use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
-use App\Services\Gift\NextSteps;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use App\Services\Guides\CoveMarkup;
-use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Seo\PageMeta;
-use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -43,6 +38,12 @@ use Inertia\Response;
  * POST, because a brief is a description of a real person and does not belong
  * in a URL that ends up in a referrer header or a browser history someone else
  * can read.
+ *
+ * Since 2026-09-26 `/gift` is "Find a gift", one flow with three ways in:
+ * "Who is it for?" first, then the questions below, This or that
+ * (TasteController) or a persona Cove. The questions and This or that end on
+ * the same results, built by App\Services\Gift\GiftResults and drawn by
+ * resources/js/Components/GiftResults.tsx. See docs/features/find-a-gift.md.
  *
  * No AI runs here — none can. The interest map was widened overnight and
  * giftability was classified after the last ingest; this endpoint is retrieval
@@ -82,24 +83,31 @@ class GiftController extends Controller
 
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
-            'recipients' => $this->recipients($request),
+            'recipients' => $this->recipients($request, $current),
             'picks' => null,
             'brief' => null,
             'recipientList' => null,
             'personas' => $this->personaShelf($current),
+            'tasteUrl' => $current->url('gift/taste'),
         ]);
     }
 
     /**
-     * The persona Coves, in the column beside the questions (owner, 2026-09-26).
+     * The persona Coves: the third way in, "Start from a type".
      *
-     * The questions filled half the page and the other half was empty. A
-     * visitor who recognises "the home cook" or "the one who has everything"
-     * on sight is one click from a finished shelf rather than six questions
-     * away from one. Same query and order as the /gift-ideas shelf and the
-     * Discover page's band; a new market with none shows no column.
+     * First added as a column beside the questions (owner, 2026-09-26),
+     * because a visitor who recognises "the home cook" or "the one who has
+     * everything" on sight is one click from a finished shelf rather than six
+     * questions away from one. Since "Find a gift" became one flow the same
+     * shelf is one of its three ways, after "Who is it for?".
      *
-     * @return list<array{title: string, intro: string, url: string, scene: string|null}>
+     * Each carries the relationship its plan was written for, when it has
+     * one, so the page can put the Coves for the person just chosen first
+     * without asking again. A persona for anyone (no relationship) stays in
+     * the list for everybody. Twelve, newest first: enough for a
+     * relationship to find its own among them, while the page shows four.
+     *
+     * @return list<array{title: string, intro: string, url: string, scene: string|null, relationship: string|null}>
      */
     private function personaShelf(CurrentMarket $current): array
     {
@@ -107,14 +115,16 @@ class GiftController extends Controller
             ->forMarket($current->get())
             ->personas()
             ->published()
+            ->with('plan:id,edition_id,brief')
             ->orderByDesc('published_at')
-            ->limit(6)
+            ->limit(12)
             ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene'])
             ->map(fn (DailyPickSet $persona): array => [
                 'title' => (string) $persona->theme_title,
                 'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
                 'url' => $current->url($persona->kind->path((string) $persona->slug, $current->get())),
                 'scene' => $persona->scene?->value,
+                'relationship' => RecipientType::tryFrom((string) ($persona->plan?->brief['relationship'] ?? ''))?->value,
             ])
             ->values()
             ->all();
@@ -265,42 +275,27 @@ class GiftController extends Controller
      */
     private function board(Request $request, CurrentMarket $current, array $picks, array $validated, ?Recipient $recipient, TasteBrief $brief): Response
     {
+        $results = app(GiftResults::class);
+
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
-            'recipients' => $this->recipients($request),
-            'picks' => $this->present($picks, $current),
+            'recipients' => $this->recipients($request, $current),
+            'picks' => $results->cards($picks, $current),
             'brief' => $validated,
-            'recipientList' => $this->recipientList($request, $recipient, $current),
+            'recipientList' => $results->recipientList(Owner::fromRequest($request), $recipient, $current),
             /*
-             * "Open as a page": the gift landing page nearest this brief, a
-             * GET address that can be kept, shared and found again, which
-             * these POSTed results cannot. Null when no such page exists.
-             * See docs/features/gift-landing-pages.md.
+             * Everything under the cards, the same on every way into ideas:
+             * "Open as a page", the ideas without a shop, Coves others made,
+             * the next step for a saved person, and "Ask others". See
+             * App\Services\Gift\GiftResults and docs/features/find-a-gift.md.
              */
-            'pageUrl' => $picks === [] ? null : app(GiftLandingLinks::class)->pageFor($brief),
-            // Ideas nobody sells here, from what other people typed onto their
-            // lists and a person approved. Id and wording only.
-            // See docs/features/offline-ideas.md.
-            'offlineIdeas' => app(OfflineIdeaPicker::class)->forBrief($brief),
-            /*
-             * "Coves others made for someone like this": lists other people
-             * published for the same kind of person or the same interests.
-             * See docs/features/community-coves.md.
-             */
-            'communityCoves' => app(CommunityCoves::class)->forBrief($brief, $request->user()),
-            /*
-             * "The next step" after what this person was given, and the way to
-             * their gift history. Only with a saved person; the history page
-             * is behind a sign-in. See docs/features/gift-history.md.
-             */
-            'nextSteps' => $recipient === null ? [] : app(NextSteps::class)->cards(
+            ...$results->extras(
+                $brief,
+                $current,
+                $request->user(),
                 $recipient,
-                $current->get(),
-                alsoExclude: array_map(fn (Suggestion $pick) => $pick->group->id, $picks),
+                array_map(fn (Suggestion $pick) => $pick->group->id, $picks),
             ),
-            'personUrl' => $recipient !== null && $request->user() !== null
-                ? $current->url("people/{$recipient->id}")
-                : null,
         ]);
     }
 
@@ -357,59 +352,6 @@ class GiftController extends Controller
             'values' => $validated['values'] ?? null,
             'avoid' => $validated['avoid'] ?? null,
         ], fn ($v) => $v !== null), TasteSource::Suggested);
-    }
-
-    /**
-     * The list a pick should land on: the chosen person's, made if missing.
-     *
-     * The How-it-works page promises "save the good ones straight onto a list
-     * for that person", and until 2026-09-13 the Save button landed wherever
-     * the last save went. Only a `for_someone` list qualifies — a group list
-     * is a shortlist other people are paying into, not somewhere to file
-     * research.
-     *
-     * ## Resolved here, not lazily from the Save button
-     *
-     * `SaveToList` can create a list on the first save, but it then reloads
-     * the shared `lists` prop with a partial GET of the current page — which
-     * on this page is `/gift` after a suggest (and `show()` flushes the
-     * rejection memory on the way in) or `/gift/swap` after a swap (a 405).
-     * Making the list once, here, keeps the Save button on the path that
-     * already works, and two quick saves cannot race to create it twice.
-     * `RecipientProfileController::theirList()` does the same for a person's
-     * own list. Signed-in owners only: an anonymous visitor cannot save at
-     * all, so a list they could never use would be noise in the picker.
-     *
-     * @return array{id: string, title: string}|null
-     */
-    private function recipientList(Request $request, ?Recipient $recipient, CurrentMarket $current): ?array
-    {
-        if ($recipient === null) {
-            return null;
-        }
-
-        $owner = Owner::fromRequest($request);
-
-        $list = $owner->scope(Wishlist::query())
-            ->where('recipient_id', $recipient->id)
-            ->where('kind', ListKind::ForSomeone->value)
-            ->latest('created_at')
-            ->first();
-
-        if ($list === null) {
-            if (! $owner->isSignedIn()) {
-                return null;
-            }
-
-            $list = app(ListMaker::class)->make(
-                $owner,
-                $current,
-                __('site.lists.for_person', ['name' => $recipient->name]),
-                recipientId: $recipient->id,
-            );
-        }
-
-        return ['id' => $list->id, 'title' => $list->displayTitle()];
     }
 
     /** @return array<string, mixed> */
@@ -550,36 +492,6 @@ class GiftController extends Controller
         ], fn ($v) => $v !== null);
     }
 
-    /**
-     * @param  list<Suggestion>  $picks
-     * @return list<array<string, mixed>>
-     */
-    private function present(array $picks, CurrentMarket $current): array
-    {
-        return array_map(fn (Suggestion $pick) => [
-            'id' => $pick->group->id,
-            'title' => $pick->group->displayTitle(),
-            'brand' => $pick->group->brand,
-            'image' => $pick->group->image_url,
-            'price' => $pick->group->min_price,
-            'merchantCount' => $pick->group->merchant_count,
-            'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
-            /*
-             * What it has in common with the brief, not a sentence about it.
-             *
-             * The card used to carry the strongest signal as prose, "matches
-             * cooking", and the owner cut the wording (2026-09-14): saying
-             * that it fits adds nothing a shopper cannot see. The values go
-             * out raw and the page labels them, so an interest the person
-             * typed themselves still shows in their own words.
-             */
-            'fits' => $pick->fits(),
-            // "Chosen by others for someone like them": five or more different
-            // people's lists, never fewer (docs/features/crowd-picks.md).
-            'chosenByOthers' => $pick->chosenByOthers(),
-        ], $picks);
-    }
-
     /** @return array<string, mixed> */
     public function options(): array
     {
@@ -613,6 +525,16 @@ class GiftController extends Controller
                 'value' => $band,
                 'label' => __('site.gift.age_band', ['band' => $band]),
             ], GiftTags::AGE_BANDS),
+            /*
+             * "Who is it for?" without a saved person: the closed vocabulary
+             * an editor tags products with (RecipientType), so the answer
+             * meets `recipient:` tags, the gift landing pages and the persona
+             * Coves as one value rather than as free text to be read.
+             */
+            'relationships' => array_map(fn (RecipientType $type) => [
+                'value' => $type->value,
+                'label' => __("site.gift.relationships.{$type->value}"),
+            ], RecipientType::cases()),
         ];
     }
 
@@ -624,8 +546,10 @@ class GiftController extends Controller
      *
      * @return list<array<string, mixed>>
      */
-    private function recipients(Request $request): array
+    private function recipients(Request $request, CurrentMarket $current): array
     {
+        $results = app(GiftResults::class);
+
         return Owner::fromRequest($request)
             ->scope(Recipient::query())
             ->orderBy('name')
@@ -634,6 +558,9 @@ class GiftController extends Controller
                 'id' => $r->id,
                 'name' => $r->name,
                 'relationship' => $r->relationship,
+                // "mama" as `mother`, so the persona Coves for her can come
+                // first without asking who she is again.
+                'relationshipType' => $results->relationshipType($r->relationship, $current->get())?->value,
                 'interests' => (array) $r->interests,
                 'vibe' => $r->vibe,
                 'preferences' => (array) $r->preferences,

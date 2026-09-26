@@ -285,3 +285,12 @@ three candidates outright: `baking` returned nothing at all in `en` (`stand mixe
 `oven`, `book`, `lamp`, `notebook` — where the specific ones (`cutting board`, `bookends`,
 `ereader case`) returned zero. Writing a persona a market cannot fill is writing a page that will
 never clear `CoveKind::minimumItems()` and so will never publish, and nothing would have said so.
+
+## "Start from a type" in Find a gift (2026-09-26)
+
+The personas are the third of the three ways in [find-a-gift.md](find-a-gift.md). `/gift` sends the
+twelve newest with the relationship their plan's brief names (`cove_plans.brief.relationship`, when
+it has one), and the page shows four: those for the kind of person chosen in "Who is it for?" first,
+then those for anybody, then the rest. Nothing is filtered out. A persona planned without a
+relationship ranks as "for anybody"; giving a persona's brief a relationship over the editorial API
+is what moves it up for that kind of person.

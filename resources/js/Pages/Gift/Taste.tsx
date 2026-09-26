@@ -1,13 +1,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import Button, { buttonClasses } from '../../Components/Button'
-import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
-import SaveToList from '../../Components/SaveToList'
+import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
-import { formatPrice, type Cents, type SharedProps } from '../../types'
+import { formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Card {
@@ -42,28 +41,22 @@ interface Profile {
     answered: number
 }
 
-interface Pick {
-    id: number
-    title: string
-    brand: string | null
-    image: string | null
-    price: Cents | null
-    url: string
-    fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
-    /** On the lists of at least five people shopping for someone like this (crowd-picks.md). */
-    chosenByOthers?: boolean
-}
-
-interface Result {
+interface Result extends GiftResultsExtras {
     profile: Profile
     thin: boolean
-    picks: Pick[]
+    picks: GiftPick[]
     choices: Choice[]
     for: 'someone' | 'me'
-    /** Approved ideas nobody sells here, matching the taste. Empty on the person's own page. */
-    offlineIdeas?: OfflineIdea[]
     /** Played through a "help me find out" link: whether this run was kept with the others. */
     recorded?: boolean
+    /** The chosen person's list, where a save lands (a giver with a saved person only). */
+    into?: SavingTo | null
+    /**
+     * What was learned, as the answers the questions post: "Refine with the
+     * questions" opens the same board with Adjust and Eight more beside it.
+     * A giver's result only.
+     */
+    refine?: Record<string, unknown>
 }
 
 interface Props {
@@ -83,6 +76,12 @@ interface Props {
     canCreate: boolean
     /** A "help me find out" link that already has as many players as it takes. */
     full?: boolean
+    /**
+     * Who "Find a gift" already said this is for: one of your people, or a
+     * kind of person. Either one skips "for someone or for yourself?".
+     * A giver's page only.
+     */
+    carried?: { person: { id: string; name: string } | null; relationship: string | null }
 }
 
 /** Rounds answered (not skipped) before "Show the result" is offered. */
@@ -129,6 +128,7 @@ export default function Taste(props: Props) {
                 {props.mode === 'together' && !props.result && (
                     <p className="mt-2 text-sm text-ink-soft">{t('gift.together.privacy')}</p>
                 )}
+                <CarriedLine carried={props.carried} finder={props.urls.finder} />
             </header>
 
             {props.result ? (
@@ -144,18 +144,46 @@ export default function Taste(props: Props) {
     )
 }
 
-function Play({ mode, urls, total, rounds }: Props) {
+/**
+ * "For Mum · change": who "Find a gift" said this is for, and the way back
+ * to its first question. Nothing when nobody was said.
+ */
+function CarriedLine({ carried, finder }: { carried?: Props['carried']; finder: string }) {
+    const { t } = useTranslations()
+
+    const who = carried?.person?.name ?? (carried?.relationship ? t(`gift.relationships.${carried.relationship}`) : null)
+
+    if (!who) {
+        return null
+    }
+
+    return (
+        <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">{t('gift.for_label', { who })}</span>
+            <Link href={finder} className="text-accent underline">
+                {t('gift.change')}
+            </Link>
+        </p>
+    )
+}
+
+function Play({ mode, urls, total, rounds, carried }: Props) {
     const { t } = useTranslations()
     const page = usePage<SharedProps>()
     const { market } = page.props
-    // `?person=<id>`: choosing for one of your saved people, from their page.
-    // The server leaves out what they were already given (gift-history.md).
-    const person = new URLSearchParams(page.url.split('?')[1] ?? '').get('person')
+    /*
+     * Choosing for one of your saved people: from "Find a gift" or from their
+     * page (`?person=<id>`, which the server checked is yours and sent back
+     * as `carried`). The server leaves out what they were already given
+     * (gift-history.md). A kind of person travels as its value.
+     */
+    const person = carried?.person?.id ?? null
+    const relationship = carried?.relationship ?? null
 
     // The person themselves is always "you", a player on a shared link always
-    // "they"; a giver says who first.
+    // "they"; a giver says who first, unless "Find a gift" already asked.
     const [forWhom, setForWhom] = useState<'someone' | 'me' | null>(
-        mode === 'self' ? 'me' : mode === 'together' ? 'someone' : null,
+        mode === 'self' ? 'me' : mode === 'together' || person || relationship ? 'someone' : null,
     )
     const [queue, setQueue] = useState<Round[]>(rounds)
     const [index, setIndex] = useState(0)
@@ -176,11 +204,16 @@ function Play({ mode, urls, total, rounds }: Props) {
             setFinishing(true)
             router.post(
                 urls.result,
-                { choices: all, for: forWhom ?? 'someone', ...(person ? { recipient_id: person } : {}) },
+                {
+                    choices: all,
+                    for: forWhom ?? 'someone',
+                    ...(person ? { recipient_id: person } : {}),
+                    ...(relationship && !person ? { relationship } : {}),
+                },
                 { onFinish: () => setFinishing(false) },
             )
         },
-        [urls.result, forWhom, person],
+        [urls.result, forWhom, person, relationship],
     )
 
     /*
@@ -534,7 +567,7 @@ function joinList(items: string[], and: string): string {
     return `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`
 }
 
-function Outcome({ mode, person, urls, result, recipients, canCreate }: Props & { result: Result }) {
+function Outcome({ mode, person, urls, result, recipients, canCreate, carried }: Props & { result: Result }) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const { profile, picks } = result
@@ -586,103 +619,119 @@ function Outcome({ mode, person, urls, result, recipients, canCreate }: Props & 
 
     const learnedNothing = profile.interests.length === 0 && budget === null && profile.avoid.length === 0
 
+    /*
+     * "Choose again" keeps who it is for, so a second round is about the
+     * same person without going back through "Find a gift".
+     */
+    const restart = (() => {
+        if (mode !== 'giver') {
+            return urls.restart
+        }
+
+        if (carried?.person) {
+            return `${urls.restart}?person=${encodeURIComponent(carried.person.id)}`
+        }
+
+        return carried?.relationship ? `${urls.restart}?relationship=${encodeURIComponent(carried.relationship)}` : urls.restart
+    })()
+
+    /*
+     * The same results page the questions end on (GiftResults), with what
+     * was learned on top and the ways to keep it. On the person's own page
+     * and on a shared "help me find out" link, only the ideas: the person is
+     * describing themselves there, and a player is not shopping.
+     */
+    const giver = mode === 'giver'
+
     return (
-        <section className="mt-8">
-            <h2 className="text-lg font-medium">{t('gift.taste.result_title')}</h2>
+        <GiftResults
+            picks={picks}
+            heading={t('gift.taste.ideas_title')}
+            note={me && giver ? <p className="mt-1 text-sm text-ink-soft">{t('gift.taste.me_hint')}</p> : undefined}
+            emptyText={t('gift.taste.no_ideas')}
+            forMe={me}
+            canSave={giver}
+            into={giver ? (result.into ?? null) : null}
+            personName={giver ? (carried?.person?.name ?? null) : null}
+            pageUrl={giver ? result.pageUrl : null}
+            offlineIdeas={giver ? result.offlineIdeas : []}
+            communityCoves={giver ? result.communityCoves : []}
+            nextSteps={giver ? result.nextSteps : []}
+            personUrl={giver ? result.personUrl : null}
+            askUrl={giver ? result.askUrl : null}
+            top={
+                <>
+                    <h2 className="text-lg font-medium">{t('gift.taste.result_title')}</h2>
 
-            <div className="mt-3 max-w-2xl rounded-card bg-accent/5 p-5 sm:p-6">
-                {learnedNothing ? (
-                    <p className="text-ink-soft">{t('gift.taste.nothing')}</p>
-                ) : (
-                    <ul className="space-y-1.5 text-lg">
-                        {lines.map((line) => (
-                            <li key={line}>{line}</li>
-                        ))}
-                    </ul>
-                )}
-                {result.thin && !learnedNothing && <p className="mt-3 text-sm text-ink-soft">{t('gift.taste.thin')}</p>}
-            </div>
+                    <div className="mt-3 max-w-2xl rounded-card bg-accent/5 p-5 sm:p-6">
+                        {learnedNothing ? (
+                            <p className="text-ink-soft">{t('gift.taste.nothing')}</p>
+                        ) : (
+                            <ul className="space-y-1.5 text-lg">
+                                {lines.map((line) => (
+                                    <li key={line}>{line}</li>
+                                ))}
+                            </ul>
+                        )}
+                        {result.thin && !learnedNothing && <p className="mt-3 text-sm text-ink-soft">{t('gift.taste.thin')}</p>}
+                    </div>
 
-            {mode === 'together' && (
-                <p role="status" className="mt-5 max-w-2xl rounded-card border border-sage/40 bg-sage/10 p-4 text-sm">
-                    {t(result.recorded ? 'gift.together.recorded' : 'gift.together.not_recorded', {
-                        name: person?.name ?? '',
-                    })}
-                </p>
-            )}
+                    {mode === 'together' && (
+                        <p role="status" className="mt-5 max-w-2xl rounded-card border border-sage/40 bg-sage/10 p-4 text-sm">
+                            {t(result.recorded ? 'gift.together.recorded' : 'gift.together.not_recorded', {
+                                name: person?.name ?? '',
+                            })}
+                        </p>
+                    )}
 
-            {mode === 'self' && !learnedNothing && <SelfSave urls={urls} choices={result.choices} name={person?.name ?? ''} />}
+                    {mode === 'self' && !learnedNothing && <SelfSave urls={urls} choices={result.choices} name={person?.name ?? ''} />}
 
-            {/*
-              "My gift profile" (docs/features/gift-profile-card.md): only about
-              yourself, only on request, and only when there is something to
-              put on it.
-            */}
-            {me && mode !== 'together' && !learnedNothing && urls.card && (
-                <MakeCard url={urls.card} choices={result.choices} />
-            )}
+                    {/*
+                      "My gift profile" (docs/features/gift-profile-card.md): only
+                      about yourself, only on request, and only when there is
+                      something to put on it.
+                    */}
+                    {me && mode !== 'together' && !learnedNothing && urls.card && (
+                        <MakeCard url={urls.card} choices={result.choices} />
+                    )}
 
-            {mode === 'giver' && !me && !learnedNothing && (
-                <KeepOnPerson urls={urls} choices={result.choices} recipients={recipients} canCreate={canCreate} />
-            )}
-
-            <h2 className="mt-10 text-sm font-medium text-ink-soft">{t('gift.taste.ideas_title')}</h2>
-            {me && mode === 'giver' && <p className="mt-1 text-sm text-ink-soft">{t('gift.taste.me_hint')}</p>}
-
-            {picks.length === 0 ? (
-                <p className="mt-4 text-ink-soft">{t('gift.taste.no_ideas')}</p>
-            ) : (
-                <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {picks.map((pick) => (
-                        <li key={pick.id} className="flex flex-col rounded-card border border-line bg-card p-4">
-                            <Link href={pick.url}>
-                                {pick.image && (
-                                    <img src={pick.image} alt="" className="mx-auto h-36 object-contain" loading="lazy" />
-                                )}
-                                <h3 className="mt-3 line-clamp-2 font-medium">{pick.title}</h3>
-                            </Link>
-                            {pick.fits.length > 0 && (
-                                <ul className="mt-2 flex flex-wrap gap-1.5">
-                                    {pick.fits.map((fit) => (
-                                        <li
-                                            key={`${fit.kind}:${fit.value}`}
-                                            className="rounded-full bg-sage/10 px-2 py-0.5 text-xs text-sage"
-                                        >
-                                            {fit.kind === 'interest'
-                                                ? interest(fit.value)
-                                                : t(`gift.${fit.kind === 'vibe' ? 'vibes' : fit.kind}.${fit.value}`)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                            {pick.chosenByOthers && (
-                                <p className="mt-2 text-xs text-ink-soft">
-                                    {t(me ? 'gift.chosen_by_others_me' : 'gift.chosen_by_others')}
-                                </p>
-                            )}
-                            <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                                <span className="font-semibold">
-                                    {pick.price === null ? '' : formatPrice(pick.price, market)}
-                                </span>
-                                {/* On their own page the person keeps things on their own list, from there. */}
-                                {mode === 'giver' && <SaveToList groupId={pick.id} />}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            {mode === 'giver' && <OfflineIdeas ideas={result.offlineIdeas ?? []} />}
-
-            <div className="mt-8 flex flex-wrap gap-3">
-                <a href={urls.restart} className={buttonClasses('secondary')}>
-                    {t('gift.taste.again')}
-                </a>
-                <Link href={urls.finder} className={buttonClasses('secondary')}>
-                    {t(mode === 'self' ? 'gift.taste.self_back' : 'gift.taste.open_finder')}
-                </Link>
-            </div>
-        </section>
+                    {giver && !me && !learnedNothing && (
+                        <KeepOnPerson
+                            urls={urls}
+                            choices={result.choices}
+                            recipients={recipients}
+                            canCreate={canCreate}
+                            first={carried?.person?.id ?? null}
+                        />
+                    )}
+                </>
+            }
+            actions={
+                <>
+                    <a href={restart} className={buttonClasses('secondary')}>
+                        {t('gift.taste.again')}
+                    </a>
+                    {giver && !me && result.refine ? (
+                        /*
+                          Refine with the questions: the learned answers,
+                          POSTed to the questions, open the same board with
+                          Adjust, Eight more and "Something else" beside it.
+                        */
+                        <button
+                            type="button"
+                            className={buttonClasses('secondary')}
+                            onClick={() => router.post(urls.finder, result.refine as Record<string, string>)}
+                        >
+                            {t('gift.refine')}
+                        </button>
+                    ) : (
+                        <Link href={urls.finder} className={buttonClasses('secondary')}>
+                            {t(mode === 'self' ? 'gift.taste.self_back' : 'gift.taste.open_finder')}
+                        </Link>
+                    )}
+                </>
+            }
+        />
     )
 }
 
@@ -698,11 +747,14 @@ function KeepOnPerson({
     choices,
     recipients,
     canCreate,
+    first = null,
 }: {
     urls: Props['urls']
     choices: Choice[]
     recipients: Props['recipients']
     canCreate: boolean
+    /** The person "Find a gift" said this is for: offered first. */
+    first?: string | null
 }) {
     const { t } = useTranslations()
     const [name, setName] = useState('')
@@ -736,7 +788,7 @@ function KeepOnPerson({
 
             {recipients.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                    {recipients.map((r) => (
+                    {[...recipients].sort((a, b) => Number(b.id === first) - Number(a.id === first)).map((r) => (
                         <Button
                             key={r.id}
                             variant="secondary"

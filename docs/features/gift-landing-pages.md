@@ -113,6 +113,16 @@ runs once per page per day, not once per visitor.
   alternate to a missing page makes a search engine discard the whole cluster.
 - **Breadcrumbs** in JSON-LD: GiftCoves › Gift ideas › (the person's page) › this page.
 
+## Drawn as the Find-a-gift results (2026-09-26)
+
+A landing page draws its products with the shared results component
+([find-a-gift.md](find-a-gift.md)): the gift cards with what each fits and "chosen by others", then
+the ideas without a shop, Coves others made and *Ask other people*. The prop is `picks` (was
+`products`). The cache holds the engine's verdict per product (`bc:gift-landing:v2:*`: id, fits,
+chosen by others) rather than ids alone, so the page still runs the engine once a day per budget;
+the products themselves are loaded fresh, and one gone since drops out. The ideas and the Coves are
+read per request: both are one small query, and the Coves leave out the viewer's own.
+
 ## The Gift Finder's "Open as a page"
 
 The Finder's results are a POST: nobody can bookmark, share or find them again. Under the results

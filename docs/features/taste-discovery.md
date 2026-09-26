@@ -186,6 +186,23 @@ person likes. It shows only before anything is answered; once somebody is into t
 would distract. The small link on the interests step stays, and is hidden when the banner already
 shows on the same screen (signed out, the interests step is the first).
 
+Superseded later that day by [find-a-gift.md](find-a-gift.md): This or that is the second of three
+ways after "Who is it for?", and the banner is gone.
+
+## One of the three ways of Find a gift, ending on its results (2026-09-26)
+
+- **Who it is for arrives in the link**: `?person=<id>` (one of your own people, else ignored) or
+  `?relationship=mother` (the vocabulary, else ignored). The server sends it back as `carried`, the
+  page skips "for someone or for yourself?", shows "For Mum · change", and posts it with the result.
+  `?person=` was read by the page before; the server reads it now, so a stranger's id never reaches
+  the page.
+- **The kind of person reaches the brief** (`TasteProfile::brief(relationship:)`), so an editor's
+  `recipient:` tag scores and Coves others made for the same kind of person match.
+- **The result is the one results page** (`GiftResults`): the same cards, and for a giver also
+  *Open as a page*, Coves others made, the next steps and list of a saved person, and *Ask other
+  people*. *Refine with the questions* posts what was learned (`result.refine`) to the questions.
+  The person's own page and a shared "help me find out" link still get the ideas only.
+
 ## Proven gifts in the deck, and labelled ideas (2026-09-27)
 
 A tenth of each draw (16 of 160) is kept for products at least five different people keep on a list

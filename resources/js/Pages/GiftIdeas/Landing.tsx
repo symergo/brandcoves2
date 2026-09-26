@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import ProductCard, { type GroupCard } from '../../Components/ProductCard'
+import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -16,11 +16,12 @@ interface BudgetOption {
     url: string
 }
 
-interface Props {
+interface Props extends GiftResultsExtras {
     heading: string
     intro: string
     isRecipientPage: boolean
-    products: GroupCard[]
+    /** The engine's best fits, as the Find-a-gift results' cards. */
+    picks: GiftPick[]
     budget: {
         current: string | null
         anyUrl: string
@@ -46,7 +47,19 @@ interface Props {
  * (the server resolves them). Nothing here is written by a model. See
  * docs/features/gift-landing-pages.md.
  */
-export default function Landing({ heading, intro, products, budget, moreFor, sameInterest, finderUrl, searchUrl }: Props) {
+export default function Landing({
+    heading,
+    intro,
+    picks,
+    budget,
+    moreFor,
+    sameInterest,
+    finderUrl,
+    searchUrl,
+    offlineIdeas = [],
+    communityCoves = [],
+    askUrl = null,
+}: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -97,25 +110,26 @@ export default function Landing({ heading, intro, products, budget, moreFor, sam
                 ))}
             </nav>
 
-            {products.length === 0 ? (
-                <p className="mt-8 text-ink-soft">{t('gift.no_results')}</p>
-            ) : (
-                <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                    {products.map((product) => (
-                        <li key={product.id} className="flex">
-                            <ProductCard group={product} />
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            {searchUrl && products.length > 0 && (
-                <p className="mt-4">
-                    <Link href={searchUrl} className="text-sm text-accent-dark underline hover:text-ink">
-                        {t('gift_landing.search_all')}
-                    </Link>
-                </p>
-            )}
+            {/*
+              The same results as "Find a gift" (owner, 2026-09-26): one kind
+              of card, with what each fits and "chosen by others", then the
+              ideas without a shop, Coves others made, and "Ask others". This
+              page is already a page, so there is no "Open as a page".
+            */}
+            <GiftResults
+                picks={picks}
+                heading={null}
+                offlineIdeas={offlineIdeas}
+                communityCoves={communityCoves}
+                askUrl={askUrl}
+                actions={
+                    searchUrl && picks.length > 0 ? (
+                        <Link href={searchUrl} className="text-sm text-accent-dark underline hover:text-ink">
+                            {t('gift_landing.search_all')}
+                        </Link>
+                    ) : undefined
+                }
+            />
 
             <section className="mt-10 max-w-2xl rounded-card border border-line bg-card p-5">
                 <h2 className="font-medium">{t('gift_landing.finder_title')}</h2>

@@ -61,8 +61,9 @@ final readonly class TasteProfile
      * title; see TasteBrief::avoidedInterests().
      *
      * @param  list<int>  $exclude  the products already shown during the rounds
+     * @param  string|null  $relationship  who it is for, when "Find a gift" was told (RecipientType)
      */
-    public function brief(Market $market, int $limit, array $exclude = [], ?SuggestionProfile $profile = null): TasteBrief
+    public function brief(Market $market, int $limit, array $exclude = [], ?SuggestionProfile $profile = null, ?string $relationship = null): TasteBrief
     {
         return new TasteBrief(
             market: $market,
@@ -73,6 +74,7 @@ final readonly class TasteProfile
             budgetMax: $this->budgetMax,
             avoid: $this->avoidEntries(),
             values: $this->values,
+            relationship: $relationship,
             excludeGroupIds: $exclude,
             limit: $limit,
             profile: $profile,
