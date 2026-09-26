@@ -1046,6 +1046,50 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Invitations by email ("Nodig uit op GiftCoves")
+    |--------------------------------------------------------------------------
+    |
+    | Since 2026-09-26 inviting somebody by their address sends them an email.
+    | That makes the form a way to mail a stranger on a member's behalf, so each
+    | number below is a limit on that, not a tuning knob. See
+    | docs/features/friend-invite-mail.md and App\Services\Social\InviteMailer.
+    */
+    'invites' => [
+        /*
+         * Addresses one member may invite in 24 hours.
+         *
+         * Twenty is a birthday party or a family, typed by hand. Nobody invites
+         * more real people than that in a day through a one-address form; a
+         * member who hits it is pasting a list, which is the use this exists
+         * to stop. Counted per address tried, mailed or not, so the cap never
+         * behaves differently for an address that asked not to be mailed.
+         */
+        'daily_limit' => 20,
+
+        /*
+         * One email per member per address in this many days.
+         *
+         * Pressing Invite twice is the commonest way to send somebody the same
+         * email twice, and a reminder a week later is a nag from a site they
+         * never signed up to. Thirty days lets a genuine "did you see my
+         * invitation?" through a month later.
+         */
+        'repeat_days' => 30,
+
+        /*
+         * "This is spam" complaints after which a member's invitations stop
+         * being emailed. The invitations still work: they are recorded and
+         * turn into a connection when the person signs in, exactly as before
+         * emails existed. One complaint can be a misunderstanding (a friend
+         * who forgot they gave their address); three different people saying
+         * so is a pattern. Complaints are kept a year (bc:prune-personal-data),
+         * so the stop lifts itself once they age out.
+         */
+        'complaint_limit' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Occasion reminders
     |--------------------------------------------------------------------------
     |

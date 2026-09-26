@@ -33,7 +33,7 @@ use Inertia\Response;
  */
 class MagicLinkController extends Controller
 {
-    public function show(): Response
+    public function show(Request $request): Response
     {
         /*
          * `noindex, follow`, which it was not until 2026-09-05.
@@ -53,11 +53,25 @@ class MagicLinkController extends Controller
             robots: 'noindex, follow',
         );
 
+        /*
+         * The address, filled in when the link carries one (2026-09-26).
+         *
+         * The button in an invitation email leads here with the invited
+         * address, so accepting is one press. Only ever a pre-filled field:
+         * nothing is sent until the visitor presses the button themselves, and
+         * anything that is not an address is dropped rather than echoed.
+         */
+        $email = $request->query('email');
+        $email = is_string($email) && mb_strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL) !== false
+            ? $email
+            : null;
+
         return Inertia::render('Auth/Login', [
             // Staging may legitimately run without OAuth credentials, and a
             // button that leads to an exception is worse than no button.
             'googleEnabled' => filled(config('services.google.client_id'))
                 && filled(config('services.google.client_secret')),
+            'email' => $email,
         ]);
     }
 

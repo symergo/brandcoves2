@@ -2308,6 +2308,7 @@ return [
         'share_santa' => 'Sortea un Amigo invisible; cada persona solo ve a quién le ha tocado.',
         'share_publish' => 'Puedes publicar una lista como Cove de la comunidad, en Compartir, para que cualquiera pueda encontrarla, guardarla o convertirla en su propia lista. Dice para quién es en palabras generales, como "para un padre", y nunca muestra nombres, notas ni lo que ya se ha reservado. «Encontrar un regalo» también muestra Coves que otros hicieron para alguien como la persona a la que buscas regalo.',
         'share_people' => 'Haz visible una lista de deseos para tu gente, en Compartir: tus amigos en GiftCoves la ven y pueden elegir de ella cuando hacen una lista para ti. Las listas de deseos nuevas lo tienen activado. Lo que compran sigue siendo una sorpresa.',
+        'share_invite' => 'Invita a alguien a GiftCoves desde Mi gente, con su correo electrónico. Le enviamos un correo con tu invitación y, en cuanto inicie sesión, quedáis conectados. Quien no quería ese correo detiene todas las invitaciones con un clic en el enlace que incluye.',
         'share_ask' => 'Pide ideas: envía a la persona homenajeada una página donde dice lo que le gusta, o deja que la gente con la que compartes la lista proponga cosas. Tú decides qué entra.',
         'share_like_this' => 'En la lista de deseos de alguien también ves ideas en la misma línea, para un segundo regalo o cuando ya está todo cogido.',
         'honest_title' => 'De dónde vienen los productos',
@@ -2344,7 +2345,7 @@ return [
         'save' => 'Guardar',
         'email' => 'Su correo',
         'add' => 'Añadir',
-        'added' => 'Añadido. Aparecerá aquí en cuanto inicie sesión.',
+        'added' => 'Invitación enviada. Aparecerá aquí en cuanto inicie sesión.',
         'settings_title' => 'Lo que ven tus amigos',
         'settings_saved' => 'Guardado.',
         'my_birthday' => 'Mi cumpleaños',
@@ -2384,9 +2385,32 @@ return [
         'birthday_optional' => 'Cumpleaños (opcional)',
         'add' => 'Añadir',
         'invite' => 'Invitar a GiftCoves',
-        'invite_tip' => 'Su correo electrónico. Si tiene una cuenta, o crea una, quedáis conectados: ves las listas que comparte contigo, y esa persona las tuyas. No le enviamos ningún correo, así que avísale tú.',
+        'invite_tip' => 'Su correo electrónico. Le enviamos un correo con tu invitación. Si tiene una cuenta, o crea una, quedáis conectados: ves las listas que comparte contigo, y esa persona las tuyas.',
         'invite_button' => 'Invitar',
+        'invite_again' => 'Ya invitaste a esta dirección en los últimos :days días, así que no le enviamos otro correo.',
+        'invite_limit' => 'Hoy ya has invitado a :count personas. Vuelve a intentarlo mañana.',
+        'invite_self' => 'Es tu propio correo electrónico.',
         'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Desde cada persona llegas a su página, a Buscar un regalo para ella y a las listas que comparte contigo.',
+    ],
+
+    /*
+     * El correo que envía una invitación desde Mi gente, y la página detrás de
+     * «¿No lo pediste? Esto es spam» (docs/features/friend-invite-mail.md).
+     */
+    'invite_mail' => [
+        'subject' => ':name te invita a GiftCoves',
+        'what' => 'GiftCoves es un sitio de listas de deseos e ideas de regalo. Si aceptas, tú y :name quedáis conectados: ves las listas que :name comparte contigo, y :name ve las que compartes tú.',
+        'button' => 'Aceptar la invitación',
+        'nothing_to_do' => '¿No te interesa? Entonces no tienes que hacer nada.',
+        'why' => 'Recibes este correo porque :name escribió tu dirección en GiftCoves.',
+        'not_wanted' => '¿No lo pediste? Esto es spam',
+        'page_title' => 'Invitaciones a través de GiftCoves',
+        'ask' => '¿Dejar de recibir invitaciones a través de GiftCoves? Así nadie podrá volver a invitarte por correo.',
+        'stop' => 'No enviarme más invitaciones',
+        'stopped' => 'Ya no recibirás invitaciones a través de GiftCoves.',
+        'stopped_more' => 'A quien te invitó no se le avisa. ¿Te equivocaste? Puedes deshacerlo aquí.',
+        'undo' => 'Deshacer',
+        'undone' => 'Deshecho. Puedes volver a recibir invitaciones.',
     ],
 
 ];

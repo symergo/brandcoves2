@@ -310,7 +310,7 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Hacerse amigos',
-                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois amigos. Para invitar a alguien tú mismo:\n\n1. Ve a [Mi gente](people).\n2. Toca «Invitar a GiftCoves» y escribe su correo, y el cumpleaños si quieres.\n3. Toca «Invitar».\n\nEsa persona no recibe ningún correo por ello, así que díselo tú. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
+                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois amigos. Para invitar a alguien tú mismo:\n\n1. Ve a [Mi gente](people).\n2. Toca «Invitar a GiftCoves» y escribe su correo, y el cumpleaños si quieres.\n3. Toca «Invitar».\n\nLe enviamos un correo con tu invitación. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
                 ],
                 [
                     'title' => 'Qué ve un amigo',

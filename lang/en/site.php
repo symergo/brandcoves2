@@ -2579,6 +2579,7 @@ return [
         'share_santa' => 'Draw names for a Secret Friend, and each person sees only their own match.',
         'share_publish' => 'Publish a list as a Community Cove, under Share, so anyone can find it, save it or make it their own list. It shows who it is for in general words, like "for a dad", and never names, notes or what has been claimed. Find a gift also shows Coves others made for someone like the person you are buying for.',
         'share_people' => 'Make a wish list visible to your people, under Share: your friends on GiftCoves see it and can pick from it when they make a list for you. New wish lists have it on. What they buy stays a surprise.',
+        'share_invite' => 'Invite somebody to GiftCoves from My people, with their email address. We email them your invitation, and once they sign in you are connected. Anyone who did not want that email stops all invitations with one click on the link in it.',
         'share_ask' => 'Ask for ideas: send the person it is for a page where they say what they like, or let the people you share the list with suggest things. You decide what goes on it.',
         'share_like_this' => 'On somebody\'s wish list you also see ideas in the same spirit, for a second present or when everything is taken.',
         'honest_title' => 'Where products come from',
@@ -2615,7 +2616,7 @@ return [
         'save' => 'Save',
         'email' => 'Their email',
         'add' => 'Add',
-        'added' => 'Added. They will show up here once they are signed in.',
+        'added' => 'Invitation sent. They will show up here once they are signed in.',
         'settings_title' => 'What your friends see',
         'settings_saved' => 'Saved.',
         'my_birthday' => 'My birthday',
@@ -2655,9 +2656,33 @@ return [
         'birthday_optional' => 'Birthday (optional)',
         'add' => 'Add',
         'invite' => 'Invite on GiftCoves',
-        'invite_tip' => 'Their email address. If they have an account, or make one, you are connected: you see the lists they share with you, and they see the ones you share. We do not email them, so tell them yourself.',
+        'invite_tip' => 'Their email address. We send them an email with your invitation. If they have an account, or make one, you are connected: you see the lists they share with you, and they see the ones you share.',
         'invite_button' => 'Invite',
+        'invite_again' => 'You invited this address in the last :days days already, so we are not emailing it again.',
+        'invite_limit' => 'You have invited :count people today. Try again tomorrow.',
+        'invite_self' => 'That is your own email address.',
         'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves. Add someone only you see, or invite someone by email. From each person you reach their page, Find a gift for them and the lists they share with you.',
+    ],
+
+    /*
+     * The email an invitation from My people sends, and the page behind "Not
+     * asked for? This is spam" in it (docs/features/friend-invite-mail.md). The
+     * reader may never have heard of GiftCoves.
+     */
+    'invite_mail' => [
+        'subject' => ':name invites you to GiftCoves',
+        'what' => 'GiftCoves is a place for wish lists and gift ideas. If you accept, you and :name are connected: you see the lists :name shares with you, and :name sees the ones you share.',
+        'button' => 'Accept the invitation',
+        'nothing_to_do' => 'Not interested? Then there is nothing to do.',
+        'why' => 'You are getting this email because :name entered your address on GiftCoves.',
+        'not_wanted' => 'Not asked for? This is spam',
+        'page_title' => 'Invitations through GiftCoves',
+        'ask' => 'Stop receiving invitations through GiftCoves? Then nobody can invite you by email any more.',
+        'stop' => 'Send me no more invitations',
+        'stopped' => 'You will not get any more invitations through GiftCoves.',
+        'stopped_more' => 'The person who invited you is not told. Pressed it by mistake? You can undo it here.',
+        'undo' => 'Undo',
+        'undone' => 'Undone. You can receive invitations again.',
     ],
 
 ];

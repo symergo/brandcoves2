@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\InviteOutcome;
 use App\Models\Friendship;
 use App\Services\Social\FriendInvites;
 use App\Services\Social\Friends;
@@ -54,9 +55,11 @@ class FriendController extends Controller
      *
      * The response says the same thing whether or not that address has an
      * account here — see {@see FriendInvites} for why that is the point rather
-     * than vagueness. Throttled on the route for the same reason.
+     * than vagueness. Throttled on the route for the same reason. Since
+     * 2026-09-26 it also emails the address, in the language of the market the
+     * member is on (the only guess we have at the other person's).
      */
-    public function store(Request $request, FriendInvites $invites): RedirectResponse
+    public function store(Request $request, FriendInvites $invites, CurrentMarket $current): RedirectResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255'],
@@ -71,13 +74,24 @@ class FriendController extends Controller
             'birthday' => ['nullable', 'string', 'regex:/^\d{2}-\d{2}$/'],
         ]);
 
-        $invites->invite(
+        $outcome = $invites->invite(
             $request->user(),
             $validated['email'],
             DayAndMonth::fromString($validated['birthday'] ?? null),
+            $current->get(),
         );
 
-        return back()->with('success', __('site.friends.added'));
+        // Each answer is about the member's own actions; see InviteOutcome.
+        return match ($outcome) {
+            InviteOutcome::Sent => back()->with('success', __('site.friends.added')),
+            InviteOutcome::AlreadyInvited => back()->with('success', __('site.people.invite_again', [
+                'days' => (int) config('giftcoves.invites.repeat_days', 30),
+            ])),
+            InviteOutcome::DailyLimit => back()->withErrors(['email' => __('site.people.invite_limit', [
+                'count' => (int) config('giftcoves.invites.daily_limit', 20),
+            ])]),
+            InviteOutcome::OwnAddress => back()->withErrors(['email' => __('site.people.invite_self')]),
+        };
     }
 
     /**

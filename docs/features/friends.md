@@ -195,10 +195,19 @@ at their first sign-in, and **the same sentence either way**. It is a true sente
 The rate limit (`throttle:10,1`) is the second half of that defence — a caller who cannot tell one
 address from another still should not be able to walk a list of them.
 
-Nothing is emailed. Sending "Bob added you as a friend" to an address that has never been near this
-site turns the feature into a way of mailing strangers on somebody else's behalf, and the connection
-is worth nothing until that person arrives of their own accord anyway. When they do, the invite is
-waiting.
+~~Nothing is emailed.~~ **Since 2026-09-26 the address is emailed**, on the owner's request. The
+argument that stood here (sending "Bob added you" to an address that has never been near this site
+makes the feature a way of mailing strangers on somebody else's behalf) still holds, so the email
+comes with brakes: a daily limit, one email per address a month, a "this is spam" link that works
+without an account, and complaints that stop a member's emails. The email is the same whether or
+not the address has an account, which keeps the two cases indistinguishable. All of it:
+[friend-invite-mail.md](friend-invite-mail.md).
+
+**One leak this does not close, and never did:** an address with an account is connected at once,
+so it appears on the inviter's My people straight away, and one without does not. The sentence and
+the email are the same; the page is not. Closing that would mean holding every invitation until the
+invited person accepts, which is friend requests, a different feature (see
+[my-people.md](my-people.md#no-pending-requests)).
 
 ## Two birthdays, and they are not the same fact
 
@@ -255,7 +264,9 @@ asks, because a single stray tap should not end a connection for two people.
 The graph is personal data (who knows whom), and the birthdays on it are second-hand facts about
 people who never typed them here. `bc:scrub` therefore **deletes** `friendships` and `friend_invites`
 outright rather than anonymising them — nothing joins to a friendship, and a scrubbed one would be a
-random pair of test users pretending to know each other — and nulls `users.birthday`.
+random pair of test users pretending to know each other — and nulls `users.birthday`. Since
+2026-09-26 it also empties the three invitation-email tables (`friend_invite_mails`,
+`invite_complaints`, `invite_suppressions`).
 
 ## Files
 
@@ -263,7 +274,7 @@ random pair of test users pretending to know each other — and nulls `users.bir
 |---|---|
 | Both directions of a write | [`App\Services\Social\Friends`](../../app/Services/Social/Friends.php) |
 | "Somebody sent me this link" | [`App\Services\Social\ShareReferral`](../../app/Services/Social/ShareReferral.php) |
-| Adding by email | [`App\Services\Social\FriendInvites`](../../app/Services/Social/FriendInvites.php) |
+| Adding by email | [`App\Services\Social\FriendInvites`](../../app/Services/Social/FriendInvites.php); the email it sends since 2026-09-26 is [`InviteMailer`](../../app/Services/Social/InviteMailer.php), see [friend-invite-mail.md](friend-invite-mail.md) |
 | A birthday with no year | [`App\Support\DayAndMonth`](../../app/Support/DayAndMonth.php) |
 | Applied at sign-in | [`App\Listeners\LinkSharerAsFriend`](../../app/Listeners/LinkSharerAsFriend.php) |
 | The page | Since 2026-09-26 [My people](my-people.md): `PeopleController`, `resources/js/Pages/People/Index.tsx`, `App\Services\Social\MyPeople`. [`FriendController`](../../app/Http/Controllers/FriendController.php) keeps the actions (add, remove, settings) and redirects `GET /friends` there; `Pages/Friends/Index.tsx` is deleted |

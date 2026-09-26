@@ -64,6 +64,13 @@ class ScrubDatabase extends Command
             DB::statement('DELETE FROM friendships');
             DB::statement('DELETE FROM friend_invites');
 
+            // Invitation emails (2026-09-26): who invited which hashed address,
+            // and who complained about whom. Hashes, but linked to real
+            // accounts, and nothing on a laptop needs them.
+            DB::statement('DELETE FROM friend_invite_mails');
+            DB::statement('DELETE FROM invite_complaints');
+            DB::statement('DELETE FROM invite_suppressions');
+
             DB::statement(<<<'SQL'
                 UPDATE recipients
                 SET name = 'Recipient ' || left(id::text, 8),

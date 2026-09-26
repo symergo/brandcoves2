@@ -2321,6 +2321,7 @@ return [
         'share_santa' => 'Trek lootjes voor een Geheime Vriend; iedereen ziet alleen zijn eigen lootje.',
         'share_publish' => 'Maak een lijst openbaar als Community Cove, onder Delen, zodat iedereen hem kan vinden, bewaren of er een eigen lijst van maken. Er staat in algemene woorden voor wie hij is, zoals "voor een papa", en nooit namen, notities of wat al gekocht is. Cadeau vinden toont ook Coves die anderen maakten voor iemand zoals de persoon voor wie jij zoekt.',
         'share_people' => 'Maak een verlanglijst zichtbaar voor je mensen, onder Delen: je vrienden op GiftCoves zien hem en kunnen eruit kiezen als ze een lijst voor jou maken. Nieuwe verlanglijsten staan aan. Wat ze kopen blijft een verrassing.',
+        'share_invite' => 'Nodig iemand uit op GiftCoves vanuit Mijn mensen, met hun e-mailadres. We sturen hen een e-mail met je uitnodiging, en zodra ze inloggen zijn jullie verbonden. Wie die e-mail niet wilde, stopt alle uitnodigingen met één klik op de link erin.',
         'share_ask' => 'Vraag om ideeën: stuur de jarige een pagina waar die zegt wat hij of zij leuk vindt, of laat de mensen met wie je de lijst deelt iets voorstellen. Jij beslist wat erop komt.',
         'share_like_this' => 'Op iemands verlanglijst zie je ook ideeën in dezelfde lijn, voor een tweede cadeau of als alles al weg is.',
         'honest_title' => 'Waar de producten vandaan komen',
@@ -2357,7 +2358,7 @@ return [
         'save' => 'Opslaan',
         'email' => 'Hun e-mailadres',
         'add' => 'Toevoegen',
-        'added' => 'Toegevoegd. Ze verschijnen hier zodra ze zijn ingelogd.',
+        'added' => 'Uitnodiging verstuurd. Ze verschijnen hier zodra ze zijn ingelogd.',
         'settings_title' => 'Wat je vrienden zien',
         'settings_saved' => 'Opgeslagen.',
         'my_birthday' => 'Mijn verjaardag',
@@ -2397,9 +2398,33 @@ return [
         'birthday_optional' => 'Verjaardag (optioneel)',
         'add' => 'Toevoegen',
         'invite' => 'Nodig uit op GiftCoves',
-        'invite_tip' => 'Hun e-mailadres. Hebben ze een account, of maken ze er een, dan zijn jullie verbonden: jij ziet de lijsten die zij met je delen, zij die van jou. We mailen hen niet, dus laat het ze zelf weten.',
+        'invite_tip' => 'Hun e-mailadres. We sturen hen een e-mail met je uitnodiging. Hebben ze een account, of maken ze er een, dan zijn jullie verbonden: jij ziet de lijsten die zij met je delen, zij die van jou.',
         'invite_button' => 'Uitnodigen',
+        'invite_again' => 'Je nodigde dit adres de afgelopen :days dagen al uit, dus we sturen niet nog een e-mail.',
+        'invite_limit' => 'Je nodigde vandaag al :count mensen uit. Probeer het morgen opnieuw.',
+        'invite_self' => 'Dat is je eigen e-mailadres.',
         'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen en de lijsten die ze met je delen.',
+    ],
+
+    /*
+     * De e-mail die een uitnodiging vanuit Mijn mensen verstuurt, en de pagina
+     * achter "Niet gevraagd? Dit is spam" erin (docs/features/friend-invite-mail.md).
+     * De lezer heeft misschien nooit van GiftCoves gehoord.
+     */
+    'invite_mail' => [
+        'subject' => ':name nodigt je uit op GiftCoves',
+        'what' => 'GiftCoves is een plek voor verlanglijstjes en cadeau-ideeën. Neem je de uitnodiging aan, dan zijn jij en :name verbonden: jij ziet de lijsten die :name met je deelt, en :name ziet de lijsten die jij deelt.',
+        'button' => 'Uitnodiging aannemen',
+        'nothing_to_do' => 'Geen interesse? Dan hoef je niets te doen.',
+        'why' => 'Je krijgt deze e-mail omdat :name je e-mailadres op GiftCoves invulde.',
+        'not_wanted' => 'Niet gevraagd? Dit is spam',
+        'page_title' => 'Uitnodigingen via GiftCoves',
+        'ask' => 'Wil je geen uitnodigingen meer krijgen via GiftCoves? Dan kan niemand je nog per e-mail uitnodigen.',
+        'stop' => 'Stuur me geen uitnodigingen meer',
+        'stopped' => 'Je krijgt geen uitnodigingen meer via GiftCoves.',
+        'stopped_more' => 'Wie je uitnodigde, krijgt dat niet te horen. Per vergissing gedrukt? Dan maak je het hier ongedaan.',
+        'undo' => 'Ongedaan maken',
+        'undone' => 'Ongedaan gemaakt. Je kunt weer uitnodigingen krijgen.',
     ],
 
 ];

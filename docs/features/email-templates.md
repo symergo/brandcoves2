@@ -69,6 +69,11 @@ Four more are not wired, and not by decision: `AlertMail` (a price alert), `List
 (the morning list digest), and the two that go to the site owner rather than to a visitor,
 `NewRegistrationMail` and `FeedbackMail`.
 
+`FriendInviteMail` (2026-09-26, [friend-invite-mail.md](friend-invite-mail.md)) is not wired on
+purpose, for the Secret Friend reason: its "Not asked for? This is spam" line is what makes it safe
+to send to a stranger, and it must also read the same whether or not the address has an account. An
+editable body is one edit away from breaking either.
+
 `MailTemplates::KEYS` is an **allowlist**, so a stray row for an undeclared
 template cannot reach an email — asserted by
 `a_template_that_is_not_in_the_registry_is_ignored`.

@@ -46,6 +46,8 @@ you have the right to object, and section *Your rights* explains how.
 | Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
+| An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "This is spam" link is the objection |
+| "No more invitations" requests and "This is spam" complaints, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
 
 ### A note on the visitor cookie
 
@@ -91,6 +93,31 @@ this off ("Send my questions to my people"), and stop receiving your friends'
 questions, or only the emails, on your notifications page or from the link in
 any such email.
 
+### Inviting somebody by email
+
+Since 26 September 2026, when you invite somebody on My people with their email
+address, we send that address one email: your name, what GiftCoves is, and a
+button to sign in. Nothing from your lists. The same email goes out whether or
+not the address already has an account, and you are told the same thing either
+way. You can invite at most 20 addresses a day, and the same address once every
+30 days. We never email your own address.
+
+We keep the address with the invitation until that person signs in (the
+invitation then becomes the connection and the address is deleted from it), or
+for 365 days after you last invited them. We also keep a record that you sent an
+invitation, with a one-way code made from the address instead of the address,
+for 90 days: it is what the two limits count.
+
+Every invitation email has a "Not asked for? This is spam" link that works
+without an account. Pressing it means no invitation from anybody is emailed to
+that address again, and counts one complaint against the member who sent it.
+For that we keep only the one-way code, never the address: the request for as
+long as it stands (the page it leads to has an undo), the complaint for 365
+days. A member with 3 complaints no longer has their invitations emailed, and
+we look at it. The member is not told about either.
+
+If you were invited and want the address removed, write to {{privacy_email}}.
+
 ### No automated decision-making
 
 Nothing here makes a decision that produces legal effects for you or similarly
@@ -116,7 +143,7 @@ Our processors, and what leaves the EEA:
 | Who | What for | Where |
 |---|---|---|
 | OVH | Hosting the site and its database | Frankfurt, Germany (EU) |
-| Resend | Sending sign-in links, alerts and the daily email | United States |
+| Resend | Sending sign-in links, alerts, invitations and the daily email | United States |
 | Anthropic | Generating editorial text | United States |
 | Google | Counting visits, only if you allowed it | United States |
 
@@ -182,6 +209,10 @@ safeguards above.
 | Feedback you send us | 12 months, message and reply address together |
 | Choices made through a This or that together link | 180 days, then the link too once nobody's choices are left on it |
 | Gift profile card | Until you remove it, or 365 days after anyone last opened it |
+| An invitation nobody has accepted yet (the invited address) | Until that person signs in, or 365 days after the member last invited them |
+| Record of the invitations a member sent (a one-way code, not the address) | 90 days |
+| "This is spam" complaint about an invitation | 365 days |
+| "No more invitations" request (a one-way code, not the address) | Until it is undone |
 | Server logs | 30 days |
 | Analytics cookie, if you allowed it | 13 months |
 | Advertising measurement cookie, if you allowed it | 90 days |

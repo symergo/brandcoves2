@@ -75,8 +75,10 @@ Two buttons at the top, one form open at a time:
   same endpoint and validation as everywhere else. No year: the birthday is stored under
   `Recipient::BIRTHDAY_YEAR`.
 - **Nodig uit op GiftCoves**: email and optional birthday, `POST /friends`
-  ([friends.md](friends.md)). It answers the same whether or not the address has an account, and
-  it sends no email; the (i) says so.
+  ([friends.md](friends.md)). It answers the same whether or not the address has an account.
+  Since 2026-09-26 it emails the address (the owner asked for it and for the old "we do not
+  email them, so tell them yourself" to go); the (i) says so. The email, its limits and its spam
+  link: [friend-invite-mail.md](friend-invite-mail.md).
 
 ### No pending requests
 

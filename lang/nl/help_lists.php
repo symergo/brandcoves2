@@ -325,7 +325,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Vrienden worden',
-                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie vrienden. Iemand zelf uitnodigen gaat zo:\n\n1. Ga naar [Mijn mensen](people).\n2. Tik op “Nodig uit op GiftCoves” en vul het e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Uitnodigen”.\n\nDie persoon krijgt daar geen mail van, zeg het dus zelf. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
+                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie vrienden. Iemand zelf uitnodigen gaat zo:\n\n1. Ga naar [Mijn mensen](people).\n2. Tik op “Nodig uit op GiftCoves” en vul het e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Uitnodigen”.\n\nWe sturen die persoon een e-mail met je uitnodiging. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
                 ],
                 [
                     'title' => 'Wat een vriend ziet',
