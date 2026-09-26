@@ -5,6 +5,14 @@ the end of it, or by adding an address on the page.
 
 **Status:** Active
 
+> **Since 2026-09-26 friends have no page of their own.** They are on "My people"
+> (`/{market}/people`, [my-people.md](my-people.md)) with the people you saved, one row per
+> person, and `/friends` redirects there. Everything below about how friendships are made, what a
+> friend sees and the two birthdays still holds: the rules moved from `FriendController::index` to
+> `App\Services\Social\MyPeople` unchanged, and the friend actions (`POST /friends` and the rest)
+> kept their addresses. Where this document says "the friends page", read "a friend's row on My
+> people".
+
 ---
 
 ## The gap this fills

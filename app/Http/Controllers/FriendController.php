@@ -4,37 +4,33 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ListVisibility;
 use App\Models\Friendship;
-use App\Models\ListOpen;
-use App\Models\Wishlist;
-use App\Models\WishlistShare;
 use App\Services\Social\FriendInvites;
 use App\Services\Social\Friends;
 use App\Support\CurrentMarket;
 use App\Support\DayAndMonth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
- * The people you share lists with.
+ * The people you share lists with: adding, noting a birthday, removing.
  *
- * ## Why this shows lists and birthdays and not just names
+ * ## The page moved
  *
- * A roster of names is a page nobody opens twice. What somebody wants from it
- * is the thing the friendship was made of — where is that registry again, and
- * when is her birthday — so each person is listed with the lists of theirs you
- * hold and the date you are buying for.
+ * Friends had a page of their own at `/friends` until 2026-09-26, beside a
+ * separate idea of "saved people" that had no page at all. The owner asked what
+ * the difference was, and a visitor needs none, so both are one list now:
+ * "My people" at `/people` ({@see PeopleController}, built by
+ * App\Services\Social\MyPeople, which also carries this page's rules on which
+ * lists and which birthday a friend row shows). `/friends` redirects there,
+ * because emails, help pages and bookmarks carry it. The actions below stayed
+ * where they were, for the same reason, and all of them answer with `back()`.
  *
  * ## What is deliberately absent
  *
  * Claim state, in every form. Not a count, not a badge, not "2 of 8 spoken
  * for". Invariant #4 is about what a list's owner may learn, and this is the
- * friend's side of it — but a page that started reporting progress here would
- * be one join from telling somebody's friend what their own list must not show
- * them. `Wishlist::items` is not loaded at all, and should stay that way.
+ * friend's side of it.
  *
  * ## Two birthdays, and they are not the same fact
  *
@@ -42,151 +38,15 @@ use Inertia\Response;
  * they left `friends_see_birthday` on. `friendships.friend_birthday_day` and
  * `_month` are what you wrote down about them: yours, private to your side of
  * the connection, and used when they have published nothing. A date you guessed
- * must never become their account's answer for everybody else.
- *
- * Only ever a day and a month leaves here, whichever of the two it came from.
- * What a friend needs is when to buy something; a year is somebody's age on a
- * page other people read, and the only person who may put one on this site is
- * its owner, about themselves, on their own settings below.
+ * must never become their account's answer for everybody else. Only a day and
+ * a month ever leaves, whichever of the two it came from.
  */
 class FriendController extends Controller
 {
-    public function index(Request $request, CurrentMarket $current, Friends $friends): Response
+    /** The old address of the list, kept working. See the class comment. */
+    public function index(CurrentMarket $current): RedirectResponse
     {
-        $user = $request->user();
-        $connections = $friends->forUser($user);
-
-        /*
-         * Their lists: the ones they invited you to.
-         *
-         * Two ways in, and both are acts by the owner rather than a setting:
-         *
-         * - **shared with you** — they picked your name in "Share with
-         *   friends", which wrote a `wishlist_shares` row and emailed you.
-         * - **you opened its link** — they sent it to you and you followed it.
-         *   `list_opens` has recorded this since long before friends existed.
-         *
-         * Nothing reaches somebody who has done neither. There was a
-         * `show_to_friends` boolean here for a day meaning "everybody I am
-         * connected to"; a friendship is made by opening any share link, so it
-         * published to a set the owner had never chosen and could not see. See
-         * docs/features/friends.md.
-         *
-         * This is also why a group gift needs no rule of its own any more. Its
-         * audience was always "the people who were sent the link", which is the
-         * second case above.
-         *
-         * `visibility != private` stays in front of both: a list whose sharing
-         * was turned off has to disappear from here, for the same reason its
-         * token stops working. Neither an invitation nor a friendship is a
-         * grant.
-         */
-        $lists = Wishlist::query()
-            ->whereIn('owner_user_id', $connections->pluck('friend_id'))
-            ->where('visibility', '!=', ListVisibility::Private->value)
-            ->where(fn ($q) => $q
-                ->whereHas('shares', fn ($share) => $share->where('user_id', $user->id))
-                ->orWhereHas('opens', fn ($open) => $open->where('user_id', $user->id)))
-            ->get()
-            ->groupBy('owner_user_id');
-
-        /*
-         * And the other direction: what each of them sees of *yours*.
-         *
-         * Genuinely per person now, because sharing is per person. Two lookups
-         * — who you shared each list with, and who opened it — fetched once and
-         * indexed by list, rather than a query per friend row.
-         *
-         * "What does Anna actually see of mine" is the question a friend list
-         * raises and the one nobody thinks to check; it is answered under her
-         * name, where the consequence is concrete.
-         */
-        $mine = Wishlist::query()
-            ->where('owner_user_id', $user->id)
-            ->where('visibility', '!=', ListVisibility::Private->value)
-            ->latest()
-            ->get();
-
-        $reachedBy = WishlistShare::query()
-            ->whereIn('wishlist_id', $mine->modelKeys())
-            ->get()
-            ->groupBy('wishlist_id')
-            ->map(fn ($shares) => $shares->pluck('user_id')->all());
-
-        $openedBy = ListOpen::query()
-            ->whereIn('wishlist_id', $mine->modelKeys())
-            ->whereNotNull('user_id')
-            ->get()
-            ->groupBy('wishlist_id')
-            ->map(fn ($opens) => $opens->pluck('user_id')->all());
-
-        $seenBy = fn (int $friendId) => $mine
-            ->filter(fn (Wishlist $list) => in_array($friendId, $reachedBy[$list->id] ?? [], true)
-                || in_array($friendId, $openedBy[$list->id] ?? [], true))
-            ->map(fn (Wishlist $list) => [
-                'title' => $list->displayTitle(),
-                /*
-                 * Your own page, not the share link.
-                 *
-                 * These are *your* lists, and following one should land you
-                 * where you can edit it — the visitor view is what a friend
-                 * gets, and it deliberately has none of the owner's controls
-                 * on it. Sending an owner there makes their own list look
-                 * read-only. Their lists, above, keep the share token, because
-                 * that is the only page a visitor may see.
-                 */
-                'url' => $current->url("lists/{$list->id}"),
-            ])
-            ->values();
-
-        return Inertia::render('Friends/Index', [
-            'friends' => $connections->map(fn (Friendship $friendship) => [
-                'id' => $friendship->friend_id,
-                // The name if they gave one, otherwise the part of the address
-                // before the @ — the same fallback the account menu uses, and
-                // never the address itself.
-                'name' => $friendship->friend->displayName(),
-                'since' => $friendship->created_at?->toDateString(),
-
-                /*
-                 * `MM-DD`, or nothing. `birthdayIsMine` is what lets the page
-                 * label a date you typed as your own note and offer to change
-                 * it — without it, a guess would read back to you as a fact
-                 * they published.
-                 */
-                'birthday' => $this->birthdayFor($friendship)?->toString(),
-                'birthdayIsMine' => ! $this->publishesBirthday($friendship)
-                    && $friendship->friend_birthday_day !== null,
-
-                // What they share with you.
-                'lists' => ($lists[$friendship->friend_id] ?? collect())
-                    ->map(fn (Wishlist $list) => [
-                        'title' => $list->displayTitle(),
-                        'url' => $current->url("l/{$list->share_token}"),
-                    ])
-                    ->values(),
-
-                // And what you share with them: the lists shown to every
-                // friend, plus any group gift this person actually opened.
-                'theySee' => $seenBy($friendship->friend_id),
-            ])->values(),
-
-            /*
-             * Your side of the page: what these people see of you.
-             *
-             * Birthday only. Lists are settled on each list's own settings
-             * panel and nowhere else — there was a second copy of that switch
-             * here for a day, and two payloads for one setting is how the two
-             * came to disagree about whether an untouched list was on or off.
-             * Each friend row above still says what they can see of yours,
-             * which is the question this page is actually asked.
-             */
-            'settings' => [
-                'birthday' => $user->birthday?->toDateString(),
-                'friendsSeeBirthday' => $user->friends_see_birthday,
-            ],
-
-        ]);
+        return redirect()->to($current->url('people'), 301);
     }
 
     /**
@@ -291,29 +151,5 @@ class FriendController extends Controller
         // Nothing to announce: their row leaves the page. See the note on
         // `SharedListController::claim()` for the rule.
         return back();
-    }
-
-    /**
-     * Theirs if they publish it, otherwise yours if you wrote one down.
-     *
-     * Day and month either way. Their own full date is trimmed on the way out
-     * rather than on the way in: the year is real and theirs, it is simply not
-     * this page's to show.
-     */
-    private function birthdayFor(Friendship $friendship): ?DayAndMonth
-    {
-        return $this->publishesBirthday($friendship)
-            ? DayAndMonth::fromDate($friendship->friend->birthday)
-            : DayAndMonth::fromColumns(
-                $friendship->friend_birthday_day,
-                $friendship->friend_birthday_month,
-            );
-    }
-
-    /** Has this friend published a birthday, and left it visible? */
-    private function publishesBirthday(Friendship $friendship): bool
-    {
-        return $friendship->friend->friends_see_birthday
-            && $friendship->friend->birthday !== null;
     }
 }

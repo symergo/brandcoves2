@@ -2383,4 +2383,41 @@ return [
         'see_birthday_hint' => 'De dag en de maand. Nooit het jaar.',
     ],
 
+    /*
+     * "Mijn mensen": bewaarde personen en vrienden op één lijst, op /people
+     * (docs/features/my-people.md). De details van een vriend gebruiken de
+     * `friends`-teksten hierboven.
+     */
+    'people' => [
+        'title' => 'Mijn mensen',
+        'intro' => 'Iedereen voor wie je een cadeau koopt, de eerstvolgende verjaardag of gelegenheid eerst.',
+        'intro_tip' => 'Sommige mensen bewaar je alleen voor jezelf: wat je over ze weet, wat je ze gaf, ideeën voor ze. Anderen zitten zelf op GiftCoves: je ziet de lijsten die ze met je delen en de verjaardag die ze tonen. Niemand anders ziet wat jij bewaarde.',
+        'guest' => 'Log in en houd iedereen voor wie je een cadeau koopt op één plek bij: hun verjaardag, wat je ze gaf, en ideeën voor ze.',
+        'empty' => 'Nog niemand. Voeg iemand toe voor wie je een cadeau koopt, of nodig een vriend uit die op GiftCoves zit.',
+        'on_giftcoves' => 'op GiftCoves',
+        'birthday' => 'Verjaardag',
+        'today' => 'vandaag',
+        'tomorrow' => 'morgen',
+        'in_days' => 'over :count dagen',
+        'open' => 'Hun pagina',
+        'find_gift' => 'Cadeau vinden',
+        'taste' => 'Dit of dat',
+        'together' => 'Dit of dat samen',
+        'their_lists' => 'Hun lijsten (:count)',
+        'details' => 'Details',
+        'save_known' => 'Bewaar wat je over :name weet',
+        'save_known_tip' => 'Hun interesses, budget en wat je ze gaf, en cadeau-ideeën voor ze. Alleen jij ziet het.',
+        'add_person' => 'Iemand toevoegen',
+        'add_person_tip' => 'Alleen jij ziet deze persoon. Geen account of e-mailadres nodig.',
+        'name' => 'Naam',
+        'relationship' => 'Wie is het voor jou?',
+        'relationship_none' => 'Kies (optioneel)',
+        'birthday_optional' => 'Verjaardag (optioneel)',
+        'add' => 'Toevoegen',
+        'invite' => 'Nodig uit op GiftCoves',
+        'invite_tip' => 'Hun e-mailadres. Hebben ze een account, of maken ze er een, dan zijn jullie verbonden: jij ziet de lijsten die zij met je delen, zij die van jou. We mailen hen niet, dus laat het ze zelf weten.',
+        'invite_button' => 'Uitnodigen',
+        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves, de eerstvolgende verjaardag of gelegenheid eerst. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen en de lijsten die ze met je delen.',
+    ],
+
 ];

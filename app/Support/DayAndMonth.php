@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
 /**
@@ -60,5 +61,32 @@ final readonly class DayAndMonth
     public function toString(): string
     {
         return sprintf('%02d-%02d', $this->month, $this->day);
+    }
+
+    /**
+     * The next time this day comes round, today included.
+     *
+     * 29 February falls on the 28th in a year without one: the page wants to
+     * say "in 3 days" about somebody born on a leap day, and skipping them for
+     * three years in four would read as a missing birthday. A day the month
+     * does not have (31 April, which the columns' CHECK allows because it
+     * checks day and month apart) moves to the month's last day for the same
+     * reason.
+     */
+    public function nextFrom(CarbonInterface $today): CarbonImmutable
+    {
+        $today = CarbonImmutable::parse($today->toDateString());
+
+        foreach ([$today->year, $today->year + 1] as $year) {
+            $last = CarbonImmutable::create($year, $this->month, 1)->endOfMonth()->day;
+            $date = CarbonImmutable::create($year, $this->month, min($this->day, $last));
+
+            if ($date->greaterThanOrEqualTo($today)) {
+                return $date;
+            }
+        }
+
+        // Not reached: the date next year is always after today.
+        return $today;
     }
 }

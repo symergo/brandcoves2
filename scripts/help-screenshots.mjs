@@ -354,8 +354,8 @@ for (const { language, market, term } of MARKETS) {
     await page.waitForTimeout(600)
     await shoot(page, out('8-santa'), top(520))
 
-    // 9. Friends.
-    await page.goto(`${SITE}/${market}/friends`, { waitUntil: 'networkidle' })
+    // 9. Friends: since 2026-09-26 they are on My people (/people).
+    await page.goto(`${SITE}/${market}/people`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(600)
     await shoot(page, out('9-friends'), top(520))
 }
