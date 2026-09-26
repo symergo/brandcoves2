@@ -338,17 +338,20 @@ return [
     'discover_cove' => [
         'seo_title' => 'Cadeau-ideeën en vondsten, elke dag nieuw',
         'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
-        'title' => 'Ontdek - manieren om iets te vinden',
-        'intro' => 'Manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, één gaat over een persoon in plaats van een ding, en de rest is om rustig te lezen.',
-        'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
+        'title' => 'Ontdek',
+        'intro' => 'Vind iets waar je niet naar zocht: de Cove van vandaag, een verrassing, of kies tussen twee dingen tot je weet wat iemand leuk vindt.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
-        'idea_what' => 'Koopadvies en koopgidsen rond één onderwerp: waar je op let en wat het verschil maakt, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
-        'persona_what' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de koffiefanaat, wie alles al heeft.',
         'persona_all' => 'Alle cadeau-ideeën',
         'guides_all' => 'Alle gidsen',
         // The list of editions before today's, under today's band.
         'dailies_heading' => 'Eerdere edities',
         'dailies_all' => 'Alle edities',
+        'jump_label' => 'Op deze pagina',
+        'taste_body' => 'Weet je niet goed wat iemand leuk vindt? Kies een tiental keer tussen twee dingen, en wij zoeken uit wat die persoon leuk vindt, een budget en ideeën die passen.',
+        'taste_cta' => 'Begin met kiezen',
+        'finder_link' => 'Of beantwoord een paar vragen',
+        'or' => 'of',
+        'for_whom' => 'Of per persoon',
     ],
 
     'shops' => [

@@ -1,9 +1,9 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
+import { useState, type ReactNode } from 'react'
+import CoveIcon from '../Components/CoveIcon'
 import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
-import GiftWizardCard from '../Components/GiftWizardCard'
-import SearchCard from '../Components/SearchCard'
+import ToolIcon from '../Components/ToolIcon'
 import type { SharedProps } from '../types'
 import { formatOccasionDate, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -30,144 +30,106 @@ interface Persona {
     scene: SceneKey | null
 }
 
+interface Find {
+    id: number
+    title: string
+    brand?: string | null
+    image: string | null
+    price: number | null
+    url: string
+}
+
 interface Props {
-    urls: { daily: string; surprise: string; guides: string; giftIdeas: string; ask: string }
-    /** The chips the Whisperer teaser under the search card offers. */
-    giftInterests: { value: string; label: string }[]
+    urls: { daily: string; surprise: string; guides: string; giftIdeas: string; ask: string; taste: string; gift: string }
     coves: Cove[]
-    /** Empty until a market publishes its first; the card goes with the band. */
+    /** Empty until a market publishes its first; the band goes with it. */
     personas: Persona[]
-    /** Null before a market has published its first edition. */
-    /** The editions before today's, newest first. */
+    /** The gift landing pages for a whole person ("gift ideas for dad"). */
+    forWhom: { label: string; url: string }[]
+    /** The editions before today's, newest first. Empty below three. */
     dailies: { date: string; title: string; url: string }[]
+    /** Null before a market has published its first edition. */
     today: {
         theme: string
         blurb: string | null
         date: string
         label: string
         url: string
-        finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
+        finds: Find[]
     } | null
+    /** Empty below three: one lonely question reads as an empty board. */
     questions: Question[]
-    askUrl: string
-    /** Resampled on every visit — that is the point of the band. */
-    surprises: { id: number; title: string; brand: string | null; image: string | null; price: number | null; url: string }[]
+    /** Resampled on every visit; that is the point of the band. */
+    surprises: Find[]
+    /** Two products for the This or that band, drawn apart from the surprises. */
+    pair: Find[]
 }
 
 /**
- * The discovery landing page.
+ * The discovery landing page, rebuilt 2026-09-26 after a review with the owner.
  *
- * Four cards, one per surface, each answering *what is this* in one sentence
- * before it asks for a click — the same rule the Gift Cove cards follow, and
- * for the same reason: "Surprise me" promises nothing a visitor can evaluate
- * in advance, so the page that sends them there has to say what arrives.
+ * The earlier page tried to be everything: a search card and the Gift Finder
+ * first (both already in the header, and both for somebody who already knows
+ * what they want), then five explainer tiles that repeated the sections below
+ * them word for word, then eight bands, nine phone screens long. A page called
+ * Discover is for somebody without a goal, so it now opens with something to
+ * look at:
  *
- * ## Then it shows, rather than describes
+ * 1. a title and one line;
+ * 2. a row of jump links, one per band on the page, which replaces the tiles;
+ * 3. today's Cove, the thing that changes every day;
+ * 4. This or that, the new way to find out what somebody likes, shown with two
+ *    real products side by side so it reads as a choice before it is read;
+ * 5. Surprise, gift ideas per person, Shop Smarter: six at most each, with a
+ *    link to the rest;
+ * 6. the question board and earlier editions, each only with three or more,
+ *    because one lonely row reads as an empty shelf.
  *
- * Four cards and nothing else made this a table of contents for the discovery
- * half rather than a landing page for it. Three of the four surfaces have
- * something real to put on the page, and each one is more persuasive than the
- * sentence about it:
- *
- * - **Today's edition**, dated, with its finds. The Daily Cove's whole argument
- *   is "this changes, come back tomorrow", and a card saying so asks the reader
- *   to take it on trust.
- * - **The Coves**, by title. "Long reads around a theme" sends a reader one
- *   click away to find out whether any of them is about anything they care
- *   about; a dozen titles answers that here.
- * - **The questions**. An unanswered one is the most effective invitation the
- *   board has — somebody who happens to know the answer recognises it on sight.
- *
- * Surprise is the one with nothing to show, by construction, and its card is
- * doing the work its name cannot.
- *
- * **Still no counts or totals.** A hub that totals things repeats the
- * catalogue-counter mistake `homepage.md` removed from the front page. Each
- * question's own answer count is a different thing: it belongs to that question
- * and travels with it.
- *
- * No container of its own — `SiteLayout`'s `<main>` is already `max-w-6xl px-4
- * py-10`, and this page used to nest a narrower one inside it.
+ * Still no counts or totals, as homepage.md decided for the front page.
  */
-export default function DiscoverCove({
-    urls,
-    coves,
-    personas,
-    today, dailies,
-    questions,
-    askUrl,
-    surprises,
-    giftInterests,
-}: Props) {
+export default function DiscoverCove({ urls, coves, personas, forWhom, today, dailies, questions, surprises, pair }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
-    // The surfaces. Named `sections` rather than `coves` because `coves`
-    // is the archive's articles here, exactly as it is on the front page.
-    const sections: { key: CoveKey; href: string; name: string; what: string }[] = [
-        { key: 'daily', href: urls.daily, name: t('nav.daily'), what: t('discover_cove.daily_what') },
-        { key: 'surprise', href: urls.surprise, name: t('nav.surprise'), what: t('discover_cove.surprise_what') },
-        { key: 'idea', href: urls.guides, name: t('nav.smart'), what: t('discover_cove.idea_what') },
-        /*
-         * Personas, and only once a market has one.
-         *
-         * Every other card here points at a surface that always has something
-         * on it — there is an edition most days, a surprise always, an archive.
-         * The persona shelf starts empty in a new market and stays empty until
-         * somebody writes one, so an unconditional card would be this hub's
-         * only link to a page saying "nothing here yet". The whole point of the
-         * band below is that a reader recognises the person they are shopping
-         * for; there is nothing to recognise in an empty grid.
-         */
-        ...(personas.length > 0
-            ? [
-                  {
-                      key: 'persona' as CoveKey,
-                      href: urls.giftIdeas,
-                      name: t('gift_ideas.title'),
-                      what: t('discover_cove.persona_what'),
-                  },
-              ]
+    // A pair with a picture that will not load reads as a broken card, and
+    // half a choice is no choice: the picture goes, the words stay.
+    const [pairBroken, setPairBroken] = useState(false)
+
+    // One jump link per band that is actually on the page, in page order.
+    const jumps: { id: string; label: string; icon: ReactNode }[] = [
+        ...(today ? [{ id: 'today', label: t('home.today_badge'), icon: <CoveIcon name="daily" className="h-4 w-4" /> }] : []),
+        { id: 'taste', label: t('gift.taste.title'), icon: <ToolIcon name="taste" className="h-4 w-4" /> },
+        ...(surprises.length > 0 ? [{ id: 'surprise', label: t('nav.surprise'), icon: <CoveIcon name="surprise" className="h-4 w-4" /> }] : []),
+        ...(personas.length > 0 || forWhom.length > 0
+            ? [{ id: 'gift-ideas', label: t('gift_ideas.title'), icon: <CoveIcon name="persona" className="h-4 w-4" /> }]
             : []),
-        /*
-         * The fourth is not ours.
-         *
-         * Daily, Surprise and the Coves are all this site showing you something
-         * it chose. Ask others is the one surface where the answer comes from
-         * another person — which is exactly why it belongs here rather than
-         * under Organise: it is a way of finding something when you cannot
-         * describe it well enough to search for it.
-         */
-        { key: 'ask', href: urls.ask, name: t('ask.title'), what: t('ask.nav_hint') },
+        ...(coves.length > 0 ? [{ id: 'guides', label: t('nav.smart'), icon: <CoveIcon name="idea" className="h-4 w-4" /> }] : []),
+        ...(questions.length > 0 ? [{ id: 'ask', label: t('ask.title'), icon: <CoveIcon name="ask" className="h-4 w-4" /> }] : []),
     ]
 
     return (
         <>
             <Head title={t('discover_cove.seo_title')} />
 
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
-            <p className="mt-3 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{t('discover_cove.title')}</h1>
+            <p className="mt-2 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
-            {/* The same search card as the home page, first (owner's call, 2026-09-13). */}
-            <SearchCard className="mt-6" />
+            <nav aria-label={t('discover_cove.jump_label')} className="mt-5 flex flex-wrap gap-2">
+                {jumps.map((jump) => (
+                    <a
+                        key={jump.id}
+                        href={`#${jump.id}`}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line bg-card px-3 text-sm text-ink transition hover:border-ink"
+                    >
+                        <span className="text-accent">{jump.icon}</span>
+                        {jump.label}
+                    </a>
+                ))}
+            </nav>
 
-            {/*
-              The Whisperer, straight under the search card (owner's call,
-              2026-09-14), in the shape the front page gives the list wizard:
-              the card above answers the visitor who knows what they want,
-              this one answers the visitor who does not, and on a page called
-              "Find a gift" that is the question most people arrive with.
-            */}
-            <GiftWizardCard interests={giftInterests} className="mt-6" />
-
-            {/*
-              Today's edition, shown rather than described. Same copy keys as
-              the front page's band — one source, so the two pages cannot drift
-              into describing the same edition differently.
-            */}
             {today && (
-                <section className="mt-14" aria-labelledby="today-heading">
-                    <div className="rounded-card border border-line bg-card p-6">
+                <section id="today" className="mt-8 scroll-mt-24" aria-labelledby="today-heading">
+                    <div className="rounded-card border border-line bg-card p-5 sm:p-6">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium tracking-wide text-accent uppercase">
                                 {t('home.today_badge')}
@@ -177,54 +139,16 @@ export default function DiscoverCove({
                             </time>
                         </div>
 
-                        <h2 id="today-heading" className="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-ink">
+                        <h2 id="today-heading" className="mt-3 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                             {today.theme}
                         </h2>
                         {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
 
-                        {today.finds.length > 0 && (
-                            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                {today.finds.map((find) => (
-                                    <li key={find.id} className="relative">
-                                        {/*
-                                          Outside the anchor and above it on the
-                                          z-axis. A tile is one big link, and a
-                                          button nested inside it is not a
-                                          button — the anchor takes the click.
-                                        */}
-                                        <div className="absolute top-2 right-2 z-10">
-                                            <SaveToList groupId={find.id} compact />
-                                        </div>
-                                        <Link
-                                            href={find.url}
-                                            className="flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink"
-                                        >
-                                            {find.image && (
-                                                <img
-                                                    src={find.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="mx-auto h-24 w-auto max-w-full object-contain"
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.visibility = 'hidden'
-                                                    }}
-                                                />
-                                            )}
-                                            <p className="mt-2 line-clamp-2 text-sm font-medium">{find.title}</p>
-                                            {find.price !== null && (
-                                                <p className="mt-1 text-sm text-ink-soft">
-                                                    {formatPrice(find.price, market)}
-                                                </p>
-                                            )}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                        {today.finds.length > 0 && <FindGrid finds={today.finds} className="mt-5" />}
 
                         <Link
                             href={today.url}
-                            className="mt-6 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                            className="mt-5 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
                         >
                             {t('home.today_cta')}
                         </Link>
@@ -233,161 +157,143 @@ export default function DiscoverCove({
             )}
 
             {/*
-              The days before today's, as rows. A visitor who liked today's
-              edition wants to know there is a yesterday; a row per edition
-              says so without another band of product tiles. Empty on a
-              market with one edition, and then not rendered.
+              This or that, shown as what it is: two things side by side and a
+              choice. The pictures are not links; the whole band leads to the
+              tool, which starts with its own pair. Without two products with
+              a picture the band still stands, as words and a button.
             */}
-            {dailies.length > 0 && (
-                <section className="mt-14" aria-labelledby="dailies-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="dailies-heading" className="text-xl font-semibold tracking-tight text-ink">
-                            {t('discover_cove.dailies_heading')}
+            <section id="taste" className="mt-10 scroll-mt-24" aria-labelledby="taste-heading">
+                <div className="grid items-center gap-6 rounded-card border border-line bg-accent/5 p-5 sm:p-6 md:grid-cols-[1fr_auto]">
+                    <div>
+                        <h2 id="taste-heading" className="flex items-center gap-2 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+                            <span className="text-accent">
+                                <ToolIcon name="taste" className="h-6 w-6" />
+                            </span>
+                            {t('gift.taste.title')}
                         </h2>
-                        <Link href={urls.daily} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                            {t('discover_cove.dailies_all')} →
-                        </Link>
+                        <p className="mt-2 max-w-xl text-ink-soft">{t('discover_cove.taste_body')}</p>
+                        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <Link
+                                href={urls.taste}
+                                className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                            >
+                                {t('discover_cove.taste_cta')}
+                            </Link>
+                            <Link href={urls.gift} className="text-sm text-accent-dark underline hover:text-ink">
+                                {t('discover_cove.finder_link')}
+                            </Link>
+                        </div>
                     </div>
-                    <ul className="mt-4 divide-y divide-line rounded-card border border-line bg-card">
-                        {dailies.map((edition) => (
-                            <li key={edition.url}>
-                                <Link
-                                    href={edition.url}
-                                    className="flex flex-col gap-0.5 p-4 transition hover:bg-cream sm:flex-row sm:items-baseline sm:gap-4"
-                                >
-                                    <time dateTime={edition.date} className="shrink-0 text-sm text-ink-soft sm:w-24">
-                                        {formatOccasionDate(edition.date, market)}
-                                    </time>
-                                    <span className="font-medium">{edition.title}</span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
+
+                    {pair.length === 2 && !pairBroken && (
+                        <div className="flex items-center justify-center gap-3" aria-hidden>
+                            <PairCard find={pair[0]} tilt="-rotate-3" onBroken={() => setPairBroken(true)} />
+                            <span className="text-sm font-medium text-ink-soft">{t('discover_cove.or')}</span>
+                            <PairCard find={pair[1]} tilt="rotate-3" onBroken={() => setPairBroken(true)} />
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {surprises.length > 0 && (
+                <Band
+                    id="surprise"
+                    title={t('nav.surprise')}
+                    intro={t('discover_cove.surprise_what')}
+                    more={{ href: urls.surprise, label: t('surprise.reroll') }}
+                >
+                    <FindGrid finds={surprises} />
+                </Band>
             )}
 
-            {/*
-              The cards for every kind of Cove, after the editions (owner's
-              call, 2026-09-13): the page opens with the search, then today's
-              edition, then the days before it, and only then the map of what
-              else there is.
+            {(personas.length > 0 || forWhom.length > 0) && (
+                <Band
+                    id="gift-ideas"
+                    title={t('gift_ideas.title')}
+                    intro={t('gift_ideas.description')}
+                    more={{ href: urls.giftIdeas, label: t('discover_cove.persona_all') }}
+                >
+                    {personas.length > 0 && (
+                        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {personas.map((persona) => (
+                                <li key={persona.url}>
+                                    <Link
+                                        href={persona.url}
+                                        className="group flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-4 transition hover:border-ink"
+                                    >
+                                        <SceneIllustration
+                                            name={persona.scene}
+                                            className="h-14 w-20 shrink-0 text-ink-soft transition group-hover:text-accent"
+                                        />
+                                        <div className="min-w-0">
+                                            <h3 className="font-medium text-ink">{persona.title}</h3>
+                                            {persona.intro && (
+                                                <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{persona.intro}</p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
 
-              Four across, or five when the persona card is present. Both
-              classes are written out because Tailwind scans source text and
-              never sees a class assembled from a variable — and four cards in a
-              five-column grid leaves a hole that reads as a missing card.
-            */}
-            <ul
-                className={`mt-10 grid gap-4 sm:grid-cols-2 ${
-                    sections.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-                }`}
-            >
-                {sections.map((section) => (
-                    <li key={section.key}>
-                        <Link
-                            href={section.href}
-                            className="flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent"
-                        >
-                            <span className="text-accent">
-                                <CoveIcon name={section.key} className="h-8 w-8" />
-                            </span>
-                            <span className="font-medium text-ink">{section.name}</span>
-                            <span className="text-sm text-ink-soft">{section.what}</span>
-                        </Link>
-                    </li>
-                ))}
-            </ul>
+                    {/* The gift landing pages per person: a row of words, not more cards. */}
+                    {forWhom.length > 0 && (
+                        <div className={personas.length > 0 ? 'mt-4' : ''}>
+                            <p className="text-sm font-medium text-ink">{t('discover_cove.for_whom')}</p>
+                            <ul className="mt-2 flex flex-wrap gap-2">
+                                {forWhom.map((page) => (
+                                    <li key={page.url}>
+                                        <Link
+                                            href={page.url}
+                                            className="inline-flex min-h-10 items-center rounded-full border border-line bg-card px-3 text-sm hover:border-ink"
+                                        >
+                                            {page.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </Band>
+            )}
 
-            {/*
-              Surprise, demonstrated.
-
-              This was the one card with nothing underneath it, which left the
-              page arguing for three surfaces and merely asserting a fourth —
-              and it is the surface whose promise is least evaluable in advance.
-              "Show me something I didn't know existed" cannot be judged until
-              you have seen one.
-
-              Resampled server-side on every visit, which is also the property
-              the band has to demonstrate rather than claim.
-            */}
-            {surprises.length > 0 && (
-                <section className="mt-14" aria-labelledby="surprise-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="surprise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
-                            {t('nav.surprise')}
-                        </h2>
-                        <Link href={urls.surprise} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                            {t('surprise.reroll')} →
-                        </Link>
-                    </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('discover_cove.surprise_what')}</p>
-
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {surprises.map((find) => (
-                            <li key={find.id} className="relative">
-                                {/* Outside the anchor; see today's finds above. */}
-                                <div className="absolute top-2 right-2 z-10">
-                                    <SaveToList groupId={find.id} compact />
-                                </div>
+            {coves.length > 0 && (
+                <Band
+                    id="guides"
+                    title={t('nav.smart')}
+                    intro={t('home.coves_intro')}
+                    more={{ href: urls.guides, label: t('discover_cove.guides_all') }}
+                >
+                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {coves.map((cove) => (
+                            <li key={cove.url}>
                                 <Link
-                                    href={find.url}
+                                    href={cove.url}
                                     className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink"
                                 >
-                                    {find.image && (
-                                        <img
-                                            src={find.image}
-                                            alt=""
-                                            loading="lazy"
-                                            className="mx-auto h-28 w-auto max-w-full object-contain"
-                                            onError={(e) => {
-                                                e.currentTarget.style.visibility = 'hidden'
-                                            }}
-                                        />
-                                    )}
-                                    {find.brand && (
-                                        <span className="mt-3 text-xs tracking-wide text-ink-soft uppercase">
-                                            {find.brand}
+                                    <h3 className="font-medium text-ink">{cove.title}</h3>
+                                    {cove.intro && <p className="mt-2 line-clamp-2 text-sm text-ink-soft">{cove.intro}</p>}
+                                    {cove.searches > 0 && (
+                                        <span className="mt-auto pt-3 text-xs text-ink-soft">
+                                            {t('home.coves_volume', { count: n(cove.searches) })}
                                         </span>
-                                    )}
-                                    <p className="mt-1 line-clamp-2 text-sm font-medium">{find.title}</p>
-                                    {find.price !== null && (
-                                        <p className="mt-auto pt-2 text-sm text-ink-soft">
-                                            {formatPrice(find.price, market)}
-                                        </p>
                                     )}
                                 </Link>
                             </li>
                         ))}
                     </ul>
-                </section>
+                </Band>
             )}
 
-            {/*
-              What the board is chewing on.
-
-              An unanswered question is the most effective invitation this
-              feature has: somebody who happens to know the answer recognises it
-              on sight, and that is a far better reason to click than a card
-              explaining what a question board is.
-            */}
             {questions.length > 0 && (
-                <section className="mt-14" aria-labelledby="questions-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="questions-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
-                            {t('ask.title')}
-                        </h2>
-                        <Link href={askUrl} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                            {t('ask.all')} →
-                        </Link>
-                    </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('ask.nav_hint')}</p>
-
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Band id="ask" title={t('ask.title')} intro={t('ask.nav_hint')} more={{ href: urls.ask, label: t('ask.all') }}>
+                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {questions.map((question) => (
                             <li key={question.url}>
                                 <Link
                                     href={question.url}
-                                    className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                    className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink"
                                 >
                                     <h3 className="font-medium text-ink">{question.title}</h3>
                                     <span
@@ -405,123 +311,117 @@ export default function DiscoverCove({
                             </li>
                         ))}
                     </ul>
-                </section>
+                </Band>
             )}
 
-            {/*
-              The archive, spelled out. Same copy keys as the front page's
-              band — one source, so the two pages describing the same shelf
-              cannot drift into describing it differently.
-            */}
-            {/*
-              The personas, by name.
-
-              Above the Coves rather than below them because this is the more
-              answerable question: a reader arrives knowing who they are buying
-              for and can recognise them in a title, where an article has to be
-              read before it is worth anything.
-
-              Heading and intro come from `gift_ideas.*` — the same keys the
-              shelf itself uses — so the hub and the page it links to cannot
-              drift into describing the shelf differently. Still no counts.
-
-              This band carried no picture while the only one available was a
-              product photograph, which would have made a shelf of people read
-              as a category of things. A persona scene is about the person, so
-              it earns its place: it is what a reader recognises.
-            */}
-            {personas.length > 0 && (
-                <section className="mt-14" aria-labelledby="personas-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2
-                            id="personas-heading"
-                            className="text-xl sm:text-2xl font-semibold tracking-tight text-ink"
-                        >
-                            {t('gift_ideas.title')}
-                        </h2>
-                        <Link
-                            href={urls.giftIdeas}
-                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                        >
-                            {t('discover_cove.persona_all')} →
-                        </Link>
-                    </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('gift_ideas.description')}</p>
-
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {personas.map((persona) => (
-                            <li key={persona.url}>
+            {dailies.length > 0 && (
+                <Band id="dailies" title={t('discover_cove.dailies_heading')} more={{ href: urls.daily, label: t('discover_cove.dailies_all') }}>
+                    <ul className="divide-y divide-line rounded-card border border-line bg-card">
+                        {dailies.map((edition) => (
+                            <li key={edition.url}>
                                 <Link
-                                    href={persona.url}
-                                    className="group flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                    href={edition.url}
+                                    className="flex flex-col gap-0.5 p-4 transition hover:bg-cream sm:flex-row sm:items-baseline sm:gap-4"
                                 >
-                                    <SceneIllustration
-                                        name={persona.scene}
-                                        className="h-14 w-20 shrink-0 text-ink-soft transition group-hover:text-accent"
-                                    />
-                                    <div className="min-w-0">
-                                        <h3 className="font-medium text-ink">{persona.title}</h3>
-                                        {persona.intro && (
-                                            <p className="mt-1 line-clamp-2 text-sm text-ink-soft">
-                                                {persona.intro}
-                                            </p>
-                                        )}
-                                    </div>
+                                    <time dateTime={edition.date} className="shrink-0 text-sm text-ink-soft sm:w-24">
+                                        {formatOccasionDate(edition.date, market)}
+                                    </time>
+                                    <span className="font-medium">{edition.title}</span>
                                 </Link>
                             </li>
                         ))}
                     </ul>
-                </section>
-            )}
-
-            {coves.length > 0 && (
-                <section className="mt-14" aria-labelledby="coves-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        {/*
-                          "Shop Smarter", the name the header gives /guides,
-                          which is where the link beside this heading goes
-                          (owner's wording, 2026-09-12). It read "Coves"
-                          before, borrowed from the home page band, and on a
-                          page whose title already says "discover the Coves"
-                          that named the shape twice and the destination never.
-                          The home page keeps its own heading.
-                        */}
-                        <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
-                            {t('nav.smart')}
-                        </h2>
-                        <Link
-                            href={urls.guides}
-                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                        >
-                            {/* "All guides", to match the heading: the
-                                link goes to /guides. */}
-                            {t('discover_cove.guides_all')} →
-                        </Link>
-                    </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('home.coves_intro')}</p>
-
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {coves.map((cove) => (
-                            <li key={cove.url}>
-                                <Link
-                                    href={cove.url}
-                                    className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
-                                >
-                                    <h3 className="font-medium text-ink">{cove.title}</h3>
-                                    {cove.intro && (
-                                        <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
-                                    )}
-                                    {cove.searches > 0 && (
-                                        <span className="mt-auto pt-3 text-xs text-ink-soft">
-                                            {t('home.coves_volume', { count: n(cove.searches) })}
-                                        </span>
-                                    )}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
+                </Band>
             )}
         </>
+    )
+}
+
+/** One band: a heading, a line, a link to the rest, and its contents. */
+function Band({
+    id,
+    title,
+    intro,
+    more,
+    children,
+}: {
+    id: string
+    title: string
+    intro?: string
+    more: { href: string; label: string }
+    children: ReactNode
+}) {
+    return (
+        <section id={id} className="mt-12 scroll-mt-24" aria-labelledby={`${id}-heading`}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 id={`${id}-heading`} className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+                    {title}
+                </h2>
+                <Link
+                    href={more.href}
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
+                >
+                    {more.label} →
+                </Link>
+            </div>
+            {intro && <p className="mt-1 max-w-2xl text-ink-soft">{intro}</p>}
+            <div className="mt-5">{children}</div>
+        </section>
+    )
+}
+
+/**
+ * Product tiles with the save bookmark. The bookmark sits outside the link and
+ * above it: a button inside an anchor is not a button, the anchor takes the click.
+ */
+function FindGrid({ finds, className = '' }: { finds: Find[]; className?: string }) {
+    const { market } = usePage<SharedProps>().props
+
+    return (
+        <ul className={`grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 ${className}`}>
+            {finds.map((find) => (
+                <li key={find.id} className="relative">
+                    <div className="absolute top-2 right-2 z-10">
+                        <SaveToList groupId={find.id} compact />
+                    </div>
+                    <Link
+                        href={find.url}
+                        className="flex h-full flex-col rounded-lg border border-line bg-card p-3 transition hover:border-ink"
+                    >
+                        <div className="flex h-24 items-center justify-center sm:h-28">
+                            {find.image && (
+                                <img
+                                    src={find.image}
+                                    alt=""
+                                    loading="lazy"
+                                    className="max-h-full w-auto max-w-full object-contain"
+                                    onError={(e) => {
+                                        e.currentTarget.style.visibility = 'hidden'
+                                    }}
+                                />
+                            )}
+                        </div>
+                        {find.brand && (
+                            <span className="mt-2 text-2xs tracking-wide text-ink-soft uppercase">{find.brand}</span>
+                        )}
+                        <p className="mt-1 line-clamp-2 text-sm font-medium">{find.title}</p>
+                        {find.price !== null && (
+                            <p className="mt-auto pt-1 text-sm text-ink-soft">{formatPrice(find.price, market)}</p>
+                        )}
+                    </Link>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+/** One side of the This or that picture: a product photo on a tilted card. */
+function PairCard({ find, tilt, onBroken }: { find: Find; tilt: string; onBroken: () => void }) {
+    return (
+        <div className={`flex h-32 w-28 items-center justify-center rounded-card border border-line bg-card p-3 shadow-sm sm:h-36 sm:w-32 ${tilt}`}>
+            {find.image && (
+                <img src={find.image} alt="" loading="lazy" onError={onBroken} className="max-h-full max-w-full object-contain" />
+            )}
+        </div>
     )
 }

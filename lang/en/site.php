@@ -447,20 +447,23 @@ return [
     'discover_cove' => [
         'seo_title' => 'Gift ideas and product finds, new every day',
         'seo_description' => 'Three ways to find something you were not looking for: a new edition every day, a surprise chosen for how rare it is, and long reads around one theme.',
-        'title' => 'Discover - ways to find something',
+        'title' => 'Discover',
         // Counts no longer. The hub described "three" while the cards were
         // four, and the persona card made it five — a number in the copy is a
         // promise the card row has to keep, and this one has been broken twice.
-        'intro' => 'Ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, one is about a person rather than a thing, and the rest are worth sitting down with.',
-        'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
+        'intro' => 'Find something you were not looking for: today\'s Cove, a surprise, or choose between two things until you know what somebody likes.',
         'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
-        'idea_what' => 'Buying advice and guides around one subject: what to look at and what actually makes the difference, with every brand and product linked straight into a live search.',
-        'persona_what' => 'Presents chosen around a person rather than a date — the coffee obsessive, the one who already has everything.',
         'persona_all' => 'All gift ideas',
         'guides_all' => 'All guides',
         // The list of editions before today's, under today's band.
         'dailies_heading' => 'Earlier editions',
         'dailies_all' => 'All editions',
+        'jump_label' => 'On this page',
+        'taste_body' => 'Not sure what somebody likes? Choose between two things a dozen times, and we work out their taste, a budget and ideas that fit.',
+        'taste_cta' => 'Start choosing',
+        'finder_link' => 'Or answer a few questions',
+        'or' => 'or',
+        'for_whom' => 'Or by person',
     ],
 
     /*

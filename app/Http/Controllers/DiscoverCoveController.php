@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\Interest;
 use App\Models\CommunityQuestion;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Models\GiftLanding;
 use App\Models\ProductGroup;
+use App\Services\Gift\GiftLandingCopy;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
@@ -40,6 +41,11 @@ use Inertia\Response;
  * whose value *is* its contents. A card saying "long reads around a theme"
  * sends the reader one click away to find out whether any of them is about
  * anything they care about; a dozen titles answers that here.
+ *
+ * Rebuilt 2026-09-26 with the owner (see DiscoverCove.tsx for the layout and
+ * why): the search card and the Gift Finder left the top, the explainer tiles
+ * went, This or that came in, every band shows six at most, and the question
+ * board and earlier editions show only with three or more.
  */
 class DiscoverCoveController extends Controller
 {
@@ -47,12 +53,24 @@ class DiscoverCoveController extends Controller
     private const EARLIER_EDITIONS = 7;
 
     /**
+     * Below this many, a list band is left out rather than shown thin. One
+     * earlier edition or one question under its own heading read as an empty
+     * shelf in the 2026-09-26 review; three is the fewest that reads as a list.
+     */
+    private const MIN_LIST = 3;
+
+    /** Gift landing pages per person, as a row of words under the personas. */
+    private const FOR_WHOM = 8;
+
+    /**
      * More than the front page's taste, fewer than the archive index's sixty.
      *
      * This page has to be a hub rather than a second copy of `/guides`: enough
-     * titles that the range is obvious, then a link to the whole thing.
+     * titles that the range is obvious, then a link to the whole thing. Six
+     * since 2026-09-26: twelve made this one band longer than the rest of
+     * the page on a phone.
      */
-    private const COVES = 12;
+    private const COVES = 6;
 
     /**
      * Questions on the hub.
@@ -96,19 +114,25 @@ class DiscoverCoveController extends Controller
             canonical: url($current->url('discover-cove')),
         );
 
-        return Inertia::render('DiscoverCove', [
-            /*
-             * The interests the Whisperer teaser offers as chips.
-             *
-             * Sent whole and sliced by the card, so what it shows is a layout
-             * decision rather than a payload one, and the link to the full
-             * wizard offers the same words for the rest of them.
-             */
-            'giftInterests' => array_map(fn (Interest $i) => [
-                'value' => $i->value,
-                'label' => $i->label(),
-            ], Interest::cases()),
+        // Six drawn at once: four for the Surprise band, and two with a picture
+        // for the This or that band, so the two never show the same product.
+        $drawn = collect($this->surprises($current));
+        $pair = $drawn->filter(fn (array $find) => $find['image'] !== null)->take(-2)->values();
 
+        // Half a pair is no pair, and must not cost the Surprise band a product.
+        if ($pair->count() < 2) {
+            $pair = collect();
+        }
+        $surprises = $drawn->reject(fn (array $find) => $pair->contains('id', $find['id']))->take(self::SURPRISES)->values();
+
+        $questions = CommunityQuestion::query()
+            ->forMarket($current->get())
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(self::QUESTIONS)
+            ->get();
+
+        return Inertia::render('DiscoverCove', [
             'urls' => [
                 'daily' => $current->get()->covePath(),
                 'surprise' => $current->url('surprise'),
@@ -117,6 +141,10 @@ class DiscoverCoveController extends Controller
                 // The one surface here whose content comes from other visitors
                 // rather than from us. See docs/features/ask-others.md.
                 'ask' => $current->url('ask'),
+                // This or that (docs/features/taste-discovery.md), and the
+                // Gift Finder for somebody who would rather answer questions.
+                'taste' => $current->url('gift/taste'),
+                'gift' => $current->url('gift'),
             ],
 
             /*
@@ -133,20 +161,13 @@ class DiscoverCoveController extends Controller
              * mistake in a new place; the answer count belongs to the question
              * it is about and travels with it.
              */
-            'questions' => CommunityQuestion::query()
-                ->forMarket($current->get())
-                ->published()
-                ->orderByDesc('published_at')
-                ->limit(self::QUESTIONS)
-                ->get()
+            'questions' => $questions->count() < self::MIN_LIST ? [] : $questions
                 ->map(fn (CommunityQuestion $question) => [
                     'title' => $question->title,
                     'answers' => $question->answers_count,
                     'url' => $current->url("ask/{$question->id}/{$question->slug()}"),
                 ])
                 ->all(),
-
-            'askUrl' => $current->url('ask'),
 
             /*
              * Today's edition, shown rather than described.
@@ -186,7 +207,26 @@ class DiscoverCoveController extends Controller
              * Reads `surprise_score`, which `ScoreSerendipity` computed after
              * the last ingest. Nothing is scored per request.
              */
-            'surprises' => $this->surprises($current),
+            'surprises' => $surprises->all(),
+            'pair' => $pair->all(),
+
+            /*
+             * The gift landing pages for a whole person ("gift ideas for
+             * dad"), most products first: a row of words under the personas,
+             * the same list the /gift-ideas shelf shows. Empty until the
+             * nightly planner has recorded a page in this market.
+             */
+            'forWhom' => GiftLanding::query()
+                ->forMarket($current->get())
+                ->whereNull('interest')
+                ->orderByDesc('product_count')
+                ->limit(self::FOR_WHOM)
+                ->get(['recipient', 'path'])
+                ->map(fn (GiftLanding $page) => [
+                    'label' => (new GiftLandingCopy($current->get(), $page->recipient))->heading(),
+                    'url' => $page->path,
+                ])
+                ->all(),
 
             /*
              * The persona shelf, by name.
@@ -279,14 +319,20 @@ class DiscoverCoveController extends Controller
     {
         $market = $current->get();
 
-        return DailyPickSet::query()
+        $editions = DailyPickSet::query()
             ->forMarket($market)
             ->daily()
             ->published()
             ->orderByDesc('drop_date')
             ->skip(1)
             ->limit(self::EARLIER_EDITIONS)
-            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title'])
+            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title']);
+
+        if ($editions->count() < self::MIN_LIST) {
+            return [];
+        }
+
+        return $editions
             ->map(fn (DailyPickSet $edition): array => [
                 'date' => $edition->drop_date->toDateString(),
                 'title' => $edition->theme_title,
@@ -362,7 +408,7 @@ class DiscoverCoveController extends Controller
         }
 
         return ProductGroup::query()
-            ->whereIn('id', $pool->shuffle()->take(self::SURPRISES))
+            ->whereIn('id', $pool->shuffle()->take(self::SURPRISES + 2))
             ->get()
             ->map(fn (ProductGroup $group) => [
                 'id' => $group->id,

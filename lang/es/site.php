@@ -334,17 +334,20 @@ return [
     'discover_cove' => [
         'seo_title' => 'Ideas de regalo y hallazgos, nuevos cada día',
         'seo_description' => 'Tres maneras de encontrar algo que no buscabas: una edición nueva cada día, una sorpresa elegida por lo rara que es, y lecturas largas por tema.',
-        'title' => 'Descubrir - maneras de encontrar algo',
-        'intro' => 'Maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, otra trata de una persona y no de un objeto, y las demás se leen con calma.',
-        'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
+        'title' => 'Descubre',
+        'intro' => 'Encuentra lo que no buscabas: la Cove de hoy, una sorpresa, o elige entre dos cosas hasta saber qué le gusta a alguien.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
-        'idea_what' => 'Consejos de compra y guías sobre un solo tema: en qué fijarse y qué marca de verdad la diferencia, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
-        'persona_what' => 'Regalos elegidos en torno a una persona y no a una fecha: el fanático del café, quien ya lo tiene todo.',
         'persona_all' => 'Todas las ideas de regalo',
         'guides_all' => 'Todas las guías',
         // The list of editions before today's, under today's band.
         'dailies_heading' => 'Ediciones anteriores',
         'dailies_all' => 'Todas las ediciones',
+        'jump_label' => 'En esta página',
+        'taste_body' => '¿No sabes bien qué le gusta a alguien? Elige una docena de veces entre dos cosas y averiguamos sus gustos, un presupuesto e ideas que encajan.',
+        'taste_cta' => 'Empezar a elegir',
+        'finder_link' => 'O responde unas preguntas',
+        'or' => 'o',
+        'for_whom' => 'O por persona',
     ],
 
     'shops' => [

@@ -335,17 +335,20 @@ return [
     'discover_cove' => [
         'seo_title' => 'Idées cadeaux et trouvailles, chaque jour',
         'seo_description' => 'Trois façons de trouver ce que vous ne cherchiez pas : une nouvelle édition chaque jour, une surprise choisie pour sa rareté, et des lectures par thème.',
-        'title' => 'Découvrir - des façons de trouver quelque chose',
-        'intro' => "Des façons de trouver ce que vous ne cherchiez pas. L'une change chaque jour, une autre est volontairement imprévisible, une autre parle d'une personne plutôt que d'un objet, et les dernières se lisent tranquillement.",
-        'daily_what' => 'Une nouvelle édition chaque jour : un thème, quelques trouvailles et une énigme de prix. Chaque édition passée garde sa page.',
+        'title' => 'Découvrir',
+        'intro' => 'Trouvez ce que vous ne cherchiez pas : la Cove du jour, une surprise, ou choisissez entre deux choses jusqu\'à savoir ce que quelqu\'un aime.',
         'surprise_what' => "Quelque chose dont vous ignoriez l'existence, choisi pour sa rareté et non pour ses ventes.",
-        'idea_what' => "Conseils d'achat et guides autour d'un seul sujet : ce à quoi regarder et ce qui fait vraiment la différence, avec chaque marque et chaque produit reliés directement à une recherche en direct.",
-        'persona_what' => "Des cadeaux choisis autour d'une personne plutôt que d'une date : le fanatique de café, celui qui a déjà tout.",
         'persona_all' => 'Toutes les idées cadeaux',
         'guides_all' => 'Tous les guides',
         // The list of editions before today's, under today's band.
         'dailies_heading' => 'Éditions précédentes',
         'dailies_all' => 'Toutes les éditions',
+        'jump_label' => 'Sur cette page',
+        'taste_body' => 'Vous ne savez pas trop ce que quelqu\'un aime ? Choisissez une douzaine de fois entre deux choses : nous trouvons ses goûts, un budget et des idées qui lui vont.',
+        'taste_cta' => 'Commencer à choisir',
+        'finder_link' => 'Ou répondez à quelques questions',
+        'or' => 'ou',
+        'for_whom' => 'Ou par personne',
     ],
 
     'shops' => [

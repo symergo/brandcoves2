@@ -53,6 +53,7 @@ is true now.
 | [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — board of eight; back in the header since 2026-09-14 |
 | [taste-discovery.md](taste-discovery.md) | Gifting | Active — This or that: a dozen choices between products become a taste, a budget and ideas; can be kept on a person |
+| [discover-cove.md](discover-cove.md) | Core / Discovery | Active, rebuilt 2026-09-26: today's Cove, This or that, then six of each |
 | [giftability.md](giftability.md) | Gifting / Catalogue | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
 | [secret-santa.md](secret-santa.md) | Gifting / Social | Active — chain repair built; year-on-year reuse open |

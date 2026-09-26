@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\CoveKind;
-use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\CommunityQuestion;
@@ -58,20 +57,21 @@ class DiscoverCoveHubTest extends TestCase
     }
 
     /**
-     * The Whisperer is back on this page and in the menu (owner's call,
-     * 2026-09-14), as a teaser under the search card: the card above answers
-     * the visitor who knows what they want and this one answers the visitor
-     * who does not, which on a page called "Find a gift" is most of them.
+     * This or that on the hub (owner, 2026-09-26), in place of the Gift Finder
+     * teaser: the Finder is in the header; choosing between two things is the
+     * discovery way to find out what somebody likes.
      */
     #[Test]
-    public function the_whisperer_teaser_is_offered_the_interests_it_shows_as_chips(): void
+    public function the_page_leads_to_this_or_that_and_the_finder(): void
     {
         $this->get('/be-nl/discover-cove')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->has('giftInterests', count(Interest::cases()))
-                ->where('giftInterests.0.value', Interest::cases()[0]->value)
-                ->where('giftInterests.0.label', Interest::cases()[0]->label()));
+                ->where('urls.taste', '/be-nl/gift/taste')
+                ->where('urls.gift', '/be-nl/gift')
+                ->missing('giftInterests')
+                // Nothing scored yet, so no pair: the band stands as words.
+                ->has('pair', 0));
     }
 
     #[Test]
@@ -79,6 +79,7 @@ class DiscoverCoveHubTest extends TestCase
     {
         // Today's edition has its own band; the days before it are rows,
         // newest first, each linking to its own page.
+        $this->daily('2026-09-10', 'Drie dagen terug');
         $this->daily('2026-09-11', 'Eergisteren');
         $this->daily('2026-09-13', 'Vandaag');
         $this->daily('2026-09-12', 'Gisteren');
@@ -88,12 +89,23 @@ class DiscoverCoveHubTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('today.theme', 'Vandaag')
-                ->has('dailies', 2)
+                ->has('dailies', 3)
                 ->where('dailies.0.title', 'Gisteren')
                 ->where('dailies.0.date', '2026-09-12')
                 ->where('dailies.0.url', '/be-nl/tips/2026-09-12')
                 ->where('dailies.1.title', 'Eergisteren')
             );
+    }
+
+    #[Test]
+    public function fewer_than_three_earlier_editions_are_not_shown_as_a_thin_band(): void
+    {
+        $this->daily('2026-09-12', 'Gisteren');
+        $this->daily('2026-09-13', 'Vandaag');
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('today.theme', 'Vandaag')->has('dailies', 0));
     }
 
     #[Test]
@@ -156,7 +168,7 @@ class DiscoverCoveHubTest extends TestCase
 
         $this->get('/be-nl/discover-cove')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('coves', 12));
+            ->assertInertia(fn ($page) => $page->has('coves', 6));
     }
 
     // --- The persona band ----------------------------------------------------
@@ -258,7 +270,9 @@ class DiscoverCoveHubTest extends TestCase
     #[Test]
     public function it_lists_published_questions_for_this_market(): void
     {
+        // Three, because fewer is not shown: one question reads as an empty board.
         $here = CommunityQuestion::factory()->published()->create(['title' => 'Iets voor mijn zus']);
+        CommunityQuestion::factory()->count(2)->published()->create();
         $elsewhere = CommunityQuestion::factory()->published()->inMarket(Market::NlNl)->create();
         $held = CommunityQuestion::factory()->create(['title' => 'Nog niet gelezen']);
 
@@ -273,11 +287,19 @@ class DiscoverCoveHubTest extends TestCase
     }
 
     #[Test]
+    public function fewer_than_three_questions_are_not_shown(): void
+    {
+        CommunityQuestion::factory()->count(2)->published()->create();
+
+        $this->get('/be-nl/discover-cove')->assertOk()->assertInertia(fn ($page) => $page->has('questions', 0));
+    }
+
+    #[Test]
     public function a_question_carries_its_own_answer_count_and_nothing_aggregate(): void
     {
         // Each question's count belongs to it and travels with it. A hub that
         // totals things is the catalogue-counter mistake in a new place.
-        CommunityQuestion::factory()->published()->create();
+        CommunityQuestion::factory()->count(3)->published()->create();
 
         $props = $this->get('/be-nl/discover-cove')->assertOk()->viewData('page')['props'];
 
@@ -337,5 +359,24 @@ class DiscoverCoveHubTest extends TestCase
         $surprises = $this->get('/be-nl/discover-cove')->assertOk()->viewData('page')['props']['surprises'];
 
         $this->assertSame([$here->id], array_column($surprises, 'id'));
+    }
+
+    #[Test]
+    public function the_this_or_that_pair_never_repeats_a_surprise(): void
+    {
+        ProductGroup::factory()->count(8)->create([
+            'market' => Market::BeNl,
+            'surprise_score' => 90,
+            'in_stock' => true,
+            'min_price' => 2500,
+            'merchant_count' => 1,
+            'image_url' => 'https://example.test/a.jpg',
+        ]);
+
+        $props = $this->get('/be-nl/discover-cove')->assertOk()->viewData('page')['props'];
+
+        $this->assertCount(2, $props['pair']);
+        $this->assertCount(4, $props['surprises']);
+        $this->assertSame([], array_intersect(array_column($props['pair'], 'id'), array_column($props['surprises'], 'id')));
     }
 }
