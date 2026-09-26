@@ -12,6 +12,7 @@ use App\Enums\Vibe;
 use App\Models\Event;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Services\Gift\GiftLandingLinks;
 use App\Services\Gift\GiftTags;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
@@ -106,7 +107,7 @@ class GiftController extends Controller
             'results' => count($picks),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
     }
 
     /**
@@ -157,7 +158,7 @@ class GiftController extends Controller
             'rejected' => $request->integer('rejected'),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
     }
 
     /**
@@ -196,7 +197,7 @@ class GiftController extends Controller
             'results' => count($picks),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
     }
 
     /**
@@ -205,7 +206,7 @@ class GiftController extends Controller
      * @param  list<Suggestion>  $picks
      * @param  array<string, mixed>  $validated
      */
-    private function board(Request $request, CurrentMarket $current, array $picks, array $validated, ?Recipient $recipient): Response
+    private function board(Request $request, CurrentMarket $current, array $picks, array $validated, ?Recipient $recipient, TasteBrief $brief): Response
     {
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
@@ -213,6 +214,13 @@ class GiftController extends Controller
             'picks' => $this->present($picks, $current),
             'brief' => $validated,
             'recipientList' => $this->recipientList($request, $recipient, $current),
+            /*
+             * "Open as a page": the gift landing page nearest this brief, a
+             * GET address that can be kept, shared and found again, which
+             * these POSTed results cannot. Null when no such page exists.
+             * See docs/features/gift-landing-pages.md.
+             */
+            'pageUrl' => $picks === [] ? null : app(GiftLandingLinks::class)->pageFor($brief),
         ]);
     }
 

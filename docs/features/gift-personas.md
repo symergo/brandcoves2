@@ -95,6 +95,16 @@ insert — at 06:00, with a constraint violation and no other symptom.
   persona written in March is exactly as useful in November, which is the whole reason it has no date
   on it.
 - `GET /{market}/gift-ideas/{slug}` — one persona.
+- `GET /{market}/gift-ideas/for/{recipient}/{interest?}` — not a persona: a gift landing page built
+  from a brief ("gift ideas for dad who loves cooking"), since 2026-09-26. The `for` segment is what
+  keeps the two apart: a persona address is one segment after `gift-ideas`, a landing page two or
+  three, so neither can shadow the other. The shelf lists each recipient's landing page above the
+  personas. See [gift-landing-pages.md](gift-landing-pages.md).
+
+**A persona can be a brief (2026-09-26).** A persona plan can carry a gift brief
+(`cove_plans.brief`) instead of search terms: "the keen cook" as *interests: cooking*, and the
+builder fills the slots the shortlist leaves open from the suggestion engine with it. See
+[editorial-api.md](editorial-api.md#a-cove-can-be-chosen-by-who-it-is-for-2026-09-26).
 
 **Not `/coves/{slug}`.** `/coves/subscribe`, `/coves/confirm/{token}` and `/coves/unsubscribe/{token}`
 already live under that prefix, and a slug catch-all beside them would shadow all three the first

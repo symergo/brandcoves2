@@ -67,6 +67,8 @@ interface Props {
     brief: Brief | null
     /** The chosen person's list, where a save lands. Null without a person. */
     recipientList: SavingTo | null
+    /** The gift landing page nearest this brief: a link that can be kept and shared. */
+    pageUrl?: string | null
 }
 
 /*
@@ -83,7 +85,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -445,6 +447,16 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                             >
                                 {t('gift.more')}
                             </button>
+                        )}
+                        {/*
+                          Open as a page: these results are a POST and cannot
+                          be kept or shared; the landing page nearest the
+                          brief can. Offered only when that page exists.
+                        */}
+                        {pageUrl && (
+                            <Link href={pageUrl} className="rounded border border-line px-4 py-2 text-sm hover:border-ink/40">
+                                {t('gift.open_as_page')}
+                            </Link>
                         )}
                     </div>
                 </section>

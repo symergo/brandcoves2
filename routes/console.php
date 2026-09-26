@@ -10,6 +10,7 @@ use App\Jobs\CountListSignals;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\LinkBarcodeItems;
+use App\Jobs\PlanGiftLandingPages;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
@@ -92,6 +93,19 @@ Schedule::job(new LinkBarcodeItems)
 Schedule::job(new CountListSignals)
     ->name('count-list-signals')
     ->dailyAt('03:50')
+    ->onOneServer();
+
+// Which gift landing pages exist (/gift-ideas/for/papa/koken): the pairs the
+// catalogue can fill with eight products or more. After grouping (05:00) so
+// tonight's products count, and after the list signals (03:50) so tonight's
+// crowd tags do. See docs/features/gift-landing-pages.md.
+Schedule::call(function (): void {
+    foreach (Market::published() as $market) {
+        PlanGiftLandingPages::dispatch($market);
+    }
+})
+    ->name('plan-gift-landing-pages')
+    ->dailyAt('05:40')
     ->onOneServer();
 
 /*

@@ -410,3 +410,12 @@ The interests step links to This or that ([taste-discovery.md](taste-discovery.m
 between products works the interests out. What it learns can be kept on a saved person, and then
 fills this wizard. An interest it learned to leave out arrives in `avoid` as `interest:gaming`, which
 the engine excludes by tag and never by title; the avoid step shows it by name, removable with a tap.
+
+## Open as a page (2026-09-26)
+
+The results are a POST, so nobody could keep, share or find a board again. Under the results the
+Finder now offers **Open as a page**: the gift landing page nearest the brief, a GET address with
+the budget carried as `?budget=`. The first of the brief's interests with a page for that person
+wins, then the person's own page; a saved person's free-text relationship ("mama") is read with the
+search box's word lists. When no page exists the link is not shown. See
+[gift-landing-pages.md](gift-landing-pages.md).

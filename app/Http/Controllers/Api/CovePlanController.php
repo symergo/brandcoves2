@@ -26,6 +26,7 @@ use App\Services\Cove\PlanState;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
+use App\Services\Gift\TasteBrief;
 use App\Services\Shops\ShopDirectory;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -143,9 +144,16 @@ class CovePlanController extends Controller
             'queries.*' => ['string', 'max:60'],
             'focusKeyphrase' => ['nullable', 'string', 'max:120'],
             'scene' => ['nullable', Rule::in(CoveScene::values())],
+            // Sent as null, it clears the brief; left out, it is untouched.
+            'brief' => ['nullable', 'array'],
         ]);
 
         $this->assertMayEdit($request, $plan);
+
+        if ($request->exists('brief')) {
+            $this->assertTakesBrief($plan->kind, $data['brief'] ?? null);
+            $plan->forceFill(['brief' => $this->briefFrom($data['brief'] ?? null, $plan->market)]);
+        }
 
         if (isset($data['scene']) && ! in_array(CoveScene::from($data['scene']), CoveScene::forKind($plan->kind), true)) {
             $allowed = array_map(fn (CoveScene $s) => $s->value, CoveScene::forKind($plan->kind));
@@ -324,6 +332,8 @@ class CovePlanController extends Controller
             ]);
         }
 
+        $this->assertTakesBrief($kind, $data['brief'] ?? null);
+
         /*
          * A season is a scheduling fact about a seasonal guide and nothing else.
          *
@@ -408,6 +418,14 @@ class CovePlanController extends Controller
             'build_instructions' => $data['buildInstructions'] ?? null,
             'queries' => $data['queries'] ?? [],
             'note' => $data['note'] ?? null,
+
+            /*
+             * The gift brief. Reset when it is not sent, like every other
+             * field of this whole-plan write: a client that re-sends a plan
+             * without its brief has said the plan has none. `PATCH` is the
+             * way to change it alone.
+             */
+            'brief' => $this->briefFrom($data['brief'] ?? null, $market),
 
             /*
              * The parts of an article that are decided before it is written.
@@ -708,7 +726,66 @@ class CovePlanController extends Controller
             'pinnedGroupIds.*' => ['integer'],
 
             'note' => ['nullable', 'string', 'max:1000'],
+
+            /*
+             * Who the Cove is for, as a gift brief: `{"relationship":
+             * "father", "interests": ["cooking"], "budgetMax": 5000}`. With
+             * one, the builder fills the open slots from the suggestion engine
+             * instead of searching `queries`. Values are checked against the
+             * gift vocabulary in `briefFrom()`.
+             */
+            'brief' => ['nullable', 'array'],
         ]);
+    }
+
+    /**
+     * Only the kinds the builder fills with a brief may carry one.
+     *
+     * A guide, a seasonal guide or an advice article is a comparison, one
+     * product per brand in a price ladder, and the builder never reads a brief
+     * for it. Accepting one would be a decision that looks made and is not.
+     *
+     * @param  array<string, mixed>|null  $brief
+     */
+    private function assertTakesBrief(CoveKind $kind, ?array $brief): void
+    {
+        if ($brief !== null && $brief !== [] && $kind->isArticle()) {
+            throw ValidationException::withMessages([
+                'brief' => 'A '.$kind->label().' chooses its products as a comparison and never reads a brief. '
+                    .'Send `queries` instead, or leave the brief off.',
+            ]);
+        }
+    }
+
+    /**
+     * A submitted gift brief, as it will be stored, or a 422 naming every
+     * value outside the gift vocabulary.
+     *
+     * Refused rather than trimmed, like every other field here: an author who
+     * sends `relationship: "uncle"` and gets a 200 believes the Cove is for an
+     * uncle, and finds out from the products.
+     *
+     * @param  array<string, mixed>|null  $brief
+     * @return array<string, mixed>|null
+     */
+    private function briefFrom(?array $brief, Market $market): ?array
+    {
+        if ($brief === null || $brief === []) {
+            return null;
+        }
+
+        $problems = TasteBrief::problems($brief);
+
+        if ($problems !== []) {
+            throw ValidationException::withMessages(array_combine(
+                array_map(fn (string $field) => 'brief.'.$field, array_keys($problems)),
+                array_values($problems),
+            ));
+        }
+
+        $stored = TasteBrief::fromArray($brief, $market)->toArray();
+
+        return $stored === [] ? null : $stored;
     }
 
     /**
@@ -906,6 +983,9 @@ class CovePlanController extends Controller
             'buildInstructions' => $plan->build_instructions,
             'queries' => $plan->queries,
             'note' => $plan->note,
+            // Who the Cove is for, when it chooses by brief rather than by
+            // search terms. Null otherwise.
+            'brief' => $plan->brief,
 
             /*
              * Read back so a writer can see what it has already decided.

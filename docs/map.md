@@ -57,7 +57,8 @@ Grouped by what a visitor is doing, not by file order:
   `/shops`, `/shops/{slug}`, `/p/{group}/{slug?}`, `/go/{offer}` (every outbound link),
   `/track/click`
 - **Discover** — `/daily`, `/daily/{date}`, `/discover-cove`, `/surprise`,
-  `/coves`, `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-cove`, `/ask`
+  `/coves`, `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-ideas/for/{recipient}/{interest?}`
+  (gift landing pages), `/gift-cove`, `/ask`
 - **Organize** — `/lists`, `/lists/{list}`, `/list-options`, `/saved-items`, `/l/{token}` (shared
   list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`
 - **Account** — `/login`, `/auth/magic/{token}`, `/auth/google`, `/logout`, `/notifications`,

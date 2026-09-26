@@ -8,6 +8,8 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\ProductGroup;
+use App\Services\Gift\BriefUrl;
+use App\Services\Gift\GiftLandingLinks;
 use App\Support\CurrentMarket;
 use App\Support\SearchUrl;
 use Illuminate\Support\Facades\DB;
@@ -430,6 +432,17 @@ class Alternates
         if ($slug === null) {
             // The shelf itself exists in every market, empty or not.
             return $this->swap('/'.implode('/', $segments));
+        }
+
+        // A gift landing page (/gift-ideas/for/papa/koken), not a persona:
+        // paired on what it is about, since each market words it its own way.
+        if ($slug === 'for') {
+            $recipient = isset($segments[3]) ? BriefUrl::recipient($current, $segments[3]) : null;
+            $interest = isset($segments[4]) ? BriefUrl::interest($current, $segments[4]) : null;
+
+            return $recipient === null || (isset($segments[4]) && $interest === null)
+                ? []
+                : app(GiftLandingLinks::class)->alternates($recipient, $interest);
         }
 
         $rows = DB::table('daily_pick_sets')

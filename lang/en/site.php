@@ -226,6 +226,9 @@ return [
         // A gift search, read back (roadmap step 4, 2026-09-26).
         'intent_label' => 'We read this as',
         'intent_remove' => 'Leave out :label',
+        // Who, interest and occasion filters on a search (?for=, ?interest=, ?occasion=).
+        'tag_filters_label' => 'Only gifts',
+        'tag_for' => 'for :who',
         'intent_budget' => 'the budget',
         'intent_under' => 'under :price',
         'intent_as_words' => 'Search the words as typed instead',
@@ -1444,6 +1447,7 @@ return [
         'more_questions' => 'Answer more questions',
         'swap' => 'Something else',
         'start_over' => 'Start over',
+        'open_as_page' => 'Open as a page',
         'results_title' => 'Eight ideas',
         'no_results' => 'Nothing fit that brief. Try a wider budget or another interest.',
         'budget_any' => 'No limit',
@@ -1819,6 +1823,95 @@ return [
         'empty' => 'Nothing here yet. These are written one at a time, and the first is on its way.',
         'finds_title' => 'What to get them',
         'find_count' => ':count ideas',
+    ],
+
+    /*
+     * Gift landing pages: /gift-ideas/for/{recipient}/{interest}.
+     *
+     * Built from the brief in the URL, never written by a model. A heading
+     * is `heading` with the pieces below filled in, so each recipient says
+     * what comes between it and the interest (`who`), which is how Dutch and
+     * French get their agreement right. GiftLandingCopy measures the listing
+     * title after it is filled in and falls back to `title_short`, then to
+     * `title_bare`, so a long pair still fits the 48 characters a listing
+     * shows. `slug` is the URL word; change one and the old address stops
+     * resolving, so treat them as permanent. See
+     * docs/features/gift-landing-pages.md.
+     */
+    'gift_landing' => [
+        'heading' => 'Gift ideas for :recipient :who :interest',
+        'title_short' => 'Gifts for :recipient :who :interest',
+        'title_bare' => ':Recipient :who :interest',
+        'heading_recipient' => 'Gift ideas for :recipient',
+        'intro' => 'Ideas for :recipient :who :interest, picked from the shops we compare. What our editors and people\'s own lists say suits them comes first, and every price is checked daily.',
+        'intro_recipient' => 'Ideas for :recipient, grouped by what they love and picked from the shops we compare. Every price is checked daily.',
+        'seo_description' => 'Gift ideas for :recipient :who :interest: :count products from the shops we compare, with every price checked daily.',
+        'seo_description_recipient' => 'Gift ideas for :recipient, by what they love: :count products from the shops we compare, with every price checked daily.',
+        'by_recipient' => 'Ideas by who it is for',
+        'search_all' => 'Search everything tagged for them',
+        'more_for' => 'More for :recipient',
+        'same_interest' => 'Also for someone who loves :interest',
+        'budget' => 'Budget',
+        'budget_any' => 'Any',
+        'budget_under' => 'Under :max',
+        'budget_between' => ':min to :max',
+        'budget_over' => 'Over :min',
+        'finder_title' => 'Know more about them?',
+        'finder_body' => 'The Gift Finder asks a few more questions: their age, their style, what to avoid.',
+        'finder_link' => 'Open the Gift Finder',
+        'recipients' => [
+            'partner' => ['slug' => 'partner', 'name' => 'your partner', 'who' => 'who loves'],
+            'mother' => ['slug' => 'mum', 'name' => 'mum', 'who' => 'who loves'],
+            'father' => ['slug' => 'dad', 'name' => 'dad', 'who' => 'who loves'],
+            'grandparent' => ['slug' => 'grandparent', 'name' => 'a grandparent', 'who' => 'who loves'],
+            'child' => ['slug' => 'son-or-daughter', 'name' => 'your child', 'who' => 'who loves'],
+            'friend' => ['slug' => 'friend', 'name' => 'a friend', 'who' => 'who loves'],
+            'colleague' => ['slug' => 'colleague', 'name' => 'a colleague', 'who' => 'who loves'],
+            'sibling' => ['slug' => 'brother-or-sister', 'name' => 'your brother or sister', 'who' => 'who loves'],
+            'teacher' => ['slug' => 'teacher', 'name' => 'a teacher', 'who' => 'who loves'],
+            'host' => ['slug' => 'host', 'name' => 'your host', 'who' => 'who loves'],
+        ],
+        'interests' => [
+            'cooking' => ['slug' => 'cooking', 'name' => 'cooking'],
+            'coffee' => ['slug' => 'coffee', 'name' => 'coffee'],
+            'photography' => ['slug' => 'photography', 'name' => 'photography'],
+            'music' => ['slug' => 'music', 'name' => 'music'],
+            'gaming' => ['slug' => 'gaming', 'name' => 'gaming'],
+            'reading' => ['slug' => 'reading', 'name' => 'reading'],
+            'fitness' => ['slug' => 'fitness', 'name' => 'fitness'],
+            'outdoors' => ['slug' => 'outdoors', 'name' => 'the outdoors'],
+            'travel' => ['slug' => 'travel', 'name' => 'travel'],
+            'gardening' => ['slug' => 'gardening', 'name' => 'gardening'],
+            'diy' => ['slug' => 'diy', 'name' => 'DIY'],
+            'beauty' => ['slug' => 'beauty', 'name' => 'beauty'],
+            'fashion' => ['slug' => 'fashion', 'name' => 'fashion'],
+            'tech' => ['slug' => 'tech', 'name' => 'tech'],
+            'home' => ['slug' => 'interiors', 'name' => 'interiors'],
+            'craft' => ['slug' => 'crafts', 'name' => 'crafts'],
+            'film' => ['slug' => 'films', 'name' => 'films'],
+            'pets' => ['slug' => 'pets', 'name' => 'pets'],
+            'wellness' => ['slug' => 'relaxing', 'name' => 'relaxing'],
+            'kids' => ['slug' => 'kids', 'name' => 'kids'],
+            'art' => ['slug' => 'art', 'name' => 'art'],
+            'cycling' => ['slug' => 'cycling', 'name' => 'cycling'],
+            'boardgames' => ['slug' => 'board-games', 'name' => 'board games'],
+            'drinks' => ['slug' => 'wine', 'name' => 'wine'],
+            'baking' => ['slug' => 'baking', 'name' => 'baking'],
+            'running' => ['slug' => 'running', 'name' => 'running'],
+            'yoga' => ['slug' => 'yoga', 'name' => 'yoga'],
+            'cars' => ['slug' => 'cars', 'name' => 'cars'],
+            'science' => ['slug' => 'science', 'name' => 'science'],
+            'water' => ['slug' => 'water-sports', 'name' => 'water sports'],
+            'wintersports' => ['slug' => 'winter-sports', 'name' => 'winter sports'],
+            'football' => ['slug' => 'football', 'name' => 'football'],
+            'collecting' => ['slug' => 'collecting', 'name' => 'collecting'],
+            'nature' => ['slug' => 'nature', 'name' => 'nature'],
+            'fishing' => ['slug' => 'fishing', 'name' => 'fishing'],
+            'horses' => ['slug' => 'horses', 'name' => 'horses'],
+            'hunting' => ['slug' => 'hunting', 'name' => 'hunting'],
+            'gadgets' => ['slug' => 'gadgets', 'name' => 'gadgets'],
+            'it' => ['slug' => 'computers', 'name' => 'computers'],
+        ],
     ],
 
     'daily' => [
@@ -2208,6 +2301,8 @@ return [
         'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
+        'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
+        'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. The Gift Finder links to the one closest to your answers with "Open as a page".',
         'find_product' => 'A product\'s page shows every shop\'s price, how many people keep it on a list, and the Coves it is in.',
         'add_title' => 'Adding anything',
         'add_link' => 'Paste a link from any shop. We fill in the name, picture and price, from our own catalogue when we know the shop and from the shop\'s page when we do not.',

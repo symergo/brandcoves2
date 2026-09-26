@@ -23,6 +23,7 @@ use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
 use App\Http\Controllers\GiftCoveManualController;
 use App\Http\Controllers\GiftIdeasController;
+use App\Http\Controllers\GiftLandingController;
 use App\Http\Controllers\GiftPledgeController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HandoverController;
@@ -953,6 +954,18 @@ Route::prefix('{market}')->group(function () {
     | "subscribe".
     */
     Route::get('/gift-ideas', [GiftIdeasController::class, 'index'])->name('gift-ideas');
+
+    /*
+     * Gift landing pages: "gift ideas for dad who loves cooking" at
+     * /be-nl/gift-ideas/for/papa/koken, in each market's own words
+     * (App\Services\Gift\BriefUrl). Only the pairs PlanGiftLandingPages
+     * recorded exist; the rest 404. The `for` segment keeps them clear of the
+     * persona slugs below, which are a single segment after /gift-ideas.
+     * See docs/features/gift-landing-pages.md.
+     */
+    Route::get('/gift-ideas/for/{recipient}/{interest?}', GiftLandingController::class)
+        ->where(['recipient' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'interest' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
+        ->name('gift-ideas.landing');
     Route::get('/gift-ideas/{slug}', [GiftIdeasController::class, 'show'])
         ->where('slug', '[a-z0-9-]+')
         ->name('gift-ideas.persona');

@@ -9,6 +9,8 @@ use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\CommunityQuestion;
+use App\Models\GiftLanding;
+use App\Services\Gift\GiftLandingLinks;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
@@ -297,6 +299,35 @@ class SitemapController extends Controller
                             'loc' => url("/{$resolved->value}/gift-ideas/{$slug}"),
                             'priority' => '0.7',
                             'changefreq' => 'weekly',
+                        ];
+                    });
+
+                /*
+                 * Gift landing pages ("gift ideas for dad who loves cooking").
+                 *
+                 * Exactly the recorded ones: the controller 404s every other
+                 * pair, and a sitemap naming a 404 asks for a crawl it then
+                 * refuses. Their hreflang is resolved here, per pair, because
+                 * each market words the path its own way and the batched
+                 * lookup below pairs on the path. See
+                 * docs/features/gift-landing-pages.md.
+                 */
+                $landingAlternates = app(GiftLandingLinks::class)->alternatesFor($resolved);
+
+                GiftLanding::query()
+                    ->forMarket($resolved)
+                    ->orderBy('path')
+                    ->limit(2000)
+                    ->get(['path', 'interest', 'checked_at'])
+                    ->each(function (GiftLanding $landing) use (&$urls, $landingAlternates): void {
+                        $urls[] = [
+                            'loc' => url($landing->path),
+                            'lastmod' => $landing->checked_at?->toAtomString(),
+                            // A recipient's own page gathers the others, so
+                            // it ranks a little above any one of them.
+                            'priority' => $landing->interest === null ? '0.7' : '0.6',
+                            'changefreq' => 'weekly',
+                            'alternates' => $landingAlternates[$landing->path] ?? [],
                         ];
                     });
 

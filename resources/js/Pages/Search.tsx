@@ -48,6 +48,8 @@ interface Props {
         words: string
         asWordsUrl: string
     } | null
+    /** Who, interest and occasion filters (?for=, ?interest=, ?occasion=), each with the search without it. */
+    tagFilters?: { label: string; without: string }[]
     /** Ways in, before a search: recent searches, your brands, the tools. Null once there is a term or a filter. */
     landing: Landing | null
     /** Set when the search box held an Amazon URL rather than a search term. */
@@ -154,6 +156,7 @@ export default function Search({
     lanes,
     emptyBecauseOfFilters,
     intent,
+    tagFilters = [],
     landing,
     amazonSearch,
     watch,
@@ -871,6 +874,18 @@ export default function Search({
                             <Link href={intent.asWordsUrl} className="mt-3 inline-block text-sm text-accent-dark underline hover:text-ink">
                                 {t('search.intent_as_words')}
                             </Link>
+                        </div>
+                    )}
+
+                    {/* Gift filters from a link (?for=, ?interest=, ?occasion=), each removable. */}
+                    {tagFilters.length > 0 && (
+                        <div className="mb-6 flex flex-wrap items-center gap-2">
+                            <span className="text-sm text-ink-soft">{t('search.tag_filters_label')}</span>
+                            <ul className="flex flex-wrap items-center gap-2">
+                                {tagFilters.map((chip) => (
+                                    <IntentChip key={chip.without + chip.label} label={chip.label} without={chip.without} removeLabel={t('search.intent_remove', { label: chip.label })} />
+                                ))}
+                            </ul>
                         </div>
                     )}
 

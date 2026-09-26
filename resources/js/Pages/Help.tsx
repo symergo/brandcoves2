@@ -68,6 +68,8 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'barcode', text: t('help.find_scan') },
                         { icon: 'whisperer', text: t('help.find_gift') },
                         { icon: 'taste', text: t('help.find_taste') },
+                        { icon: 'giftlist', text: t('help.find_pages') },
+                        { icon: 'search', text: t('help.find_filters') },
                         { icon: 'guides', text: t('help.find_browse') },
                         { icon: 'wishlist', text: t('help.find_product') },
                     ]}
