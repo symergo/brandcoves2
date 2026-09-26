@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { type ListKind } from '../../Components/ListKindBadge'
 import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
@@ -88,137 +88,165 @@ function ListCard({ list }: { list: ListSummary }) {
      */
     const theirs = list.sharedWithMe
 
+    /*
+     * Adding from the card (owner's call, 2026-09-26). A panel at the top of
+     * the page with a list picker came first; a button on the list itself is
+     * the obvious place, and it needs no picker. The card was one big link,
+     * and a button cannot sit inside a link, so the card is now a box holding
+     * the link and, below it, the button.
+     */
+    const [adding, setAdding] = useState(false)
+    const canAdd = !theirs || list.role === 'editor'
+
     return (
-        <Link
-            href={list.url}
-            className="flex h-full flex-col rounded-card border border-line bg-card transition hover:border-ink/30"
-        >
-            {/*
-              A strip of what is in it. An empty list gets a placeholder rather
-              than a collapsed card, so the grid keeps its rhythm and an empty
-              list still reads as a list.
-            */}
-            <div className="flex gap-1 overflow-hidden rounded-t-card border-b border-line bg-cream p-2">
-                {list.covers.length === 0 ? (
-                    <span className="flex h-16 w-full items-center justify-center text-xs text-ink-soft">
-                        {t('lists.empty_list')}
-                    </span>
-                ) : (
-                    list.covers.map((src, i) => (
-                        <img
-                            key={i}
-                            src={src}
-                            alt=""
-                            loading="lazy"
-                            className="h-16 min-w-0 flex-1 object-contain"
-                            onError={(e) => {
-                                e.currentTarget.style.visibility = 'hidden'
-                            }}
-                        />
-                    ))
-                )}
-            </div>
-
-            <div className="flex flex-1 flex-col p-4">
-                <h3 className="font-medium">{list.title}</h3>
-
-                <p className="mt-1 text-sm text-ink-soft">
-                    {list.itemCount === 1
-                        ? t('lists.one_item')
-                        : t('lists.items', { count: n(list.itemCount) })}
-                    {/*
-                      Who the list is for. On a list about somebody, the
-                      recipient; on a wish list somebody shared with me, its
-                      owner, because that is the person I shop for. Never on
-                      a wish list of your own: there the recipient is you,
-                      and a handed-over list keeps your name as its record.
-                    */}
-                    {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
-                    {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
-                </p>
-
+        <div className="relative flex h-full flex-col rounded-card border border-line bg-card transition hover:border-ink/30">
+            <Link href={list.url} className="flex flex-1 flex-col">
                 {/*
-                  What this card is FOR, on somebody else's wish list.
-
-                  A list Anna shared with me is, from where I stand, how I shop
-                  for Anna — and that is the commonest gifting act on the site.
-                  The card said "11 items" and nothing else, so the one row that
-                  answers "what do I get her?" read exactly like a row of my own
-                  filing.
-
-                  Only on a `mine` list of theirs: those are the ones with
-                  something to claim. A `for_someone` or `group` list I was
-                  invited to is co-giver coordination, and its own kind sentence
-                  covers it.
+                  A strip of what is in it. An empty list gets a placeholder rather
+                  than a collapsed card, so the grid keeps its rhythm and an empty
+                  list still reads as a list.
                 */}
-                {theirs && list.kind === 'mine' && list.ownerName && (
-                    <p className="mt-1 text-sm text-accent">
-                        {t('lists.shop_for', { name: list.ownerName })}
-                    </p>
-                )}
-
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-2xs">
-                    {/*
-                      What kind of list this is.
-
-                      The kind lived only in the section heading, so a card read
-                      out of context — which is how a card is read, and the only
-                      way one is read in the Shared and Group views, where there
-                      are no sections — said nothing about what could be done
-                      with it.
-                    */}
-                    {/*
-                      Kind, whose it is, and what you may do — one component,
-                      the same order and the same colours as the list page and
-                      the shared page. These three pills were built here and
-                      copied outward by hand, which is how the same list came to
-                      describe itself differently depending on which page you
-                      reached it from.
-                    */}
-                    <ListPills
-                        kind={list.kind as ListKind}
-                        role={theirs ? 'contributor' : 'owner'}
-                        ownerName={theirs ? list.ownerName : null}
-                        canAdd={list.visibility !== 'private' && list.linkCanAdd}
-                    />
-                    {list.isDefault && (
-                        <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>
-                    )}
-                    {/*
-                      Shared or not is the fact people most need off this page —
-                      it is the difference between a private note and something
-                      anyone with the link can read.
-                    */}
-                    {!theirs && (
-                        <span
-                            className={
-                                shared
-                                    ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage'
-                                    : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
-                            }
-                        >
-                            {shared ? t('lists.shared_short') : t('lists.private_short')}
+                <div className="flex gap-1 overflow-hidden rounded-t-card border-b border-line bg-cream p-2">
+                    {list.covers.length === 0 ? (
+                        <span className="flex h-16 w-full items-center justify-center text-xs text-ink-soft">
+                            {t('lists.empty_list')}
                         </span>
-                    )}
-
-                    {/*
-                      Somebody put something forward and it is waiting on you.
-
-                      This is the badge the Gift Cove's suggestions card was
-                      always pointing at: it sends you here so you can see which
-                      list received one, and until now the index said nothing
-                      about them at all.
-                    */}
-                    {list.suggestions !== null && list.suggestions > 0 && (
-                        <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
-                            {list.suggestions === 1
-                                ? t('suggestions.one_waiting')
-                                : t('suggestions.waiting', { count: n(list.suggestions) })}
-                        </span>
+                    ) : (
+                        list.covers.map((src, i) => (
+                            <img
+                                key={i}
+                                src={src}
+                                alt=""
+                                loading="lazy"
+                                className="h-16 min-w-0 flex-1 object-contain"
+                                onError={(e) => {
+                                    e.currentTarget.style.visibility = 'hidden'
+                                }}
+                            />
+                        ))
                     )}
                 </div>
-            </div>
-        </Link>
+
+                <div className="flex flex-1 flex-col p-4">
+                    <h3 className="font-medium">{list.title}</h3>
+
+                    <p className="mt-1 text-sm text-ink-soft">
+                        {list.itemCount === 1
+                            ? t('lists.one_item')
+                            : t('lists.items', { count: n(list.itemCount) })}
+                        {/*
+                          Who the list is for. On a list about somebody, the
+                          recipient; on a wish list somebody shared with me, its
+                          owner, because that is the person I shop for. Never on
+                          a wish list of your own: there the recipient is you,
+                          and a handed-over list keeps your name as its record.
+                        */}
+                        {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
+                        {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
+                    </p>
+
+                    {/*
+                      What this card is FOR, on somebody else's wish list.
+
+                      A list Anna shared with me is, from where I stand, how I shop
+                      for Anna — and that is the commonest gifting act on the site.
+                      The card said "11 items" and nothing else, so the one row that
+                      answers "what do I get her?" read exactly like a row of my own
+                      filing.
+
+                      Only on a `mine` list of theirs: those are the ones with
+                      something to claim. A `for_someone` or `group` list I was
+                      invited to is co-giver coordination, and its own kind sentence
+                      covers it.
+                    */}
+                    {theirs && list.kind === 'mine' && list.ownerName && (
+                        <p className="mt-1 text-sm text-accent">
+                            {t('lists.shop_for', { name: list.ownerName })}
+                        </p>
+                    )}
+
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-2xs">
+                        {/*
+                          What kind of list this is.
+
+                          The kind lived only in the section heading, so a card read
+                          out of context — which is how a card is read, and the only
+                          way one is read in the Shared and Group views, where there
+                          are no sections — said nothing about what could be done
+                          with it.
+                        */}
+                        {/*
+                          Kind, whose it is, and what you may do — one component,
+                          the same order and the same colours as the list page and
+                          the shared page. These three pills were built here and
+                          copied outward by hand, which is how the same list came to
+                          describe itself differently depending on which page you
+                          reached it from.
+                        */}
+                        <ListPills
+                            kind={list.kind as ListKind}
+                            role={theirs ? 'contributor' : 'owner'}
+                            ownerName={theirs ? list.ownerName : null}
+                            canAdd={list.visibility !== 'private' && list.linkCanAdd}
+                        />
+                        {list.isDefault && (
+                            <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>
+                        )}
+                        {/*
+                          Shared or not is the fact people most need off this page —
+                          it is the difference between a private note and something
+                          anyone with the link can read.
+                        */}
+                        {!theirs && (
+                            <span
+                                className={
+                                    shared
+                                        ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage'
+                                        : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
+                                }
+                            >
+                                {shared ? t('lists.shared_short') : t('lists.private_short')}
+                            </span>
+                        )}
+
+                        {/*
+                          Somebody put something forward and it is waiting on you.
+
+                          This is the badge the Gift Cove's suggestions card was
+                          always pointing at: it sends you here so you can see which
+                          list received one, and until now the index said nothing
+                          about them at all.
+                        */}
+                        {list.suggestions !== null && list.suggestions > 0 && (
+                            <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                                {list.suggestions === 1
+                                    ? t('suggestions.one_waiting')
+                                    : t('suggestions.waiting', { count: n(list.suggestions) })}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </Link>
+            {/*
+              An icon in the corner of the pictures, not a line of text under
+              the card (owner, 2026-09-26: more compact). Outside the link, so
+              pressing it adds rather than opening the list.
+            */}
+            {canAdd && (
+                <button
+                    type="button"
+                    onClick={() => setAdding(true)}
+                    aria-label={t('lists.add_product')}
+                    title={t('lists.add_product')}
+                    className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-accent-dark shadow-sm transition hover:border-ink hover:text-ink"
+                >
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                    </svg>
+                </button>
+            )}
+            {adding && <AddToListDialog list={list} onClose={() => setAdding(false)} />}
+        </div>
     )
 }
 
@@ -395,8 +423,6 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 </div>
             )}
 
-            {view !== 'saved' && <QuickAdd lists={lists} />}
-
             {view === 'saved' ? (
                 <SavedCoves coves={savedCoves} base={`/${market.key}`} />
             ) : lists.length === 0 ? (
@@ -545,44 +571,41 @@ function SavedCoves({ coves, base }: { coves: SavedCoveRow[]; base: string }) {
 }
 
 /**
- * Add a product without opening a list first (owner's request, 2026-09-26).
+ * The add panel of a list page, over the overview, for one list.
  *
- * The same AddProduct panel as on a list page, so search, a pasted link, a
- * barcode and writing it down all work here too, with a picker for which list
- * it goes on. Only lists this person may add to are offered: their own, and
- * ones shared with them as an editor. It starts on the default list, the one a
- * product saved from anywhere else lands on.
+ * A native <dialog> through showModal(), as SignInDialog does: focus stays
+ * inside, Escape closes it, and the page behind is inert. The panel opens at
+ * once; adding or cancelling closes the dialog, and the server answers with a
+ * toast naming the list (`onListPage={false}`), since the list is not on screen.
  */
-function QuickAdd({ lists }: { lists: ListSummary[] }) {
+function AddToListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
     const { market } = usePage<SharedProps>().props
-    const { t } = useTranslations()
-    const writable = lists.filter((list) => !list.sharedWithMe || list.role === 'editor')
-    const [listId, setListId] = useState(() => (writable.find((list) => list.isDefault) ?? writable[0])?.id ?? '')
+    const ref = useRef<HTMLDialogElement>(null)
 
-    if (writable.length === 0) return null
+    useEffect(() => {
+        const el = ref.current
 
-    const target = writable.some((list) => list.id === listId) ? listId : writable[0].id
+        if (el !== null && !el.open) {
+            el.showModal()
+        }
+    }, [])
 
     return (
-        <div className="mt-6 flex flex-wrap items-start gap-2">
-            {writable.length > 1 && (
-                <label className="flex min-h-10 items-center gap-2 text-sm text-ink-soft">
-                    {t('lists.quick_add_to')}
-                    <select
-                        value={target}
-                        onChange={(event) => setListId(event.target.value)}
-                        className="rounded-lg border border-line bg-card px-2 py-2 text-sm text-ink"
-                    >
-                        {writable.map((list) => (
-                            <option key={list.id} value={list.id}>
-                                {list.title}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-            )}
-            <AddProduct base={`/${market.key}`} listId={target} market={market} onListPage={false} />
-        </div>
+        <dialog
+            ref={ref}
+            onClose={onClose}
+            onClick={(e) => {
+                if (e.target === ref.current) {
+                    onClose()
+                }
+            }}
+            aria-label={list.title}
+            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
+        >
+            <h2 className="text-lg font-semibold">{list.title}</h2>
+            <div className="mt-3">
+                <AddProduct base={`/${market.key}`} listId={list.id} market={market} defaultOpen onListPage={false} onClose={onClose} />
+            </div>
+        </dialog>
     )
 }
-

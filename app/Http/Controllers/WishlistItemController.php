@@ -424,7 +424,7 @@ class WishlistItemController extends Controller
      * is someone pressing "save" on a product page having never made a list —
      * asking them to create one first loses most of them.
      */
-    public function store(Request $request, CurrentMarket $current, ItemSaver $saver): RedirectResponse|JsonResponse
+    public function store(Request $request, CurrentMarket $current, ItemSaver $saver, ImageStore $images): RedirectResponse|JsonResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
@@ -460,6 +460,16 @@ class WishlistItemController extends Controller
             'image_url' => ['nullable', 'url', 'max:1024'],
             'url' => ['nullable', 'string', 'max:2048', new SafeExternalUrl],
             'price' => ['nullable', 'integer', 'min:0'],
+
+            // A picture of something typed by hand, sent with it (2026-09-26).
+            // The same limits as adding one later (`photo()`); never on a
+            // product we hold, whose pictures are the shops'.
+            'photo' => [
+                'nullable',
+                $manual ? 'file' : 'prohibited',
+                'max:'.intdiv((int) config('giftcoves.page_reading.max_image_bytes', 8 * 1024 * 1024), 1024),
+                'mimetypes:image/jpeg,image/png,image/webp,image/gif',
+            ],
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
 
@@ -540,14 +550,31 @@ class WishlistItemController extends Controller
          * `ItemSaver::saveManual()`.
          */
         if ($validated['source'] === Source::Manual->value) {
-            return $this->report($request, $saver->saveManual(
+            // Read before saving, so a file that is not a picture refuses the
+            // whole add rather than leaving an item without the photo it came with.
+            $photo = $request->hasFile('photo') ? $images->fromUpload($request->file('photo')) : null;
+
+            if ($request->hasFile('photo') && $photo === null) {
+                return back()->withErrors(['photo' => __('site.lists.photo_unreadable')]);
+            }
+
+            $item = $saver->saveManual(
                 list: $list,
                 title: $validated['title'] ?? null,
                 url: $validated['url'] ?? null,
                 price: $validated['price'] ?? null,
                 note: $validated['note'] ?? null,
                 gtin: $validated['gtin'] ?? null,
-            ), $list);
+            );
+
+            // The person's own photo beats one read from a pasted page later:
+            // ItemLinker::fill() only fills a picture that is missing.
+            if ($photo !== null) {
+                $images->forget($item->snapshot_image_url);
+                $item->update(['snapshot_image_url' => $photo]);
+            }
+
+            return $this->report($request, $item, $list);
         }
 
         /*

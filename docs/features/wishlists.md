@@ -1198,9 +1198,29 @@ skipped with no outbound request, and an eBay offer still refreshed by its id.
 
 ## Adding from the My Coves overview (2026-09-26)
 
-The owner asked for a way to add a product without opening a list first. The overview
-(`Lists/Index.tsx`, `QuickAdd`) now carries the same `AddProduct` panel as a list page, so search, a
-pasted link, a barcode and writing it down all work there, with a picker for the list. Only lists
-the person may add to are offered (their own, and ones shared with them as an editor), starting on
-the default list. The panel posts `on_list_page: false`, so the server answers with a "Saved to
-:list" toast: the list is not on screen, and a new row cannot be the confirmation there.
+The owner asked for a way to add a product without opening a list first. Every list card on the
+overview (`Lists/Index.tsx`) carries a round **+** in the corner of its pictures, on the lists the
+person may add to (their own, and ones shared with them as an editor). It opens the list page's own
+`AddProduct` panel in a dialog, already open, so search, a pasted link, a barcode and writing it
+down all work there.
+
+It took three rounds the same day: first one panel at the top of the page with a list picker, then
+a text button under each card, then the icon, because the owner wanted the card compact. The card
+used to be a single link, and a button cannot sit inside a link, so the card is now a box holding
+the link, with the icon placed over it.
+
+The panel posts `on_list_page: false`, so the server answers with a "Saved to :list" toast: the list
+is not on screen, and a new row cannot be the confirmation there.
+
+## Offline items, with a photo (2026-09-26)
+
+The way into writing an item by hand used to read "Not in the shops we cover? Write it in
+yourself", which framed it as a fallback for a failed search. The owner renamed it **Add an offline
+item** ("Voeg een offline artikel toe"): a present from a market stall or a voucher is a first
+choice, not a consolation, and needs no link or search.
+
+That form now takes a photo too, sent with the item in the same request (`photo` on
+`POST /list-items`, manual items only, the same limits as `POST /list-items/{item}/photo`). A file
+that is not a picture refuses the whole add, so an item never lands without the photo it came
+with. The person's photo wins over one read later from a pasted page, because `ItemLinker::fill()`
+only fills a missing picture.

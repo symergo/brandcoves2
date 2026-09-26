@@ -163,6 +163,40 @@ class ItemPhotoTest extends TestCase
         return substr($jpeg, 0, 2).$segment.substr($jpeg, 2);
     }
 
+    #[Test]
+    public function an_offline_item_can_be_added_with_its_photo_in_one_go(): void
+    {
+        [$owner, $item] = $this->manualItem();
+        $list = $item->wishlist;
+
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'title' => 'Bowl from the pottery market',
+            'photo' => UploadedFile::fake()->image('bowl.png', 40, 40),
+        ])->assertSessionHasNoErrors();
+
+        $added = WishlistItem::query()->where('snapshot_title', 'Bowl from the pottery market')->sole();
+
+        $this->assertMatchesRegularExpression('#^/media/items/[0-9a-f-]{36}\.webp$#', (string) $added->snapshot_image_url);
+        Storage::disk('media')->assertExists(substr((string) $added->snapshot_image_url, strlen('/media/')));
+    }
+
+    #[Test]
+    public function a_bad_file_refuses_the_add_rather_than_saving_it_without_a_photo(): void
+    {
+        [$owner, $item] = $this->manualItem();
+
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $item->wishlist_id,
+            'source' => 'manual',
+            'title' => 'Mystery',
+            'photo' => UploadedFile::fake()->createWithContent('x.jpg', '<svg onload="alert(1)"></svg>'),
+        ])->assertSessionHasErrors('photo');
+
+        $this->assertFalse(WishlistItem::query()->where('snapshot_title', 'Mystery')->exists());
+    }
+
     /** @return array{0: User, 1: WishlistItem} */
     private function manualItem(): array
     {

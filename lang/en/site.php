@@ -771,12 +771,10 @@ return [
         // catalogue and the live sources, adjust the wording, or write in
         // something we do not sell — without searching first.
         'add_product' => 'Add a product',
-        'quick_add_to' => 'Add to',
         'add_search_placeholder' => 'Search, or paste a link...',
         'search_failed' => 'The search did not work. Try again?',
         'add_nothing_found' => 'Nothing found for ":term".',
-        'add_own_intro' => 'Not in the shops we cover?',
-        'add_own_cta' => 'Write it in yourself',
+        'add_own_cta' => 'Add an offline item',
         'add_link_also' => 'Or add the link as it is',
         'link_refused' => 'Only secure links (https://) can be added.',
         'reading_link' => 'Looking up the shop\'s page...',
@@ -2216,7 +2214,7 @@ return [
         'add_barcode' => 'Scan a barcode nobody sells yet. We keep it, and the product appears on its own once a shop starts selling it.',
         'add_photo' => 'Add a photo of your own to something you wrote down yourself.',
         'add_write' => 'Or just write it down: a voucher, a book in one particular edition, a day out.',
-        'add_overview' => 'You can also add straight from My Coves, without opening a list: pick the list, then search, paste a link or write it down.',
+        'add_overview' => 'You can also add straight from My Coves: press the + on a list, without opening it first. Something you cannot buy online? Add an offline item, with a photo if you like.',
         'share_title' => 'Sharing and giving',
         'share_link' => 'Share a Cove with a link. People can say they will buy something, and you do not see what has been claimed, so it stays a surprise.',
         'share_together' => 'Buy together: in a group Cove several people suggest, vote and chip in for one present.',

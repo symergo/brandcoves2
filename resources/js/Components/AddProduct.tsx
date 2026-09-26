@@ -63,6 +63,7 @@ export default function AddProduct({
     market,
     defaultOpen = false,
     onListPage = true,
+    onClose,
 }: {
     base: string
     listId: string
@@ -79,6 +80,8 @@ export default function AddProduct({
      * answers with a toast naming it instead.
      */
     onListPage?: boolean
+    /** Told when the panel closes, added or cancelled: a dialog around it closes too. */
+    onClose?: () => void
 }) {
     const { t } = useTranslations()
 
@@ -108,6 +111,28 @@ export default function AddProduct({
     const [price, setPrice] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    /*
+     * A picture for something typed by hand (owner's request, 2026-09-26): the
+     * pottery from the market, the voucher. Sent with the item in one request,
+     * so there is no second step after saving. The server re-encodes it
+     * (ImageStore), which drops the GPS position a phone writes into a photo.
+     */
+    const [photo, setPhoto] = useState<File | null>(null)
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (photo === null) {
+            setPhotoPreview(null)
+
+            return
+        }
+
+        const preview = URL.createObjectURL(photo)
+        setPhotoPreview(preview)
+
+        return () => URL.revokeObjectURL(preview)
+    }, [photo])
 
     const field = useRef<HTMLInputElement>(null)
 
@@ -220,6 +245,7 @@ export default function AddProduct({
         setNote('')
         setUrl('')
         setPrice('')
+        setPhoto(null)
         setError(null)
     }
 
@@ -232,6 +258,7 @@ export default function AddProduct({
         setLinkRefused(false)
         setSearched(false)
         reset()
+        onClose?.()
     }
 
     /*
@@ -324,6 +351,9 @@ export default function AddProduct({
                         source: 'manual',
                         url: url.trim() || null,
                         gtin: barcode,
+                        // Only when there is one: a File makes Inertia send the
+                        // request as multipart, which the server reads the same.
+                        ...(photo !== null ? { photo } : {}),
                         /*
                          * Euros in the box, cents on the wire (invariant #7).
                          * A comma is accepted because half our markets write
@@ -512,8 +542,7 @@ export default function AddProduct({
                       allowed to write it down asks them to guess it. This is
                       here from the moment the panel opens.
                     */}
-                    <p className="mt-4 border-t border-line pt-3 text-sm text-ink-soft">
-                        {t('lists.add_own_intro')}{' '}
+                    <p className="mt-4 border-t border-line pt-3 text-sm">
                         <button
                             type="button"
                             onClick={() => choose({ kind: 'manual' })}
@@ -598,6 +627,35 @@ export default function AddProduct({
                                     className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
                                 />
                             </label>
+                        </div>
+                    )}
+
+                    {chosen.kind === 'manual' && (
+                        <div className="text-sm font-medium">
+                            {t('lists.photo_label')}
+                            <div className="mt-1 flex flex-wrap items-center gap-3">
+                                {photoPreview && (
+                                    <img src={photoPreview} alt="" className="h-14 w-14 rounded object-cover" />
+                                )}
+                                <label className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-sm font-normal hover:border-ink">
+                                    {photo ? t('lists.photo_replace') : t('lists.photo_add')}
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                                        className="sr-only"
+                                    />
+                                </label>
+                                {photo && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPhoto(null)}
+                                        className="text-xs font-normal text-ink-soft underline hover:text-ink"
+                                    >
+                                        {t('lists.photo_remove')}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
 
