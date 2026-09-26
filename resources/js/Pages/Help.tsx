@@ -56,6 +56,8 @@ export default function Help({ guides, path }: Props) {
                         <p>{t('help.coves_body1')}</p>
                         <p>{t('help.coves_body2')}</p>
                         <p>{t('help.coves_body3')}</p>
+                        {/* Making one: the one-step create (docs/features/one-step-list.md). */}
+                        <p>{t('help.coves_make')}</p>
                         <p>{t('help.coves_body4')}</p>
                     </div>
                 </section>

@@ -290,6 +290,11 @@ class HandleInertiaRequests extends Middleware
                 // shows the links to send, once. See WishlistController::store().
                 'askForIdeas' => fn () => $request->session()->get('ask_for_ideas'),
 
+                // Not a message: this list was made a moment ago, from the
+                // one-step create. `Lists/Show` offers the settings that step
+                // no longer asks, once. See WishlistController::store().
+                'newList' => fn () => (bool) $request->session()->get('new_list', false),
+
                 // Not a message either: how the account that was just created
                 // signed in ('google' or 'email'), set by the auth callbacks on
                 // a first sign-in only. The client reports it to analytics as

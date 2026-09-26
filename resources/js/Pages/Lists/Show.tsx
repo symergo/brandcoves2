@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
+import NewListPrompt from '../../Components/NewListPrompt'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import ListTools, { ListToolsBar, type Panel } from '../../Components/ListTools'
@@ -356,6 +357,15 @@ export default function ListShow({
               the list's link lets others suggest, and suggestions wait for
               the owner.
             */}
+            {/* Just made by the one-step create: what it no longer asks (one-step-list.md). */}
+            {flash.newList && access.isOwner && askForIdeas.length === 0 && (
+                <NewListPrompt
+                    kind={list.kind}
+                    askName={target?.askUrl && list.kind !== 'mine' ? target.name : null}
+                    onPanel={setPanel}
+                />
+            )}
+
             {askForIdeas.length > 0 && (
                 <div className="mt-6 space-y-4 rounded-card border border-accent/40 bg-accent/5 p-4 sm:p-5">
                     <p className="font-medium">{t('wizard.ask_card_title')}</p>

@@ -37,9 +37,9 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Bewaren en een lijst maken',
-            'blurb' => 'Iets vinden, bewaren, je lijsten openen, en een lijst maken in drie stappen.',
-            'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijst en maak er een in drie stappen. Met beeld.',
-            'intro' => 'Je hoeft niet eerst een lijst te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in drie stappen een maakt.',
+            'blurb' => 'Iets vinden, bewaren, je lijsten openen, en een lijst maken in één stap.',
+            'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijst en maak er een in één stap. Met beeld.',
+            'intro' => 'Je hoeft niet eerst een lijst te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in één stap een maakt.',
             'numbered' => true,
             'sections' => [
                 [
@@ -61,14 +61,14 @@ return [
                     'alt' => 'De pagina Mijn Coves, met twee lijsten en de knop waarmee je er een maakt.',
                 ],
                 [
-                    'title' => 'Een lijst maken in drie stappen',
-                    'body' => "1. Tik op “Nieuwe lijst” onder [Mijn Coves](lists), of op “Maak een nieuwe lijst” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef de lijst een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijst maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of samen geven](lists-help/kinds).",
+                    'title' => 'Een lijst maken in één stap',
+                    'body' => "1. Tik op “Maak een Cove” onder [Mijn Coves](lists) of op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Voor iemand anders typ je de naam, of tik je op iemand die je al hebt.\n3. Tik op “Lijst maken”. De naam is al ingevuld; verander hem eerst als je wilt.\n\nDe lijst opent met het vak om iets toe te voegen al open: plak een link of zoek. Gelegenheid, delen en om ideeën vragen staan op de lijst zelf: onder Delen, en Instellingen onder Meer.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of samen geven](lists-help/kinds).",
                     'shot' => 'wizard',
-                    'alt' => 'De eerste stap van een nieuwe lijst, met de drie keuzes voor wie het is.',
+                    'alt' => 'Een nieuwe lijst: de ene vraag, voor wie het is.',
                 ],
                 [
                     'title' => 'Je hoeft niet ingelogd te zijn om te beginnen',
-                    'body' => 'De drie stappen kun je zonder account doorlopen. Aan het eind log je in en de lijst staat er. Wat je invulde blijft een dag bewaard, dus even weglopen kan.',
+                    'body' => 'Dit kan zonder account: de knop logt je in en de lijst staat er. Wat je invulde blijft een dag bewaard, dus even weglopen kan.',
                 ],
             ],
         ],
@@ -82,9 +82,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Eén keuze ligt vast',
-                    'body' => 'De eerste stap van een [nieuwe lijst](lists-help/saving) vraagt voor wie het is. Dat bepaalt wat de lijst kan, en het is het enige wat je later niet meer verandert. Naam, gelegenheid en wie het ziet pas je altijd nog aan.',
+                    'body' => 'De enige vraag bij een [nieuwe lijst](lists-help/saving) is voor wie het is. Dat bepaalt wat de lijst kan, en het is het enige wat je later niet meer verandert. Naam, gelegenheid en wie het ziet pas je altijd nog aan.',
                     'shot' => 'wizard',
-                    'alt' => 'De eerste stap van een nieuwe lijst, met de drie soorten om uit te kiezen.',
+                    'alt' => 'Een nieuwe lijst, met de drie soorten om uit te kiezen.',
                 ],
                 [
                     'title' => 'Voor mezelf: een verlanglijst',
@@ -255,7 +255,7 @@ Iedereen speelt één keer.',
             'sections' => [
                 [
                     'title' => 'Samen geven',
-                    'body' => "1. Maak een [nieuwe lijst](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef hem een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau dat jullie [samen geven](lists-help/kinds). Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
+                    'body' => "1. Maak een [nieuwe lijst](lists-help/saving) en kies “Samen, voor iemand”.\n2. Zeg voor wie het is; de naam is al ingevuld.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau dat jullie [samen geven](lists-help/kinds). Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
                     'shot' => 'group',
                     'alt' => 'De pagina van een lijst om samen te geven, met de ideeën om op te stemmen en het vak om bij te dragen.',
                 ],
@@ -301,7 +301,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Meer”, dan op “Geheime Vriend” en op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in drie stappen.",
+                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Meer”, dan op “Geheime Vriend” en op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in één stap.",
                 ],
                 [
                     'title' => 'Een herinnering vooraf',

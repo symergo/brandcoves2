@@ -125,6 +125,8 @@ export interface SharedProps {
         savedItem?: number | null
         /** Whom the owner chose to ask for ideas when making this list; `Lists/Show` shows the links once. */
         askForIdeas?: ('recipient' | 'others')[] | null
+        /** The list was just made by the one-step create; `Lists/Show` offers occasion and sharing once. */
+        newList?: boolean
         /** How an account that was just created signed in; only on the page after a first sign-in. */
         signUp?: 'google' | 'email' | null
     }

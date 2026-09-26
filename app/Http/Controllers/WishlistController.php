@@ -34,6 +34,7 @@ use App\Support\CurrentMarket;
 use App\Support\DayAndMonth;
 use App\Support\ListAccess;
 use App\Support\Owner;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -253,7 +254,12 @@ class WishlistController extends Controller
         abort_unless($owner->exists(), 403);
 
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:120'],
+            /*
+             * Optional since the one-step create (2026-09-26): a blank name
+             * becomes the kind's default ("Gifts for Sara"), the same words
+             * the screen had filled in. See ListMaker::defaultTitle().
+             */
+            'title' => ['nullable', 'string', 'max:120'],
             'recipient_id' => ['nullable', 'uuid'],
 
             /*
@@ -358,7 +364,7 @@ class WishlistController extends Controller
         $list = $maker->make(
             owner: $owner,
             current: $current,
-            title: $validated['title'],
+            title: $validated['title'] ?? null,
             recipientId: $forFriend?->id ?? ($validated['recipient_id'] ?? null),
             newRecipient: $validated['new_recipient'] ?? null,
             together: (bool) ($validated['together'] ?? false),
@@ -382,7 +388,15 @@ class WishlistController extends Controller
             fn (string $who) => $list->kind !== ListKind::Mine && ($who === 'others' || $list->recipient_id !== null),
         ));
 
-        return $ask === [] ? $redirect : $redirect->with('ask_for_ideas', $ask);
+        /*
+         * `new_list`: the list page offers, once, what the one-step create no
+         * longer asks (occasion, sharing, asking for ideas), as a light
+         * prompt beside the add field. Not when the links to send are shown
+         * instead: that card already answers the choice just made.
+         */
+        return $ask === []
+            ? $redirect->with('new_list', true)
+            : $redirect->with('ask_for_ideas', $ask);
     }
 
     /**
@@ -1105,6 +1119,30 @@ class WishlistController extends Controller
             $validated['price_watch_percent'] === null
                 ? $watch->forget($wishlist)
                 : $watch->seed($wishlist);
+        }
+
+        /*
+         * A birthday date given here is the person's birthday too.
+         *
+         * The three-step wizard asked for a new person's birthday while making
+         * the list; the one-step create (docs/features/one-step-list.md) does
+         * not, and the occasion moved here. So choosing "Birthday" with a date
+         * on a list about somebody whose birthday we do not have stores the
+         * day and month on them, where the reminders read it. Blank only, as
+         * in `applyWizardSettings()`: adding what somebody knows, never
+         * correcting what is there.
+         */
+        if (
+            ($validated['event_type'] ?? null) === EventType::Birthday->value
+            && filled($validated['event_date'] ?? null)
+            && $wishlist->recipient_id !== null
+        ) {
+            $date = CarbonImmutable::parse((string) $validated['event_date']);
+
+            Recipient::query()
+                ->whereKey($wishlist->recipient_id)
+                ->whereNull('birthday')
+                ->update(['birthday' => Recipient::birthdayFrom($date->day, $date->month)]);
         }
 
         return back();

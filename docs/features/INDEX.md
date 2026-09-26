@@ -109,6 +109,7 @@ is true now.
 | [save-button.md](save-button.md) | Wishlist / Coves / UI | Active: one Save button and one panel for products and Coves; the "▾" is gone |
 | [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by the Gift Finder, admin can hide |
 | [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active — your own list opens on its items; Share plus a More menu in the header, a "⋯" per item; My Coves on one page and one word per list kind (2026-09-26) |
+| [one-step-list.md](one-step-list.md) | Wishlist / Gifting | Active since 2026-09-26: a list in one question (who for), occasion and sharing moved to the list page; replaces the three-step wizard |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |

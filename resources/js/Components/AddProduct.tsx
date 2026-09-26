@@ -239,6 +239,24 @@ export default function AddProduct({
         if (open) field.current?.focus()
     }, [open])
 
+    /*
+     * Opened on arrival (an empty list, which is where the one-step create
+     * lands): bring the field into view as well. The focus above scrolls to
+     * it, but Inertia puts the page back at the top once the visit finishes,
+     * so on a phone the cursor sat in a field a screen and a half down that
+     * nobody could see. 'nearest' moves as little as it can, so on a tall
+     * screen the page does not move at all.
+     */
+    useEffect(() => {
+        if (!defaultOpen) return
+
+        const timer = window.setTimeout(() => field.current?.scrollIntoView({ block: 'nearest' }), 60)
+
+        return () => window.clearTimeout(timer)
+        // Once, on mount: this is about arriving, not about reopening.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     function reset(): void {
         setChosen(null)
         setTitle('')

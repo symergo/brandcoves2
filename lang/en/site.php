@@ -890,7 +890,7 @@ return [
         // The front page's version of the same button. Longer on
         // purpose: on /lists it sits under a heading that already says
         // "lists", and on the home page it has to say what it makes.
-        'make_new' => 'Make a new list',
+        'make_new' => 'Create a Cove',
         'list_name' => 'List name',
         'create' => 'Create list',
         'for_someone' => 'This list is for someone else',
@@ -1364,7 +1364,7 @@ return [
         'title_placeholder_for_someone' => 'Ideas for Dad, Anna turns 30…',
         'title_placeholder_group' => 'A present for Sam from all of us…',
         'title_placeholder_santa' => 'Office 2026, Family Christmas…',
-        'title_santa' => 'A group in three steps',
+        'title_santa' => 'A Secret Friend group',
         'santa_sharing' => 'How you share the group',
         'santa_sharing_hint' => 'Once the group exists you get an invite link. Whoever opens it joins with a name and an email, no account needed. When everyone is in, you draw, and each person is emailed one name.',
         'santa_no_list_yet' => 'No wish list yet? Make one and attach it later on the group page.',
@@ -1413,6 +1413,20 @@ return [
         'next' => 'Next',
         'sign_in_hint' => 'Sign in to keep the list. Your answers stay.',
         'sign_in_and_create' => 'Sign in and make the list',
+        // The one-step list (2026-09-26): see docs/features/one-step-list.md.
+        'one_step_hint' => 'Occasion, sharing and asking for ideas come after, on the list itself.',
+        'default_mine' => 'Wish list',
+        'default_for_someone' => 'Gifts for :name',
+        'default_group' => 'Together for :name',
+        'person_placeholder' => 'e.g. Sara',
+        'or_santa' => 'Or draw names in a group',
+        'not_santa' => 'A list after all',
+        'next_title' => 'Your list is ready. Add something below, or set these now:',
+        'next_occasion' => 'Pick an occasion',
+        'next_share' => 'Share',
+        'next_share_others' => 'Share or ask others for ideas',
+        'next_ask' => 'Ask :name for ideas',
+        'next_dismiss' => 'Later',
     ],
 
     'reminders' => [
@@ -2504,6 +2518,7 @@ return [
         'coves_body1' => 'A Cove is a collection of things around one idea: things you want, presents for Emma\'s birthday, your new home, Christmas this year.',
         'coves_body2' => 'You make your own Coves. Some you keep for yourself, some you make for somebody else, and some you fill together with other people. GiftCoves makes Coves too: something new every day, gift ideas for a kind of person, and buying guides.',
         'coves_body3' => 'Anything can go in a Cove, from any shop, and every Cove can be shared.',
+        'coves_make' => 'To make one, press Create a Cove and say who it is for: you, somebody else, or several of you together. It is made at once, with a name you can change, and opens ready for the first thing: paste a link or search. The occasion, sharing and asking for ideas are on the Cove itself.',
         'coves_body4' => 'Press Save on a Cove and choose. Keep it in My Coves to find it again under My Coves, in Saved; it keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change. It is the same Save button as on a product.',
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',

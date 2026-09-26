@@ -22,9 +22,9 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Enregistrer et créer une liste',
-            'blurb' => 'Trouver, enregistrer, ouvrir ses listes, et créer une liste en trois étapes.',
-            'seo_description' => 'Enregistrez tout ce que vous trouvez ici dans une liste d’envies et créez-en une en trois étapes. En images.',
-            'intro' => 'Pas besoin de créer une liste d’abord. L’enregistrement le propose, et la page d’accueil a un bouton qui en crée une en trois étapes.',
+            'blurb' => 'Trouver, enregistrer, ouvrir ses listes, et créer une liste en une étape.',
+            'seo_description' => 'Enregistrez tout ce que vous trouvez ici dans une liste d’envies et créez-en une en une étape. En images.',
+            'intro' => 'Pas besoin de créer une liste d’abord. L’enregistrement le propose, et la page d’accueil a un bouton qui en crée une en une étape.',
             'numbered' => true,
             'sections' => [
                 [
@@ -46,14 +46,14 @@ return [
                     'alt' => 'La page Mes Coves, avec deux listes et le bouton pour en créer une.',
                 ],
                 [
-                    'title' => 'Créer une liste en trois étapes',
-                    'body' => "1. Touchez « Nouvelle liste » sous [Mes Coves](lists), ou « Créer une nouvelle liste » sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Touchez « Suivant ».\n3. Donnez un nom et une occasion à la liste. Touchez « Suivant ».\n4. Choisissez « Privée (ou partager plus tard) » ou « Partager par un lien », et touchez « Créer la liste ».\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste d’envies, liste de cadeaux ou offrir ensemble](lists-help/kinds).",
+                    'title' => 'Créer une liste en une étape',
+                    'body' => "1. Touchez « Créer une Cove » sous [Mes Coves](lists) ou sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Pour quelqu’un d’autre, tapez son prénom ou touchez une personne que vous avez déjà.\n3. Touchez « Créer la liste ». Le nom est déjà rempli ; changez-le d’abord si vous voulez.\n\nLa liste s’ouvre avec la case pour ajouter déjà ouverte : collez un lien ou cherchez. L’occasion, le partage et les demandes d’idées sont sur la liste elle-même : Partager, et Réglages sous Plus.\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste d’envies, liste de cadeaux ou offrir ensemble](lists-help/kinds).",
                     'shot' => 'wizard',
-                    'alt' => 'La première étape d’une nouvelle liste, avec les trois choix de pour qui elle est.',
+                    'alt' => 'Une nouvelle liste : la seule question, pour qui elle est.',
                 ],
                 [
                     'title' => 'Pas besoin d’être connecté pour commencer',
-                    'body' => 'Les trois étapes marchent sans compte. À la fin vous vous connectez et la liste est là. Ce que vous avez rempli est gardé un jour, vous pouvez donc vous absenter.',
+                    'body' => 'Cela marche sans compte : le bouton vous connecte et la liste est là. Ce que vous avez rempli est gardé un jour, vous pouvez donc vous absenter.',
                 ],
             ],
         ],
@@ -67,9 +67,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Un choix est fixé',
-                    'body' => 'La première étape d’une [nouvelle liste](lists-help/saving) demande pour qui elle est. Cela décide de ce que la liste permet, et c’est la seule chose qu’on ne change plus ensuite. Le nom, l’occasion et qui la voit se changent toujours.',
+                    'body' => 'La seule question d’une [nouvelle liste](lists-help/saving) est pour qui elle est. Cela décide de ce que la liste permet, et c’est la seule chose qu’on ne change plus ensuite. Le nom, l’occasion et qui la voit se changent toujours.',
                     'shot' => 'wizard',
-                    'alt' => 'La première étape d’une nouvelle liste, avec les trois sortes au choix.',
+                    'alt' => 'Une nouvelle liste, avec les trois sortes au choix.',
                 ],
                 [
                     'title' => 'Pour moi : une liste d’envies',
@@ -240,7 +240,7 @@ Chacun joue une fois.',
             'sections' => [
                 [
                     'title' => 'Offrir ensemble',
-                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau que vous [offrez ensemble](lists-help/kinds). Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
+                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un ».\n2. Dites pour qui elle est ; le nom est déjà rempli.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau que vous [offrez ensemble](lists-help/kinds). Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
                     'shot' => 'group',
                     'alt' => 'La page d’une liste pour offrir ensemble, avec les idées à voter et la case pour contribuer.',
                 ],
@@ -286,7 +286,7 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'Rattacher ma liste d’envies au groupe',
-                    'body' => "Choisissez votre liste sous « Votre liste d’envies » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste d’envies](lists) et touchez « Plus », puis « Ami Secret » et « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
+                    'body' => "Choisissez votre liste sous « Votre liste d’envies » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste d’envies](lists) et touchez « Plus », puis « Ami Secret » et « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en une étape.",
                 ],
                 [
                     'title' => 'Un rappel avant',
