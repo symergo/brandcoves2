@@ -574,7 +574,7 @@ return [
         'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
-        'link_sent' => 'Consultez votre boîte de réception, si un compte existe pour cette adresse, le lien est en route.',
+        'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes. Pas encore de compte ? Il est créé dès que vous ouvrez le lien.',
         'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
         'too_many' => 'Trop de demandes. Réessayez dans :seconds secondes.',
         'or' => 'ou',

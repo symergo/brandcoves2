@@ -721,7 +721,7 @@ return [
         'intro' => 'Enter your email and we will send you a link. No password to remember.',
         'email' => 'Email address',
         'send' => 'Send me a link',
-        'link_sent' => 'Check your inbox, if that address has an account, a sign-in link is on its way.',
+        'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes. No account yet? It is made the moment you open the link.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'too_many' => 'Too many requests. Try again in :seconds seconds.',
         'or' => 'or',

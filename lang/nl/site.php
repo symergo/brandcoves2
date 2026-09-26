@@ -577,7 +577,7 @@ return [
         'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
-        'link_sent' => 'Kijk in je inbox, als er een account bij dat adres hoort, is de inloglink onderweg.',
+        'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten. Nog geen account? Dat maken we aan zodra je de link opent.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
         'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',
         'or' => 'of',

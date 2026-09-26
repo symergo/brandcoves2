@@ -215,3 +215,13 @@ Token consumption is throttled separately at `throttle:20,1` — that one is gue
 - [wishlists.md](wishlists.md) — what the anonymous merge is carrying
 - [rebrand.md](rebrand.md) — the callback URI's part in the domain move
 - [config-contract.md](config-contract.md) — `bc:check-config`
+
+## The "link sent" notice says what happens (2026-09-26)
+
+It read "Kijk in je inbox, als er een account bij dat adres hoort, is de inloglink onderweg". That was
+untrue: a link goes to every address, and opening it creates the account if there is none. It also
+told a first-time visitor they had to register first, when this form is the registration. The
+hedge was meant to keep the form from revealing which addresses have accounts, but an answer that
+is the same for every address reveals nothing either. Now: "We stuurden een inloglink naar dat
+adres. Open hem binnen 15 minuten. Nog geen account? Dat maken we aan zodra je de link opent." (15
+minutes is `LoginToken`'s lifetime.)

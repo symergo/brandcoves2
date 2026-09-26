@@ -573,7 +573,7 @@ return [
         'intro' => 'Escribe tu correo y te enviaremos un enlace. Sin contraseñas que recordar.',
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',
-        'link_sent' => 'Revisa tu bandeja de entrada, si hay una cuenta con ese correo, el enlace va de camino.',
+        'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos. ¿Aún no tienes cuenta? Se crea en cuanto abres el enlace.',
         'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
         'too_many' => 'Demasiadas solicitudes. Inténtalo de nuevo en :seconds segundos.',
         'or' => 'o',
