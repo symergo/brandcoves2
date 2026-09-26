@@ -83,6 +83,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Editorial/` | the API's view of products; link checking; allowlist |
 | `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs |
 | `Guides/` | topic mining and planning |
+| `Ideas/` | offline items people typed by hand, folded (`IdeaKey`), counted nightly from five people (`OfflineIdeaCounter`) and, once a person approved them, matched to a brief (`OfflineIdeaPicker`); see features/offline-ideas.md |
 | `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2; merges, splits and the match rules (`GroupMerger`, `GroupSplitter`, `MatchFinder`, `ModelNumber`) |
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
 | `Ops/` | config report, market supply |

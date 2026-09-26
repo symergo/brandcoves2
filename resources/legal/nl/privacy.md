@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
-updated: 2026-09-17
+updated: 2026-09-26
 ---
 
 ## Kort samengevat
@@ -80,6 +80,12 @@ iets vaak gekozen wordt, bij welke gelegenheid, en welke producten vaak samen op
 lijsten staan. Dat gebeurt alleen als aantallen, pas wanneer genoeg verschillende
 mensen hetzelfde doen, en zonder dat een lijst, een naam of iets wat je schreef
 ergens anders te zien is. Wie wat gekocht heeft, telt nooit mee.
+
+Wat je zelf op een lijst zet, zoals een workshop of een dagje uit, kan een
+cadeau-idee voor anderen worden. Alleen als minstens vijf verschillende mensen
+hetzelfde schreven, en pas nadat een van ons het las en in eigen woorden
+opschreef. Wie het schreef, hoeveel mensen dat deden en jouw eigen woorden tonen
+we nooit. Foto's gebruiken we nooit.
 
 ## Waar je gegevens naartoe gaan
 

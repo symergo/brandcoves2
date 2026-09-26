@@ -469,6 +469,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Offline ideas
+    |--------------------------------------------------------------------------
+    |
+    | Items people typed onto their lists by hand, proposed as gift ideas for
+    | others. See docs/features/offline-ideas.md.
+    */
+    'offline_ideas' => [
+        // THE PRIVACY GUARANTEE. Different people (list owners) who must have
+        // typed something that folds to the same idea before it is even shown
+        // to a reviewer. A title can name a person or say something private;
+        // five strangers writing the same words cannot. The same bar as the
+        // list signals above, for the same reason. Lowering it weakens the
+        // promise on the privacy page, so it is the owner's decision, not a
+        // tuning knob.
+        'min_owners' => 5,
+
+        // Ideas shown under the Gift Finder's and This or that's results. A
+        // few: they are a side note to the products, not a second board.
+        'shown' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Gift landing pages
     |--------------------------------------------------------------------------
     |

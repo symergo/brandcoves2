@@ -39,13 +39,19 @@ class SaveIntentController extends Controller
          * it and accepting one here would be a free-text channel with no owner.
          */
         $validated = $request->validate([
-            'group_id' => ['nullable', 'integer', 'required_without_all:source,cove_id'],
+            'group_id' => ['nullable', 'integer', 'required_without_all:source,cove_id,idea_id'],
             'source' => [
                 'nullable',
                 'string',
                 'in:'.implode(',', array_diff(Source::values(), [Source::Manual->value])),
-                'required_without_all:group_id,cove_id',
+                'required_without_all:group_id,cove_id,idea_id',
             ],
+
+            // An approved offline idea to add after sign-in. Not free text:
+            // an id, whose wording is read from the idea at replay, so this
+            // stays closed to the "text with no owner" the rule above keeps
+            // out. See docs/features/offline-ideas.md.
+            'idea_id' => ['nullable', 'integer'],
 
             // A Cove to save, or to make a list of, after sign-in. See
             // docs/features/saved-coves.md.

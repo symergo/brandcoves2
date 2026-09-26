@@ -5,6 +5,7 @@ import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ChipInput from '../../Components/ChipInput'
 import InfoTip from '../../Components/InfoTip'
+import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
 import ToolIcon from '../../Components/ToolIcon'
 
@@ -71,6 +72,8 @@ interface Props {
     recipientList: SavingTo | null
     /** The gift landing page nearest this brief: a link that can be kept and shared. */
     pageUrl?: string | null
+    /** Approved ideas nobody sells here, matching the brief. Id and wording only. */
+    offlineIdeas?: OfflineIdea[]
 }
 
 /*
@@ -87,7 +90,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [] }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -432,6 +435,8 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                             ))}
                         </ul>
                     )}
+
+                    <OfflineIdeas ideas={offlineIdeas} into={recipientList} />
 
                     <div className="mt-8 flex flex-wrap gap-3">
                         <button

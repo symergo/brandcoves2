@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Source;
 use App\Models\Merchant;
+use App\Models\OfflineIdea;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\Wishlist;
@@ -450,7 +451,7 @@ class WishlistItemController extends Controller
             //
             // With a link it may be left out: the item is called after the
             // shop until its page has been read. See ItemSaver::saveManual().
-            'title' => [$manual ? 'required_without:url' : 'nullable', 'nullable', 'string', 'max:500'],
+            'title' => [$manual ? 'required_without_all:url,idea_id' : 'nullable', 'nullable', 'string', 'max:500'],
 
             // A scanned barcode we did not know yet, kept on a hand-written
             // item so it can join its product later. Invalid codes are
@@ -472,6 +473,11 @@ class WishlistItemController extends Controller
             ],
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
+
+            // An approved offline idea from the Gift Finder ("Add to my
+            // list"). Its wording is read here, never taken from the request.
+            // See docs/features/offline-ideas.md.
+            'idea_id' => ['nullable', 'integer', $manual ? 'prohibits:url,photo,gtin' : 'prohibited'],
 
             /*
              * Create-and-save in one step.
@@ -550,6 +556,16 @@ class WishlistItemController extends Controller
          * `ItemSaver::saveManual()`.
          */
         if ($validated['source'] === Source::Manual->value) {
+            if (! empty($validated['idea_id'])) {
+                $idea = OfflineIdea::query()->approved()->find($validated['idea_id']);
+
+                if ($idea === null) {
+                    throw new NotFoundHttpException;
+                }
+
+                return $this->report($request, $saver->saveManual(list: $list, title: $idea->title), $list);
+            }
+
             // Read before saving, so a file that is not a picture refuses the
             // whole add rather than leaving an item without the photo it came with.
             $photo = $request->hasFile('photo') ? $images->fromUpload($request->file('photo')) : null;
