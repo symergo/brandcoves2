@@ -17,6 +17,7 @@
                         <th class="py-1 pr-6">The same</th>
                         <th class="py-1 pr-6">Precision</th>
                         <th class="py-1 pr-6">Waiting</th>
+                        <th class="py-1"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,6 +28,17 @@
                             <td class="py-1 pr-6">{{ $row['merged'] }}</td>
                             <td class="py-1 pr-6">{{ $row['precision'] === null ? '-' : number_format($row['precision'] * 100, 1).' %' }}</td>
                             <td class="py-1 pr-6">{{ $row['pending'] }}</td>
+                            <td class="py-1">
+                                {{-- Every waiting pair of this rule at once; asks first. See mergeRule(). --}}
+                                @if ($row['pending'] > 0)
+                                    <x-filament::button
+                                        size="xs"
+                                        color="success"
+                                        wire:click="mergeRule('{{ $rule }}')"
+                                        wire:confirm="Merge all {{ $row['pending'] }} waiting pairs of &quot;{{ App\Enums\MatchRule::from($rule)->label() }}&quot;{{ $this->market ? ' in '.$this->market : '' }}? Precision so far: {{ $row['precision'] === null ? 'not measured yet' : number_format($row['precision'] * 100, 1).' %' }}. A merge can be split again, but only one product at a time."
+                                    >The same</x-filament::button>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

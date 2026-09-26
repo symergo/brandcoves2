@@ -125,3 +125,20 @@ that must not match; when two titles' numbers agree), `tests/Feature/MatchFinder
 the barcode-pair and brand guards, rejected pairs stay rejected, precision) and
 `tests/Feature/MatchReviewScreenTest.php` (both screens render; merge, swap, reject, skip, and the
 product page's merge and split).
+
+## "The same" for a whole rule (2026-09-26)
+
+The owner asked for a button after each rule in the precision table that applies "The same" to every
+waiting pair of that rule. `MatchReview::mergeRule()` counts the waiting pairs (in the market the
+screen is narrowed to, if any) and dispatches `MergeRuleCandidates`, which merges them 200 per run and
+queues the next run until the rule's queue is empty (invariant 8). Each pair is re-read before its
+merge, because an earlier merge may already have settled it; a pair the merger refuses stays waiting
+for a person. Which product survives is `MatchKeeper::pick()`, the same choice the one-at-a-time
+review makes (barcode product, then more offers, then older), so the two cannot disagree.
+
+The button asks first, naming the count and the rule's precision so far. That is the whole safety
+net, and it matters: when measured, the model-number rule was right about half the time and the
+similar-title rule about one time in ten, so pressing it on "Similar titles" folds unrelated
+products together. A merge can be undone with Split, but one product at a time; there is no bulk
+undo. Tests: `MatchReviewScreenTest` (a rule's pairs merge and another rule's do not; the market
+filter holds).

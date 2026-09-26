@@ -171,4 +171,49 @@ class MatchReviewScreenTest extends TestCase
         $this->assertNotSame($winner->id, $moved->fresh()->group_id);
         $this->assertSame(2, $winner->fresh()->offer_count);
     }
+
+    #[Test]
+    public function the_same_for_a_rule_merges_every_waiting_pair_of_that_rule_and_no_other(): void
+    {
+        // Owner's request, 2026-09-26: a "The same" button per rule row.
+        [$big, $small, $candidate] = $this->pending();
+        [$big2, $small2, $candidate2] = $this->pending();
+
+        $otherA = $this->group('LEGO Creator Expert Bugatti', offers: 2);
+        $otherB = $this->group('LEGO Bugatti Chiron');
+        $titleRule = MatchCandidate::create([
+            'market' => 'be-nl', 'group_a' => min($otherA->id, $otherB->id), 'group_b' => max($otherA->id, $otherB->id),
+            'rule' => MatchRule::Title, 'score' => 0.7, 'status' => MatchStatus::Pending,
+        ]);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->get('/admin/match-review')->assertOk()->assertSee('wire:confirm', false);
+
+        // The queue runs synchronously in tests, so the job has finished here.
+        Livewire::actingAs($admin)->test(MatchReview::class)->call('mergeRule', MatchRule::Model->value);
+
+        $this->assertSame($big->id, $small->fresh()->merged_into_id);
+        $this->assertSame($big2->id, $small2->fresh()->merged_into_id);
+        $this->assertSame(MatchStatus::Merged, $candidate->fresh()->status);
+        $this->assertSame(MatchStatus::Merged, $candidate2->fresh()->status);
+        $this->assertSame($admin->id, $candidate->fresh()->decided_by);
+
+        $this->assertSame(MatchStatus::Pending, $titleRule->fresh()->status, 'another rule is left alone');
+        $this->assertNull($otherB->fresh()->merged_into_id);
+    }
+
+    #[Test]
+    public function the_same_for_a_rule_respects_the_market_filter(): void
+    {
+        [, $small, $candidate] = $this->pending();
+        $candidate->update(['market' => 'nl-nl']);
+
+        Livewire::actingAs($this->admin())->test(MatchReview::class)
+            ->set('market', 'be-nl')
+            ->call('mergeRule', MatchRule::Model->value);
+
+        $this->assertSame(MatchStatus::Pending, $candidate->fresh()->status);
+        $this->assertNull($small->fresh()->merged_into_id);
+    }
 }

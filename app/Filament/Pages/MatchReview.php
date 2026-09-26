@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
-use App\Enums\IdentityKind;
 use App\Enums\Market;
 use App\Enums\MatchRule;
 use App\Enums\MatchStatus;
+use App\Jobs\MergeRuleCandidates;
 use App\Models\MatchCandidate;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Identity\GroupMerger;
 use App\Services\Identity\MatchFinder;
+use App\Services\Identity\MatchKeeper;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -124,13 +125,7 @@ class MatchReview extends Page
             return $this->keep === $a->id ? $a : $b;
         }
 
-        $rank = fn (ProductGroup $g) => [
-            $g->identity_kind === IdentityKind::Ean ? 0 : 1,
-            -$g->offer_count,
-            $g->id,
-        ];
-
-        return $rank($a) <= $rank($b) ? $a : $b;
+        return MatchKeeper::pick($a, $b);
     }
 
     /** @return Collection<int, Product> */
@@ -178,6 +173,45 @@ class MatchReview extends Page
 
         $this->last = "Merged #{$loser->id} into #{$winner->id}.";
         $this->keep = null;
+    }
+
+    /**
+     * "The same" for every waiting pair of one rule (owner's request,
+     * 2026-09-26), in the market the screen is narrowed to, if any.
+     *
+     * The button asks first, naming the count and the rule's precision so
+     * far: the similar-title rule was right about one time in ten when it was
+     * measured, and a bulk merge there would fold unrelated products together.
+     * The merging runs in a queued job, in batches, because a rule can hold a
+     * thousand pairs; see MergeRuleCandidates.
+     */
+    public function mergeRule(string $rule): void
+    {
+        $rule = MatchRule::tryFrom($rule);
+
+        if ($rule === null) {
+            return;
+        }
+
+        $waiting = MatchCandidate::query()
+            ->where('status', MatchStatus::Pending->value)
+            ->where('rule', $rule->value)
+            ->when($this->market, fn (Builder $q, string $m) => $q->where('market', $m))
+            ->count();
+
+        if ($waiting === 0) {
+            return;
+        }
+
+        MergeRuleCandidates::dispatch($rule->value, $this->market, $this->user()?->id);
+
+        $this->last = "Merging {$waiting} waiting pairs of \"{$rule->label()}\" in the background.";
+
+        Notification::make()
+            ->title('Merging '.$waiting.' pairs')
+            ->body('In the background, 200 at a time. Pairs the merger refuses stay here for you.')
+            ->success()
+            ->send();
     }
 
     public function reject(): void
