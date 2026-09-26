@@ -807,3 +807,28 @@ remove ✕ went on 2026-09-12).
 - [wishlists.md](wishlists.md) — claiming, sharing, and the occasion
 - [list-quiz.md](list-quiz.md) — why the quiz cannot appear on a private list
 - [sharing.md](sharing.md) — the link, the copy button and the channels inside the first block
+
+## "Who is it for?" first, and asking for ideas (2026-09-26)
+
+**Create a Cove opens on "Who is it for?".** The homepage's three Create a Cove buttons send a bare
+`/lists?new`, so the wizard starts with the question that decides what kind of Cove it becomes (for
+me, for someone else, together, Secret Friend). They briefly sent `?new=mine`, which answered that
+question for the visitor and skipped it; the owner asked for it back. The homepage's "Building a
+wish list?" card keeps `?new=mine`, because that card has already answered it.
+
+**A list for somebody else asks whether to ask for ideas** (owner's request). The wizard's last
+step opens with two choices, both optional:
+
+- **Ask {name} what they would like**, only when the list names a person: after creating the list,
+  its page shows that person's own page (`/for/{code}`) to send, where they say what they like and
+  never see the list. That link had existed since recipient profiles shipped (`target.askUrl`) and
+  was shown nowhere.
+- **Ask other people for suggestions**: turns sharing on (a suggestion needs a link to arrive
+  through), and the page shows the list's link to send. Suggestions wait for the owner, as any
+  suggestion on a shared list always has (`SuggestionController`).
+
+The choice travels as `ask[]` to `WishlistController::store()`, comes back once as the
+`askForIdeas` flash, and `Lists/Show` shows a card with a share control per choice. Once, because
+the list's own share controls are there for every visit after. A wish list for yourself drops the
+choice: nobody asks on your behalf. `AskForIdeasTest` holds it; the help page describes it under
+sharing.

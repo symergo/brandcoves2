@@ -264,7 +264,25 @@ class WishlistController extends Controller
             'voting_enabled' => ['sometimes', 'nullable', 'boolean'],
             'share_with' => ['sometimes', 'array', 'max:50'],
             'share_with.*' => ['integer'],
+
+            /*
+             * "Ask for ideas", on a list for somebody else (owner's request,
+             * 2026-09-26). `recipient`: show the person their own page, where
+             * they say what they like without seeing this list. `others`:
+             * share the list so people who know them can suggest things,
+             * which wait for the owner to accept. Both already worked; nothing
+             * asked for them at the moment the list is made.
+             */
+            'ask' => ['sometimes', 'array', 'max:2'],
+            'ask.*' => ['string', 'in:recipient,others'],
         ]);
+
+        $ask = array_values(array_unique($validated['ask'] ?? []));
+
+        // Asking other people needs a link to send them, so it turns sharing on.
+        if (in_array('others', $ask, true)) {
+            $validated['visibility'] = 'link';
+        }
 
         /*
          * A friend becomes a recipient before the list is made.
@@ -294,7 +312,19 @@ class WishlistController extends Controller
 
         $this->applyWizardSettings($list, $owner, $validated, $current);
 
-        return redirect()->to($current->url("lists/{$list->id}"));
+        $redirect = redirect()->to($current->url("lists/{$list->id}"));
+
+        /*
+         * The new list's page shows the links to send, once. Only for a list
+         * about somebody else: your own wish list has nobody to ask on your
+         * behalf, and "ask the recipient" needs a person the list is for.
+         */
+        $ask = array_values(array_filter(
+            $ask,
+            fn (string $who) => $list->kind !== ListKind::Mine && ($who === 'others' || $list->recipient_id !== null),
+        ));
+
+        return $ask === [] ? $redirect : $redirect->with('ask_for_ideas', $ask);
     }
 
     /**

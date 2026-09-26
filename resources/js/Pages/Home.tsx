@@ -55,8 +55,10 @@ export default function Home({ today, coves }: Props) {
     const base = `/${market.key}`
 
     // Works without an account (owner's decision, 2026-09-26): the growth
-    // loop's first step must not be a sign-in form.
-    const createCove = `${base}/lists?new=mine`
+    // loop's first step must not be a sign-in form. A bare `?new`, not
+    // `?new=mine`: the wizard then opens on "Who is it for?", which decides
+    // what kind of Cove it becomes (owner's request, the same day).
+    const createCove = `${base}/lists?new`
 
     return (
         <>
@@ -112,7 +114,9 @@ export default function Home({ today, coves }: Props) {
                         title={t('home.entry_list_title')}
                         body={t('home.entry_list_body')}
                         cta={t('home.entry_list_cta')}
-                        href={createCove}
+                        // This card has already answered "for whom": a wish
+                        // list is for yourself, so the wizard skips that step.
+                        href={`${base}/lists?new=mine`}
                     />
                     <Entry
                         icon="guides"

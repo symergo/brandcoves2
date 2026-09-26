@@ -142,6 +142,8 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
         link_can_add: false,
         voting_enabled: true,
         share_with: [] as number[],
+        // Who to ask for ideas, on a list for somebody else. See the sharing step.
+        ask: [] as ('recipient' | 'others')[],
         /*
          * The Secret Friend group's own fields. `title` is shared: it is the
          * group's name there, and a list's title otherwise. Euros here, cents
@@ -299,6 +301,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
             link_can_add: shared ? data.link_can_add : undefined,
             voting_enabled: kind === 'group' ? data.voting_enabled : undefined,
             share_with: shared ? data.share_with : [],
+            ask: forSomeone ? data.ask : [],
             event_type: data.event_type || null,
             event_date: data.event_date || null,
             friend_id: data.friend_id === '' ? null : data.friend_id,
@@ -340,6 +343,14 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
     })()
 
     const personName = person?.name ?? form.data.new_recipient
+
+    function toggleAsk(who: 'recipient' | 'others', on: boolean) {
+        const ask = on ? [...form.data.ask.filter((w) => w !== who), who] : form.data.ask.filter((w) => w !== who)
+
+        // Asking other people needs a link to send them; the server does the
+        // same, this only shows it.
+        form.setData((data) => ({ ...data, ask, visibility: who === 'others' && on ? 'link' : data.visibility }))
+    }
 
     /*
      * The title follows the person until somebody types one.
@@ -814,6 +825,41 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
 
                 {step === 'sharing' && !isSanta && (
                     <div>
+                        {/*
+                          Ask for ideas, on a list about somebody else (owner's
+                          request, 2026-09-26). First on this step, because it
+                          is the reason most people share such a list at all.
+
+                          The person themselves, only when the list names one:
+                          they get their own page, where they say what they
+                          like without ever seeing this list. Other people: the
+                          list is shared, anybody with the link can suggest
+                          things, and suggestions wait for the owner to accept.
+                          Choosing the second turns sharing on below, since a
+                          suggestion needs a link to arrive through.
+                        */}
+                        {forSomeone && (
+                            <fieldset className="mb-6">
+                                <legend className="font-medium">{t('wizard.ask_title')}</legend>
+                                <div className="mt-3 space-y-3">
+                                    {kind === 'for_someone' && personName.trim() !== '' && (
+                                        <AskChoice
+                                            checked={form.data.ask.includes('recipient')}
+                                            onChange={(on) => toggleAsk('recipient', on)}
+                                            label={t('wizard.ask_recipient', { name: personName.trim() })}
+                                            hint={t('wizard.ask_recipient_hint')}
+                                        />
+                                    )}
+                                    <AskChoice
+                                        checked={form.data.ask.includes('others')}
+                                        onChange={(on) => toggleAsk('others', on)}
+                                        label={t('wizard.ask_others')}
+                                        hint={t('wizard.ask_others_hint')}
+                                    />
+                                </div>
+                            </fieldset>
+                        )}
+
                         <fieldset>
                             <legend className="font-medium">
                                 {t('wizard.sharing')}
@@ -977,5 +1023,28 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
                 )}
             </div>
         </section>
+    )
+}
+
+/** One "ask for ideas" choice: a checkbox, what it does, and a line on how. */
+function AskChoice({
+    checked,
+    onChange,
+    label,
+    hint,
+}: {
+    checked: boolean
+    onChange: (on: boolean) => void
+    label: string
+    hint: string
+}) {
+    return (
+        <label className="flex items-start gap-3">
+            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1" />
+            <span>
+                <span className="block text-sm font-medium">{label}</span>
+                <span className="block text-xs text-ink-soft">{hint}</span>
+            </span>
+        </label>
     )
 }

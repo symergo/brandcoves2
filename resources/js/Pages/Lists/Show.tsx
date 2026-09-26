@@ -11,6 +11,7 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
+import ShareMenu from '../../Components/ShareMenu'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -223,6 +224,7 @@ export default function ListShow({
     const freshRow = useRef<HTMLLIElement | null>(null)
 
     const savedItem = flash.savedItem ?? null
+    const askForIdeas = flash.askForIdeas ?? []
 
     useEffect(() => {
         if (savedItem === null) return
@@ -361,6 +363,47 @@ export default function ListShow({
                         panel={panel}
                         onPanel={setPanel}
                     />
+
+                    {/*
+                      The links to send, right after the list was made with
+                      "ask for ideas" chosen in the wizard. Once: it answers
+                      the choice just made, and the share controls above stay
+                      for every visit after. The person's own page is where
+                      they say what they like without seeing this list; the
+                      list's link lets others suggest, and suggestions wait
+                      for the owner.
+                    */}
+                    {askForIdeas.length > 0 && (
+                        <div className="mt-6 space-y-4 rounded-card border border-accent/40 bg-accent/5 p-4 sm:p-5">
+                            <p className="font-medium">{t('wizard.ask_card_title')}</p>
+
+                            {askForIdeas.includes('recipient') && target?.askUrl && (
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <p className="max-w-md text-sm text-ink-soft">
+                                        {t('wizard.ask_card_recipient', { name: target.name })}
+                                    </p>
+                                    <ShareMenu
+                                        url={target.askUrl}
+                                        text={t('wizard.ask_message_recipient')}
+                                        label={t('wizard.ask_card_send', { name: target.name })}
+                                    />
+                                </div>
+                            )}
+
+                            {askForIdeas.includes('others') && list.shareUrl && (
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <p className="max-w-md text-sm text-ink-soft">
+                                        {t('wizard.ask_card_others')}
+                                    </p>
+                                    <ShareMenu
+                                        url={list.shareUrl}
+                                        text={t('wizard.ask_message_others', { title: list.title })}
+                                        label={t('wizard.ask_card_share')}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/*
                       The pot, on the page the organiser actually works from.

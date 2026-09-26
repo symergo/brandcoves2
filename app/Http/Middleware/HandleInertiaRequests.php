@@ -282,6 +282,11 @@ class HandleInertiaRequests extends Middleware
                 // of a sentence — see `WishlistItemController::report()`.
                 'savedItem' => fn () => $request->session()->get('saved_item'),
 
+                // Not a message: who the owner chose to ask for ideas when
+                // they made this list (`recipient`, `others`). `Lists/Show`
+                // shows the links to send, once. See WishlistController::store().
+                'askForIdeas' => fn () => $request->session()->get('ask_for_ideas'),
+
                 // Not a message either: how the account that was just created
                 // signed in ('google' or 'email'), set by the auth callbacks on
                 // a first sign-in only. The client reports it to analytics as
