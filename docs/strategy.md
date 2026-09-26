@@ -197,6 +197,12 @@ not Coves. Gift personas are hand-written Coves, not briefs.
 
 **Missing.** `TasteBrief` behind search (section 5), guide landing pages and Cove suggestions.
 
+**Since 2026-09-26** the brief drives all three: the search box reads one
+([intent-search.md](features/intent-search.md)), it is stored and written as an address
+(`TasteBrief::toArray()`, `BriefUrl`), gift landing pages are built from it
+([gift-landing-pages.md](features/gift-landing-pages.md)), and a Cove plan can carry one
+(`cove_plans.brief`). The paragraph above describes the day this was written.
+
 ### F. A list's intent teaches the catalogue
 
 The owner's idea (2026-09-26): **when somebody builds a list with an intent, the products on it
@@ -416,9 +422,14 @@ Order agreed with the owner on 2026-09-26.
 4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
    gift pages and Coves, the intent a list passes on to its products, and a person's own list as
    the brief for a gift for them. Built 2026-09-26: the search box reads intent
-   ([intent-search.md](features/intent-search.md)), and lists teach the catalogue
-   ([list-signals.md](features/list-signals.md)). Still to come: gift landing pages and briefs on
-   Coves.
+   ([intent-search.md](features/intent-search.md)), lists teach the catalogue
+   ([list-signals.md](features/list-signals.md)), a brief can be stored and linked, gift landing
+   pages exist for every recipient and interest the catalogue fills with eight products
+   ([gift-landing-pages.md](features/gift-landing-pages.md)), search filters by who, interest and
+   occasion ([search.md](features/search.md)), and a Cove plan can be chosen by a brief
+   ([editorial-api.md](features/editorial-api.md)). Open for the owner: recipient × occasion
+   pages, how strictly a page must fit the recipient (`gift_landings.min_recipient_matches`), and
+   an AI tagging pass (not built).
 5. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
    confirmed by a person; admin merge and split.
 6. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with

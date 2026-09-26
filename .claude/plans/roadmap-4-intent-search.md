@@ -4,6 +4,11 @@ Strategy: [docs/strategy.md](../../docs/strategy.md), section 5 and engine E, F 
 2026-09-26 as "intent everywhere", widened the same day with the natural-language search box (owner's
 section 5) and the two list signals (owner's ideas F and G).
 
+**Status (2026-09-26): built**, A to C and 1 to 4. Decisions taken without the owner are listed in
+`docs/features/gift-landing-pages.md`: the URL words (`/gift-ideas/for/` everywhere, recipient and
+interest in the market's language), recipient × interest only, no AI tagging pass, and
+`gift_landings.min_recipient_matches` at 0.
+
 ## Goal
 
 "Gift for my sister who loves gardening, €30–€50" typed into search comes back as **Sister ·

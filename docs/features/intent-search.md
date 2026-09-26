@@ -1,7 +1,7 @@
 ---
 name: Intent search
 area: Search / Gifting
-status: Active — part A of roadmap step 4 (reading the search box); list signals and landing pages to follow
+status: Active — part A of roadmap step 4 (reading the search box); the rest of the step is built too
 date_added: 2026-09-26
 ---
 
@@ -52,10 +52,13 @@ box is not offered (it would search the sentence word for word), and there is no
 as usual and no chips are shown: the page never comes back empty for having understood. Gift
 searches are not written to `search_log`, because they never reach `SearchService::search()`.
 
-## Still to come in step 4
+## The rest of step 4
 
-The two list signals (a list's intent counting for its products; a person's own list as the brief
-for a gift for them), gift landing pages, and briefs on Coves. See `.claude/plans/roadmap-4-intent-search.md`.
+All built on 2026-09-26: the two list signals ([list-signals.md](list-signals.md)), gift landing
+pages built from a brief ([gift-landing-pages.md](gift-landing-pages.md)), search filters for who,
+interest and occasion ([search.md](search.md)), and briefs on Coves
+([editorial-api.md](editorial-api.md)). A gift sentence typed in the box is still answered here, by
+the engine; the landing pages are what search engines are meant to find for those phrases.
 
 ## Tests
 
