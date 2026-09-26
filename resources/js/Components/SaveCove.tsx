@@ -1,9 +1,11 @@
-import { router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { Link, router, usePage } from '@inertiajs/react'
+import { useCallback, useRef, useState } from 'react'
 import { send } from '../http'
 import { useSignIn } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import SaveButton, { BookmarkIcon } from './SaveButton'
+import SaveSheet from './SaveSheet'
 
 export interface SaveCoveState {
     /** An editorial Cove's id. Absent on a Community Cove, which sends its addresses instead. */
@@ -23,28 +25,46 @@ export interface SaveCoveState {
 }
 
 /**
- * Save a Cove into My Coves, and "Make it my list" (docs/features/saved-coves.md).
+ * Save a Cove: keep it in My Coves, or make it my list
+ * (docs/features/saved-coves.md, docs/features/save-button.md).
  *
- * Save is a bookmark: the Cove stays ours and changes when we edit it. Make it
- * my list copies its products into a new list of your own, a snapshot. Both
- * need an account; a guest's press is stashed (`/save-intent`) and finished
- * after sign-in, the way saving a product works, so nobody is sent to a login
- * form empty-handed.
+ * Keeping is a bookmark: the Cove stays ours (or its maker's) and changes when
+ * it is edited. Make it my list copies its products into a new list of your
+ * own, a snapshot.
  *
- * The bookmark is the same one as on a product card (SaveToList), filled once
- * saved, so the two read as one idea: keep this.
+ * ## One button, and the two choices behind it
+ *
+ * Until 2026-09-26 these were two controls side by side, "Bewaar" and "Maak er
+ * mijn lijst van", next to a product's own bookmark-with-a-chevron. The site
+ * now has one Save button; on a Cove, pressing it opens the same sheet a
+ * product's does, holding both choices with a line on what each means.
+ *
+ * A Cove's press opens the sheet rather than saving straight away, unlike a
+ * product's, because here there are two different things "save" can mean and
+ * guessing the wrong one either leaves you without the list you wanted or
+ * gives you a copy you did not. Once kept, the button reads "Bewaard" and the
+ * sheet says where it is, with a link there and a way to remove it.
+ *
+ * Both choices need an account; a guest's choice is stashed (`/save-intent`)
+ * and finished after sign-in, the way saving a product works, so nobody is
+ * sent to a login form empty-handed.
  */
 export default function SaveCove({ state }: { state: SaveCoveState }) {
     const { auth, market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const signIn = useSignIn()
     const [busy, setBusy] = useState(false)
+    const [open, setOpen] = useState(false)
+    const trigger = useRef<HTMLButtonElement>(null)
+    const close = useCallback(() => setOpen(false), [])
     const base = `/${market.key}`
     const saved = state.isSaved
     const saveUrl = state.saveUrl ?? `${base}/coves/${state.coveId}/save`
     const copyUrl = state.copyUrl ?? `${base}/coves/${state.coveId}/copy`
 
     async function asGuest(action: 'save' | 'copy'): Promise<void> {
+        setOpen(false)
+
         try {
             await send(`${base}/save-intent`, 'POST', {
                 ...(state.intent ?? { cove_id: state.coveId ?? 0 }),
@@ -66,7 +86,9 @@ export default function SaveCove({ state }: { state: SaveCoveState }) {
         }
 
         setBusy(true)
-        const options = { preserveScroll: true, onFinish: () => setBusy(false) }
+        // Closed on success: the button itself turns to "Bewaard", which is
+        // the confirmation, and the flash names the Cove.
+        const options = { preserveScroll: true, onSuccess: close, onFinish: () => setBusy(false) }
 
         if (saved) {
             router.delete(saveUrl, options)
@@ -90,36 +112,62 @@ export default function SaveCove({ state }: { state: SaveCoveState }) {
         return null
     }
 
+    const choice = 'flex w-full items-start gap-3 rounded px-2 py-2 text-left hover:bg-line/40 disabled:opacity-50'
+
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            <button
-                type="button"
-                onClick={toggle}
-                disabled={busy}
-                aria-pressed={saved}
-                className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition disabled:opacity-50 ${
-                    saved ? 'border-sage bg-sage text-white' : 'border-line bg-card text-ink hover:border-ink'
-                }`}
-            >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-                    <path
-                        d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"
-                        fill={saved ? 'currentColor' : 'none'}
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                    />
-                </svg>
-                {saved ? t('saved_coves.saved') : t('saved_coves.save')}
-            </button>
-            <button
-                type="button"
-                onClick={copy}
-                disabled={busy}
-                className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm text-accent-dark underline hover:text-ink disabled:opacity-50"
-            >
-                {t('saved_coves.copy')}
-            </button>
-        </div>
+        <>
+            <SaveButton
+                ref={trigger}
+                saved={saved}
+                busy={busy}
+                onClick={() => setOpen((v) => !v)}
+                opensSheet
+                expanded={open}
+            />
+
+            <SaveSheet open={open} onClose={close} anchor={trigger} label={t('save_button.cove_title')}>
+                {saved ? (
+                    <div className="rounded border border-sage bg-sage/10 px-2 py-2">
+                        <p className="flex items-center gap-2 text-sm font-medium text-sage">
+                            <BookmarkIcon filled />
+                            {t('save_button.cove_saved_in')}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 pl-6 text-sm">
+                            <Link href={`${base}/lists`} className="font-medium text-accent-dark underline hover:text-ink">
+                                {t('save_button.open_my_coves')}
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={toggle}
+                                disabled={busy}
+                                className="text-ink-soft underline hover:text-ink disabled:opacity-50"
+                            >
+                                {t('save_button.cove_remove')}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <button type="button" onClick={toggle} disabled={busy} className={choice}>
+                        <span aria-hidden className="mt-0.5 flex w-4 shrink-0 justify-center text-ink">
+                            <BookmarkIcon filled={false} />
+                        </span>
+                        <span>
+                            <span className="block text-sm font-medium">{t('save_button.cove_keep')}</span>
+                            <span className="block text-xs text-ink-soft">{t('save_button.cove_keep_hint')}</span>
+                        </span>
+                    </button>
+                )}
+
+                <button type="button" onClick={copy} disabled={busy} className={`${choice} mt-1`}>
+                    <span aria-hidden className="mt-0.5 flex w-4 shrink-0 justify-center text-sm leading-4 font-bold text-ink">
+                        +
+                    </span>
+                    <span>
+                        <span className="block text-sm font-medium">{t('saved_coves.copy')}</span>
+                        <span className="block text-xs text-ink-soft">{t('save_button.cove_copy_hint')}</span>
+                    </span>
+                </button>
+            </SaveSheet>
+        </>
     )
 }

@@ -600,6 +600,23 @@ return [
         'empty' => 'Je hebt nog geen Cove bewaard. Klik op Bewaren bij een Cove om hem hier terug te vinden.',
     ],
 
+    // The one Save button, on products and Coves; see docs/features/save-button.md.
+    'save_button' => [
+        'save' => 'Bewaar',
+        'saved' => 'Bewaard',
+        'saved_label' => 'Bewaard. Kies lijsten',
+        'quick_hint' => 'Eén druk op Bewaar zet het in :list. Vink hier nog andere lijsten aan.',
+        'pick_hint' => 'Vink de lijsten aan waar het op moet.',
+        'saved_hint' => 'Het staat op de aangevinkte lijsten. Vink er een uit om het eraf te halen.',
+        'cove_title' => 'Bewaar deze Cove',
+        'cove_keep' => 'Bewaar in Mijn Coves',
+        'cove_keep_hint' => 'Je vindt hem daar terug, en hij verandert mee als de maker hem bijwerkt.',
+        'cove_saved_in' => 'Bewaard in Mijn Coves',
+        'open_my_coves' => 'Open Mijn Coves',
+        'cove_remove' => 'Haal uit Mijn Coves',
+        'cove_copy_hint' => 'Zet de producten in een nieuwe lijst van jezelf, die je aanpast zoals je wilt.',
+    ],
+
     // Community Coves; see lang/en/site.php and docs/features/community-coves.md.
     'community' => [
         'index_heading' => 'Community Coves',
@@ -2233,7 +2250,7 @@ return [
         'coves_body1' => 'Een Cove is een verzameling dingen rond één idee: dingen die je wilt, cadeaus voor Emma\'s verjaardag, je nieuwe huis, Kerstmis dit jaar.',
         'coves_body2' => 'Je maakt je eigen Coves. Sommige hou je voor jezelf, sommige maak je voor iemand anders, en sommige vul je samen met anderen. GiftCoves maakt ook Coves: elke dag iets nieuws, cadeau-ideeën per soort persoon, en koopgidsen.',
         'coves_body3' => 'Alles kan in een Cove, uit elke winkel, en elke Cove kun je delen.',
-        'coves_body4' => 'Klik op Bewaren bij een Cove om hem terug te vinden onder Mijn Coves, Bewaarde Coves. Hij verandert mee als wij de Cove bijwerken. Maak er mijn lijst van zet de producten in een eigen lijst, die je zelf kunt aanpassen.',
+        'coves_body4' => 'Klik op Bewaar bij een Cove en kies. Bewaar in Mijn Coves en je vindt hem terug onder Bewaarde Coves; hij verandert mee als wij de Cove bijwerken. Maak er mijn lijst van zet de producten in een eigen lijst, die je zelf kunt aanpassen. Het is dezelfde Bewaar-knop als bij een product.',
         'find_title' => 'Dingen vinden',
         'find_search' => 'Zoek op naam, merk of soort ding, of zeg voor wie het is: "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We kijken in veel winkels tegelijk en vergelijken hun prijzen.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',

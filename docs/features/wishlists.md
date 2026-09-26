@@ -321,6 +321,10 @@ variants now follow one rule, **not saved → save; saved → open the picker**,
 narrow chevron (desktop only since 2026-09-08) so that filing straight into a named list does not
 first cost a save into the wrong one.
 
+**2026-09-26: the chevron is gone.** At card size it read as a minus sign, and saving was four
+different controls across the site. There is now one Save button ("Bewaar", filled "Bewaard") and one
+panel it opens, shared with Coves; the rule above is unchanged. See [save-button.md](save-button.md).
+
 ### What order a list is in (2026-09-06)
 
 Priority first, then **newest first**. `WishlistController` sorts by `priority` and breaks the tie on

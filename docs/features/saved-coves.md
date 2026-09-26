@@ -59,5 +59,8 @@ editorial Cove's when given only a `coveId`.
 - `app/Services/Cove/SavedCoves.php`: save, unsave, isSaved, the button state, copyToList
 - `app/Http/Controllers/SavedCoveController.php`: `POST|DELETE /coves/{id}/save`, `POST /coves/{id}/copy`
 - `WishlistController::savedCoves()`, the `saved` view in `resources/js/Pages/Lists/Index.tsx`
-- `resources/js/Components/SaveCove.tsx`, placed on Daily, Persona, Guide and Entity pages
+- `resources/js/Components/SaveCove.tsx`, placed on Daily, Persona, Guide and Entity pages. Since
+  2026-09-26 it is the site's one Save button: pressing it opens a panel with "Bewaar in Mijn Coves"
+  and "Maak er mijn lijst van" instead of two controls side by side; see
+  [save-button.md](save-button.md)
 - Test: `tests/Feature/SavedCoveTest.php`

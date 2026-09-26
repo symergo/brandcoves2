@@ -124,6 +124,11 @@ interests found, no person, like `gift.suggest`.
   today comes off the avoid list and the other way round). Making a new person needs an account, as
   everywhere else since 2026-09-06; anonymous visitors can use the whole tool and are offered sign-in
   to keep the result.
+
+  The "Bewaar voor [naam]" buttons stayed as they are when the rest of the site moved to one Save
+  button on 2026-09-26 ([save-button.md](save-button.md)): they keep a *taste*, not a thing, and have
+  no saved state to fill in, so the bookmark icon would promise something they cannot show. They
+  already use the same verb.
 - **Choosing for yourself** ("Me") ranks the ideas as for yourself (`SuggestionProfile::forMyself`)
   and offers each one to your wish list. There is nowhere to store a taste on an account, and a
   person's own wish list already acts as their brief (`TasteBrief::fromList`, list-signals.md), so

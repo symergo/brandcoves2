@@ -730,6 +730,23 @@ return [
         'empty' => 'You have not saved a Cove yet. Press Save on any Cove to find it here again.',
     ],
 
+    // The one Save button, on products and Coves; see docs/features/save-button.md.
+    'save_button' => [
+        'save' => 'Save',
+        'saved' => 'Saved',
+        'saved_label' => 'Saved. Choose lists',
+        'quick_hint' => 'One press on Save puts it in :list. Tick more lists here.',
+        'pick_hint' => 'Tick the lists it goes on.',
+        'saved_hint' => 'It is on the ticked lists. Untick one to take it off.',
+        'cove_title' => 'Save this Cove',
+        'cove_keep' => 'Keep it in My Coves',
+        'cove_keep_hint' => 'You find it there again, and it changes when its maker updates it.',
+        'cove_saved_in' => 'Saved in My Coves',
+        'open_my_coves' => 'Open My Coves',
+        'cove_remove' => 'Remove from My Coves',
+        'cove_copy_hint' => 'Puts its products in a new list of your own, to change as you like.',
+    ],
+
     /*
      * Community Coves: lists their owners chose to publish
      * (docs/features/community-coves.md). `for.*` says who a list is for as a
@@ -2476,7 +2493,7 @@ return [
         'coves_body1' => 'A Cove is a collection of things around one idea: things you want, presents for Emma\'s birthday, your new home, Christmas this year.',
         'coves_body2' => 'You make your own Coves. Some you keep for yourself, some you make for somebody else, and some you fill together with other people. GiftCoves makes Coves too: something new every day, gift ideas for a kind of person, and buying guides.',
         'coves_body3' => 'Anything can go in a Cove, from any shop, and every Cove can be shared.',
-        'coves_body4' => 'Press Save on a Cove to find it again under My Coves, Saved Coves. It keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change.',
+        'coves_body4' => 'Press Save on a Cove and choose. Keep it in My Coves to find it again under Saved Coves; it keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change. It is the same Save button as on a product.',
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',

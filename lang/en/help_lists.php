@@ -35,7 +35,7 @@ return [
                 ],
                 [
                     'title' => 'Save it and pick a list',
-                    'body' => 'Tap the bookmark and it is on your list. Tap again to pick another list or start a new one. On a computer a small arrow next to the bookmark opens that panel straight away.',
+                    'body' => 'Tap the bookmark and it is on your list. Tap again to pick another list or start a new one. The panel puts the list one tap uses on top, and ticks every list it is on.',
                     'shot' => 'choose',
                     'alt' => 'The panel open beside a product, listing the lists to save to and the option to start a new one.',
                 ],
@@ -101,7 +101,7 @@ return [
             'sections' => [
                 [
                     'title' => 'The bookmark',
-                    'body' => 'On every product card, in [search](search) and in every [Cove](cove). One tap saves to the list you last saved to, otherwise to your default list. Another tap opens the panel: there you pick another list, move it, or take it off. On a computer a small arrow next to the bookmark opens the panel straight away.',
+                    'body' => 'On every product card, in [search](search) and in every [Cove](cove). One tap saves to the list you last saved to, otherwise to your default list. Once saved, the bookmark is filled and reads Saved, and another tap opens the panel: tick another list, or untick one to take it off. On a product page it is the same button with the word Save next to it, and on a Cove too.',
                 ],
                 [
                     'title' => 'Adding from the list itself',
