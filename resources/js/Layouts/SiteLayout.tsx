@@ -241,7 +241,7 @@ function Chrome({ children }: PropsWithChildren) {
     // The one flat link beside the three menus.
     const nav = [
         {
-            href: `${base}/gift-cove/how-it-works`,
+            href: `${base}/help`,
             label: t('nav.how_it_works'),
             icon: <ToolIcon name="help" className="h-5 w-5" />,
         },

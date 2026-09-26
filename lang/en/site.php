@@ -2094,11 +2094,38 @@ return [
      * most people arriving are stuck rather than reporting a fault.
      */
     'help' => [
-        'seo_title' => 'Help',
-        'seo_description' => 'How to search, how lists work, and where to tell us something is wrong.',
-        'title' => 'Help',
-        'intro' => 'How to get what you want out of this site, and where to say when it does not work.',
-        'guides_heading' => 'How it works',
+        /*
+         * Since 2026-09-26 this page is the site's "How it works" (the header
+         * and the homepage link here) as well as its help and contact page.
+         */
+        'seo_title' => 'How GiftCoves works, and help',
+        'seo_description' => 'What a Cove is, how to find and add anything, how sharing and giving together work, and where to tell us something is wrong.',
+        'title' => 'How GiftCoves works',
+        'intro' => 'Everything you can do here, in a few minutes of reading. Something not working? The form is at the bottom.',
+        'coves_title' => 'What is a Cove?',
+        'coves_body1' => 'A Cove is a collection of things around one idea: things you want, presents for Emma\'s birthday, your new home, Christmas this year.',
+        'coves_body2' => 'You make your own Coves. Some you keep for yourself, some you make for somebody else, and some you fill together with other people. GiftCoves makes Coves too: something new every day, gift ideas for a kind of person, and buying guides.',
+        'coves_body3' => 'Anything can go in a Cove, from any shop, and every Cove can be shared.',
+        'find_title' => 'Finding things',
+        'find_search' => 'Search by name, brand or kind of thing. We look across many shops at once and compare their prices.',
+        'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
+        'find_gift' => 'Tell the Gift Finder who it is for, what they like and your budget, and get ideas to choose from.',
+        'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
+        'add_title' => 'Adding anything',
+        'add_link' => 'Paste a link from any shop. We fill in the name, picture and price, from our own catalogue when we know the shop and from the shop\'s page when we do not.',
+        'add_barcode' => 'Scan a barcode nobody sells yet. We keep it, and the product appears on its own once a shop starts selling it.',
+        'add_photo' => 'Add a photo of your own to something you wrote down yourself.',
+        'add_write' => 'Or just write it down: a voucher, a book in one particular edition, a day out.',
+        'share_title' => 'Sharing and giving',
+        'share_link' => 'Share a Cove with a link. People can say they will buy something, and you do not see what has been claimed, so it stays a surprise.',
+        'share_together' => 'Buy together: in a group Cove several people suggest, vote and chip in for one present.',
+        'share_santa' => 'Draw names for a Secret Friend, and each person sees only their own match.',
+        'honest_title' => 'Where products come from',
+        'honest_body' => 'Products come from shops and brands we work with, from independent sellers, and from what people add themselves. Some links earn GiftCoves a commission. That never changes what you pay, and never decides whether something can appear here.',
+        'guides_heading' => 'The details',
+        'manual_title' => 'The list tools, step by step',
+        'manual_blurb' => 'Nine tools for lists and giving, three steps each.',
+        'contact_title' => 'Something wrong, or a question?',
         'search_title' => 'Searching',
         'search_blurb' => 'What the box accepts, how the scanner works, and why a typo still finds things.',
         'lists_title' => 'Lists',

@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import FeedbackForm from '../Components/FeedbackForm'
+import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
@@ -8,19 +9,28 @@ interface Props {
 }
 
 /**
- * How the site works, and where to say it does not.
+ * How GiftCoves works, and where to say it does not.
+ *
+ * ## One page for the whole site (2026-09-26)
+ *
+ * The header's "How it works" and the homepage's "How GiftCoves works" both
+ * land here. Until then the header's entry opened the list tools' manual,
+ * which explains lists and nothing else, and has no form: somebody looking for
+ * support found neither the search, nor what a Cove is, nor a way to tell us
+ * something was wrong (the owner's report, 2026-09-26). This page now says, in
+ * order, what a Cove is, how you find things, how you add anything, how you
+ * share and give, and where products come from; then the detailed guides; then
+ * the form.
  *
  * ## The order is the odds
  *
- * Guides first, form second. Most people arriving here are stuck rather than
- * reporting a fault, and a form at the top of a help page asks them to describe
- * a problem they would rather just solve. Whoever the guides did not help
- * scrolls past two cards to reach it, which is a fair price for putting the
- * likely answer first.
+ * Explanation first, form last. Most people arriving here are stuck rather than
+ * reporting a fault, and a form at the top asks them to describe a problem they
+ * would rather just solve.
  *
  * ## The form is the real one
  *
- * `FeedbackForm` is the component `/feedback` renders, not a copy of it. Two
+ * `FeedbackForm` is the component `/feedback` rendered, not a copy of it. Two
  * forms posting to one endpoint drift: the honeypot gets added to one, the line
  * explaining what the address is for gets rewritten on the other.
  */
@@ -31,20 +41,66 @@ export default function Help({ guides, path }: Props) {
         <>
             <Head title={t('help.title')} />
 
-            <div className="mx-auto max-w-2xl px-4 py-10">
-                {/*
-                  The heading is the whole invitation.
+            <div className="mx-auto max-w-3xl py-4 sm:py-8">
+                <h1 className="text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
+                    {t('help.title')}
+                </h1>
+                <p className="mt-3 max-w-2xl text-lg text-ink-soft">{t('help.intro')}</p>
 
-                  A sentence under it restated what the two cards and the form
-                  heading already say, in front of the answers somebody came for.
-                  Same reasoning the feedback page recorded when its own three
-                  pieces of preamble came off.
-                */}
-                <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('help.title')}</h1>
+                {/* What a Cove is: the one word on this site nobody knows yet. */}
+                <section className="mt-10 rounded-card bg-accent/5 p-6 sm:p-8" aria-labelledby="help-coves">
+                    <h2 id="help-coves" className="text-xl font-semibold tracking-tight sm:text-2xl">
+                        {t('help.coves_title')}
+                    </h2>
+                    <div className="mt-3 max-w-2xl space-y-3 text-ink-soft">
+                        <p>{t('help.coves_body1')}</p>
+                        <p>{t('help.coves_body2')}</p>
+                        <p>{t('help.coves_body3')}</p>
+                    </div>
+                </section>
 
-                <h2 className="mt-10 text-lg font-semibold text-ink">{t('help.guides_heading')}</h2>
+                <Topic
+                    id="help-find"
+                    title={t('help.find_title')}
+                    items={[
+                        { icon: 'search', text: t('help.find_search') },
+                        { icon: 'barcode', text: t('help.find_scan') },
+                        { icon: 'whisperer', text: t('help.find_gift') },
+                        { icon: 'guides', text: t('help.find_browse') },
+                    ]}
+                />
 
-                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Topic
+                    id="help-add"
+                    title={t('help.add_title')}
+                    items={[
+                        { icon: 'link', text: t('help.add_link') },
+                        { icon: 'barcode', text: t('help.add_barcode') },
+                        { icon: 'picture', text: t('help.add_photo') },
+                        { icon: 'build', text: t('help.add_write') },
+                    ]}
+                />
+
+                <Topic
+                    id="help-share"
+                    title={t('help.share_title')}
+                    items={[
+                        { icon: 'shared', text: t('help.share_link') },
+                        { icon: 'collab', text: t('help.share_together') },
+                        { icon: 'santa', text: t('help.share_santa') },
+                    ]}
+                />
+
+                <section className="mt-10" aria-labelledby="help-honest">
+                    <h2 id="help-honest" className="text-xl font-semibold tracking-tight">
+                        {t('help.honest_title')}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-ink-soft">{t('help.honest_body')}</p>
+                </section>
+
+                <h2 className="mt-12 text-xl font-semibold tracking-tight">{t('help.guides_heading')}</h2>
+
+                <ul className="mt-4 grid gap-3 sm:grid-cols-3">
                     {guides.map((guide) => (
                         <li key={guide.key}>
                             <Link
@@ -63,22 +119,38 @@ export default function Help({ guides, path }: Props) {
                 {/*
                   A rule, not just space. Everything above answers "how does this
                   work"; everything below is for when the answer is "it does not".
-                  Two different kinds of help stacked on one page need the seam
-                  drawn, the same way the search rail draws it.
-
-                  No heading and no preamble over the form. "Something wrong? A
-                  price that is out of date, a dead link…" listed examples of
-                  what to write directly above a box whose placeholder asks the
-                  same question — two invitations for one field, and the reader
-                  has to read both before typing a word. The placeholder does
-                  the asking; the textarea keeps its screen-reader label, which
-                  is the part a heading was carrying for people who cannot see
-                  the box.
+                  The heading says so in a few words, because the form is now at
+                  the end of a long page and has to be findable by scrolling.
                 */}
-                <div className="mt-12 border-t border-line pt-10">
-                    <FeedbackForm path={path} />
-                </div>
+                <section id="contact" className="mt-12 scroll-mt-8 border-t border-line pt-10" aria-labelledby="help-contact">
+                    <h2 id="help-contact" className="text-xl font-semibold tracking-tight">
+                        {t('help.contact_title')}
+                    </h2>
+                    <div className="mt-4">
+                        <FeedbackForm path={path} />
+                    </div>
+                </section>
             </div>
         </>
+    )
+}
+
+function Topic({ id, title, items }: { id: string; title: string; items: { icon: ToolKey; text: string }[] }) {
+    return (
+        <section className="mt-10" aria-labelledby={id}>
+            <h2 id={id} className="text-xl font-semibold tracking-tight">
+                {title}
+            </h2>
+            <ul className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                {items.map((item) => (
+                    <li key={item.text} className="flex gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                            <ToolIcon name={item.icon} className="h-5 w-5" />
+                        </span>
+                        <span className="text-ink-soft">{item.text}</span>
+                    </li>
+                ))}
+            </ul>
+        </section>
     )
 }

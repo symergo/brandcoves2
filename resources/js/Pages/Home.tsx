@@ -265,7 +265,7 @@ export default function Home({ today, coves }: Props) {
                     {t('home.trust_sources')} {t('home.trust_commission')}
                 </p>
                 <Link
-                    href={`${base}/gift-cove/how-it-works`}
+                    href={`${base}/help`}
                     className="mt-3 inline-flex min-h-11 items-center font-medium text-accent-dark hover:text-ink sm:min-h-0"
                 >
                     {t('home.trust_link')} →

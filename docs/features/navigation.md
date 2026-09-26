@@ -13,11 +13,11 @@ grouped under what it is (`Layouts/SiteLayout.tsx`, `sections` and `nav`):
 | **Discover** | `/discover-cove` | Search offers, Surprise Cove, Ask others |
 | **Coves** | `/coves` | Daily Cove, Shop Smarter, All Coves |
 | **Gifts** | `/gift` | Gift Finder, Gift Coves |
-| **How it works** | `/gift-cove/how-it-works` | (a plain link) |
+| **How it works** | `/help` | (a plain link) |
 
 On the right, **My Coves** (`/lists`, `nav.lists`, the same words in all four languages by the
 owner's decision): the visitor's own lists, with Secret Friend, group lists and occasions inside it
-as before. **Help** left the header for the footer, which links it on every page. "Make a list"
+as before. **How it works** is `/help`: the whole site explained, then the detailed guides, then the help form (see [feedback.md](feedback.md)). The footer still links it as Help. "Make a list"
 went: My Coves and the homepage's Create a Cove do that job, and its hub `/gift-cove` still
 exists. Brand and Shop Coves stay withheld from the menu, as before.
 

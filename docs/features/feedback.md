@@ -6,8 +6,16 @@ status: Active
 
 # Feedback
 
-A form on `/help`, reached from **Help** in the main menu: tell us what could be better, or what
-you like. No account, one required field.
+A form on `/help`, reached from **How it works** in the main menu and **Help** in the footer: tell
+us what could be better, or what you like. No account, one required field.
+
+**Since 2026-09-26 `/help` is also the site's "How it works".** The header's "How it works" first
+pointed at the list tools' manual (`/gift-cove/how-it-works`), which explains lists only and has no
+form; the owner found the support page "incomplete, without the help form". So `/help` now explains
+the whole site above the form: what a Cove is, finding things (search, scan, the Gift Finder,
+browsing Coves), adding anything (link, barcode, photo, writing it down), sharing and giving, and
+where products come from; then three detailed guides (search tips, lists, the list tools step by
+step); then the form under "Something wrong, or a question?". `HomePageTest` holds it.
 
 - Page: [`Help.tsx`](../../resources/js/Pages/Help.tsx) and the form it renders,
   [`FeedbackForm.tsx`](../../resources/js/Components/FeedbackForm.tsx);

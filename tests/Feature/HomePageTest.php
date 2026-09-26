@@ -41,6 +41,25 @@ class HomePageTest extends TestCase
     }
 
     #[Test]
+    public function how_it_works_explains_the_whole_site_and_keeps_the_form(): void
+    {
+        /*
+         * The header's "How it works" led to the list tools' manual for a few
+         * hours on 2026-09-26: lists only, and no form. The owner called that
+         * the support page, and it was missing search, what a Cove is, and a
+         * way to report anything. It is /help now, which has all three and
+         * links the manual as one of its guides.
+         */
+        $this->get('/nl-nl/help')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Help')
+                ->where('guides', fn ($guides) => collect($guides)->pluck('key')->all() === ['search', 'lists', 'manual']));
+
+        $this->get('/nl-nl/help')->assertSee('Wat is een Cove?')->assertSee('Iets mis, of een vraag?');
+    }
+
+    #[Test]
     public function every_place_the_page_and_the_header_send_people_exists(): void
     {
         foreach ([

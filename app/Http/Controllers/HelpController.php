@@ -14,6 +14,11 @@ use Inertia\Response;
 /**
  * One page for "how does this work" and "this is broken".
  *
+ * Since 2026-09-26 it is also the site's "How it works": the header entry and
+ * the homepage both link here, and the page explains the whole site (what a
+ * Cove is, finding, adding anything, sharing) above the guides and the form.
+ * See Pages/Help.tsx.
+ *
  * ## Why the two belong together
  *
  * Somebody who cannot make the site do what they want has one question and does
@@ -57,6 +62,13 @@ class HelpController extends Controller
                 [
                     'key' => 'lists',
                     'url' => $current->url('lists-help'),
+                ],
+                // The list tools, three steps each. It was where the header's
+                // "How it works" led until 2026-09-26; now it is one of the
+                // detailed guides under the overview on this page.
+                [
+                    'key' => 'manual',
+                    'url' => $current->url('gift-cove/how-it-works'),
                 ],
             ],
             /*
