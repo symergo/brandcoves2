@@ -1,0 +1,249 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Jobs;
+
+use App\Enums\EventType;
+use App\Enums\Interest;
+use App\Enums\Market;
+use App\Enums\RecipientType;
+use App\Services\Gift\GiftTags;
+use App\Services\Search\GiftIntentParser;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * What people's lists teach the catalogue, counted once a night.
+ *
+ * Roadmap step 4, engine F and G (docs/strategy.md; docs/features/list-signals.md).
+ * The owner's idea: a list made with an intent says "these things fit that",
+ * and summed over many lists that is a better answer than any tag an editor
+ * can write. Two outputs:
+ *
+ * 1. **Crowd tags** (`product_groups.crowd_tags`). Each list's intent is
+ *    deduced from everything the list says about itself, wish lists and gift
+ *    lists alike: who it is for (the recipient's relationship, age band and
+ *    interests), its occasion, its title and description (read by the same
+ *    GiftIntentParser as the search box), and the editors' interest tags that
+ *    several products on it share, since products on one list share its
+ *    intent. A product earns a tag once enough different people's lists
+ *    carrying that tag hold it.
+ * 2. **Product links** (`product_links`): products that sit on the same lists,
+ *    counted in different people. "Often on the same lists as this."
+ *
+ * ## The rules that keep it safe
+ *
+ * - People, not lists: every count is of distinct owners, so one person with
+ *   ten lists is one, and nobody can move a tag alone.
+ * - A threshold (`giftcoves.list_signals.min_owners`) before anything counts.
+ * - Counts only: neither output holds a list, an owner or a word anybody
+ *   wrote. Private lists count too (the owner's decision, 2026-09-26); the
+ *   privacy page says so.
+ * - Claims are never read (invariant 4). Only accepted items count.
+ * - Crowd tags never touch `gift_tags`: people's lists never change what an
+ *   editor wrote, and the editors' own tags are the only product tags read
+ *   back into a list's intent, so the crowd cannot feed on itself.
+ * - Links stay inside one market (invariant 2).
+ */
+class CountListSignals implements ShouldBeUnique, ShouldQueue
+{
+    use Queueable;
+
+    public int $timeout = 1800;
+
+    public int $uniqueFor = 3600;
+
+    /** Lists read per round trip when their titles are parsed. */
+    private const CHUNK = 1000;
+
+    /**
+     * An interest the editors tagged on this many products of one list is
+     * that list's interest. Two, because one tagged product says something
+     * about that product, and two sharing a tag say something about the list.
+     */
+    private const SHARED_PRODUCT_TAG = 2;
+
+    public function handle(GiftIntentParser $parser): void
+    {
+        $minOwners = (int) config('giftcoves.list_signals.min_owners', 5);
+
+        DB::statement('CREATE TEMPORARY TABLE IF NOT EXISTS list_intent (wishlist_id uuid, tag text) ON COMMIT PRESERVE ROWS');
+        DB::statement('TRUNCATE list_intent');
+
+        $this->fromRecipientsAndOccasions();
+        $this->fromWords($parser);
+        $this->fromSharedProductTags();
+
+        DB::transaction(function () use ($minOwners): void {
+            $this->writeCrowdTags($minOwners);
+            $this->writeLinks($minOwners);
+        });
+
+        DB::statement('DROP TABLE IF EXISTS list_intent');
+    }
+
+    /** Who a list is for, and what for. */
+    private function fromRecipientsAndOccasions(): void
+    {
+        DB::insert(
+            <<<'SQL'
+                INSERT INTO list_intent (wishlist_id, tag)
+                SELECT w.id, 'recipient:' || r.relationship
+                FROM wishlists w JOIN recipients r ON r.id = w.recipient_id
+                WHERE r.relationship = ANY (?::text[])
+                UNION
+                SELECT w.id, 'age:' || r.age_band
+                FROM wishlists w JOIN recipients r ON r.id = w.recipient_id
+                WHERE r.age_band = ANY (?::text[])
+                UNION
+                SELECT w.id, 'interest:' || i.value
+                FROM wishlists w JOIN recipients r ON r.id = w.recipient_id
+                CROSS JOIN LATERAL jsonb_array_elements_text(r.interests) AS i(value)
+                WHERE i.value = ANY (?::text[])
+                UNION
+                SELECT w.id, 'occasion:' || w.event_type
+                FROM wishlists w
+                WHERE w.event_type IS NOT NULL AND w.event_type <> ?
+            SQL,
+            [
+                $this->textArray(RecipientType::values()),
+                $this->textArray(GiftTags::AGE_BANDS),
+                $this->textArray(array_map(fn (Interest $i) => $i->value, Interest::cases())),
+                EventType::Other->value,
+            ],
+        );
+    }
+
+    /**
+     * What a list's own title and description say: "Kerst voor papa",
+     * "Verjaardag Emma, ze houdt van bakken". Read as a gift context, since a
+     * list is one.
+     */
+    private function fromWords(GiftIntentParser $parser): void
+    {
+        DB::table('wishlists')
+            ->select(['id', 'market', 'title', 'description'])
+            ->orderBy('id')
+            ->chunk(self::CHUNK, function ($lists) use ($parser): void {
+                $rows = [];
+
+                foreach ($lists as $list) {
+                    $market = Market::tryFrom((string) $list->market);
+
+                    if ($market === null) {
+                        continue;
+                    }
+
+                    $parsed = $parser->parse(trim($list->title.'. '.($list->description ?? '')), $market, giftContext: true);
+
+                    $tags = array_map(fn (string $i) => GiftTags::interest($i), $parsed->interests);
+
+                    if ($parsed->relationship !== null) {
+                        $tags[] = GiftTags::recipient($parsed->relationship);
+                    }
+
+                    if ($parsed->occasion !== null) {
+                        $tags[] = GiftTags::occasion($parsed->occasion);
+                    }
+
+                    foreach (array_unique($tags) as $tag) {
+                        $rows[] = ['wishlist_id' => $list->id, 'tag' => $tag];
+                    }
+                }
+
+                if ($rows !== []) {
+                    DB::table('list_intent')->insert($rows);
+                }
+            });
+    }
+
+    /** An interest several products on one list were tagged with by editors. */
+    private function fromSharedProductTags(): void
+    {
+        DB::insert(
+            <<<'SQL'
+                INSERT INTO list_intent (wishlist_id, tag)
+                SELECT wi.wishlist_id, t.tag
+                FROM wishlist_items wi
+                JOIN product_groups g ON g.id = wi.group_id
+                CROSS JOIN LATERAL jsonb_array_elements_text(g.gift_tags) AS t(tag)
+                WHERE wi.accepted_at IS NOT NULL AND t.tag LIKE 'interest:%'
+                GROUP BY wi.wishlist_id, t.tag
+                HAVING count(DISTINCT wi.group_id) >= ?
+            SQL,
+            [self::SHARED_PRODUCT_TAG],
+        );
+    }
+
+    private function writeCrowdTags(int $minOwners): void
+    {
+        DB::statement('CREATE TEMPORARY TABLE IF NOT EXISTS earned_tags (group_id bigint PRIMARY KEY, tags jsonb) ON COMMIT DROP');
+
+        DB::insert(
+            <<<'SQL'
+                INSERT INTO earned_tags (group_id, tags)
+                SELECT group_id, jsonb_agg(tag ORDER BY tag)
+                FROM (
+                    SELECT wi.group_id, li.tag
+                    FROM (SELECT DISTINCT wishlist_id, tag FROM list_intent) li
+                    JOIN wishlists w ON w.id = li.wishlist_id
+                    JOIN wishlist_items wi ON wi.wishlist_id = w.id
+                    WHERE wi.group_id IS NOT NULL AND wi.accepted_at IS NOT NULL
+                    GROUP BY wi.group_id, li.tag
+                    HAVING count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text)) >= ?
+                ) counted
+                GROUP BY group_id
+            SQL,
+            [$minOwners],
+        );
+
+        // Tags a product no longer earns go. Only rows that carry some.
+        DB::statement(
+            <<<'SQL'
+                UPDATE product_groups g SET crowd_tags = '[]'::jsonb
+                WHERE g.crowd_tags <> '[]'::jsonb
+                  AND NOT EXISTS (SELECT 1 FROM earned_tags e WHERE e.group_id = g.id)
+            SQL
+        );
+
+        DB::statement(
+            <<<'SQL'
+                UPDATE product_groups g SET crowd_tags = e.tags
+                FROM earned_tags e
+                WHERE g.id = e.group_id AND g.crowd_tags IS DISTINCT FROM e.tags
+            SQL
+        );
+    }
+
+    /** Products on the same lists, in different people, within one market. */
+    private function writeLinks(int $minOwners): void
+    {
+        DB::table('product_links')->delete();
+
+        DB::insert(
+            <<<'SQL'
+                INSERT INTO product_links (group_a, group_b, market, owners)
+                SELECT a.group_id, b.group_id, ga.market,
+                       count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text))
+                FROM wishlist_items a
+                JOIN wishlist_items b ON b.wishlist_id = a.wishlist_id AND b.group_id > a.group_id
+                JOIN wishlists w ON w.id = a.wishlist_id
+                JOIN product_groups ga ON ga.id = a.group_id
+                JOIN product_groups gb ON gb.id = b.group_id AND gb.market = ga.market
+                WHERE a.accepted_at IS NOT NULL AND b.accepted_at IS NOT NULL
+                GROUP BY a.group_id, b.group_id, ga.market
+                HAVING count(DISTINCT COALESCE('u' || w.owner_user_id::text, 'a' || w.owner_anon_id::text)) >= ?
+            SQL,
+            [$minOwners],
+        );
+    }
+
+    /** @param  list<string>  $values */
+    private function textArray(array $values): string
+    {
+        return '{'.implode(',', array_map(fn (string $v) => '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $v).'"', $values)).'}';
+    }
+}

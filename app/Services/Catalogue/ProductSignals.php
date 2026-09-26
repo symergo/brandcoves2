@@ -26,6 +26,9 @@ class ProductSignals
     /** Seconds one answer is kept. */
     private const TTL = 3600;
 
+    /** Products in the "often on the same lists" band. */
+    private const ALSO_ON = 4;
+
     /** Coves named on the page; the rest are counted. */
     private const COVES_NAMED = 3;
 
@@ -41,7 +44,8 @@ class ProductSignals
      *     savedBy: int|null,
      *     coveCount: int,
      *     coves: list<array{title: string, url: string}>,
-     *     band: array{euros: int, url: string}|null
+     *     band: array{euros: int, url: string}|null,
+     *     alsoOn: list<array{id: int, title: string, image: string|null, price: int|null, url: string}>
      * }
      */
     public function for(ProductGroup $group, CurrentMarket $current): array
@@ -53,6 +57,7 @@ class ProductSignals
                 'savedBy' => $this->savedBy($group),
                 ...$this->coves($group, $current),
                 'band' => $this->band($group, $current),
+                'alsoOn' => $this->alsoOn($group),
             ],
         );
     }
@@ -108,6 +113,46 @@ class ProductSignals
             ->all();
 
         return ['coveCount' => $query->count(), 'coves' => $named];
+    }
+
+    /**
+     * Products people keep on the same lists as this one, most people first.
+     *
+     * From `product_links`, which CountListSignals rebuilds nightly from
+     * distinct people and only above a threshold, within one market. Only
+     * what can be shown: in stock, priced, with a picture.
+     *
+     * @return list<array{id: int, title: string, image: string|null, price: int|null, url: string}>
+     */
+    private function alsoOn(ProductGroup $group): array
+    {
+        $ids = DB::table('product_links')
+            ->where(fn ($q) => $q->where('group_a', $group->id)->orWhere('group_b', $group->id))
+            ->orderByDesc('owners')
+            ->limit(self::ALSO_ON * 2)
+            ->get(['group_a', 'group_b'])
+            ->map(fn ($link) => (int) ((int) $link->group_a === $group->id ? $link->group_b : $link->group_a))
+            ->all();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $groups = ProductGroup::query()->whereIn('id', $ids)->presentable()->get()->keyBy('id');
+
+        return collect($ids)
+            ->map(fn (int $id) => $groups->get($id))
+            ->filter()
+            ->take(self::ALSO_ON)
+            ->map(fn (ProductGroup $g): array => [
+                'id' => $g->id,
+                'title' => $g->displayTitle(),
+                'image' => $g->image_url,
+                'price' => $g->min_price,
+                'url' => $g->path(),
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array{euros: int, url: string}|null */

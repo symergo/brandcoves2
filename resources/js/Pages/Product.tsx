@@ -73,6 +73,8 @@ interface Props {
         coveCount: number
         coves: { title: string; url: string }[]
         band: { euros: number; url: string } | null
+        /** Kept on the same lists as this one by enough different people. */
+        alsoOn: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     }
 }
 
@@ -317,6 +319,35 @@ export default function Product({ product, offers, alert, amazonSearch, descript
             {/*
               The offer table IS the product. Everything above gives it context.
             */}
+            {/*
+              Often on the same lists (roadmap step 4, engine G): what people
+              keep beside this, counted in different people. Under the
+              details, before the offers: it is where a gift-giver who is not
+              sure about this one looks next.
+            */}
+            {signals.alsoOn.length > 0 && (
+                <section className="mt-12" aria-labelledby="also-on-heading">
+                    <h2 id="also-on-heading" className="mb-4 text-xl font-semibold">{t('product.also_on')}</h2>
+                    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        {signals.alsoOn.map((other) => (
+                            <li key={other.id}>
+                                <Link href={other.url} className="group block">
+                                    <div className="aspect-square overflow-hidden rounded-lg border border-line bg-card">
+                                        {other.image && (
+                                            <img src={other.image} alt="" loading="lazy" className="h-full w-full object-contain transition group-hover:scale-105" />
+                                        )}
+                                    </div>
+                                    <div className="mt-2 line-clamp-2 text-sm group-hover:text-accent">{other.title}</div>
+                                    {other.price !== null && (
+                                        <div className="text-sm font-medium tabular-nums">{formatPrice(other.price, market)}</div>
+                                    )}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
             <section id="offers" className="mt-12 scroll-mt-8">
                 <h2 className="mb-4 text-xl font-semibold">{t('product.all_offers')}</h2>
 

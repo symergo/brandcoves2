@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\ListOpen;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Gift\Suggestion;
+use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\TasteBrief;
 use App\Services\Notifications\ListActivity;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
@@ -25,6 +29,7 @@ use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -571,7 +576,46 @@ class SharedListController extends Controller
                     'votedByMe' => $this->hasVoted($item, $owner),
                 ] : [],
             ]),
+
+            /*
+             * Ideas in the same spirit, for the people a wish list is shared
+             * with (roadmap step 4, engine G). The list is the best brief for
+             * a present for its owner: this is for the second present, or when
+             * everything is claimed. Never for the owner, who would be shown
+             * suggestions for themselves on their own list. See
+             * docs/features/list-signals.md.
+             */
+            'likeThis' => $isOwner || $list->kind !== ListKind::Mine ? [] : $this->likeThis($list),
         ]);
+    }
+
+    /**
+     * Held for an hour per list version: many people open one shared list,
+     * and the answer only changes when the list does.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function likeThis(Wishlist $list): array
+    {
+        return Cache::remember(
+            "list-like-this:{$list->id}:{$list->updated_at?->getTimestamp()}",
+            3600,
+            function () use ($list): array {
+                $brief = TasteBrief::fromList($list, 4);
+
+                if ($brief === null) {
+                    return [];
+                }
+
+                return array_map(fn (Suggestion $s): array => [
+                    'id' => $s->group->id,
+                    'title' => $s->group->displayTitle(),
+                    'image' => $s->group->image_url,
+                    'price' => $s->group->min_price,
+                    'url' => $s->group->path(),
+                ], app(SuggestionEngine::class)->suggest($brief));
+            },
+        );
     }
 
     public function claim(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse

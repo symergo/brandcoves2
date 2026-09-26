@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\EventType;
 use App\Enums\Market;
 use App\Enums\Vibe;
 use App\Models\Recipient;
+use App\Models\Wishlist;
 
 /**
  * What we know about a person's taste.
@@ -62,6 +64,59 @@ final readonly class TasteBrief
             relationship: $recipient->relationship,
             occasion: $recipient->occasion,
             ageBand: $recipient->age_band,
+            limit: $limit,
+        );
+    }
+
+    /**
+     * A person's own wish list, read as the brief for a gift for them.
+     *
+     * Roadmap step 4, engine G (docs/strategy.md): the list is the best brief
+     * there is. Its interests are the ones its products are tagged with (by
+     * editors, and by people's lists), its budget band sits around the price
+     * of what is on it, and what is on it is excluded, since the list itself is
+     * shown first. Nothing about claims is read (invariant 4).
+     *
+     * Null when the list says too little to go on: no tagged product means no
+     * interest, and a brief with none would be a random shelf wearing the
+     * list's name.
+     */
+    public static function fromList(Wishlist $list, int $limit = 4): ?self
+    {
+        $groups = $list->items()->whereNotNull('group_id')->with('group')->get()
+            ->pluck('group')
+            ->filter();
+
+        $counts = [];
+
+        foreach ($groups as $group) {
+            foreach ([...$group->giftTags(), ...$group->crowdTags()] as $tag) {
+                if (str_starts_with($tag, GiftTags::INTEREST.':')) {
+                    $interest = substr($tag, strlen(GiftTags::INTEREST) + 1);
+                    $counts[$interest] = ($counts[$interest] ?? 0) + 1;
+                }
+            }
+        }
+
+        if ($counts === []) {
+            return null;
+        }
+
+        arsort($counts);
+
+        $prices = $groups->pluck('min_price')->filter()->sort()->values();
+        $median = $prices->isEmpty() ? null : (int) $prices[intdiv($prices->count(), 2)];
+
+        return new self(
+            market: $list->market,
+            // The three interests most of the list is about.
+            interests: array_slice(array_keys($counts), 0, 3),
+            // Half to one and a half times the typical price on the list:
+            // near what they asked for, without being only what they asked for.
+            budgetMin: $median === null ? null : intdiv($median, 2),
+            budgetMax: $median === null ? null : intdiv($median * 3, 2),
+            occasion: $list->event_type !== null && $list->event_type !== EventType::Other ? $list->event_type->value : null,
+            excludeGroupIds: $groups->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             limit: $limit,
         );
     }

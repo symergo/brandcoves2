@@ -69,6 +69,14 @@ Nothing here makes a decision that produces legal effects for you or similarly
 significantly affects you (Art. 22). Ranking and recommendations decide which
 products you are shown, not anything about you.
 
+### What lists teach together
+
+Lists count, private ones included, towards what we know about products: who
+they are often chosen for, for which occasion, and which products often sit on
+lists together. Only as numbers, only once enough different people do the same,
+and without any list, name or anything you wrote showing anywhere else. Who
+bought what never counts.
+
 ## Where your data goes
 
 Our processors, and what leaves the EEA:

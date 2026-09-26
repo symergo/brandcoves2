@@ -102,6 +102,17 @@ class ProductGroup extends Model
         return array_values((array) ($this->gift_tags ?? []));
     }
 
+    /**
+     * Tags this product earned from people's lists (CountListSignals), kept
+     * apart from the editors' `gift_tags` and read at less weight.
+     *
+     * @return list<string>
+     */
+    public function crowdTags(): array
+    {
+        return array_values((array) ($this->crowd_tags ?? []));
+    }
+
     protected function casts(): array
     {
         return [
@@ -109,6 +120,7 @@ class ProductGroup extends Model
             'identity_kind' => IdentityKind::class,
             'surprise_breakdown' => 'array',
             'gift_tags' => 'array',
+            'crowd_tags' => 'array',
             'in_stock' => 'boolean',
             'giftable' => 'boolean',
             'worth_showing' => 'boolean',

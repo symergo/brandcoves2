@@ -422,6 +422,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | What lists teach the catalogue
+    |--------------------------------------------------------------------------
+    |
+    | CountListSignals (nightly): crowd tags on products, and products linked by
+    | the lists they share. See docs/features/list-signals.md.
+    */
+    'list_signals' => [
+        // Different people who must agree before a tag or a link counts. One
+        // person, or a few friends, cannot move what everybody else sees.
+        'min_owners' => 5,
+
+        // How much a crowd tag weighs against an editor's tag of the same
+        // kind (1.0) in the suggestion engine. Less: an editor looked at the
+        // product, the crowd only kept it on lists.
+        'weight' => 0.75,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Reading a pasted link
     |--------------------------------------------------------------------------
     |

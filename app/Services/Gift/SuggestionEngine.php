@@ -405,6 +405,8 @@ class SuggestionEngine
 
                 if ($tags !== []) {
                     $either->orWhereRaw('jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$this->pgTextArray($tags)]);
+                    // What people's lists taught the catalogue (CountListSignals).
+                    $either->orWhereRaw('jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$this->pgTextArray($tags)]);
                 }
             });
         }
@@ -476,6 +478,8 @@ class SuggestionEngine
         $index = 0;
 
         $tags = $group->giftTags();
+        $crowd = $group->crowdTags();
+        $crowdWeight = (float) config('giftcoves.list_signals.weight', 0.75);
 
         foreach ($slots as $slotIndex => $slot) {
             /*
@@ -486,6 +490,14 @@ class SuggestionEngine
              */
             if (in_array(GiftTags::interest($slot['interest']), $tags, true)) {
                 $strengths[$slotIndex] = 1.0;
+                $matched[] = $slot['interest'];
+            } elseif (in_array(GiftTags::interest($slot['interest']), $crowd, true)) {
+                /*
+                 * Enough different people's lists for this interest hold it:
+                 * strong evidence, a little below an editor's word, who looked
+                 * at the product. See docs/features/list-signals.md.
+                 */
+                $strengths[$slotIndex] = $crowdWeight;
                 $matched[] = $slot['interest'];
             }
 
@@ -528,7 +540,7 @@ class SuggestionEngine
              * small enough that "kerst" in a novelty title cannot outrank a
              * real present.
              */
-            'occasion' => $this->occasionFit($haystack, $brief, $tags) * $profile->weight('occasion', 0),
+            'occasion' => $this->occasionFit($haystack, $brief, $tags, $crowd, $crowdWeight) * $profile->weight('occasion', 0),
             /*
              * Who the present is for, from an editor's tag only.
              *
@@ -538,7 +550,7 @@ class SuggestionEngine
              * answers, it does not choose one. Zero for `for_myself`, where
              * there is no other person to be for.
              */
-            'recipient_fit' => $this->recipientFit($brief, $tags) * $profile->weight('recipient_fit', 0),
+            'recipient_fit' => $this->recipientFit($brief, $tags, $crowd, $crowdWeight) * $profile->weight('recipient_fit', 0),
             /*
              * Zero by default, and zero for `for_someone` on purpose.
              *
@@ -818,7 +830,7 @@ class SuggestionEngine
      * carry real weight without becoming noise, and claiming otherwise would be
      * the "plausible wrong answer" failure the discovery docs warn about.
      */
-    private function occasionFit(string $haystack, TasteBrief $brief, array $tags = []): float
+    private function occasionFit(string $haystack, TasteBrief $brief, array $tags = [], array $crowd = [], float $crowdWeight = 0.75): float
     {
         if ($brief->occasion === null || $brief->occasion === '') {
             // An unanswered question scores 0.5, not 0 — "does not apply" is not
@@ -831,6 +843,11 @@ class SuggestionEngine
         // An editor said so; no need to find the word in the title.
         if (in_array(GiftTags::occasion($occasion), $tags, true)) {
             return 1.0;
+        }
+
+        // People's lists for this occasion hold it; see list-signals.md.
+        if (in_array(GiftTags::occasion($occasion), $crowd, true)) {
+            return $crowdWeight;
         }
 
         $markers = self::OCCASION_MARKERS[$occasion] ?? [$occasion];
@@ -864,7 +881,7 @@ class SuggestionEngine
      *
      * @param  list<string>  $tags
      */
-    private function recipientFit(TasteBrief $brief, array $tags): float
+    private function recipientFit(TasteBrief $brief, array $tags, array $crowd = [], float $crowdWeight = 0.75): float
     {
         $asked = [];
 
@@ -883,6 +900,15 @@ class SuggestionEngine
         foreach ($asked as $tag) {
             if (in_array($tag, $tags, true)) {
                 return 1.0;
+            }
+        }
+
+        // People's lists for this kind of person hold it. Only ever a lift:
+        // a crowd tag for somebody else is no evidence against, because a
+        // product can suit many people and the crowd only says who it suited.
+        foreach ($asked as $tag) {
+            if (in_array($tag, $crowd, true)) {
+                return $crowdWeight;
             }
         }
 

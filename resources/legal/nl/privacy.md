@@ -73,6 +73,14 @@ Niets hier neemt een besluit met rechtsgevolgen voor jou of dat jou in
 vergelijkbare mate treft (art. 22). Rangschikking en aanbevelingen bepalen welke
 producten je te zien krijgt, niet iets over jou.
 
+### Wat lijsten samen leren
+
+Lijsten tellen mee, ook privélijsten, voor wat we over producten weten: voor wie
+iets vaak gekozen wordt, bij welke gelegenheid, en welke producten vaak samen op
+lijsten staan. Dat gebeurt alleen als aantallen, pas wanneer genoeg verschillende
+mensen hetzelfde doen, en zonder dat een lijst, een naam of iets wat je schreef
+ergens anders te zien is. Wie wat gekocht heeft, telt nooit mee.
+
 ## Waar je gegevens naartoe gaan
 
 Onze verwerkers, en wat de EER verlaat:

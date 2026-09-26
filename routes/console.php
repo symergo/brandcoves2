@@ -6,6 +6,7 @@ use App\Enums\Market;
 use App\Jobs\BuildDailyEdition;
 use App\Jobs\CheckSearchAlerts;
 use App\Jobs\ClassifyGiftability;
+use App\Jobs\CountListSignals;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\LinkBarcodeItems;
@@ -82,6 +83,15 @@ Schedule::call(function (): void {
 Schedule::job(new LinkBarcodeItems)
     ->name('link-barcode-items')
     ->twiceDailyAt(5, 17, 30)
+    ->onOneServer();
+
+// What people's lists teach the catalogue: crowd tags on products, and
+// products linked by the lists they share. Once a night, in the quiet hours,
+// after the personal-data prune (03:20) so deleted lists no longer count.
+// See docs/features/list-signals.md.
+Schedule::job(new CountListSignals)
+    ->name('count-list-signals')
+    ->dailyAt('03:50')
     ->onOneServer();
 
 /*

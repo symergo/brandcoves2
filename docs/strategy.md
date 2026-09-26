@@ -415,7 +415,10 @@ Order agreed with the owner on 2026-09-26.
    range, saved by, found in, related.
 4. **Intent search.** Section 5 and engine E, F and G: the parser, the interpretation, intent on
    gift pages and Coves, the intent a list passes on to its products, and a person's own list as
-   the brief for a gift for them.
+   the brief for a gift for them. Built 2026-09-26: the search box reads intent
+   ([intent-search.md](features/intent-search.md)), and lists teach the catalogue
+   ([list-signals.md](features/list-signals.md)). Still to come: gift landing pages and briefs on
+   Coves.
 5. **Matching.** Beyond exact keys: barcode, then brand plus model number, then similar titles
    confirmed by a person; admin merge and split.
 6. **Interoperable Coves.** Save this Cove, Follow Cove in the app, Publish Cove (public lists with

@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useRef, useState } from 'react'
 import Button from '../../Components/Button'
 import { type ListKind } from '../../Components/ListKindBadge'
@@ -60,6 +60,11 @@ interface Result {
 }
 
 interface Props {
+    /**
+     * Ideas in the same spirit as this wish list, for the people it is shared
+     * with; empty for its owner and for gift lists. See TasteBrief::fromList().
+     */
+    likeThis: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     list: {
         title: string
         description: string | null
@@ -138,6 +143,7 @@ interface Props {
 }
 
 export default function SharedList({
+    likeThis,
     list,
     isOwner,
     canClaim,
@@ -738,6 +744,43 @@ export default function SharedList({
                       have not asked yet, and the empty list is exactly the case where
                       they scroll far enough to reach this anyway.
                     */}
+                    {/*
+                      In the same spirit (roadmap step 4, engine G): what this
+                      person's own list says about their taste, answered by the
+                      gift engine. For the second present, or when everything
+                      above is taken. Links to the product, where the shops are.
+                    */}
+                    {likeThis.length > 0 && (
+                        <section className="mt-8 sm:mt-12" aria-labelledby="like-this-heading">
+                            <h2 id="like-this-heading" className="text-lg font-semibold">
+                                {t('lists.like_this_title')}
+                            </h2>
+                            <p className="mt-1 text-sm text-ink-soft">{t('lists.like_this_hint')}</p>
+                            <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                {likeThis.map((idea) => (
+                                    <li key={idea.id}>
+                                        <Link href={idea.url} className="group block">
+                                            <div className="aspect-square overflow-hidden rounded-lg bg-card">
+                                                {idea.image && (
+                                                    <img
+                                                        src={idea.image}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-full w-full object-contain transition group-hover:scale-105"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="mt-2 line-clamp-2 text-sm group-hover:text-accent">{idea.title}</div>
+                                            {idea.price !== null && (
+                                                <div className="text-sm font-medium tabular-nums">{formatPrice(idea.price, market)}</div>
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+
                     {canSuggest && (
                         <section className="mt-8 rounded-card border border-line bg-card p-5 sm:mt-12 sm:p-6">
                             {/*

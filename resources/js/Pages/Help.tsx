@@ -88,6 +88,7 @@ export default function Help({ guides, path }: Props) {
                     items={[
                         { icon: 'shared', text: t('help.share_link') },
                         { icon: 'suggestions', text: t('help.share_ask') },
+                        { icon: 'whisperer', text: t('help.share_like_this') },
                         { icon: 'collab', text: t('help.share_together') },
                         { icon: 'santa', text: t('help.share_santa') },
                     ]}
@@ -98,6 +99,7 @@ export default function Help({ guides, path }: Props) {
                         {t('help.honest_title')}
                     </h2>
                     <p className="mt-2 max-w-2xl text-ink-soft">{t('help.honest_body')}</p>
+                    <p className="mt-3 max-w-2xl text-ink-soft">{t('help.honest_lists')}</p>
                 </section>
 
                 <h2 className="mt-12 text-xl font-semibold tracking-tight">{t('help.guides_heading')}</h2>

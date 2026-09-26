@@ -43,7 +43,12 @@ class GiftIntentParser
 
     private const CURRENCY = '(?:€|eur|euro|euros)';
 
-    public function parse(string $text, Market $market): ParsedIntent
+    /**
+     * @param  bool  $giftContext  the text is already about a gift, as a list's
+     *                             title is: its interests count without a
+     *                             "cadeau voor" in front (CountListSignals)
+     */
+    public function parse(string $text, Market $market, bool $giftContext = false): ParsedIntent
     {
         $original = trim($text);
         $words = Lang::get('intent', [], $market->language());
@@ -97,7 +102,7 @@ class GiftIntentParser
             }
         }
 
-        $isGift = $trigger || $relationship !== null || $occasion !== null;
+        $isGift = $giftContext || $trigger || $relationship !== null || $occasion !== null;
 
         return new ParsedIntent(
             original: $original,
