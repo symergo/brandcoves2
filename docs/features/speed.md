@@ -636,3 +636,60 @@ only a cookie cannot add, so they get their list after signing in. See
 limit of 30 a minute on top of the group's 60. It has its own counter (`throttle:30,1,for-suggest`):
 a bare `throttle` shares one counter per visitor with every throttled route, and two on one route
 would count each request twice.
+
+## Search
+
+Three things a visitor waited on that did not need to happen in the request, or did not need to
+happen twice.
+
+### The live shops are asked in a queued job
+
+A search or brand page whose live marker was free called bol, eBay and Tradedoubler in the request,
+one after the other, each with an 8 s timeout and two retries, then stored and grouped their offers
+before rendering. Brand pages pass the brand's name as the live term, so a crawler walking the
+brand pages paid that once per brand. Now the request takes the same marker and dispatches
+`App\Jobs\PullLiveSearch`; the page renders from the stored catalogue at once and the shop's offers
+show from the next view. The marker still means one fetch per (market, term) per 15 minutes.
+
+What a visitor notices: only a term the catalogue does not hold and bol does. Its first view is
+thin; a view a few seconds later has bol's products. Curation in the admin and the editorial API's
+product lookup still wait for the shops (`waitForLive: true`): a person is waiting on that answer
+and no crawler reaches them. Amazon, which must be fetched at render, would still be asked in the
+request; it has no connector.
+
+A bol or eBay link pasted into the list picker (`/list-search`) no longer imports the product in the
+request. It is answered from the catalogue, or offered as a link to add; adding it queues
+`ReadItemLink`, which asks the connector while the list page polls, as it already did for every
+other shop.
+
+### One search's ordered ids are cached for twelve hours
+
+Every page, sort and filter change ran the four-branch text union twice (count and page), and the
+audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
+cached per (market, term, filters, in-stock, sort), the first 480 of them. A page is a slice plus
+one lookup by primary key, the total needs no `count(*)` when the list is complete, and the by-store
+view reads the same list. Prices, stock and offer counts are still read on every view.
+
+Kept twelve hours, facets too (owner's decision). They are retired the moment what they were
+computed from changes, by generation numbers in the key: a market's number goes up when grouping
+finishes (the twice-daily catalogue update), a source is withdrawn or an editor merges or splits
+products; a term's goes up when its queued live fetch finishes. So results are stale by seconds,
+not by the expiry. What still waits for the next grouping, and the reasoning:
+[search.md](search.md), "Twelve hours, retired by generation numbers".
+
+### This or that draws from a cached pool
+
+Each request of the deck sorted every giftable product of the market at random twice, one of the
+two behind a `gift_tags::text like` that no index serves, and loaded whole rows for ~240 products to
+show eight. Now a per-market pool of a few thousand plain rows (id, price, tags, guessed interests)
+is cached for 10 minutes, a request samples from it in PHP with the same shares, and only the shown
+products are loaded. See [taste-discovery.md](taste-discovery.md).
+
+### Check on staging after the push
+
+- Search for a word the catalogue lacks and bol has: the page answers without the old wait, and a
+  reload a few seconds later shows bol's products. Horizon shows one `PullLiveSearch` for the term.
+- Page 2 of a broad search, and a filter click, answer faster than the first view.
+- After the next grouping run, the cache key `bc:search:gen:be-nl` (with the store's prefix) holds a
+  higher number, and a repeated search is slow once, then fast again.
+- `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.

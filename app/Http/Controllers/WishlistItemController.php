@@ -390,7 +390,17 @@ class WishlistItemController extends Controller
     private function findLink(string $url, CurrentMarket $current, LinkRouter $router): JsonResponse
     {
         $safe = WishlistItem::isSafeExternalUrl($url);
-        $route = $safe ? $router->resolve($url, $current->get()) : null;
+        /*
+         * Without the connectors (2026-09-27). A bol or eBay link we do not
+         * hold yet used to be imported here — bol's API with retries, then an
+         * upsert and a regroup — while the panel waited on this GET. Now it
+         * answers from our catalogue only: a product we hold comes back as
+         * itself, one we do not comes back as a link to add as it is, and
+         * adding it queues ReadItemLink, which asks the connector and fills
+         * the item in while the list page polls (Lists/Show). The same path a
+         * link to any other shop has always taken.
+         */
+        $route = $safe ? $router->resolve($url, $current->get(), useConnectors: false) : null;
         $group = $route?->group;
         $offer = $route?->offer;
 

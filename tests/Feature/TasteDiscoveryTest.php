@@ -15,6 +15,7 @@ use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -114,6 +115,29 @@ class TasteDiscoveryTest extends TestCase
 
         $shown = collect($rounds)->flatten(1)->pluck('id')->all();
         $this->assertEmpty(array_intersect($shown, [...$queued, ...collect($choices)->pluck('shown')->flatten()->all()]));
+    }
+
+    #[Test]
+    public function the_deck_draws_from_a_cached_pool_and_loads_only_what_it_shows(): void
+    {
+        $this->postJson('/be-nl/gift/taste/next', ['choices' => [], 'from' => 0])->assertOk();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $rounds = $this->postJson('/be-nl/gift/taste/next', ['choices' => [], 'from' => 4])->assertOk()->json('rounds');
+
+        $sql = array_column(DB::getQueryLog(), 'query');
+
+        // The random sorts ran once, for the pool, and not again.
+        $this->assertSame([], array_values(array_filter($sql, fn (string $q) => str_contains(strtolower($q), 'random()'))));
+
+        // One read of product_groups: the cards on screen, by id.
+        $reads = array_values(array_filter($sql, fn (string $q) => str_contains($q, 'from "product_groups"')));
+        $this->assertCount(1, $reads);
+        $this->assertStringNotContainsString('*', $reads[0]);
+
+        $this->assertCount(4, $rounds);
     }
 
     #[Test]

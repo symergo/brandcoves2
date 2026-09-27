@@ -101,6 +101,11 @@ The offers stay folded in the database long after the marker expires, so a throt
 exactly the page a folded one would. This also covers the search page, where the connector was
 already serving a cached payload while the write ran every time.
 
+Since 2026-09-27 the request that wins the marker queues the fetch and the fold
+(`App\Jobs\PullLiveSearch`) instead of doing them, and renders from what is stored. A crawler
+walking the brand pages no longer waits on bol per brand; a brand's bol-only products show from the
+next view. See [search.md](search.md), "The live shops are asked in the background".
+
 ### `BrandAttribution`: the part that makes it work at all
 
 bol's catalogue API returns **no brand field**. `BolConnector::normalise()` sets it null on purpose —

@@ -78,7 +78,12 @@ class CurationSearch
              * rows from the real ones.
              */
             logged: false,
-        ));
+        ),
+            // An editor is waiting on exactly this answer, in the admin: ask
+            // bol now rather than queue it for the next search, which is how
+            // the visitor pages do it (docs/features/search.md).
+            waitForLive: true,
+        );
 
         $taken = $this->taken($plan);
 
