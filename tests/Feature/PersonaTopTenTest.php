@@ -73,6 +73,8 @@ class PersonaTopTenTest extends TestCase
         $props = $this->get('/be-nl/gift-ideas/de-thuiskok')->assertOk()->viewData('page')['props'];
 
         $this->assertSame('2026-09-28', $props['topTen']['week']);
+        // Made on the Wednesday: that is the day the page says it was updated.
+        $this->assertSame('2026-09-30', $props['topTen']['updated']);
         $this->assertSame([1, 2], array_slice(array_column($props['topTen']['items'], 'rank'), 0, 2));
         $this->assertSame($wished->id, $props['topTen']['items'][0]['groupId']);
     }

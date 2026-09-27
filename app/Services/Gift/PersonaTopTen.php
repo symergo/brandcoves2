@@ -95,7 +95,7 @@ class PersonaTopTen
      * The list as the page shows it: the latest week's, products still
      * presentable, in order. Null when there is none.
      *
-     * @return array{week: string, items: list<array<string, mixed>>}|null
+     * @return array{week: string, updated: string, items: list<array<string, mixed>>}|null
      */
     public function forPage(DailyPickSet $persona, CurrentMarket $current): ?array
     {
@@ -141,7 +141,10 @@ class PersonaTopTen
 
         return count($items) < self::MINIMUM
             ? null
-            : ['week' => $list->week->toDateString(), 'items' => $items];
+            // `updated` is the day it was worked out, which the page shows:
+            // a list made by hand on a Sunday belongs to the week that began
+            // the Monday before, and "updated on Monday" would be untrue.
+            : ['week' => $list->week->toDateString(), 'updated' => $list->updated_at->toDateString(), 'items' => $items];
     }
 
     /**

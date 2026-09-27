@@ -6,8 +6,10 @@ import InfoTip from './InfoTip'
 import SaveToList from './SaveToList'
 
 export interface TopTen {
-    /** The Monday the list was worked out, YYYY-MM-DD. */
+    /** The Monday of the week the list is for, YYYY-MM-DD. */
     week: string
+    /** The day it was worked out, YYYY-MM-DD: what the page shows. */
+    updated: string
     items: {
         rank: number
         groupId: number
@@ -43,7 +45,7 @@ export default function PersonaTopTen({ top }: { top: TopTen | null }) {
                 <InfoTip>{t('gift_ideas.top_hint')}</InfoTip>
             </h2>
             <p className="mt-1 text-xs text-ink-soft">
-                {t('gift_ideas.top_updated', { date: formatDay(top.week, market) })}
+                {t('gift_ideas.top_updated', { date: formatDay(top.updated, market) })}
             </p>
 
             <ol className="mt-4 divide-y divide-line rounded-card border border-line bg-card">
