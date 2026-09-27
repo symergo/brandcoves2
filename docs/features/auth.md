@@ -106,9 +106,13 @@ lists attach to that. On sign-in, `IdentityMerger` moves that work onto the real
 brand, a product or another page the anonymous page cache serves gets no identity and no cookie: the
 page must be the same for everybody. The identity is made on the first write, since every write is a
 POST (or the `GET /csrf` the browser asks right before one), and those still run the middleware.
-Nothing on the cached pages reads the identity. The interactive GET pages (a shared list, the gift
-wizard, `/for`) still make one on a view, because they decide what to offer from `Owner::exists()`.
-See [speed.md](speed.md), "Anonymous page cache".
+Nothing on the cached pages reads the identity. See [speed.md](speed.md), "Anonymous page cache".
+
+**Nor on a read of a shared list, Find a gift or `/for` (2026-09-27).** These are not cached, but a
+GET of them uses an identity the visitor already has and makes none
+(`TrackAnonymousIdentity::LAZY_ROUTES`). What they offer is decided by `Owner::canAct()` rather than
+`exists()`: true for a guest who has no identity yet, because the POST that acts will make one.
+Details in speed.md, same section.
 
 **The merge runs before `Auth::login()`, deliberately** — see
 [GoogleController::callback()](../../app/Http/Controllers/Auth/GoogleController.php). Once the session
@@ -141,8 +145,10 @@ And `bc:prune-personal-data` deletes an identity **seen on one day only, a month
 nothing**: no row in any of the eight tables that point at it (lists, recipients, votes, pledges,
 messages, list opens, quiz and challenge attempts). The privacy policy says so, in both languages
 ("30 days if you came once and saved nothing"); the one-year window still applies to everyone else.
-Lazily creating the row on first save was considered and rejected: eight tables write with the
-identity, and a first visit to a shared list already records a `list_opens` row.
+Lazily creating the row on first save was considered and rejected on 2026-09-26 (eight tables write
+with the identity, and a first visit to a shared list recorded a `list_opens` row), and then done
+the next day for reads only: the write paths still make the identity exactly as before, and the
+shared list's open is held in the session until they do (see speed.md, "Anonymous page cache").
 
 ## Google: the redirect URI is unprefixed, and has to be
 
