@@ -1258,3 +1258,8 @@ again brought the old link back to life for everyone who ever had it. Now `Wishl
 replaces `share_token` the moment visibility goes to private: old links stay dead, and sharing again
 gives a new link. Friends who see a list through "Zichtbaar voor mijn mensen" always reach it through
 the current token, so they are unaffected. Test: `WishlistTest::stopping_sharing_retires_the_link…`.
+
+**"Ik koop dit voor {naam}"** (owner, 2026-09-27): the claim button names who the present is for,
+on a shared list (`lists.claim_for` with `list.for`: the recipient of a gift list or group gift, the
+owner of a wish list), on a friend's wishes in the add panel, and on your Secret Friend's list. Where
+nobody is named the button stays "Ik koop dit".

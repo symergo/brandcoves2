@@ -718,7 +718,8 @@ export default function SharedList({
                                                 busy={claiming === item.id}
                                                 className="w-full"
                                             >
-                                                {t('lists.claim')}
+                                                {/* Who it is for, on the button (owner, 2026-09-27): the recipient, or the owner of a wish list. */}
+                                                {list.for ? t('lists.claim_for', { name: list.for }) : t('lists.claim')}
                                             </Button>
                                         ) : null}
                                     </div>

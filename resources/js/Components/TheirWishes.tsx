@@ -222,7 +222,7 @@ export default function TheirWishes({
                                                 }
                                                 className="rounded-lg border border-line px-3 py-1.5 text-sm hover:border-ink"
                                             >
-                                                {t('lists.claim')}
+                                                {t('lists.claim_for', { name })}
                                             </button>
                                         ))}
                                 </div>

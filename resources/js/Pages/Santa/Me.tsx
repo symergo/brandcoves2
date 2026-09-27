@@ -169,7 +169,7 @@ export default function SantaMe({ group, me }: Props) {
                                             }
                                             className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm"
                                         >
-                                            {t('lists.claim')}
+                                            {me.giftee ? t('lists.claim_for', { name: me.giftee.name }) : t('lists.claim')}
                                         </button>
                                     )}
                                 </li>

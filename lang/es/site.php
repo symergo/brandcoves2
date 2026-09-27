@@ -805,6 +805,7 @@ return [
         'copy_link' => 'Copiar enlace',
         'copied' => 'Enlace copiado',
         'claim' => 'Yo lo regalo',
+        'claim_for' => 'Se lo regalo a :name',
         'claimed' => 'Yo lo regalo',
         'claimed_by_someone' => 'Alguien ya lo regala',
         'unclaim' => 'Mejor no',

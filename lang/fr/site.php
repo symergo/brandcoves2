@@ -806,6 +806,7 @@ return [
         'copy_link' => 'Copier le lien',
         'copied' => 'Lien copié',
         'claim' => 'Je m\'en occupe',
+        'claim_for' => 'Je l\'offre à :name',
         'claimed' => 'Je m’en occupe',
         'claimed_by_someone' => 'Quelqu\'un s\'en occupe',
         'unclaim' => 'Finalement non',

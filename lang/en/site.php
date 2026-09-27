@@ -969,6 +969,7 @@ return [
         'copy_link' => 'Copy link',
         'copied' => 'Link copied',
         'claim' => 'I\'ll get this',
+        'claim_for' => 'I\'ll get this for :name',
         'claimed' => 'I am getting this',
         'claimed_by_someone' => 'Someone is getting this',
         'unclaim' => 'Actually, I am not',

@@ -809,6 +809,7 @@ return [
         'copy_link' => 'Link kopiëren',
         'copied' => 'Link gekopieerd',
         'claim' => 'Ik koop dit',
+        'claim_for' => 'Ik koop dit voor :name',
         'claimed' => 'Ik koop dit',
         'claimed_by_someone' => 'Iemand koopt dit al',
         'unclaim' => 'Toch niet',
