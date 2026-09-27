@@ -2347,6 +2347,7 @@ return [
         'add_photo' => 'Ajoutez votre propre photo à quelque chose que vous avez écrit vous-même.',
         'add_write' => 'Ou écrivez-le simplement : un bon cadeau, un livre dans une édition précise, une sortie.',
         'add_overview' => 'Vous pouvez aussi ajouter directement depuis Mes Coves : touchez le + d\'une liste, sans l\'ouvrir. Quelque chose qui ne s\'achète pas en ligne ? Ajoutez un article hors ligne, avec une photo si vous voulez.',
+        'add_undo' => 'Vous avez retiré quelque chose de votre liste par erreur ? Appuyez sur Annuler dans le message en bas de l’écran, et il revient tel qu’il était.',
         'share_title' => 'Partager et offrir',
         'share_link' => 'Partagez une Cove avec un lien. Les gens peuvent indiquer qu\'ils achètent quelque chose, et vous ne voyez pas ce qui est réservé : la surprise reste entière.',
         'share_together' => 'Offrir ensemble : chacun propose, vote et participe pour un seul cadeau.',

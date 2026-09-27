@@ -2616,6 +2616,7 @@ return [
         'add_photo' => 'Add a photo of your own to something you wrote down yourself.',
         'add_write' => 'Or just write it down: a voucher, a book in one particular edition, a day out.',
         'add_overview' => 'You can also add straight from My Coves: press the + on a list, without opening it first. Something you cannot buy online? Add an offline item, with a photo if you like.',
+        'add_undo' => 'Took something off your list by mistake? Press Undo in the message at the bottom of the screen, and it is back as it was.',
         'share_title' => 'Sharing and giving',
         'share_link' => 'Share a Cove with a link. People can say they will buy something, and you do not see what has been claimed, so it stays a surprise.',
         'share_together' => 'Give together: several people suggest, vote and chip in for one present.',

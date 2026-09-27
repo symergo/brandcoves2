@@ -101,6 +101,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'picture', text: t('help.add_photo') },
                         { icon: 'build', text: t('help.add_write') },
                         { icon: 'wishlist', text: t('help.add_overview') },
+                        { icon: 'trash', text: t('help.add_undo') },
                     ]}
                 />
 

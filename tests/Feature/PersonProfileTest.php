@@ -114,6 +114,8 @@ class PersonProfileTest extends TestCase
         $this->actingAs($this->me)->get("/be-nl/people/{$saved->id}")
             ->assertInertia(fn ($page) => $page
                 ->where('profile.isFriend', true)
+                // For "Remove as friend" in the page's ⋯.
+                ->where('profile.friendId', $sam->id)
                 ->has('profile.theirLists', 1)
                 ->where('profile.theirLists.0.title', 'Sam wishes')
                 // Linked to an account: no profile link to send.
@@ -125,7 +127,48 @@ class PersonProfileTest extends TestCase
         $this->actingAs($this->me)->get("/be-nl/people/{$saved->id}")
             ->assertInertia(fn ($page) => $page
                 ->where('profile.isFriend', false)
+                ->where('profile.friendId', null)
                 ->where('profile.theirLists', []));
+    }
+
+    #[Test]
+    public function your_lists_for_them_are_the_rows_of_my_coves_and_delete_back_to_the_page(): void
+    {
+        /*
+         * Since 2026-09-27 the person's page draws your lists for them with
+         * Mijn Coves' own row (ListSummaryRow): pictures, count, the share
+         * popup's switches and the same ⋯, including Delete, which returns to
+         * this page rather than to Mijn Coves (`stay`).
+         */
+        $mum = $this->saved('Mum');
+        $list = $this->listFor($mum, 'Kerst', ListKind::Group);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id, 'snapshot_image_url' => 'https://example.com/teapot.jpg']);
+
+        $this->actingAs($this->me)->get("/be-nl/people/{$mum->id}")
+            ->assertInertia(fn ($page) => $page
+                ->where('profile.listsForThem.0.itemCount', 1)
+                ->where('profile.listsForThem.0.covers', ['https://example.com/teapot.jpg'])
+                ->where('profile.listsForThem.0.recipient.name', 'Mum')
+                ->where('profile.listsForThem.0.sharedWithMe', false)
+                ->where('profile.listsForThem.0.shareUrl', null)
+                ->where('profile.listsForThem.0.visibleToFriends', null)
+                ->where('profile.listsForThem.0.votingEnabled', true)
+                ->where('profile.listsForThem.0.suggestions', 0));
+
+        $this->actingAs($this->me)
+            ->from("/be-nl/people/{$mum->id}")
+            ->delete("/be-nl/lists/{$list->id}", ['stay' => true])
+            ->assertRedirect("/be-nl/people/{$mum->id}");
+
+        $this->assertModelMissing($list);
+
+        // From the list page itself, still the overview.
+        $other = $this->listFor($mum, 'Verjaardag', ListKind::ForSomeone);
+
+        $this->actingAs($this->me)
+            ->from("/be-nl/lists/{$other->id}")
+            ->delete("/be-nl/lists/{$other->id}")
+            ->assertRedirect('/be-nl/lists');
     }
 
     #[Test]

@@ -2358,6 +2358,7 @@ return [
         'add_photo' => 'Zet een eigen foto bij iets dat je zelf hebt opgeschreven.',
         'add_write' => 'Of schrijf het gewoon op: een cadeaubon, een boek in één bepaalde uitgave, een dagje uit.',
         'add_overview' => 'Je kunt ook meteen toevoegen vanuit Mijn Coves: klik op de + bij een lijst, zonder hem eerst te openen. Iets dat je niet online koopt? Voeg een offline artikel toe, eventueel met een foto.',
+        'add_undo' => 'Iets per ongeluk van je lijst gehaald? Druk op Ongedaan maken in het bericht onderaan het scherm, en het staat er weer op zoals het was.',
         'share_title' => 'Delen en geven',
         'share_link' => 'Deel een Cove met een link. Mensen kunnen laten weten dat ze iets kopen, en jij ziet niet wat al gekocht is, zodat het een verrassing blijft.',
         'share_together' => 'Samen geven: meerdere mensen stellen iets voor, stemmen en leggen samen in voor één cadeau.',

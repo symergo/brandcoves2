@@ -2345,6 +2345,7 @@ return [
         'add_photo' => 'Añade una foto tuya a algo que hayas escrito tú.',
         'add_write' => 'O simplemente escríbelo: un vale, un libro en una edición concreta, una excursión.',
         'add_overview' => 'También puedes añadir directamente desde Mis Coves: pulsa el + de una lista, sin abrirla. ¿Algo que no se compra en internet? Añade un artículo offline, con una foto si quieres.',
+        'add_undo' => '¿Has quitado algo de tu lista sin querer? Pulsa Deshacer en el mensaje de abajo de la pantalla y vuelve a estar como estaba.',
         'share_title' => 'Compartir y regalar',
         'share_link' => 'Comparte una Cove con un enlace. La gente puede decir que va a comprar algo, y tú no ves qué está reservado, así que sigue siendo una sorpresa.',
         'share_together' => 'Regalar juntos: varias personas proponen, votan y ponen dinero para un solo regalo.',
