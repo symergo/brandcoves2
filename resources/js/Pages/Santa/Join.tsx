@@ -2,6 +2,7 @@ import { Head, useForm, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatBudget, formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
 
 interface Props {
@@ -59,10 +60,7 @@ export default function SantaJoin({ group, members, you }: Props) {
             <div className="mx-auto max-w-xl">
                 {/* The pill, as on the group page, rather than an eyebrow
                     line: one way of saying what this is, everywhere. */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
-                    <SantaBadge />
-                </div>
+                <PageHeader size="md" title={group.title} beside={<SantaBadge />} />
 
                 <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-soft">
                     {budget && (

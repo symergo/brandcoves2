@@ -41,6 +41,7 @@ export function BackLink({ href, children }: { href: string; children: ReactNode
 export default function PageHeader({
     title,
     back,
+    before,
     size = 'lg',
     icon,
     beside,
@@ -51,6 +52,8 @@ export default function PageHeader({
 }: {
     title: ReactNode
     back?: { href: string; label: string }
+    /** A line above the title that has to be read first (who can see a question). */
+    before?: ReactNode
     size?: 'lg' | 'md'
     /** A mark before the title (the tool's icon). */
     icon?: ReactNode
@@ -70,7 +73,8 @@ export default function PageHeader({
     return (
         <header className={className}>
             {back && <BackLink href={back.href}>{back.label}</BackLink>}
-            <div className={`${back ? 'mt-1 ' : ''}flex flex-wrap items-start justify-between gap-x-4 gap-y-3`}>
+            {before && <div className={back ? 'mt-3' : ''}>{before}</div>}
+            <div className={`${back || before ? 'mt-1 ' : ''}flex flex-wrap items-start justify-between gap-x-4 gap-y-3`}>
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
                     {icon}
                     <h1 className={`${heading} break-words`}>{title}</h1>

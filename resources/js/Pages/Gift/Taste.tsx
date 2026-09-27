@@ -5,6 +5,7 @@ import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Compon
 import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
+import PageHeader from '../../Components/PageHeader'
 import { send } from '../../http'
 import { formatBudget, formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -113,13 +114,15 @@ export default function Taste(props: Props) {
                 {props.mode !== 'giver' && <meta name="robots" content="noindex, nofollow" />}
             </Head>
 
-            <header className="max-w-2xl">
-                <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+            <PageHeader
+                className="max-w-2xl"
+                icon={
+                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                         <ToolIcon name="taste" className="h-6 w-6" />
                     </span>
-                    <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift.taste.title')}</h1>
-                </div>
+                }
+                title={t('gift.taste.title')}
+            >
                 <p className="mt-2 text-ink-soft">
                     {props.mode === 'together'
                         ? t('gift.together.subtitle', { name: props.person?.name ?? '' })
@@ -129,7 +132,7 @@ export default function Taste(props: Props) {
                     <p className="mt-2 text-sm text-ink-soft">{t('gift.together.privacy')}</p>
                 )}
                 <CarriedLine carried={props.carried} finder={props.urls.finder} />
-            </header>
+            </PageHeader>
 
             {props.result ? (
                 <Outcome {...props} result={props.result} />

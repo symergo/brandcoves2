@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import { useConfirm } from './Modal'
 import InfoTip from './InfoTip'
 import { useTranslations } from '../useTranslations'
 
@@ -38,6 +39,8 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
     const [title, setTitle] = useState(state.title)
     const [showOwner, setShowOwner] = useState(state.showsOwner)
     const [busy, setBusy] = useState(false)
+    // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
+    const [confirm, confirmDialog] = useConfirm()
     const tooFew = state.itemCount < state.minItems
 
     function publish(): void {
@@ -49,8 +52,8 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
         )
     }
 
-    function unpublish(): void {
-        if (!confirm(t('community.unpublish_confirm'))) {
+    async function unpublish(): Promise<void> {
+        if (!(await confirm({ message: t('community.unpublish_confirm'), confirmLabel: t('community.unpublish'), danger: true }))) {
             return
         }
 
@@ -60,6 +63,7 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
 
     return (
         <section className="mt-6">
+            {confirmDialog}
             <h3 className="flex flex-wrap items-center text-sm font-medium">
                 {state.published && !state.hidden ? t('community.publish_on') : t('community.publish_heading')}
                 <InfoTip className="ml-1">{t('community.publish_hint')}</InfoTip>

@@ -1,5 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import InfoTip from '../../Components/InfoTip'
+import { useConfirm } from '../../Components/Modal'
+import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
 import ShareRow from '../../Components/ShareRow'
 import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
@@ -52,6 +54,8 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const done = members.filter((m) => m.done).length
+    // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
+    const [confirm, confirmDialog] = useConfirm()
 
     return (
         <>
@@ -59,11 +63,14 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
-            <header className="max-w-2xl">
-                <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
-                    <SantaBadge />
-                </div>
+            {confirmDialog}
+            <PageHeader
+                className="max-w-2xl"
+                size="md"
+                back={{ href: `/${market.key}/santa`, label: t('santa.title') }}
+                title={group.title}
+                beside={<SantaBadge />}
+            >
                 <p className="mt-2 text-sm text-ink-soft">
                     {/* No dangling separator when the budget is missing. */}
                     {[
@@ -91,7 +98,7 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                         />
                     </div>
                 )}
-            </header>
+            </PageHeader>
 
             {me && (
                 <div className="mt-6 rounded-card border border-line bg-card p-4 text-sm">
@@ -196,8 +203,14 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                                     {group.drawn && (
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                if (confirm(t('santa.redraw_confirm', { name: member.name }))) {
+                                            onClick={async () => {
+                                                if (
+                                                    await confirm({
+                                                        message: t('santa.redraw_confirm', { name: member.name }),
+                                                        confirmLabel: t('santa.redraw'),
+                                                        danger: true,
+                                                    })
+                                                ) {
                                                     router.post(
                                                         `/${market.key}/santa/${group.id}/members/${member.id}/redraw`,
                                                         {},
@@ -213,12 +226,12 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
 
                                     <button
                                         type="button"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const warning = group.drawn
                                                 ? t('santa.remove_confirm_drawn', { name: member.name })
                                                 : t('santa.remove_confirm', { name: member.name })
 
-                                            if (confirm(warning)) {
+                                            if (await confirm({ message: warning, confirmLabel: t('santa.remove_member'), danger: true })) {
                                                 router.delete(
                                                     `/${market.key}/santa/${group.id}/members/${member.id}`,
                                                     { preserveScroll: true },
@@ -243,8 +256,13 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                                 // Asked first, like every other consequential press
                                 // on this page: the draw emails everybody a name,
                                 // and there is no un-sending that.
-                                onClick={() => {
-                                    if (confirm(t('santa.draw_confirm', { count: String(members.length) }))) {
+                                onClick={async () => {
+                                    if (
+                                        await confirm({
+                                            message: t('santa.draw_confirm', { count: String(members.length) }),
+                                            confirmLabel: t('santa.draw'),
+                                        })
+                                    ) {
                                         router.post(`/${market.key}/santa/${group.id}/draw`)
                                     }
                                 }}
@@ -269,12 +287,12 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                         */}
                         <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                                 const warning = group.drawn
                                     ? t('santa.delete_confirm_drawn', { title: group.title })
                                     : t('santa.delete_confirm', { title: group.title })
 
-                                if (confirm(warning)) {
+                                if (await confirm({ message: warning, confirmLabel: t('santa.delete'), danger: true })) {
                                     router.delete(`/${market.key}/santa/${group.id}`)
                                 }
                             }}
