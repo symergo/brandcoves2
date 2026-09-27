@@ -6,7 +6,7 @@ import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
-import { formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
+import { formatBudget, formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Card {
@@ -582,8 +582,8 @@ function Outcome({ mode, person, urls, result, recipients, canCreate, carried }:
     const budget =
         profile.budgetMin !== null && profile.budgetMax !== null
             ? t('gift.taste.budget', {
-                  min: formatPrice(profile.budgetMin, market),
-                  max: formatPrice(profile.budgetMax, market),
+                  min: formatBudget(profile.budgetMin, market),
+                  max: formatBudget(profile.budgetMax, market),
               })
             : null
 

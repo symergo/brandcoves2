@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { Fragment, type ReactNode, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget, formatCountdown, formatDay, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import { stashAskBrief } from '../../askBrief'
 import CoveIcon from '../../Components/CoveIcon'
@@ -12,6 +12,7 @@ import type { SceneKey } from '../../Components/SceneIllustration'
 import ShareRow from '../../Components/ShareRow'
 import SaveToList from '../../Components/SaveToList'
 import AddProduct from '../../Components/AddProduct'
+import Badge from '../../Components/Badge'
 import Button from '../../Components/Button'
 import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
@@ -308,10 +309,6 @@ function PeopleCards({
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const [saving, setSaving] = useState<string | null>(null)
-    const dateFormat = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long' })
-
-    const when = (days: number) =>
-        days === 0 ? t('people.today') : days === 1 ? t('people.tomorrow') : t('people.in_days', { count: days })
 
     const choose = (person: PersonCard) => {
         if (person.personId !== null) {
@@ -367,9 +364,9 @@ function PeopleCards({
                                                 <span className="text-sm text-ink-soft">{person.relationship}</span>
                                             )}
                                         {person.friend !== null && (
-                                            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-2xs font-medium text-accent">
+                                            <Badge tone="accent" size="xs">
                                                 {t('people.on_giftcoves')}
-                                            </span>
+                                            </Badge>
                                         )}
                                     </span>
                                     {person.next !== null && (
@@ -379,9 +376,9 @@ function PeopleCards({
                                             ) : (
                                                 person.next.title && <span className="mr-1">{person.next.title} ·</span>
                                             )}
-                                            {dateFormat.format(new Date(`${person.next.date}T00:00:00`))}
+                                            {formatDay(person.next.date, market)}
                                             {'\u00a0·\u00a0'}
-                                            <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>{when(person.next.days)}</span>
+                                            <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>{formatCountdown(person.next.days, t)}</span>
                                         </span>
                                     )}
                                     {interests.length > 0 && (
@@ -898,7 +895,7 @@ export default function GiftWizard(props: Props) {
                                     {budgetMax === ''
                                         ? t('gift.budget_any')
                                         : t('gift.summary_budget', {
-                                              amount: formatPrice(Math.round(Number(budgetMax) * 100), market),
+                                              amount: formatBudget(Math.round(Number(budgetMax) * 100), market),
                                           })}
                                 </span>
                                 {avoid.map((word) => (
@@ -1328,10 +1325,11 @@ export default function GiftWizard(props: Props) {
                                             <button
                                                 key={word}
                                                 type="button"
-                                                className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft hover:border-ink"
+                                                className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-sm text-ink-soft hover:border-ink"
                                                 onClick={() => setAvoid(avoid.filter((w) => w !== word))}
                                             >
-                                                {t('gift.summary_avoid', { word: avoidLabel(word) })} <span aria-hidden>×</span>
+                                                {t('gift.summary_avoid', { word: avoidLabel(word) })}
+                                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                             </button>
                                         ))}
                                     </div>

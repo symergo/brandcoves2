@@ -6,6 +6,7 @@ import { dismiss, snapshot, serverSnapshot, subscribe } from '../saveToast'
 import type { SharedProps } from '../types'
 import { rich, useTranslations } from '../useTranslations'
 import ListName from './ListName'
+import ToolIcon from './ToolIcon'
 
 /**
  * "Saved to Camping · Undo · View list", where you are looking.
@@ -137,9 +138,9 @@ export default function SaveToast() {
                     type="button"
                     onClick={() => dismiss(toast.key)}
                     aria-label={t('nav.close')}
-                    className="shrink-0 text-ink-soft hover:text-ink"
+                    className="-my-1 -mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-soft hover:text-ink"
                 >
-                    ×
+                    <ToolIcon name="close" className="h-4 w-4 shrink-0" />
                 </button>
             </div>
         </div>

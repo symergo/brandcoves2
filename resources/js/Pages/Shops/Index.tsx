@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react'
+import Badge from '../../Components/Badge'
 import { useTranslations } from '../../useTranslations'
 
 interface Shop {
@@ -58,9 +59,9 @@ function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
                 </span>
 
                 {shop.isNew && (
-                    <span className="ml-auto shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-2xs font-medium text-accent">
+                    <Badge tone="accent" size="xs" className="ml-auto shrink-0">
                         {newLabel}
-                    </span>
+                    </Badge>
                 )}
             </Link>
         </li>

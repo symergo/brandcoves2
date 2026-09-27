@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Button from './Button'
 import ShareRow from './ShareRow'
 import ToolIcon from './ToolIcon'
-import { formatPrice, type Cents, type SharedProps } from '../types'
+import { formatBudget, type Cents, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export interface TasteTogetherState {
@@ -68,8 +68,8 @@ export default function TasteTogetherPanel({
         if (profile.budgetMin !== null && profile.budgetMax !== null) {
             found.push(
                 t('gift.taste.budget', {
-                    min: formatPrice(profile.budgetMin, market),
-                    max: formatPrice(profile.budgetMax, market),
+                    min: formatBudget(profile.budgetMin, market),
+                    max: formatBudget(profile.budgetMax, market),
                 }),
             )
         }

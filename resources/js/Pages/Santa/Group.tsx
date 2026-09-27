@@ -2,7 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import InfoTip from '../../Components/InfoTip'
 import SantaBadge from '../../Components/SantaBadge'
 import ShareRow from '../../Components/ShareRow'
-import { formatPrice, type Cents, type SharedProps } from '../../types'
+import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Member {
@@ -65,10 +65,14 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                     <SantaBadge />
                 </div>
                 <p className="mt-2 text-sm text-ink-soft">
-                    {group.budgetMax !== null &&
-                        `${t('santa.budget')}: ${formatPrice(group.budgetMax, market)}`}
-                    {group.exchangeDate && ` · ${group.exchangeDate}`}
-                    {group.theme && ` · ${group.theme}`}
+                    {/* No dangling separator when the budget is missing. */}
+                    {[
+                        group.budgetMax !== null ? `${t('santa.budget')}: ${formatBudget(group.budgetMax, market)}` : null,
+                        group.exchangeDate ? formatDay(group.exchangeDate, market, { year: 'auto' }) : null,
+                        group.theme || null,
+                    ]
+                        .filter(Boolean)
+                        .join(' · ')}
                 </p>
 
                 {/*

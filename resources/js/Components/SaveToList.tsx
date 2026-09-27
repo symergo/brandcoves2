@@ -27,6 +27,7 @@ import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import type { ListKind } from './ListKindBadge'
 import ListName from './ListName'
+import ToolIcon from './ToolIcon'
 import SaveButton from './SaveButton'
 import SaveSheet from './SaveSheet'
 
@@ -502,7 +503,7 @@ export default function SaveToList({
                         on ? 'border-sage bg-sage text-white' : 'border-line bg-card'
                     }`}
                 >
-                    {on ? '✓' : ''}
+                    {on && <ToolIcon name="check" className="h-3 w-3" />}
                 </span>
                 <span className="min-w-0 flex-1 truncate">{label}</span>
             </button>

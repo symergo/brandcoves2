@@ -15,7 +15,7 @@ import ScanButton from '../Components/ScanButton'
 import ToolIcon from '../Components/ToolIcon'
 import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import type { SharedProps } from '../types'
-import { formatPrice } from '../types'
+import { formatBudget, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import { searchHref, searchTarget } from '../searchUrl'
 
@@ -600,9 +600,7 @@ export default function Search({
                                         {n(chips.length)}
                                     </span>
                                 )}
-                                <span aria-hidden className="text-xs text-ink-soft">
-                                    {filtersOpen ? '▲' : '▼'}
-                                </span>
+                                <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${filtersOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {/*
@@ -679,7 +677,7 @@ export default function Search({
                                                 title={t('search.intent_remove', { label: chip.label })}
                                                 className="flex h-7 w-7 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
                                             >
-                                                ×
+                                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                             </Link>
                                         ) : (
                                             <button
@@ -689,7 +687,7 @@ export default function Search({
                                                 title={t('search.intent_remove', { label: chip.label })}
                                                 className="flex h-7 w-7 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
                                             >
-                                                ×
+                                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                             </button>
                                         )}
                                     </li>
@@ -758,7 +756,7 @@ export default function Search({
                                     // suggestion at a glance rather than by reading it.
                                     className="inline-flex items-center gap-1.5 rounded-full border border-sage bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-sage transition hover:border-accent hover:text-accent"
                                 >
-                                    <span aria-hidden>×</span>
+                                    <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                     {item.term}
                                     <span className="sr-only">{t('search.remove_term', { term: item.term })}</span>
                                 </button>
@@ -902,8 +900,8 @@ export default function Search({
                                     <IntentChip
                                         label={
                                             intent.budget.min !== null && intent.budget.max !== null
-                                                ? `${formatPrice(intent.budget.min, market)} – ${formatPrice(intent.budget.max, market)}`
-                                                : t('search.intent_under', { price: formatPrice(intent.budget.max ?? 0, market) })
+                                                ? `${formatBudget(intent.budget.min, market)} – ${formatBudget(intent.budget.max, market)}`
+                                                : t('search.intent_under', { price: formatBudget(intent.budget.max ?? 0, market) })
                                         }
                                         without={intent.budget.without}
                                         removeLabel={t('search.intent_remove', { label: t('search.intent_budget') })}
@@ -1480,9 +1478,7 @@ function Facet({
                             {title}
                             {count}
                         </span>
-                        <span aria-hidden className="text-xs text-ink-soft">
-                            {open ? '▲' : '▼'}
-                        </span>
+                        <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${open ? 'rotate-180' : ''}`} />
                     </button>
                 </h2>
             ) : (
@@ -1531,7 +1527,7 @@ function IntentChip({ label, without, removeLabel }: { label: string; without: s
                 title={removeLabel}
                 className="flex h-6 w-6 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
             >
-                ×
+                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
             </Link>
         </li>
     )

@@ -917,7 +917,7 @@ export default function SharedList({
                                                 }`}
                                             >
                                                 {suggested.has(result.id)
-                                                    ? `✓ ${addsDirectly ? t('suggestions.added_short') : t('suggestions.suggested')}`
+                                                    ? <span className="inline-flex items-center gap-1.5"><ToolIcon name="check" className="h-4 w-4" />{addsDirectly ? t('suggestions.added_short') : t('suggestions.suggested')}</span>
                                                     : addsDirectly
                                                       ? t('suggestions.add_action')
                                                       : t('suggestions.suggest')}

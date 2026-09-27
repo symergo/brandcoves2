@@ -1,7 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react'
 import SantaBadge from '../../Components/SantaBadge'
 import SaveToList from '../../Components/SaveToList'
-import { formatPrice, type Cents, type SharedProps } from '../../types'
+import { formatBudget, formatDay, formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Wish {
@@ -71,9 +71,13 @@ export default function SantaMe({ group, me }: Props) {
                 ) : null}
 
                 <p className="mt-2 text-sm text-ink-soft">
-                    {group.budgetMax !== null &&
-                        formatPrice(group.budgetMax, market) + ' · '}
-                    {group.exchangeDate}
+                    {/* No dangling separator when one of the two is missing. */}
+                    {[
+                        group.budgetMax !== null ? formatBudget(group.budgetMax, market) : null,
+                        group.exchangeDate ? formatDay(group.exchangeDate, market, { year: 'auto' }) : null,
+                    ]
+                        .filter(Boolean)
+                        .join(' · ')}
                 </p>
             </header>
 

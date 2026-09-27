@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ToolIcon from './ToolIcon'
 
 /**
  * Words of your own, one at a time, each a chip you can take off again.
@@ -81,10 +82,11 @@ export default function ChipInput({
                         <li key={word}>
                             <button
                                 type="button"
-                                className="rounded-full border border-accent bg-accent px-3 py-1 text-sm text-white"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-accent bg-accent px-3 py-1 text-sm text-white"
                                 onClick={() => onChange(value.filter((w) => w !== word))}
                             >
-                                {word} ×
+                                {word}
+                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                             </button>
                         </li>
                     ))}

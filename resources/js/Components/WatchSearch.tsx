@@ -2,7 +2,7 @@ import { router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import Button, { buttonClasses } from './Button'
 import SignInLink from './SignInLink'
-import { formatPrice, type SharedProps } from '../types'
+import { formatBudget, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export interface WatchState {
@@ -42,7 +42,7 @@ export default function WatchSearch({ term, watch }: { term: string; watch: Watc
                 <span className="text-ink-soft">
                     {watch.maxPrice === null
                         ? t('search.watching')
-                        : t('search.watching_under', { price: formatPrice(watch.maxPrice, market) })}
+                        : t('search.watching_under', { price: formatBudget(watch.maxPrice, market) })}
                 </span>
                 <button
                     type="button"
