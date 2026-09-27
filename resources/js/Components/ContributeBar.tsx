@@ -68,20 +68,27 @@ export default function ContributeBar() {
     return (
         <aside aria-label={t('contribute.bar_label')} className="border-b border-line bg-card text-sm">
             <div className="mx-auto flex max-w-6xl items-center gap-2 py-1 pr-1 pl-4 sm:pr-3">
-                <span className="hidden shrink-0 text-accent sm:inline">
-                    <ToolIcon name="suggestions" className="h-4 w-4" />
-                </span>
-                <p className="min-w-0 flex-1 truncate text-ink-soft">
-                    <span className="lg:hidden">{t('contribute.bar_text_short')}</span>
-                    <span className="hidden lg:inline">{t('contribute.bar_text')}</span>
-                </p>
+                {/*
+                  The whole row is the link, not only "Denk mee" (owner,
+                  2026-09-27): a one-line bar is one target. Only the close
+                  button sits outside it.
+                */}
                 <Link
                     href={`/${market.key}/contribute`}
-                    className="inline-flex min-h-9 shrink-0 items-center font-medium whitespace-nowrap text-accent-dark hover:text-ink"
+                    className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 text-ink-soft hover:text-ink"
                 >
-                    {t('contribute.bar_link')}
-                    <span aria-hidden className="ml-1">
-                        →
+                    <span className="hidden shrink-0 text-accent sm:inline">
+                        <ToolIcon name="suggestions" className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                        <span className="lg:hidden">{t('contribute.bar_text_short')}</span>
+                        <span className="hidden lg:inline">{t('contribute.bar_text')}</span>
+                    </span>
+                    <span className="inline-flex shrink-0 items-center font-medium whitespace-nowrap text-accent-dark group-hover:text-ink group-hover:underline">
+                        {t('contribute.bar_link')}
+                        <span aria-hidden className="ml-1">
+                            →
+                        </span>
                     </span>
                 </Link>
                 <button

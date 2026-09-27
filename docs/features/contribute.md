@@ -47,6 +47,10 @@ Files:
 →**", with a close button. Below `lg` it says only "Jouw mening telt." and the link, so it
 is one short line on a phone; the long sentence would wrap to two there.
 
+**The whole row is the link** (owner, 2026-09-27), not only "Denk mee →": a one-line bar is one
+target, and the sentence is what people read and tap. Only the close button sits outside it.
+Hovering anywhere underlines "Denk mee".
+
 **Quiet on purpose.** The card background, muted text, 14px, a small line icon. It is the market
 bar's recipe (Components/MarketBar), so the two read as the same kind of thing: information you can
 act on or ignore. No solid accent: that belongs to the one main action of each page.
