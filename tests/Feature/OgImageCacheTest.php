@@ -295,4 +295,50 @@ class OgImageCacheTest extends TestCase
 
         $this->assertSame(2, $renderer->renders, 'the new build must not inherit the old build\'s card');
     }
+
+    #[Test]
+    public function a_client_that_already_has_the_card_gets_a_304_and_nothing_is_drawn(): void
+    {
+        /*
+         * 2026-09-27. The ETag used to be md5 of the PNG, so answering "is my
+         * copy still good?" meant drawing the card first: 58ms for a product,
+         * the one card that is never cached. It now comes from the card's
+         * version (commit, record, drawn text), which is known before drawing.
+         */
+        $group = $this->product();
+        $renderer = $this->countingRenderer();
+        $url = "/be-nl/og/p/{$group->id}.png";
+
+        $etag = (string) $this->get($url)->assertOk()->headers->get('ETag');
+        $this->assertSame(1, $renderer->renders);
+
+        $this->withHeader('If-None-Match', $etag)->get($url)
+            ->assertStatus(304)
+            ->assertHeader('ETag', $etag)
+            ->assertHeader('Cache-Control', 'max-age=604800, public');
+        $this->withHeader('If-None-Match', 'W/'.$etag)->get($url)->assertStatus(304);
+
+        $this->assertSame(1, $renderer->renders, 'a 304 must not draw');
+
+        // What the card draws changed, so the old copy is stale: a full answer.
+        $group->forceFill(['merchant_count' => 14])->save();
+
+        $fresh = $this->withHeader('If-None-Match', $etag)->get($url)->assertOk();
+        $this->assertNotSame($etag, $fresh->headers->get('ETag'));
+        $this->assertSame(2, $renderer->renders);
+    }
+
+    #[Test]
+    public function a_deploy_changes_the_etag(): void
+    {
+        // The same reason the cache key carries the commit: a card drawn by
+        // broken code must not be revalidated as good by the next build.
+        $this->edition();
+
+        config(['giftcoves.commit_sha' => 'aaaaaaa']);
+        $before = $this->get($this->url())->headers->get('ETag');
+
+        config(['giftcoves.commit_sha' => 'bbbbbbb']);
+        $this->withHeader('If-None-Match', (string) $before)->get($this->url())->assertOk();
+    }
 }
