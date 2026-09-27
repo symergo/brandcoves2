@@ -294,3 +294,9 @@ it has one), and the page shows four: those for the kind of person chosen in "Wh
 then those for anybody, then the rest. Nothing is filtered out. A persona planned without a
 relationship ranks as "for anybody"; giving a persona's brief a relationship over the editorial API
 is what moves it up for that kind of person.
+
+## Stored prose, and the shelf's count (2026-09-27)
+
+A persona's prose is rendered at build and stored with it, like a Daily's; see
+[speed.md](speed.md), "Cove pages". The `/gift-ideas` shelf counts each persona's in-stock finds in
+SQL rather than loading every pick for one number per card.

@@ -542,3 +542,11 @@ the application writes them. The why, the surfaces and the writing brief are in
 listing carries the vocabulary, the write is a publish, all or nothing, replacing a product's tags.
 The vocabulary, the engine's reading of them and the tagging brief are in
 [gift-tags.md](gift-tags.md).
+
+## Stored prose (2026-09-27)
+
+A Cove's prose is rendered when it is built and stored with it, so publishing over this API
+(approve, build) stores it as a side effect. Anything that changes a published Cove's text some
+other way still shows at once: the stored value carries a fingerprint of the text, and a mismatch
+renders live. See
+[speed.md](speed.md), "Cove pages".
