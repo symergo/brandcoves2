@@ -39,7 +39,7 @@ interface Props {
  * what can I do now. Every section below is one of the owner's, in the owner's
  * order, and each ends in one action:
  *
- *  1. Hero: the idea, Create a Cove, and the three verbs with their ways in.
+ *  1. Hero: the idea, Create a Cove and Explore Coves.
  *  2. Three ways in, one per audience: a gift, a wish list, browsing.
  *  3. From anywhere: what makes this more than an affiliate catalogue.
  *  4. Coves: where the catalogue becomes discovery.
@@ -70,8 +70,7 @@ export default function Home({ today, coves, collected = [] }: Props) {
             {/*
               1. The hero, in the approved layout ("A2, round 3"): the headline
               across the full width, the pitch and the buttons beside the
-              drawing, and the three verbs across the full width underneath,
-              each with the ways it is done.
+              drawing.
             */}
             <section aria-labelledby="hero-heading">
                 <h1 id="hero-heading" className="max-w-4xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
@@ -96,13 +95,7 @@ export default function Home({ today, coves, collected = [] }: Props) {
 
                     <SharedCoveIllustration className="h-auto w-full max-w-xs justify-self-center text-ink md:max-w-sm" />
                 </div>
-
-                <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-4 text-sm text-ink-soft">
-                    {/* Each word leads to where you do it (owner, 2026-09-27). */}
-                    <Way icons={['search']} label={t('home.way_search')} href={`${base}/search`} />
-                    <Way icons={['link', 'barcode', 'picture']} label={t('home.way_add')} href={`${base}/lists`} />
-                    <Way icons={['people']} label={t('home.way_share')} href={`${base}/people`} />
-                </ul>
+                {/* "Zoek · Verzamel · Deel" stood here until the owner removed it (2026-09-27). */}
             </section>
 
             {/*
@@ -156,11 +149,11 @@ export default function Home({ today, coves, collected = [] }: Props) {
 
                     {/* Four ways, so 2 or 4 columns: 3 would leave the fourth alone on a row. */}
                     <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <OpenWay icon="link" text={t('home.open_link')} />
-                        <OpenWay icon="barcode" text={t('home.open_scan')} />
-                        <OpenWay icon="search" text={t('home.open_search')} />
+                        <OpenWay icon="link" text={t('home.open_link')} href={`${base}/lists`} />
+                        <OpenWay icon="barcode" text={t('home.open_scan')} href={`${base}/scan`} />
+                        <OpenWay icon="search" text={t('home.open_search')} href={`${base}/search`} />
                         {/* Offline items with a photo (owner, 2026-09-27). */}
-                        <OpenWay icon="picture" text={t('home.open_photo')} />
+                        <OpenWay icon="picture" text={t('home.open_photo')} href={`${base}/lists`} />
                     </ul>
 
                     <p className="mt-6 text-xs tracking-wide text-ink-soft uppercase">{t('home.open_sources')}</p>
@@ -328,22 +321,6 @@ export default function Home({ today, coves, collected = [] }: Props) {
     )
 }
 
-/** One of the hero's three verbs, with the icons for the ways it is done. */
-function Way({ icons, label, href }: { icons: ToolKey[]; label: string; href: string }) {
-    return (
-        <li>
-            <Link href={href} className="inline-flex items-center gap-2 whitespace-nowrap hover:text-ink hover:underline">
-                <span className="inline-flex gap-1 text-ink">
-                    {icons.map((icon) => (
-                        <ToolIcon key={icon} name={icon} className="h-5 w-5" />
-                    ))}
-                </span>
-                {label}
-            </Link>
-        </li>
-    )
-}
-
 function Entry({ icon, title, body, cta, href }: { icon: ToolKey; title: string; body: string; cta: string; href: string }) {
     return (
         <li>
@@ -360,11 +337,18 @@ function Entry({ icon, title, body, cta, href }: { icon: ToolKey; title: string;
     )
 }
 
-function OpenWay({ icon, text }: { icon: ToolKey; text: string }) {
+/**
+ * One way in, and a link to where it is done (owner, 2026-09-27). Pasting a
+ * link and adding a photo both happen in a list's add panel, which the + on
+ * every card in My Coves opens; scanning and searching have their own pages.
+ */
+function OpenWay({ icon, text, href }: { icon: ToolKey; text: string; href: string }) {
     return (
-        <li className="flex items-start gap-3">
-            <ToolIcon name={icon} className="mt-0.5 h-6 w-6 shrink-0 text-ink" />
-            <span>{text}</span>
+        <li>
+            <Link href={href} className="group flex items-start gap-3 hover:text-ink">
+                <ToolIcon name={icon} className="mt-0.5 h-6 w-6 shrink-0 text-ink" />
+                <span className="underline decoration-line underline-offset-4 group-hover:decoration-ink">{text}</span>
+            </Link>
         </li>
     )
 }

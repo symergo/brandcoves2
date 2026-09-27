@@ -19,14 +19,12 @@ bottom (`Pages/Home.tsx`):
 
 1. **Hero.** "Find things worth giving, getting and sharing." across the full width; under it the
    pitch with **Create a Cove** and **Explore Coves** beside the drawing; across the full width
-   underneath, *Zoek · Verzamel · Deel* (Search · Collect · Share), each with the icons of the ways
-   it is done (search; link, barcode, picture; people). Since 2026-09-27 (owner) the words are
-   short and each is a link to where you do it: the search page (`/search`), My Coves (`/lists`)
-   and My people (`/people`, where you share with the people you give to). Until then they read
-   "Zoek alles · Voeg alles toe · Deel alles" and linked nowhere.
+   underneath, until 2026-09-27, a row of three verbs ("Zoek alles · Voeg alles toe · Deel alles",
+   briefly "Zoek · Verzamel · Deel" with links). The owner removed it the same day: the search card
+   right under the hero and "Van overal" below say the same with something to press.
 2. **Three ways in**, one per audience: a gift (Find a gift, `/gift`), a wish list (Create my Cove),
    browsing (`/coves`).
-3. **From anywhere.** Paste a link, scan it, search it, or, when it is not sold online, take a photo and add it (the picture icon, added 2026-09-27 at the owner's request; four items, so the row is 2 or 4 columns, never 3); the sources named generically ("Big online
+3. **From anywhere.** Each of the four lines links to where it is done (owner, 2026-09-27): pasting a link and adding a photo to My Coves, where the + on every list card opens the add panel; scanning to `/scan`; searching to `/search`. Paste a link, scan it, search it, or, when it is not sold online, take a photo and add it (the picture icon, added 2026-09-27 at the owner's request; four items, so the row is 2 or 4 columns, never 3); the sources named generically ("Big online
    shops · Independent makers · The shop round the corner"), never other companies' names
    (owner's decision: Amazon's terms restrict the use of its name and marks).
 4. **Coves**: six cards, drawn at random from published non-daily Coves and held for an hour per
