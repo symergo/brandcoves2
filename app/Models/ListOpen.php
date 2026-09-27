@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ListVisibility;
 use App\Support\Owner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -69,6 +71,62 @@ class ListOpen extends Model
         }
 
         self::record($list, $reader);
+    }
+
+    /** Session key for {@see rememberForLater()}. */
+    private const PENDING_SESSION_KEY = 'list_opens_pending';
+
+    /** Enough for the lists one person is sent in a sitting; the rest are dropped. */
+    private const PENDING_LIMIT = 10;
+
+    /**
+     * Hold an open by a guest who has no identity yet, in their session.
+     *
+     * Since 2026-09-27 the shared page makes no identity on a read, so there is
+     * nobody to record the open against. It is kept here and recorded by
+     * {@see recordRemembered()} when a write makes the identity, so a guest
+     * who opens a link and then does something (a suggestion, a vote, saving
+     * a product anywhere) still finds the list under their lists. A guest who
+     * only reads keeps nothing, which is the point: most of them are link
+     * previews and people passing through.
+     */
+    public static function rememberForLater(Request $request, Wishlist $list): void
+    {
+        if (! $request->hasSession()) {
+            return;
+        }
+
+        /** @var list<int> $ids */
+        $ids = (array) $request->session()->get(self::PENDING_SESSION_KEY, []);
+
+        if (in_array($list->id, $ids, true)) {
+            return;
+        }
+
+        $ids[] = $list->id;
+        $request->session()->put(self::PENDING_SESSION_KEY, array_slice($ids, -self::PENDING_LIMIT));
+    }
+
+    /** Record the opens {@see rememberForLater()} held, now that there is somebody to own them. */
+    public static function recordRemembered(Request $request, Owner $reader): void
+    {
+        if (! $request->hasSession() || ! $reader->exists()) {
+            return;
+        }
+
+        /** @var list<int> $ids */
+        $ids = (array) $request->session()->pull(self::PENDING_SESSION_KEY, []);
+
+        if ($ids === []) {
+            return;
+        }
+
+        // Only lists still shared: one switched off since is not theirs to find.
+        Wishlist::query()
+            ->whereKey($ids)
+            ->where('visibility', '!=', ListVisibility::Private->value)
+            ->get()
+            ->each(fn (Wishlist $list) => self::record($list, $reader));
     }
 
     /**

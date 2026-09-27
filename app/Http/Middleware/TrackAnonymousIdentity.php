@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\AnonymousIdentity;
+use App\Models\ListOpen;
+use App\Support\Owner;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -77,6 +79,28 @@ class TrackAnonymousIdentity
         'slackbot', 'linkexpanding', 'google-inspectiontool',
     ];
 
+    /**
+     * Set on a lazy page's request when the visitor has no identity yet but
+     * would be given one on their first write. Read by `Owner::canAct()`.
+     */
+    public const PENDING = 'anonymous_identity_pending';
+
+    /**
+     * GET pages that use an existing identity and never create one.
+     *
+     * Route names, since the paths carry a market and a token. Not cached
+     * (CacheAnonymousPage): they are per token and partly per visitor, so a
+     * guest still gets a session here, only no identity row and no cookie.
+     *
+     * @var list<string>
+     */
+    public const LAZY_ROUTES = [
+        'lists.shared',          // /l/{token}
+        'gift',                  // Find a gift
+        'recipients.self',       // /for/{token}
+        'recipients.self.suggest', // /for/{token}/suggest, the same page with a search
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         // A signed-in user has a real identity; a second anonymous one would
@@ -96,10 +120,7 @@ class TrackAnonymousIdentity
          * on those pages reads the identity. It is made the moment they first
          * write something, because a write is a POST (or the GET /csrf the
          * browser asks right before one), and every other route still runs
-         * the code below. Kept for the interactive GET pages (a shared list,
-         * the gift wizard, /for) because they ask `Owner::exists()` to decide
-         * what to offer: "suggest a gift" on a shared list is offered to a
-         * visitor who has an identity.
+         * the code below.
          */
         if (CacheAnonymousPage::servesAnonymously($request)) {
             return $next($request);
@@ -107,6 +128,22 @@ class TrackAnonymousIdentity
 
         $id = $request->cookie(self::COOKIE);
         $identity = is_string($id) ? AnonymousIdentity::find($id) : null;
+
+        /*
+         * The interactive pages a guest reads before doing anything (a shared
+         * list, Find a gift, /for) use an identity the visitor already has,
+         * and make none. They are opened from links in chats and emails, so
+         * most views are a link preview, a prefetch or somebody who looks and
+         * leaves, and each made a row and a cookie that nothing would read.
+         * What they offer ("suggest a gift", a vote, the board) is offered to
+         * a guest without one on the promise of `Owner::canAct()`: the POST
+         * that acts runs this middleware in full and makes the identity then.
+         */
+        if ($identity === null && self::isLazy($request)) {
+            $request->attributes->set(self::PENDING, true);
+
+            return $next($request);
+        }
 
         if ($identity === null) {
             $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
@@ -117,6 +154,12 @@ class TrackAnonymousIdentity
         }
 
         $request->attributes->set('anonymous_identity', $identity);
+
+        if ($identity->wasRecentlyCreated) {
+            // Shared lists this visitor read before they had an identity, so
+            // they still find them under their lists (ListOpen::rememberForLater).
+            ListOpen::recordRemembered($request, new Owner(null, $identity));
+        }
 
         $response = $next($request);
 
@@ -129,6 +172,13 @@ class TrackAnonymousIdentity
         ));
 
         return $response;
+    }
+
+    /** A read (GET or HEAD) of one of the {@see LAZY_ROUTES}. */
+    public static function isLazy(Request $request): bool
+    {
+        return $request->isMethodSafe()
+            && $request->route()?->named(...self::LAZY_ROUTES) === true;
     }
 
     /** Whether this User-Agent is a crawler or a script rather than a person's browser. */

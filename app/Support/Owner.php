@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,12 @@ final readonly class Owner
     public function __construct(
         public ?User $user,
         public ?AnonymousIdentity $anonymous,
+        /**
+         * Nobody yet, on a page that makes no identity on a read
+         * (`TrackAnonymousIdentity::LAZY_ROUTES`), but a person's browser that
+         * will be given one by its first write.
+         */
+        public bool $pending = false,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -28,12 +35,32 @@ final readonly class Owner
         return new self(
             user: $request->user(),
             anonymous: $request->attributes->get('anonymous_identity'),
+            pending: $request->attributes->get(TrackAnonymousIdentity::PENDING) === true,
         );
     }
 
     public function exists(): bool
     {
         return $this->user !== null || $this->anonymous !== null;
+    }
+
+    /**
+     * May this visitor be offered an action that needs an owner?
+     *
+     * `exists()`, or a guest reading a lazy page who has no identity yet. The
+     * shared list, Find a gift and /for make none on a GET (a link preview or
+     * somebody who only looks was a row and a cookie each), so there
+     * `exists()` is false for every first-time guest, and asking it would
+     * hide "suggest a gift", the vote and the board from exactly them. The
+     * POST that acts runs `TrackAnonymousIdentity` in full, which makes the
+     * identity, and the endpoint then asks `exists()` as before.
+     *
+     * For deciding what to OFFER only. Anything that reads or writes rows
+     * still needs `exists()`: a pending owner owns nothing and has no key.
+     */
+    public function canAct(): bool
+    {
+        return $this->exists() || $this->pending;
     }
 
     public function isSignedIn(): bool

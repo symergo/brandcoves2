@@ -762,10 +762,36 @@ This is what makes the page the same for everybody, and also what lets a browser
 - **Identity.** `TrackAnonymousIdentity` skips such a request, so reading public pages makes no
   `anonymous_identities` row and no `bc_visitor` cookie. The identity is made on the first write: a
   POST runs the middleware as before, and so does `GET /csrf`, which the browser asks right before
-  its first write. The interactive GET pages that are not cached (a shared list, the gift wizard,
-  `/for`) still make one on a view, because they ask `Owner::exists()` to decide what to offer
-  ("suggest a gift" on a shared list). Making those lazy too means going through each of them, and
-  was left out of this step.
+  its first write.
+- **Identity on the three interactive pages that are not cached** (owner, 2026-09-27): the shared
+  list (`/l/{token}`), Find a gift (`/gift`) and `/for/{token}` (with `/for/{token}/suggest`, the
+  same page with a search). They are per token or per visitor, so they stay out of the page cache
+  and a guest still gets a session there; what changed is that a GET of them makes no
+  `anonymous_identities` row and sets no `bc_visitor` cookie. They are opened from links in chats
+  and emails, so most views are link previews, prefetches and people who look and leave.
+  `TrackAnonymousIdentity::LAZY_ROUTES` names them. On such a read, a visitor whose cookie finds an
+  identity gets it as before (an anonymous owner opening their own share link must still be seen as
+  the owner, or they would see what was claimed: invariant 4). A visitor without one gets none, and
+  the request is marked *pending*: a person's browser that will be given an identity by its first
+  write.
+
+  The pages decided what to offer from `Owner::exists()`, which is false for every such guest. They
+  now ask `Owner::canAct()`, which is `exists()` or pending: "suggest a gift" (`canSuggest`), the
+  vote (`Wishlist::allowsVotingFrom`), the pot (`allowsContributionsFrom`) and the board's form
+  (`Board::writableBy`). The same three methods guard the POST endpoints, and there nothing is ever
+  pending (only a GET of a lazy route is), so the endpoints answer exactly as before; the POST runs
+  the middleware in full and makes the identity before the controller asks. A crawler is never
+  pending, so it is offered none of these. Claiming is unchanged: it needs an account
+  (`claimNeedsAccount`), identity or not. Find a gift and `/for` needed nothing: every write there
+  (the brief, swap, more, a thumb, "remember", describing yourself) is a POST, and what they read on
+  a GET (the visitor's people, their list for the person) is empty without an identity anyway.
+
+  One thing was written on the read: the shared list recorded a `list_opens` row, which is what
+  puts the list under the visitor's lists. For a pending guest the list's id is held in the session
+  (`ListOpen::rememberForLater`, at most ten), and `TrackAnonymousIdentity` records those opens the
+  moment it creates the identity, for lists still shared. A guest who opens a link and then does
+  anything still finds it again; one who only looks keeps nothing, which is the point. Tests:
+  `LazyAnonymousIdentityTest`.
 - **CSRF token.** `app.blade.php` leaves the `csrf-token` meta tag empty on such a page. Before its
   first write the browser asks `GET /csrf` (`CsrfTokenController`: starts the session, sets the
   session and `XSRF-TOKEN` cookies, returns the token, `no-store`) through `ensureCsrfToken()` in
