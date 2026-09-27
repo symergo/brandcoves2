@@ -52,20 +52,44 @@ class CheckSearchAlerts implements ShouldBeUnique, ShouldQueue
     {
         $checked = 0;
         $notified = 0;
+        $searched = 0;
+
+        /*
+         * Each distinct search once per run (2026-09-28). Many people watch
+         * the same few terms ("lego", "airfryer"), and every watch ran its own
+         * identical search. Keyed on what decides the result: market, term
+         * (case and spacing do not matter to the search) and price ceiling.
+         *
+         * @var array<string, list<int>> $results
+         */
+        $results = [];
 
         SearchAlert::query()
             ->where('state', AlertState::Active->value)
-            ->chunkById(100, function ($alerts) use ($search, &$checked, &$notified): void {
+            /*
+             * Only watches not yet checked today, so a run cut off by a
+             * deploy or a timeout picks up where it stopped on the retry
+             * instead of checking (and possibly notifying) from the top.
+             */
+            ->where(fn ($q) => $q->whereNull('last_checked_at')->orWhere('last_checked_at', '<', today()))
+            ->chunkById(100, function ($alerts) use ($search, &$checked, &$notified, &$searched, &$results): void {
                 foreach ($alerts as $alert) {
                     $checked++;
 
-                    $matches = $search->matchingGroupIds(new SearchQuery(
-                        market: $alert->market,
-                        term: $alert->term,
-                        maxPrice: $alert->max_price,
-                        logged: false,
-                        liveTerm: '',
-                    ), self::MATCHES);
+                    $key = $alert->market->value.'|'.mb_strtolower(trim((string) $alert->term)).'|'.($alert->max_price ?? '');
+
+                    if (! array_key_exists($key, $results)) {
+                        $searched++;
+                        $results[$key] = $search->matchingGroupIds(new SearchQuery(
+                            market: $alert->market,
+                            term: $alert->term,
+                            maxPrice: $alert->max_price,
+                            logged: false,
+                            liveTerm: '',
+                        ), self::MATCHES);
+                    }
+
+                    $matches = $results[$key];
 
                     $seen = array_map('intval', (array) $alert->seen_group_ids);
                     $new = array_values(array_diff($matches, $seen));
@@ -83,7 +107,7 @@ class CheckSearchAlerts implements ShouldBeUnique, ShouldQueue
                 }
             });
 
-        Log::info('Search alerts checked', ['checked' => $checked, 'notified' => $notified]);
+        Log::info('Search alerts checked', ['checked' => $checked, 'searches' => $searched, 'notified' => $notified]);
     }
 
     private function notify(SearchAlert $alert, int $count): void

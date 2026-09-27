@@ -118,6 +118,9 @@ class SearchAlertTest extends TestCase
         $cheap = $this->product('Philips koptelefoon', 8900);
         $this->product('Bang & Olufsen koptelefoon', 79900);
 
+        // The next morning: a watch is checked once a day (since 2026-09-28 a
+        // second run on the same day skips it, so a retried run resumes).
+        $this->travel(1)->days();
         (new CheckSearchAlerts)->handle(app(SearchService::class));
 
         $notification = Notification::query()->firstOrFail();
@@ -129,8 +132,30 @@ class SearchAlertTest extends TestCase
         $this->assertContains($cheap->id, SearchAlert::query()->firstOrFail()->seen_group_ids);
 
         // The next morning says nothing about the same product.
+        $this->travel(1)->days();
         (new CheckSearchAlerts)->handle(app(SearchService::class));
         $this->assertSame(1, Notification::query()->count());
+    }
+
+    #[Test]
+    public function a_run_checks_each_watch_once_a_day_and_each_search_once(): void
+    {
+        $this->product('Sony koptelefoon', 19900);
+        $first = User::create(['email' => 'one@example.test']);
+        $second = User::create(['email' => 'two@example.test']);
+
+        $this->actingAs($first)->post('/be-nl/search-alerts', ['term' => 'koptelefoon'])->assertRedirect();
+        $this->actingAs($second)->post('/be-nl/search-alerts', ['term' => 'Koptelefoon'])->assertRedirect();
+
+        // Two people watching one term is ONE search, across both runs: the
+        // retry on the same day finds both watches already checked.
+        $this->mock(SearchService::class, fn ($mock) => $mock->shouldReceive('matchingGroupIds')->once()->andReturn([]));
+
+        $this->travel(1)->days();
+        (new CheckSearchAlerts)->handle(app(SearchService::class));
+        (new CheckSearchAlerts)->handle(app(SearchService::class));
+
+        $this->assertSame(2, SearchAlert::query()->whereDate('last_checked_at', today())->count());
     }
 
     #[Test]
