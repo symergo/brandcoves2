@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ProductStatus;
-use App\Enums\Source;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
-use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Cove\CommunityCoves;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
+use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -62,7 +60,7 @@ class CovesController extends Controller
 
     private const EDITIONS = 8;
 
-    public function __invoke(CurrentMarket $current, ConnectorRegistry $registry): Response
+    public function __invoke(CurrentMarket $current, ShopDirectory $directory): Response
     {
         app(PageMeta::class)->set(
             title: __('site.coves.seo_title'),
@@ -100,7 +98,7 @@ class CovesController extends Controller
                 ),
                 $this->brands($current),
                 // The writing if there is any, the directory of shops if not.
-                $this->shopCoves($current) ?? $this->shops($current, $registry),
+                $this->shopCoves($current) ?? $this->shops($current, $directory),
                 $this->community($current),
             ])),
         ]);
@@ -158,29 +156,18 @@ class CovesController extends Controller
      *
      * @return array<string, mixed>|null
      */
-    private function shops(CurrentMarket $current, ConnectorRegistry $registry): ?array
+    private function shops(CurrentMarket $current, ShopDirectory $directory): ?array
     {
-        $market = $current->get();
-        $live = $registry->liveSourcesFor($market);
-
-        $shops = Merchant::query()
-            ->where('enabled', true)
-            ->where(function (Builder $q) use ($market, $live): void {
-                $q->whereHas('products', fn (Builder $p) => $p
-                    ->where('market', $market->value)
-                    ->where('status', ProductStatus::Active->value));
-
-                if ($live !== []) {
-                    $q->orWhereIn('source', array_map(fn (Source $s) => $s->value, $live));
-                }
-            })
+        $shops = $directory->in($current->get(), requireDomain: false)
             // Newest first here, unlike the A–Z on `/shops` itself. This band is
             // a dozen of them on an overview page: which shops are *new* is the
             // only ordering that says something a full alphabetical list does
-            // not already say better.
-            ->orderByDesc('created_at')
-            ->limit(self::PER_SECTION)
-            ->get(['id', 'name', 'domain']);
+            // not already say better. Sorted in PHP because the directory is
+            // one cached list per market, shared with `/shops` and the shop
+            // pages; a market carries dozens of shops, not thousands.
+            ->sortByDesc('created_at')
+            ->take(self::PER_SECTION)
+            ->values();
 
         if ($shops->isEmpty()) {
             return null;

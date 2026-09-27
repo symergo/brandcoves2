@@ -453,7 +453,61 @@ class EntityRailsTest extends TestCase
         $this->assertSame([], $this->categoryGroupings());
     }
 
+    #[Test]
+    public function the_shop_page_asks_the_directory_and_the_count_once(): void
+    {
+        /*
+         * The shop was looked up four times on one view (the allowlist, the
+         * rails, the page, the count) and its product count twice, each a
+         * query over `products`. Now once each, and not at all on the next
+         * view within the hour.
+         */
+        $this->merchant->forceFill(['enabled' => true])->save();
+        $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'shop-be',
+            'theme_title' => 'Kopen bij Shop',
+            'theme_slug' => 'shop-be',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
+            'link_categories' => ['Koptelefoons'],
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $directory = fn () => $this->queriesMatching('from "merchants"');
+        $count = fn () => $this->queriesMatching('count(distinct "group_id")');
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->get('/be-nl/shops/shop-be')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('entity.total', 1));
+
+        $this->assertCount(1, $directory());
+        $this->assertCount(1, $count());
+
+        DB::flushQueryLog();
+        $this->get('/be-nl/shops/shop-be')->assertOk();
+
+        $this->assertSame([], $directory());
+        $this->assertSame([], $count());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    /** @return list<string> */
+    private function queriesMatching(string $needle): array
+    {
+        return array_values(array_filter(
+            array_column(DB::getQueryLog(), 'query'),
+            fn (string $sql) => str_contains($sql, $needle),
+        ));
+    }
 
     /**
      * The link-list query, as it appears in the query log: product groups

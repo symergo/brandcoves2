@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\Connectors\ConnectorRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
@@ -38,31 +39,76 @@ use Illuminate\Support\Str;
  */
 final readonly class ShopDirectory
 {
+    /**
+     * An hour, for the membership list and for a shop's product count.
+     *
+     * Membership changes when a feed is onboarded or a shop is switched off,
+     * which is days apart; the query behind it is an `EXISTS` over `products`
+     * per merchant, and it ran up to four times on one shop page. An hour late
+     * is the worst a new shop can be, and the directory is not where a shop is
+     * announced.
+     */
+    private const TTL = 3600;
+
     public function __construct(private ConnectorRegistry $registry) {}
 
     /**
-     * The shops this market compares prices across.
+     * The shops this market compares prices across, A to Z.
+     *
+     * `$requireDomain` is false for the two listings (`/shops` and the shop
+     * band on `/coves`), which always listed a shop with no domain; true, the
+     * default, wherever a slug is derived from the domain and a shop without
+     * one could never be named.
      *
      * @return Collection<int, Merchant>
      */
-    public function in(Market $market, array $columns = ['id', 'name', 'domain', 'source']): Collection
+    public function in(Market $market, bool $requireDomain = true): Collection
     {
-        $live = $this->registry->liveSourcesFor($market);
+        $shops = $this->members($market);
 
-        return Merchant::query()
-            ->where('enabled', true)
-            ->whereNotNull('domain')
-            ->where(function (Builder $q) use ($market, $live): void {
-                $q->whereHas('products', fn (Builder $p) => $p
-                    ->where('market', $market->value)
-                    ->where('status', ProductStatus::Active->value));
+        return $requireDomain
+            ? $shops->filter(fn (Merchant $shop) => $shop->domain !== null)->values()
+            : $shops;
+    }
 
-                if ($live !== []) {
-                    $q->orWhereIn('source', array_map(fn ($s) => $s->value, $live));
-                }
-            })
-            ->orderBy('name')
-            ->get($columns);
+    /**
+     * Every enabled shop with active offers here or a live source serving here.
+     *
+     * Cached as a whole per market, with every column any caller reads, so the
+     * directory, the shop page, the `/coves` band and the seeder share one
+     * query an hour instead of each running its own copy. Two of them had one
+     * until 2026-09-27, and the copies already differed on whether a shop
+     * needs a domain, which is what `$requireDomain` keeps.
+     *
+     * @return Collection<int, Merchant>
+     */
+    private function members(Market $market): Collection
+    {
+        return Cache::remember("bc:shops:{$market->value}", self::TTL, function () use ($market): Collection {
+            $live = $this->registry->liveSourcesFor($market);
+
+            return Merchant::query()
+                ->where('enabled', true)
+                ->where(function (Builder $q) use ($market, $live): void {
+                    $q->whereHas('products', fn (Builder $p) => $p
+                        ->where('market', $market->value)
+                        ->where('status', ProductStatus::Active->value));
+
+                    if ($live !== []) {
+                        /*
+                         * Live sources are listed whether or not they have rows
+                         * here yet. One merchant row per source (bol is 'bol',
+                         * not one row per bol seller), and its offers are
+                         * fetched per request rather than ingested, so a market
+                         * can compare bol prices while holding almost nothing
+                         * of bol's in `products`.
+                         */
+                        $q->orWhereIn('source', array_map(fn ($s) => $s->value, $live));
+                    }
+                })
+                ->orderBy('name')
+                ->get(['id', 'name', 'domain', 'logo_url', 'source', 'created_at']);
+        });
     }
 
     /**
@@ -105,13 +151,20 @@ final readonly class ShopDirectory
             return null;
         }
 
-        return (int) Product::query()
-            ->where('merchant_id', $shop->id)
-            ->where('market', $market->value)
-            ->where('status', ProductStatus::Active->value)
-            ->whereNotNull('group_id')
-            ->distinct()
-            ->count('group_id');
+        // Cached for the hour the membership list is: a "see all N products"
+        // link that is an hour behind is still the number the search shows,
+        // give or take a feed run, and the count reads every offer of the shop.
+        return (int) Cache::remember(
+            "bc:shops:{$market->value}:{$shop->id}:count",
+            self::TTL,
+            fn (): int => (int) Product::query()
+                ->where('merchant_id', $shop->id)
+                ->where('market', $market->value)
+                ->where('status', ProductStatus::Active->value)
+                ->whereNotNull('group_id')
+                ->distinct()
+                ->count('group_id'),
+        );
     }
 
     /**
