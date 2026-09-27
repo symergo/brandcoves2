@@ -460,6 +460,13 @@ Schedule::command('bc:prune-rank-history')
     ->dailyAt('03:30')
     ->onOneServer();
 
+// The image proxy's copies older than their keep window (30 days): how a
+// picture a shop replaced behind the same URL shows again, and a ceiling on
+// the media volume. A deleted copy is made again on its next view.
+Schedule::command('bc:prune-image-cache')
+    ->dailyAt('03:35')
+    ->onOneServer();
+
 /*
  * Turn the last hour of searches into pictures for the front page.
  *

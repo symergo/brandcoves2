@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { formatBudget, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -14,6 +14,7 @@ import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
 import ToolIcon from '../Components/ToolIcon'
 import CoveIcon from '../Components/CoveIcon'
+import { pictureAttributes } from '../imageUrl'
 
 interface Offer {
     id: number
@@ -40,6 +41,8 @@ interface Props {
         /** The brand's own page, when it has one. Null for most brands. */
         brandUrl: string | null
         image: string | null
+        /** Signed address of our resized WebP copies; null keeps `image` as it is. */
+        imageToken?: string | null
         category: string | null
         minPrice: number | null
         maxPrice: number | null
@@ -106,6 +109,11 @@ function reportClick(offer: Offer): void {
 export default function Product({ product, offers, alert, amazonSearch, description, signals }: Props) {
     const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
+    // Which token failed, not a flag: Inertia keeps this component mounted from
+    // one product page to the next, and a flag would carry one product's
+    // failure over to the next product's picture.
+    const [failedToken, setFailedToken] = useState<string | null>(null)
+    const proxyFailed = !!product.imageToken && failedToken === product.imageToken
 
     // Remembered on this device, for the "you looked at" band. After mount,
     // because storage does not exist on the SSR container.
@@ -135,7 +143,22 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                 <div className="rounded-card border border-line bg-card p-8">
                     {product.image && (
                         <img
-                            src={product.image}
+                            /*
+                              Our own WebP copies when the server signed one
+                              (docs/features/image-proxy.md): 640 wide on a 1x
+                              screen, 960 on a 2x one, instead of whatever
+                              size the feed carried. If the copies cannot be
+                              reached the shop's URL takes over.
+                            */
+                            {...pictureAttributes(
+                                product.image,
+                                product.imageToken,
+                                proxyFailed,
+                                640,
+                                '(min-width: 1024px) 512px, calc(100vw - 6rem)',
+                                [320, 480, 640, 960],
+                            )}
+                            onError={() => setFailedToken(product.imageToken ?? null)}
                             alt={product.title}
                             /*
                               The largest thing on the page and the first the

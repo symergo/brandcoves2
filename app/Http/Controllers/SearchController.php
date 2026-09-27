@@ -17,6 +17,7 @@ use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
+use App\Services\Images\ImageProxy;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
@@ -889,6 +890,9 @@ class SearchController extends Controller
             'slug' => $group->slug,
             'brand' => $group->brand,
             'image' => $group->image_url,
+            // The same picture on our own address at the card's size, or null
+            // when it keeps the shop's URL (docs/features/image-proxy.md).
+            'imageToken' => app(ImageProxy::class)->token($group->image_url),
             // Cents cross the wire exactly as stored; the client formats them
             // for the market, so a float never enters the pipeline.
             'minPrice' => $group->min_price,
