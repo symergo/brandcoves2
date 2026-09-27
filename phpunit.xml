@@ -108,6 +108,12 @@
         <env name="BOL_CLIENT_SECRET" value=""/>
         <env name="AWIN_API_TOKEN" value=""/>
         <env name="AWIN_VDB_API_TOKEN" value=""/>
+        <!-- Like bol and Awin above: without these, a developer's live eBay and
+             Tradedoubler keys in .env reached the suite (found 2026-09-27, when
+             BrandPageTest failed only on a machine that had them). -->
+        <env name="EBAY_CLIENT_ID" value=""/>
+        <env name="EBAY_CLIENT_SECRET" value=""/>
+        <env name="TRADEDOUBLER_TOKEN" value=""/>
         <env name="CLAIM_HASH_SECRET" value="testing-claim-secret"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
