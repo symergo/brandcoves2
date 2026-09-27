@@ -33,12 +33,15 @@ separators differently while agreeing on every word.
 
 1. `SetMarket` middleware resolves the market from `/{market}/` and calls
    `app()->setLocale($market->language())`.
-2. `HandleInertiaRequests` shares `Lang::get('site')` with every response.
+2. `HandleInertiaRequests` shares `Lang::get('site')` as a once-prop: with the
+   first document, and again only when the language or the file changes.
 3. React reads it through `useTranslations()`: `t('home.cta_gift')`.
 
-Translations are shipped **whole** in the Inertia payload rather than fetched.
-They are a few kilobytes, and a separate request would mean the first paint
-shows raw translation keys.
+Translations are shipped **whole** in the Inertia payload rather than fetched,
+because a separate request would mean the first paint shows raw translation
+keys. They are no longer small (about 130 KB of JSON in 2026-09), which is why
+they travel once per language rather than with every page:
+[speed.md](speed.md), "The site copy is sent once per language".
 
 **A missing key renders as the key itself** (`home.cta_gift`), on purpose. A
 visible key is an obvious bug; a blank button is one you ship without noticing.

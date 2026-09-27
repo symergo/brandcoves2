@@ -49,4 +49,15 @@ createServer((page) =>
 
         setup: ({ App, props }) => <App {...props} />,
     }),
+    /*
+     * One Node process per core instead of one in all. Rendering is
+     * synchronous JavaScript, so a single process renders one page at a time
+     * and every other request waits behind it: a crawler burst queued up here
+     * while PHP sat waiting on the answer. The cluster forks
+     * `availableParallelism()` workers (6 on the VPS, measured 2026-09-27) at
+     * about 60 MB each, and staging runs its own, so about 0.8 GB together
+     * against 7 GB free. Port 13714 is the default; named so it is not lost
+     * when the options object is edited.
+     */
+    { port: 13714, cluster: true },
 )
