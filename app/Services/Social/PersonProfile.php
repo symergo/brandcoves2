@@ -131,7 +131,13 @@ class PersonProfile
             return null;
         }
 
-        return $this->friends->forUser($viewer)->firstWhere('friend_id', $person->user_id);
+        // The one row, not every friend loaded to pick it out. With the
+        // friend, as `Friends::forUser()` hands its rows over.
+        return Friendship::query()
+            ->with('friend')
+            ->where('user_id', $viewer->id)
+            ->where('friend_id', $person->user_id)
+            ->first();
     }
 
     /**

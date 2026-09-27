@@ -18,6 +18,7 @@ use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
+use App\Services\Gift\PastGift;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
@@ -80,9 +81,10 @@ class GiftController extends Controller
         if ($recipient !== null) {
             $validated = $this->withStored(['recipient_id' => $recipient->id], $current, $recipient);
             $brief = $this->brief($validated, $current, $recipient);
-            $picks = $engine->suggest($brief->excluding($this->given($recipient)));
+            $past = $this->past($recipient);
+            $picks = $engine->suggest($brief->excluding($this->given($recipient, $past)));
 
-            return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+            return $this->board($request, $current, $picks, $validated, $recipient, $brief, $past);
         }
 
         return Inertia::render('Gift/Wizard', [
@@ -171,7 +173,8 @@ class GiftController extends Controller
 
         // Everything already rejected for this brief, remembered server-side.
         $key = $memory->key($brief);
-        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient)]));
+        $past = $this->past($recipient);
+        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient, $past)]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -186,7 +189,7 @@ class GiftController extends Controller
             'results' => count($picks),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief, $past);
     }
 
     /**
@@ -236,7 +239,8 @@ class GiftController extends Controller
          */
         $this->thumbDown($request, $current, $request->integer('rejected'), $recipient, $validated);
 
-        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient)]));
+        $past = $this->past($recipient);
+        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient, $past)]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -245,7 +249,7 @@ class GiftController extends Controller
             'rejected' => $request->integer('rejected'),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief, $past);
     }
 
     /**
@@ -279,10 +283,16 @@ class GiftController extends Controller
      * The board the visitor is looking at is recomputed here rather than read
      * from the request: the ranker is deterministic and the memory holds every
      * exclusion, so `suggest(brief minus memory)` *is* what is on screen. Those
-     * ids go into the memory, and the next `suggest` is the next board. Two
-     * engine runs, each well under 100 ms, is the price of never trusting a
-     * client-supplied list of ids — a list that could just as well name the
-     * four the visitor wanted to keep.
+     * ids go into the memory, and the board after it is the next one down.
+     * Recomputing is the price of never trusting a client-supplied list of
+     * ids — a list that could just as well name the four the visitor wanted
+     * to keep.
+     *
+     * One engine run since speed wave 2 (2026-09-27), not two: both boards
+     * are picked from the same scored candidates
+     * ({@see SuggestionEngine::suggestTwo()}), which was the second run's
+     * whole cost, retrieval and scoring included, for the same answer bar the
+     * pool's far tail.
      *
      * This replaces "Try again", which re-posted the same brief and, because
      * `suggest()` is idempotent, showed the same four cards unless something had
@@ -297,11 +307,9 @@ class GiftController extends Controller
 
         $key = $memory->key($brief);
 
-        $given = $this->given($recipient);
-        $shown = $engine->suggest($brief->excluding([...$memory->all($key), ...$given]));
+        $past = $this->past($recipient);
+        [$shown, $picks] = $engine->suggestTwo($brief->excluding([...$memory->all($key), ...$this->given($recipient, $past)]));
         $memory->remember($key, ...array_map(fn (Suggestion $pick) => $pick->group->id, $shown));
-
-        $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$given]));
 
         $this->rememberFor($request, $recipient, $validated);
 
@@ -310,7 +318,7 @@ class GiftController extends Controller
             'results' => count($picks),
         ]);
 
-        return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+        return $this->board($request, $current, $picks, $validated, $recipient, $brief, $past);
     }
 
     /**
@@ -318,8 +326,9 @@ class GiftController extends Controller
      *
      * @param  list<Suggestion>  $picks
      * @param  array<string, mixed>  $validated
+     * @param  list<PastGift>  $past  the person's gift history, read once for the request
      */
-    private function board(Request $request, CurrentMarket $current, array $picks, array $validated, ?Recipient $recipient, TasteBrief $brief): Response
+    private function board(Request $request, CurrentMarket $current, array $picks, array $validated, ?Recipient $recipient, TasteBrief $brief, array $past = []): Response
     {
         $results = app(GiftResults::class);
 
@@ -349,6 +358,7 @@ class GiftController extends Controller
                 $request->user(),
                 $recipient,
                 array_map(fn (Suggestion $pick) => $pick->group->id, $picks),
+                past: $recipient === null ? null : $past,
             ),
         ]);
     }
@@ -357,11 +367,24 @@ class GiftController extends Controller
      * What this person was already given, never to be suggested again: the
      * products in their gift history and whatever was merged with them.
      *
+     * @param  list<PastGift>  $past  from {@see past()}, so the history is read once a request
      * @return list<int>
      */
-    private function given(?Recipient $recipient): array
+    private function given(?Recipient $recipient, array $past): array
     {
-        return $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient);
+        return $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient, $past);
+    }
+
+    /**
+     * The person's gift history, read once per request and handed to both
+     * readers: the exclusions above and the next steps under the board. It
+     * was read twice (three times with the next steps' own exclusions).
+     *
+     * @return list<PastGift>
+     */
+    private function past(?Recipient $recipient): array
+    {
+        return $recipient === null ? [] : app(GiftHistory::class)->for($recipient);
     }
 
     /**
