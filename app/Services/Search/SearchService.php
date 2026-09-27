@@ -163,16 +163,23 @@ class SearchService
          * An editor's tag or the crowd's: either says the product suits it,
          * the crowd's only once enough different people agreed
          * (docs/features/list-signals.md). Any value within one kind, every
-         * kind asked. `jsonb_exists_any` is `?|` spelled as a function,
-         * because a bare `?` is a placeholder to PDO; both columns have a GIN
-         * index it can use.
+         * kind asked.
+         *
+         * The operator `?|`, written `??|` because a bare `?` is a placeholder
+         * to PDO (it hands Postgres a single `?`). Until 2026-09-27 this was
+         * `jsonb_exists_any()`, the function behind the operator, which reads
+         * the same and cannot use an index: a GIN index serves operators, not
+         * functions, and the two tag indexes had never been scanned on
+         * production. With the operator both branches of the OR are indexed,
+         * so Postgres can combine them in a bitmap instead of reading every
+         * row.
          */
         foreach ($query->tagGroups() as $tags) {
             $array = '{'.implode(',', array_map(fn (string $t) => '"'.$t.'"', $tags)).'}';
 
             $groups->where(fn (Builder $either) => $either
-                ->whereRaw('jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$array])
-                ->orWhereRaw('jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$array]));
+                ->whereRaw('product_groups.gift_tags ??| ?::text[]', [$array])
+                ->orWhereRaw('product_groups.crowd_tags ??| ?::text[]', [$array]));
         }
 
         return $this->applySort($groups, $query);

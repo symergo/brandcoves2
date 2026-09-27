@@ -680,7 +680,8 @@ to products tagged for them, by an editor (`gift_tags`) or by enough different p
 vocabulary are dropped when the request is read, so a filter can never be a string nothing is
 tagged with.
 
-- **SQL**: one `jsonb_exists_any(gift_tags, …) OR jsonb_exists_any(crowd_tags, …)` per kind in
+- **SQL**: one `gift_tags ?| … OR crowd_tags ?| …` per kind (the operator, not the function
+  `jsonb_exists_any()`, which no index serves; see [speed.md](speed.md)) in
   `SearchService::storedQuery()`, so the grid and the by-store lanes both obey it. A watched search
   does not carry these filters (it stores the term and the price filters only). Both columns have a GIN index. The facet counts deliberately ignore it, like every other
   filter.
