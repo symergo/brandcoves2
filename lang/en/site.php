@@ -867,6 +867,7 @@ return [
         'default_badge' => 'Default',
         'shared_short' => 'Shared',
         'private_short' => 'Private',
+        'published_short' => 'In the community',
         'tool_on' => 'on',
         'find_things' => 'Find things to add',
         'manual_add' => 'Add something yourself',

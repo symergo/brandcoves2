@@ -1466,6 +1466,11 @@ class WishlistController extends Controller
             // Whole percent, or null when the owner is not watching prices.
             'priceWatchPercent' => $list->price_watch_percent,
             'isDefault' => (bool) $list->is_default,
+            // On the site as a Community Cove. Separate from `visibility` (the
+            // share link) by design, so the row's "Privé" pill has to read it
+            // too: a published list with no link is not private (owner,
+            // 2026-09-27).
+            'published' => $list->isCommunityCove(),
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,
             'eventDate' => $list->event_date?->toDateString(),

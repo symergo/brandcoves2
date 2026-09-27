@@ -714,6 +714,7 @@ return [
         'default_badge' => 'Par défaut',
         'shared_short' => 'Partagée',
         'private_short' => 'Privée',
+        'published_short' => 'Dans la communauté',
         'tool_on' => 'activé',
         'find_things' => 'Trouver quelque chose à ajouter',
         'manual_add' => 'Ajoutez-le vous-même',

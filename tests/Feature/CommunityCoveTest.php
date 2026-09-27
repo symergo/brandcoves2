@@ -133,6 +133,26 @@ class CommunityCoveTest extends TestCase
     }
 
     #[Test]
+    public function my_coves_says_a_published_list_is_in_the_community_even_without_a_share_link(): void
+    {
+        // The owner's report (2026-09-27): published, and the row still said "Privé",
+        // because that pill read only the share link.
+        $list = $this->list();
+        $list->forceFill(['visibility' => ListVisibility::Private])->save();
+
+        // The account's default list is on the page too, so find this one's row.
+        $row = fn (): array => collect($this->actingAs($this->owner)->get('/be-nl/lists')
+            ->viewData('page')['props']['lists'])->firstWhere('id', $list->id);
+
+        $this->assertFalse($row()['published']);
+
+        $this->publish($list);
+
+        $this->assertSame('private', $row()['visibility']);
+        $this->assertTrue($row()['published']);
+    }
+
+    #[Test]
     public function the_public_page_shows_the_products_and_nothing_private(): void
     {
         $list = $this->publish($this->list());

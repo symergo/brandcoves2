@@ -53,6 +53,8 @@ export interface ListSummary {
     visibleToFriends?: boolean | null
     pledgersVisible?: boolean
     votingEnabled?: boolean
+    /** On the site as a Community Cove (published, not hidden). From `summarise()`. */
+    published?: boolean
     /** The occasion's day, `YYYY-MM-DD`, when the list has one. */
     eventDate?: string | null
 }
@@ -192,7 +194,18 @@ export default function ListSummaryRow({
                         canAdd={list.visibility !== 'private' && list.linkCanAdd}
                     />
                     {list.isDefault && <Badge size="xs">{t('lists.default_badge')}</Badge>}
-                    {!theirs && (
+                    {/*
+                      Publishing to the community is not the share link: a list
+                      can have either, both or neither (community-coves.md). So
+                      "Privé" only when it has neither; a published list says
+                      so, and keeps "Gedeeld" beside it when it also has a link.
+                    */}
+                    {!theirs && list.published && (
+                        <Badge size="xs" tone="sage">
+                            {t('lists.published_short')}
+                        </Badge>
+                    )}
+                    {!theirs && (shared || !list.published) && (
                         <Badge size="xs" tone={shared ? 'sage' : 'neutral'}>
                             {shared ? t('lists.shared_short') : t('lists.private_short')}
                         </Badge>

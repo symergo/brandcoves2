@@ -187,6 +187,8 @@ class PersonProfile
                 'eventDate' => $list->event_date?->toDateString(),
                 'isDefault' => (bool) $list->is_default,
                 'visibility' => $list->visibility->value,
+                // Published as a Community Cove: the row's "Privé" reads it too.
+                'published' => $list->isCommunityCove(),
                 'itemCount' => (int) $list->items_count,
                 'covers' => $list->items->pluck('snapshot_image_url')->all(),
                 'recipient' => ['id' => $person->id, 'name' => $person->name],

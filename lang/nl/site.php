@@ -717,6 +717,7 @@ return [
         'default_badge' => 'Standaard',
         'shared_short' => 'Gedeeld',
         'private_short' => 'Privé',
+        'published_short' => 'In de community',
         'tool_on' => 'aan',
         'find_things' => 'Zoek iets om toe te voegen',
         'manual_add' => 'Zelf iets toevoegen',

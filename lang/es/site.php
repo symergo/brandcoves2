@@ -713,6 +713,7 @@ return [
         'default_badge' => 'Predeterminada',
         'shared_short' => 'Compartida',
         'private_short' => 'Privada',
+        'published_short' => 'En la comunidad',
         'tool_on' => 'activado',
         'find_things' => 'Busca algo para añadir',
         'manual_add' => 'Añádelo tú',

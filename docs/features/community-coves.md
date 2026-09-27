@@ -89,6 +89,12 @@ the board). `ListVisibility::Public` still exists in the enum from an earlier id
 by this feature; reusing it would have tied publishing to the share link, which is the one
 coupling the owner's privacy depends on not having.
 
+**The row on Mijn Coves reads both.** Because the two are separate, the row's "Privé" pill, which
+reads only `visibility`, went on saying "Privé" on a published list (owner's report, 2026-09-27).
+The row data now carries `published` (`Wishlist::isCommunityCove()`, so a list moderation hid does
+not claim it), and the row shows "In de community" when published, "Gedeeld" beside it when it
+also has a link, and "Privé" only when it has neither. `CommunityCoveTest` holds it.
+
 **Unpublishing is immediate.** `published_at` goes back to null. The address answers **410 Gone**
 (so search engines drop it), the Cove leaves the listing, Find a gift and everyone's saved view,
 and bookmarks are kept so they come back if the owner publishes again. The slug is kept too, so the
