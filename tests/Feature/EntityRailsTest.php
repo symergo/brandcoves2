@@ -7,10 +7,12 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\BrandStat;
+use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\PopularRank;
@@ -18,6 +20,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\EntityRails;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -330,7 +333,141 @@ class EntityRailsTest extends TestCase
         $this->assertContains('Aansluitsnoer', $vocabulary);
     }
 
+    #[Test]
+    public function a_built_shop_cove_stores_its_link_list_and_the_page_reads_it(): void
+    {
+        /*
+         * The link list is worked out when the Cove is built, not per view.
+         *
+         * Grouping every active offer of the shop by category took 4.4 s for
+         * bol.com on production, and the shop page ran it on every view to
+         * decide which `[[search:...]]` tokens may render as links.
+         */
+        $this->merchant->forceFill(['enabled' => true])->save();
+
+        foreach (range(1, 3) as $n) {
+            $this->product("Koptelefoon {$n}", 9900 + $n, 'Sony', category: 'Koptelefoons');
+        }
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'shop-be',
+            'title' => 'Kopen bij Shop',
+            'status' => 'approved',
+            'writer' => PlanWriter::Authored->value,
+            'blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]] en [[search:Zeldzaam|iets zeldzaams]].',
+        ]);
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan);
+
+        $this->assertNotNull($edition);
+        $this->assertSame(['Koptelefoons'], $edition->fresh()->link_categories);
+
+        /*
+         * The page reads the stored list, and only the stored list.
+         *
+         * Swapped for a category the shop does not sell: if the page still
+         * asked the catalogue, `Zeldzaam` would render as plain words. And the
+         * query log proves the grouping never ran.
+         */
+        $edition->forceFill(['link_categories' => ['Zeldzaam']])->save();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->get('/be-nl/shops/shop-be')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Entity/Cove')
+                ->where('cove.body', fn ($body) => str_contains($body->implode(''), 'iets zeldzaams</a>')
+                    && ! str_contains($body->implode(''), 'koptelefoons</a>')));
+
+        $this->assertSame([], $this->categoryGroupings());
+    }
+
+    #[Test]
+    public function a_shop_cove_built_before_the_column_falls_back_to_a_cached_list(): void
+    {
+        $this->merchant->forceFill(['enabled' => true])->save();
+        $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
+
+        // Built before the column existed: nothing stored.
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'shop-be',
+            'theme_title' => 'Kopen bij Shop',
+            'theme_slug' => 'shop-be',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $linked = fn ($page) => $page->where('cove.body', fn ($body) => str_contains($body->implode(''), 'koptelefoons</a>'));
+
+        // The first view works the list out, so the links still render.
+        $this->get('/be-nl/shops/shop-be')->assertOk()->assertInertia($linked);
+        $this->assertCount(1, $this->categoryGroupings());
+
+        // Every later view that day reads it from the cache.
+        DB::flushQueryLog();
+        $this->get('/be-nl/shops/shop-be')->assertOk()->assertInertia($linked);
+        $this->assertSame([], $this->categoryGroupings());
+    }
+
+    #[Test]
+    public function a_built_brand_cove_stores_its_link_list_and_the_brand_page_reads_it(): void
+    {
+        $this->product('Gewilde koptelefoon', 12900, 'Sony', category: 'Koptelefoons');
+        $this->brand('Sony');
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'sony',
+            'title' => 'Wat Sony maakt',
+            'status' => 'approved',
+            'writer' => PlanWriter::Authored->value,
+            'blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
+        ]);
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan);
+
+        $this->assertSame(['Koptelefoons'], $edition->fresh()->link_categories);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->get('/be-nl/brand/sony')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('cove.body', fn ($body) => str_contains($body->implode(''), 'koptelefoons</a>')));
+
+        $this->assertSame([], $this->categoryGroupings());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    /**
+     * The link-list query, as it appears in the query log: product groups
+     * grouped by category. Nothing else on these pages groups by category.
+     *
+     * @return list<string>
+     */
+    private function categoryGroupings(): array
+    {
+        return array_values(array_filter(
+            array_column(DB::getQueryLog(), 'query'),
+            fn (string $sql) => str_contains($sql, 'group by "category"'),
+        ));
+    }
 
     /**
      * One anonymous owner per list.

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Cove;
 
-use App\Enums\CoveKind;
-use App\Models\BrandStat;
 use App\Models\CovePlan;
-use App\Services\Shops\ShopDirectory;
 
 /**
  * What a plan may link to, answered once.
@@ -33,15 +30,13 @@ use App\Services\Shops\ShopDirectory;
  * nothing on purpose, so without the second half it has no vocabulary at all,
  * on the one kind of page whose whole purpose is to link into the search.
  *
- * `EntityRails` supplies the second half, so what a writer may link to and what
- * a reader sees under the writing come from one query.
+ * `EntityRails` supplies the second half (through `EntityLinks`), so what a
+ * writer may link to and what a reader sees under the writing come from one
+ * query.
  */
 final readonly class PlanLinks
 {
-    public function __construct(
-        private EntityRails $rails,
-        private ShopDirectory $shops,
-    ) {}
+    public function __construct(private EntityLinks $links) {}
 
     /**
      * The searches this plan may link to, beyond its products' own categories.
@@ -65,28 +60,14 @@ final readonly class PlanLinks
     /**
      * The categories this brand or shop sells in, most first.
      *
-     * Empty for a slug naming no shop this market compares or no brand it
-     * carries. That is the honest answer rather than a failure: there is nothing
-     * to link to, and a token naming a category the entity does not stock
-     * renders as plain words wherever it appears.
+     * Live rather than stored: a writer is writing now, so the list they are
+     * handed is today's. The page reads the list `EditionBuilder` stored with
+     * the built Cove instead, see EntityLinks.
      *
      * @return list<string>
      */
     private function entityVocabulary(CovePlan $plan): array
     {
-        $slug = (string) $plan->slug;
-
-        if ($plan->kind === CoveKind::Shop) {
-            $shop = $this->shops->shopFor($plan->market, $slug);
-
-            return $shop === null ? [] : $this->rails->vocabularyForShop($shop, $plan->market);
-        }
-
-        $brand = BrandStat::query()
-            ->forMarket($plan->market)
-            ->where('slug', $slug)
-            ->first();
-
-        return $brand === null ? [] : $this->rails->vocabularyForBrand($brand, $plan->market);
+        return $this->links->compute($plan->kind, $plan->market, (string) $plan->slug);
     }
 }
