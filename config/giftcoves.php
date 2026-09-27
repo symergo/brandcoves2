@@ -621,6 +621,42 @@ return [
         // "Kids" is who a present is for, not something dad loves.
         'excluded_interests' => ['kids'],
 
+        // Pairs that must not have a page at all, whatever the catalogue holds.
+        // "A child who loves drinks" is a page selling alcohol to a child, and
+        // coffee and hunting are not a child's hobby either. Every recipient had
+        // all 38 interests until 2026-09-27.
+        'excluded_pairs' => [
+            'child' => ['drinks', 'coffee', 'hunting'],
+        ],
+
+        /*
+         * Which interests a recipient's own page (/for/papa) is built from, in
+         * order of preference: the first `hub_interests` of these that have a
+         * page of their own.
+         *
+         * Why a list rather than "most products": the engine retrieves by
+         * interest and the recipient only reorders, so the count per interest
+         * is the same for every recipient, and it stops at the page size (24).
+         * Every interest tied, the tie fell to the enum order, and all ten
+         * recipient pages were cooking, coffee and photography: the same 24
+         * products for mum, a colleague and a child (found 2026-09-27). Until
+         * recipient tags are common enough to tell the recipients apart, this
+         * editorial guess is what makes the pages differ. A recipient missing
+         * here falls back to the count.
+         */
+        'hub_interests_by_recipient' => [
+            'partner' => ['wellness', 'travel', 'music', 'beauty', 'film', 'cooking'],
+            'mother' => ['gardening', 'wellness', 'home', 'reading', 'beauty', 'baking'],
+            'father' => ['diy', 'drinks', 'gadgets', 'cycling', 'outdoors', 'cars'],
+            'grandparent' => ['gardening', 'reading', 'boardgames', 'nature', 'home', 'wellness'],
+            'child' => ['science', 'boardgames', 'craft', 'art', 'football', 'gaming'],
+            'friend' => ['boardgames', 'drinks', 'music', 'film', 'travel', 'gadgets'],
+            'colleague' => ['coffee', 'home', 'reading', 'tech', 'wellness', 'drinks'],
+            'sibling' => ['gaming', 'music', 'fashion', 'fitness', 'film', 'travel'],
+            'teacher' => ['reading', 'gardening', 'coffee', 'home', 'craft', 'wellness'],
+            'host' => ['drinks', 'home', 'cooking', 'baking', 'gardening', 'coffee'],
+        ],
+
         // Seconds a rendered page's product list is cached. A day: the
         // planner reruns nightly and the key carries its timestamp, so a
         // fresh plan never waits for this to run out.

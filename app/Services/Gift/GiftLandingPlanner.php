@@ -43,7 +43,7 @@ class GiftLandingPlanner
         $counts = [];
 
         foreach (RecipientType::cases() as $recipient) {
-            foreach ($this->interests() as $interest) {
+            foreach ($this->interests($recipient) as $interest) {
                 $brief = BriefUrl::toBrief($market, $recipient, $interest, limit: $this->pageSize());
                 $count = $this->count($brief);
 
@@ -106,9 +106,7 @@ class GiftLandingPlanner
      */
     private function recordHub(Market $market, RecipientType $recipient, array $byInterest): void
     {
-        arsort($byInterest);
-
-        $best = array_slice(array_keys($byInterest), 0, (int) config('giftcoves.gift_landings.hub_interests', 3));
+        $best = $this->hubInterests($recipient, $byInterest);
 
         $brief = new TasteBrief(
             market: $market,
@@ -158,10 +156,43 @@ class GiftLandingPlanner
         );
     }
 
-    /** @return list<Interest> */
-    private function interests(): array
+    /**
+     * The interests a recipient's own page is built from.
+     *
+     * The recipient's preferred interests first, in the configured order, as
+     * far as each has a page; then, only if that leaves room, the rest by
+     * product count. Not by count alone: the count is the same for every
+     * recipient and capped at the page size, so it tied everywhere and every
+     * recipient page came out identical (see `hub_interests_by_recipient`).
+     *
+     * @param  array<string, int>  $byInterest  interest => products, for this recipient
+     * @return list<string>
+     */
+    public function hubInterests(RecipientType $recipient, array $byInterest): array
     {
-        $excluded = (array) config('giftcoves.gift_landings.excluded_interests', []);
+        $size = (int) config('giftcoves.gift_landings.hub_interests', 3);
+        $preferred = (array) config("giftcoves.gift_landings.hub_interests_by_recipient.{$recipient->value}", []);
+
+        $best = array_values(array_filter($preferred, fn ($interest) => isset($byInterest[$interest])));
+
+        arsort($byInterest);
+
+        foreach (array_keys($byInterest) as $interest) {
+            if (! in_array($interest, $best, true)) {
+                $best[] = $interest;
+            }
+        }
+
+        return array_slice($best, 0, $size);
+    }
+
+    /** @return list<Interest> */
+    private function interests(RecipientType $recipient): array
+    {
+        $excluded = [
+            ...(array) config('giftcoves.gift_landings.excluded_interests', []),
+            ...(array) config("giftcoves.gift_landings.excluded_pairs.{$recipient->value}", []),
+        ];
 
         return array_values(array_filter(
             Interest::cases(),

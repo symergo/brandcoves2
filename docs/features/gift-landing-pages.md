@@ -62,10 +62,19 @@ a page of that would be "for dad who loves fishing" showing a candle.
 - **Eight or more** (`giftcoves.gift_landings.min_products`, the owner's minimum for a Cove) and the
   pair is recorded in `gift_landings`. Anything else answers 404, which keeps hundreds of thin
   combinations out of the index. A pair that drops under eight loses its row the next night.
-- **A recipient's own page** exists when at least one of their pairs does. Its brief is their
-  three best interests (most products first), and it links on to every pair.
+- **A recipient's own page** exists when at least one of their pairs does, and links on to every
+  pair. Its brief is three interests chosen from `hub_interests_by_recipient`: an ordered list per
+  recipient (dad: DIY, drinks, gadgets; grandparent: gardening, reading, board games), taking the
+  first ones that have a page. Only when too few do, the rest are filled in by product count.
+  Why a list (2026-09-27): it used to be "most products first", and the count is the same for
+  every recipient (the engine retrieves by interest) and stops at the page size, 24. Every interest
+  tied, the tie fell to the enum order, and all ten recipient pages were cooking, coffee and
+  photography: the same 24 products for mum, a colleague and a child. The list is an editorial
+  guess, to be replaced by the data once recipient tags are common (see below).
 - **`kids` is not walked** (`excluded_interests`): it says who a present is for, not something dad
   loves.
+- **Some pairs never get a page** (`excluded_pairs`): a child × drinks (alcohol), coffee or hunting.
+  Until 2026-09-27 every recipient had all of them.
 - **Recipient × occasion** is not walked yet (the owner's order: recipient × interest first).
 
 ### The known weakness, and the switch for it

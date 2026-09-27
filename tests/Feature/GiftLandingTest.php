@@ -15,6 +15,7 @@ use App\Models\GiftLanding;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Gift\GiftLandingPlanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -198,6 +199,54 @@ class GiftLandingTest extends TestCase
         $this->post('/be-nl/gift', ['interests' => ['cooking']])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('pageUrl', null));
+    }
+
+    #[Test]
+    public function recipients_with_the_same_counts_get_different_interests_on_their_own_page(): void
+    {
+        /*
+         * Every interest tied at the page size, as on production on 2026-09-27:
+         * by count alone every recipient got the first three interests of the
+         * enum, and all ten recipient pages showed the same 24 products.
+         */
+        $counts = array_fill_keys(['cooking', 'coffee', 'photography', 'gardening', 'diy', 'drinks', 'science', 'boardgames', 'craft'], 24);
+        $planner = app(GiftLandingPlanner::class);
+
+        $mother = $planner->hubInterests(RecipientType::Mother, $counts);
+        $father = $planner->hubInterests(RecipientType::Father, $counts);
+        $child = $planner->hubInterests(RecipientType::Child, $counts);
+
+        $this->assertSame('gardening', $mother[0]);
+        $this->assertSame(['diy', 'drinks'], array_slice($father, 0, 2));
+        $this->assertSame(['science', 'boardgames', 'craft'], $child);
+        $this->assertNotSame($mother, $father);
+    }
+
+    #[Test]
+    public function a_recipients_page_falls_back_to_the_count_where_their_interests_have_no_page(): void
+    {
+        // Only cooking has a page for dad, and cooking is not on his list: the
+        // page still exists, built from what does.
+        $this->assertSame(
+            ['cooking'],
+            app(GiftLandingPlanner::class)->hubInterests(RecipientType::Father, ['cooking' => 12]),
+        );
+    }
+
+    #[Test]
+    public function a_child_gets_no_page_for_drinks(): void
+    {
+        config(['giftcoves.gift_landings.excluded_interests' => array_values(array_diff(
+            Interest::values(),
+            [Interest::Cooking->value, Interest::Drinks->value],
+        ))]);
+
+        $this->products(Market::BeNl, 'Wijnglas', 8, ['interest:drinks']);
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Drinks));
+        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Child, Interest::Drinks));
     }
 
     #[Test]
