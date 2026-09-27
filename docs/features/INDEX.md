@@ -41,6 +41,7 @@ is true now.
 | [has-everything.md](has-everything.md) | Gifting / Search / Content | Active — a brief flag: used up or done before more things; the search box reads the phrase in four languages |
 | [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
 | [seo.md](seo.md) | SEO / Frontend | Active |
+| [speed.md](speed.md) | Core / Frontend / Operations | Active — translations sent once per language, page chunk preloaded, SSR clustered with a 2 s limit and off for signed-in visitors (2026-09-27) |
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |
 | [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
