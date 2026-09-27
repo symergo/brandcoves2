@@ -269,17 +269,18 @@ class PageTemplateTest extends TestCase
     #[Test]
     public function the_longest_placeholder_name_wins(): void
     {
-        // `:count` is a real placeholder and a prefix of nothing here — but the
-        // matcher must not fire inside a longer word either.
-        $this->block('Er zijn :count resultaten, :countdown niet.');
+        // `:term` is a real placeholder, and the matcher must not fire inside a
+        // longer word. (This used `:count`, which renders nothing since search
+        // stopped counting its results, owner 2026-09-27, and a paragraph with
+        // an empty placeholder is hidden.)
+        $this->block('Zoek je :term? Dan is :termijn geen placeholder.');
 
         $rendered = $this->text($this->copy()->forRegion('search', 'below_grid', $this->context([
             'products' => [['min_price' => 1999]],
-            'total' => 7,
         ])));
 
-        $this->assertStringContainsString('Er zijn 7 resultaten', $rendered);
-        $this->assertStringContainsString(':countdown', $rendered);
+        $this->assertStringContainsString('Zoek je koptelefoon?', $rendered);
+        $this->assertStringContainsString(':termijn', $rendered);
     }
 
     /*
