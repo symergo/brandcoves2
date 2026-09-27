@@ -18,6 +18,7 @@ use App\Support\MarketSwitcher;
 use App\Support\Owner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -39,9 +40,14 @@ class HandleInertiaRequests extends Middleware
     private function translationVersion(): string
     {
         /*
-         * Once per process per locale. The file's mtime changes only on a
-         * deploy, which restarts the process, so a stat on every request was
-         * paying for a fact that cannot change while the process lives.
+         * Memoised per locale for the life of the PHP process, which today is
+         * one request: FrankenPHP runs in classic mode, not worker mode. So
+         * the memo only saves the second stat within a request (the once-key
+         * of `translations` and the `translationVersion` prop both ask). It is
+         * not cached anywhere longer-lived on purpose: one filemtime() costs
+         * microseconds, less than the Redis round trip that would cache it.
+         * Under worker mode (Octane, planned) the memo lasts until the worker
+         * restarts, which a deploy does, and only a deploy changes the file.
          */
         static $versions = [];
 
@@ -54,7 +60,8 @@ class HandleInertiaRequests extends Middleware
      * Shared with every Inertia page.
      *
      * Kept deliberately small — this payload is serialised into every single
-     * response, including partial reloads.
+     * response, including partial reloads. The one large member,
+     * `translations`, is a once-prop and so is not.
      *
      * @return array<string, mixed>
      */
@@ -217,14 +224,31 @@ class HandleInertiaRequests extends Middleware
             'contributeBar' => ContributeBar::shows($request, $marketBar !== null),
 
             /*
-             * Site copy for the current market's language.
+             * Site copy for the current market's language, sent ONCE.
              *
-             * Shipped whole rather than fetched: it is a few kilobytes, and a
-             * separate request would mean the first paint shows translation
-             * keys. Keyed by language, so be-nl and nl-nl share one file —
-             * they are two markets, not two languages.
+             * Shipped whole rather than fetched, because a separate request
+             * would mean the first paint shows translation keys. Keyed by
+             * language, so be-nl and nl-nl share one file: they are two
+             * markets, not two languages.
+             *
+             * It is no longer "a few kilobytes": about 115 KB of JSON, most of
+             * every page's data, and it was resent on every Inertia navigation
+             * (measured 2026-09-27; docs/features/speed.md). As a once-prop
+             * the browser keeps it: each Inertia visit names the once-keys it
+             * already holds (the X-Inertia-Except-Once-Props header) and the
+             * server leaves those props out. A full page load sends no such
+             * header, so the first document, and its server-side render,
+             * always carry the strings.
+             *
+             * The key is what makes it safe. It holds the language and the
+             * file's mtime, so a visit that lands in another language, or the
+             * first visit after a deploy that changed the copy, names a key the
+             * browser does not hold, and the strings come fresh. Without the
+             * language in the key, a link from /nl-nl to /fr-be would keep the
+             * Dutch words on the French page.
              */
-            'translations' => Lang::get('site'),
+            'translations' => Inertia::once(fn () => Lang::get('site'))
+                ->as('translations:'.app()->getLocale().':'.$this->translationVersion()),
             'translationVersion' => $this->translationVersion(),
 
             /*
