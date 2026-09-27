@@ -204,6 +204,16 @@ class LinkRouter
             ->where('market', $market->value)
             ->where('status', ProductStatus::Active->value)
             ->whereNotNull('group_id')
+            /*
+             * The same conditions as the partial index
+             * `products_deep_link_prefix_idx`, which the LIKEs below use
+             * because each is anchored at the start. Postgres only takes a
+             * partial index when the query repeats its condition, so this one
+             * is here for the planner: a link over 2000 bytes cannot sit in a
+             * btree (see the migration 2026_09_28_001200) and is no product
+             * page anybody pastes.
+             */
+            ->whereRaw('octet_length(merchant_deep_link) < 2000')
             ->where(function ($q) use ($host, $escaped): void {
                 foreach (["https://{$host}", "https://www.{$host}", "http://{$host}", "http://www.{$host}"] as $origin) {
                     $q->orWhere('merchant_deep_link', 'like', $origin.$escaped)
