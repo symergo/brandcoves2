@@ -126,9 +126,20 @@ export default function ListBoard({ board, action }: { board: BoardState; action
                                     <span className="text-sm font-medium">{message.name}</span>
                                     {message.at && (
                                         <span className="text-xs text-ink-soft">
+                                            {/*
+                                              An explicit time zone, because this
+                                              renders twice: in Node on the server
+                                              (UTC) and in the browser (usually
+                                              Brussels). A message written just
+                                              after midnight read "3 okt" in one
+                                              and "2 okt" in the other, and React
+                                              reports that as a hydration
+                                              mismatch. The site's own clock is
+                                              the one both can agree on.
+                                            */}
                                             {new Date(message.at).toLocaleDateString(
                                                 market.hrefLang,
-                                                { day: 'numeric', month: 'short' },
+                                                { day: 'numeric', month: 'short', timeZone: 'Europe/Brussels' },
                                             )}
                                         </span>
                                     )}

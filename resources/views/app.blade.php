@@ -261,8 +261,32 @@
     <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet">
 
+    {{-- Most product images come from bol's CDN. Opening that connection while
+         the HTML is still arriving saves the DNS, TCP and TLS round trips from
+         the first product photo, which is often the largest thing on the
+         page. No `crossorigin`: images are fetched without CORS, and a
+         preconnect in the wrong mode is a connection nobody uses. --}}
+    <link rel="preconnect" href="https://media.s-bol.com">
+
+    {{-- The page's own chunk, alongside the app entry, as the Laravel React
+         starter kit does. Pages are split per component (app.tsx imports them
+         lazily), so without this the browser learns which chunk it needs only
+         after app.js has downloaded and run: two round trips in a row before
+         the page can hydrate. Named here, Vite emits a modulepreload for it
+         and its imports, and AddLinkHeadersForPreloadedAssets repeats them as
+         Link headers.
+
+         Guarded by a file check because an entry Vite cannot find in the
+         manifest throws, and a preload hint is not worth a 500. Every
+         component rendered today has its file; the guard is for the one
+         that is renamed next. --}}
+    @php($pageEntry = 'resources/js/Pages/'.$page['component'].'.tsx')
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/app.tsx'])
+    @vite(array_values(array_filter([
+        'resources/css/app.css',
+        'resources/js/app.tsx',
+        is_file(base_path($pageEntry)) ? $pageEntry : null,
+    ])))
     @inertiaHead
 </head>
 <body>

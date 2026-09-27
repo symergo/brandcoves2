@@ -66,6 +66,9 @@ class AllCovesTest extends TestCase
                 ->where('sections.0.coves.0.title', 'Vondsten van vandaag')
                 ->where('sections.1.coves.0.title', 'De vader die alles heeft')
                 ->where('sections.2.coves.0.title', 'De beste koptelefoons')
+                // The Daily band's "all" link goes straight to the current
+                // address. `/daily` still works, but only as a 301.
+                ->where('sections.0.url', '/be-nl/tips')
             );
     }
 
