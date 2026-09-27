@@ -137,6 +137,10 @@ final readonly class EntityRails
      * Drawn from the same scope as the rails, so what the prose may link to and
      * what the page actually shows are the same set of subjects.
      *
+     * **Not asked per page view.** It groups every active offer of the entity
+     * by category, 4.4 s for bol.com on production. `EntityLinks` asks it when
+     * the Cove is built and stores the answer with it; the page reads that.
+     *
      * @return list<string>
      */
     public function vocabularyForBrand(BrandStat $brand, Market $market): array

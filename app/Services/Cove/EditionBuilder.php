@@ -65,6 +65,7 @@ class EditionBuilder
         private readonly PromptBank $prompts,
         private readonly CovePrompt $prompt,
         private readonly SuggestionEngine $engine,
+        private readonly EntityLinks $links,
     ) {}
 
     /**
@@ -430,7 +431,22 @@ class EditionBuilder
 
         $written = $this->article($plan, $finds);
 
-        return DB::transaction(function () use ($market, $plan, $finds, $written): DailyPickSet {
+        /*
+         * A shop or brand Cove's link list, worked out now and stored with it.
+         *
+         * The categories its `[[search:...]]` tokens may link to. The page used
+         * to work this out on every view by grouping every active offer of the
+         * shop by category, 4.4 s for bol.com on production; it now reads this
+         * column (see EntityLinks). Outside the transaction on purpose: it is
+         * the slowest query of the build, and nothing it reads is written below.
+         *
+         * Null for every other kind, whose links come from their own products.
+         */
+        $linkCategories = $plan->kind->isEntity()
+            ? $this->links->compute($plan->kind, $market, (string) $plan->slug)
+            : null;
+
+        return DB::transaction(function () use ($market, $plan, $finds, $written, $linkCategories): DailyPickSet {
             $existing = DailyPickSet::query()
                 ->where('market', $market->value)
                 ->where('kind', $plan->kind->value)
@@ -462,6 +478,7 @@ class EditionBuilder
                     // wore the default sheet of paper whatever the plan said.
                     'scene' => $plan->scene,
                     'source_queries' => $plan->queries ?? [],
+                    'link_categories' => $linkCategories,
                     'editorial_source' => $written->source,
                     'season_from' => $plan->season_from,
                     'season_to' => $plan->season_to,

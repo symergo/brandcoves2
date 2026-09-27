@@ -132,6 +132,31 @@ and a writer cannot link a category this brand does not stock.
 A token naming anything outside it renders as plain text, which is the safety property: a
 hallucinated link is an unlinked phrase rather than a 404 in the middle of an article.
 
+### The link list is stored at build (2026-09-27)
+
+The list of categories a shop or brand Cove may link to (its "link list") is worked out **when the
+Cove is built**, not when it is read. `EditionBuilder::buildArticle()` asks
+`EntityLinks::compute()` and stores the answer in `daily_pick_sets.link_categories`; the shop page
+(`GuideController`) and the brand page (`BrandController::cove()`) read that column.
+
+Why: the question groups every active offer of the shop or brand by category, forty most-sold
+first. For bol.com on production that took **4.4 s**, and the shop page asked it on every view
+(twice, in fact: once for the allowlist and once for the page copy). The answer changes when the
+shop's range changes, which is weeks, so asking it per view was paying seconds for nothing.
+
+Freezing it at build is also the more honest answer. The writer was handed the list as it stood
+when they wrote (`PlanLinks`, which still asks live, because writing happens now), so the links they
+were promised are the links the reader gets. A redo or a rebuild works it out again.
+
+A Cove built before the column existed has `link_categories` null. The page then works the list
+out once and caches it for a day per market and shop or brand (`bc:entity-links:{market}:{kind}:{slug}`),
+so the first visitor of the day pays and nobody else does. Rebuilding the Cove ends the fallback for
+good. The migration (`2026_09_28_001210_an_entity_cove_keeps_its_link_list`) only adds the nullable
+column: no default, no rewrite, safe on production.
+
+The same change resolves the shop, its link list and its product count **once** per shop page. They
+were looked up four, two and two times. See [speed.md](speed.md), "Shop page and admin".
+
 ## The filtered search is the fallback, and a written page is an article
 
 **Where somebody has written about a brand or a shop, the writing is the page. Where nobody has,
@@ -243,13 +268,17 @@ That is the same route a Shop Cove takes, and it is why neither kind needs a sou
 
 - `app/Enums/CoveKind.php` — `Brand`, `isEntity()`
 - `app/Services/Cove/EntityRails.php`
+- `app/Services/Cove/EntityLinks.php` — when the link list is asked: at build, stored, with a
+  day's cache for Coves built before the column
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
 - `app/Http/Controllers/BrandController.php` — `cove()`, `covePage()`, and the landing-page rule
 - `app/Services/Cove/PlanDrafter.php` — why a brand is refused rather than drafted
 - `app/Services/Settings/AutomationSettingsStore.php` — the `plan` cell that follows that refusal
 - `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
-- `app/Http/Controllers/GuideController.php` — `entityPage()`, `shopRails()`, `shopVocabulary()`
-- `app/Services/Shops/ShopDirectory.php` — the slug rule, membership, and `productCount()`
+- `app/Http/Controllers/GuideController.php` — `render()` resolves the shop and its link list once,
+  `entityPage()` draws the page
+- `app/Services/Shops/ShopDirectory.php` — the slug rule, membership (cached an hour per market),
+  and `productCount()`
 - `app/Services/Pages/Regions/EntityCoveRegions.php` — the six editable regions
 - `app/Services/Pages/Context/EntityCoveContext.php` — the facts they may state
 - `resources/js/Pages/Entity/Cove.tsx` — the page both kinds render

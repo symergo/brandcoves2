@@ -21,6 +21,7 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -281,6 +282,34 @@ class CommunityCoveTest extends TestCase
         $this->assertNull($list->refresh()->published_at);
         $this->assertNull($list->public_shows_owner);
         $this->get("/be-nl/coves/community/{$list->public_slug}")->assertStatus(410);
+    }
+
+    #[Test]
+    public function a_listing_card_loads_only_what_it_shows_and_reads_the_same(): void
+    {
+        /*
+         * A listing loaded every column of every item and of its product for a
+         * count and one picture. It now loads the handful of columns the card
+         * reads, and the card must come out exactly as it did from the whole
+         * rows (find() still loads them whole, for the Cove's own page).
+         */
+        $list = $this->publish($this->list());
+        $coves = app(CommunityCoves::class);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $cards = $coves->newest(Market::BeNl, 12);
+
+        $groups = array_values(array_filter(
+            array_column(DB::getQueryLog(), 'query'),
+            fn (string $sql) => str_contains($sql, 'from "product_groups"'),
+        ));
+
+        $this->assertCount(1, $groups);
+        $this->assertStringStartsWith('select "id", "image_url" from "product_groups"', $groups[0]);
+
+        $this->assertSame([$coves->card($coves->find(Market::BeNl, (string) $list->public_slug))], $cards);
     }
 
     #[Test]

@@ -53,6 +53,10 @@ class DailyPickSet extends Model
             'source_queries' => 'array',
             'source_volume' => 'integer',
             'last_checked_at' => 'datetime',
+            // Shop and brand Coves only: the categories the prose may link
+            // to, worked out at build. Null on every other kind, and on an
+            // entity Cove built before the column existed. See EntityLinks.
+            'link_categories' => 'array',
         ];
     }
 

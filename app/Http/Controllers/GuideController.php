@@ -9,7 +9,9 @@ use App\Enums\CoveScene;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Models\Merchant;
 use App\Services\Cove\CoveRail;
+use App\Services\Cove\EntityLinks;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
 use App\Services\Editorial\Allowlist;
@@ -126,6 +128,29 @@ class GuideController extends Controller
         }
 
         /*
+         * A Shop Cove's shop and link list, resolved once for the whole page.
+         *
+         * Each was looked up where it was used: the shop four times (the
+         * allowlist, the rails, the page, the count) and the shop's product
+         * count twice. On production that was the directory query four times
+         * and a count over the shop's offers twice, on one view.
+         *
+         * The link list is the one stored when the Cove was built, so the
+         * 4.4 s "group every offer by category" query does not run here at all.
+         * See App\Services\Cove\EntityLinks.
+         *
+         * The shop is matched through `ShopDirectory`, which owns both the
+         * membership question and the slug rule: a Shop Cove's slug is derived
+         * from `merchants.domain`, and that derivation is the only thing that
+         * connects this page to a merchant at all.
+         *
+         * Null and empty for every other kind.
+         */
+        $isShop = $guide->kind === CoveKind::Shop;
+        $shop = $isShop ? app(ShopDirectory::class)->shopFor($current->get(), (string) $guide->slug) : null;
+        $shopLinks = $isShop ? app(EntityLinks::class)->forShopCove($guide, $shop) : [];
+
+        /*
          * What this article's prose may link to.
          *
          * Its own items, plus every other published guide in this market. That
@@ -157,7 +182,7 @@ class GuideController extends Controller
              */
             extraSearches: [
                 ...(array) $guide->source_queries,
-                ...$this->shopVocabulary($guide, $current),
+                ...$shopLinks,
             ],
         );
 
@@ -224,9 +249,9 @@ class GuideController extends Controller
          * shortlist, and a rail underneath one would be a second, unranked
          * answer to the question the article just answered.
          */
-        $rails = $guide->kind === CoveKind::Shop
-            ? $this->shopRails($guide, $current)
-            : null;
+        $rails = $shop === null
+            ? null
+            : app(EntityRails::class)->forShop($shop, $current->get());
 
         /*
          * A Shop Cove is an entity page, not an article with a shortlist.
@@ -240,8 +265,8 @@ class GuideController extends Controller
          * Everything above this line still runs, because the piece is written,
          * linked and SEO'd the way every other Cove is. Only the layout forks.
          */
-        if ($guide->kind === CoveKind::Shop) {
-            return $this->entityPage($guide, $current, $allowed, $rails);
+        if ($isShop) {
+            return $this->entityPage($guide, $current, $allowed, $rails, $shop, $shopLinks);
         }
 
         return Inertia::render('Guides/Show', [
@@ -346,12 +371,15 @@ class GuideController extends Controller
      * The written shop page: the piece, with the shop's products beside it.
      *
      * @param  array<string, mixed>|null  $rails
+     * @param  list<string>  $categories  the shop's link list, as resolved in render()
      */
     private function entityPage(
         DailyPickSet $guide,
         CurrentMarket $current,
         array $allowed,
         ?array $rails,
+        ?Merchant $shop,
+        array $categories,
     ): Response {
         $market = $current->get();
 
@@ -366,7 +394,14 @@ class GuideController extends Controller
          * makes, so both halves of one page component get one shape.
          */
         $markup = app(CoveMarkup::class);
-        $shop = app(ShopDirectory::class)->shopFor($market, (string) $guide->slug);
+
+        /*
+         * Null where no count can be trusted: a live connector answers per
+         * request, so the rows stored for it are not its range. The page then
+         * offers "all offers" rather than a number that happens to be wrong.
+         * Asked once; it was asked twice, for the copy and for the page.
+         */
+        $total = $shop === null ? null : app(ShopDirectory::class)->productCount($shop, $market);
 
         /*
          * A shop this market no longer compares.
@@ -383,12 +418,12 @@ class GuideController extends Controller
         $context = new EntityCoveContext(
             market: $market,
             items: [],
-            total: $shop === null ? 0 : (app(ShopDirectory::class)->productCount($shop, $market) ?? 0),
+            total: $total ?? 0,
             page: EntityCoveRegions::SHOP,
             entity: $shop?->displayName() ?? (string) $guide->theme_title,
             slug: (string) $guide->slug,
             searchUrl: $searchUrl,
-            categories: $this->shopVocabulary($guide, $current),
+            categories: $categories,
         );
 
         return Inertia::render('Entity/Cove', [
@@ -397,13 +432,7 @@ class GuideController extends Controller
             'entity' => [
                 'name' => $shop?->displayName() ?? (string) $guide->theme_title,
                 'kind' => 'shop',
-                /*
-                 * Null where no count can be trusted: a live connector answers
-                 * per request, so the rows stored for it are not its range. The
-                 * page then offers "all offers" rather than a number that
-                 * happens to be wrong.
-                 */
-                'total' => $shop === null ? null : app(ShopDirectory::class)->productCount($shop, $market),
+                'total' => $total,
                 // Their own mark, never the affiliate network's — the same rule
                 // the directory follows.
                 'logo' => $shop?->faviconUrl(),
@@ -430,41 +459,6 @@ class GuideController extends Controller
             'searchUrl' => $searchUrl,
             'copy' => app(PageCopy::class)->forPage($context),
         ]);
-    }
-
-    /**
-     * The categories a Shop Cove's shop sells in.
-     *
-     * Empty for every other kind, and for a shop this market does not compare.
-     *
-     * @return list<string>
-     */
-    private function shopVocabulary(DailyPickSet $guide, CurrentMarket $current): array
-    {
-        if ($guide->kind !== CoveKind::Shop) {
-            return [];
-        }
-
-        $shop = app(ShopDirectory::class)->shopFor($current->get(), (string) $guide->slug);
-
-        return $shop === null ? [] : app(EntityRails::class)->vocabularyForShop($shop, $current->get());
-    }
-
-    /**
-     * The rails under a Shop Cove, if the shop is one this market compares.
-     *
-     * Matched through `ShopDirectory`, which owns both the membership question
-     * and the slug rule — a Shop Cove's slug is derived from `merchants.domain`,
-     * and that derivation is the only thing that connects this page to a
-     * merchant at all.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function shopRails(DailyPickSet $guide, CurrentMarket $current): ?array
-    {
-        $shop = app(ShopDirectory::class)->shopFor($current->get(), (string) $guide->slug);
-
-        return $shop === null ? null : app(EntityRails::class)->forShop($shop, $current->get());
     }
 
     private function faq(DailyPickSet $guide, CurrentMarket $current, array $allowed): ?array

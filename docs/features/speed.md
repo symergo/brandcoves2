@@ -201,3 +201,66 @@ read one day on the server and the next in the browser.
   sixth section, well below the fold on a phone. Marking an off-screen image
   `fetchpriority="high"` takes bandwidth from what is on screen, so it stays
   lazy. Revisit if a product image moves into the hero.
+
+## Shop page and admin
+
+The shop page (`/shops/{slug}`) took 4.4 s warm on production for bol.com, and a handful of admin
+screens did work per keystroke or per click that belongs elsewhere.
+
+### The shop page
+
+Measured locally against the development copy of production data, `/be-nl/shops/bol-com`, one
+process, cache in memory:
+
+| | first view | later views |
+|---|---|---|
+| before | 3,540 ms, 22 queries | about 800 ms, 14 queries, 660 ms of it SQL |
+| after | 850 ms, 18 queries (the one-day fallback working the link list out) | about 95 ms, 8 queries, 24 ms of it SQL |
+
+A Cove built after this change stores its link list, so its first view skips the ~310 ms link-list
+query as well. Three changes:
+
+- **The link list is stored when the Cove is built.** The categories a shop or brand Cove's
+  `[[search:…]]` tokens may link to were worked out per view by grouping every active offer of the
+  shop by category, twice per view. `EditionBuilder` now stores them in
+  `daily_pick_sets.link_categories`; a Cove built before that falls back to working them out once a
+  day. Why this is also the more honest answer: [cove-entities.md](cove-entities.md), "The link
+  list is stored at build".
+- **One cached list of shops per market.** `ShopDirectory::in()` (every enabled shop with active
+  offers here, or a live source serving here) was an `EXISTS` over `products` per merchant, run up
+  to four times on one shop page. It is cached for an hour per market (`bc:shops:{market}`), and
+  so is a shop's product count. `/shops` and the shop band on `/coves` had their own copies of the
+  query and now use this one; `requireDomain: false` keeps their rule that a shop without a domain
+  is still listed. An hour late is the worst a newly onboarded shop can be, on a directory that is
+  not where a shop is announced.
+- **Asked once per view.** `GuideController::render()` resolves the shop, its link list and its
+  product count once and hands them down, rather than each part of the page looking them up again.
+
+Tests: `EntityRailsTest` (the stored list is what renders, and the grouping query does not run; the
+fallback runs it once; the directory and the count run once and not at all on the next view).
+
+### Admin
+
+| Screen | Was | Now |
+|---|---|---|
+| Products, search box | `lower(title) like '%x%'`, which no index serves: every keystroke read the whole offers table (668 ms on production; 173 ms locally on 175k offers) | `title ilike '%x%'`, served by `products_title_trgm_idx` (27 ms locally). Typed `%` and `_` are escaped. The shop name is no longer searched: that joined every offer to its merchant per keystroke, and the shop filter answers the same question |
+| Market supply badge, in the sidebar of every admin page | built every row, including a `count(distinct group_id)` over every offer (339 ms), cached only a minute | reads the small `feeds` table and the connector config only. Whether a market is dark depends on its sources, never on how many products it holds; the catalogue counts are cached separately and only the page itself asks for them |
+| Market trends | the rank-history join ran four times per render (risers, new entries, fallers, active categories are four filters over one result), and the market tabs came from a `DISTINCT market` over the whole rank history | `MarketTrends::moves()` is remembered for the life of the object and the page holds one per request; the tabs ask one `EXISTS` per market, each stopping at its first row |
+| Guide topics, "Refresh queue" | mined the search log and seeded the seasonal topics for all five markets inside the web request | queues one `RefreshTopicQueue` job per market and says so; the list is the report once they have run |
+
+The memo on `MarketTrends` lives on the object, and the class is never bound as a singleton, so a
+long-running queue worker cannot keep serving an old answer.
+
+Tests: `AdminQueryCostTest` (search is an `ilike`, finds a typed `%`, no longer matches a shop
+name; the refresh queues one job per market), `MarketSupplyTest::the_sidebar_badge_never_counts_the_catalogue`,
+`MarketTrendsTest::the_admin_page_reads_the_moves_once_per_render`.
+
+### Community Cove cards
+
+Every listing of Community Coves (the band on `/coves`, the community index, Find a gift, the search)
+loaded every column of every item and of its product, for a count and one picture per card. The
+items still load, because which items a stranger may see is decided in PHP (a hand-written title
+with a link in it is dropped by the same screen that guards the page, and that screen has no SQL
+twin), but only the six item columns and the product's picture. The card is identical;
+`CommunityCoveTest::a_listing_card_loads_only_what_it_shows_and_reads_the_same` compares it against
+one built from the whole rows.

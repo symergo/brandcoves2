@@ -10,6 +10,7 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Services\Cove\EntityLinks;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
 use App\Services\Editorial\Allowlist;
@@ -387,7 +388,9 @@ class BrandController extends Controller
             // The categories this brand actually sells in. Without them the
             // allowlist is empty and every `[[search:…]]` renders as plain
             // words — which is the one thing an entity Cove must not do.
-            extraSearches: app(EntityRails::class)->vocabularyForBrand($stat, $market),
+            // Stored with the Cove when it was built rather than worked out
+            // per view: see App\Services\Cove\EntityLinks.
+            extraSearches: app(EntityLinks::class)->forBrandCove($cove, $stat),
         );
 
         return [

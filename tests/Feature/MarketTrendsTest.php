@@ -6,11 +6,15 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Filament\Pages\MarketTrends as MarketTrendsPage;
 use App\Models\ChartCategory;
 use App\Models\PopularRank;
+use App\Models\User;
 use App\Services\Discovery\MarketTrends;
 use App\Services\Discovery\TrendMove;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -180,5 +184,34 @@ class MarketTrendsTest extends TestCase
         $this->assertSame('small', $categories[0]['category_external_id']);
         $this->assertSame('Small but moving', $categories[0]['name']);
         $this->assertEqualsWithDelta(1.0, $categories[0]['churn'], 0.001);
+    }
+
+    #[Test]
+    public function the_admin_page_reads_the_moves_once_per_render(): void
+    {
+        /*
+         * Risers, new entries, fallers and active categories are four filters
+         * over one join. The page asked for it four times per render.
+         */
+        $this->rank('climber', 40, now()->subDays(7)->toDateString());
+        $this->rank('climber', 6, now()->toDateString());
+
+        $admin = User::factory()->create();
+        $admin->forceFill(['is_admin' => true])->save();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        Livewire::actingAs($admin)
+            ->test(MarketTrendsPage::class)
+            ->assertOk()
+            ->assertSee('climber');
+
+        $joins = array_filter(
+            array_column(DB::getQueryLog(), 'query'),
+            fn (string $sql) => str_contains($sql, '"popular_ranks" as "now"'),
+        );
+
+        $this->assertCount(1, $joins);
     }
 }

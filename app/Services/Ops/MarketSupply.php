@@ -65,6 +65,12 @@ class MarketSupply
 
     private const CACHE_KEY = 'bc:market-supply-counts';
 
+    /**
+     * Separate from the feed counts, so the sidebar badge never asks for it.
+     * See darkMarkets().
+     */
+    private const CATALOGUE_CACHE_KEY = 'bc:market-supply-catalogue';
+
     public function __construct(
         private readonly ConnectorRegistry $registry,
         private readonly SourceSwitch $switch,
@@ -105,39 +111,73 @@ class MarketSupply
      */
     public function rows(): array
     {
-        $counts = $this->counts();
+        $feeds = $this->feedCounts();
+        $catalogue = $this->catalogueCounts();
 
-        return array_map(function (Market $market) use ($counts): array {
-            $cells = array_map(
-                fn (Source $source): array => $source->isFeed()
-                    ? $this->feedCell($source, $market, $counts['feeds'][$market->value.'|'.$source->value] ?? [])
-                    : $this->liveCell($source, $market),
-                $this->sources(),
-            );
+        return array_map(function (Market $market) use ($feeds, $catalogue): array {
+            $cells = $this->cells($market, $feeds);
 
             return [
                 'market' => $market,
                 'published' => $market->isPublished(),
-                'serving' => count(array_filter($cells, fn (array $cell): bool => $cell['status'] === 'ok')),
-                'groups' => (int) ($counts['groups'][$market->value] ?? 0),
-                'offers' => (int) ($counts['offers'][$market->value] ?? 0),
+                'serving' => $this->serving($cells),
+                'groups' => (int) ($catalogue['groups'][$market->value] ?? 0),
+                'offers' => (int) ($catalogue['offers'][$market->value] ?? 0),
                 'cells' => $cells,
             ];
         }, Market::cases());
     }
 
-    /** Markets with nothing serving them at all, by value. @return list<string> */
+    /**
+     * Markets with nothing serving them at all, by value.
+     *
+     * The sidebar badge, so it runs on every admin page. It reads the feed
+     * counts and the connector config and **not** the catalogue counts: those
+     * are a `count(distinct group_id)` over every offer (339 ms on production),
+     * and whether a market is dark is decided by its sources, never by how
+     * many products it holds.
+     *
+     * @return list<string>
+     */
     public function darkMarkets(): array
     {
+        $feeds = $this->feedCounts();
+
         return array_values(array_map(
-            fn (array $row): string => $row['market']->value,
-            array_filter($this->rows(), fn (array $row): bool => $row['serving'] === 0),
+            fn (Market $market): string => $market->value,
+            array_filter(
+                Market::cases(),
+                fn (Market $market): bool => $this->serving($this->cells($market, $feeds)) === 0,
+            ),
         ));
     }
 
     public function forget(): void
     {
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::CATALOGUE_CACHE_KEY);
+    }
+
+    /**
+     * One cell per source for a market.
+     *
+     * @param  array<string, array<string, mixed>>  $feeds
+     * @return list<array{source: Source, kind: string, status: string, headline: string, notes: list<string>, earning: ?string}>
+     */
+    private function cells(Market $market, array $feeds): array
+    {
+        return array_map(
+            fn (Source $source): array => $source->isFeed()
+                ? $this->feedCell($source, $market, $feeds[$market->value.'|'.$source->value] ?? [])
+                : $this->liveCell($source, $market),
+            $this->sources(),
+        );
+    }
+
+    /** @param list<array{status: string}> $cells */
+    private function serving(array $cells): int
+    {
+        return count(array_filter($cells, fn (array $cell): bool => $cell['status'] === 'ok'));
     }
 
     /**
@@ -395,13 +435,16 @@ class MarketSupply
     }
 
     /**
-     * Every count the page needs, in three queries.
+     * The feed rows per market and source, from the small `feeds` table.
      *
-     * @return array{feeds: array<string, array<string, mixed>>, groups: array<string, int>, offers: array<string, int>}
+     * Kept apart from the catalogue counts so the sidebar badge can ask for
+     * this alone; see darkMarkets().
+     *
+     * @return array<string, array<string, mixed>>
      */
-    private function counts(): array
+    private function feedCounts(): array
     {
-        /** @var array{feeds: array<string, array<string, mixed>>, groups: array<string, int>, offers: array<string, int>} */
+        /** @var array<string, array<string, mixed>> */
         return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function (): array {
             /*
              * DB::table, not the Feed model: the model casts `market` and
@@ -409,7 +452,7 @@ class MarketSupply
              * feed — a Feed object whose `enabled` is a count of feeds is a
              * lie waiting to be read by the next person.
              */
-            $feeds = DB::table('feeds')
+            return DB::table('feeds')
                 ->selectRaw('market, source')
                 ->selectRaw('count(*) as total')
                 // Postgres aggregate FILTER, which this project may use freely —
@@ -430,7 +473,18 @@ class MarketSupply
                     'last_run_at' => $row->last_run_at === null ? null : (string) $row->last_run_at,
                 ])
                 ->all();
+        });
+    }
 
+    /**
+     * Products and offers per market, for the page's two number columns.
+     *
+     * @return array{groups: array<string, int>, offers: array<string, int>}
+     */
+    private function catalogueCounts(): array
+    {
+        /** @var array{groups: array<string, int>, offers: array<string, int>} */
+        return Cache::remember(self::CATALOGUE_CACHE_KEY, self::CACHE_TTL, function (): array {
             /*
              * Both catalogue numbers from one pass over `products`, and both
              * counting only what a visitor could actually be shown.
@@ -454,7 +508,6 @@ class MarketSupply
                 ->get();
 
             return [
-                'feeds' => $feeds,
                 'groups' => $catalogue->pluck('groups', 'market')->map(fn ($n): int => (int) $n)->all(),
                 'offers' => $catalogue->pluck('offers', 'market')->map(fn ($n): int => (int) $n)->all(),
             ];

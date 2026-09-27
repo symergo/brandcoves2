@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\CoveKind;
-use App\Enums\ProductStatus;
-use App\Enums\Source;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
-use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -77,7 +73,7 @@ class ShopsController extends Controller
      */
     private const COVES = 12;
 
-    public function __invoke(CurrentMarket $current, ConnectorRegistry $registry): Response
+    public function __invoke(CurrentMarket $current, ShopDirectory $directory): Response
     {
         app(PageMeta::class)->set(
             title: __('site.shops.seo_title'),
@@ -86,29 +82,15 @@ class ShopsController extends Controller
         );
 
         $market = $current->get();
-        $live = $registry->liveSourcesFor($market);
 
-        $shops = Merchant::query()
-            ->where('enabled', true)
-            ->where(function (Builder $q) use ($market, $live): void {
-                $q->whereHas('products', fn (Builder $p) => $p
-                    ->where('market', $market->value)
-                    ->where('status', ProductStatus::Active->value));
-
-                if ($live !== []) {
-                    /*
-                     * Live sources are listed whether or not they have rows
-                     * here yet. One merchant row per source — bol is 'bol', not
-                     * one row per bol seller — and its offers are fetched per
-                     * request rather than ingested, so a market can compare bol
-                     * prices while holding almost nothing of bol's in
-                     * `products` (invariant 6 is the same story for Amazon).
-                     */
-                    $q->orWhereIn('source', array_map(fn (Source $s) => $s->value, $live));
-                }
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'domain', 'logo_url', 'source', 'created_at']);
+        /*
+         * The directory's own membership rule, cached for an hour.
+         *
+         * A shop with no domain is still listed here, as it always was: the
+         * row links to a search filtered by the shop's id, which needs no
+         * domain. Only a Shop Cove's slug does. See ShopDirectory::in().
+         */
+        $shops = $directory->in($market, requireDomain: false);
 
         $since = now()->subDays(self::NEW_FOR_DAYS);
 

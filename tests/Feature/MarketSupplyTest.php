@@ -8,6 +8,7 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Filament\Pages\MarketSupply as MarketSupplyPage;
 use App\Models\Feed;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Services\Connectors\SourceSwitch;
 use App\Services\Ops\MarketSupply;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -297,5 +299,27 @@ class MarketSupplyTest extends TestCase
         $supply->forget();
 
         $this->assertNotContains(Market::BeNl->value, $supply->darkMarkets());
+    }
+
+    #[Test]
+    public function the_sidebar_badge_never_counts_the_catalogue(): void
+    {
+        /*
+         * The badge renders on every admin page. It used to build every row,
+         * catalogue counts included: a count(distinct group_id) over every
+         * offer, 339 ms on production. Whether a market is dark is decided by
+         * its sources alone.
+         */
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        MarketSupplyPage::getNavigationBadge();
+
+        $queries = array_column(DB::getQueryLog(), 'query');
+
+        $this->assertSame([], array_values(array_filter(
+            $queries,
+            fn (string $sql) => str_contains($sql, 'from "products"'),
+        )));
     }
 }
