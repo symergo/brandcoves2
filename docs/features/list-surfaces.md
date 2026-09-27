@@ -997,3 +997,11 @@ to go: it lives in the menu only.
 On a gift or group list the menu now has "Vraag het aan anderen", linking to the same pre-filled form
 (`/ask?list=<id>`, filled in on the server by `AskPrefill`; see ask-others.md). Not on a wish list
 of your own, as with the button.
+
+## Share and ⋯ on each card in My Coves (2026-09-27)
+
+Owner: "add the share and more menu also to the cove cards on /lists", as icons. Beside the round +
+in the corner of the pictures, on your own lists only (someone else's list is theirs to share and
+set up): **share** opens the list on its Share panel (`?panel=share`), **⋯** holds **Vraag het aan
+anderen** (`/ask?list=`) and **Instellingen** (`?panel=settings`). The same actions as a list's row
+on a person's page, so a list offers the same things wherever it is shown.

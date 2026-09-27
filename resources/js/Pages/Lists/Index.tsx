@@ -11,6 +11,7 @@ import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/Lis
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
 import { buttonClasses } from '../../Components/Button'
+import Menu, { MenuItem } from '../../Components/Menu'
 
 interface ListSummary {
     id: string
@@ -74,6 +75,10 @@ interface Props extends WizardOffer {
     isSignedIn: boolean
 }
 
+/** A round icon button over a card's pictures: add, share, more. */
+const cardIcon =
+    'flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-ink-soft shadow-sm transition hover:border-ink hover:text-ink'
+
 /**
  * One card per list, in two groups.
  *
@@ -86,6 +91,7 @@ interface Props extends WizardOffer {
  */
 function ListCard({ list }: { list: ListSummary }) {
     const { t, n } = useTranslations()
+    const { market } = usePage<SharedProps>().props
     const shared = list.visibility !== 'private'
 
     /*
@@ -239,19 +245,54 @@ function ListCard({ list }: { list: ListSummary }) {
               the card (owner, 2026-09-26: more compact). Outside the link, so
               pressing it adds rather than opening the list.
             */}
-            {canAdd && (
-                <button
-                    type="button"
-                    onClick={() => setAdding(true)}
-                    aria-label={t('lists.add_product')}
-                    title={t('lists.add_product')}
-                    className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-accent-dark shadow-sm transition hover:border-ink hover:text-ink"
-                >
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
-                    </svg>
-                </button>
-            )}
+            {/*
+              Share and ⋯ beside the + since 2026-09-27 (owner: "add the share
+              and more menu also to the cove cards", as icons), on your own
+              lists only: somebody else's list is theirs to share and set up.
+              Each opens the list page on that tool (`?panel=`), the same
+              actions as a list's row on a person's page.
+            */}
+            <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                {!theirs && (
+                    <>
+                        <Link
+                            href={`${list.url}?panel=share`}
+                            aria-label={`${t('lists.share')}: ${list.title}`}
+                            title={t('lists.share')}
+                            className={cardIcon}
+                        >
+                            <ToolIcon name="shared" className="h-5 w-5" />
+                        </Link>
+                        <Menu
+                            label={t('people.list_actions', { name: list.title })}
+                            button={<ToolIcon name="more" className="h-5 w-5" />}
+                            buttonClassName={cardIcon}
+                        >
+                            {() => (
+                                <>
+                                    <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
+                                        {t('lists.ask_others')}
+                                    </MenuItem>
+                                    <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
+                                        {t('lists.settings')}
+                                    </MenuItem>
+                                </>
+                            )}
+                        </Menu>
+                    </>
+                )}
+                {canAdd && (
+                    <button
+                        type="button"
+                        onClick={() => setAdding(true)}
+                        aria-label={t('lists.add_product')}
+                        title={t('lists.add_product')}
+                        className={`${cardIcon} text-accent-dark`}
+                    >
+                        <ToolIcon name="plus" className="h-5 w-5" />
+                    </button>
+                )}
+            </div>
             {adding && <AddToListDialog list={list} onClose={() => setAdding(false)} />}
         </div>
     )
