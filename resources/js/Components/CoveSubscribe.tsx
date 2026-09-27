@@ -20,11 +20,19 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
     const form = useForm({ email: '', source })
 
     return (
-        <section className="rounded-card border border-line bg-card p-6" aria-labelledby="cove-subscribe">
-            <h2 id="cove-subscribe" className="text-xl font-semibold tracking-tight">
-                {t('cove.subscribe_heading')}
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-ink-soft">{t('cove.subscribe_intro')}</p>
+        // Text left, form right on a wide screen (owner's rule, 2026-09-27: a
+        // card whose right half stays empty is a missing column). Stacked on a
+        // phone, as before.
+        <section
+            className="grid gap-4 rounded-card border border-line bg-card p-6 md:grid-cols-2 md:items-center md:gap-8"
+            aria-labelledby="cove-subscribe"
+        >
+            <div>
+                <h2 id="cove-subscribe" className="text-xl font-semibold tracking-tight">
+                    {t('cove.subscribe_heading')}
+                </h2>
+                <p className="mt-2 max-w-xl text-sm text-ink-soft">{t('cove.subscribe_intro')}</p>
+            </div>
 
             {form.wasSuccessful ? (
                 /*
@@ -45,7 +53,7 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                  * point of `cove.subscribe_thanks`: saying which one it was
                  * would tell a stranger whether an address is on the list.
                  */
-                <p className="mt-4 rounded border border-sage/40 bg-sage/10 p-3 text-sm" role="status">
+                <p className="rounded border border-sage/40 bg-sage/10 p-3 text-sm" role="status">
                     {t('cove.subscribe_thanks')}
                 </p>
             ) : (
@@ -54,7 +62,7 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                         e.preventDefault()
                         form.post(`/${market.key}/coves/subscribe`, { preserveScroll: true })
                     }}
-                    className="mt-4 flex max-w-md flex-wrap gap-2"
+                    className="flex flex-wrap gap-2"
                 >
                     <label className="sr-only" htmlFor="cove-email">
                         {t('cove.subscribe_placeholder')}

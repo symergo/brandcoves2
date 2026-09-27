@@ -291,32 +291,41 @@ export default function Home({ today, coves, collected = [] }: Props) {
                 </section>
             )}
 
-            {/* 6. Trust, short. */}
-            <section className="mt-14 sm:mt-20" aria-labelledby="trust-heading">
-                <h2 id="trust-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
-                    {t('home.trust_title')}
-                </h2>
-                <p className="mt-2 max-w-2xl text-ink-soft">
-                    {t('home.trust_sources')} {t('home.trust_commission')}
-                </p>
-                <Link
-                    href={`${base}/help`}
-                    className="mt-3 inline-flex min-h-11 items-center font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                >
-                    {t('home.trust_link')} →
-                </Link>
-            </section>
+            {/*
+              6 and 7, side by side (owner, 2026-09-27: "sections on the
+              homepage with no content on the right"). Each was a short block
+              on the left of an empty width; together they fill the row. Trust
+              on the left, the last call to action on the right, where the eye
+              ends. Stacked on a phone, trust first, as before.
+            */}
+            <div className="mt-14 grid gap-4 sm:mt-20 md:grid-cols-2">
+                {/* 6. Trust, short. */}
+                <section className="flex flex-col rounded-card border border-line bg-card p-6 sm:p-8" aria-labelledby="trust-heading">
+                    <h2 id="trust-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
+                        {t('home.trust_title')}
+                    </h2>
+                    <p className="mt-2 text-ink-soft">
+                        {t('home.trust_sources')} {t('home.trust_commission')}
+                    </p>
+                    <Link
+                        href={`${base}/help`}
+                        className="mt-auto inline-flex min-h-11 items-center pt-4 font-medium text-accent-dark hover:text-ink sm:min-h-0"
+                    >
+                        {t('home.trust_link')} →
+                    </Link>
+                </section>
 
-            {/* 7. The last thing on the page is the first thing it asked. */}
-            <section className="mt-14 border-t border-line pt-10 sm:mt-20" aria-labelledby="final-heading">
-                <h2 id="final-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                    {t('home.final_title')}
-                </h2>
-                <p className="mt-2 max-w-xl text-ink-soft">{t('home.final_body')}</p>
-                <Link href={createCove} className={`mt-6 ${buttonClasses('primary', 'lg')}`}>
-                    {t('home.cta_create')}
-                </Link>
-            </section>
+                {/* 7. The last thing on the page is the first thing it asked. */}
+                <section className="flex flex-col rounded-card bg-accent/5 p-6 sm:p-8" aria-labelledby="final-heading">
+                    <h2 id="final-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
+                        {t('home.final_title')}
+                    </h2>
+                    <p className="mt-2 text-ink-soft">{t('home.final_body')}</p>
+                    <Link href={createCove} className={`mt-auto self-start pt-0 ${buttonClasses('primary', 'lg')}`}>
+                        {t('home.cta_create')}
+                    </Link>
+                </section>
+            </div>
         </>
     )
 }

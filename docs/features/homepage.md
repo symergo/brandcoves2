@@ -34,6 +34,8 @@ bottom (`Pages/Home.tsx`):
 6. **Trust, short**: where products come from, and that a commission never changes the price.
 7. **Start your first Cove**, the page's first question asked again at the end.
 
+**6 and 7 side by side since 2026-09-27** (owner: "sections on the homepage with no content on the right"): two cards in one row, trust left and the last call to action right, stacked on a phone. Each was a short block on the left of an empty width. The morning-email card (`CoveSubscribe`, also on the daily Cove) went the same way: text left, form right.
+
 **Create a Cove works without an account** (owner's decision, 2026-09-26): it opens
 `/lists?new=mine`, which an anonymous visitor can use; asking for an account first would put a form
 on the first step of the growth loop. `HomePageTest` holds that.
