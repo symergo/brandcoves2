@@ -103,6 +103,42 @@ class Automation extends Page
         return AutomationSettingsStore::whyNot($stage, $kind);
     }
 
+    /**
+     * What each column does, behind the info icon on its heading.
+     *
+     * The bare stage names ("plan", "curate") meant nothing to the owner on
+     * first reading, and the page is only useful if the columns are understood.
+     */
+    public function stageHint(string $stage): string
+    {
+        return match ($stage) {
+            'plan' => 'Adds new drafts to the planner, with topics taken from the calendar and from what people search for.',
+            'curate' => 'Chooses the products for drafts that have none yet.',
+            'write' => 'Writes the text. Click to cycle: off, builder (the AI writes it on this server, counted against the daily AI budget) or external (queued for an outside writer, at no cost here).',
+            'approve' => 'Approves written drafts without anyone reading them. The only switch that can put a page in front of readers unseen.',
+            'build' => 'Turns approved drafts into live pages on their date. Off stops this kind publishing in this market.',
+            default => '',
+        };
+    }
+
+    /**
+     * A cell that works differently from the rest of its column.
+     *
+     * The Daily's `approve` cell looked like every other and it isn't: the Daily
+     * publishes every morning whether or not anything was approved
+     * (`BuildDailyEdition`, gated only by `build`). Approval only chooses a
+     * curated draft over the automatic edition. With no note, "off" read as
+     * "Dailies need approval", which is the opposite of what happens.
+     */
+    public function cellNote(string $stage, CoveKind $kind): ?string
+    {
+        if ($stage === 'approve' && $kind === CoveKind::Daily) {
+            return 'Publishes daily anyway. This only picks your draft over the automatic one.';
+        }
+
+        return null;
+    }
+
     /** @return array<string, string> */
     public function markets(): array
     {
