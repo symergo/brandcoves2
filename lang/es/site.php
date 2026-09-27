@@ -2305,7 +2305,7 @@ return [
         'share_santa' => 'Sortea un Amigo invisible; cada persona solo ve a quién le ha tocado.',
         'share_publish' => 'Puedes publicar una lista como Cove de la comunidad, en Compartir, para que cualquiera pueda encontrarla, guardarla o convertirla en su propia lista. Dice para quién es en palabras generales, como "para un padre", y nunca muestra nombres, notas ni lo que ya se ha reservado. «Encontrar un regalo» también muestra Coves que otros hicieron para alguien como la persona a la que buscas regalo.',
         'share_people' => 'Haz visible una lista de deseos para tu gente, en Compartir: tus amigos en GiftCoves la ven y pueden elegir de ella cuando hacen una lista para ti. Las listas de deseos nuevas lo tienen activado. Lo que compran sigue siendo una sorpresa.',
-        'share_invite' => 'Invita a alguien a GiftCoves desde Mi gente, con su correo electrónico. Le enviamos un correo con tu invitación y, en cuanto inicie sesión, quedáis conectados. Quien no quería ese correo detiene todas las invitaciones con un clic en el enlace que incluye.',
+        'share_invite' => 'Invita a alguien a GiftCoves desde Mi gente, con su correo electrónico. Le enviamos un correo con tu invitación. ¿Aún no tiene cuenta? Con pulsar el botón de ese correo se crea, sin un segundo correo, y quedáis conectados. Quien no quería ese correo detiene todas las invitaciones con un clic en el enlace que incluye.',
         'share_ask' => 'Pide ideas: envía a la persona homenajeada una página donde dice lo que le gusta, o deja que la gente con la que compartes la lista proponga cosas. Tú decides qué entra.',
         'share_like_this' => 'En la lista de deseos de alguien también ves ideas en la misma línea, para un segundo regalo o cuando ya está todo cogido.',
         'honest_title' => 'De dónde vienen los productos',
@@ -2464,6 +2464,17 @@ return [
         'spam_ask' => '¿No conoces al remitente o no lo pediste? Denúncialo como spam y lo revisaremos.',
         'spam' => 'Denunciar como spam',
         'reported' => 'Denunciado como spam. Gracias, lo revisaremos.',
+    ],
+
+    // The page the button in an invitation email opens (2026-09-27).
+    'invite_accept' => [
+        'title' => ':name te invita a GiftCoves',
+        'title_plain' => 'Una invitación a GiftCoves',
+        'what' => 'Si aceptas la invitación, creamos tu cuenta enseguida y tú y :name quedáis conectados. No necesitas contraseña.',
+        'button' => 'Aceptar la invitación',
+        'signed_in_as' => 'Has iniciado sesión como :email. Para aceptar esta invitación con otra dirección de correo, cierra sesión primero y vuelve a abrir el enlace.',
+        'sign_in_instead' => 'Inicia sesión con tu dirección de correo para continuar. Te enviaremos un enlace.',
+        'welcome' => 'Bienvenido a GiftCoves.',
     ],
 
 ];

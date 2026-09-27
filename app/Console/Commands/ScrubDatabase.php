@@ -70,6 +70,9 @@ class ScrubDatabase extends Command
             DB::statement('DELETE FROM friend_invite_mails');
             DB::statement('DELETE FROM invite_complaints');
             DB::statement('DELETE FROM invite_suppressions');
+            // The invitation buttons: a real address each, and live ones
+            // would sign somebody in on a laptop.
+            DB::statement('DELETE FROM friend_invite_tokens');
 
             DB::statement(<<<'SQL'
                 UPDATE recipients

@@ -33,6 +33,7 @@ use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InviteAcceptController;
 use App\Http\Controllers\InviteNotWantedController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
@@ -1174,6 +1175,24 @@ Route::prefix('{market}')->group(function () {
         ->where('hash', '[a-f0-9]{64}')
         ->middleware(['signed', 'throttle:30,1'])
         ->name('invites.not-wanted.spam');
+
+    /*
+     * "Uitnodiging aannemen", the button in an invitation email (2026-09-27):
+     * creates a new invitee's account and signs them in. The GET only shows a
+     * page (mail scanners open every link); the POST is its button, with
+     * CSRF. Not behind `guest`, which would bounce a signed-in visitor home
+     * without saying why; the controller tells them instead. Throttled like
+     * the magic link. See InviteAcceptController.
+     */
+    Route::get('/invites/accept/{token}', [InviteAcceptController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{64}')
+        ->middleware('throttle:20,1')
+        ->name('invites.accept');
+
+    Route::post('/invites/accept/{token}', [InviteAcceptController::class, 'store'])
+        ->where('token', '[A-Za-z0-9]{64}')
+        ->middleware('throttle:20,1')
+        ->name('invites.accept.store');
 
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')

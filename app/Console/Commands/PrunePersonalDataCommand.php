@@ -242,6 +242,16 @@ class PrunePersonalDataCommand extends Command
             $dry,
         );
 
+        // The "Uitnodiging aannemen" buttons (2026-09-27). One used or past its
+        // `giftcoves.invites.accept_days` opens nothing, and it holds the
+        // invited address, so it goes at the next run.
+        $report['invitation buttons'] = $this->prune(
+            'friend_invite_tokens',
+            fn () => DB::table('friend_invite_tokens')
+                ->where(fn ($q) => $q->whereNotNull('used_at')->orWhere('expires_at', '<', now())),
+            $dry,
+        );
+
         // Complaints go after a year, which also lifts a stop on a member's
         // invitation emails that nobody has renewed. The suppression list is
         // deliberately NOT pruned: it is the record of somebody asking never

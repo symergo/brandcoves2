@@ -55,8 +55,8 @@ class FriendInviteMailTest extends TestCase
 
             return $mail->hasTo('bo@example.com')
                 && $mail->envelope()->subject === 'Anna nodigt je uit op GiftCoves'
-                // The button: the sign-in page, address filled in.
-                && $mail->url === url('/be-nl/login?email=bo%40example.com')
+                // The button: accept in one press (InviteAcceptTest).
+                && preg_match('#^'.preg_quote(url('/be-nl/invites/accept').'/', '#').'[A-Za-z0-9]{64}$#', $mail->url) === 1
                 && str_contains($html, 'Uitnodiging aannemen')
                 && str_contains($html, 'Wil je geen uitnodigingen meer ontvangen?')
                 // RFC 8058 one-click, pointing at the same signed link.

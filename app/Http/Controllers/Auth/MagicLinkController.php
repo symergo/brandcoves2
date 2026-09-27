@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Mail\MagicLinkMail;
-use App\Models\AnonymousIdentity;
 use App\Models\LoginToken;
-use App\Models\User;
-use App\Services\Auth\IdentityMerger;
-use App\Services\Auth\Registration;
+use App\Services\Auth\EmailSignIn;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
@@ -164,7 +160,7 @@ class MagicLinkController extends Controller
     }
 
     /** `{market}` is consumed by middleware but still passed positionally. */
-    public function consume(Request $request, string $market, string $token, IdentityMerger $merger): RedirectResponse
+    public function consume(Request $request, string $market, string $token, EmailSignIn $signIn): RedirectResponse
     {
         $loginToken = LoginToken::consume($token);
 
@@ -174,48 +170,9 @@ class MagicLinkController extends Controller
             ]);
         }
 
-        // Case-insensitive, matching the unique index on lower(email), so
-        // Alice@ and alice@ are one person rather than two accounts with half
-        // a gift list each.
-        $user = User::query()
-            ->whereRaw('lower(email) = ?', [$loginToken->email])
-            ->first();
-
-        $user ??= User::create([
-            'email' => $loginToken->email,
-            'name' => $loginToken->name,
-        ]);
-        // A new account: the analytics event and the owner's email both
-        // start here. See App\Services\Auth\Registration.
-        if ($user->wasRecentlyCreated) {
-            app(Registration::class)->record($request, $user, 'email', $market);
-        }
-
-        // An account that never got a name takes the one just typed. Never
-        // overwrites: a name already set is theirs, not the login form's.
-        if (blank($user->name) && filled($loginToken->name)) {
-            $user->forceFill(['name' => $loginToken->name])->save();
-        }
-
-        // Proof of mailbox control is exactly what a magic link establishes.
-        if ($user->email_verified_at === null) {
-            $user->forceFill(['email_verified_at' => now()])->save();
-        }
-
-        // Everything built before signing up moves across. Do this BEFORE
-        // logging in, while the anonymous cookie identity is still resolvable.
-        $anonId = $request->cookie(TrackAnonymousIdentity::COOKIE);
-        if (is_string($anonId)) {
-            $anon = AnonymousIdentity::find($anonId);
-            if ($anon !== null) {
-                $merger->merge($anon, $user);
-            }
-        }
-
-        Auth::login($user, remember: true);
-        // A fresh session id after a privilege change; otherwise a session
-        // fixed before login stays valid after it.
-        $request->session()->regenerate();
+        // Find or create, then sign in. Shared with the invitation button
+        // (2026-09-27) so both create an account the same way.
+        $signIn->signIn($request, $loginToken->email, $loginToken->name, $market);
 
         return redirect()->intended(app(CurrentMarket::class)->url('lists'));
     }

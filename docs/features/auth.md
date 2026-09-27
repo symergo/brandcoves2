@@ -21,6 +21,10 @@ Two paths, offered together rather than one instead of the other:
 |---|---|---|
 | Magic link | `/{market}/login` → `/{market}/auth/magic/{token}` | Works for everyone, needs no third party |
 | Google | `/{market}/auth/google` → `/auth/google/callback` | An email round-trip is slow; for someone already signed into Google this is one tap |
+| Invitation button (2026-09-27) | `/{market}/invites/accept/{token}` (GET page, POST button) | The invitation email already proves the address; creates **new** accounts only, never signs in an existing one. See [friend-invite-mail.md](friend-invite-mail.md#accepting-in-one-press) |
+
+The magic link and the invitation button create an account through one piece of code,
+`App\Services\Auth\EmailSignIn`, so they cannot drift apart.
 
 **Google goes first, above the form** (owner's call, 2026-09-14, on both the page and the dialog).
 It used to sit under the email form behind an "or", which reads as the fallback and is the wrong way
