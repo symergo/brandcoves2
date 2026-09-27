@@ -42,7 +42,9 @@ class FeatureIdeaAdminTest extends TestCase
     {
         $content = require resource_path('content/feature-ideas.php');
 
-        $this->assertGreaterThanOrEqual(11, count($content));
+        // Only truly new ideas since 2026-09-27 (owner): three. The board fills
+        // with visitors' suggestions from here, so this checks it is not empty.
+        $this->assertNotEmpty($content);
 
         foreach ($content as $key => $idea) {
             $this->assertNotNull(FeatureStatus::tryFrom($idea['status']), "{$key} has an unknown status");
