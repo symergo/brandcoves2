@@ -86,6 +86,14 @@ const hide = (e: { currentTarget: HTMLImageElement }) => {
 }
 
 /**
+ * The box a product picture sits in: white (owner, 2026-09-27: "background of
+ * the image boxes can be white"). Product photos are nearly all shot on
+ * white, so a cream box showed as a cream frame around a white square; on
+ * white they sit flush and the thin border gives the box its edge.
+ */
+export const pictureBox = 'h-12 w-12 shrink-0 rounded-lg border border-line bg-white object-contain p-1'
+
+/**
  * A list's picture, 48px: up to four products as a 2×2 collage (what is in it
  * at a glance, while every name starts at the same place), one product on its
  * own, or the kind's mark on a list with no pictures yet.
@@ -93,9 +101,11 @@ const hide = (e: { currentTarget: HTMLImageElement }) => {
 export function ListThumb({ covers = [], kind = null }: { covers?: string[]; kind?: ListKind | string | null }) {
     if (covers.length > 1) {
         return (
-            <span className="grid h-12 w-12 shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
+            // White between the cells too: the hairline gap drew a grey cross
+            // through four white product shots.
+            <span className="grid h-12 w-12 shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-white">
                 {covers.slice(0, 4).map((src, i) => (
-                    <img key={i} src={src} alt="" loading="lazy" className="h-full w-full bg-cream object-contain" onError={hide} />
+                    <img key={i} src={src} alt="" loading="lazy" className="h-full w-full bg-white object-contain" onError={hide} />
                 ))}
             </span>
         )
@@ -107,7 +117,7 @@ export function ListThumb({ covers = [], kind = null }: { covers?: string[]; kin
                 src={covers[0]}
                 alt=""
                 loading="lazy"
-                className="h-12 w-12 shrink-0 rounded-lg border border-line bg-cream object-contain p-1"
+                className={pictureBox}
                 onError={hide}
             />
         )

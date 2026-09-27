@@ -10,7 +10,7 @@ import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
 import { buttonClasses, rowActionClasses } from '../../Components/Button'
 import EmptyState from '../../Components/EmptyState'
-import ListRow, { ListRowMeta, ListRowTitle } from '../../Components/ListRow'
+import ListRow, { ListRowMeta, ListRowTitle, pictureBox } from '../../Components/ListRow'
 import ListSummaryRow, { type ListSummary as RowSummary } from '../../Components/ListSummaryRow'
 import Menu, { MenuItem, MoreButtonContent } from '../../Components/Menu'
 import PageHeader from '../../Components/PageHeader'
@@ -354,12 +354,7 @@ function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
                 slots={2}
                 thumb={
                     cove.image ? (
-                        <img
-                            src={cove.image}
-                            alt=""
-                            loading="lazy"
-                            className="h-12 w-12 shrink-0 rounded-lg border border-line bg-cream object-contain p-1"
-                        />
+                        <img src={cove.image} alt="" loading="lazy" className={pictureBox} />
                     ) : (
                         <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                             <ToolIcon name="gift" className="h-5 w-5" />
