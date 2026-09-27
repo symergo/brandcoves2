@@ -15,7 +15,7 @@ ideas already"*.
 
 Three parts:
 
-1. **The bar**: one line directly under the site header, in every market and language.
+1. **The bar**: one line above the site header, in every market and language.
 2. **The page** `/{market}/contribute`, headed "Denk mee" (nl), "Contribute" (en), "Contribuez"
    (fr), "Contribuye" (es): the feedback form, the board of ideas with votes, and a form to suggest
    one.
@@ -51,9 +51,14 @@ is one short line on a phone; the long sentence would wrap to two there.
 target, and the sentence is what people read and tap. Only the close button sits outside it.
 Hovering anywhere underlines "Denk mee".
 
-**Quiet on purpose.** The card background, muted text, 14px, a small line icon. It is the market
-bar's recipe (Components/MarketBar), so the two read as the same kind of thing: information you can
-act on or ignore. No solid accent: that belongs to the one main action of each page.
+**Above the header, and tinted** (owner, 2026-09-27, the same day it was built: "find a better
+place", "i prefer more visible", "what do you think of above the page?"). It first sat under the
+header in the card colour, where it read as part of the page and was easy to miss. Now it takes the
+market bar's slot above the header: the two never show together (below), so the top of the page
+holds one question to the visitor at a time, and up there it reads as the site asking. A floating
+tab was considered and not built: on a phone it would sit over the page, beside the save toast and
+the cookie banner. The tint is the accent at 10% with the icon on every width; never the solid
+accent, which belongs to the one main action of each page.
 
 **Closing is remembered in a cookie the server reads, not in localStorage.** The pages are
 server-rendered. With localStorage the server cannot know the bar was closed, so it would draw the
