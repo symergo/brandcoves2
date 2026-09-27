@@ -13,6 +13,8 @@ use App\Http\Controllers\ClaimIntentController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\CommunityCoveController;
+use App\Http\Controllers\ContributeBarController;
+use App\Http\Controllers\ContributeController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
@@ -153,6 +155,11 @@ Route::post('/market', MarketPreferenceController::class)->name('market.choose')
 // switcher is — consent is about the visitor, not the catalogue they are in.
 Route::post('/consent', CookieConsentController::class)->name('consent.choose');
 
+// Closing the contribute bar under the header. Unprefixed and POST-only, like
+// the two above: it is about this visitor, and only the bar's own close
+// button may write it. See App\Support\ContributeBar.
+Route::post('/contribute-bar', ContributeBarController::class)->name('contribute-bar.close');
+
 /*
  * Where Google sends the visitor back. Unprefixed, and it has to be.
  *
@@ -285,6 +292,29 @@ Route::prefix('{market}')->group(function () {
     Route::get('/feedback', fn (CurrentMarket $current) => redirect($current->url('help'), 301))
         ->name('feedback');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+
+    /*
+     * "Denk mee": feedback, the ideas we are weighing, voting on them and
+     * suggesting one (docs/features/contribute.md). The page is open to
+     * guests; voting and suggesting need an account. `/contribute` in every
+     * language, like `/people`: the heading is translated, the path is not.
+     */
+    Route::get('/contribute', [ContributeController::class, 'index'])->name('contribute');
+
+    Route::middleware('auth')->group(function () {
+        Route::post('/contribute/ideas/{idea}/vote', [ContributeController::class, 'vote'])
+            ->whereNumber('idea')
+            ->middleware('throttle:60,1')
+            ->name('contribute.vote');
+        Route::delete('/contribute/ideas/{idea}/vote', [ContributeController::class, 'unvote'])
+            ->whereNumber('idea')
+            ->middleware('throttle:60,1')
+            ->name('contribute.unvote');
+        // A burst limit; the daily one is FeatureSuggestions::PER_DAY.
+        Route::post('/contribute/suggestions', [ContributeController::class, 'suggest'])
+            ->middleware('throttle:10,1')
+            ->name('contribute.suggest');
+    });
 
     // The slug is decoration; the id is identity. A stale slug redirects rather
     // than 404s, so old shared links keep working after a retitle.

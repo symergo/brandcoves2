@@ -55,6 +55,7 @@ is true now.
 | [search-alerts.md](search-alerts.md) | Search / Alerts | Active — in-app only |
 | [list-price-watch.md](list-price-watch.md) | Wishlist / Alerts | Active — one digest a morning |
 | [feedback.md](feedback.md) | Core / Quality | Active |
+| [contribute.md](contribute.md) | Core / Community | Active — `/contribute` ("Denk mee"): the feedback form, a voting board the owner runs at /admin (Community > Feature ideas), suggestions published by hand; a closable bar under the header on every page (2026-09-27) |
 | [product-description.md](product-description.md) | Catalogue / Frontend | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect works for ASINs imported with a barcode (page import) |
 | [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |

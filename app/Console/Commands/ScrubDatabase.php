@@ -74,6 +74,15 @@ class ScrubDatabase extends Command
             // would sign somebody in on a laptop.
             DB::statement('DELETE FROM friend_invite_tokens');
 
+            /*
+             * Feature suggestions no one but their author and the admin has
+             * seen (docs/features/contribute.md): free text from a real
+             * account, waiting or rejected. Published ideas are already public
+             * and stay, so the board looks like production; their votes point
+             * at the scrubbed accounts above.
+             */
+            DB::statement("DELETE FROM feature_ideas WHERE source = 'visitor' AND moderation <> 'published'");
+
             DB::statement(<<<'SQL'
                 UPDATE recipients
                 SET name = 'Recipient ' || left(id::text, 8),

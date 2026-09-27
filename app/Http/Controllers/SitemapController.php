@@ -117,6 +117,9 @@ class SitemapController extends Controller
                      * twice.
                      */
                     ['loc' => url("/{$resolved->value}/help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
+                    // The contribute page, footer-linked and indexable, for the
+                    // same reason (docs/features/contribute.md).
+                    ['loc' => url("/{$resolved->value}/contribute"), 'priority' => '0.3', 'changefreq' => 'weekly'],
 
                     ['loc' => url($resolved->covePath()), 'priority' => '0.9', 'changefreq' => 'daily'],
                     ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],

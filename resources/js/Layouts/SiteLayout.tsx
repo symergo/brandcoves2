@@ -4,6 +4,7 @@ import AccountSheet from '../Components/AccountSheet'
 import AddingToBar from '../Components/AddingToBar'
 import { buttonClasses } from '../Components/Button'
 import CookieBanner from '../Components/CookieBanner'
+import ContributeBar from '../Components/ContributeBar'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
@@ -708,6 +709,11 @@ function Chrome({ children }: PropsWithChildren) {
                 )}
             </header>
 
+            {/* Directly under the header, in the flow: feedback, suggestions
+                and votes are welcome (owner, 2026-09-27). One short line,
+                closable for a year; see Components/ContributeBar. */}
+            <ContributeBar />
+
             {/*
               The adding-mode bar sits directly under the header, outside
               `<main>`, because it is chrome rather than page content — it
@@ -796,6 +802,12 @@ function Chrome({ children }: PropsWithChildren) {
                             </Link>
                             <Link href={`/${market.key}/help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
                                 {t('nav.how_it_works')}
+                            </Link>
+                            {/* Feedback, the ideas board and suggestions
+                                (2026-09-27). Here as well as in the bar under
+                                the header, because the bar can be closed. */}
+                            <Link href={`/${market.key}/contribute`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('contribute.title')}
                             </Link>
                         </nav>
 

@@ -15,7 +15,18 @@ import { useTranslations } from '../useTranslations'
  * a prefilled path, an optional address that says what it is for, and the
  * `website` honeypot that is hidden from people and from screen readers alike.
  */
-export default function FeedbackForm({ path }: { path: string | null }) {
+export default function FeedbackForm({
+    path,
+    autoFocus = true,
+}: {
+    path: string | null
+    /**
+     * On /help the form is what somebody scrolled down for. On the contribute
+     * page it is one of three sections, and grabbing the focus (and a phone's
+     * keyboard) on arrival would put the board out of sight.
+     */
+    autoFocus?: boolean
+}) {
     const { t } = useTranslations()
     const { market, auth } = usePage<SharedProps>().props
     const base = `/${market.key}`
@@ -56,7 +67,7 @@ export default function FeedbackForm({ path }: { path: string | null }) {
                         <span className="sr-only">{t('feedback.message_label')}</span>
                         <textarea
                             required
-                            autoFocus
+                            autoFocus={autoFocus}
                             rows={7}
                             minLength={10}
                             maxLength={4000}

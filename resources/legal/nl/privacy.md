@@ -45,6 +45,7 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Prijs- en voorraadmeldingen | De melding sturen waar je om vroeg | Overeenkomst (art. 6(1)(b)) |
 | E-mailadres nieuwsbrief, bevestigingsdatum, IP bij inschrijving | De mail sturen, en toestemming kunnen aantonen | Toestemming (art. 6(1)(a)) |
 | Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
+| Op de pagina Denk mee: op welke ideeën je stemde, en de functies die je voorstelt | Elke stem één keer tellen, en je voorstel lezen | Gerechtvaardigd belang (art. 6(1)(f)): het onze om te weten wat we best bouwen, en het jouwe om meegeteld te worden |
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
 | Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Wil je geen uitnodigingen meer ontvangen?" is het bezwaar |
@@ -132,6 +133,18 @@ ernaar. Het lid krijgt van geen van beide iets te horen.
 
 Werd je uitgenodigd en wil je dat we het adres verwijderen, schrijf dan naar
 {{privacy_email}}.
+
+### De pagina Denk mee
+
+Stemmen en een functie voorstellen kan alleen met een account, dus we bewaren
+op welke ideeën je account stemde en wat je voorstelde. Andere bezoekers zien
+alleen hoeveel stemmen een idee heeft, nooit wie stemde, en nooit wie een idee
+voorstelde. Een voorstel leest eerst iemand van ons voor het op de pagina kan
+komen; tot dan zien alleen jij en wij het. Een stem trek je altijd weer in. Je
+stemmen verdwijnen als je je account verwijdert. Een voorstel dat op de pagina
+staat, blijft daar na het verwijderen van je account, zonder enig verband met
+jou; een voorstel dat we niet op de pagina zetten, verwijderen we 365 dagen na
+die beslissing.
 
 ### Geen geautomatiseerde besluitvorming
 
@@ -223,6 +236,8 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Inschrijving nieuwsbrief | Tot je je uitschrijft |
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |
 | Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
+| Je stemmen op de pagina Denk mee | Tot je een stem intrekt, het idee verdwijnt, of je je account verwijdert |
+| Een functie die je voorstelde en die we niet op de pagina zetten | 365 dagen na die beslissing |
 | Keuzes via een Dit of dat samen-link | 180 dagen, daarna ook de link zodra er geen keuzes meer op staan |
 | Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
 | Een uitnodiging die nog niemand aannam (het uitgenodigde adres) | Tot die persoon inlogt, of 365 dagen nadat het lid hen voor het laatst uitnodigde |
@@ -255,8 +270,8 @@ Onder de AVG kun je:
 Schrijf naar {{privacy_email}}. We antwoorden binnen een maand, kosteloos, en
 vragen je niet om je verzoek te motiveren.
 
-Je account verwijderen wist je lijstjes, je ontvangers, je meldingen en je
-berichten. Dat gebeurt meteen en is niet terug te draaien.
+Je account verwijderen wist je lijstjes, je ontvangers, je meldingen, je
+berichten en je stemmen. Dat gebeurt meteen en is niet terug te draaien.
 
 Vind je dat we slecht met je gegevens omgaan, dan kun je klacht indienen bij de
 Gegevensbeschermingsautoriteit, Drukpersstraat 35, 1000 Brussel,
@@ -265,7 +280,7 @@ EU-land waar je woont.
 
 ## Cookies
 
-Vier die nodig zijn voor iets waar je om gevraagd hebt:
+Vijf die nodig zijn voor iets waar je om gevraagd hebt:
 
 - **Sessie:** houdt je ingelogd.
 - **Bezoekersidentificatie:** laat een lijstje werken vóór je een account hebt.
@@ -273,9 +288,11 @@ Vier die nodig zijn voor iets waar je om gevraagd hebt:
 - **Markt:** onthoudt welk land en welke taal je koos.
 - **CSRF-token:** verhindert dat een andere site formulieren in jouw naam
   verstuurt.
+- **Denk mee-balk:** onthoudt een jaar lang dat je de balk onder de kop sloot
+  die je uitnodigt om feedback te geven, zodat hij dicht blijft.
 
 Artikel 5(3) van de e-Privacyrichtlijn vereist toestemming voor cookies die niet
-strikt noodzakelijk zijn. Deze vier zijn dat wel, dus daarvoor is geen
+strikt noodzakelijk zijn. Deze vijf zijn dat wel, dus daarvoor is geen
 toestemming nodig.
 
 En twee die dat niet zijn, en waar we het daarom over hebben:
