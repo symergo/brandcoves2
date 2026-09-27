@@ -172,19 +172,21 @@ owner's list of 2026-09-27, checked against [strategy.md](../strategy.md) and th
 | Een Cove volgen | considering | only the Daily Cove by email exists (cove-subscriptions.md) |
 | Een knop in je browser | considering | the extension in `extension/` is an editors' import tool with an API key, not this |
 | Verjaardagen in je eigen agenda | considering | no calendar feed exists |
+| Zoeken op wat je bedoelt | **done** | intent search, built 2026-09-26 (intent-search.md) |
+| Een productpagina met meer | **done** | price range, saved by, found in Coves, built 2026-09-26 (product-signals.md) |
+| Openbare Coves | **done** | publishing a list as a Community Cove, built 2026-09-26 |
 
-**Only what is truly new** (owner, the same day, before the board went live: "check the features
-listed: what is truly a new idea, remove the implemented ones or the ones that we are implementing.
-Truly new is eg a browser plugin"). The first seed had eleven. Eight came off:
+**Open ideas only when truly new; built ones stay as done** (owner, the same day, before the board
+went live). First: "check the features listed: what is truly a new idea, remove the implemented ones or
+the ones that we are implementing. Truly new is eg a browser plugin". Five came off because they were
+our own plans or the owner's open decisions, not visitors' wishes: friends saved as people (step 3 of
+my-people.md), a shorter interest list, price watch on every list at once, Spanish gift pages, the
+Secret Friend draw on a profile. A board of what we already mean to do asks visitors to vote on our
+to-do list.
 
-- three already built on 2026-09-26: search that reads what you mean (intent-search.md), the fuller
-  product page (product-signals.md), publishing a list as a Community Cove;
-- five that were our own plans or the owner's open decisions, not visitors' wishes: friends saved as
-  people (step 3 of my-people.md), a shorter interest list, price watch on every list at once, Spanish
-  gift pages, the Secret Friend draw on a profile.
-
-A board of what we already do or already mean to do asks visitors to vote on our to-do list. New
-ideas come from visitors' suggestions from here on, and from the owner in the admin.
+Then: "you can keep the already built part, also add in the future". So the three built ones stay as
+**done**, and **every feature a visitor would notice gets an entry here as `done` when it ships**, in
+four languages, described as it works. "Al gebouwd" on the board is where that shows.
 
 **Seeding.** `php artisan bc:seed-feature-ideas` (`--dry-run`, `--replace`) is idempotent, matched on
 `seed_key`, and never overwrites an idea edited in the admin: saving a shipped idea there turns its

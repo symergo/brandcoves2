@@ -17,16 +17,18 @@ declare(strict_types=1);
  * ## What may be written here
  *
  * - **No dates and no promises.** "Planned" is a status, not a deadline.
- * - **Only ideas that are truly new** (owner, 2026-09-27: "remove the
- *   implemented ones or the ones that we are implementing. Truly new is eg a
- *   browser plugin"). The first seed also carried three things already built
- *   (search that reads what you mean, the fuller product page, publishing a
- *   list as a Community Cove) as `done`, and five that were our own plans or
- *   open decisions (friends saved as people, a shorter interest list, price
- *   watch on every list, Spanish gift pages, the Secret Friend draw on a
- *   profile). All eight were taken off before the board went live. The
- *   browser button stays: the extension in `extension/` is for editors
- *   importing shelves, not for visitors adding to their own lists.
+ * - **Open ideas only when they are truly new** (owner, 2026-09-27: "remove
+ *   the implemented ones or the ones that we are implementing. Truly new is
+ *   eg a browser plugin"). Five that were our own plans or open decisions
+ *   came off before the board went live (friends saved as people, a shorter
+ *   interest list, price watch on every list, Spanish gift pages, the Secret
+ *   Friend draw on a profile). The browser button stays: the extension in
+ *   `extension/` is for editors importing shelves, not visitors.
+ * - **What is built stays, as `done`** (owner, the same day: "you can keep
+ *   the already built part, also add in the future"). Every feature a
+ *   visitor would notice gets an entry here with status `done` when it
+ *   ships, in all four languages, described as it works; that is what "Al
+ *   gebouwd" on the board is for.
  * - **Nothing about Amazon.**
  * - Plain words, in all four languages. `sort` orders ideas that share a
  *   status before the votes do (FeatureBoard).
@@ -104,4 +106,64 @@ return [
 
 
 
+    'search-for-what-you-mean' => [
+        'status' => 'done',
+        'sort' => 10,
+        'nl' => [
+            'title' => 'Zoeken op wat je bedoelt',
+            'body' => 'Typ in het zoekvak wat je zoekt, zoals "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We tonen wat we begrepen (voor wie, waarvan die houdt, je budget) en meteen ideeën die passen. Elk stukje haal je met één tik weg.',
+        ],
+        'en' => [
+            'title' => 'Search for what you mean',
+            'body' => 'Type what you are looking for, like "gift for my sister who loves gardening, €30-€50". We show what we understood (who it is for, what they love, your budget) and ideas that fit straight away. Remove any part with one tap.',
+        ],
+        'fr' => [
+            'title' => 'Chercher ce que vous voulez dire',
+            'body' => 'Tapez ce que vous cherchez, par exemple « cadeau pour ma sœur qui aime le jardinage, 30-50 € ». Nous montrons ce que nous avons compris (pour qui, ce que cette personne aime, votre budget) et tout de suite des idées qui correspondent. Chaque élément se retire en un geste.',
+        ],
+        'es' => [
+            'title' => 'Buscar lo que quieres decir',
+            'body' => 'Escribe lo que buscas, como «regalo para mi hermana a la que le encanta la jardinería, 30-50 €». Mostramos lo que entendimos (para quién es, qué le gusta, tu presupuesto) y enseguida ideas que encajan. Quita cualquier parte con un toque.',
+        ],
+    ],
+    'fuller-product-page' => [
+        'status' => 'done',
+        'sort' => 20,
+        'nl' => [
+            'title' => 'Een productpagina met meer',
+            'body' => 'De pagina van een product toont de prijs bij elke winkel, hoeveel mensen het op een lijst bewaarden en in welke Coves het staat, met verwante ideeën eronder. Alleen aantallen, nooit wie.',
+        ],
+        'en' => [
+            'title' => 'A product page with more',
+            'body' => 'A product\'s page shows the price at every shop, how many people saved it to a list and which Coves it is in, with related ideas below. Only counts, never who.',
+        ],
+        'fr' => [
+            'title' => 'Une page produit plus complète',
+            'body' => "La page d'un produit montre le prix dans chaque boutique, combien de personnes l'ont gardé sur une liste et dans quelles Coves il se trouve, avec des idées proches en dessous. Seulement des nombres, jamais qui.",
+        ],
+        'es' => [
+            'title' => 'Una página de producto más completa',
+            'body' => 'La página de un producto muestra el precio en cada tienda, cuántas personas lo guardaron en una lista y en qué Coves aparece, con ideas relacionadas debajo. Solo cifras, nunca quién.',
+        ],
+    ],
+    'public-coves' => [
+        'status' => 'done',
+        'sort' => 30,
+        'nl' => [
+            'title' => 'Openbare Coves',
+            'body' => 'Maak een van je lijsten openbaar als Community Cove, onder Delen. Iedereen kan hem dan vinden, bewaren of er een eigen lijst van maken. Namen, notities en wat al gekocht is blijven verborgen.',
+        ],
+        'en' => [
+            'title' => 'Public Coves',
+            'body' => 'Publish one of your lists as a Community Cove, under Share. Anyone can then find it, save it or make it their own list. Names, notes and what has been bought stay hidden.',
+        ],
+        'fr' => [
+            'title' => 'Des Coves publiques',
+            'body' => 'Publiez une de vos listes comme Cove de la communauté, sous Partager. Tout le monde peut alors la trouver, la garder ou en faire sa propre liste. Les noms, les notes et ce qui a déjà été acheté restent cachés.',
+        ],
+        'es' => [
+            'title' => 'Coves públicas',
+            'body' => 'Publica una de tus listas como Cove de la comunidad, en Compartir. Cualquiera puede encontrarla, guardarla o convertirla en su propia lista. Los nombres, las notas y lo que ya se compró siguen ocultos.',
+        ],
+    ],
 ];
