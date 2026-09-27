@@ -113,6 +113,7 @@ return [
         'open_link' => '¿Has encontrado algo en tu web favorita? Pega el enlace.',
         'open_scan' => '¿Has visto algo en una tienda? Escanéalo.',
         'open_search' => '¿Sabes qué producto es? Búscalo.',
+        'open_photo' => '¿No está en línea? Hazle una foto y añádelo.',
         'open_sources' => 'Grandes tiendas online · Creadores independientes · La tienda de la esquina',
         'open_cta' => 'Añadir algo a GiftCoves',
         'daily_title' => 'Algo interesante cada día: una Cove nueva de productos e ideas.',

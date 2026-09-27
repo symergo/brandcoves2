@@ -113,6 +113,7 @@ return [
         'open_link' => 'Iets gevonden op je favoriete website? Plak de link.',
         'open_scan' => 'Iets gezien in een winkel? Scan het.',
         'open_search' => 'Weet je welk product? Zoek het.',
+        'open_photo' => 'Offline? Neem een foto en voeg het toe.',
         'open_sources' => 'Grote webwinkels · Zelfstandige makers · De winkel om de hoek',
         'open_cta' => 'Voeg iets toe aan GiftCoves',
         'daily_title' => 'Elke dag iets interessants: een nieuwe Cove vol producten en ideeën.',

@@ -114,6 +114,7 @@ return [
         'open_link' => 'Trouvé quelque chose sur votre site préféré ? Collez le lien.',
         'open_scan' => 'Vu quelque chose en magasin ? Scannez-le.',
         'open_search' => 'Vous connaissez le produit ? Cherchez-le.',
+        'open_photo' => 'Hors ligne ? Prenez une photo et ajoutez-la.',
         'open_sources' => 'Grandes boutiques en ligne · Créateurs indépendants · Le magasin du coin',
         'open_cta' => 'Ajouter quelque chose à GiftCoves',
         'daily_title' => 'Quelque chose d’intéressant chaque jour : une nouvelle Cove de produits et d’idées.',

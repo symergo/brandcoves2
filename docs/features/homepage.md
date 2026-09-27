@@ -26,7 +26,7 @@ bottom (`Pages/Home.tsx`):
    "Zoek alles · Voeg alles toe · Deel alles" and linked nowhere.
 2. **Three ways in**, one per audience: a gift (Find a gift, `/gift`), a wish list (Create my Cove),
    browsing (`/coves`).
-3. **From anywhere.** Paste a link, scan it, search it; the sources named generically ("Big online
+3. **From anywhere.** Paste a link, scan it, search it, or, when it is not sold online, take a photo and add it (the picture icon, added 2026-09-27 at the owner's request; four items, so the row is 2 or 4 columns, never 3); the sources named generically ("Big online
    shops · Independent makers · The shop round the corner"), never other companies' names
    (owner's decision: Amazon's terms restrict the use of its name and marks).
 4. **Coves**: six cards, drawn at random from published non-daily Coves and held for an hour per

@@ -154,10 +154,13 @@ export default function Home({ today, coves, collected = [] }: Props) {
                     </h2>
                     <p className="mt-2 max-w-2xl text-ink-soft">{t('home.open_intro')}</p>
 
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-3">
+                    {/* Four ways, so 2 or 4 columns: 3 would leave the fourth alone on a row. */}
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <OpenWay icon="link" text={t('home.open_link')} />
                         <OpenWay icon="barcode" text={t('home.open_scan')} />
                         <OpenWay icon="search" text={t('home.open_search')} />
+                        {/* Offline items with a photo (owner, 2026-09-27). */}
+                        <OpenWay icon="picture" text={t('home.open_photo')} />
                     </ul>
 
                     <p className="mt-6 text-xs tracking-wide text-ink-soft uppercase">{t('home.open_sources')}</p>

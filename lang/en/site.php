@@ -174,6 +174,7 @@ return [
         'open_link' => 'Found something on your favourite website? Paste the link.',
         'open_scan' => 'See something in a shop? Scan it.',
         'open_search' => 'Know the product? Search it.',
+        'open_photo' => 'Offline? Take a photo and add it.',
         // Generic on purpose: never other companies' names (owner, 2026-09-26).
         'open_sources' => 'Big online shops · Independent makers · The shop round the corner',
         'open_cta' => 'Add something to GiftCoves',
