@@ -38,6 +38,32 @@ class OneStepListTest extends TestCase
         $this->assertNull($list->recipient_id);
     }
 
+    /**
+     * The wizard's person cards (PersonPicker, consistency review round 3)
+     * show the relationship in the reader's words and the next birthday with
+     * its countdown, as Find a gift's cards do.
+     */
+    #[Test]
+    public function the_wizard_offers_people_with_what_their_cards_show(): void
+    {
+        $this->travelTo('2026-03-01 10:00:00');
+        $owner = User::factory()->create();
+        Recipient::factory()->create([
+            'owner_user_id' => $owner->id,
+            'name' => 'Ans',
+            'relationship' => 'mother',
+            'birthday' => '1960-03-11',
+        ]);
+
+        $this->actingAs($owner)->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page
+                ->where('recipients.0.name', 'Ans')
+                ->where('recipients.0.relationship', 'Mama')
+                ->where('recipients.0.next.date', '2026-03-11')
+                ->where('recipients.0.next.days', 10)
+                ->where('recipients.0.next.kind', 'birthday'));
+    }
+
     #[Test]
     public function someone_else_makes_a_gift_list_named_for_them(): void
     {

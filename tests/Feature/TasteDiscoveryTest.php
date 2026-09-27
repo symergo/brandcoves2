@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Services\Ai\AiClient;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
+use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -223,6 +225,57 @@ class TasteDiscoveryTest extends TestCase
         $emma = Recipient::query()->where('name', 'Emma')->sole();
         $this->assertSame($user->id, $emma->owner_user_id);
         $this->assertSame(['cooking'], $emma->interests);
+    }
+
+    /**
+     * The people cards offer friends too (consistency review round 3): a
+     * friend nobody saved becomes the linked person My people merges with
+     * them, the second time reuses that person, and only a real friend may
+     * be named.
+     */
+    #[Test]
+    public function a_result_is_kept_on_a_friend_as_their_linked_person(): void
+    {
+        $user = User::factory()->create();
+        $sam = User::factory()->create(['name' => 'Sam']);
+        app(Friends::class)->link($user, $sam);
+
+        $this->actingAs($user)
+            ->postJson('/be-nl/gift/taste/save', ['choices' => $this->cookingChoices(), 'friend_id' => $sam->id])
+            ->assertOk()
+            ->assertJson(['name' => 'Sam']);
+
+        $person = Recipient::query()->where('owner_user_id', $user->id)->sole();
+        $this->assertSame($sam->id, $person->user_id);
+        $this->assertSame(RecipientStatus::Linked, $person->status);
+        $this->assertSame(['cooking'], $person->interests);
+
+        // Again: the same person, not a second one.
+        $this->actingAs($user)
+            ->postJson('/be-nl/gift/taste/save', ['choices' => $this->cookingChoices(), 'friend_id' => $sam->id])
+            ->assertOk();
+        $this->assertSame(1, Recipient::query()->where('owner_user_id', $user->id)->count());
+
+        // A stranger's account is not a friend.
+        $this->actingAs($user)
+            ->postJson('/be-nl/gift/taste/save', ['choices' => $this->cookingChoices(), 'friend_id' => User::factory()->create()->id])
+            ->assertNotFound();
+        $this->assertSame(1, Recipient::query()->where('owner_user_id', $user->id)->count());
+    }
+
+    #[Test]
+    public function the_result_offers_your_people_as_cards_with_friends(): void
+    {
+        $user = User::factory()->create();
+        $sam = User::factory()->create(['name' => 'Sam']);
+        app(Friends::class)->link($user, $sam);
+        Recipient::factory()->create(['owner_user_id' => $user->id, 'name' => 'Mama']);
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift/taste', ['choices' => $this->cookingChoices()])
+            ->assertInertia(fn ($page) => $page
+                ->has('people', 2)
+                ->where('people', fn ($people) => collect($people)->contains(fn ($p) => $p['friend']['id'] ?? null) === true));
     }
 
     #[Test]

@@ -484,15 +484,7 @@ class MyPeople
      */
     public function relationshipLabel(?string $relationship): ?string
     {
-        $relationship = trim((string) $relationship);
-
-        if ($relationship === '') {
-            return null;
-        }
-
-        $type = RecipientType::tryFrom(mb_strtolower($relationship));
-
-        return $type === null ? $relationship : $type->label();
+        return RecipientType::describe($relationship);
     }
 
     /**

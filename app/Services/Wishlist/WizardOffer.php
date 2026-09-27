@@ -7,6 +7,7 @@ namespace App\Services\Wishlist;
 use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\Market;
+use App\Enums\RecipientType;
 use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\User;
@@ -14,6 +15,7 @@ use App\Models\Wishlist;
 use App\Services\Social\Friends;
 use App\Support\DayAndMonth;
 use App\Support\Owner;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 /**
@@ -36,8 +38,8 @@ final class WizardOffer
 
     /**
      * @return array{
-     *     friends: list<array{id: int, name: string, recipientId: string|null, birthday: string|null}>,
-     *     recipients: list<array{id: string, name: string, birthday: string|null}>,
+     *     friends: list<array{id: int, name: string, recipientId: string|null, relationship: string|null, birthday: string|null, next: array{date: string, days: int, kind: string, title: null}|null}>,
+     *     recipients: list<array{id: string, name: string, relationship: string|null, birthday: string|null, next: array{date: string, days: int, kind: string, title: null}|null}>,
      *     occasions: list<array{value: string, label: string, date: string|null}>,
      *     myLists: list<array{id: string, title: string}>,
      * }
@@ -58,6 +60,20 @@ final class WizardOffer
             ? null
             : $this->dates->for(EventType::Birthday, $market, $birthday)?->toDateString();
 
+        /*
+         * The same birthday as the date line on a person's card
+         * (`PersonPicker`, consistency review round 3, 2026-09-27): the date
+         * and how many days away, in the shape My people sends, so the list
+         * wizard draws the card Find a gift draws.
+         */
+        $today = CarbonImmutable::today();
+        $next = fn (?string $date) => $date === null ? null : [
+            'date' => $date,
+            'days' => (int) $today->diffInDays(CarbonImmutable::parse($date)),
+            'kind' => 'birthday',
+            'title' => null,
+        ];
+
         return [
             /*
              * **Every** friend, always. Friends who already had a profile with
@@ -73,12 +89,19 @@ final class WizardOffer
              * "Birthday" rather than ask for something it is holding.
              */
             'friends' => $friendships
-                ->map(fn (Friendship $friendship) => [
-                    'id' => $friendship->friend_id,
-                    'name' => $friendship->friend->displayName(),
-                    'recipientId' => $linked->get($friendship->friend_id)?->id,
-                    'birthday' => $nextBirthday($this->birthdayOf($friendship, $linked)),
-                ])
+                ->map(function (Friendship $friendship) use ($linked, $nextBirthday, $next) {
+                    $birthday = $nextBirthday($this->birthdayOf($friendship, $linked));
+
+                    return [
+                        'id' => $friendship->friend_id,
+                        'name' => $friendship->friend->displayName(),
+                        'recipientId' => $linked->get($friendship->friend_id)?->id,
+                        // What you called them on the profile you keep, if any.
+                        'relationship' => RecipientType::describe($linked->get($friendship->friend_id)?->relationship),
+                        'birthday' => $birthday,
+                        'next' => $next($birthday),
+                    ];
+                })
                 ->values()
                 ->all(),
 
@@ -87,11 +110,17 @@ final class WizardOffer
             'recipients' => $recipients
                 ->reject(fn (Recipient $r) => $r->user_id !== null
                     && $friendships->contains('friend_id', $r->user_id))
-                ->map(fn (Recipient $r) => [
-                    'id' => $r->id,
-                    'name' => $r->name,
-                    'birthday' => $nextBirthday(DayAndMonth::fromDate($r->birthday)),
-                ])
+                ->map(function (Recipient $r) use ($nextBirthday, $next) {
+                    $birthday = $nextBirthday(DayAndMonth::fromDate($r->birthday));
+
+                    return [
+                        'id' => $r->id,
+                        'name' => $r->name,
+                        'relationship' => RecipientType::describe($r->relationship),
+                        'birthday' => $birthday,
+                        'next' => $next($birthday),
+                    ];
+                })
                 ->values()
                 ->all(),
 

@@ -6,6 +6,7 @@ import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import PageHeader from '../../Components/PageHeader'
+import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
 import { send } from '../../http'
 import { formatBudget, formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -74,6 +75,8 @@ interface Props {
     rounds: Round[]
     result: Result | null
     recipients: { id: string; name: string }[]
+    /** My people's rows, friends included, for "Bewaar bij …". Signed in, on the result only. */
+    people?: PickablePerson[]
     canCreate: boolean
     /** A "help me find out" link that already has as many players as it takes. */
     full?: boolean
@@ -570,7 +573,7 @@ function joinList(items: string[], and: string): string {
     return `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`
 }
 
-function Outcome({ mode, person, urls, result, recipients, canCreate, carried }: Props & { result: Result }) {
+function Outcome({ mode, person, urls, result, recipients, people = [], canCreate, carried }: Props & { result: Result }) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const { profile, picks } = result
@@ -706,6 +709,7 @@ function Outcome({ mode, person, urls, result, recipients, canCreate, carried }:
                             urls={urls}
                             choices={result.choices}
                             recipients={recipients}
+                            people={people}
                             canCreate={canCreate}
                             first={carried?.person?.id ?? null}
                         />
@@ -752,12 +756,14 @@ function KeepOnPerson({
     urls,
     choices,
     recipients,
+    people,
     canCreate,
     first = null,
 }: {
     urls: Props['urls']
     choices: Choice[]
     recipients: Props['recipients']
+    people: PickablePerson[]
     canCreate: boolean
     /** The person "Find a gift" said this is for: offered first. */
     first?: string | null
@@ -768,7 +774,7 @@ function KeepOnPerson({
     const [message, setMessage] = useState<string | null>(null)
     const [failed, setFailed] = useState(false)
 
-    const save = (target: { recipient_id: string } | { name: string }, key: string) => {
+    const save = (target: { recipient_id: string } | { friend_id: number } | { name: string }, key: string) => {
         setBusy(key)
         setFailed(false)
         send<{ name: string; tasteWritten: boolean }>(urls.save, 'POST', { choices, ...target })
@@ -788,10 +794,16 @@ function KeepOnPerson({
      */
     useEffect(() => {
         if (first !== null && recipients.some((r) => r.id === first)) {
-            save({ recipient_id: first }, first)
+            save({ recipient_id: first }, `p:${first}`)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    // My people's rows when signed in; otherwise the saved people, by name.
+    const cards: PickablePerson[] =
+        people.length > 0
+            ? people
+            : recipients.map((r) => ({ key: `p:${r.id}`, name: r.name, personId: r.id, friend: null }))
 
     if (message) {
         return (
@@ -806,20 +818,24 @@ function KeepOnPerson({
             <h3 className="font-medium">{t('gift.taste.save_title')}</h3>
             <p className="mt-1 text-sm text-ink-soft">{t('gift.taste.save_hint')}</p>
 
-            {recipients.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {[...recipients].sort((a, b) => Number(b.id === first) - Number(a.id === first)).map((r) => (
-                        <Button
-                            key={r.id}
-                            variant="secondary"
-                            size="sm"
-                            busy={busy === r.id}
-                            disabled={busy !== null}
-                            onClick={() => save({ recipient_id: r.id }, r.id)}
-                        >
-                            {t('gift.taste.save_for', { name: r.name })}
-                        </Button>
-                    ))}
+            {/*
+              The people cards (consistency review round 3, 2026-09-27), where
+              this was a row of "Bewaar voor …" buttons with a name each. A
+              press still saves at once; a friend nobody saved yet is saved as
+              a person by the same request (`friend_id`). The person Find a
+              gift passed along goes first.
+            */}
+            {cards.length > 0 && (
+                <div className="mt-4">
+                    <PersonPicker
+                        variant="compact"
+                        people={[...cards].sort((a, b) => Number(b.personId === first) - Number(a.personId === first))}
+                        isChosen={() => false}
+                        onChoose={(p) => save(p.personId !== null ? { recipient_id: p.personId } : { friend_id: p.friend?.id ?? 0 }, p.key)}
+                        busyKey={busy}
+                        disabled={busy !== null}
+                        trailing={(p) => t('gift.taste.save_for', { name: p.name })}
+                    />
                 </div>
             )}
 
