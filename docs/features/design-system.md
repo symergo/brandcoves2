@@ -1,7 +1,7 @@
 ---
 name: Design system
 area: Frontend / Brand
-status: Active — tokens, Button, Badge, the navigation beam; most call sites not yet migrated
+status: Active — tokens, Button, Badge, the navigation beam, and since 2026-09-27 shared rows, popups, headers and empty states; most call sites not yet migrated
 date_added: 2026-09-06
 ---
 
@@ -92,6 +92,9 @@ waits its turn, and the description has the same ~70-character measure as every 
   across 36 files (counted 2026-09-15), including the list wizard that replaced the list create
   form.
 - Three h1 tiers with no rule for which page gets which; two prose measures on editorial pages.
+  *Partly settled 2026-09-27:* `PageHeader` has two sizes and a rule (an overview is `lg`, one
+  thing inside it `md`), applied to the list, people, Santa, question and taste pages; the other
+  pages still pick their own.
 - Four icon stroke widths. The glyph characters that stood in for icons (`▲ ▼ ✕ × ✓ ♥ ♡`, the
   header's 🔔, the notification emoji, the Daily's 👍 👎) became `ToolIcon`s on 2026-09-27; see
   below.
@@ -286,3 +289,100 @@ status.
 a dynamic prefix in any language. The scan is not committed: it flags about thirty keys that *are*
 used, built from parts (`lists.about_${kind}_${visibility}`), and a test that has to be taught
 every such pattern would be noise.
+
+## The consistency review, round 2 (2026-09-27)
+
+The second round: shared components where the same thing was drawn by hand in several places and
+had begun to say different things. Each is below with the reason it had to be one.
+
+**One row for a list: `ListRow`** (`Components/ListRow.tsx`), with `ListThumb` (one product, a 2×2
+collage of four, or the kind's mark) and the slots `ListRowTitle`, `ListRowMeta`, `ListRowBadges`.
+Mijn Coves, a person's page and the saved Coves under Mijn Coves drew "a list you can open" three
+ways: a row with pictures and outlined actions, a name with a badge and two borderless icons, and
+picture cards three to a row. On a phone the actions sit in the row's top-right corner as icons, and
+the text keeps clear of them by padding sized to how many there are (`slots`), where Mijn Coves had
+`pr-32` whatever the count. Picture boxes are white (owner: "background of the image boxes can be
+white"): product photos are shot on white, and a cream box showed as a cream frame.
+
+**One row for one of your lists: `ListSummaryRow`**, the Mijn Coves row with add, the share popup
+and ⋯, used by Mijn Coves and by "Lijsten voor {naam}" on a person's page. The ⋯ is built by one
+function, `listActionItems()` (`Components/listActions.tsx`), per kind, so the same list offers the
+same actions on both pages; the person's page had two of the six. The server sends the person's
+page the row's shape (`PersonProfile::listsForThem()`), and a delete from a row returns to the page
+it was made on (`stay`).
+
+**One set of sharing controls: `ShareSettings`**, used by the share popup and by the list page's
+share panel. They had drifted: the panel said "Alleen jij en je mensen zien deze lijst" when a
+private wish list was shown to your people while the popup said "privé"; the popup showed each
+switch's explanation on screen and the panel behind an (i); only the panel named the friends who
+can see the list; "Stop met delen" was a button in one and grey text in the other. A privacy
+control that reads differently depending on the door you came in by gets misread. Now one
+component with the panel's wording, conditions and names; how a group collects (the pledge mode)
+stays under Settings, where the owner moved it. `Option`, the choice card, moved to its own file
+and takes `tip` (behind an (i)) and `note` (a visible fact, such as who can see it); a press on an
+opened explanation no longer flips the switch it sits in.
+
+**One popup: `Modal`, and one "are you sure?": `ConfirmDialog` / `useConfirm()`**
+(`Components/Modal.tsx`). `window.confirm()` was used in twelve places: browser chrome, the site's
+address as a title, "OK" as the button that deletes a list, and on some phones a box offering to
+silence the site's dialogs. The site's own popup says what the button does ("Verwijderen", "Stop met
+delen", "Trekken"), puts Cancel first and focused so a stray Enter deletes nothing, and a
+destructive confirmation has a filled red button: `Button`'s new `destructive` variant, the only
+place a filled red button is allowed. `useConfirm()` returns a promise, so each call site kept its
+logic (`if (await confirm({ … }))`). Converted: deleting a list (list page, Mijn Coves, a person's
+page), stopping sharing, unsharing with a friend, handing a list over, taking a Community Cove
+down, the four Secret Santa questions, removing a friend, and deleting a person (a red box under
+the header until now). The share popup, the add popup and the question's share popup are `Modal`s.
+**Verwijder als vriend** moved into the ⋯ on My people and on the person's page, in red.
+
+**One page header: `PageHeader` and `BackLink`** (`Components/PageHeader.tsx`): the way back
+("← Mijn Coves"), the title with what sits beside it (a kind pill, the Santa badge), the (i) note
+under the title, and the page's actions on the right, wrapping under it on a phone. Two sizes with a
+rule: an overview is `lg`, one thing inside it `md` (a list, a person, a group, a question). Applied
+to Mijn Coves, Mijn mensen, the list page, a person's page, the four Secret Santa pages (the group
+and "your draw" pages gained "← Secret Santa"; the join page, for somebody new, has none) and the
+question and This or that pages. The question page's way back was an underlined word with no arrow;
+it is the arrow now. A person's page moved from the `lg` title to `md`, by the rule.
+
+**Explanations behind the (i)**, where a paragraph still sat on screen under a heading: the
+sharing switches, the price watch, "Deel met vrienden", the occasion ("registry.hint"), the
+delivery address note and handing a list over. Left visible: the one sentence a panel consists of
+(the quiz, Secret Santa, asking the person), and empty states.
+
+**Every ⋯ looks the same: `MoreButtonContent`** in `Menu.tsx`: the ⋯ icon, and its word where there
+is room. The list page's "Meer" and My people's "Meer" carried a chevron after the word; no other ⋯
+did. My people's separate **Details** toggle, a second "more" on the same row, folded into the ⋯
+(the birthday note, the lists they see, removing the friend).
+
+**Taking an item off your list has an Undo** (`resources/js/pendingRemovals.ts`). Saving had one
+on its toast; removing, the one that loses something (the note, and on a shared list the claims and
+votes on it), had none. The server deletes the row outright, and re-adding the product would make a
+different row, so the removal waits instead: the item leaves the page at once, "Van {lijst} gehaald
+· Ongedaan maken" shows for the toast's six seconds, and the DELETE is sent when the toast goes
+(timer, close, replaced by another message, or the page left, with `keepalive`). Undo means the
+server never heard of it. It fails safe: a request that never arrives leaves the item on the list,
+and a refused one brings it back with an error. No claim state is read or shown by any of this.
+
+**One empty state: `EmptyState`**: a mark, the statement, a second line and the way to fill it;
+`quiet` is the dashed, left-aligned one for a section inside a page. Applied to Mijn Coves (signed
+in and out), Mijn mensen (signed out and no people) and a person's page ("nothing known yet", "no
+lists for them yet"). The question board and the notifications page keep their own for now.
+
+**Words:** `saved_coves.unsave` is **Niet meer bewaren** (it said "Verwijderen", which in a ⋯ beside
+a Cove you do not own reads as deleting the Cove); **Verwijder als vriend** (`friends.unfriend`)
+names what the red item in a person's ⋯ does, beside "Verwijderen" for the saved person; the popup's
+buttons are `nav.cancel` / `nav.confirm`.
+
+**Mijn Coves rows show the occasion's day** ("· 24 december"), which a person's page showed and Mijn
+Coves did not; one row now shows both pages' facts.
+
+### Still open after round 2
+
+- `ListToolsBar` (the list page's own Share and ⋯) builds its menu itself: its items open panels
+  on the page rather than links, so it does not use `listActionItems()`. Its delete now asks
+  through `ConfirmDialog`.
+- The "Samen met" rows on a person's page (a friend's group gifts, their lists for others, Secret
+  Santas) are still their own compact rows, since they carry a role rather than a list's facts.
+- `EmptyState` is not yet on the question board, notifications, gift history or the guide indexes.
+- Other pages with a hand-made header (search, brand, guides, the Daily) are untouched.
+- Remove from a list elsewhere (the self-describe page's own wishes) still deletes at once.
