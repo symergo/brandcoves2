@@ -170,6 +170,24 @@ class CoveProseTest extends TestCase
         $this->assertLessThan($live, $stored, "stored {$stored} queries, live {$live}");
     }
 
+    #[Test]
+    public function the_backfill_stores_older_coves_without_moving_their_date(): void
+    {
+        [$cove] = $this->make('guide');
+        $updated = $cove->fresh()->updated_at->toIso8601String();
+
+        $this->artisan('bc:store-cove-prose')->assertSuccessful();
+        $this->assertNull($cove->fresh()->rendered_prose, 'a dry run writes nothing');
+
+        $this->travel(1)->hours();
+        $this->artisan('bc:store-cove-prose', ['--write' => true])->assertSuccessful();
+
+        $fresh = $cove->fresh();
+        $this->assertNotNull($fresh->rendered_prose);
+        // The sitemap reads this as the page's last change.
+        $this->assertSame($updated, $fresh->updated_at->toIso8601String());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /** @return array{0: DailyPickSet, 1: string} */

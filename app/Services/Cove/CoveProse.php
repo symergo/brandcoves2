@@ -129,7 +129,14 @@ final class CoveProse
             $result = $this->render($fresh);
             $value = $result['complete'] ? $result['prose'] : null;
 
-            $fresh->forceFill(['rendered_prose' => $value])->saveQuietly();
+            /*
+             * One column, without touching `updated_at`: the sitemap reads it
+             * as the page's last change and the social card as its version,
+             * and rendering the same text again changes neither.
+             */
+            DailyPickSet::query()->whereKey($fresh->id)->toBase()->update([
+                'rendered_prose' => $value === null ? null : json_encode($value),
+            ]);
 
             $cove->forceFill(['rendered_prose' => $value])->syncOriginalAttribute('rendered_prose');
         } catch (Throwable $e) {
