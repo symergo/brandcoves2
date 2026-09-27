@@ -114,6 +114,8 @@
         <env name="EBAY_CLIENT_ID" value=""/>
         <env name="EBAY_CLIENT_SECRET" value=""/>
         <env name="TRADEDOUBLER_TOKEN" value=""/>
+        <!-- Serialize the array cache like Redis, so a cached object that the real store refuses to rebuild fails here too (config/cache.php). -->
+        <env name="CACHE_ARRAY_SERIALIZE" value="true"/>
         <env name="CLAIM_HASH_SECRET" value="testing-claim-secret"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

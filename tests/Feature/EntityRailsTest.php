@@ -422,6 +422,34 @@ class EntityRailsTest extends TestCase
     }
 
     #[Test]
+    public function the_backfill_stores_the_list_on_older_shop_coves_only_with_write(): void
+    {
+        $this->merchant->forceFill(['enabled' => true])->save();
+        $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
+
+        $cove = DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'shop-be',
+            'theme_title' => 'Kopen bij Shop',
+            'theme_slug' => 'shop-be',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        // A dry run reports and stores nothing.
+        $this->artisan('bc:store-entity-links')->assertSuccessful();
+        $this->assertNull($cove->fresh()->link_categories);
+
+        $this->artisan('bc:store-entity-links', ['--write' => true])->assertSuccessful();
+        $this->assertSame(['Koptelefoons'], $cove->fresh()->link_categories);
+        // Only the list: the prose is untouched.
+        $this->assertSame('Kijk naar [[search:Koptelefoons|koptelefoons]].', $cove->fresh()->body);
+    }
+
+    #[Test]
     public function a_built_brand_cove_stores_its_link_list_and_the_brand_page_reads_it(): void
     {
         $this->product('Gewilde koptelefoon', 12900, 'Sony', category: 'Koptelefoons');
