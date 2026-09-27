@@ -109,13 +109,29 @@ all, the note would not travel, and it posts to the save endpoint, which cannot
 express "copy from somebody else's shared list". Adopting it would have meant
 keeping both components anyway.
 
+## One picker body (2026-09-27)
+
+The menu here, "Kopieer naar" in the ⋯ on an item of your own list (`OwnItemMenu`) and the Save
+button's sheet asked the same question, "which of your lists, or a new one", three ways. Since the
+consistency review's round 3 all three draw `ListPicker` (`resources/js/Components/ListPicker.tsx`):
+the kind's icon before each name, **your default list first**, "+ Maak een Cove" as a row, and one
+form to name a new list, with a Cancel. Only the body is shared; the endpoint, the shell (a portal
+dropdown here, a `Menu` in the ⋯, where the rows are menu items so the arrows move through them)
+and what a press does stay with each.
+
+For that the targets carry `kind` and `isDefault`, built once in
+`ListOptions::copyTargets()` for the list page and the shared page, which each had their own copy
+of the query. Only *my* default list is pinned: a list somebody let me into may be their default,
+which says nothing about where I save. After it, by title, as before.
+
 ## Where it is
 
 | | |
 |---|---|
 | Service | [app/Services/Wishlist/ItemMover.php](../../app/Services/Wishlist/ItemMover.php) |
 | Endpoints | [app/Http/Controllers/ItemTransferController.php](../../app/Http/Controllers/ItemTransferController.php) — `POST /lists/{list}/items/{item}/copy`, `POST /l/{token}/items/{item}/copy` |
-| Component | [resources/js/Components/CopyToList.tsx](../../resources/js/Components/CopyToList.tsx) |
+| Component | [resources/js/Components/CopyToList.tsx](../../resources/js/Components/CopyToList.tsx), its rows [ListPicker.tsx](../../resources/js/Components/ListPicker.tsx) |
+| Targets | `ListOptions::copyTargets()` in [app/Services/Wishlist/ListOptions.php](../../app/Services/Wishlist/ListOptions.php) |
 | Rendered | `Lists/Show.tsx` and `Lists/Shared.tsx` on hand-written items only (catalogue items get `SaveToList`); `ListTools.tsx` on every Ask row |
 | Copy | `site.lists.copy_to`, `copy_to_which`, `copied_to`, `add_to_my_list` |
 | Tests | [tests/Feature/CopyItemToListTest.php](../../tests/Feature/CopyItemToListTest.php) |

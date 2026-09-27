@@ -386,3 +386,48 @@ Coves did not; one row now shows both pages' facts.
 - `EmptyState` is not yet on the question board, notifications, gift history or the guide indexes.
 - Other pages with a hand-made header (search, brand, guides, the Daily) are untouched.
 - Remove from a list elsewhere (the self-describe page's own wishes) still deletes at once.
+
+## The consistency review, round 3: the pickers (2026-09-27)
+
+Two choices were drawn several ways, and a choice that looks different on each page reads as a
+different choice.
+
+**Choosing a person: `PersonPicker`** (`Components/PersonPicker.tsx`). Find a gift had the cards the
+owner asked for ("the cards of the people you know / are connected with instead of just the name");
+the list wizard had a row of name chips; This or that's result had a row of "Bewaar voor …" buttons.
+Now one card everywhere: the initial, the name, the relationship (hidden when it only repeats the
+name), "op GiftCoves" as the same `Badge` for a friend, the next date with its countdown, the
+interests you know, and a check on the chosen one. Two variants: `cards` (Find a gift) and `compact`
+(a smaller mark and one line of facts, for a form or a panel: the list wizard, This or that). The
+picker only draws and reports; what a choice does stays with the page (Find a gift saves a friend as
+a person first, the wizard fills its form, This or that saves the result). Its row shape is My
+people's (`MyPeople`), and a page that knows less draws a shorter card, never a different one:
+`WizardOffer` now sends each person's relationship (`RecipientType::describe()`, the one label My
+people and a person's page use) and next birthday with its countdown. This or that gained friends,
+through a `friend_id` on its save; see [taste-discovery.md](taste-discovery.md).
+
+Looked at and left alone, because they choose nobody from a list: Ask others (opened for one person
+by `?person=`, no chooser), Secret Santa (invites by link and email), a person's own page ("Maak een
+Cove" is for that person), and the save sheet's "for somebody else" form, which names a *new* person
+by typing and creates them (offering the existing people there would change what the form does).
+
+**Choosing a list: `ListPicker`** (`Components/ListPicker.tsx`). The Save button's sheet, the copy
+menu on a shared list's hand-written items and "Kopieer naar" in the ⋯ on your own list's items each
+drew "pick one of your lists, or make a new one": a tick box and a name, a bare title, a menu item,
+with a different form behind "+ Maak een Cove" in each. One body now: the kind's icon before each
+name (the icon `ListName` uses in a sentence, so a list looks like a list everywhere), the default
+list first (the copy targets now say which is yours, `ListOptions::copyTargets()`), "Maak een Cove"
+as a row with a plus, and `ListPickerNameForm` to name a new list, with a Cancel back to the rows.
+Each caller keeps its shell (a sheet, a portal dropdown, a `Menu`), its action and its endpoint;
+inside a `Menu` the rows are menu items (`inMenu`), so the arrow keys still move through them. The
+save sheet's rows are tick boxes (`isChecked`), the copy menus' are actions. No endpoint changed.
+
+### Still open after round 3
+
+- The rule "not for a row in a picker" under *How to name a list in text* still stands for the name:
+  a picker row shows the kind's icon and the name in the row's own weight, not `ListName`'s medium
+  ink, because in a column of rows every name would be bold.
+- `PersonPicker` has no search: somebody with forty people scrolls a grid of forty cards. Not seen
+  yet; a filter field above the cards would be the fix.
+- The Gift Cove passes `WizardOffer` to the wizard as well; its own type still lists the two older
+  fields only (the new ones are optional), which is harmless but a second description of one shape.

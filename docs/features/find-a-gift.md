@@ -33,7 +33,9 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    relationship, the next date and up to three interests. A saved person is chosen with one tap. A
    friend nobody saved yet is saved first (`POST /recipients` with `friend_id`, My people's "Bewaar
    wat je over … weet") and then chosen, because Find a gift works on a saved person whose taste it
-   reads and whose list it fills. A visitor who is not signed in keeps the name chips.
+   reads and whose list it fills. The cards are `PersonPicker` since the consistency review's round
+   3 (2026-09-27), shared with the list wizard and This or that; a visitor who is not signed in gets
+   the same cards for their saved people (name, relationship, interests) instead of the name chips.
 2. **Three ways, side by side**, under a "For Mum · change" line:
    - **Answer a few questions**: the old wizard's questions (interests, age, taste, budget, avoid),
      minus its own "who" step, which step 1 replaced.
