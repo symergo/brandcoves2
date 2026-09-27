@@ -19,6 +19,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Settings\AffiliateSettingsStore;
 use App\Services\Settings\AiSettingsStore;
 use App\Services\Settings\ReminderSettingsStore;
+use App\Support\SsrGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Ssr\HttpGateway;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -81,6 +83,16 @@ class AppServiceProvider extends ServiceProvider
          * time instead of memoising it for the request.
          */
         $this->app->scoped(ChartDemand::class);
+
+        /*
+         * Inertia's SSR gateway with a two-second limit and no render for a
+         * signed-in visitor; the reasons are on the class. Bound under
+         * `HttpGateway` because Inertia resolves `Gateway` through that name,
+         * so both reach this one instance. Scoped rather than Inertia's
+         * singleton: the gateway holds per-request state (excluded paths, a
+         * disable condition) that would pile up in a long-lived worker.
+         */
+        $this->app->scoped(HttpGateway::class, SsrGateway::class);
 
         // The single place that knows which connectors exist. Adding a source
         // is a registration here plus a config entry — the ingestion pipeline

@@ -865,7 +865,16 @@ function Chrome({ children }: PropsWithChildren) {
                       others show no Amazon link at all.
                     */}
                     <p className="mt-3 border-t border-line/60 pt-3 text-2xs">
-                        {t('footer.copyright', { year: String(new Date().getFullYear()) })} {t('footer.affiliate')}
+                        {/*
+                          The year on the site's clock, not the machine's: the
+                          server renders in UTC and the browser in local time,
+                          and in the first hour of 1 January they disagree,
+                          which React reports as a hydration mismatch.
+                        */}
+                        {t('footer.copyright', {
+                            year: new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Europe/Brussels' }).format(new Date()),
+                        })}{' '}
+                        {t('footer.affiliate')}
                         {amazonAssociate && ` ${t('footer.amazon')}`}
                     </p>
                 </div>

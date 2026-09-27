@@ -103,8 +103,10 @@ mean "their child, who may be forty".
 
 `product_groups.gift_tags`, a jsonb array, empty by default, with a GIN index. Untagged is the
 empty array, which is nearly every row. Nothing automated writes it: not the grouper, not a job,
-not a model. The engine asks `jsonb_exists_any(gift_tags, ARRAY[...])`, spelled as the function
-because a bare `?` is a placeholder to PDO, and the default jsonb operator class indexes it.
+not a model. The engine asks `gift_tags ?| ARRAY[...]`, written `??|` in PHP because a bare `?`
+is a placeholder to PDO; the default jsonb operator class indexes it. Until 2026-09-27 it was
+spelled as the function `jsonb_exists_any()`, which means the same and which no index serves: the
+index had never been scanned ([speed.md](speed.md)).
 
 ## How the Whisperer reads them
 

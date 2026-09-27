@@ -31,6 +31,13 @@ return [
 
         'hot_url' => env('INERTIA_SSR_HOT_URL'),
 
+        // Seconds PHP waits for the renderer before sending the page to be
+        // drawn in the browser instead. Ours, read by App\Support\SsrGateway:
+        // Inertia's own request had no limit but Laravel's 30 s, so a hung
+        // renderer held every request that long. A real render takes tens of
+        // milliseconds.
+        'timeout' => (float) env('INERTIA_SSR_TIMEOUT', 2),
+
         /*
         |--------------------------------------------------------------------------
         | Bundle check — DEFAULTED OFF, and it must stay off
