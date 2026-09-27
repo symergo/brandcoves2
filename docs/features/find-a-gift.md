@@ -59,7 +59,13 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      look the same day it looks like a list's search box from the start ("Zoek, of plak een link…",
      the magnifier, "Voeg een offline artikel toe"), not a button: the first search or the offline
      link fetches the list and hands over to `AddProduct`, which starts with that search already run
-     (`initialTerm`) or on the typed-by-hand form (`startManual`), so nothing is asked twice. Without a saved person it
+     (`initialTerm`) or on the typed-by-hand form (`startManual`), so nothing is asked twice. **A relationship counts as a person too** (owner: "there is a person picked, either a
+     friend or a relationship"): with "Collega" chosen, the first search POSTs to
+     `/people/for-relationship/list` (`PersonController::listForRelationship`), which saves a person
+     named after the relationship ("Collega") and makes their list, and finds that same person again
+     next time. They appear on My people, where they can be renamed or removed. Only when nobody is
+     chosen, or for a visitor who is not signed in, does the card search in place (`/list-search`)
+     with the save picker on each result instead of going to /search. Without a saved person it
      is the site search, where Bewaar asks which list.
    - **The type card is a dropdown** ("Kies een type…", up to 30 persona Coves, this kind of person's
      first). It was four cards inside a card, the tallest thing on the page, and every other card was

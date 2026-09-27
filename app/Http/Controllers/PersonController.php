@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListKind;
+use App\Enums\RecipientType;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\RecipientGift;
@@ -25,6 +26,7 @@ use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -282,6 +284,45 @@ class PersonController extends Controller
         }
 
         return response()->json(['id' => $list['id'], 'title' => $list['title'], 'kind' => $list['kind']]);
+    }
+
+    /**
+     * The same, for a relationship chosen on Find a gift instead of a saved
+     * person ("Collega"). The owner (2026-09-27): "there is a person picked,
+     * either a friend or a relationship", so a search there also puts things
+     * on a list for them. A list about somebody needs a somebody, so the first
+     * press saves a person named after the relationship ("Collega") and the
+     * next one finds that person again rather than making a second. They show
+     * on My people, where the owner can rename or remove them: that is also
+     * how the list is found again later.
+     */
+    public function listForRelationship(Request $request, CurrentMarket $current, GiftResults $results): JsonResponse
+    {
+        $validated = $request->validate([
+            'relationship' => ['required', 'string', Rule::enum(RecipientType::class)],
+        ]);
+
+        $owner = Owner::fromRequest($request);
+        $type = RecipientType::from($validated['relationship']);
+
+        $person = $owner->scope(Recipient::query())
+            ->where('relationship', $type->value)
+            ->where('name', $type->label())
+            ->oldest()
+            ->first()
+            ?? Recipient::create([
+                ...$owner->attributes(),
+                'name' => $type->label(),
+                'relationship' => $type->value,
+            ]);
+
+        $list = $results->recipientList($owner, $person, $current);
+
+        if ($list === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return response()->json(['id' => $list['id'], 'title' => $list['title'], 'kind' => $list['kind'], 'personId' => $person->id]);
     }
 
     private function findOwned(Request $request, string $id): Recipient

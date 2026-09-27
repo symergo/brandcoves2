@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import Button from '../../Components/Button'
+import Button, { buttonClasses } from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
@@ -111,9 +111,14 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
         <>
             <Head title={t('people.title')} />
 
-            <header className="flex flex-wrap items-center gap-x-1">
+            <header className="flex flex-wrap items-center gap-x-1 gap-y-3">
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('people.title')}</h1>
                 {isSignedIn && <InfoTip>{t('people.intro_tip')}</InfoTip>}
+                {/* The mirror of Mijn Coves' "Mijn mensen" button (owner, 2026-09-27). */}
+                <Link href={`${base}/lists`} className={`ml-auto ${buttonClasses('secondary', 'md')}`}>
+                    <ToolIcon name="wishlist" className="h-4 w-4" />
+                    {t('lists.title')}
+                </Link>
             </header>
             <p className="mt-2 text-ink-soft">{t('people.intro')}</p>
 

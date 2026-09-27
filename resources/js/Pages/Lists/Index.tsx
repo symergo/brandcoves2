@@ -10,6 +10,7 @@ import AddProduct from '../../Components/AddProduct'
 import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
+import { buttonClasses } from '../../Components/Button'
 
 interface ListSummary {
     id: string
@@ -371,6 +372,15 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                       without the glyph, and the two looked like different things
                       that turned out to open the same form.
                     */}
+                    {/*
+                      The other half of "who and what": Mijn mensen, as a
+                      secondary button before the page's own action (owner,
+                      2026-09-27). Mijn mensen has the mirror of it.
+                    */}
+                    <Link href={`/${market.key}/people`} className={buttonClasses('secondary', 'md')}>
+                        <ToolIcon name="people" className="h-4 w-4" />
+                        {t('people.title')}
+                    </Link>
                     <NewListButton
                         open={creating}
                         onToggle={() => setCreating((v) => !v)}

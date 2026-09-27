@@ -10,6 +10,7 @@ import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Compon
 import InfoTip from '../../Components/InfoTip'
 import type { SceneKey } from '../../Components/SceneIllustration'
 import ShareRow from '../../Components/ShareRow'
+import SaveToList from '../../Components/SaveToList'
 import AddProduct from '../../Components/AddProduct'
 import Button from '../../Components/Button'
 import { send } from '../../http'
@@ -129,13 +130,36 @@ function WayHead({ icon, title }: { icon: ReactNode; title: string }) {
  * button is pressed, not when the page opens: choosing a person must not make
  * a list by itself. Then it is the list page's own add panel (AddProduct), so
  * catalogue results, shops we do not mirror and something typed by hand all
- * work here as they do there; the server's toast names the list. Without a
- * saved person there is no list to put it on, so the card is the site search,
- * where Bewaar asks which list.
+ * work here as they do there; the server's toast names the list. A
+ * relationship ("Collega") gets the same, through a person saved under that
+ * name on the first press. Only when nobody is chosen, or the visitor is not
+ * signed in, does the card search in place with the save picker per result.
  */
-function SearchToListCard({ recipient, market }: { recipient: Recipient | null; market: SharedProps['market'] }) {
+function SearchToListCard({
+    recipient: person,
+    kind,
+    kindLabel,
+    market,
+}: {
+    recipient: Recipient | null
+    /** A relationship picked instead of a saved person ("Collega"). */
+    kind: string | null
+    kindLabel: string | null
+    market: SharedProps['market']
+}) {
     const { t } = useTranslations()
+    const { auth } = usePage<SharedProps>().props
     const base = `/${market.key}`
+    /*
+     * Who the list is for. A saved person, or (owner, 2026-09-27: "there is a
+     * person picked, either a friend or a relationship") a relationship, which
+     * the server turns into a saved person on the first press. Only "skip" and
+     * a visitor who is not signed in (who cannot have saved people) search
+     * without a list, with the save picker on each result.
+     */
+    const recipient: { name: string } | null =
+        person ?? (kind !== null && kindLabel !== null && auth.user !== null ? { name: kindLabel } : null)
+    const listUrl = person ? `${base}/people/${person.id}/list` : `${base}/people/for-relationship/list`
     const [listId, setListId] = useState<string | null>(null)
     // What the list's own panel starts with once it has the list: the first
     // search, or "something typed by hand".
@@ -160,7 +184,7 @@ function SearchToListCard({ recipient, market }: { recipient: Recipient | null; 
         }
         setBusy(true)
         setFailed(false)
-        send<{ id: string }>(`${base}/people/${recipient.id}/list`, 'POST')
+        send<{ id: string }>(listUrl, 'POST', person ? undefined : { relationship: kind })
             .then((list) => {
                 setListId(list.id)
                 setHandOver(next)
@@ -239,17 +263,108 @@ function SearchToListCard({ recipient, market }: { recipient: Recipient | null; 
             ) : (
                 <>
                     <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint_none')}</span>
-                    <form action={`${base}/search`} method="get" className="mt-4 flex gap-2">
-                        <input
-                            type="search"
-                            name="q"
-                            required
-                            aria-label={t('gift.way_search')}
-                            placeholder={t('gift.way_search_placeholder')}
-                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                        />
-                        <Button type="submit">{t('gift.way_search_go')}</Button>
-                    </form>
+                    <InlineSearch base={base} />
+                </>
+            )}
+        </div>
+    )
+}
+
+/** A catalogue hit from `/list-search`, the search a list's add panel uses. */
+interface FoundGroup {
+    id: number
+    title: string
+    image: string | null
+    price: number | null
+    merchantCount: number
+}
+
+/**
+ * The search card without a saved person (a kind of person, or skipped):
+ * results in the card, like a list's add panel, instead of leaving for
+ * /search (owner, 2026-09-27). There is no list for "a colleague", so each
+ * result carries the site's own save button, which asks which list (or
+ * starts one); the full search page is one link away for more.
+ */
+function InlineSearch({ base }: { base: string }) {
+    const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+    const [term, setTerm] = useState('')
+    const [found, setFound] = useState<FoundGroup[] | null>(null)
+    const [busy, setBusy] = useState(false)
+
+    const run = (q: string) => {
+        if (q.trim().length < 2) {
+            return
+        }
+        setBusy(true)
+        fetch(`${base}/list-search?q=${encodeURIComponent(q.trim())}`, { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((data: { groups?: FoundGroup[] }) => setFound(data.groups ?? []))
+            .catch(() => setFound([]))
+            .finally(() => setBusy(false))
+    }
+
+    return (
+        <div className="mt-4 w-full rounded-card border border-line bg-card p-4">
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    run(term)
+                }}
+                className="flex items-center gap-2"
+            >
+                <input
+                    type="search"
+                    value={term}
+                    onChange={(e) => setTerm(e.target.value)}
+                    placeholder={t('gift.way_search_placeholder')}
+                    aria-label={t('gift.way_search')}
+                    className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                />
+                <button
+                    type="submit"
+                    disabled={busy}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
+                >
+                    <ToolIcon name="search" className="h-5 w-5" />
+                    <span className="sr-only">{t('search.submit')}</span>
+                </button>
+            </form>
+
+            {busy && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
+
+            {!busy && found !== null && found.length === 0 && (
+                <p className="mt-3 text-sm text-ink-soft">{t('gift.way_search_none_found')}</p>
+            )}
+
+            {!busy && found !== null && found.length > 0 && (
+                <>
+                    <ul className="mt-3 divide-y divide-line">
+                        {found.map((hit) => (
+                            <li key={hit.id} className="flex items-center gap-3 py-2">
+                                {hit.image ? (
+                                    <img src={hit.image} alt="" className="h-12 w-12 shrink-0 rounded object-contain" loading="lazy" />
+                                ) : (
+                                    <span className="h-12 w-12 shrink-0 rounded bg-line/40" />
+                                )}
+                                <Link href={`${base}/p/${hit.id}`} className="min-w-0 flex-1 hover:underline">
+                                    <span className="line-clamp-2 block text-sm">{hit.title}</span>
+                                    <span className="text-xs text-ink-soft">
+                                        {hit.price !== null && formatPrice(hit.price, market)}
+                                        {hit.merchantCount > 1 && ` · ${t('product.across_shops', { count: hit.merchantCount })}`}
+                                    </span>
+                                </Link>
+                                <SaveToList groupId={hit.id} title={hit.title} imageUrl={hit.image} price={hit.price} compact />
+                            </li>
+                        ))}
+                    </ul>
+                    <Link
+                        href={`${base}/search?q=${encodeURIComponent(term.trim())}`}
+                        className="mt-3 inline-block text-sm font-medium text-accent-dark hover:text-ink"
+                    >
+                        {t('gift.way_search_all')} →
+                    </Link>
                 </>
             )}
         </div>
@@ -756,7 +871,14 @@ export default function GiftWizard(props: Props) {
                         {t('gift.ways_title')}
                     </h2>
 
-                    <SearchToListCard recipient={recipient} market={market} />
+                    {/* Keyed by who it is for: another person means another list, never the last one's. */}
+                    <SearchToListCard
+                        key={recipient?.id ?? kind ?? 'nobody'}
+                        recipient={recipient}
+                        kind={kind}
+                        kindLabel={whoLabel}
+                        market={market}
+                    />
 
                     {/*
                       Two rows since the owner's review of 2026-09-27: the ways

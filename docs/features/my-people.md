@@ -26,6 +26,10 @@ difference between my people and friends?"). For a visitor there is none worth k
 somebody you buy a present for. The difference is only where the facts come from, so the page
 shows one list and marks the people who are on GiftCoves themselves with a small "op GiftCoves".
 
+**Mijn mensen and Mijn Coves point at each other** (owner, 2026-09-27): a secondary "Mijn Coves"
+button (heart) in this page's header, and a "Mijn mensen" button (two figures) beside "Maak een Cove"
+on `/lists`. Who you buy for and what you collect are the two halves of the same job.
+
 ## What a row shows
 
 - the name (your own name for them when you saved them), and the relationship in the reader's

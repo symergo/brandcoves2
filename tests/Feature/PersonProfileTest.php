@@ -253,6 +253,31 @@ class PersonProfileTest extends TestCase
     }
 
     #[Test]
+    public function a_relationship_gets_one_saved_person_and_one_list_on_the_search_card(): void
+    {
+        // "There is a person picked, either a friend or a relationship" (owner, 2026-09-27).
+        $first = $this->actingAs($this->me)
+            ->postJson('/be-nl/people/for-relationship/list', ['relationship' => 'colleague'])
+            ->assertOk();
+
+        $person = Recipient::query()->where('owner_user_id', $this->me->id)->sole();
+        $this->assertSame('colleague', $person->relationship);
+        $this->assertSame(__('site.gift.relationships.colleague'), $person->name);
+        $list = Wishlist::query()->where('recipient_id', $person->id)->sole();
+        $first->assertJson(['id' => $list->id, 'personId' => $person->id]);
+
+        // Pressed again: the same person and the same list, not a second "Collega".
+        $this->actingAs($this->me)
+            ->postJson('/be-nl/people/for-relationship/list', ['relationship' => 'colleague'])
+            ->assertJson(['id' => $list->id]);
+        $this->assertSame(1, Recipient::query()->where('owner_user_id', $this->me->id)->count());
+
+        $this->actingAs($this->me)
+            ->postJson('/be-nl/people/for-relationship/list', ['relationship' => 'not-a-kind'])
+            ->assertUnprocessable();
+    }
+
+    #[Test]
     public function sharing_the_list_for_a_person_opens_it_on_share_and_makes_one_only_when_needed(): void
     {
         // "Deel de lijst voor … en laat anderen iets voorstellen" (2026-09-27).

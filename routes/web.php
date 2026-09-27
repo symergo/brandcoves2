@@ -627,6 +627,10 @@ Route::prefix('{market}')->group(function () {
             ->whereUuid('recipient')
             ->middleware('throttle:30,1')
             ->name('people.list');
+        // The same for a relationship ("Collega") chosen instead of a saved person.
+        Route::post('/people/for-relationship/list', [PersonController::class, 'listForRelationship'])
+            ->middleware('throttle:30,1')
+            ->name('people.relationship-list');
 
         // Hand a list to the person it was built for. It stops being research
         // and becomes theirs — which is what makes it claimable.
