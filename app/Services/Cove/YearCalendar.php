@@ -293,6 +293,15 @@ final readonly class YearCalendar
                     'title' => $plan->title,
                     'status' => $plan->status,
                     'published' => $plan->edition_id !== null,
+                    /*
+                     * Why the last build of this day published nothing.
+                     *
+                     * A held Daily (no editorial, or too few finds on its
+                     * theme) leaves the column on yesterday's edition, which
+                     * looks exactly like a normal morning from the site. This
+                     * is the one place the year is read, so it says so here.
+                     */
+                    'held' => $plan->last_build_failed_at === null ? null : $plan->last_build_note,
                 ],
             ];
         }

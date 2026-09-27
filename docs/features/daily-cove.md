@@ -219,6 +219,11 @@ where padding wins. That floor is load-bearing rather than theoretical: the obse
 queries are **Dutch**, deliberately (`config/observances.php` says so), so on an unplanned day in
 `en` or `es` the themed lane matches nothing at all and the whole edition is the pool.
 
+**Superseded for Dailies on 2026-09-27:** a themed Daily is no longer padded at all, because the
+padded page published under World Tourism Day with nobody having looked. See
+[An uncurated day reads its theme strictly](#an-uncurated-day-reads-its-theme-strictly-2026-09-27).
+The floor still holds for gift personas.
+
 **Gift personas too**, since 2026-09-05 — `SurpriseSelector` fills both. The reason is sharper
 there than on a Tuesday: a persona page is titled after a person, so a high-scoring stranger under
 *The herbalist* is not serendipity, it is a page that does not know who it is about. Buying guides
@@ -227,6 +232,97 @@ are unaffected; they use `LadderSelector`, which never had a surprise lane.
 Locked plans are unaffected — they never reached the selector. Nor is the guide side: `LadderSelector`
 already treated the shortlist as an untrimmed lead and spent its one-per-brand rule around it, which
 is where the shape of the fix came from.
+
+### An uncurated day reads its theme strictly (2026-09-27)
+
+Nobody curated the Dailies for 25 to 28 September 2026. `bc:plan-coves` had drafted a plan for each
+day (search words only, no shortlist), and the 06:00 build filled them from those words. On World
+Tourism Day ("Werelddag van het toerisme", words `koffer`, `reisadapter`, `nekkussen`) be-nl
+published a tablet car holder, a suitcase, a Nanoleaf light kit, **a vibrator**, a STANLEY
+gereedschapkoffer and IRWIN gatenzagen "in koffer". nl-nl got a travel adapter and a travel iron,
+then two DeWalt drill sets, a laser level and a Littlest Pet Shop set.
+
+Two things let them through. The themed lane matched on `products.search_vector`, which carries
+the **description**: the vibrator, the light kit and the car holder mention a suitcase somewhere
+in theirs. And a word match cannot tell a suitcase from a tool case or from the case a drill is
+sold in. The ranking then made it worse: the lane is ordered by surprise score, and the strangest
+product that mentions "koffer" is never a suitcase.
+
+**The rule, in `App\Services\Cove\ThemeRelevance`** (a pure class; `ThemeRelevanceTest` holds the
+real titles):
+
+| Rule | Why | Stops |
+|---|---|---|
+| Only the **title and the category** count, never the description | A description names everything the product is near: where it fits, what it comes in. The title and the category say what it *is* | the vibrator, the light kit, the car holder |
+| A match right after `in`, `met`, `incl.`, `inclusief` (two words back) does not count | "in koffer" is the packaging; the product is a hole saw | IRWIN gatenzagen, the DeWalt sets, "microscoop met koffer" |
+| A compound counts when the word is its **last** part (Dutch puts the kind of thing last), unless its first part is on a short list of trades that borrow the noun: tools, storage, toys and crafts, beauty | a reiskoffer and a handbagagekoffer are suitcases; a gereedschapskoffer, dokterskoffer or knutselkoffer is lexically a koffer too, and no spelling rule tells them apart, so they are named | STANLEY gereedschapkoffer, toy doctor's cases, a kofferdiepvriezer (the word is first, not last) |
+| A word under four letters never ends a compound, and counts **in the category only** | "pet" ends "trompet"; in a title it is as often the English word or a PET bottle | a pet-hair vacuum on hat day |
+| A **category** match ranks above a title-only match, surprise within each | the category is the feed's statement, the title the seller's advert. Title-only "koffer" still admits a fireproof document case and a toy, and those outscore everything filed under Reiskoffer | the long tail of odd title matches |
+
+Checked against the local be-nl catalogue: World Tourism Day now draws a roof box and five
+suitcases filed under Reiskoffer; before the category rule it was a fireproof case, a camera case, a
+toy, packing cubes, luggage labels and a travel plug.
+
+**Being wrong in the strict direction is the cheap way round.** A real suitcase the rule misses is
+one candidate fewer among dozens; a tool case it lets through is a page that looks assembled by
+nobody. The list of trades is the part most likely to need a line added; add it with the title that
+needed it.
+
+Where it applies: the engine's own picks on a **Daily**, whether the day has a plan or not, and so
+also the suggestions the curation screen and `bc:plan-coves` make for one. It does not apply to:
+
+- **Curated products** (`cove_plan_items`). Curation overrides the engine, and this is the engine's
+  judgement. A person who puts a tool case on a travel day meant it.
+- **Gift personas.** They use the same selector with the old full-text match. A persona is built on
+  demand from a plan a person approved; the Daily is the one kind that publishes at 09:00 whether
+  anybody looked or not. Worth revisiting if a persona ever shows the same failure.
+
+**No padding under a theme, either.** The general pool used to fill a Daily that its theme could
+not carry to `picks.minimum` (above). A themed Daily is now never padded: short of the minimum
+nothing publishes, the plan for the day says so, and the column keeps showing the last edition. A
+Daily with no search words at all still takes the pool, because it makes no claim to be about
+anything. **The cost is deliberate and large for some markets:** the calendar's words are Dutch, so
+an uncurated day in `en`, `fr` or `es` usually matches nothing and publishes nothing. Those markets
+now publish a Daily only when somebody curates or writes one.
+
+The database side only narrows (`title` or `category` `ILIKE` each word, which the title's trigram
+index serves) and over-fetches ten times the page, because the tool cases and toys it lets through
+outscore the real matches; the class decides.
+
+### No prose, no page (2026-09-27)
+
+The same morning be-nl published **with no editorial at all**: the writer was called, nothing usable
+came back, `editorial_source` was stored as `none`, and the page went out as a headline over six
+products. Nothing anywhere said so.
+
+`EditionBuilder::build()` now **holds** a Daily whose editorial came back empty, whatever the reason:
+AI switched off, the day's cap spent, a refusal, a timeout, or an answer with no editorial in it.
+Held means:
+
+- **Nothing is written.** No edition row for a new day; an edition that already published (an
+  earlier build of the same day) is left exactly as it was, so a rebuild that fails never trades
+  real prose for none. The same rule `refreshCopy()` holds for guides.
+- **The site shows the last published edition.** The front page and `/tips` already ask for "the
+  latest published Daily", which is how they behave on a fresh deploy with none; `SendCoveDigest`
+  looks for the day's edition and sends nothing without one.
+- **The owner is told.** The plan for the day (approved, or the draft `bc:plan-coves` made) gets
+  `last_build_failed_at` and a `last_build_note` saying why, which the planner shows on the state
+  badge and the calendar shows as "not published". The next build that works clears it.
+
+An **authored plan is never held**: its prose is on the plan, and `editorial()` returns it without
+asking the model. That is the way to publish a Daily with AI off.
+
+Why not publish bare and flag it: the column is an article, and a list with a title is the version
+of it that a reader arriving from search judges the site by. A day with no new edition costs one
+morning; a bare one sits in the archive under a permanent URL.
+
+`picks.require_editorial` (`DAILY_REQUIRE_EDITORIAL`, default on) turns the hold off, for a machine
+where the model is deliberately off and a bare page is wanted anyway. Production should leave it on.
+
+**Not diagnosed:** why be-nl's writer returned nothing on 27 September. The job log and the
+`ai_usage` rows for `daily_picks` that morning are the place to look: a spent cap, an error, and an
+answer cut off at `maxTokens` (2200, for six paragraphs) all end the same way, and the hold now
+covers all three.
 
 ### Only what you can buy
 
@@ -371,7 +467,8 @@ an English sentence under it looks broken in a way a missing sentence does not. 
 exempts exactly that one key shape and nothing else.
 
 `fr` and `es` currently carry titles only. The AI editorial pass fills the prose; with `AI_ENABLED=false`
-those editions run with a title and no blurb, which is correct rather than broken.
+a theme runs with a title and no blurb, which is correct rather than broken. (An edition with no
+*editorial* is a different matter: it is held, see [No prose, no page](#no-prose-no-page-2026-09-27).)
 
 An evergreen theme is passed to the model as "today's angle … this is NOT a named day", because told
 "the occasion: cosy" a model writes "today we celebrate cosiness" and invents a holiday.
@@ -389,7 +486,7 @@ The three things it changed here:
   Curated products still lead and are still exempt from the 90-day repeat memory, for the unchanged
   reason: the point of curation is to override a score, so a pick the ranker could veto would not be
   curation.
-- **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`, from the theme alone unless that leaves the page under `picks.minimum` (above);
+- **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`, from the theme alone, read strictly and never padded (above);
   `locked` publishes exactly the shortlist, in order, with `spread()` skipped so the variety trim
   cannot reorder a hand-built list. The publish floor is now `picks.minimum` in config rather than a
   literal 3, so the curation screen can warn about a short locked plan before 06:00.
@@ -423,9 +520,11 @@ selection for it. That gate is gone with the game; the general rule is unchanged
 The theme line and the edition's editorial are the AI-touched parts of a Daily, written in the
 nightly `BuildDailyEdition` job under the `daily_picks` cap. Guide copy is written when the guide
 itself is built (`BuildCove`, `PublishDueCoves` or `bc:refresh-guide-copy`) under `guide_copy`.
-Everything publishes with `AI_ENABLED=false`: themes fall back to the curated rotation, guides to
-`GuideWriter`'s template copy. Choosing the picks involves no model at all. See
-[ai-invariant.md](ai-invariant.md).
+With `AI_ENABLED=false` themes fall back to the curated rotation and guides to `GuideWriter`'s
+template copy. **A Daily does not publish bare**, since 2026-09-27: with the model off (or capped,
+or failing) only an authored plan publishes, and an unwritten day is held with a note on its plan
+([No prose, no page](#no-prose-no-page-2026-09-27)). The site still works: it shows the last
+edition. Choosing the picks involves no model at all. See [ai-invariant.md](ai-invariant.md).
 
 **Prose written by an author beats all of it.** A `cove_plans` row may carry the edition's editorial,
 and when it does the builder uses it verbatim and skips the model entirely — not as a seed to

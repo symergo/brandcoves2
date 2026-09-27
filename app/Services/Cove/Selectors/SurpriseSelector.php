@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Models\CovePlan;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Cove\ThemeRelevance;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,11 @@ use Illuminate\Support\Facades\DB;
  * choice is not between a themed find and a stranger but between a page and no
  * page. That holds for the gift personas this also fills: a stranger under
  * "the herbalist" is the same failure with a different heading.
+ *
+ * Since 2026-09-27 a themed Daily is stricter still: its theme is matched on
+ * title and category through {@see ThemeRelevance} rather than on the full-text
+ * vector, and it is never padded from the pool. A Daily is the one kind that
+ * publishes unattended.
  *
  * The curator's shortlist is exempt from the variety trim as well as from the
  * repeat memory. Both exemptions say the same thing — the point of curation is
@@ -62,9 +68,24 @@ class SurpriseSelector implements CoveSelector
          * the page. The entire point of curation is to override a score, so a
          * pick the ranker could veto would not be curation.
          */
-        $themed = $queries === []
-            ? collect()
-            : $this->matching($market, $queries, $recent->merge($curated->pluck('id')), $count);
+        /*
+         * A Daily is filled unattended, so its theme is read strictly.
+         *
+         * Title or category, never the description, and a word that names the
+         * product rather than its packaging: see ThemeRelevance for the 27 Sep
+         * 2026 edition that put a vibrator and a tool case under World Tourism
+         * Day. A persona keeps the full-text match. It is built on demand,
+         * after a person approved it, from search words a person chose; the
+         * Daily is the one kind that publishes at 09:00 whether anybody looked
+         * or not.
+         */
+        $relevance = $plan->kind === CoveKind::Daily ? new ThemeRelevance($queries) : null;
+
+        $themed = match (true) {
+            $queries === [] => collect(),
+            $relevance !== null => $this->onTheme($market, $relevance, $recent->merge($curated->pluck('id')), $count),
+            default => $this->matching($market, $queries, $recent->merge($curated->pluck('id')), $count),
+        };
 
         /*
          * The curator's shortlist is the page, and the engine fills what is
@@ -116,6 +137,28 @@ class SurpriseSelector implements CoveSelector
          * wearing a different title.
          */
         if (count($onTheme) >= (int) config('giftcoves.picks.minimum')) {
+            return $onTheme;
+        }
+
+        /*
+         * A themed Daily is not padded at all, since 2026-09-27.
+         *
+         * The floor below was the one trade where padding won: a page, rather
+         * than none. It stopped winning once the page it produced had to carry
+         * a title. A day named "Werelddag van het toerisme" filled with the
+         * market's highest-scoring strangers is a page that says one thing and
+         * shows another, published under the site's name with nobody having
+         * looked at it. Short of `picks.minimum` the builder now publishes
+         * nothing for the day, says so on the plan, and the column keeps
+         * showing the last edition that was about something.
+         *
+         * The cost is real and deliberate: the calendar's words are Dutch, so
+         * an uncurated day in `en`, `fr` or `es` usually matches nothing and
+         * publishes nothing. Those markets need a curated or authored plan.
+         * A Daily with no words at all still takes the pool: it makes no claim
+         * to be about anything, and its title is written from the finds.
+         */
+        if ($relevance?->hasTheme()) {
             return $onTheme;
         }
 
@@ -226,6 +269,66 @@ class SurpriseSelector implements CoveSelector
             ->orderByDesc('surprise_score')
             ->limit($count * 2)
             ->get();
+    }
+
+    /**
+     * Products whose title or category says they are the day's theme.
+     *
+     * The database narrows to titles or categories that contain the words at
+     * all (substring, served by the title's trigram index), and ThemeRelevance
+     * decides. The narrowing has to over-fetch: it lets through the tool cases
+     * and the "in koffer" drill sets that the gate then rejects, and on be-nl
+     * those outscore every real suitcase (toy doctor's cases around 80, travel
+     * cases around 68). Ten times the page, so a theme whose best-scoring
+     * substring matches are all the wrong sense still reaches the right ones.
+     *
+     * Still gated on `surprise_score`, and an active offer is still required,
+     * for the same reasons as `matching()`.
+     *
+     * @param  Collection<int, int>  $recent
+     * @return Collection<int, ProductGroup>
+     */
+    private function onTheme(Market $market, ThemeRelevance $relevance, Collection $recent, int $count): Collection
+    {
+        $candidates = ProductGroup::query()
+            ->forMarket($market)
+            ->presentable()
+            ->where('surprise_score', '>', 0)
+            ->whereNotIn('id', $recent)
+            ->where(function ($any) use ($relevance): void {
+                foreach ($relevance->terms() as $words) {
+                    foreach (['title', 'category'] as $field) {
+                        $any->orWhere(function ($all) use ($words, $field): void {
+                            foreach ($words as $word) {
+                                // Folded to [a-z0-9] by ThemeRelevance, so
+                                // there is no % or _ to escape.
+                                $all->where($field, 'ilike', '%'.$word.'%');
+                            }
+                        });
+                    }
+                }
+            })
+            ->whereExists(fn ($sub) => $sub
+                ->select(DB::raw(1))
+                ->from('products')
+                ->whereColumn('products.group_id', 'product_groups.id')
+                ->where('products.status', 'active'))
+            ->orderByDesc('surprise_score')
+            ->limit($count * 10)
+            ->get();
+
+        /*
+         * The category-confirmed matches first, then the title-only ones, by
+         * surprise within each (ThemeRelevance::strength() says why). A stable
+         * sort on the tier alone keeps the SQL's surprise order inside it.
+         */
+        return $candidates
+            ->map(fn (ProductGroup $group) => [$group, $relevance->strength((string) $group->title, $group->category)])
+            ->filter(fn (array $scored) => $scored[1] > ThemeRelevance::NONE)
+            ->sortByDesc(fn (array $scored) => $scored[1])
+            ->map(fn (array $scored) => $scored[0])
+            ->take($count * 2)
+            ->values();
     }
 
     /**

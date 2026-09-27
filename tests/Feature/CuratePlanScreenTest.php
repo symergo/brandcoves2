@@ -312,6 +312,10 @@ class CuratePlanScreenTest extends TestCase
             'market' => Market::BeNl->value,
             'drop_date' => CarbonImmutable::tomorrow()->toDateString(),
             'title' => 'Gecureerd',
+            // The fixtures' own word. A Daily's suggestions come from what its
+            // theme names in a title or category, and nothing else, since
+            // 2026-09-27; tomorrow's calendar words would match no fixture.
+            'queries' => ['apparaat'],
             'status' => 'draft',
             'pick_mode' => $mode->value,
         ]);

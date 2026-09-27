@@ -324,6 +324,34 @@ class CoveCalendarTest extends TestCase
 
         // Every other named day in the month is honestly unplanned.
         $this->assertNull($days->except(['2027-02-14'])->first()['plan'] ?? null);
+
+        // Nothing has tried to build it, so nothing says it was held.
+        $this->assertNull($days->get('2027-02-14')['plan']['held']);
+    }
+
+    #[Test]
+    public function a_named_day_that_was_held_says_why(): void
+    {
+        /*
+         * A held Daily leaves the column on the previous edition, which looks
+         * like any other morning from the site. The calendar is where the year
+         * is read, so the builder's reason is carried there.
+         */
+        CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Daily->value,
+            'drop_date' => '2027-09-27',
+            'title' => 'Werelddag van het toerisme',
+            'status' => 'draft',
+            'last_build_failed_at' => now(),
+            'last_build_note' => 'Held: the writer returned no editorial (capped, refused or failed).',
+        ]);
+
+        $september = app(YearCalendar::class)->for(Market::BeNl, 2027)[8];
+        $day = collect($september['days'])->keyBy('date')->get('2027-09-27');
+
+        $this->assertNotNull($day, 'World Tourism Day is a named day');
+        $this->assertStringStartsWith('Held:', (string) $day['plan']['held']);
     }
 
     #[Test]

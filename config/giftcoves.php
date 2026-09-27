@@ -887,6 +887,20 @@ return [
          */
         'minimum' => 3,
 
+        /*
+         * A Daily with no editorial is held, not published.
+         *
+         * On 27 Sep 2026 be-nl's edition published as a title over six
+         * products: the writer was asked, nothing came back, and the page went
+         * out bare with nobody told. Held, the column keeps showing the last
+         * edition, and the plan for the day carries the reason in /admin. An
+         * authored plan is never held: its prose is on the plan, not waiting on
+         * a model. Off only where the model is deliberately off and a bare
+         * page is wanted anyway, a local machine for instance. See
+         * docs/features/daily-cove.md.
+         */
+        'require_editorial' => (bool) env('DAILY_REQUIRE_EDITORIAL', true),
+
         // Fixed drop time makes it an appointment, like a daily puzzle.
         'drop_time' => '09:00',
 

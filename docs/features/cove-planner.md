@@ -32,7 +32,7 @@ how the page is addressed, how its products are chosen, and how many it needs.
 
 | Kind | Address | Products chosen by | Floor |
 |---|---|---|---|
-| `daily` | `/daily/{slug}` | surprise + category spread | `picks.minimum` |
+| `daily` | `/daily/{slug}` | surprise + category spread, only what the theme names in a title or category | `picks.minimum` |
 | `persona` | `/gift-ideas/{slug}` | surprise + category spread | `picks.minimum` |
 | `guide` | `/guides/{slug}` | one per brand, price ladder | `guides.min_products` |
 | `seasonal` | `/guides/{slug}` | one per brand, price ladder | `guides.min_products` |
@@ -220,6 +220,13 @@ repeat memory, so every automatic Daily would become a curated one and the next
 routine rebuild would republish exactly what it was meant to refresh. And
 `cove_plan_items.note` means "why a person chose this" — nobody chose these, a ranker
 did. The curation screen fills a shortlist from the engine in one click.
+
+**For a Daily, the engine suggests only what the day's theme names**, since 2026-09-27: the
+suggestion is the same selection the build makes, and the build now reads a theme strictly (title
+or category, never the description; see [daily-cove.md](daily-cove.md#an-uncurated-day-reads-its-theme-strictly-2026-09-27)).
+So `bc:plan-coves` can draft a day with an empty shortlist, where it used to fill it from the
+market's highest-scoring products. That is the intended signal: a day whose theme the catalogue
+cannot name will not publish unattended, and the empty draft is where somebody curates it.
 
 ## The topic queue is an idea feed now
 
