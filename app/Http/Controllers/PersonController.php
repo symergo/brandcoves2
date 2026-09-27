@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftHistory;
+use App\Services\Gift\GiftTags;
 use App\Services\Gift\NextSteps;
 use App\Services\Gift\PastGift;
 use App\Services\Seo\PageMeta;
@@ -76,10 +77,13 @@ class PersonController extends Controller
              * the same value the wizard and the engine read (the same call
              * GiftProfileCardController makes).
              */
+            // Find a gift's own choices. `values` is not among them (its form
+            // keeps the three in the page), so it is added here: without it
+            // the "Over" form crashed on opening (found 2026-09-27).
             'options' => array_intersect_key(
                 app(GiftController::class)->options(),
-                array_flip(['interests', 'vibes', 'values', 'ages', 'relationships']),
-            ),
+                array_flip(['interests', 'vibes', 'ages', 'relationships']),
+            ) + ['values' => GiftTags::VALUE_OPTIONS],
             /*
              * Deleting fails at the database while a group gift is about
              * them: `wishlists.recipient_id` is set to null on delete, and a

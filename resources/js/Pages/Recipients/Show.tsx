@@ -192,8 +192,9 @@ export default function RecipientShow({
                     </ul>
                 )}
 
+                {/* On a phone the gift takes its own row: beside the year and the button it was cut to "Bijvoc". */}
                 <form onSubmit={add} className="mt-4 flex flex-wrap items-end gap-2">
-                    <label className="min-w-0 flex-1">
+                    <label className="min-w-0 basis-full sm:basis-auto sm:flex-1">
                         <span className="block text-xs text-ink-soft">{t('gift_history.add_title')}</span>
                         <input
                             type="text"
@@ -221,7 +222,7 @@ export default function RecipientShow({
                     <button
                         type="submit"
                         disabled={busy || title.trim() === ''}
-                        className="rounded bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        className="min-h-11 rounded bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:min-h-0"
                     >
                         {t('gift_history.add_button')}
                     </button>

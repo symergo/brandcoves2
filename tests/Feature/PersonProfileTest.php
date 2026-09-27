@@ -80,7 +80,11 @@ class PersonProfileTest extends TestCase
                 // Find a gift's own vocabularies, to edit in place with.
                 ->has('options.interests')
                 ->has('options.vibes')
-                ->has('options.ages'));
+                ->has('options.ages')
+                // Every list the "Over" form draws: a missing one crashed the
+                // page on "Aanpassen" (found 2026-09-27).
+                ->where('options.values', ['sustainable', 'local', 'handmade'])
+                ->has('options.relationships'));
     }
 
     #[Test]

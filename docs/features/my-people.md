@@ -81,18 +81,30 @@ gift, and none of her lists were there. The owner asked for a page about the per
 and each part left out when it would be empty (the owner's rule: no empty blocks; one column, full
 width, because there is nothing for a side column):
 
-1. **The person**: their name as the heading, relationship and birthday (`cake` icon) under it,
-   "op GiftCoves" when they are a friend. Then the actions: **Cadeau vinden** (the one filled
-   button), **Dit of dat**, **Vraag**, **Stuur hun profiellink** (their `/for/{token}` link, only
-   while they are not linked to an account), **Nodig uit op GiftCoves** (the same condition; see
-   [Inviting a saved person](#inviting-a-saved-person)), **Naam en verjaardag**, and **Verwijderen**. The brief
-   listed the actions last; they sit under the name because they are what the page is used for,
-   and at the bottom they would be under a gift history of any length.
+1. **The person**: their name as the heading; under it the relationship, the birthday (`cake`
+   icon) or a "Verjaardag toevoegen" link when there is none, and their status: "op GiftCoves"
+   for a friend, or **"Niet op GiftCoves · Nodig uit"** (see
+   [Inviting a saved person](#inviting-a-saved-person)). Under that, the ways to an idea:
+   **Cadeau vinden** (the one filled button; a full row on a phone), **Dit of dat** and **Vraag**
+   (sharing the next row on a phone). **Naam en verjaardag** and **Verwijderen** are in a ⋯ menu
+   beside the name.
+   *Why (owner's review of a phone screenshot, 2026-09-27):* until then all seven actions were
+   equal buttons, four rows of them before anything about the person, with a red "Verwijderen"
+   among them and "Stuur hun profiellink" and "Nodig uit op GiftCoves" looking like the same thing.
+   Now each kind of action has one place: ideas under the name, reaching them beside their status,
+   their taste in "Over", housekeeping in the menu.
 2. **Over {naam}**: what you know as chips: interests, style (vibe), what matters to them (values),
    age, budget, what to avoid. **Aanpassen** edits them in place with Find a gift's own
-   vocabularies (`GiftController::options()`, the call `GiftProfileCardController` already made),
-   saved through the existing `PATCH /recipients/{id}`. When nothing is known the section is not
-   drawn; a "Vertel wat je over {naam} weet" button among the actions opens the same form.
+   vocabularies (`GiftController::options()`, the call `GiftProfileCardController` already made,
+   plus `GiftTags::VALUE_OPTIONS`, which `options()` does not carry: without it the form crashed on
+   opening, found in the same review), saved through the existing `PATCH /recipients/{id}`.
+   **Always drawn.** With nothing known it is not an empty box but the page's question: "Je weet
+   nog niets over {naam}" with **Vul zelf in** and **Laat {naam} het zelf invullen** (their
+   `/for/{token}` link, while no account is behind them). With something known, a small
+   "Laat {naam} aanvullen" link under the chips offers the same link until they have answered
+   themselves.
+   The list rows below carry their kind as a word (`ListKindBadge`: Cadeaulijst, Samen geven), so
+   two lists called "Voor David" and "David" can be told apart.
    - **Where it came from.** `taste_source` has two values: `suggested` (you: typed here, in Find a
      gift, or a This or that you played for them) and `self` (they said it through their own link).
      The page says "Ingevuld door jou" or "Ingevuld door {naam} zelf", the detail behind an
