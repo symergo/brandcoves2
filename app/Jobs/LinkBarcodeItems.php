@@ -10,6 +10,7 @@ use App\Services\Wishlist\ItemLinker;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 
 /**
  * A scanned barcode we did not know, joined to its product once we do.
@@ -24,6 +25,7 @@ use Illuminate\Foundation\Queue\Queueable;
  * Market-scoped, per invariant 2: a barcode sold only in another market is a
  * different offer set, with different tax and shipping.
  */
+#[Queue('batch')]
 class LinkBarcodeItems implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

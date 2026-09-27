@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Services\Ai\AiClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
 
@@ -36,6 +37,7 @@ use Throwable;
  * most useful thing this can tell you: generation is scheduled from the queue, so
  * a dead worker means nothing is being generated regardless of the credential.
  */
+#[Queue('default')]
 class TestAiCredential implements ShouldQueue
 {
     use Queueable;
@@ -55,6 +57,18 @@ class TestAiCredential implements ShouldQueue
      * call counts against the cap either way.
      */
     public int $tries = 1;
+
+    /**
+     * Two minutes: one model call, whose HTTP timeout is 60 seconds in
+     * AiClient, plus the reading and writing around it. Without a value of
+     * its own the job took the worker's, which on the `default` queue is 90
+     * and elsewhere up to an hour, so a hung call held a worker that long.
+     * Stays below `retry_after` on the `default` connection (180).
+     */
+    public int $timeout = 120;
+
+    /** A minute before the retry, so a model hiccup has time to pass. */
+    public int $backoff = 60;
 
     public function handle(AiClient $ai): void
     {

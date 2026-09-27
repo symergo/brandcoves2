@@ -12,6 +12,7 @@ use App\Services\Identity\MatchKeeper;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
@@ -31,6 +32,7 @@ use InvalidArgumentException;
  * products) is left waiting for a person and carried in `$skipped` so the
  * next run does not try it again.
  */
+#[Queue('editorial')]
 class MergeRuleCandidates implements ShouldQueue
 {
     use Queueable;

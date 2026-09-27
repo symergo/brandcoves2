@@ -9,6 +9,7 @@ use App\Services\Identity\MatchFinder;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Log;
  * See App\Services\Identity\MatchFinder for the rules and
  * docs/features/match-review.md for why every pair goes to a person.
  */
+#[Queue('batch')]
 class FindMatchCandidates implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

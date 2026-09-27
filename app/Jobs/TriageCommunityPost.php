@@ -12,6 +12,7 @@ use App\Services\Community\PostScreen;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -41,6 +42,7 @@ use Illuminate\Support\Facades\Log;
  * — so a bug here cannot put unreviewed text on the site, it can only make the
  * admin queue longer.
  */
+#[Queue('default')]
 class TriageCommunityPost implements ShouldQueue
 {
     use Queueable;
@@ -55,6 +57,18 @@ class TriageCommunityPost implements ShouldQueue
      * anyway.
      */
     public int $tries = 2;
+
+    /**
+     * Two minutes: one model call, whose HTTP timeout is 60 seconds in
+     * AiClient, plus the reading and writing around it. Without a value of
+     * its own the job took the worker's, which on the `default` queue is 90
+     * and elsewhere up to an hour, so a hung call held a worker that long.
+     * Stays below `retry_after` on the `default` connection (180).
+     */
+    public int $timeout = 120;
+
+    /** A minute before the retry, so a model hiccup has time to pass. */
+    public int $backoff = 60;
 
     public function __construct(
         /** @var class-string<CommunityQuestion|CommunityAnswer> */

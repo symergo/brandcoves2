@@ -10,6 +10,7 @@ use App\Services\Gift\GiftSearchDemand;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Log;
  * demand counts past a year. Drafts only, never an approval or a build, and
  * no AI. See docs/features/persona-demand.md.
  */
+#[Queue('batch')]
 class PlanPersonasFromDemand implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

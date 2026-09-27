@@ -14,6 +14,7 @@ use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,7 @@ use Throwable;
  * its position, so the stored cursor always trails committed work — never leads
  * it, which would silently skip rows if the process died in between.
  */
+#[Queue('batch')]
 class IngestFeed implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

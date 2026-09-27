@@ -13,6 +13,7 @@ use App\Services\Ai\AiUnavailable;
 use App\Services\Gift\AngleMap;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -38,6 +39,7 @@ use Illuminate\Support\Facades\Log;
  * *possible*. Faking widening from the catalogue would push results toward what
  * is already well stocked, which is the opposite of the point.
  */
+#[Queue('editorial')]
 class WidenGiftAngles implements ShouldQueue
 {
     use Queueable;
@@ -48,6 +50,18 @@ class WidenGiftAngles implements ShouldQueue
     private const BATCH = 5;
 
     public int $tries = 2;
+
+    /**
+     * Two minutes: one model call, whose HTTP timeout is 60 seconds in
+     * AiClient, plus the reading and writing around it. Without a value of
+     * its own the job took the worker's, which on the `default` queue is 90
+     * and elsewhere up to an hour, so a hung call held a worker that long.
+     * Stays below `retry_after` on the `default` connection (180).
+     */
+    public int $timeout = 120;
+
+    /** A minute before the retry, so a model hiccup has time to pass. */
+    public int $backoff = 60;
 
     public function __construct(public Market $market, public ?Vibe $vibe = null) {}
 

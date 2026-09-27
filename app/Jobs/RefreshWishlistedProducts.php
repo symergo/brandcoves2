@@ -18,6 +18,7 @@ use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Number;
@@ -31,6 +32,7 @@ use Throwable;
  * often and notice a drop sooner. It reads what ingestion already wrote rather
  * than re-fetching, so it costs a query rather than a download.
  */
+#[Queue('batch')]
 class RefreshWishlistedProducts implements ShouldQueue
 {
     use Queueable;

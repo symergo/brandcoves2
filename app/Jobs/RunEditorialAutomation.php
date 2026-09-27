@@ -15,6 +15,7 @@ use App\Services\Curation\PlanCurator;
 use App\Services\Settings\AutomationSettingsStore;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -45,6 +46,7 @@ use Illuminate\Support\Facades\Log;
  * has to avoid — so each stage logs what it did, per market, and the counts are
  * the ones a person would check.
  */
+#[Queue('editorial')]
 class RunEditorialAutomation implements ShouldQueue
 {
     use Queueable;

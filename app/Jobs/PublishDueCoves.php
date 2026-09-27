@@ -11,6 +11,7 @@ use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -55,6 +56,7 @@ use Illuminate\Support\Facades\Log;
  * is not cancelled either — the plan keeps its approval, and the window reopens
  * next year.
  */
+#[Queue('editorial')]
 class PublishDueCoves implements ShouldQueue
 {
     use Queueable;

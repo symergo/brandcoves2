@@ -12,6 +12,7 @@ use App\Services\Search\SearchService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Log;
  * ids fall off, and a product that left the results for months and came back
  * is, from the watcher's chair, new again.
  */
+#[Queue('batch')]
 class CheckSearchAlerts implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

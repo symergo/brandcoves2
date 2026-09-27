@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Services\Gift\GiftabilityClassifier;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Log;
  * old verdict on 60,000 rows with no way to tell which. A full pass over the
  * catalogue is a few seconds of CPU and no network at all.
  */
+#[Queue('batch')]
 class ClassifyGiftability implements ShouldQueue
 {
     use Queueable;

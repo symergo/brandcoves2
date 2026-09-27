@@ -70,7 +70,8 @@ return [
             'queue' => env('REDIS_QUEUE', 'default'),
 
             /*
-             * Longer than the longest job timeout, and that is the whole rule.
+             * Longer than the longest job timeout on the queues this
+             * connection is used to READ, and that is the whole rule.
              *
              * `retry_after` is how long Redis holds a job reserved before it
              * decides the worker died and hands the job to somebody else. Set
@@ -92,12 +93,36 @@ return [
              * 3900 = IngestFeed's 3600s timeout plus five minutes of headroom.
              * Raise this whenever a job's `$timeout` goes above it.
              *
-             * The cost, accepted knowingly: a job orphaned by a worker that
-             * really did die now waits 65 minutes for its retry instead of 90
-             * seconds. Every job here is scheduled daily and idempotent, so a
-             * late retry is cheap — a guaranteed daily failure was not.
+             * The cost of 3900 for everything: a visitor's job (a pasted link
+             * being read) orphaned by a worker that really did die waited 65
+             * minutes for its retry. So since 2026-09-28 there are TWO
+             * connections onto the same Redis queues, differing only here.
+             *
+             * Jobs are PUSHED onto this connection with a queue name
+             * (#[Queue('batch')] on the class). The Redis key, `queues:batch`,
+             * is the same whichever connection reads it, and the READING
+             * connection's `retry_after` is the one that applies, because it is
+             * set at the moment a worker reserves the job. config/horizon.php
+             * has the `default` queue read through this connection and the
+             * slow queues (`mail`, `editorial`, `batch`) through `redis-long`.
+             *
+             * 180 = the longest job on `default` (the AI jobs, `$timeout` 120)
+             * plus a minute. A long job that forgets its #[Queue] attribute
+             * lands here and is re-run after three minutes while still running;
+             * QueueRoutingTest fails before that can ship.
              */
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 3900),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 180),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        // The slow queues. 3900 = IngestFeed's 3600s timeout plus five
+        // minutes; raise it whenever a job's `$timeout` goes above it.
+        'redis-long' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE', 'default'),
+            'retry_after' => (int) env('REDIS_LONG_QUEUE_RETRY_AFTER', 3900),
             'block_for' => null,
             'after_commit' => false,
         ],

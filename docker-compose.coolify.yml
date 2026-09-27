@@ -274,8 +274,16 @@ services:
       start_period: 30s
     # SIGTERM lets Horizon finish the job in flight instead of abandoning a
     # half-ingested feed chunk mid-transaction.
+    #
+    # 120s since 2026-09-28. IngestFeed notices the SIGTERM, finishes the chunk
+    # it is writing, records its place and puts itself back on the queue, so
+    # the new Horizon resumes it at once instead of after `retry_after` (65
+    # minutes). A chunk of a large feed can take most of a minute, so 60s cut
+    # some of them off mid-write. Other long jobs (a grouping pass, a Cove
+    # build) still run to their end or are killed at the limit, and are
+    # retried later; every one of them is idempotent.
     stop_signal: SIGTERM
-    stop_grace_period: 60s
+    stop_grace_period: 120s
     depends_on:
       migrate:
         condition: service_completed_successfully

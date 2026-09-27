@@ -14,6 +14,7 @@ use App\Support\ListName;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -35,6 +36,7 @@ use Illuminate\Support\Facades\Mail;
  * Unique, as the other scheduled jobs are: a replayed schedule must not seed
  * twice or mail twice. See docs/features/list-price-watch.md.
  */
+#[Queue('mail')]
 class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

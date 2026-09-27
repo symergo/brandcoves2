@@ -14,6 +14,7 @@ use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Log;
  * reads like something a page could do on demand. It cannot: that would put
  * model latency and model cost on every visitor, seven markets over.
  */
+#[Queue('editorial')]
 class BuildDailyEdition implements ShouldQueue
 {
     use Queueable;

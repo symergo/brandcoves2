@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Services\Search\RecentSearches;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 
 /**
  * Resolve the recent searches into pictures, once an hour, per market.
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Queue\Queueable;
  * Safe to run at any time and safe to run twice. It only writes a cache key, so
  * a failure leaves the previous hour's band in place rather than an empty one.
  */
+#[Queue('batch')]
 class RefreshRecentSearches implements ShouldQueue
 {
     use Queueable;

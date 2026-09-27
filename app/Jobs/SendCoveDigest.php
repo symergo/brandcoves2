@@ -12,6 +12,7 @@ use App\Services\Cove\DigestBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Mail;
  * the work — the same reason ingestion is chunked. `last_sent_on` is written
  * per subscriber immediately after the send, so a crash costs at most one mail.
  */
+#[Queue('mail')]
 class SendCoveDigest implements ShouldQueue
 {
     use Queueable;

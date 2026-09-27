@@ -9,6 +9,7 @@ use App\Services\Gift\GiftLandingPlanner;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Log;
  * sitemap, which lists the pages. About 400 engine runs per market, each a few
  * database queries and no AI. See docs/features/gift-landing-pages.md.
  */
+#[Queue('batch')]
 class PlanGiftLandingPages implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

@@ -10,6 +10,7 @@ use App\Services\Search\SearchGenerations;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Log;
  * than doing it per chunk, where a group's "cheapest offer" would be computed
  * from a catalogue that is still half-loaded.
  */
+#[Queue('batch')]
 class GroupProducts implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
