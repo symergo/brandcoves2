@@ -465,10 +465,15 @@ class Wishlist extends Model
      * back later. Asked here rather than only at the endpoint so the button and
      * the POST answer the same question: this is the value the page renders
      * from, and a control that 403s when pressed is worse than no control.
+     *
+     * `canAct()` rather than `exists()` since 2026-09-27: the shared page makes
+     * no identity on a read, so a first-time guest is "pending" there and gets
+     * one from the POST. On the POST itself nothing is pending (only a GET of
+     * a lazy page is), so the endpoint's answer is `exists()` exactly as before.
      */
     public function allowsContributionsFrom(Owner $viewer): bool
     {
-        return $viewer->exists()
+        return $viewer->canAct()
             && $this->kind->allowsContributions()
             && ($this->kind->ownerSeesContributions() || ! $this->shouldHideClaimsFrom($viewer));
     }
@@ -513,10 +518,12 @@ class Wishlist extends Model
      * The owner votes too. On a group list they are the organiser — a member of
      * the group who is also fronting the money — not the person being
      * surprised, so there is nothing to keep from them.
+     *
+     * `canAct()`: see {@see allowsContributionsFrom()}.
      */
     public function allowsVotingFrom(Owner $viewer): bool
     {
-        return $viewer->exists() && $this->votingEnabled();
+        return $viewer->canAct() && $this->votingEnabled();
     }
 
     /**

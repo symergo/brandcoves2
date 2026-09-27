@@ -103,6 +103,15 @@ class SharedListController extends Controller
             }
 
             /*
+             * A guest with no identity yet (this page makes none on a read):
+             * held in the session, and recorded by `TrackAnonymousIdentity`
+             * the moment their first write makes one.
+             */
+            if ($owner->pending) {
+                ListOpen::rememberForLater($request, $list);
+            }
+
+            /*
              * And remember who sent it, so the two people know each other after.
              *
              * Sharing is a link, which made it frictionless and left both ends
@@ -163,8 +172,12 @@ class SharedListController extends Controller
          * No account needed — an anonymous cookie identity is an owner. Somebody
          * followed a link once; requiring a signup before they can say "she'd
          * love this" is how the feature does not get used.
+         *
+         * `canAct()`, not `exists()`: this page makes no identity on a read
+         * (2026-09-27), so a first-time guest has none yet and is offered the
+         * control on the promise that the POST makes one. See `Owner::canAct()`.
          */
-        $canSuggest = ! $isOwner && $owner->exists();
+        $canSuggest = ! $isOwner && $owner->canAct();
 
         $term = $canSuggest ? trim((string) $request->query('q', '')) : '';
 

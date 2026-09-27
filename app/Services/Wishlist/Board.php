@@ -133,10 +133,14 @@ class Board
      * it and to take it back later. The same `exists()` check the vote and the
      * pledge make, and for the same reason — without it a visitor whose cookie
      * identity has not been minted yet is shown a form that 403s on submit.
+     *
+     * `canAct()`, like the vote and the pledge: a first-time guest on the
+     * shared page has no identity yet (it is made by their first POST) and is
+     * still offered the form. On the POST itself `canAct()` is `exists()`.
      */
     public function writableBy(Wishlist $list, Owner $viewer): bool
     {
-        return $viewer->exists() && $this->visibleTo($list, $viewer);
+        return $viewer->canAct() && $this->visibleTo($list, $viewer);
     }
 
     /**
