@@ -553,7 +553,24 @@ class CommunityCoves
         return Wishlist::query()
             ->communityCoves()
             ->where('wishlists.market', $market->value)
-            ->with(['recipient', 'items.group'])
+            /*
+             * Only the columns a card reads.
+             *
+             * A card needs the count of what a stranger may see and one
+             * picture, and publicItems() decides the first in PHP (the flat
+             * screen that drops a hand-written title with a link in it has no
+             * SQL twin), so the items still load. But not whole: every column
+             * of every item and every column of its product (descriptions,
+             * tags, search fields) was loaded for a listing of twenty-four
+             * cards. These are the columns publicItems() and card() touch.
+             */
+            ->with([
+                'recipient',
+                'items' => fn ($items) => $items->select([
+                    'id', 'wishlist_id', 'group_id', 'source', 'snapshot_title', 'created_at',
+                ]),
+                'items.group' => fn ($group) => $group->select(['id', 'image_url']),
+            ])
             ->withCount('saves');
     }
 
