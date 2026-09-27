@@ -120,7 +120,9 @@ class GiftIdeasController extends Controller
             ->personas()
             ->where('slug', $slug)
             ->unless($preview, fn ($q) => $q->published())
-            ->with(['picks.group'])
+            // The footer guide and its count in the same round; see
+            // DailyCoveController::findEdition().
+            ->with(['picks.group', 'featured' => fn ($q) => $q->withCount('picks')])
             ->first();
 
         if ($persona === null) {

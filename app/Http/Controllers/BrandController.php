@@ -10,11 +10,9 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
-use App\Services\Cove\EntityLinks;
+use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
-use App\Services\Editorial\Allowlist;
-use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\EntityCoveContext;
@@ -369,49 +367,30 @@ class BrandController extends Controller
             return null;
         }
 
-        $markup = app(CoveMarkup::class);
-        $market = $current->get();
-
         /*
-         * No products in the allowlist, on purpose.
+         * The prose as rendered when the Cove was built (App\Services\Cove\CoveProse).
          *
-         * An entity Cove's prose is about ranges and categories rather than
-         * about individual products, because the products under it are live
-         * rails that change with stock. What it links to is searches, brands and
-         * other guides — and a `[[search:…]]` resolving to a real crawlable
+         * No products in its allowlist, on purpose. An entity Cove's prose is
+         * about ranges and categories rather than about individual products,
+         * because the products under it are live rails that change with stock.
+         * What it links to is searches (the categories this brand sells in,
+         * stored with the Cove: see App\Services\Cove\EntityLinks), brands
+         * and other guides, and a `[[search:…]]` resolving to a real crawlable
          * market URL is the point of the piece rather than a decoration on it.
          */
-        $allowed = app(Allowlist::class)->full(
-            collect(),
-            $market,
-            excludeGuideId: $cove->id,
-            // The categories this brand actually sells in. Without them the
-            // allowlist is empty and every `[[search:…]]` renders as plain
-            // words — which is the one thing an entity Cove must not do.
-            // Stored with the Cove when it was built rather than worked out
-            // per view: see App\Services\Cove\EntityLinks.
-            extraSearches: app(EntityLinks::class)->forBrandCove($cove, $stat),
-        );
+        $prose = app(CoveProse::class)->for($cove);
 
         return [
             'id' => $cove->id,
             'title' => $cove->theme_title,
-            // `render()` returns html plus a link report; the page wants the
-            // html. The report is for the author, and they read it from the
-            // editorial API rather than from a visitor's page.
-            'intro' => $markup->render((string) $cove->theme_blurb, $market, $allowed)['html'],
+            'intro' => $prose['entity']['intro'],
             /*
-                 * Paragraph by paragraph, not one string.
-                 *
-                 * `render()` resolves tokens and leaves the text as it found
-                 * it, so a piece written in three paragraphs arrived as one
-                 * wall of prose - and nothing reported it, because the tokens
-                 * all resolved. `paragraphs()` splits on blank lines first,
-                 * which is what every other written page here already does.
-                 *
-                 * Found 2026-09-06 reading the first published Shop Cove.
-                 */
-            'body' => $markup->paragraphs((string) $cove->body, $market, $allowed)['html'],
+             * Paragraph by paragraph, not one string: a piece written in three
+             * paragraphs once arrived as one wall of prose, and nothing
+             * reported it because the tokens all resolved. Found 2026-09-06
+             * reading the first published Shop Cove.
+             */
+            'body' => $prose['entity']['body'],
             /*
              * For the page's <meta description>, and stripped of link tokens.
              *
@@ -420,7 +399,7 @@ class BrandController extends Controller
              * Falls back to the brand's generic line when the Cove has none.
              */
             'metaDescription' => $cove->meta_description
-                ?: $markup->plain((string) $cove->theme_blurb),
+                ?: $prose['plain']['blurb'],
         ];
     }
 

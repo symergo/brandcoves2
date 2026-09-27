@@ -110,13 +110,15 @@ eatured_cove_id can point at it.
      *   staging's visitors. Carrying them would put invented engagement in
      *   front of real users.
      * - **Runtime state.** A feed's `last_run_at` and `last_error` describe the
-     *   environment that ran it, not the feed.
+     *   environment that ran it, not the feed. An edition's `rendered_prose`
+     *   is its text with product ids already turned into this environment's
+     *   links, and the far side renders its own (see CoveProse).
      */
     private const DROP = [
         'feeds' => ['id', 'merchant_id', 'last_run_at', 'last_row_count', 'last_error', 'created_at', 'updated_at'],
         'blocks' => ['id', 'author_id', 'created_at', 'updated_at'],
         'topics' => ['id', 'guide_id', 'edition_id', 'plan_id', 'created_at', 'updated_at', 'last_attempt_at', 'attempts'],
-        'editions' => ['id', 'guide_id', 'featured_cove_id', 'folded_from_guide_id', 'challenge_group_id', 'created_at', 'updated_at'],
+        'editions' => ['id', 'guide_id', 'featured_cove_id', 'folded_from_guide_id', 'challenge_group_id', 'rendered_prose', 'created_at', 'updated_at'],
         'plans' => ['id', 'edition_id', 'created_by', 'created_at', 'updated_at'],
     ];
 
