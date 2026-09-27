@@ -135,7 +135,16 @@ export default function GiftResults({
             )}
 
             {into && canSave && (
-                <p className="mt-1 text-sm text-ink-soft">{tRich('gift.saving_to', { list: <ListName name={into.title} kind={into.kind} /> })}</p>
+                <p className="mt-1 text-sm text-ink-soft">
+                    {tRich('gift.saving_to', {
+                        // The list's name leads to it (owner, 2026-09-27), as "Bewaard in …" does.
+                        list: (
+                            <Link href={`/${market.key}/lists/${into.id}`} className="hover:underline">
+                                <ListName name={into.title} kind={into.kind} />
+                            </Link>
+                        ),
+                    })}
+                </p>
             )}
 
             {note}
