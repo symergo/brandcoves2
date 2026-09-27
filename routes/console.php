@@ -20,7 +20,6 @@ use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshRecentSearches;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\RunEditorialAutomation;
-use App\Jobs\ScoreSerendipity;
 use App\Jobs\SendCoveDigest;
 use App\Jobs\SendListPriceDigests;
 use App\Jobs\SendOccasionReminders;
@@ -195,30 +194,35 @@ Schedule::call(function (): void {
     ->onOneServer();
 
 /*
- * Score serendipity.
+ * Score serendipity: OFF THE SCHEDULE since 2026-09-27.
  *
- * After giftability, because the quality gate reads that verdict — a row
- * already known to be a printer cartridge must never be scored as an exciting
- * find. Builds the whole market's word-frequency distribution once per run,
- * which is why this is a job and not something a request could ever do.
+ * The owner switched the Serendipity Engine (the surprise score) off that day
+ * as a trial, to see whether anything visibly gets worse without it: the score
+ * had ranked unrelated products high on a daily Cove, and this job failed
+ * twice a day, timing out on the whole-market word-frequency pass. A decision
+ * on removing it for good is due around 2026-10-11.
+ *
+ * Only the schedule entry is gone. App\Jobs\ScoreSerendipity and the stored
+ * scores stay, and `bc:refresh-discovery` still runs it by hand. To bring it
+ * back, restore this entry, which ran at 05:25 and 17:25 (after giftability,
+ * because its quality gate reads that verdict):
+ *
+ *   Schedule::call(function (): void {
+ *       foreach (Market::cases() as $market) {
+ *           ScoreSerendipity::dispatch($market);
+ *       }
+ *   })->name('score-serendipity')->twiceDailyAt(5, 17, 25)
+ *     ->withoutOverlapping()->onOneServer();
  */
-Schedule::call(function (): void {
-    foreach (Market::cases() as $market) {
-        ScoreSerendipity::dispatch($market);
-    }
-})
-    ->name('score-serendipity')
-    ->twiceDailyAt(5, 17, 25)
-    ->withoutOverlapping()
-    ->onOneServer();
 
 /*
  * Recompute brand statistics.
  *
  * Brand pages are made entirely of these numbers — "N products, from €X, M of
  * them reduced" — so this has to follow grouping, which is what produces the
- * cheapest price and the median those sentences quote. Five minutes after
- * serendipity, which is the last thing that touches product_groups.
+ * cheapest price and the median those sentences quote. Twenty minutes after
+ * giftability, which with serendipity off the schedule is the last thing
+ * that touches product_groups.
  */
 Schedule::call(function (): void {
     foreach (Market::cases() as $market) {
