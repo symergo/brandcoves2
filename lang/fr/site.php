@@ -896,7 +896,6 @@ return [
         'on_your_list' => 'Sur votre liste',
         'share_with' => 'Partager avec :name',
         'enable_sharing' => 'Activer le partage',
-        'more_share_options' => 'Plus d\'options de partage',
         'send_via' => 'Envoyer via…',
         'unshare_from' => 'Ne plus partager avec :name',
         'unshare_confirm' => 'Ne plus partager cette liste avec :name ? Un lien déjà reçu fonctionne toujours.',

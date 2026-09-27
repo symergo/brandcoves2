@@ -785,10 +785,6 @@ function ShareListDialog({ list, onClose }: { list: ListSummary; onClose: () => 
                     {t('lists.disable_sharing')}
                 </button>
             )}
-
-            <Link href={`${list.url}?panel=share`} className="mt-5 block text-sm font-medium text-accent-dark hover:text-ink">
-                {t('lists.more_share_options')} →
-            </Link>
         </dialog>
     )
 }

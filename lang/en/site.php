@@ -1062,7 +1062,6 @@ return [
         'on_your_list' => 'On your list',
         'share_with' => 'Share with :name',
         'enable_sharing' => 'Turn sharing on',
-        'more_share_options' => 'More sharing options',
         'send_via' => 'Send via…',
         'unshare_from' => 'Stop sharing with :name',
         'unshare_confirm' => 'Stop sharing this list with :name? Their link, if they have one, still works.',
