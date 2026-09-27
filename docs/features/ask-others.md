@@ -28,6 +28,10 @@ to one owner, a Secret Santa exclusion is read by a draw algorithm and by nobody
 table whose rows are meant to be read by strangers on an indexable page — so moderation is a column,
 not a plan.
 
+(Since 2026-09-27 a question can also be asked of your people only, which is never on the board and
+is not read first; see "Ask the community or ask your people" below. Everything in this section is
+about the board.)
+
 **Nothing that can be reached from a request handler is able to publish anything.** A post is
 created `pending`; `TriageCommunityPost` is the only thing in the codebase that can set
 `published`. That is invariant #1 doing double duty — a visitor request must never cause AI spend,
@@ -220,6 +224,77 @@ site (the only one is the reminder emails'), so the email got a switch of its ow
 receiver's, which is also what the unsubscribe link needs to turn off. The form says "Gaat ook naar
 je mensen" with (i) while the asker's switch is on.
 
+## Ask the community or ask your people (2026-09-27)
+
+Owner: "2 options: ask the GiftCoves community, ask your people on GiftCoves (provide a share link
+after posting)." The form now opens on **Aan wie vraag je het?**, two cards:
+
+| | De GiftCoves-gemeenschap (`public`) | Je mensen op GiftCoves (`people`) |
+|---|---|---|
+| Who sees it | everyone, on the board; indexable once answered; in the sitemap | the asker's friends and whoever holds the link; `noindex, nofollow`; on no public list |
+| Address | `/ask/{id}/{slug}` | `/ask/p/{code}`, never the id |
+| Read first | yes, `TriageCommunityPost` | no |
+| The asker's people | told once it is published, if the asker's switch is on | told at once, whatever the asker's switch says |
+| After posting | back to the board, "we lezen dit" | the question page, with the share popup already open |
+
+`community_questions.audience` (string + CHECK, default `public`) and `share_token` (a
+`ShareCode`, unique where set), with a CHECK that a people question has a code and a board
+question has none. The logic is `App\Services\Community\PeopleQuestions`.
+
+**The community stays the default from every way in**, Find a gift and a list page included. It
+is the feature people already know, and the narrower audience should be something the asker chose,
+not something that happened because of where they clicked from.
+
+### Why a people question is not read first
+
+The board is moderated because it publishes a stranger's writing on an indexable page of ours. A
+people question is not published: it goes to people the asker chose, as a shared list, a suggestion
+or an invitation does, and none of those is read first. Holding it would also break the one thing
+asked for: a link to send straight after posting is useless if it opens on "we are still reading
+this". So it is created `published` (which is what makes it answerable, and keeps the
+status-and-date CHECK true) with `audience = people`. It still shows in the admin's question list,
+with an audience column and filter, so a reported one can be refused; that closes the link to
+everybody but its asker.
+
+**Answers on it are still read first**, by the same job. Whoever holds the link can answer, and a
+link travels further than the asker may have meant. A held answer costs its writer a short wait.
+Decided without the owner; an easy switch if friends' answers should appear at once.
+
+### Why a link code and not the id
+
+Ids are sequential, and "only your people" must not mean "anybody who counts". The code is the
+permission, exactly as on a shared list (the same 10-character `ShareCode`, about 50 bits), the
+GET is throttled at 60 a minute, and `/ask/{id}` answers 404 for a people question, even to its
+asker, who has the link. `bc:scrub` rotates the codes. The model hides `share_token` from
+serialisation.
+
+### Nothing that lists questions to strangers can reach one
+
+`CommunityQuestion::published()` now means **on the board**: published *and* `audience =
+public`. Every caller (the board, Discover, the sitemap, the board's answer route) wanted exactly
+that, and the next listing somebody writes gets the safe set without having to know people
+questions exist. A people question is found by its code or as one of your friends'.
+
+### Where the asker and their friends find it again
+
+- **Jouw vragen** on `/ask` now lists all your questions, not only the held ones, and a published
+  one carries a share button (the popup: *Link kopiëren*, *Stuur via…*, the question as the
+  message). Your own board questions are left out of the board list below it, so nothing shows
+  twice. A held question has no share button: its link is a 404 to everybody else.
+- **Van je mensen**: your friends' people questions (six, newest first), because the notification
+  is dismissed and the one-a-day limit can keep a second question out of the inbox. Only friends
+  you have now: removing a friend takes their questions off your page, as it takes their lists.
+- The question page shows *Alleen voor je mensen* with (i) above the title, and the asker a *Delen*
+  button. Guests can read and get the sign-in link to answer; they come back to the same page.
+
+### Notifications
+
+The same `SendQuestionToPeople` job, queued by `PeopleQuestions::ask()` after the commit, with the
+same `people_notified_at` claim. Two differences, in `QuestionToPeople`: the link is the code URL,
+and **the asker's "Stuur mijn vragen naar mijn mensen" switch does not stop it**. That switch means
+"also send my board questions to my people"; choosing *Je mensen* on the form is the later and more
+specific decision. The receivers' two switches and the one-a-day limit apply unchanged.
+
 ## Schema notes
 
 - **`status` is a string with a CHECK**, per the enum-ish convention: altering a native PG enum
@@ -276,6 +351,10 @@ with a stale slug redirecting rather than 404ing, so retitling never strands a s
   `app/Http/Controllers/AskPeopleSettingsController.php`, `resources/js/askBrief.ts`
 - `database/migrations/2026_09_28_000300_ask_others_reaches_your_people.php`
 - `tests/Feature/AskOthersReachTest.php`
+- `app/Enums/AskAudience.php`, `app/Services/Community/PeopleQuestions.php`,
+  `resources/js/Components/AskShareDialog.tsx`,
+  `database/migrations/2026_09_28_001100_a_question_can_ask_only_your_people.php`,
+  `tests/Feature/AskYourPeopleTest.php`
 - `resources/js/Pages/Ask/Index.tsx`, `Show.tsx`
 - `resources/js/Components/CoveIcon.tsx` — the `ask` mark
 - `lang/*/site.php` — `ask.*`

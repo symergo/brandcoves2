@@ -166,4 +166,24 @@ return [
             'body' => 'Publica una de tus listas como Cove de la comunidad, en Compartir. Cualquiera puede encontrarla, guardarla o convertirla en su propia lista. Los nombres, las notas y lo que ya se compró siguen ocultos.',
         ],
     ],
+    'ask-your-people' => [
+        'status' => 'done',
+        'sort' => 40,
+        'nl' => [
+            'title' => 'Vraag het aan je mensen',
+            'body' => 'Bij Vraag het aan anderen kies je aan wie je het vraagt: de GiftCoves-gemeenschap op het openbare bord, of alleen je mensen. Je vrienden op GiftCoves krijgen dan meteen een melding, en je krijgt een link om te sturen naar wie je wilt. Die vraag staat niet op het bord.',
+        ],
+        'en' => [
+            'title' => 'Ask your people',
+            'body' => 'In Ask others you choose who you ask: the GiftCoves community on the public board, or only your people. Your friends on GiftCoves then get a notification straight away, and you get a link to send to anyone you like. That question is not on the board.',
+        ],
+        'fr' => [
+            'title' => 'Demandez à vos proches',
+            'body' => "Dans Demandez aux autres, vous choisissez à qui vous demandez : la communauté GiftCoves sur le tableau public, ou seulement vos proches. Vos amis sur GiftCoves reçoivent alors tout de suite une notification, et vous recevez un lien à envoyer à qui vous voulez. Cette question n'est pas sur le tableau.",
+        ],
+        'es' => [
+            'title' => 'Pregunta a tu gente',
+            'body' => 'En Pregunta a los demás eliges a quién preguntas: la comunidad de GiftCoves en el tablón público, o solo tu gente. Tus amigos en GiftCoves reciben entonces un aviso enseguida, y tú recibes un enlace para enviarlo a quien quieras. Esa pregunta no está en el tablón.',
+        ],
+    ],
 ];

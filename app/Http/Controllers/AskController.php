@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\AskAudience;
 use App\Enums\Interest;
 use App\Enums\ModerationStatus;
 use App\Enums\Vibe;
@@ -13,6 +14,7 @@ use App\Models\CommunityQuestion;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Services\Community\AskPrefill;
+use App\Services\Community\PeopleQuestions;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
@@ -46,6 +48,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * cannot publish, which is deliberate: the one place that turns a stranger's
  * writing into a public page is a queued job with the model behind it, and no
  * request path should be able to do it. See docs/features/ask-others.md.
+ *
+ * ## Or only your people (2026-09-27)
+ *
+ * The one exception, and it publishes nothing: a question asked of your people
+ * only (`PeopleQuestions`) is never on the board. It opens by its link code at
+ * `/ask/p/{token}`, for your friends and whoever you send the link to, the
+ * way a shared list does, and so it is not read first.
  */
 class AskController extends Controller
 {
@@ -63,37 +72,55 @@ class AskController extends Controller
             canonical: url($current->url('ask')),
         );
 
+        $user = $request->user();
+        $people = app(PeopleQuestions::class);
+
+        /*
+         * Your own questions: the ones still being looked at, the ones on the
+         * board, and the ones you asked your people.
+         *
+         * Held ones because without them the feature looks broken in the exact
+         * moment somebody first uses it: they press "Ask", the board reloads,
+         * and their question is not on it. Their own held post is not a
+         * disclosure, it is their own writing. Published ones (since
+         * 2026-09-27) because this is where the asker finds a question's link
+         * again to send it on; a people question is on no other list at all.
+         */
+        $mine = $user === null ? collect() : CommunityQuestion::query()
+            ->forMarket($current->get())
+            ->where('user_id', $user->id)
+            ->with('author')
+            ->latest()
+            ->limit(10)
+            ->get();
+
         $questions = CommunityQuestion::query()
             ->forMarket($current->get())
             ->published()
+            // Already above, under "Jouw vragen", with a share button.
+            ->whereNotIn('id', $mine->pluck('id'))
             ->with('author')
             ->orderByDesc('published_at')
             ->limit(self::PER_PAGE)
             ->get();
 
-        $user = $request->user();
-
         return Inertia::render('Ask/Index', [
             'questions' => $questions->map(fn (CommunityQuestion $q) => $this->summarise($q, $current))->all(),
 
+            'mine' => $mine->map(fn (CommunityQuestion $q) => $this->summarise($q, $current, withShare: true))->all(),
+
             /*
-             * Your own questions, including the ones still being looked at.
-             *
-             * Without this the feature looks broken in the exact moment
-             * somebody first uses it: they press "Ask", the board reloads, and
-             * their question is not on it. Their own held post is not a
-             * disclosure — it is their own writing — and it is the only honest
-             * way to say "we have it, we are reading it".
+             * Your friends' questions for their people. Reached otherwise only
+             * through the notification, which is dismissed, or not sent at all
+             * past the one-a-day limit. Your own page, never a public one.
              */
-            'mine' => $user === null ? [] : CommunityQuestion::query()
-                ->forMarket($current->get())
-                ->where('user_id', $user->id)
-                ->whereNot('status', ModerationStatus::Published->value)
-                ->latest()
-                ->limit(10)
-                ->get()
+            'fromPeople' => $user === null ? [] : $people->fromFriends($user, $current->get())
                 ->map(fn (CommunityQuestion $q) => $this->summarise($q, $current))
                 ->all(),
+
+            // For the "Your people" choice: with nobody yet, it says the link
+            // is the way to reach them.
+            'friendCount' => $user === null ? 0 : $people->friendCount($user),
 
             'canAsk' => $user !== null,
 
@@ -183,6 +210,9 @@ class AskController extends Controller
             'occasion' => ['nullable', 'string', 'max:40'],
             // The list it was asked from; checked against the owner below.
             'list_id' => ['nullable', 'string'],
+            // Who it is for: the board (the default, and what every question
+            // was before 2026-09-27) or only the asker's people.
+            'audience' => ['nullable', 'string', 'in:'.implode(',', array_column(AskAudience::cases(), 'value'))],
         ]);
 
         /*
@@ -193,7 +223,7 @@ class AskController extends Controller
          */
         $list = app(AskPrefill::class)->list($request, Owner::fromRequest($request));
 
-        $question = CommunityQuestion::create([
+        $attributes = [
             'market' => $current->get(),
             'user_id' => $user->id,
             'title' => $validated['title'],
@@ -211,10 +241,28 @@ class AskController extends Controller
             'age_band' => $validated['age_band'] ?? null,
             'occasion' => $validated['occasion'] ?? null,
             'wishlist_id' => $list?->id,
+        ];
 
+        /*
+         * Only your people: visible at once to them and to whoever holds the
+         * link, never on the board, not read first (PeopleQuestions says why).
+         * The asker lands on the question with its link open to send.
+         */
+        if (($validated['audience'] ?? null) === AskAudience::People->value) {
+            $question = app(PeopleQuestions::class)->ask($attributes);
+
+            return redirect()
+                ->to($current->url($question->path()))
+                ->with('askShare', true)
+                ->with('status', __('site.ask.people_only.asked'));
+        }
+
+        $question = CommunityQuestion::create([
+            ...$attributes,
             // Stated rather than inherited from the column default: `create()`
             // hands back the instance it built, and a value only Postgres knows
             // about is null on it.
+            'audience' => AskAudience::Public,
             'status' => ModerationStatus::Pending,
         ]);
 
@@ -232,7 +280,12 @@ class AskController extends Controller
             ->with(['author'])
             ->find($question);
 
-        if ($found === null || ! $found->isVisibleTo($request->user())) {
+        /*
+         * A people question is never opened by its id, not even by its asker:
+         * ids are sequential, and an address anybody can count to is not
+         * "only your people". It has one address, its link (`showPeople`).
+         */
+        if ($found === null || $found->isForPeople() || ! $found->isVisibleTo($request->user())) {
             // A held question is a 404 to everybody but its author: "this
             // exists but you may not see it" is itself information.
             throw new NotFoundHttpException;
@@ -262,7 +315,42 @@ class AskController extends Controller
                 : 'noindex, follow',
         );
 
+        return $this->page($request, $current, $found);
+    }
+
+    /**
+     * A question for the asker's people, opened by its link.
+     *
+     * The code is the permission, as on a shared list: anybody holding it may
+     * read, and anybody signed in may answer. A wrong code, one from another
+     * market, or a question an admin refused is a 404 (the refused one still
+     * opens for its asker). `noindex, nofollow` and no canonical other than
+     * itself: it is a private page that happens to have an address.
+     */
+    public function showPeople(Request $request, CurrentMarket $current, string $market, string $token): Response
+    {
+        $people = app(PeopleQuestions::class);
+        $found = $people->find($current->get(), $token);
+
+        if ($found === null || ! $people->mayOpen($found, $request->user())) {
+            throw new NotFoundHttpException;
+        }
+
+        app(PageMeta::class)->set(
+            title: $found->title,
+            description: __('site.ask.people_only.description'),
+            canonical: url($current->url($found->path())),
+            robots: 'noindex, nofollow',
+        );
+
+        return $this->page($request, $current, $found);
+    }
+
+    /** The question page, for either audience. */
+    private function page(Request $request, CurrentMarket $current, CommunityQuestion $found): Response
+    {
         $viewer = $request->user();
+        $asker = $viewer !== null && $viewer->id === $found->user_id;
 
         $answers = $found->allAnswers()
             ->with(['author', 'groups'])
@@ -273,12 +361,25 @@ class AskController extends Controller
 
         return Inertia::render('Ask/Show', [
             'question' => [
-                ...$this->summarise($found, $current),
+                // The link to send, for the asker alone: on a people question
+                // it is the permission itself, and on a board question it is
+                // the asker's to pass around.
+                ...$this->summarise($found, $current, withShare: $asker),
                 'body' => $found->body,
                 // Only its author ever reads this, and only in the general
                 // form the copy allows.
-                'note' => $found->user_id === $viewer?->id ? $found->moderation_note : null,
+                'note' => $asker ? $found->moderation_note : null,
+                'answerUrl' => $current->url($found->isForPeople()
+                    ? $found->path().'/answers'
+                    : "ask/{$found->id}/answers"),
             ],
+
+            /*
+             * Straight after asking your people: the page opens with the link
+             * to send (the owner's "provide a share link after posting").
+             * Flashed by `store()`, so a reload does not open it again.
+             */
+            'openShare' => $asker && (bool) $request->session()->get('askShare', false),
 
             'answers' => $answers->map(fn (CommunityAnswer $a) => [
                 'id' => $a->id,
@@ -330,6 +431,34 @@ class AskController extends Controller
             throw new NotFoundHttpException;
         }
 
+        return $this->storeAnswer($request, $current, $found);
+    }
+
+    /**
+     * Answer a question for somebody's people, by its link.
+     *
+     * Signed in, like every answer (the route says so), and holding the link,
+     * which is the permission: a friend told by a notification and somebody
+     * the asker sent it to are the same here. A refused question takes no
+     * answers, from anybody.
+     */
+    public function answerPeople(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
+    {
+        abort_if($request->user() === null, 403);
+
+        $found = app(PeopleQuestions::class)->find($current->get(), $token);
+
+        if ($found === null || ! $found->status->isPublished()) {
+            throw new NotFoundHttpException;
+        }
+
+        return $this->storeAnswer($request, $current, $found);
+    }
+
+    private function storeAnswer(Request $request, CurrentMarket $current, CommunityQuestion $found): RedirectResponse
+    {
+        $user = $request->user();
+
         $validated = $request->validate([
             'body' => ['required', 'string', 'min:2', 'max:2000'],
             'picks' => ['nullable', 'array', 'max:'.self::MAX_PICKS],
@@ -361,6 +490,8 @@ class AskController extends Controller
             $answer->picks()->create(['group_id' => $groupId, 'position' => $position]);
         }
 
+        // Read first on either audience: see PeopleQuestions for why an
+        // answer on a people question is not exempt.
         dispatch(TriageCommunityPost::for($answer));
 
         return back()->with('status', __('site.ask.answer_submitted'));
@@ -421,9 +552,20 @@ class AskController extends Controller
         return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
     }
 
-    /** @return array<string, mixed> */
-    private function summarise(CommunityQuestion $question, CurrentMarket $current): array
+    /**
+     * One question as a card or a page header.
+     *
+     * `withShare` adds the absolute link to send, for the asker's own eyes
+     * only (their list, their question page), and only once there is
+     * something to send: a held board question's link is a 404 to everybody
+     * else, so offering it would hand people a dead link.
+     *
+     * @return array<string, mixed>
+     */
+    private function summarise(CommunityQuestion $question, CurrentMarket $current, bool $withShare = false): array
     {
+        $url = $current->url($question->path());
+
         return [
             'id' => $question->id,
             'title' => $question->title,
@@ -435,7 +577,9 @@ class AskController extends Controller
             'author' => $question->author?->displayName(),
             'status' => $question->status->value,
             'askedAt' => ($question->published_at ?? $question->created_at)->toIso8601String(),
-            'url' => $current->url("ask/{$question->id}/{$question->slug()}"),
+            'url' => $url,
+            'audience' => ($question->audience ?? AskAudience::Public)->value,
+            'shareUrl' => $withShare && $question->status->isPublished() ? url($url) : null,
         ];
     }
 }

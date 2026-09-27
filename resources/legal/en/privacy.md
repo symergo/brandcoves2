@@ -94,6 +94,18 @@ this off ("Send my questions to my people"), and stop receiving your friends'
 questions, or only the emails, on your notifications page or from the link in
 any such email.
 
+Since 27 September 2026 you can also ask a question of your people only. That
+question is not on the public board, not in search engines and in no list that
+anybody else sees. Your friends on GiftCoves and anyone with the link can read
+it; the link holds a secret code, and whoever gets it from you or from a friend
+can read the question and answer it after signing in. Your friends get a
+notification straight away (and an email if they want one), with your name and
+the question; their settings on their notifications page apply the same way. We
+do not read such a question before it is visible, just as we do not read a
+shared list; if one is reported to us, we can take it down. Answers to it are
+read first, as on the board. We keep the question like any question: until you
+delete your account.
+
 ### Inviting somebody by email
 
 Since 26 September 2026, when you invite somebody on My people with their email

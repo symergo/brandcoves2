@@ -77,7 +77,7 @@ is true now.
 | [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [recently-viewed.md](recently-viewed.md) | Discovery / Frontend | Active |
-| [ask-others.md](ask-others.md) | Discovery / Community | Active. Since 2026-09-26 filled in from Find a gift and gift lists, always invited to on Discover, and sent to your people once published (two switches, one a day) |
+| [ask-others.md](ask-others.md) | Discovery / Community | Active. Since 2026-09-26 filled in from Find a gift and gift lists, always invited to on Discover, and sent to your people once published (two switches, one a day). Since 2026-09-27 two audiences: the community board, or only your people (friends and link holders, a link code, not read first, share popup after posting) |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Removed 2026-09-07 |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |

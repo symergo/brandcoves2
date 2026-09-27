@@ -100,6 +100,17 @@ dit uitzetten ("Stuur mijn vragen naar mijn mensen"), en de vragen van je vriend
 niet meer krijgen, of alleen de e-mails niet, bij je meldingen of via de link in
 zo'n e-mail.
 
+Sinds 27 september 2026 kun je een vraag ook alleen aan je mensen stellen. Die
+vraag staat niet op het openbare bord, niet in zoekmachines en in geen enkele
+lijst die anderen zien. Lezen kunnen je vrienden op GiftCoves en iedereen die de
+link heeft; de link bevat een geheime code, en wie hem van jou of van een vriend
+krijgt, kan de vraag lezen en na inloggen beantwoorden. Je vrienden krijgen er
+meteen een melding van (en een e-mail als ze dat willen), met je naam en de
+vraag; hun instellingen bij hun meldingen gelden net zo. We lezen zo'n vraag
+niet vooraf na, zoals we ook een gedeelde lijst niet nalezen; meldt iemand er
+een bij ons, dan kunnen we hem weghalen. Antwoorden erop lezen we wel eerst na, zoals op
+het bord. Een vraag bewaren we zoals elke vraag: tot je je account verwijdert.
+
 ### Iemand uitnodigen met een e-mailadres
 
 Sinds 26 september 2026 sturen we, als je iemand uitnodigt bij Mijn mensen met
