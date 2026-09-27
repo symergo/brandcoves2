@@ -8,7 +8,9 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\LiveRequest;
 use App\Services\Connectors\Offer;
+use App\Services\Connectors\PooledSearch;
 use App\Services\Connectors\RateLimiter;
 use App\Services\Connectors\SourceSwitch;
 use Illuminate\Http\Client\Response;
@@ -39,7 +41,7 @@ use Throwable;
  * demand signal must not be. Charting eBay would mean scraping, so eBay does
  * not chart.
  */
-class EbayConnector implements LiveConnector
+class EbayConnector implements LiveConnector, PooledSearch
 {
     private const TOKEN_URL = 'https://api.ebay.com/identity/v1/oauth2/token';
 
@@ -85,7 +87,7 @@ class EbayConnector implements LiveConnector
             return [];
         }
 
-        $cacheKey = sprintf('bc:ebay:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
 
         /*
          * The cache holds eBay's RAW PAYLOAD, never our Offer objects.
@@ -113,6 +115,59 @@ class EbayConnector implements LiveConnector
         }
 
         return $this->offersFrom($items, $market);
+    }
+
+    /**
+     * The same search as search(), described for a parallel send
+     * (PooledSearch): same cache, same limiter, same status handling.
+     */
+    public function searchRequest(string $query, Market $market, int $limit = 24, int $timeout = 3): array|LiveRequest
+    {
+        $query = trim($query);
+        if ($query === '' || ! $this->supports($market)) {
+            return [];
+        }
+
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $this->offersFrom($cached, $market);
+        }
+
+        if (! $this->limiter('search')->attempt()) {
+            Log::info('ebay search skipped: rate limited', ['market' => $market->value]);
+
+            return [];
+        }
+
+        $token = $this->accessToken($timeout);
+
+        if ($token === null) {
+            return [];
+        }
+
+        return new LiveRequest(
+            url: self::API_BASE.'/item_summary/search',
+            query: $this->searchParams($query, $limit),
+            headers: $this->headers($market),
+            token: $token,
+            finish: function (?Response $response) use ($cacheKey, $market): array {
+                $response = $response === null ? null : $this->checked($response, '/item_summary/search', 'search');
+                $items = $response === null ? [] : $this->searchRows($response);
+
+                if ($items !== []) {
+                    Cache::put($cacheKey, $items, (int) config('giftcoves.search.live_cache_ttl'));
+                }
+
+                return $this->offersFrom($items, $market);
+            },
+        );
+    }
+
+    private function searchCacheKey(string $query, Market $market, int $limit): string
+    {
+        return sprintf('bc:ebay:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
     }
 
     public function fetchById(string $externalId, Market $market): ?Offer
@@ -187,16 +242,25 @@ class EbayConnector implements LiveConnector
             return [];
         }
 
-        $response = $this->request('/item_summary/search', $market, 'search', array_filter([
+        $response = $this->request('/item_summary/search', $market, 'search', $this->searchParams($query, $limit));
+
+        return $response === null ? [] : $this->searchRows($response);
+    }
+
+    /** @return array<string, string> */
+    private function searchParams(string $query, int $limit): array
+    {
+        return array_filter([
             'q' => $query,
             // eBay caps this at 200; the caller asks for a page's worth.
             'limit' => (string) min(max($limit, 1), 200),
             'filter' => (string) config('giftcoves.connectors.ebay.filter'),
-        ], fn (string $value): bool => $value !== ''));
+        ], fn (string $value): bool => $value !== '');
+    }
 
-        if ($response === null) {
-            return [];
-        }
+    /** @return list<array<string, mixed>> */
+    private function searchRows(Response $response): array
+    {
 
         /*
          * The envelope is `itemSummaries`, and it is ABSENT — not empty — when
@@ -227,13 +291,7 @@ class EbayConnector implements LiveConnector
             $response = Http::timeout(8)
                 ->retry(2, 200, throw: false)
                 ->withToken($token)
-                ->withHeaders(array_filter([
-                    'Accept' => 'application/json',
-                    // Which catalogue, which currency, which shipping. Every
-                    // Browse call is meaningless without it.
-                    'X-EBAY-C-MARKETPLACE-ID' => $market->ebayMarketplace(),
-                    'X-EBAY-C-ENDUSERCTX' => $this->endUserContext($market),
-                ], fn (?string $value): bool => $value !== null && $value !== ''))
+                ->withHeaders($this->headers($market))
                 ->get(self::API_BASE.$path, $params);
         } catch (Throwable $e) {
             Log::warning('ebay request failed', ['path' => $path, 'error' => $e->getMessage()]);
@@ -241,6 +299,24 @@ class EbayConnector implements LiveConnector
             return null;
         }
 
+        return $this->checked($response, $path, $bucket);
+    }
+
+    /** @return array<string, string> */
+    private function headers(Market $market): array
+    {
+        return array_filter([
+            'Accept' => 'application/json',
+            // Which catalogue, which currency, which shipping. Every
+            // Browse call is meaningless without it.
+            'X-EBAY-C-MARKETPLACE-ID' => $market->ebayMarketplace(),
+            'X-EBAY-C-ENDUSERCTX' => $this->endUserContext($market),
+        ], fn (?string $value): bool => $value !== null && $value !== '');
+    }
+
+    /** The response when it is one to read, after acting on what it says about us. */
+    private function checked(Response $response, string $path, string $bucket): ?Response
+    {
         if ($response->status() === 429) {
             // eBay's Browse limit is a daily quota rather than a per-second
             // window, so a 429 usually means the day is spent. Back off long
@@ -310,12 +386,12 @@ class EbayConnector implements LiveConnector
      * rather than the full two so a request never races the expiry — the 401
      * branch above is the safety net, not the plan.
      */
-    private function accessToken(): ?string
+    private function accessToken(int $timeout = 8): ?string
     {
-        return Cache::remember($this->tokenCacheKey(), 3600, function (): ?string {
+        return Cache::remember($this->tokenCacheKey(), 3600, function () use ($timeout): ?string {
             try {
                 $response = Http::asForm()
-                    ->timeout(8)
+                    ->timeout($timeout)
                     ->withBasicAuth(
                         (string) config('giftcoves.connectors.ebay.client_id'),
                         (string) config('giftcoves.connectors.ebay.client_secret'),

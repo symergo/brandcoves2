@@ -92,15 +92,25 @@ class SearchLiveQueueTest extends TestCase
         app(ConnectorRegistry::class)->registerLive($this->shop);
     }
 
+    /**
+     * Pin the background path: these tests are about the queued fetch, and a
+     * term with nothing stored would otherwise be asked inline (thin rule).
+     */
+    private function backgroundOnly(): void
+    {
+        config(['giftcoves.search.inline_live_below' => 0]);
+    }
+
     #[Test]
     public function a_search_renders_without_asking_the_live_shop_and_queues_the_fetch_once(): void
     {
         Queue::fake();
         $this->registerShop();
+        $this->backgroundOnly();
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 0));
+            ->assertInertia(fn ($page) => $page->has('results.items', 0));
 
         $this->get('/be-nl/search?q=tuinkabouter')->assertOk();
 
@@ -117,6 +127,7 @@ class SearchLiveQueueTest extends TestCase
     {
         Queue::fake();
         $this->registerShop();
+        $this->backgroundOnly();
 
         $this->get('/be-nl/search?q=tuinkabouter')->assertOk();
 
@@ -128,7 +139,7 @@ class SearchLiveQueueTest extends TestCase
         // Not cached empty while the fetch was pending, so the next view has it.
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
     }
 
     #[Test]
@@ -143,7 +154,7 @@ class SearchLiveQueueTest extends TestCase
         );
 
         $this->assertSame(1, $this->shop->asked);
-        $this->assertSame(1, $result->groups->total());
+        $this->assertCount(1, $result->groups->items());
         Queue::assertNothingPushed();
     }
 
@@ -162,8 +173,10 @@ class SearchLiveQueueTest extends TestCase
         $second = $search->search(new SearchQuery(market: Market::BeNl, term: 'koptelefoon', page: 2, logged: false));
 
         $this->assertSame([], $this->searchQueries(), 'Page two ran the text search again.');
-        $this->assertSame(30, $second->groups->total());
+        // 30 in the list, 24 on page one: page two holds the last 6 and
+        // says there is nothing after it. No total anywhere.
         $this->assertCount(6, $second->groups->items());
+        $this->assertFalse($second->groups->hasMorePages());
 
         // Same order as the uncached list, and no card on both pages.
         $this->assertSame([], array_intersect(
@@ -205,6 +218,7 @@ class SearchLiveQueueTest extends TestCase
         Queue::fake();
         $this->koptelefoons(2);
         $this->registerShop();
+        $this->backgroundOnly();
 
         $search = app(SearchService::class);
         $plain = new SearchQuery(market: Market::BeNl, term: 'tuinkabouter', logged: false);
@@ -212,14 +226,14 @@ class SearchLiveQueueTest extends TestCase
         $other = new SearchQuery(market: Market::BeNl, term: 'koptelefoon', logged: false, liveTerm: '');
 
         // Cached before the shop answered: empty, both variants.
-        $this->assertSame(0, $search->search($plain)->groups->total());
-        $this->assertSame(0, $search->search($cheapest)->groups->total());
-        $this->assertSame(2, $search->search($other)->groups->total());
+        $this->assertCount(0, $search->search($plain)->groups->items());
+        $this->assertCount(0, $search->search($cheapest)->groups->items());
+        $this->assertCount(2, $search->search($other)->groups->items());
 
         Queue::pushed(PullLiveSearch::class)->sole()->handle($search);
 
-        $this->assertSame(1, $search->search($plain)->groups->total());
-        $this->assertSame(1, $search->search($cheapest)->groups->total());
+        $this->assertCount(1, $search->search($plain)->groups->items());
+        $this->assertCount(1, $search->search($cheapest)->groups->items());
 
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -241,7 +255,7 @@ class SearchLiveQueueTest extends TestCase
         $this->get('/be-nl/search?q=koptelefoon', [
             'X-Inertia' => 'true',
             'X-Inertia-Version' => (string) $version,
-        ])->assertOk()->assertJsonPath('props.results.total', 5);
+        ])->assertOk()->assertJsonCount(5, 'props.results.items');
 
         $this->assertSame([], $this->searchQueries(), 'The Inertia visit ran the text search again.');
     }

@@ -336,7 +336,7 @@ return [
         // anything is typed. Not the same sentence with an empty gap in it.
         'previous' => 'Previous',
         'next' => 'Next',
-        'page_of' => 'Page :current of :last',
+        'page' => 'Page :current',
         'seo_term' => 'Find :term at bol, Amazon and hundreds of shops. One card per product, with the lowest price and any discount marked.',
 
         /*

@@ -167,6 +167,24 @@ return [
         // page is not embarrassingly stale.
         'live_cache_ttl' => 900,
 
+        /*
+         * When a search is due a live fetch and its stored results are fewer
+         * than this, the request asks the shops itself instead of queueing it
+         * (SearchService::askNow()). One page: below it the shops are most of
+         * the answer, and the owner's rule (2026-09-27) is that a term only
+         * bol knows shows bol's products on the first view. At or above it
+         * the page is already full and the fetch stays in the background.
+         */
+        'inline_live_below' => 24,
+
+        /*
+         * Seconds each shop gets on that inline path, all asked at once, no
+         * retry. The ordinary connector path is 8 s with two retries, up to
+         * ~25 s a shop; a visitor waiting on a page gets 3. A shop that does
+         * not answer in time still gets the queued fetch for the next view.
+         */
+        'inline_live_timeout' => 3,
+
         // Facet counts are cached this long.
         //
         // Facets are computed from market, term and in-stock only — deliberately
@@ -201,12 +219,19 @@ return [
         'results_cache_ttl' => 43200,
 
         /*
-         * How many ids of one search are cached: twenty pages of 24. Past that
-         * a page asks the database for its own slice. Kept at or above 300,
-         * the number the by-store view draws its lanes from, so that view
-         * reads the same list.
+         * At most this many products per shop in one search's list (owner's
+         * decision, 2026-09-27), counted by the shop behind each product's
+         * best offer. Keeps one shop with a huge feed from filling every page,
+         * the same problem `store_lane_cap` solves for the by-store view.
          */
-        'results_cache_ids' => 480,
+        'results_per_shop' => 25,
+
+        /*
+         * How many ranked matches the list is capped from. Far above what 25
+         * per shop lets through for any realistic number of shops; its only
+         * job is to stop a one-letter search reading the whole catalogue.
+         */
+        'results_scan_limit' => 3000,
 
         /*
          * The public "what people search for" page.

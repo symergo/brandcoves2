@@ -43,10 +43,15 @@ interface Props {
     sort: string
     view: 'grid' | 'store'
     facets: Facets
+    /**
+     * One page and whether another follows. No total and no last page
+     * (owner's decision, 2026-09-27): nothing counts the matches, so the
+     * page shows neither a number nor a word standing in for one.
+     */
     results: {
-        total: number
+        empty: boolean
         currentPage: number
-        lastPage: number
+        hasMore: boolean
         items: GroupCard[]
     }
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
@@ -644,7 +649,7 @@ export default function Search({
                             </aside>
                         </div>
 
-                        {amazonSearch && results.total > 0 && (
+                        {amazonSearch && !results.empty && (
                             <div className="min-w-0 max-w-full sm:ml-auto">
                                 <AmazonSearchCta link={amazonSearch} label={amazonLabel} compact />
                             </div>
@@ -917,7 +922,7 @@ export default function Search({
                         </div>
                     )}
 
-                    {results.total === 0 ? (
+                    {results.empty ? (
                         <div className="rounded-card border border-line bg-card p-8 text-center">
                             {/*
                               "No results" and "no results with these filters" are
@@ -1159,7 +1164,7 @@ export default function Search({
                         </div>
                     )}
 
-                    {results.lastPage > 1 && view === 'grid' && (
+                    {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (
                         <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
                             <button
                                 disabled={results.currentPage <= 1}
@@ -1169,10 +1174,10 @@ export default function Search({
                                 {t('search.previous')}
                             </button>
                             <span className="text-ink-soft">
-                                {t('search.page_of', { current: n(results.currentPage), last: n(results.lastPage) })}
+                                {t('search.page', { current: n(results.currentPage) })}
                             </span>
                             <button
-                                disabled={results.currentPage >= results.lastPage}
+                                disabled={!results.hasMore}
                                 onClick={() => go({ page: results.currentPage + 1 })}
                                 className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
                             >
