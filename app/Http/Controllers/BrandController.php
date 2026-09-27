@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
+use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Cove\CoveProse;
@@ -373,6 +374,7 @@ class BrandController extends Controller
             ->where('kind', CoveKind::Brand->value)
             ->where('slug', $stat->slug)
             ->where('status', PublishStatus::Published->value)
+            ->with('picks.group')
             ->first();
 
         if ($cove === null) {
@@ -382,13 +384,11 @@ class BrandController extends Controller
         /*
          * The prose as rendered when the Cove was built (App\Services\Cove\CoveProse).
          *
-         * No products in its allowlist, on purpose. An entity Cove's prose is
-         * about ranges and categories rather than about individual products,
-         * because the products under it are live rails that change with stock.
          * What it links to is searches (the categories this brand sells in,
-         * stored with the Cove: see App\Services\Cove\EntityLinks), brands
-         * and other guides, and a `[[search:…]]` resolving to a real crawlable
-         * market URL is the point of the piece rather than a decoration on it.
+         * stored with the Cove: see App\Services\Cove\EntityLinks), brands,
+         * other guides, and since 2026-09-27 the Cove's own example products.
+         * A `[[search:…]]` resolving to a real crawlable market URL is the
+         * point of the piece rather than a decoration on it.
          */
         $prose = app(CoveProse::class)->for($cove);
 
@@ -412,6 +412,27 @@ class BrandController extends Controller
              */
             'metaDescription' => $cove->meta_description
                 ?: $prose['plain']['blurb'],
+            /*
+             * The example products, each drawn as a card under the paragraph
+             * naming it. Price and stock live from the group, never from the
+             * Cove: the writing is months old, the price is today's. Catalogue
+             * products only, as on a guide (GuideController says why).
+             */
+            'items' => $cove->picks
+                ->filter(fn (DailyPick $pick) => $pick->group !== null)
+                ->map(fn (DailyPick $pick) => [
+                    'rank' => $pick->rank,
+                    'groupId' => $pick->group->id,
+                    'title' => $pick->group->displayTitle(),
+                    'image' => $pick->group->image_url,
+                    'price' => $pick->group->min_price,
+                    'merchantCount' => $pick->group->merchant_count,
+                    'verdict' => $pick->verdict,
+                    'unavailable' => $pick->unavailable || ! $pick->group->in_stock,
+                    'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
+                ])
+                ->values()
+                ->all(),
         ];
     }
 

@@ -64,7 +64,7 @@ use Throwable;
 final class CoveProse
 {
     /** Bump when the rendered output changes; see the class comment. */
-    public const VERSION = 1;
+    public const VERSION = 2;
 
     /**
      * A day, for a Cove whose stored prose is missing or out of date.
@@ -155,13 +155,11 @@ final class CoveProse
      */
     public function fingerprint(DailyPickSet $cove): string
     {
-        // A brand Cove's links come from the brand, not from picks, and its
-        // page loads none; asking would be a query for nothing.
-        $picks = $cove->kind === CoveKind::Brand
-            ? []
-            : $cove->picks
-                ->map(fn (DailyPick $pick): array => [$pick->id, $pick->group_id, $pick->blurb])
-                ->all();
+        // A Brand Cove included since 2026-09-27: it may carry example
+        // products, and a card under a paragraph depends on which.
+        $picks = $cove->picks
+            ->map(fn (DailyPick $pick): array => [$pick->id, $pick->group_id, $pick->blurb])
+            ->all();
 
         return sha1((string) json_encode(self::sorted([
             self::VERSION,
@@ -342,8 +340,11 @@ final class CoveProse
     /**
      * A Brand Cove, a section of the brand page.
      *
-     * No products in the allowlist, on purpose: an entity Cove's prose is about
-     * ranges, and the products under it are live rails (see BrandController).
+     * Its links are the categories the brand sells in, plus its own example
+     * products. Most brand Coves carry none and read as before; one that
+     * does gets each product's card under the paragraph naming it, the way a
+     * guide does, so the body comes back as blocks rather than strings
+     * (docs/features/cove-entities.md, "Example products").
      *
      * @return array<string, mixed>
      */
@@ -360,19 +361,22 @@ final class CoveProse
             : $this->links->forBrandCove($cove, $stat);
 
         $allowed = $this->allowlist->full(
-            collect(),
+            $cove->picks->map(fn (DailyPick $pick) => $pick->group)->filter(),
             $market,
             excludeGuideId: $cove->id,
             extraSearches: $links,
         );
 
+        // The intro is one line above the body and names no product: a card
+        // there would sit between the heading and the first paragraph.
         $intro = $this->markup->render((string) $cove->theme_blurb, $market, $allowed);
-        $body = $this->markup->paragraphs((string) $cove->body, $market, $allowed);
+        $cards = new ProseCards($this->markup, $market, $allowed);
+        $body = $cards->blocks($cove->body);
 
         return [
-            'entity' => ['intro' => $intro['html'], 'body' => $body['html']],
+            'entity' => ['intro' => $intro['html'], 'body' => $body],
             'plain' => ['blurb' => $this->markup->plain((string) $cove->theme_blurb), 'faq' => []],
-            'rejected' => [...$intro['rejected'], ...$body['rejected']],
+            'rejected' => [...$intro['rejected'], ...$cards->rejected()],
         ];
     }
 

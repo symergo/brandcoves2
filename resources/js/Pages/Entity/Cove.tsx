@@ -4,12 +4,26 @@ import PageBlocks from '../../Components/PageBlocks'
 import type { BlockPayload } from '../../Components/Parts'
 import { useTranslations } from '../../useTranslations'
 import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
+import InlineCard, { type InlineCardItem } from '../../Components/InlineCard'
+
+/**
+ * A paragraph and the products it names. A brand page sends these; a shop page
+ * still sends plain strings, which read as blocks naming nothing.
+ */
+interface Block {
+    html: string
+    groupIds: number[]
+}
+
+interface Item extends InlineCardItem {
+    rank: number
+}
 
 interface Props {
     /** Save into My Coves; see docs/features/saved-coves.md. */
     saveCove: SaveCoveState
     entity: { name: string; kind: 'brand' | 'shop'; total: number | null; logo: string | null }
-    cove: { title: string; intro: string; body: string[] }
+    cove: { title: string; intro: string; body: (string | Block)[]; items?: Item[] }
     rails: EntityRailSet | null
     /** Where "see all" goes: the search page, filtered to this entity. */
     searchUrl: string
@@ -38,10 +52,12 @@ interface Props {
  * - **The grid has to stay reachable**, so the sidebar ends in a link to the
  *   filtered search — the same destination a word in the prose narrows to. One
  *   answer to "show me the rest", not two that differ by which control was used.
- * - **The prose names ranges, never products.** A page's words and its products
- *   move at different speeds; a frozen "biggest discounts" list is wrong within
- *   days. So the writing talks about categories and sub-brands, which do not
- *   move, and the sidebar talks about products, which do.
+ * - **The prose names ranges; the sidebar lists products.** A page's words and
+ *   its products move at different speeds; a frozen "biggest discounts" list is
+ *   wrong within days. So the writing talks about categories and sub-brands,
+ *   which do not move, and the sidebar talks about products, which do. The one
+ *   exception is a brand's hand-picked examples (2026-09-27): each is drawn as a
+ *   card under the paragraph naming it, with a live price, as on a guide.
  *
  * ## Why wish-listed sits under the writing and the other two do not
  *
@@ -53,6 +69,13 @@ interface Props {
  */
 export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveCove }: Props) {
     const { t } = useTranslations()
+    const blocks: Block[] = cove.body.map((b) => (typeof b === 'string' ? { html: b, groupIds: [] } : b))
+    const items = cove.items ?? []
+    const byGroup: Record<number, Item> = Object.fromEntries(items.map((i) => [i.groupId, i]))
+    // An example no paragraph names still gets its card, after the writing,
+    // rather than silently vanishing.
+    const named = new Set(blocks.flatMap((b) => b.groupIds))
+    const rest = items.filter((i) => !named.has(i.groupId))
     const sidebar = rails
         ? [
               { key: 'discounts', products: rails.discounts },
@@ -101,8 +124,19 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                       in three paragraphs reads as three.
                     */}
                     <div className="mt-6 max-w-2xl space-y-4 leading-relaxed text-ink">
-                        {cove.body.map((paragraph, index) => (
-                            <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                        {blocks.map((block, index) => (
+                            <div key={index}>
+                                <p dangerouslySetInnerHTML={{ __html: block.html }} />
+                                {block.groupIds
+                                    .map((id) => byGroup[id])
+                                    .filter(Boolean)
+                                    .map((item) => (
+                                        <InlineCard key={item.rank} item={item} />
+                                    ))}
+                            </div>
+                        ))}
+                        {rest.map((item) => (
+                            <InlineCard key={item.rank} item={item} />
                         ))}
                     </div>
 

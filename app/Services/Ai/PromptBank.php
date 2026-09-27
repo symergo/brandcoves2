@@ -149,15 +149,14 @@ class PromptBank
              * A Brand Cove is briefed exactly like a Shop one: they are the same
              * page shape, and the subject is a name and a direction.
              *
-             * **No `{finds}`.** An entity Cove carries no shortlist — its prose
-             * is about ranges and categories rather than about individual
-             * products, because the products under it are a live rail that
-             * changes with stock. Offering the placeholder would be offering one
-             * the writer never binds, which renders as nothing and makes a
-             * template look right while it quietly drops a line.
+             * `{curated}` and `{finds}` since 2026-09-27: a Brand Cove may now
+             * carry a few example products, each with a card under the
+             * paragraph naming it (docs/features/cove-entities.md). Neither is
+             * required, because most brand pages still carry none, and an
+             * empty block leaves nothing behind in the prompt.
              */
             'cove.brand' => [
-                'allowed' => ['language', 'topic', 'title', 'direction'],
+                'allowed' => ['language', 'topic', 'title', 'direction', 'curated', 'finds'],
                 'required' => ['language'],
             ],
             'cove.theme' => [

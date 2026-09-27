@@ -274,9 +274,10 @@ class EntityRailsTest extends TestCase
                 // A list of paragraphs, not one string: the piece keeps the
                 // shape somebody wrote it in.
                 // A Collection, not an array: Laravel's fluent assertion hands
-                // the closure whatever the prop decoded to.
-                ->where('cove.body', fn ($body) => str_contains($body->implode(''), '<a')
-                    && str_contains($body->implode(''), '/be-nl/'))
+                // the closure whatever the prop decoded to. A brand page's
+                // paragraphs are blocks, each carrying the products it names.
+                ->where('cove.body', fn ($body) => str_contains($body->implode('html', ''), '<a')
+                    && str_contains($body->implode('html', ''), '/be-nl/'))
                 ->has('rails.discounts', 1)
                 ->has('rails.wishlisted', 1)
             );
@@ -476,7 +477,7 @@ class EntityRailsTest extends TestCase
         $this->get('/be-nl/brand/sony')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('cove.body', fn ($body) => str_contains($body->implode(''), 'koptelefoons</a>')));
+                ->where('cove.body', fn ($body) => str_contains($body->implode('html', ''), 'koptelefoons</a>')));
 
         $this->assertSame([], $this->categoryGroupings());
     }

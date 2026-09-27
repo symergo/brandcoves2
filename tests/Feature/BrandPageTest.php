@@ -264,6 +264,49 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
+    public function a_brand_coves_example_product_gets_its_card_under_the_paragraph_naming_it(): void
+    {
+        $this->seedBrand('Aurex');
+        $group = ProductGroup::query()->where('brand', 'Aurex')->orderBy('id')->firstOrFail();
+
+        $cove = DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'aurex',
+            'theme_title' => 'Over Aurex',
+            'theme_slug' => 'aurex',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => "**Herkomst.** Een merk zonder producten in de tekst.\n\n"
+                ."Neem [[product:{$group->id}|de draadloze koptelefoon]] als voorbeeld.",
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        DailyPick::create([
+            'set_id' => $cove->id,
+            'group_id' => $group->id,
+            'rank' => 1,
+            'slug' => $group->slug.'-'.$group->id,
+        ]);
+
+        /*
+         * The card follows the writing: none under the first paragraph, one
+         * under the second, and the price comes from the group, live. Before
+         * 2026-09-27 a brand Cove had no products in its link list, so the
+         * token rendered as plain words and no card appeared at all.
+         */
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Entity/Cove')
+                ->where('cove.body.0.groupIds', [])
+                ->where('cove.body.1.groupIds', [$group->id])
+                ->where('cove.items.0.groupId', $group->id)
+                ->where('cove.items.0.price', $group->min_price)
+                ->where('cove.body.1.html', fn (string $html) => str_contains($html, '<a ')));
+    }
+
+    #[Test]
     public function copy_written_in_the_admin_reaches_the_written_brand_page(): void
     {
         $this->seedBrand('Aurex');

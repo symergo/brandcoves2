@@ -976,6 +976,17 @@ class EditionBuilder
         }
 
         /*
+         * A Brand Cove's products are its examples, chosen by hand, and nothing
+         * else: the brand's live lists sit beside the writing already, and no
+         * selector knows which products show a brand best. So an open plan is
+         * read as a locked one rather than handed to a selector aiming for
+         * `targetItems()`, which is 0 for this kind.
+         */
+        if ($plan?->kind === CoveKind::Brand) {
+            return $curated->all();
+        }
+
+        /*
          * A plan that says who it is for is filled by the gift engine.
          *
          * `cove_plans.brief` (roadmap step 4, part 4): "the keen cook" as

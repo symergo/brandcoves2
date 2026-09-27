@@ -46,9 +46,42 @@ products come from live rails underneath.
 So: floor 0, `expectsShortlist()` false, nothing to freeze, nothing to go stale, and an entity Cove
 can never land in the `Thin` state.
 
+Narrowed for brand Coves on 2026-09-27: they may carry optional example products, each with a
+card under the paragraph naming it. See "Brand Coves: example products" below.
+
 **It is expected to carry search links.** That is the point of the page rather than a decoration on
 it: `/brand/sony` is an indexable destination, and the categories it names are real crawlable market
 URLs. `Defaults::BRAND_SYSTEM` asks for them directly.
+
+### Brand Coves: example products, and what the piece covers (2026-09-27)
+
+The owner narrowed both rules above for **brand** Coves (shop Coves are unchanged). A brand
+piece now covers five things, in order, each paragraph opening with its label in bold:
+where the brand comes from, what it says it stands for, its reputation (the criticism
+included), its sub-brands and ranges, and examples of what it makes. `Defaults::BRAND_SYSTEM`
+asks for exactly that. It used to forbid history outright ("if you were not told it, you do
+not know it"); it now allows facts that are well established and checkable (founding year,
+founders, a famous first product) and still says to leave out anything uncertain, because a
+wrong date on the brand's own page is worse than no date.
+
+A brand plan may carry a few **example products**. Each gets its card under the paragraph
+naming it, exactly as on a guide: `CoveProse::brand()` puts the plan's products in the link
+list and walks the body with `ProseCards`, so the page gets blocks (`{html, groupIds}`)
+instead of plain paragraph strings, and `BrandController::cove()` sends the cards with a live
+price. The card is `resources/js/Components/InlineCard.tsx`, moved out of the guide page so
+both draw one card. An example no paragraph names still gets a card, after the writing.
+
+- **Optional, and hand-picked.** Floor and target stay 0: most brand pages carry none, the
+  curate stage still skips the kind, and nothing suggests products for it. The build treats a
+  brand plan as `locked` whatever its `pickMode` (`EditionBuilder::finds()`), because no
+  selector knows which products show a brand best.
+- **Why products are now fine here** when "ranges, never products" was the rule: the old
+  worry was prose about something that may be gone. A card carries a live price and dims when
+  out of stock, the same risk every guide already takes, and the owner judged the examples
+  worth it. The live rails beside the writing are unchanged.
+- The brief lists the products (`{curated}`/`{finds}` in `BRAND_PROMPT`, optional in
+  `PromptBank`). Shop pages still send plain strings; `Entity/Cove.tsx` reads both.
+- `CoveProse::VERSION` went to 2, so stored brand prose is re-rendered in the new shape.
 
 ## The slug is not ours to choose
 

@@ -533,37 +533,65 @@ class Defaults
      * and the categories it names are real, crawlable market URLs. A piece that
      * describes a brand and points nowhere leaves the page a leaf.
      */
+    /*
+     * Five parts, in this order, at the owner's request (2026-09-27): where the
+     * brand comes from, what it says it stands for, its reputation, its
+     * sub-brands, and examples of what it makes. Until then this prompt banned
+     * history and individual products outright. History is now asked for, but
+     * only what is well established: a founding year and founders are facts a
+     * reader can check, and a wrong one on a page about the brand is worse than
+     * none. Products appear as examples with a card under the paragraph that
+     * names them (docs/features/cove-entities.md).
+     */
     private const BRAND_SYSTEM = <<<'TXT'
-        You write a short piece about one brand, for a gift discovery site that
-        compares what the shops selling it are charging. It sits directly above
-        that brand's own products, with live prices beside them, so the reader
-        can already see what is available and what it costs. Your job is
-        everything the grid does not tell them: what this brand actually makes,
-        which of its ranges differ from each other and how, and who each one
-        suits.
+        You write a piece about one brand, for a gift discovery site that
+        compares what the shops selling it are charging. It sits on that brand's
+        own page, beside live lists of its products, so the reader can already
+        see what is available and what it costs. Your job is everything those
+        lists do not tell them: where the brand comes from, what it stands for,
+        how it is regarded, how its sub-brands and ranges differ, and which of
+        its products are good examples of each.
 
         Voice: plain, specific, even-handed. You are describing a brand, not
         recommending it. We earn a commission on what people buy, so a piece
         that reads as an advertisement is worse than no piece at all.
 
+        Write five short paragraphs, in this order, each opening with its label
+        in bold, for example **Origins.**:
+        1. Origins: who founded it, where, when, and what it made first. The
+           turning points that explain what it is today, and who owns it now
+           where that is not obvious from the name.
+        2. What it stands for: the values or purpose the brand states, and what
+           that means in what it actually makes. Say plainly where the words
+           and the products part company.
+        3. Reputation: what it is known for, and the criticism it is known for
+           too, stated as fact without heat. Say plainly what this brand is not
+           for. A piece that finds nothing to qualify is not describing a brand.
+        4. Sub-brands and ranges: the names under the brand, what each covers,
+           and who each suits.
+        5. Examples: the product families that show the brand best, each named
+           the way a shopper would say it, next to a search link on its category.
+
         Rules:
-        - Never state a price, a discount, a rating or a stock claim. The grid
-          under this renders live ones, so a number in your sentence is wrong
+        - Only facts that are well established and checkable. A founding year,
+          the founders and a famous first product, yes; anything you are not
+          sure of, leave out. A wrong date on the brand's own page is worse than
+          no date.
+        - Never state a price, a discount, a rating or a stock claim. The lists
+          beside this render live ones, so a number in your sentence is wrong
           within a week.
         - Never claim the brand is best, cheapest or most reliable. Nothing on
-          this page can back that up.
-        - No invented history, no founding dates, no factory locations, no
-          revenue, no awards. If you were not told it, you do not know it.
-        - Write about ranges and categories, never about individual products.
-          The products under this change with stock, so a paragraph about one of
-          them is a paragraph about something that may be gone.
+          this page can back that up. What others say of it is reputation; say
+          whose view it is when it matters.
+        - Where products are listed below, each one gets its own paragraph after
+          the five above, naming it with its product token, saying which range it
+          belongs to and who it suits. Its card appears under that paragraph.
+          Where none are listed, name example product families in the fifth
+          paragraph in plain words, never as a token.
         - Do link the categories and sub-ranges you name, with search tokens, so
           a reader can go straight to them. That is what this piece is for.
-        - Say plainly what this brand is not for. A piece that finds nothing to
-          qualify is not describing a brand.
         - No em dashes. Where a sentence needs a break, use a comma, a colon,
           or a spaced hyphen - like this one.
-        - Two to four short paragraphs. This sits above a grid, not alone.
         TXT;
 
     private const BRAND_PROMPT = <<<'TXT'
@@ -572,6 +600,10 @@ class Defaults
         Title: {title}
 
         {direction}
+
+        {curated}
+
+        {finds}
         TXT;
 
     // ── Naming a Daily Cove ───────────────────────────────────────────────
