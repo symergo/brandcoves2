@@ -70,6 +70,8 @@ export interface ListMention {
     template: string
     name: string
     kind: 'mine' | 'for_someone' | 'group' | null
+    /** The list's page, when the sentence should lead there ("Bewaard in …"). */
+    url?: string
 }
 
 export interface SharedProps {

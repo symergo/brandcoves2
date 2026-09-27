@@ -47,9 +47,19 @@ export default function FlashMessage() {
                 {/* A sentence naming a list arrives in pieces too, so the name
                     is drawn as a list's name (ListName). Only when the pieces
                     belong to the message on screen. */}
-                {!isError && flash.list && flash.list.message === message
-                    ? rich(flash.list.template, { list: <ListName name={flash.list.name} kind={flash.list.kind} /> })
-                    : message}
+                {!isError && flash.list && flash.list.message === message ? (
+                    // With a url the whole sentence, pill included, leads to the
+                    // list (owner, 2026-09-27: "Bewaard in Voor Collega").
+                    flash.list.url ? (
+                        <Link href={flash.list.url} className="hover:underline">
+                            {rich(flash.list.template, { list: <ListName name={flash.list.name} kind={flash.list.kind} /> })}
+                        </Link>
+                    ) : (
+                        rich(flash.list.template, { list: <ListName name={flash.list.name} kind={flash.list.kind} /> })
+                    )
+                ) : (
+                    message
+                )}
                 {/* The way on, when the server named one: a link, not a
                     second sentence, so the banner still reads as one line. */}
                 {flash.action && (

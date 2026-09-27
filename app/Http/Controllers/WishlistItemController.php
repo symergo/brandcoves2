@@ -679,7 +679,13 @@ class WishlistItemController extends Controller
      */
     private function confirm(Wishlist $list): array
     {
-        return ListName::mentionList('site.lists.added_to', $list);
+        // With the list's own page, so "Bewaard in Voor Collega" is a way to
+        // it (owner, 2026-09-27): a save from Find a gift can make a new list,
+        // and a toast that names it without reaching it leaves you to go find
+        // it. Only on this confirmation, which only ever goes to whoever just
+        // saved into a list they may open.
+        return ListName::mentionList('site.lists.added_to', $list)
+            + ['url' => "/{$list->market->value}/lists/{$list->id}"];
     }
 
     /**
