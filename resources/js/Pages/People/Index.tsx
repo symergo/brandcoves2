@@ -446,7 +446,8 @@ function PersonRow({
                         )}
                         {' · '}
                         {dateLabel(person.next.date)}
-                        {' · '}
+                        {/* Non-breaking: in a flex row a plain space at the edge of an item is dropped ("oktober ·over"). */}
+                        {' · '}
                         <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>
                             {when(person.next.days)}
                         </span>
