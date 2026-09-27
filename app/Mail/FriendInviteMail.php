@@ -16,10 +16,11 @@ use Illuminate\Queue\SerializesModels;
  * "Anna nodigt je uit op GiftCoves."
  *
  * Sent when a member invites an address from My people ({@see InviteMailer}).
- * Identical whether or not the address has an account: the button leads to the
- * sign-in page with the address filled in, which creates an account for a new
- * address and simply signs in an existing one. Anything that differed would
- * tell the member which it was.
+ * Identical whether or not the address has an account: the button carries a
+ * single-use accept token either way (2026-09-27), which creates and signs in
+ * a new account and sends an existing one to the sign-in page, a difference
+ * that shows only to the person who presses it. Anything in the email that
+ * differed would tell the member which it was.
  *
  * Carries the member's name and nothing else about them: not their address,
  * not a list. The person reading it may never have heard of us.

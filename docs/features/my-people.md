@@ -229,7 +229,9 @@ row and one page, and what she says about herself through her own link outranks 
   in the same request.
 - **An address without one**: the invitation waits in `friend_invites` as always, now with
   `recipient_id`, and `LinkSharerAsFriend` links the saved person when it turns the invitation into
-  a friendship at sign-in. The saved person is read fresh then: one that was deleted meanwhile
+  a friendship at sign-in (since 2026-09-27 usually the one press on the email's accept button,
+  which signs in through the same `Login` event; friend-invite-mail.md, "Accepting in one
+  press"). The saved person is read fresh then: one that was deleted meanwhile
   (the column is `ON DELETE SET NULL`) leaves an ordinary invitation, and one linked another way
   meanwhile (they claimed their `/for/{token}` link) keeps the account it has.
 - Sending the plain form to the same address later does not forget whose invitation it was; naming

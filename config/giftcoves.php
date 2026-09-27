@@ -1086,6 +1086,21 @@ return [
          * so the stop lifts itself once they age out.
          */
         'complaint_limit' => 3,
+
+        /*
+         * Days the "Uitnodiging aannemen" button in the email keeps working.
+         *
+         * The button signs a new invitee straight in (the email already proves
+         * they own the address), so it is a credential, and it expires. Not a
+         * magic link's fifteen minutes: an invitation is read when the person
+         * gets round to it, often days later, and a button that is dead by
+         * then would send most invitees back to a second email. Two weeks
+         * covers "I'll look at it this weekend" twice. After that, or once
+         * used, the button leads to the sign-in page with the address filled
+         * in, which still works. Stated in the privacy policy; tokens are
+         * deleted by bc:prune-personal-data once used or expired.
+         */
+        'accept_days' => 14,
     ],
 
     /*

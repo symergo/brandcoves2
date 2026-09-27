@@ -69,7 +69,8 @@ Grouped by what a visitor is doing, not by file order:
   `/people/{recipient}` (a saved person's gift history and next step)
 - **Account** — `/login`, `/auth/magic/{token}`, `/auth/google`, `/logout`, `/notifications`,
   `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email),
-  `/invites/not-wanted/{inviter}/{hash}` (signed, "this is spam" from every invitation email)
+  `/invites/not-wanted/{inviter}/{hash}` (signed, "this is spam" from every invitation email),
+  `/invites/accept/{token}` (the invitation's button: signs a new invitee straight in)
 - **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`
 
 ## Services, one line each

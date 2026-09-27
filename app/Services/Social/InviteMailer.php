@@ -6,6 +6,7 @@ namespace App\Services\Social;
 
 use App\Enums\Market;
 use App\Mail\FriendInviteMail;
+use App\Models\FriendInviteToken;
 use App\Models\InviteComplaint;
 use App\Models\User;
 use Carbon\CarbonInterface;
@@ -130,16 +131,20 @@ class InviteMailer
             return;
         }
 
+        /*
+         * The button: accept in one press (2026-09-27). A token is issued for
+         * every email, with an account behind the address or not, so the
+         * email stays the same in both cases. What the button does differs
+         * only once pressed: it creates and signs in a new account, and sends
+         * an existing one to the sign-in page. See InviteAcceptance.
+         */
+        $token = FriendInviteToken::issue($inviter, $email);
+
         try {
             Mail::to($email)->queue(new FriendInviteMail(
                 inviterName: $inviter->displayName(),
                 language: $market->language(),
-                // The sign-in page with the address filled in. Signing in by
-                // magic link creates the account, and LinkSharerAsFriend turns
-                // the waiting invitation into the connection on that sign-in.
-                // An address that already has an account gets the same link:
-                // it simply signs them in.
-                url: url("/{$market->value}/login?".http_build_query(['email' => mb_strtolower(trim($email))])),
+                url: url("/{$market->value}/invites/accept/{$token}"),
                 notWantedUrl: $this->notWantedUrl($inviter->id, $hash, $market),
             ));
         } catch (\Throwable $e) {

@@ -2576,7 +2576,7 @@ return [
         'share_santa' => 'Draw names for a Secret Friend, and each person sees only their own match.',
         'share_publish' => 'Publish a list as a Community Cove, under Share, so anyone can find it, save it or make it their own list. It shows who it is for in general words, like "for a dad", and never names, notes or what has been claimed. Find a gift also shows Coves others made for someone like the person you are buying for.',
         'share_people' => 'Make a wish list visible to your people, under Share: your friends on GiftCoves see it and can pick from it when they make a list for you. New wish lists have it on. What they buy stays a surprise.',
-        'share_invite' => 'Invite somebody to GiftCoves from My people, with their email address. We email them your invitation, and once they sign in you are connected. Anyone who did not want that email stops all invitations with one click on the link in it.',
+        'share_invite' => 'Invite somebody to GiftCoves from My people, with their email address. We email them your invitation. No account yet? One press on the button in that email creates it, without a second email, and you are connected. Anyone who did not want that email stops all invitations with one click on the link in it.',
         'share_ask' => 'Ask for ideas: send the person it is for a page where they say what they like, or let the people you share the list with suggest things. You decide what goes on it.',
         'share_like_this' => 'On somebody\'s wish list you also see ideas in the same spirit, for a second present or when everything is taken.',
         'honest_title' => 'Where products come from',
@@ -2736,6 +2736,17 @@ return [
         'spam_ask' => 'Don\'t know the sender, or did this come unasked? Report it as spam and we will look into it.',
         'spam' => 'Report as spam',
         'reported' => 'Reported as spam. Thank you, we will look into it.',
+    ],
+
+    // The page the button in an invitation email opens (2026-09-27).
+    'invite_accept' => [
+        'title' => ':name invites you to GiftCoves',
+        'title_plain' => 'An invitation to GiftCoves',
+        'what' => 'If you accept, we create your account straight away and you and :name are connected. You do not need a password.',
+        'button' => 'Accept the invitation',
+        'signed_in_as' => 'You are signed in as :email. To accept this invitation with a different email address, sign out first and open the link again.',
+        'sign_in_instead' => 'Sign in with your email address to continue. We will send you a link.',
+        'welcome' => 'Welcome to GiftCoves.',
     ],
 
 ];

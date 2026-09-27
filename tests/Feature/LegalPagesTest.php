@@ -178,6 +178,11 @@ class LegalPagesTest extends TestCase
             $this->assertStringContainsString(config('giftcoves.invites.daily_limit').' '.($language === 'en' ? 'addresses '.$day : 'adressen '.$day), $text);
             $this->assertStringContainsString(config('giftcoves.invites.repeat_days').' '.$days, $text);
             $this->assertStringContainsString(config('giftcoves.invites.complaint_limit').' '.$complaints, $text);
+            // How long the "accept" button in the email works (2026-09-27).
+            $this->assertStringContainsString(
+                ($language === 'en' ? 'at most ' : 'hoogstens ').config('giftcoves.invites.accept_days').' '.$days,
+                $text,
+            );
         }
     }
 

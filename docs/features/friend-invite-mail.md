@@ -34,17 +34,20 @@ have at the other person's).
 >
 > *Je krijgt deze e-mail omdat Anna je e-mailadres op GiftCoves invulde. [Wil je geen uitnodigingen meer ontvangen?]*
 
-The button opens `/{market}/login?email=…`, the sign-in page with the address filled in (the page
-drops anything that is not an address). Signing in by magic link creates the account, and
-`LinkSharerAsFriend` turns the waiting invitation into the connection on that sign-in, exactly as
-before emails existed. Nothing new was needed on that side.
+The button opens `/{market}/invites/accept/{token}`, which since 2026-09-27 creates a new invitee's
+account and signs them in with one press; see [Accepting in one press](#accepting-in-one-press).
+Before that it opened the sign-in page with the address filled in, and the invitee needed a magic
+link: a second email. That page (`/{market}/login?email=…`, which drops anything that is not an
+address) is still where the button leads when it cannot sign somebody in.
 
 The member's name only: not their address (the reader may be a stranger), nothing from any list.
 
 **The same email for an address with an account and one without.** An existing account is already
-connected when the email goes out; its button simply signs them in. Anything that differed would tell
-the member which it was, so `FriendInviteMail` takes no argument that depends on it, and
-`the_email_and_the_answer_are_the_same_with_or_without_an_account` compares the two rendered emails.
+connected when the email goes out; its button leads to the sign-in page. Anything that differed would
+tell the member which it was, so `FriendInviteMail` takes no argument that depends on it, every email
+carries an accept token (with an account or not), and
+`the_email_and_the_answer_are_the_same_with_or_without_an_account` compares the two rendered emails
+with the links taken out.
 
 **Queued**, like the list-sharing email (`ListSharer::notify()`), not sent inline like the magic
 link: nothing here expires in fifteen minutes, and a slow mail server must not slow the form. A mail
@@ -52,6 +55,57 @@ that cannot be queued is logged and the invitation stands.
 
 **Not an editable template** ([email-templates.md](email-templates.md)): the spam line and the
 sameness above are what make it safe to send, and an editable body is one edit from breaking either.
+
+## Accepting in one press
+
+**2026-09-27, owner's request.** The invitation already proves the reader owns the address, so
+asking them for a magic link (a second email to the same inbox) proved nothing new and lost people
+between the two emails. The button now signs a new invitee straight in.
+
+**The token.** `InviteMailer::deliver()` issues one per email that goes out (`FriendInviteToken`,
+table `friend_invite_tokens`): 64 random characters in the link, only their sha256 stored, bound to
+the inviter and the lower-cased address. Used with one conditional UPDATE, like `LoginToken`, so a
+double press or two tabs cannot both win. Its own table rather than a column on `friend_invites`,
+because an email also goes to addresses that already have an account (which have no
+`friend_invites` row, yet must get the same email), and because `friend_invites` rows are deleted
+the moment that person signs in any other way.
+
+**Fourteen days** (`giftcoves.invites.accept_days`), not a magic link's fifteen minutes. An
+invitation is read when the person gets round to it, often days later; a button that is dead by
+then would send most invitees back to the second email this was meant to remove. Once used or
+expired it leads to the sign-in page with the address filled in, which still works.
+
+**Opening is not accepting.** `GET /{market}/invites/accept/{token}` shows a page ("Anna nodigt je
+uit op GiftCoves", one button, `Invites/Accept`) and consumes nothing: company mail filters open every
+link in an email, and a GET that signed in would spend the token on the scanner. The button is a
+plain `<form method="post">` with the session's CSRF token, handed to the page as a prop so it works
+before the script loads. CSRF is kept, unlike the not-wanted POSTs: no mail client POSTs here, the
+invitee's first GET starts a session, and without it another site could press somebody's button
+for them and sign that browser into an account it did not choose. Both routes `throttle:20,1`, like
+the magic link.
+
+**Never an existing account.** The button signs in only an account it creates. An address with an
+account, then or by the time of the press, goes to the sign-in page instead, with a neutral
+sentence ("Meld je aan met je e-mailadres om verder te gaan. We sturen je een link."), the same for
+a used, expired or unknown token. The email lives two weeks in an inbox and may be forwarded; for a
+new address the worst it opens is an empty account, but for an existing one it would be a standing
+key to somebody's lists, notes and people, issued by whoever typed their address. A magic link lasts
+fifteen minutes for exactly that reason.
+
+**The account and the connection.** Pressing creates the account through `EmailSignIn`, the code the
+magic link now also uses (moved out of `MagicLinkController::consume()` so the two cannot drift):
+same fields, `Registration::record()` (method `email`), verified address, the anonymous identity
+merged, and `Auth::login`, whose `Login` event lets `LinkSharerAsFriend` turn the waiting
+`friend_invites` into friendships and link the saved person (`recipient_id`). The connection comes
+from the waiting invitation, not from the token's inviter: a member who withdrew the invitation
+meanwhile is not connected by an old email. It lands on **My people** ("Welkom op GiftCoves."),
+where that connection is the first thing on the page; a magic link lands on the lists, which for a
+new account are empty and say nothing about why they came.
+
+**Somebody already signed in** is not switched silently. The page says who they are signed in as,
+without a button, and asks them to sign out and open the link again; the POST sends them back to it.
+If the signed-in account is the invited address, the invitation already connected them, so they go
+to My people.
 
 ## Limits on the member
 
@@ -149,6 +203,7 @@ together:
 | what | kept |
 |---|---|
 | a pending invitation (`friend_invites`, holds the address, and since 2026-09-27 which saved person it was for, `recipient_id`) | until the person signs in, or 365 days after the member last invited them (`updated_at`, touched on every invite). It had no window before this |
+| the accept button (`friend_invite_tokens`, the address and a token hash, 2026-09-27) | until used, at most 14 days (`accept_days`); the pruner deletes used and expired ones, `the_published_invitation_limits_are_the_ones_the_code_applies` checks the 14 |
 | the invitation log (`friend_invite_mails`, hash) | 90 days: the limits need 30, the admin screen uses 90 |
 | complaints (`invite_complaints`, hash) | 365 days, which also lifts a stop nobody renewed |
 | suppressions (`invite_suppressions`, hash) | until undone; never pruned, on purpose |
@@ -187,10 +242,11 @@ goes after a year, and the privacy policy tells an invited person how to ask for
 | Order of the checks, and what the member is told | [`App\Services\Social\FriendInvites::invite()`](../../app/Services/Social/FriendInvites.php), `App\Enums\InviteOutcome`, `FriendController::store()` |
 | The email | `App\Mail\FriendInviteMail`, `resources/views/mail/friend-invite.blade.php` |
 | The spam page | `InviteNotWantedController`, `resources/js/Pages/Invites/NotWanted.tsx` |
-| Pre-filled sign-in | `MagicLinkController::show()`, `Pages/Auth/Login.tsx` |
+| Accepting in one press | `App\Services\Social\InviteAcceptance`, `InviteAcceptController`, `App\Models\FriendInviteToken`, `resources/js/Pages/Invites/Accept.tsx`; account creation shared with the magic link in `App\Services\Auth\EmailSignIn` |
+| Pre-filled sign-in (the fallback) | `MagicLinkController::show()`, `Pages/Auth/Login.tsx` |
 | Admin | `App\Filament\Resources\InviteComplaints` |
-| Tables | `2026_09_28_000400_invitations_are_emailed`; `friend_invites.recipient_id` in `2026_09_28_000500_an_invitation_can_name_a_saved_person` |
-| Tests | [`FriendInviteMailTest`](../../tests/Feature/FriendInviteMailTest.php), [`InviteSavedPersonTest`](../../tests/Feature/InviteSavedPersonTest.php) (inviting a saved person) |
+| Tables | `2026_09_28_000400_invitations_are_emailed`; `friend_invites.recipient_id` in `2026_09_28_000500_an_invitation_can_name_a_saved_person`; `friend_invite_tokens` in `2026_09_28_000600_an_invitation_can_be_accepted_in_one_press` |
+| Tests | [`FriendInviteMailTest`](../../tests/Feature/FriendInviteMailTest.php), [`InviteSavedPersonTest`](../../tests/Feature/InviteSavedPersonTest.php) (inviting a saved person), [`InviteAcceptTest`](../../tests/Feature/InviteAcceptTest.php) (accepting in one press) |
 
 ## Invitations landing in spam (2026-09-26)
 

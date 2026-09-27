@@ -97,7 +97,7 @@ any such email.
 
 Since 26 September 2026, when you invite somebody on My people with their email
 address, we send that address one email: your name, what GiftCoves is, and a
-button to sign in. Nothing from your lists. The same email goes out whether or
+button to accept the invitation. Nothing from your lists. The same email goes out whether or
 not the address already has an account, and you are told the same thing either
 way. You can invite at most 20 addresses a day, and the same address once every
 30 days. We never email your own address.
@@ -107,6 +107,13 @@ invitation then becomes the connection and the address is deleted from it), or
 for 365 days after you last invited them. We also keep a record that you sent an
 invitation, with a one-way code made from the address instead of the address,
 for 90 days: it is what the two limits count.
+
+Since 27 September 2026, for an address with no account, that button creates the
+account and signs it in straight away, without a second email. For that we keep,
+with every invitation email sent, the address and a single-use code (only a
+one-way code of it, never the code itself). The button works once and for 14
+days; after that we delete both. It never signs in an address that already has
+an account: that goes to the ordinary sign-in page.
 
 Every invitation email has a "Don't want to receive invitations any more?" link that works
 without an account. Pressing it means no invitation from anybody is emailed to
@@ -211,6 +218,7 @@ safeguards above.
 | Choices made through a This or that together link | 180 days, then the link too once nobody's choices are left on it |
 | Gift profile card | Until you remove it, or 365 days after anyone last opened it |
 | An invitation nobody has accepted yet (the invited address) | Until that person signs in, or 365 days after the member last invited them |
+| The "Accept the invitation" button (the invited address and a one-way code) | Until it is used, at most 14 days |
 | Record of the invitations a member sent (a one-way code, not the address) | 90 days |
 | "Not asked for" report about an invitation | 365 days |
 | "No more invitations" request (a one-way code, not the address) | Until it is undone |

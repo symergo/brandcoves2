@@ -2318,7 +2318,7 @@ return [
         'share_santa' => 'Trek lootjes voor een Geheime Vriend; iedereen ziet alleen zijn eigen lootje.',
         'share_publish' => 'Maak een lijst openbaar als Community Cove, onder Delen, zodat iedereen hem kan vinden, bewaren of er een eigen lijst van maken. Er staat in algemene woorden voor wie hij is, zoals "voor een papa", en nooit namen, notities of wat al gekocht is. Cadeau vinden toont ook Coves die anderen maakten voor iemand zoals de persoon voor wie jij zoekt.',
         'share_people' => 'Maak een verlanglijst zichtbaar voor je mensen, onder Delen: je vrienden op GiftCoves zien hem en kunnen eruit kiezen als ze een lijst voor jou maken. Nieuwe verlanglijsten staan aan. Wat ze kopen blijft een verrassing.',
-        'share_invite' => 'Nodig iemand uit op GiftCoves vanuit Mijn mensen, met hun e-mailadres. We sturen hen een e-mail met je uitnodiging, en zodra ze inloggen zijn jullie verbonden. Wie die e-mail niet wilde, stopt alle uitnodigingen met één klik op de link erin.',
+        'share_invite' => 'Nodig iemand uit op GiftCoves vanuit Mijn mensen, met hun e-mailadres. We sturen hen een e-mail met je uitnodiging. Nog geen account? Eén druk op de knop in die e-mail maakt het aan, zonder tweede e-mail, en dan zijn jullie verbonden. Wie die e-mail niet wilde, stopt alle uitnodigingen met één klik op de link erin.',
         'share_ask' => 'Vraag om ideeën: stuur de jarige een pagina waar die zegt wat hij of zij leuk vindt, of laat de mensen met wie je de lijst deelt iets voorstellen. Jij beslist wat erop komt.',
         'share_like_this' => 'Op iemands verlanglijst zie je ook ideeën in dezelfde lijn, voor een tweede cadeau of als alles al weg is.',
         'honest_title' => 'Waar de producten vandaan komen',
@@ -2479,6 +2479,17 @@ return [
         'spam_ask' => 'Ken je de afzender niet, of kreeg je dit ongevraagd? Meld het dan als spam. Dan kijken wij ernaar.',
         'spam' => 'Meld als spam',
         'reported' => 'Gemeld als spam. Bedankt, we kijken ernaar.',
+    ],
+
+    // The page the button in an invitation email opens (2026-09-27).
+    'invite_accept' => [
+        'title' => ':name nodigt je uit op GiftCoves',
+        'title_plain' => 'Uitnodiging voor GiftCoves',
+        'what' => 'Neem je de uitnodiging aan, dan maken we meteen een account voor je en zijn jij en :name verbonden. Een wachtwoord heb je niet nodig.',
+        'button' => 'Uitnodiging aannemen',
+        'signed_in_as' => 'Je bent aangemeld als :email. Wil je deze uitnodiging aannemen met een ander e-mailadres? Meld je dan eerst af en open de link opnieuw.',
+        'sign_in_instead' => 'Meld je aan met je e-mailadres om verder te gaan. We sturen je een link.',
+        'welcome' => 'Welkom op GiftCoves.',
     ],
 
 ];

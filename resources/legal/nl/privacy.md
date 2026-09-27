@@ -103,7 +103,7 @@ zo'n e-mail.
 
 Sinds 26 september 2026 sturen we, als je iemand uitnodigt bij Mijn mensen met
 een e-mailadres, dat adres één e-mail: je naam, wat GiftCoves is, en een knop om
-in te loggen. Niets van je lijsten. Dezelfde e-mail gaat uit of het adres nu al
+de uitnodiging aan te nemen. Niets van je lijsten. Dezelfde e-mail gaat uit of het adres nu al
 een account heeft of niet, en jij krijgt in beide gevallen hetzelfde te horen. Je
 kunt hoogstens 20 adressen per dag uitnodigen, en hetzelfde adres één keer per
 30 dagen. Je eigen adres mailen we nooit.
@@ -113,6 +113,13 @@ uitnodiging de verbinding en verdwijnt het adres eruit), of 365 dagen nadat je
 hen voor het laatst uitnodigde. We houden ook 90 dagen bij dat je een uitnodiging
 stuurde, met een eenrichtingscode gemaakt van het adres in plaats van het adres:
 dat is wat de twee grenzen tellen.
+
+Sinds 27 september 2026 maakt die knop voor een adres zonder account meteen het
+account aan en logt het in, zonder tweede e-mail. Daarvoor bewaren we bij elke
+verstuurde uitnodiging het adres en een eenmalige code (alleen een eenrichtingscode
+ervan, nooit de code zelf). De knop werkt 14 dagen en één keer; daarna wissen we
+beide. Een adres dat al een account heeft, logt de knop nooit in: dat gaat naar de
+gewone aanmeldpagina.
 
 Elke uitnodiging per e-mail heeft een link "Wil je geen uitnodigingen meer ontvangen?" die zonder
 account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail.
@@ -219,6 +226,7 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Keuzes via een Dit of dat samen-link | 180 dagen, daarna ook de link zodra er geen keuzes meer op staan |
 | Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
 | Een uitnodiging die nog niemand aannam (het uitgenodigde adres) | Tot die persoon inlogt, of 365 dagen nadat het lid hen voor het laatst uitnodigde |
+| De knop "Uitnodiging aannemen" (het uitgenodigde adres en een eenrichtingscode) | Tot hij gebruikt is, hoogstens 14 dagen |
 | Overzicht van de uitnodigingen die een lid stuurde (een eenrichtingscode, niet het adres) | 90 dagen |
 | Melding "Niet gevraagd" over een uitnodiging | 365 dagen |
 | Verzoek om geen uitnodigingen meer (een eenrichtingscode, niet het adres) | Tot het ongedaan wordt gemaakt |
