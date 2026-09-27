@@ -82,7 +82,11 @@ export default function ContributeBar() {
                     <span className="shrink-0 text-accent-dark">
                         <ToolIcon name="suggestions" className="h-4 w-4" />
                     </span>
-                    <span className="min-w-0 flex-1 truncate">
+                    {/* Not `flex-1`: "Denk mee" follows the sentence (owner,
+                        2026-09-27) instead of being pushed against the close
+                        button. The row itself still fills the width, so all
+                        of it stays one link. */}
+                    <span className="min-w-0 truncate">
                         <span className="lg:hidden">{t('contribute.bar_text_short')}</span>
                         <span className="hidden lg:inline">{t('contribute.bar_text')}</span>
                     </span>
