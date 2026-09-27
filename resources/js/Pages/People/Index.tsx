@@ -111,14 +111,42 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
         <>
             <Head title={t('people.title')} />
 
-            <header className="flex flex-wrap items-center gap-x-1 gap-y-3">
-                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('people.title')}</h1>
-                {isSignedIn && <InfoTip>{t('people.intro_tip')}</InfoTip>}
-                {/* The mirror of Mijn Coves' "Mijn mensen" button (owner, 2026-09-27). */}
-                <Link href={`${base}/lists`} className={`ml-auto ${buttonClasses('secondary', 'md')}`}>
-                    <ToolIcon name="wishlist" className="h-4 w-4" />
-                    {t('lists.title')}
-                </Link>
+            {/*
+              The same structure as Mijn Coves (owner, 2026-09-27): the title
+              on the left, the buttons on the right, the way to the other page
+              first and this page's own actions after it.
+            */}
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-x-1">
+                    <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('people.title')}</h1>
+                    {isSignedIn && <InfoTip>{t('people.intro_tip')}</InfoTip>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Link href={`${base}/lists`} className={buttonClasses('secondary', 'md')}>
+                        <ToolIcon name="wishlist" className="h-4 w-4" />
+                        {t('lists.title')}
+                    </Link>
+                    {isSignedIn && (
+                        <>
+                            <Button
+                                variant={adding === 'person' ? 'secondary' : 'primary'}
+                                aria-expanded={adding === 'person'}
+                                aria-controls="people-add"
+                                onClick={() => setAdding(adding === 'person' ? null : 'person')}
+                            >
+                                {t('people.add_person')}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                aria-expanded={adding === 'invite'}
+                                aria-controls="people-add"
+                                onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
+                            >
+                                {t('people.invite')}
+                            </Button>
+                        </>
+                    )}
+                </div>
             </header>
             <p className="mt-2 text-ink-soft">{t('people.intro')}</p>
 
@@ -135,29 +163,10 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
             ) : (
                 <>
                     {/*
-                      The two ways to add somebody, side by side because they
-                      answer the same question, "who is missing here", in two
-                      ways: somebody only you see, or somebody on GiftCoves.
+                      The two ways to add somebody sit in the header since
+                      2026-09-27, after "Mijn Coves": somebody only you see, or
+                      somebody on GiftCoves. Their forms open here.
                     */}
-                    <div className="mt-6 flex flex-wrap gap-2">
-                        <Button
-                            variant={adding === 'person' ? 'secondary' : 'primary'}
-                            aria-expanded={adding === 'person'}
-                            aria-controls="people-add"
-                            onClick={() => setAdding(adding === 'person' ? null : 'person')}
-                        >
-                            {t('people.add_person')}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            aria-expanded={adding === 'invite'}
-                            aria-controls="people-add"
-                            onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
-                        >
-                            {t('people.invite')}
-                        </Button>
-                    </div>
-
                     {adding === 'person' && (
                         <form
                             id="people-add"

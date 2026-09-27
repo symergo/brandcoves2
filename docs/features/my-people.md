@@ -28,7 +28,10 @@ shows one list and marks the people who are on GiftCoves themselves with a small
 
 **Mijn mensen and Mijn Coves point at each other** (owner, 2026-09-27): a secondary "Mijn Coves"
 button (heart) in this page's header, and a "Mijn mensen" button (two figures) beside "Maak een Cove"
-on `/lists`. Who you buy for and what you collect are the two halves of the same job.
+on `/lists`. Who you buy for and what you collect are the two halves of the same job. The header has the
+same structure as `/lists` too: title left; right, "Mijn Coves" first, then this page's own actions,
+**Iemand toevoegen** (filled) and **Nodig uit op GiftCoves**. Those two sat in a row of their own
+under the intro until the owner moved them up the same day.
 
 ## What a row shows
 
