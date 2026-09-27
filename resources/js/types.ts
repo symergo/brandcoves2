@@ -171,18 +171,81 @@ export type Cents = number
  * on and the page other people read it from.
  */
 export function formatOccasionDate(iso: string, market: CurrentMarket): string {
-    const date = new Date(iso)
+    return formatDay(iso, market, { month: 'short', year: 'auto' })
+}
+
+/**
+ * A day, in the reader's market: "20 december", "20 déc. 2027".
+ *
+ * The one date formatter (2026-09-27). Before it, the people page, the Find a
+ * gift wizard and the person page each built their own `Intl.DateTimeFormat`,
+ * and the four Secret Santa pages printed the raw `2026-12-20` the server sent.
+ *
+ * Takes `YYYY-MM-DD` (a date) or `MM-DD` (a birthday, which has no year here:
+ * see Recipient::BIRTHDAY_YEAR). Parsed as a local midnight rather than with
+ * `new Date(iso)`, which reads a bare date as UTC and, west of Greenwich,
+ * shows the day before.
+ *
+ * `year`: `false` never (the default: most of these dates are weeks away),
+ * `true` always, `'auto'` only when it is not this year.
+ */
+export function formatDay(
+    iso: string,
+    market: CurrentMarket,
+    { year = false, month = 'long' }: { year?: boolean | 'auto'; month?: 'long' | 'short' } = {},
+): string {
+    const birthday = /^\d{2}-\d{2}$/.test(iso)
+    const date = new Date(`${birthday ? `2000-${iso}` : iso.slice(0, 10)}T00:00:00`)
+
+    if (Number.isNaN(date.getTime())) {
+        return iso
+    }
+
+    const withYear = !birthday && (year === true || (year === 'auto' && date.getFullYear() !== new Date().getFullYear()))
 
     // Same reasoning as `formatPrice`: `Intl` throws on a malformed locale, and
-    // a throw inside render blanks the page rather than one badge.
+    // a throw inside render blanks the page rather than one date.
     try {
         return new Intl.DateTimeFormat(market.hrefLang, {
             day: 'numeric',
-            month: 'short',
-            ...(date.getFullYear() === new Date().getFullYear() ? {} : { year: 'numeric' }),
+            month,
+            ...(withYear ? { year: 'numeric' } : {}),
         }).format(date)
     } catch {
         return iso
+    }
+}
+
+/**
+ * "vandaag", "morgen", "over 12 dagen": how far away a day is. Takes `t` so it
+ * can live here without a hook; the keys are `people.today`, `people.tomorrow`
+ * and `people.in_days`.
+ */
+export function formatCountdown(days: number, t: (key: string, replacements?: Record<string, string | number>) => string): string {
+    if (days <= 0) {
+        return t('people.today')
+    }
+
+    return days === 1 ? t('people.tomorrow') : t('people.in_days', { count: days })
+}
+
+/**
+ * "€ 50" rather than "€ 50,00": a budget or a price threshold is a round
+ * number somebody chose, not a price, and the cents made "tot € 50,00" read
+ * like a till receipt. Real prices keep their cents (`formatPrice`).
+ */
+export function formatBudget(cents: Cents, market: CurrentMarket): string {
+    try {
+        return new Intl.NumberFormat(market.hrefLang, {
+            style: 'currency',
+            currency: market.currency,
+            // Whole euros only when the amount is whole: a budget of € 12,50
+            // is rare, and rounding it would state a different budget.
+            maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
+            minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+        }).format(cents / 100)
+    } catch {
+        return formatPrice(cents, market)
     }
 }
 

@@ -53,6 +53,46 @@ export function buttonClasses(
         .join(' ')
 }
 
+/**
+ * A row's action on a list of rows (Mijn Coves, Mijn mensen): outlined, the
+ * words beside the icon on a wide screen and the icon alone on a phone (owner,
+ * 2026-09-27: "on mobile, replace the buttons with icons"). Callers keep the
+ * words for screen readers with `aria-label`, and wrap them in
+ * `hidden sm:inline`.
+ *
+ * Never filled: on a page of twenty rows a filled button on each is twenty
+ * primary actions, and the page's own one in the header ("Maak een Cove",
+ * "Iemand toevoegen") stops standing out (2026-09-27 review).
+ *
+ * 36px square on a phone rather than Button's 44px: two or three of these sit
+ * in a row's corner beside the name, and the row itself is the larger target.
+ */
+export function rowActionClasses(className = ''): string {
+    return [
+        'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-card px-2 text-sm text-ink transition',
+        'hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5',
+        className,
+    ]
+        .filter(Boolean)
+        .join(' ')
+}
+
+/**
+ * A text field, select or textarea in a form: the one input recipe the
+ * people, person and Santa forms repeated by hand (2026-09-27). `block
+ * w-full` is the default because almost every field fills its label;
+ * `inline` drops it for a field that sits in a row.
+ */
+export function fieldClasses(className = '', { inline = false }: { inline?: boolean } = {}): string {
+    return [
+        'rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal',
+        inline ? '' : 'mt-1 block w-full',
+        className,
+    ]
+        .filter(Boolean)
+        .join(' ')
+}
+
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant
     size?: ButtonSize

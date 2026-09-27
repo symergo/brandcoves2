@@ -42,6 +42,24 @@ export type ToolKey =
     | 'vote'
     | 'thumbsUp'
     | 'thumbsDown'
+    | 'check'
+    | 'bell'
+    | 'package'
+    | 'gift'
+    | 'heart'
+
+/*
+ * Two drawings with two names each, drawn once so the pairs cannot drift
+ * apart: the alerts tool and the header's bell, the wish list and the vote's
+ * heart (2026-09-27).
+ */
+const BELL = (
+    <>
+        <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+        <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </>
+)
+const HEART = <path d="M18.3 13.8c1.34-1.31 2.7-2.89 2.7-4.95A4.95 4.95 0 0 0 16.05 3.9c-1.58 0-2.7.45-4.05 1.8-1.35-1.35-2.47-1.8-4.05-1.8A4.95 4.95 0 0 0 3 8.85c0 2.07 1.35 3.65 2.7 4.95l6.3 6.3Z" />
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -71,6 +89,20 @@ const paths: Record<ToolKey, ReactNode> = {
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
 
     close: <path d="m6 6 12 12M18 6 6 18" />,
+
+    /*
+     * The glyphs that stood in for icons until 2026-09-27: ✓ beside "saved"
+     * and "on this list", 🔔 in the header, 📦 and 🎁 on the notifications
+     * page, ♥ ♡ on a group list's vote. Each rendered in the font's or the
+     * operating system's drawing, at its metrics, off the baseline of the line
+     * icons beside it. Same grid and stroke as everything here.
+     *
+     * `heart` is the wish list's outline under a second name, for the vote,
+     * where it means "this is the one we want" rather than "a wish list". The
+     * filled state is `className="fill-current"`: CSS outranks the `fill`
+     * attribute on the `<svg>`, so no second drawing is needed.
+     */
+    check: <path d="M5 12.5 10 17.5 19 7" />,
     // Start something new: "Nieuwe lijst voor …" on a person's page (2026-09-27).
     plus: <path d="M12 5v14M5 12h14" />,
     // A vote on the contribute page's board (2026-09-27): an arrow up, the
@@ -207,9 +239,8 @@ const paths: Record<ToolKey, ReactNode> = {
      * three units. Next to them it read a size larger and heavier. Same
      * stroke, same round joins; only the outline moved in.
      */
-    wishlist: (
-        <path d="M18.3 13.8c1.34-1.31 2.7-2.89 2.7-4.95A4.95 4.95 0 0 0 16.05 3.9c-1.58 0-2.7.45-4.05 1.8-1.35-1.35-2.47-1.8-4.05-1.8A4.95 4.95 0 0 0 3 8.85c0 2.07 1.35 3.65 2.7 4.95l6.3 6.3Z" />
-    ),
+    wishlist: HEART,
+    heart: HEART,
 
     /*
      * A list whose kind is unknown or does not apply: a Cove somebody
@@ -339,12 +370,8 @@ const paths: Record<ToolKey, ReactNode> = {
     ),
 
     // A bell — the one tool that comes to you instead of waiting to be opened.
-    alerts: (
-        <>
-            <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
-            <path d="M10 20.5a2 2 0 0 0 4 0" />
-        </>
-    ),
+    alerts: BELL,
+    bell: BELL,
 
     // One person and a plus: a connection you make, as opposed to `collab`'s
     // two people already on one list.
@@ -443,6 +470,23 @@ const paths: Record<ToolKey, ReactNode> = {
             <path d="M5.5 16c1.1.9 2.2.9 3.25 0s2.15-.9 3.25 0 2.15.9 3.25 0 2.15-.9 3.25 0" />
             <path d="M12 12.5V9" />
             <path d="M12 4c.8.9 1.2 1.6 1.2 2.2a1.2 1.2 0 0 1-2.4 0c0-.6.4-1.3 1.2-2.2z" />
+        </>
+    ),
+
+    // A box: something back in stock (was 📦 on the notifications page).
+    package: (
+        <>
+            <path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5l-8.5-4z" />
+            <path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9" />
+        </>
+    ),
+
+    // A wrapped present: an occasion coming up (was 🎁 on the notifications page).
+    gift: (
+        <>
+            <rect x="4" y="9" width="16" height="11" rx="1" />
+            <path d="M3 9h18M12 9v11" />
+            <path d="M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z" />
         </>
     ),
 

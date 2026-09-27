@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import ShareIcon from './ShareIcon'
 import ShareMenu from './ShareMenu'
+import { useCopy } from '../useCopy'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -47,37 +48,16 @@ export default function ShareRow({
     hint?: string
 }) {
     const { t } = useTranslations()
-    const [status, setStatus] = useState('')
     const field = useRef<HTMLInputElement>(null)
-
-    // Say it once, then stop. A confirmation that never leaves stops being read
-    // as a confirmation of the press that just happened.
-    useEffect(() => {
-        if (status === '') return
-        const timer = setTimeout(() => setStatus(''), 3000)
-
-        return () => clearTimeout(timer)
-    }, [status])
+    const clipboard = useCopy()
 
     /**
      * Copy the URL, and when that is not allowed, hand the reader the next best
-     * thing rather than nothing.
-     *
-     * `navigator.clipboard` is undefined outside a secure context and rejects
-     * when the document is not focused. Both used to throw into an empty catch
-     * that did not exist: the button did visibly nothing, with no explanation.
-     * Now the field is selected and the status line says to copy it — which is
-     * one keystroke, and is at least true.
+     * thing rather than nothing: the field is selected and the status line says
+     * to copy it, which is one keystroke and is at least true.
      */
-    async function copy() {
-        try {
-            await navigator.clipboard.writeText(url)
-            setStatus(t('lists.copied'))
-        } catch {
-            field.current?.select()
-            setStatus(t('lists.copy_manual'))
-        }
-    }
+    const copy = () => clipboard.copy(url, () => field.current?.select())
+    const status = clipboard.status
 
     return (
         <div>

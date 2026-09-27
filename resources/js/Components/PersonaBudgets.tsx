@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { Cents, CurrentMarket, SharedProps } from '../types'
-import { formatPrice } from '../types'
+import { formatBudget, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
 import SaveToList from './SaveToList'
@@ -85,17 +85,10 @@ export default function PersonaBudgets({ bands }: { bands: BudgetBand[] }) {
 }
 
 /**
- * "€ 15" rather than "€ 15,00": a tab names a budget, not a price. Guarded
- * like formatPrice, whose note explains why a throw here would blank the page.
+ * "€ 15" rather than "€ 15,00": a tab names a budget, not a price. Always
+ * rounded here, because the tabs are bands the server computed, not a sum
+ * somebody typed; `formatBudget` keeps odd cents for a typed budget.
  */
 function wholePrice(cents: Cents, market: CurrentMarket): string {
-    try {
-        return new Intl.NumberFormat(market.hrefLang, {
-            style: 'currency',
-            currency: market.currency,
-            maximumFractionDigits: 0,
-        }).format(cents / 100)
-    } catch {
-        return formatPrice(cents, market)
-    }
+    return formatBudget(Math.round(cents / 100) * 100, market)
 }

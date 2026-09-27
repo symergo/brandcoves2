@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import ShareIcon, { type ShareIconKey } from './ShareIcon'
+import { useCopy } from '../useCopy'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -57,7 +58,8 @@ export default function ShareMenu({
 }) {
     const { t } = useTranslations()
     const [open, setOpen] = useState(false)
-    const [status, setStatus] = useState('')
+    const clipboard = useCopy()
+    const status = clipboard.status
     const [native, setNative] = useState(false)
 
     const box = useRef<HTMLDivElement>(null)
@@ -72,14 +74,6 @@ export default function ShareMenu({
     useEffect(() => {
         setNative(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
     }, [])
-
-    // Say it once, then stop. A status that stays on screen stops being read.
-    useEffect(() => {
-        if (status === '') return
-        const timer = setTimeout(() => setStatus(''), 3000)
-
-        return () => clearTimeout(timer)
-    }, [status])
 
     useEffect(() => {
         if (!open) return
@@ -104,22 +98,9 @@ export default function ShareMenu({
         if (returnFocus) trigger.current?.focus()
     }
 
-    /**
-     * Copy, and say what happened either way.
-     *
-     * `navigator.clipboard` is undefined outside a secure context — which is
-     * every plain-http address, including the LAN one this gets tested on — and
-     * it rejects when the page is not focused. Both used to throw into nothing:
-     * the button did visibly nothing and the reader had no idea why.
-     */
+    /** Copy, say what happened either way (`useCopy`), and close the menu. */
     async function copy(value: string) {
-        try {
-            await navigator.clipboard.writeText(value)
-            setStatus(t('lists.copied'))
-        } catch {
-            setStatus(t('lists.copy_manual'))
-        }
-
+        await clipboard.copy(value)
         close()
     }
 
