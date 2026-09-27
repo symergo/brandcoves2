@@ -344,7 +344,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
 
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-semibold">{heading}</h1>
+                    <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{heading}</h1>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {/*

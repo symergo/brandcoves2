@@ -31,7 +31,10 @@ button (heart) in this page's header, and a "Mijn mensen" button (two figures) b
 on `/lists`. Who you buy for and what you collect are the two halves of the same job. The header has the
 same structure as `/lists` too: title left; right, "Mijn Coves" first, then this page's own actions,
 **Iemand toevoegen** (filled) and **Nodig uit op GiftCoves**. Those two sat in a row of their own
-under the intro until the owner moved them up the same day.
+under the intro until the owner moved them up the same day. Same design on both pages since then: "Maak een
+Cove" (`NewListButton`) became the filled `Button` that "Iemand toevoegen" is, outlined while its
+form is open, each with a line icon (+, and the invite figure for "Nodig uit"), and both titles
+are the same size.
 
 ## What a row shows
 

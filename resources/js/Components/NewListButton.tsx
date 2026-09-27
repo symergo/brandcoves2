@@ -1,3 +1,5 @@
+import Button from './Button'
+import ToolIcon from './ToolIcon'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -30,26 +32,14 @@ export default function NewListButton({
 }) {
     const { t } = useTranslations()
 
+    // The same button as Mijn mensen's "Iemand toevoegen" (owner, 2026-09-27):
+    // filled while closed, outlined while its form is open, with its icon.
     return (
-        <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={open}
-            aria-controls={controls}
-            className="flex w-full items-center justify-center gap-2 rounded-card border border-line bg-card px-4 py-2.5 font-medium text-ink transition hover:border-ink sm:inline-flex sm:w-auto"
-        >
-            <svg
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-                className="h-4 w-4 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            >
-                <path d="M10 4v12M4 10h12" />
-            </svg>
-            {t('lists.make_new')}
-        </button>
+        <Button variant={open ? 'secondary' : 'primary'} onClick={onToggle} aria-expanded={open} aria-controls={controls}>
+            <span className="inline-flex items-center gap-2">
+                <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                {t('lists.make_new')}
+            </span>
+        </Button>
     )
 }

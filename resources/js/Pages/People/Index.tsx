@@ -134,7 +134,10 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 aria-controls="people-add"
                                 onClick={() => setAdding(adding === 'person' ? null : 'person')}
                             >
-                                {t('people.add_person')}
+                                <span className="inline-flex items-center gap-2">
+                                    <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                                    {t('people.add_person')}
+                                </span>
                             </Button>
                             <Button
                                 variant="secondary"
@@ -142,7 +145,10 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 aria-controls="people-add"
                                 onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
                             >
-                                {t('people.invite')}
+                                <span className="inline-flex items-center gap-2">
+                                    <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
+                                    {t('people.invite')}
+                                </span>
                             </Button>
                         </>
                     )}
