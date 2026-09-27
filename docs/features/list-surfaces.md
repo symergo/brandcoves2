@@ -1045,8 +1045,10 @@ settings"): under the link, the share panel's own switches (`Option`, exported f
 each the list page's own `PATCH` with the popup staying open: "Zichtbaar voor mijn mensen" on a wish
 list of yours, "Iedereen met de link mag toevoegen" on a shared list about somebody, and on a group
 gift "Iedereen ziet wie bijdraagt" and "Deelnemers kunnen stemmen"; then "Stop met delen", quiet and
-asking once. The forms (how much each person chips in, sharing with one friend by name, who was let
-in before) stay on the list page's own share panel. The popup had a "Meer deelopties" link to it;
+asking once. The forms (sharing with one friend by name, who was let in before) stay on the list
+page's own share panel. "Hoe iedereen bijdraagt" (how much each person chips in on a group gift)
+moved to the list's Settings panel (owner, 2026-09-27): how the money is collected is what the list
+is, not who may see it. The popup had a "Meer deelopties" link to it;
 the owner had it removed (2026-09-27), so the popup ends at "Stop met delen".
 
 ## The list's search is the site's inline search (2026-09-27)

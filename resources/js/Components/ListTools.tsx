@@ -719,74 +719,6 @@ export default function ListTools({
                             )}
 
                             {/*
-                              How a group gift collects: a choice, not a switch
-                              with a field hanging off it, because "each names
-                              their own" and "everyone puts in the same" are
-                              two collections rather than one with an option.
-                              The amount appears under the option it belongs to
-                              and nowhere else, and is written on blur: this
-                              posts, and "€1, €12, €120" typed into a live field
-                              is three settings saved and two of them wrong.
-                            */}
-                            {access.isOwner && list.kind === 'group' && (
-                                <section className="mt-6">
-                                    <h3 className="text-sm font-medium">{t('lists.pledge_mode')}</h3>
-                                    <div className="mt-3 space-y-2">
-                                        <Option
-                                            type="radio"
-                                            name="pledge_mode"
-                                            checked={list.pledgeAmount === null}
-                                            onChange={() => setting({ pledge_amount: null })}
-                                            label={t('lists.pledge_mode_each')}
-                                        />
-                                        <Option
-                                            type="radio"
-                                            name="pledge_mode"
-                                            checked={list.pledgeAmount !== null}
-                                            // Ten is the amount the field opens
-                                            // on, not a recommendation; the
-                                            // organiser overtypes it.
-                                            onChange={() => setting({ pledge_amount: 10 })}
-                                            label={t('lists.pledge_mode_fixed')}
-                                        />
-                                        {list.pledgeAmount !== null && (
-                                            <label className="flex items-center gap-2 pl-3 text-sm">
-                                                {/* The market's currency sign, never a hard-coded €. */}
-                                                <span className="text-ink-soft">
-                                                    {(0)
-                                                        .toLocaleString(market.hrefLang, {
-                                                            style: 'currency',
-                                                            currency: market.currency,
-                                                            minimumFractionDigits: 0,
-                                                            maximumFractionDigits: 0,
-                                                        })
-                                                        .replace(/[\d\s]/g, '')}
-                                                </span>
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    max={100000}
-                                                    step="0.01"
-                                                    defaultValue={list.pledgeAmount / 100}
-                                                    onBlur={(e) => {
-                                                        const euros = Number(e.target.value)
-
-                                                        if (euros > 0) {
-                                                            setting({ pledge_amount: euros })
-                                                        }
-                                                    }}
-                                                    className="w-28 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                                />
-                                                <span className="text-xs text-ink-soft">
-                                                    {t('lists.pledge_mode_each_person')}
-                                                </span>
-                                            </label>
-                                        )}
-                                    </div>
-                                </section>
-                            )}
-
-                            {/*
                               The people who were let in one at a time, back
                               when that was how sharing worked. Nothing creates
                               collaborators any more, and people granted access
@@ -1087,6 +1019,76 @@ export default function ListTools({
                                             </label>
                                         )}
                             </div>
+                            {/*
+                              How a group gift collects: a choice, not a switch
+                              with a field hanging off it, because "each names
+                              their own" and "everyone puts in the same" are
+                              two collections rather than one with an option.
+                              Under Settings, not Sharing (owner, 2026-09-27):
+                              how the money is collected is what the list is,
+                              not who may see it.
+                              The amount appears under the option it belongs to
+                              and nowhere else, and is written on blur: this
+                              posts, and "€1, €12, €120" typed into a live field
+                              is three settings saved and two of them wrong.
+                            */}
+                            {access.isOwner && list.kind === 'group' && (
+                                <section className="mt-6">
+                                    <h3 className="text-sm font-medium">{t('lists.pledge_mode')}</h3>
+                                    <div className="mt-3 space-y-2">
+                                        <Option
+                                            type="radio"
+                                            name="pledge_mode"
+                                            checked={list.pledgeAmount === null}
+                                            onChange={() => setting({ pledge_amount: null })}
+                                            label={t('lists.pledge_mode_each')}
+                                        />
+                                        <Option
+                                            type="radio"
+                                            name="pledge_mode"
+                                            checked={list.pledgeAmount !== null}
+                                            // Ten is the amount the field opens
+                                            // on, not a recommendation; the
+                                            // organiser overtypes it.
+                                            onChange={() => setting({ pledge_amount: 10 })}
+                                            label={t('lists.pledge_mode_fixed')}
+                                        />
+                                        {list.pledgeAmount !== null && (
+                                            <label className="flex items-center gap-2 pl-3 text-sm">
+                                                {/* The market's currency sign, never a hard-coded €. */}
+                                                <span className="text-ink-soft">
+                                                    {(0)
+                                                        .toLocaleString(market.hrefLang, {
+                                                            style: 'currency',
+                                                            currency: market.currency,
+                                                            minimumFractionDigits: 0,
+                                                            maximumFractionDigits: 0,
+                                                        })
+                                                        .replace(/[\d\s]/g, '')}
+                                                </span>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={100000}
+                                                    step="0.01"
+                                                    defaultValue={list.pledgeAmount / 100}
+                                                    onBlur={(e) => {
+                                                        const euros = Number(e.target.value)
+
+                                                        if (euros > 0) {
+                                                            setting({ pledge_amount: euros })
+                                                        }
+                                                    }}
+                                                    className="w-28 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                                />
+                                                <span className="text-xs text-ink-soft">
+                                                    {t('lists.pledge_mode_each_person')}
+                                                </span>
+                                            </label>
+                                        )}
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     )}
                     {open === 'settings' && (
