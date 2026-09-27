@@ -1217,7 +1217,7 @@ return [
     'gift_history' => [
         'history_title' => 'Ce que vous avez offert',
         'history_hint' => 'Nous retirons ces cadeaux des idées pour :name dans « Trouver un cadeau » et dans Ceci ou cela, et nous proposons ce qui pourrait suivre. Ce que vous avez marqué « Je m’en occupe » sur les listes pour :name compte aussi. Ce que d’autres ont marqué, non.',
-        'history_empty' => 'Rien pour l’instant. Notez ci-dessous ce que vous avez offert, ou appuyez sur « Je l’ai offert » à côté d’un article d’une liste pour :name.',
+        'history_empty' => 'Notez ce que vous avez offert à :name. Nous ne proposerons jamais deux fois la même chose, et nous proposerons ce qui peut suivre : ce qui va avec, une recharge, le tome suivant. Écrivez-le ci-dessous, ou appuyez sur « Je l’ai offert » à côté d’un article d’une liste pour :name.',
         'source_claimed' => 'Vous vous en occupez',
         'source_sent' => 'Vous l’avez acheté',
         'given_in' => ':year',

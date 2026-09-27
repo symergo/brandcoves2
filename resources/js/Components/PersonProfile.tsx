@@ -546,13 +546,15 @@ function Lists({
                   David" and "David" read as the same thing until one says
                   "Cadeaulijst" and the other "Samen geven" (owner's review).
                 */
+                // The kind right after the name (owner, 2026-09-27): it says
+                // what the name is, so it is read with it, not at the far end.
                 const body = (
                     <>
-                        <ListName name={list.title} kind={list.kind} />
-                        <span className="flex items-center gap-2">
-                            {list.eventDate && <span className="text-xs text-ink-soft">{format(list.eventDate)}</span>}
+                        <span className="flex min-w-0 flex-wrap items-center gap-2">
+                            <ListName name={list.title} kind={list.kind} />
                             <ListKindBadge kind={list.kind} />
                         </span>
+                        {list.eventDate && <span className="text-xs text-ink-soft">{format(list.eventDate)}</span>}
                     </>
                 )
 
@@ -573,7 +575,16 @@ function Lists({
                           opens the list on that tool (`?panel=`).
                         */}
                         {actions && (
-                            <span className="pr-2">
+                            <span className="flex items-center pr-2">
+                                {/* Share is the action people come for: its own icon; the rest under ⋯. */}
+                                <Link
+                                    href={`${list.url}?panel=share`}
+                                    aria-label={`${t('lists.share')}: ${list.title}`}
+                                    title={t('lists.share')}
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink sm:h-8 sm:w-8"
+                                >
+                                    <ToolIcon name="shared" className="h-4 w-4" />
+                                </Link>
                                 <Menu
                                     label={t('people.list_actions', { name: list.title })}
                                     button={<ToolIcon name="more" className="h-4 w-4" />}
@@ -581,9 +592,6 @@ function Lists({
                                 >
                                     {() => (
                                         <>
-                                            <MenuItem href={`${list.url}?panel=share`} icon={<ToolIcon name="shared" className="h-4 w-4" />}>
-                                                {t('lists.share')}
-                                            </MenuItem>
                                             <MenuItem
                                                 href={`/${market.key}/ask?list=${list.id}`}
                                                 icon={<ToolIcon name="board" className="h-4 w-4" />}

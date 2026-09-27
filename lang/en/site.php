@@ -1420,7 +1420,7 @@ return [
     'gift_history' => [
         'history_title' => 'What you gave',
         'history_hint' => 'We leave these out of ideas for :name in Find a gift and This or that, and suggest what could follow them. What you marked "I\'ll get this" on lists for :name counts too. What anybody else marked does not.',
-        'history_empty' => 'Nothing yet. Write down what you gave below, or press "I gave this" beside something on a list for :name.',
+        'history_empty' => 'Note what you gave :name. Then we never suggest the same thing twice, and we do suggest what could follow it: something that goes with it, a refill, the next volume. Write it below, or press "I gave this" beside something on a list for :name.',
         'source_claimed' => 'You are getting this',
         'source_sent' => 'You bought this',
         'given_in' => ':year',

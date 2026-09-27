@@ -33,6 +33,12 @@ you know about them, their wish lists, your lists for them; see
 
 The buttons to Find a gift and This or that moved into the profile's header.
 
+**While it is empty, the section says what it is for** (owner, 2026-09-27: "explain what the use
+of this is"): "Noteer wat je Mama gaf. Dan stellen we nooit twee keer hetzelfde voor, en wel wat
+erop kan volgen…" (`gift_history.history_empty`). Until then it said only "Nog niets", with the
+purpose behind the (i), so the one moment somebody decides whether to fill it in was the moment it
+did not explain itself. The (i) keeps the details (which claims count, whose do not).
+
 Linked from a list about somebody (under the description, owner only), from Find a gift's
 results when a saved person is chosen, from the reminder email, and since 2026-09-26 from **My
 people** (`/{market}/people`, [my-people.md](my-people.md)), the page that lists every saved person

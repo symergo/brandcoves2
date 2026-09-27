@@ -119,8 +119,9 @@ width, because there is nothing for a side column):
    somebody else is not their wish list and does not appear here.
 4. **Lijsten voor {naam}**: yours, kind `for_someone` or `group`, about this person. Since
    2026-09-27 (owner) always drawn, with **Nieuwe lijst** beside the heading (a menu: Cadeaulijst or
-   Samen geven, `POST /lists` with `recipient_id` and `together`), and a ⋯ menu per list: **Delen**,
-   **Vraag het aan anderen** and **Instellingen**. Each opens the list page on that tool through
+   Samen geven, `POST /lists` with `recipient_id` and `together`). Each row: the name with its kind
+   pill right after it (it says what the name is), a **share icon** (the action people come for),
+   and a ⋯ menu with **Vraag het aan anderen** and **Instellingen**. Each opens the list page on that tool through
    `?panel=share|settings` (`Lists/Show.tsx` reads it, for someone who may edit the list) or the ask
    form (`/ask?list=`). With no list yet the section says so and offers the button, because starting
    a list for them is what the section is for.

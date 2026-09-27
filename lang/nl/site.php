@@ -1220,7 +1220,7 @@ return [
     'gift_history' => [
         'history_title' => 'Wat je gaf',
         'history_hint' => 'Dit laten we weg uit ideeën voor :name in Cadeau vinden en in Dit of dat, en we stellen voor wat erop kan volgen. Wat jij met "Ik koop dit" aanduidde op lijstjes voor :name telt ook mee. Wat anderen aanduidden niet.',
-        'history_empty' => 'Nog niets. Schrijf hieronder op wat je gaf, of druk op "Dit gaf ik" bij iets op een lijstje voor :name.',
+        'history_empty' => 'Noteer wat je :name gaf. Dan stellen we nooit twee keer hetzelfde voor, en wel wat erop kan volgen: iets wat erbij hoort, een navulling, het volgende deel. Schrijf het hieronder, of druk op "Dit gaf ik" bij iets op een lijstje voor :name.',
         'source_claimed' => 'Jij koopt dit',
         'source_sent' => 'Jij kocht dit',
         'given_in' => ':year',

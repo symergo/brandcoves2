@@ -1216,7 +1216,7 @@ return [
     'gift_history' => [
         'history_title' => 'Lo que regalaste',
         'history_hint' => 'Lo dejamos fuera de las ideas para :name en «Encontrar un regalo» y en Esto o aquello, y proponemos lo que podría venir después. Lo que marcaste con «Yo lo regalo» en listas para :name también cuenta. Lo que marcaron otros, no.',
-        'history_empty' => 'Todavía nada. Apunta abajo lo que regalaste, o pulsa «Lo regalé» junto a algo de una lista para :name.',
+        'history_empty' => 'Apunta lo que le regalaste a :name. Así nunca proponemos dos veces lo mismo, y sí lo que puede venir después: algo que va con ello, un recambio, el siguiente tomo. Escríbelo abajo, o pulsa «Lo regalé» junto a algo de una lista para :name.',
         'source_claimed' => 'Tú lo regalas',
         'source_sent' => 'Tú lo compraste',
         'given_in' => ':year',
