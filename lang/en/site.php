@@ -1052,7 +1052,7 @@ return [
         'share_with_friends' => 'Share with friends',
         'share_with_friends_hint' => 'Tap a name and they get the link by email.',
         'visible_to_people' => 'Visible to my people',
-        'visible_to_people_tip' => 'Your friends on GiftCoves see this wish list. They can say they will buy something (you never see what) and pick from it for a list they make for you. Not the public, and not people you only saved. Switch it off and they no longer see it; somebody who also has the link keeps that until you stop sharing.',
+        'visible_to_people_tip' => 'Your friends on GiftCoves see this wish list. They can let each other know what they are giving (you never see what). Switch it off and only people with a link see the list (until you stop sharing).',
         'visible_to_people_who' => 'Now: :names',
         'visible_to_people_nobody' => 'You have no friends on GiftCoves yet. Invite them from My people.',
         'sharing_off_people' => 'Only you and your people can see this list.',

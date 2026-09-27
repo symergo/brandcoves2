@@ -889,7 +889,7 @@ return [
         'share_with_friends' => 'Delen met vrienden',
         'share_with_friends_hint' => 'Tik op een naam en die krijgt de link per e-mail.',
         'visible_to_people' => 'Zichtbaar voor mijn mensen',
-        'visible_to_people_tip' => 'Je vrienden op GiftCoves zien deze verlanglijst. Ze kunnen laten weten dat ze iets kopen (jij ziet nooit wat) en eruit kiezen voor een lijst die ze voor jou maken. Niet het publiek, en niet mensen die je alleen bewaarde. Zet je het uit, dan zien ze hem niet meer; wie ook de link heeft, houdt die tot je stopt met delen.',
+        'visible_to_people_tip' => 'Je vrienden op GiftCoves zien deze verlanglijst. Ze kunnen elkaar laten weten wat ze cadeau doen (jij ziet nooit wat). Zet je het uit, dan zien enkel de mensen met een link de lijst (tot je het delen stopt).',
         'visible_to_people_who' => 'Nu: :names',
         'visible_to_people_nobody' => 'Je hebt nog geen vrienden op GiftCoves. Nodig ze uit via Mijn mensen.',
         'sharing_off_people' => 'Alleen jij en je mensen zien deze lijst.',

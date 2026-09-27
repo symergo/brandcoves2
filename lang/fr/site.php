@@ -886,7 +886,7 @@ return [
         'share_with_friends' => 'Partager avec des amis',
         'share_with_friends_hint' => 'Touchez un nom et cette personne reçoit le lien par e-mail.',
         'visible_to_people' => 'Visible par mes proches',
-        'visible_to_people_tip' => 'Vos amis sur GiftCoves voient cette liste d\'envies. Ils peuvent indiquer qu\'ils achètent quelque chose (vous ne voyez jamais quoi) et y choisir pour une liste qu\'ils font pour vous. Pas le public, ni les personnes que vous avez seulement enregistrées. Désactivez-le et ils ne la voient plus ; qui a aussi le lien le garde jusqu\'à ce que vous arrêtiez le partage.',
+        'visible_to_people_tip' => 'Vos amis sur GiftCoves voient cette liste d\'envies. Ils peuvent se dire entre eux ce qu\'ils offrent (vous ne voyez jamais quoi). Désactivez-le et seules les personnes qui ont un lien voient la liste (jusqu\'à ce que vous arrêtiez le partage).',
         'visible_to_people_who' => 'Actuellement : :names',
         'visible_to_people_nobody' => 'Vous n\'avez pas encore d\'amis sur GiftCoves. Invitez-les depuis Mes proches.',
         'sharing_off_people' => 'Seuls vous et vos proches voyez cette liste.',

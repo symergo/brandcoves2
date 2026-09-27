@@ -885,7 +885,7 @@ return [
         'share_with_friends' => 'Compartir con amigos',
         'share_with_friends_hint' => 'Toca un nombre y esa persona recibe el enlace por correo.',
         'visible_to_people' => 'Visible para mi gente',
-        'visible_to_people_tip' => 'Tus amigos en GiftCoves ven esta lista de deseos. Pueden decir que van a comprar algo (tú nunca ves qué) y elegir de ella para una lista que hagan para ti. No el público, ni las personas que solo guardaste. Si lo desactivas, dejan de verla; quien también tenga el enlace lo conserva hasta que dejes de compartir.',
+        'visible_to_people_tip' => 'Tus amigos en GiftCoves ven esta lista de deseos. Pueden decirse entre ellos qué van a regalar (tú nunca ves qué). Si lo desactivas, solo las personas con un enlace ven la lista (hasta que dejes de compartir).',
         'visible_to_people_who' => 'Ahora: :names',
         'visible_to_people_nobody' => 'Aún no tienes amigos en GiftCoves. Invítalos desde Mi gente.',
         'sharing_off_people' => 'Solo tú y tu gente veis esta lista.',
