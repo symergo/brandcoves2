@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react'
+import ToolIcon from './ToolIcon'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -280,4 +281,24 @@ export function MenuItem({
 /** A thin rule between groups of items, e.g. before the destructive one. */
 export function MenuSeparator() {
     return <div role="separator" className="my-1 border-t border-line" />
+}
+
+/**
+ * What every "more" menu's button shows: the ⋯, and its word where there is
+ * room for one.
+ *
+ * No chevron (consistency review, round 2, 2026-09-27). The list page's "Meer"
+ * and the people rows' "Meer" carried a ▾ after the word and every other ⋯ on
+ * the site did not, so the same menu looked like two kinds of control. The ⋯
+ * already says "there is more behind this"; a chevron said it twice. The
+ * button's shape stays the caller's, because a row's action, a header's pill
+ * and a card's corner are different places.
+ */
+export function MoreButtonContent({ word, wordOnPhone = false }: { word?: string; wordOnPhone?: boolean }) {
+    return (
+        <>
+            <ToolIcon name="more" className="h-4 w-4 shrink-0" />
+            {word !== undefined && <span className={wordOnPhone ? '' : 'hidden sm:inline'}>{word}</span>}
+        </>
+    )
 }

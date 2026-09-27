@@ -382,17 +382,6 @@ function Chrome({ children }: PropsWithChildren) {
                 first-visit dialog on 2026-09-26; see Components/MarketBar. */}
             <MarketBar />
 
-            {/*
-              Feedback, suggestions and votes are welcome (owner, 2026-09-27):
-              one short line, closable for a year; see Components/ContributeBar.
-              Above the header, in the market bar's slot, not under it (owner:
-              "find a better place", "more visible", "above the page"). Under
-              the header it read as part of the page; up here it reads as the
-              site asking, and the two bars never show together, so the top of
-              the page holds one question at a time.
-            */}
-            <ContributeBar />
-
             <header className="border-b border-line">
                 {/* Tighter from xl (2026-09-26): gap-4 here rather than
                     gap-6. The row is the page column (1152px) at 1280 and
@@ -719,6 +708,11 @@ function Chrome({ children }: PropsWithChildren) {
                     </div>
                 )}
             </header>
+
+            {/* Directly under the header, in the flow: feedback, suggestions
+                and votes are welcome (owner, 2026-09-27). One short line,
+                closable for a year; see Components/ContributeBar. */}
+            <ContributeBar />
 
             {/*
               The adding-mode bar sits directly under the header, outside

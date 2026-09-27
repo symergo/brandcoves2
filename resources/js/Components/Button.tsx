@@ -16,7 +16,7 @@ import { type ButtonHTMLAttributes, type ReactNode } from 'react'
  * `buttonClasses()` is exported for the anchors that look like buttons (an
  * outbound shop link, a sign-in link), which cannot be a `<button>`.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const variants: Record<ButtonVariant, string> = {
@@ -24,6 +24,13 @@ const variants: Record<ButtonVariant, string> = {
     secondary: 'border border-line bg-card text-ink hover:border-ink',
     ghost: 'text-ink-soft hover:text-ink',
     danger: 'border border-line text-danger hover:border-danger',
+    /*
+     * Filled red: only the button that carries out a deletion in a
+     * confirmation (`ConfirmDialog`), where it is the one action of the popup.
+     * Anywhere else a destructive action is `danger`, outlined, so it never
+     * outshouts the page's primary action (2026-09-27).
+     */
+    destructive: 'bg-danger text-white hover:opacity-90',
 }
 
 /*
