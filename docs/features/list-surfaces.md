@@ -1046,4 +1046,5 @@ each the list page's own `PATCH` with the popup staying open: "Zichtbaar voor mi
 list of yours, "Iedereen met de link mag toevoegen" on a shared list about somebody, and on a group
 gift "Iedereen ziet wie bijdraagt" and "Deelnemers kunnen stemmen"; then "Stop met delen", quiet and
 asking once. The forms (how much each person chips in, sharing with one friend by name, who was let
-in before) stay behind "Meer deelopties".
+in before) stay on the list page's own share panel. The popup had a "Meer deelopties" link to it;
+the owner had it removed (2026-09-27), so the popup ends at "Stop met delen".
