@@ -12,7 +12,7 @@ import Modal, { useConfirm } from './Modal'
 import ShareSettings, { type ShareableList } from './ShareSettings'
 import ToolIcon from './ToolIcon'
 import { invalidate } from '../savedItems'
-import type { SharedProps } from '../types'
+import { formatDay, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -53,6 +53,8 @@ export interface ListSummary {
     visibleToFriends?: boolean | null
     pledgersVisible?: boolean
     votingEnabled?: boolean
+    /** The occasion's day, `YYYY-MM-DD`, when the list has one. */
+    eventDate?: string | null
 }
 
 /** A row's action; the recipe and why it is never filled are in `rowActionClasses`. */
@@ -175,6 +177,8 @@ export default function ListSummaryRow({
                     */}
                     {list.kind !== 'mine' && list.recipient && !onPersonPage && ` · ${list.recipient.name}`}
                     {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
+                    {/* The occasion's day: a person's page showed it, Mijn Coves did not. */}
+                    {list.eventDate && ` · ${formatDay(list.eventDate, market, { year: 'auto' })}`}
                 </ListRowMeta>
                 {/* Somebody else's wish list is how I shop for them: say so. */}
                 {theirs && list.kind === 'mine' && list.ownerName && (
