@@ -62,6 +62,17 @@ on the screen that sets it is a setting somebody forgets is on.
 `BuildDailyEdition` builds from the calendar and an approved plan merely overrides what it would
 have chosen. For every other kind, `approve` is genuinely new.
 
+The screen says so, since 2026-09-27. Until then the Daily's `approve` cell looked like every other
+one, and the section text said a page "still needs somebody to approve it before it can publish".
+The owner read "off" as "Dailies need approval" and asked whether it should be on, which is the
+opposite of what happens. The cell now carries a note ("Publishes daily anyway…"), the section
+text names the Daily as the exception, and each column heading has an info icon saying what the
+stage does (`Automation::stageHint()`, `cellNote()`).
+
+Leaving the Daily's `approve` **off** is the recommended setting. On, the 05:00 walk approves any
+written Daily draft unread, and it then replaces the automatic edition. Off, a draft you approved is
+used and one you did not get to falls back to the automatic edition.
+
 ## `write` chooses who, and settles a race
 
 Not on/off, because the question is not whether prose happens.

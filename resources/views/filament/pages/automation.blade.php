@@ -22,8 +22,12 @@
         <x-filament::section>
             <x-slot name="heading">What runs on its own</x-slot>
             <x-slot name="description">
-                Kinds down, stages across. Everything but <strong>approve</strong> only prepares
-                work: a page still needs somebody to approve it before it can publish.
+                Kinds down, stages across, run each night at 05:00 in this order. Everything but
+                <strong>approve</strong> only prepares work: a Buying guide, persona or any other
+                kind stays unpublished until somebody approves it. The exception is the Daily
+                Cove, which publishes every morning while its <strong>build</strong> is on. For
+                the Daily, approval only decides whether your draft is used instead of the
+                automatic one.
             </x-slot>
 
             <div class="overflow-x-auto">
@@ -33,7 +37,13 @@
                             <th class="py-2 pr-4 text-left font-medium text-gray-500 dark:text-gray-400">Kind</th>
                             @foreach ($this->stages() as $stage)
                                 <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
-                                    {{ $stage }}
+                                    {{-- The name stays visible; what it does sits behind the icon. --}}
+                                    <span class="inline-flex items-center gap-1">
+                                        {{ $stage }}
+                                        <span class="cursor-help" title="{{ $this->stageHint($stage) }}">
+                                            <x-filament::icon icon="heroicon-o-information-circle" class="h-4 w-4" />
+                                        </span>
+                                    </span>
                                 </th>
                             @endforeach
                         </tr>
@@ -74,6 +84,10 @@
                                                         => ! $on,
                                                 ])
                                             >{{ $stage === 'write' ? $value : ($on ? 'on' : 'off') }}</button>
+
+                                            @if ($note = $this->cellNote($stage, $kind))
+                                                <p class="mt-1 max-w-48 text-xs text-gray-500 dark:text-gray-400">{{ $note }}</p>
+                                            @endif
                                         @endif
                                     </td>
                                 @endforeach

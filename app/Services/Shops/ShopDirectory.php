@@ -84,31 +84,48 @@ final readonly class ShopDirectory
      */
     private function members(Market $market): Collection
     {
-        return Cache::remember("bc:shops:{$market->value}", self::TTL, function () use ($market): Collection {
-            $live = $this->registry->liveSourcesFor($market);
+        /*
+         * Cached as plain rows and hydrated back into models.
+         *
+         * `config/cache.php` sets `serializable_classes` to false, so the cache
+         * refuses to rebuild objects: a cached Collection of Merchants came back
+         * as `__PHP_Incomplete_Class` and took /coves and every shop page down on
+         * staging (2026-09-27). The array store the tests use does not serialize,
+         * which is why no test saw it.
+         */
+        $rows = Cache::remember("bc:shops:v2:{$market->value}", self::TTL, fn (): array => $this->query($market)
+            ->map(fn (Merchant $shop): array => $shop->getAttributes())
+            ->all());
 
-            return Merchant::query()
-                ->where('enabled', true)
-                ->where(function (Builder $q) use ($market, $live): void {
-                    $q->whereHas('products', fn (Builder $p) => $p
-                        ->where('market', $market->value)
-                        ->where('status', ProductStatus::Active->value));
+        return Merchant::hydrate($rows);
+    }
 
-                    if ($live !== []) {
-                        /*
-                         * Live sources are listed whether or not they have rows
-                         * here yet. One merchant row per source (bol is 'bol',
-                         * not one row per bol seller), and its offers are
-                         * fetched per request rather than ingested, so a market
-                         * can compare bol prices while holding almost nothing
-                         * of bol's in `products`.
-                         */
-                        $q->orWhereIn('source', array_map(fn ($s) => $s->value, $live));
-                    }
-                })
-                ->orderBy('name')
-                ->get(['id', 'name', 'domain', 'logo_url', 'source', 'created_at']);
-        });
+    /** @return Collection<int, Merchant> */
+    private function query(Market $market): Collection
+    {
+        $live = $this->registry->liveSourcesFor($market);
+
+        return Merchant::query()
+            ->where('enabled', true)
+            ->where(function (Builder $q) use ($market, $live): void {
+                $q->whereHas('products', fn (Builder $p) => $p
+                    ->where('market', $market->value)
+                    ->where('status', ProductStatus::Active->value));
+
+                if ($live !== []) {
+                    /*
+                     * Live sources are listed whether or not they have rows
+                     * here yet. One merchant row per source (bol is 'bol',
+                     * not one row per bol seller), and its offers are
+                     * fetched per request rather than ingested, so a market
+                     * can compare bol prices while holding almost nothing
+                     * of bol's in `products`.
+                     */
+                    $q->orWhereIn('source', array_map(fn ($s) => $s->value, $live));
+                }
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'domain', 'logo_url', 'source', 'created_at']);
     }
 
     /**

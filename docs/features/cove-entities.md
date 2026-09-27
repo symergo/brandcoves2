@@ -154,6 +154,11 @@ so the first visitor of the day pays and nobody else does. Rebuilding the Cove e
 good. The migration (`2026_09_28_001210_an_entity_cove_keeps_its_link_list`) only adds the nullable
 column: no default, no rewrite, safe on production.
 
+`php artisan bc:store-entity-links --write` fills the list in on every older shop and brand Cove at
+once, so no visitor pays at all (owner, 2026-09-27). It writes only that column, never the prose, so
+it is safe on a Cove a person edited; a dry run without `--write`, and `--all` recomputes lists
+already stored. Run it once after the deploy that brings the column.
+
 The same change resolves the shop, its link list and its product count **once** per shop page. They
 were looked up four, two and two times. See [speed.md](speed.md), "Shop page and admin".
 

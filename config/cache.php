@@ -36,7 +36,11 @@ return [
 
         'array' => [
             'driver' => 'array',
-            'serialize' => false,
+            // The suite sets this to true (phpunit.xml) so the array store
+            // serializes like Redis does, with `serializable_classes` below
+            // applied. Without it, a cached model passed every test and came
+            // back as __PHP_Incomplete_Class in production (2026-09-27).
+            'serialize' => (bool) env('CACHE_ARRAY_SERIALIZE', false),
         ],
 
         'database' => [
