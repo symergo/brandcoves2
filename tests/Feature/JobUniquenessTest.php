@@ -7,14 +7,22 @@ namespace Tests\Feature;
 use App\Enums\JobStatus;
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Jobs\ClassifyGiftability;
+use App\Jobs\FindMatchCandidates;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\LinkBarcodeItems;
+use App\Jobs\PlanGiftLandingPages;
 use App\Jobs\PullPopularCharts;
+use App\Jobs\RefreshBrandStats;
+use App\Jobs\RefreshWishlistedProducts;
 use App\Models\Feed;
 use App\Models\IngestionJob;
+use App\Services\Ingestion\ProductGrouper;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,11 +46,61 @@ class JobUniquenessTest extends TestCase
     #[Test]
     public function the_chunked_jobs_are_unique(): void
     {
-        foreach ([IngestFeed::class, GroupProducts::class, PullPopularCharts::class] as $job) {
+        foreach ([IngestFeed::class, PullPopularCharts::class] as $job) {
             $this->assertTrue(
                 is_subclass_of($job, ShouldBeUnique::class),
                 "{$job} defines uniqueId(), which counts for nothing unless it implements ShouldBeUnique",
             );
+        }
+    }
+
+    /**
+     * The steps of the catalogue run guard themselves when they RUN.
+     *
+     * They must not be ShouldBeUnique (since 2026-09-28): Laravel checks that
+     * when a chain dispatches its next job, and a refused job is dropped with
+     * the rest of the chain. See App\Jobs\Concerns\RunsOneAtATime.
+     */
+    #[Test]
+    public function the_catalogue_run_steps_run_one_at_a_time_without_being_unique(): void
+    {
+        foreach ([
+            new GroupProducts(Market::BeNl),
+            new ClassifyGiftability(Market::BeNl),
+            new RefreshBrandStats(Market::BeNl),
+            new FindMatchCandidates(Market::BeNl),
+            new PlanGiftLandingPages(Market::BeNl),
+            new LinkBarcodeItems,
+            new RefreshWishlistedProducts,
+        ] as $job) {
+            $this->assertNotInstanceOf(ShouldBeUnique::class, $job, $job::class.' would cut the catalogue chain');
+            $this->assertContainsOnlyInstancesOf(WithoutOverlapping::class, $job->middleware());
+            $this->assertNotEmpty($job->middleware(), $job::class.' has no overlap guard');
+        }
+    }
+
+    #[Test]
+    public function a_second_grouping_of_the_same_market_while_one_runs_is_skipped(): void
+    {
+        Cache::flush();
+
+        $lock = Cache::lock((new WithoutOverlapping(Market::BeNl->value))->getLockKey(new GroupProducts(Market::BeNl)), 60);
+        $this->assertTrue($lock->get());
+
+        try {
+            $ran = false;
+            $this->app->bind(ProductGrouper::class, function () use (&$ran) {
+                $ran = true;
+
+                return new ProductGrouper;
+            });
+
+            GroupProducts::dispatchSync(Market::BeNl);
+
+            $this->assertFalse($ran, 'the second copy must not run while the first holds the market');
+        } finally {
+            $lock->release();
+            Cache::flush();
         }
     }
 

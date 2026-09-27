@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Catalogue\BrandStats;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -22,11 +23,16 @@ use Illuminate\Support\Facades\Log;
 #[Queue('batch')]
 class RefreshBrandStats implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 900;
 
     public function __construct(public Market $market) {}
+
+    protected function overlapKey(): string
+    {
+        return $this->market->value;
+    }
 
     public function handle(BrandStats $stats): void
     {

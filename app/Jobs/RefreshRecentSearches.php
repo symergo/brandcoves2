@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Market;
 use App\Services\Search\RecentSearches;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Attributes\Queue;
@@ -21,9 +22,27 @@ use Illuminate\Queue\Attributes\Queue;
  * a failure leaves the previous hour's band in place rather than an empty one.
  */
 #[Queue('batch')]
-class RefreshRecentSearches implements ShouldQueue
+class RefreshRecentSearches implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
+
+    // Hourly, and a handful of searches: five minutes is a hung search, not
+    // a slow one. Without it the job took the `batch` default of an hour.
+    public int $timeout = 300;
+
+    /**
+     * One run per market at a time, however often it is queued (2026-09-28).
+     * The schedule's `withoutOverlapping()` only guards the moment of
+     * dispatch, which is over in milliseconds; this holds until the job has
+     * run. Released when it finishes or fails, and after `$uniqueFor` at the
+     * latest if a worker is killed mid-run.
+     */
+    public int $uniqueFor = 600;
+
+    public function uniqueId(): string
+    {
+        return $this->market->value;
+    }
 
     public function __construct(public Market $market) {}
 
