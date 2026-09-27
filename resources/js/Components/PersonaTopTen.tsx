@@ -50,8 +50,10 @@ export default function PersonaTopTen({ top }: { top: TopTen | null }) {
 
             <ol className="mt-4 divide-y divide-line rounded-card border border-line bg-card">
                 {top.items.map((item) => (
-                    <li key={item.groupId} className="flex items-center gap-4 p-3">
-                        <span className="w-6 shrink-0 text-center text-lg font-semibold text-accent">{item.rank}</span>
+                    <li key={item.groupId} className="flex items-start gap-3 p-3 sm:items-center sm:gap-4">
+                        <span className="w-5 shrink-0 pt-1 text-center text-lg font-semibold text-accent sm:w-6 sm:pt-0">
+                            {item.rank}
+                        </span>
 
                         <Link href={item.url} className="shrink-0">
                             {item.image ? (
@@ -61,13 +63,24 @@ export default function PersonaTopTen({ top }: { top: TopTen | null }) {
                             )}
                         </Link>
 
-                        <Link href={item.url} className="min-w-0 flex-1 line-clamp-2 font-medium hover:underline">
-                            {item.title}
-                        </Link>
+                        {/*
+                          On a phone the title gets the whole width beside the
+                          picture, with price and save on a line under it: side
+                          by side they left the title a few characters a line.
+                          From `sm` up there is room for one row.
+                        */}
+                        <div className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
+                            <Link
+                                href={item.url}
+                                className="line-clamp-3 text-sm font-medium hover:underline sm:line-clamp-2 sm:flex-1 sm:text-base"
+                            >
+                                {item.title}
+                            </Link>
 
-                        <div className="flex shrink-0 items-center gap-3">
-                            <span className="font-semibold">{formatPrice(item.price, market)}</span>
-                            <SaveToList groupId={item.groupId} />
+                            <div className="mt-2 flex items-center gap-3 sm:mt-0 sm:shrink-0">
+                                <span className="font-semibold">{formatPrice(item.price, market)}</span>
+                                <SaveToList groupId={item.groupId} />
+                            </div>
                         </div>
                     </li>
                 ))}
