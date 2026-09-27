@@ -49,8 +49,19 @@ class PersonaTopTen
      */
     private const PER_BRAND = 2;
 
-    /** Candidates asked from the engine before ranking. */
-    private const POOL = 60;
+    /** Candidates asked from the engine per price band. */
+    private const POOL_PER_BAND = 20;
+
+    /**
+     * The price bands the ten places are spread over, in cents; the last has
+     * no ceiling. Without them the engine's own order decided (few products
+     * carry a chart or wish-list signal yet) and a cooking persona got ten
+     * appliances between 277 and 479 euro (2026-09-27). Taken in turn, a
+     * list holds something at every budget the page's tabs above it offer.
+     *
+     * @var list<array{0: int, 1: int|null}>
+     */
+    private const BANDS = [[0, 2499], [2500, 7499], [7500, 14999], [15000, null]];
 
     /**
      * One wish list is worth this many chart places. With it, four lists
@@ -154,7 +165,7 @@ class PersonaTopTen
      */
     public function rank(DailyPickSet $persona): array
     {
-        $brief = $this->budgets->brief($persona, self::POOL);
+        $brief = $this->budgets->brief($persona, self::POOL_PER_BAND);
 
         if ($brief === null) {
             return [];
@@ -163,11 +174,47 @@ class PersonaTopTen
         $persona->loadMissing('picks');
         $shown = $persona->picks->pluck('group_id')->filter()->map(fn ($id) => (int) $id)->values()->all();
 
-        $candidates = [];
+        // What an interest tag on the product says about this persona.
+        $wanted = array_map(fn (string $interest) => GiftTags::interest($interest), $brief->interests);
 
-        foreach ($this->engine->suggest($brief->withLimit(self::POOL)->excluding($shown)) as $index => $suggestion) {
-            if (PersonaBudgets::fits($brief, $suggestion) && ! isset($candidates[$suggestion->group->id])) {
-                $candidates[$suggestion->group->id] = ['group' => $suggestion->group, 'order' => $index];
+        /*
+         * The pool, per price band: the engine asked once per band, so a
+         * band the engine would never reach on its own order still has
+         * candidates.
+         */
+        $candidates = [];
+        $order = 0;
+
+        foreach (self::BANDS as $band => [$min, $max]) {
+            $asked = $brief->withBudget($min, $max)->withLimit(self::POOL_PER_BAND)->excluding($shown);
+
+            foreach ($this->engine->suggest($asked) as $suggestion) {
+                $group = $suggestion->group;
+
+                if (isset($candidates[$group->id]) || ! PersonaBudgets::fits($brief, $suggestion)) {
+                    continue;
+                }
+
+                // The engine may round a band's edge; the band is decided by
+                // the price the page will show.
+                if ($group->min_price === null || $group->min_price < $min || ($max !== null && $group->min_price > $max)) {
+                    continue;
+                }
+
+                $candidates[$group->id] = [
+                    'group' => $group,
+                    'band' => $band,
+                    'order' => $order++,
+                    /*
+                     * An editor's or the crowd's interest tag, rather than a
+                     * word in the title. A title word is how a DJ controller
+                     * "matched" cooking through "mixer"; a tag is somebody
+                     * having looked at the product. Tagged candidates go
+                     * first, and title-only ones fill in where too few are
+                     * tagged (in nl-nl, most of them for now).
+                     */
+                    'tagged' => $wanted === [] || array_intersect($wanted, [...$group->giftTags(), ...$group->crowdTags()]) !== [],
+                ];
             }
         }
 
@@ -185,27 +232,53 @@ class PersonaTopTen
         }
         unset($candidate);
 
-        uasort($candidates, fn (array $a, array $b) => [$b['score'], $a['order']] <=> [$a['score'], $b['order']]);
+        // Best first within each band: tagged, then the signals, then the
+        // engine's own order.
+        $key = fn (array $c) => [(int) ! $c['tagged'], -$c['score'], $c['order']];
+        uasort($candidates, fn (array $a, array $b) => $key($a) <=> $key($b));
 
+        $queues = array_fill(0, count(self::BANDS), []);
+
+        foreach ($candidates as $id => $candidate) {
+            $queues[$candidate['band']][] = $id;
+        }
+
+        /*
+         * The bands in turn, one place each round, so the ten are spread over
+         * every budget the catalogue can fill. A band that runs dry is skipped
+         * and the others fill its places.
+         */
         $picked = [];
         $brands = [];
 
-        foreach ($candidates as $id => $candidate) {
-            $brand = mb_strtolower((string) $candidate['group']->brand);
+        while (count($picked) < self::SIZE && array_filter($queues) !== []) {
+            foreach ($queues as $band => &$queue) {
+                while ($queue !== []) {
+                    $id = array_shift($queue);
+                    $brand = mb_strtolower((string) $candidates[$id]['group']->brand);
 
-            if ($brand !== '' && ($brands[$brand] ?? 0) >= self::PER_BRAND) {
-                continue;
+                    if ($brand !== '' && ($brands[$brand] ?? 0) >= self::PER_BRAND) {
+                        continue;
+                    }
+
+                    $brands[$brand] = ($brands[$brand] ?? 0) + 1;
+                    $picked[] = $id;
+
+                    break;
+                }
+
+                if (count($picked) === self::SIZE) {
+                    break;
+                }
             }
-
-            $brands[$brand] = ($brands[$brand] ?? 0) + 1;
-            $picked[] = (int) $id;
-
-            if (count($picked) === self::SIZE) {
-                break;
-            }
+            unset($queue);
         }
 
-        return $picked;
+        // The places are chosen for spread; the numbering is by the same
+        // order as within a band, so rank 1 is the strongest of the ten.
+        usort($picked, fn (int $a, int $b) => $key($candidates[$a]) <=> $key($candidates[$b]));
+
+        return array_map('intval', $picked);
     }
 
     /**

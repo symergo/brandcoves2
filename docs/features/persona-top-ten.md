@@ -27,6 +27,22 @@ exists:
   signal. Where neither says anything, the engine's own order decides.
 - **At most two products per brand**, so a coffee persona is not ten machines from whoever has
   the most listings.
+- **Tagged before title-only** (2026-09-27). A product whose interest tag (an editor's, or enough
+  people's lists) matches the persona goes before one that only has one of the interest's search
+  words in its title. The first list for "De thuiskok" held an audio mixer and a DJ controller,
+  matched through the word "mixer". Title-only products still fill in where too few are tagged:
+  be-nl has about 54,000 tagged products, nl-nl about 700.
+- **Spread over four price bands** (under €25, €25–75, €75–150, over €150; 2026-09-27). The engine
+  is asked once per band and the ten places are taken from the bands in turn, then numbered by the
+  ranking above. Without it, the engine's own order decided (few products carry a chart or wish-list
+  signal yet) and "De thuiskok" got ten appliances between €277 and €479.
+
+### What the ranking cannot fix
+
+The list trusts the catalogue's interest tags and its giftability verdict. Where those are wrong the
+list is too. On 2026-09-27 the be-nl lists still held spare parts tagged for cooking (a heating
+element, oven runners) and children's puzzles tagged for gaming. That is a tagging problem, for the
+tagging queue, not something to patch here.
 - **Six products minimum** (`PersonaTopTen::MINIMUM`), or no list and no section: "top 10" over
   four products is a claim the page cannot back.
 

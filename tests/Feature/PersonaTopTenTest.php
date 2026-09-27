@@ -80,6 +80,58 @@ class PersonaTopTenTest extends TestCase
     }
 
     #[Test]
+    public function a_tagged_product_goes_before_one_that_only_has_the_word_in_its_title(): void
+    {
+        $this->forbidAi();
+        $this->persona();
+
+        /*
+         * "Wok" is one of cooking's search words, so the engine matches this
+         * by its title alone, the way a DJ controller matched cooking through
+         * "mixer" on production (2026-09-27). With enough tagged products it
+         * never gets a place.
+         */
+        $titleOnly = $this->giftable('Wok speaker met disco-licht', 2000, [], 'Audio');
+
+        foreach (range(1, 12) as $i) {
+            $this->giftable("Koksmes {$i}", 2000, ['interest:cooking'], 'Keuken');
+        }
+
+        (new RefreshPersonaTopLists(Market::BeNl))->handle(app(PersonaTopTen::class));
+
+        $this->assertNotContains($titleOnly->id, PersonaTopList::query()->sole()->group_ids);
+    }
+
+    #[Test]
+    public function the_places_are_spread_over_the_price_bands(): void
+    {
+        $this->forbidAi();
+        $this->persona();
+
+        // Twelve expensive ones and three in each cheaper band.
+        foreach (range(1, 12) as $i) {
+            $this->giftable("Keukenmachine {$i}", 30000 + $i, ['interest:cooking'], 'Keuken');
+        }
+        foreach ([1200, 4000, 9000] as $price) {
+            foreach (range(1, 3) as $i) {
+                $this->giftable("Koksmes {$price} {$i}", $price, ['interest:cooking'], 'Keuken');
+            }
+        }
+
+        (new RefreshPersonaTopLists(Market::BeNl))->handle(app(PersonaTopTen::class));
+
+        $prices = ProductGroup::query()->whereIn('id', PersonaTopList::query()->sole()->group_ids)->pluck('min_price');
+
+        // One place per band per round: 4, 4, then the first two bands again.
+        // By price alone it would have been ten of the twelve dear ones.
+        $this->assertCount(10, $prices);
+        $this->assertSame(3, $prices->filter(fn ($p) => $p < 2500)->count());
+        $this->assertSame(3, $prices->filter(fn ($p) => $p >= 2500 && $p < 7500)->count());
+        $this->assertSame(2, $prices->filter(fn ($p) => $p >= 7500 && $p < 15000)->count());
+        $this->assertSame(2, $prices->filter(fn ($p) => $p >= 15000)->count());
+    }
+
+    #[Test]
     public function too_few_products_make_no_list(): void
     {
         $this->forbidAi();
