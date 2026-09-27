@@ -17,6 +17,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * `birthday_day` / `birthday_month` carry no year and no cast: what one person
  * writes down about another is a day and a month. See the migration.
+ *
+ * `recipient_id` (2026-09-27): the inviter's saved person the invitation was
+ * sent from, linked to the account when this turns into a connection. Null for
+ * the plain form, and when that saved person was deleted.
  */
 class FriendInvite extends Model
 {

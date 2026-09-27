@@ -136,6 +136,13 @@ class MyPeople
                 // Lists you are making for them (a gift list or a group gift
                 // about them), counted for the line under the name.
                 'listsForThem' => count($theirLists[$person->id] ?? []),
+                /*
+                 * "Nodig uit op GiftCoves" in the Meer menu (2026-09-27):
+                 * offered while no account is behind this saved person. The
+                 * invitation names them, so the connection lands on this row
+                 * instead of a second one (FriendInvites).
+                 */
+                'invitable' => $person->user_id === null,
                 'urls' => [
                     'person' => $current->url("people/{$person->id}"),
                     'finder' => $current->url('gift').'?for='.$person->id,
@@ -175,6 +182,8 @@ class MyPeople
                 // Nothing of yours about somebody you have not saved.
                 'known' => null,
                 'listsForThem' => 0,
+                // Already on GiftCoves.
+                'invitable' => false,
                 'urls' => ['person' => null, 'finder' => null, 'taste' => null, 'ask' => null, 'together' => null],
             ];
         }

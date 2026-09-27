@@ -15,6 +15,7 @@ use App\Services\Gift\GiftHistory;
 use App\Services\Gift\NextSteps;
 use App\Services\Gift\PastGift;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\FriendInvites;
 use App\Services\Social\PersonProfile;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
@@ -44,7 +45,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class PersonController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current, GiftHistory $history, NextSteps $nextSteps, PersonProfile $profile, string $market, string $recipient): Response
+    public function show(Request $request, CurrentMarket $current, GiftHistory $history, NextSteps $nextSteps, PersonProfile $profile, FriendInvites $invites, string $market, string $recipient): Response
     {
         $person = $this->findOwned($request, $recipient);
         $past = $history->for($person);
@@ -113,6 +114,13 @@ class PersonController extends Controller
                  * answered for themselves, or can, as a friend.
                  */
                 'selfDescribe' => $person->isLinked() ? null : url($current->url("for/{$person->share_token}")),
+                /*
+                 * "Nodig uit op GiftCoves" (2026-09-27): the friends' own
+                 * invitation, naming this person so the connection lands on
+                 * them. Only while no account is behind them; the same rule
+                 * FriendInvites::mayLink() applies on the way in.
+                 */
+                'invite' => $invites->mayLink($viewer, $person) ? $current->url('friends') : null,
             ],
             'thisYear' => (int) now()->year,
         ]);
