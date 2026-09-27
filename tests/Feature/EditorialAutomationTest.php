@@ -11,6 +11,7 @@ use App\Jobs\BuildCove;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\RunEditorialAutomation;
 use App\Models\CovePlan;
+use App\Models\User;
 use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -209,6 +210,28 @@ class EditorialAutomationTest extends TestCase
         $this->settings->flush();
 
         $this->assertFalse($this->settings->enabled('plan', Market::BeNl, CoveKind::Advice));
+    }
+
+    #[Test]
+    public function the_screen_says_the_daily_publishes_without_approval(): void
+    {
+        /*
+         * The Daily's approve cell read "off" like every other, and the owner
+         * took it to mean Dailies wait for approval. They do not; the screen has
+         * to say so, and say what each stage does.
+         */
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'admin@example.test',
+            'password' => 'password-for-testing',
+        ]);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        $this->actingAs($admin)
+            ->get('/admin/automation')
+            ->assertOk()
+            ->assertSee('Publishes daily anyway')
+            ->assertSee('Chooses the products for drafts that have none yet.');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

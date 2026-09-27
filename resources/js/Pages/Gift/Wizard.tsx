@@ -609,6 +609,11 @@ export default function GiftWizard(props: Props) {
         )
     }
 
+    // Declared before `pickable`, which calls it while rendering: a `const` arrow
+    // used above its line is a ReferenceError, and the page rendered blank for
+    // anybody with saved people but no My people list (production, 2026-09-27).
+    const interestLabel = (value: string) => options.interests.find((o) => o.value === value)?.label ?? value
+
     /*
      * Without My people (not signed in, so no friends), the saved people as the
      * same cards: what the page knows of them from their own record.
@@ -642,8 +647,6 @@ export default function GiftWizard(props: Props) {
         setRelationship(value)
         setStage('ways')
     }
-
-    const interestLabel = (value: string) => options.interests.find((o) => o.value === value)?.label ?? value
 
     /*
       An avoided *interest*, as This or that learns it ("not gaming"), is kept
