@@ -8,10 +8,13 @@ use App\Enums\Interest;
 use App\Enums\Preference;
 use App\Enums\RecipientType;
 use App\Enums\TasteSource;
+use App\Enums\Thumb;
 use App\Enums\Vibe;
 use App\Models\DailyPickSet;
 use App\Models\Event;
+use App\Models\ProductGroup;
 use App\Models\Recipient;
+use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
@@ -225,6 +228,14 @@ class GiftController extends Controller
         // the very response that acknowledges it.
         $memory->remember($key, $request->integer('rejected'));
 
+        /*
+         * The swap is the thumb down (2026-09-27): besides this sitting's
+         * memory, it teaches the engine. For a saved person the product never
+         * comes back for them; for everybody it is one vote among many
+         * (GiftFeedback, docs/features/find-a-gift.md).
+         */
+        $this->thumbDown($request, $current, $request->integer('rejected'), $recipient, $validated);
+
         $picks = $engine->suggest($brief->excluding([...$memory->all($key), ...$this->given($recipient)]));
 
         $this->rememberFor($request, $recipient, $validated);
@@ -235,6 +246,31 @@ class GiftController extends Controller
         ]);
 
         return $this->board($request, $current, $picks, $validated, $recipient, $brief);
+    }
+
+    /**
+     * Record a thumb down from the swap, when it names a product of this
+     * market and there is somebody to count it for.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function thumbDown(Request $request, CurrentMarket $current, int $groupId, ?Recipient $recipient, array $validated): void
+    {
+        $owner = Owner::fromRequest($request);
+
+        if ($groupId < 1 || ! $owner->exists()
+            || ! ProductGroup::query()->forMarket($current->get())->whereKey($groupId)->exists()) {
+            return;
+        }
+
+        app(GiftFeedback::class)->record(
+            $owner,
+            $groupId,
+            Thumb::Down,
+            $recipient,
+            $validated['relationship'] ?? null,
+            $current->get(),
+        );
     }
 
     /**
@@ -290,7 +326,15 @@ class GiftController extends Controller
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
             'recipients' => $this->recipients($request, $current),
-            'picks' => $results->cards($picks, $current),
+            /*
+             * With the thumbs already given, so a liked card is drawn
+             * pressed: the saved person's, or this visitor's own votes.
+             */
+            'picks' => $results->cards($picks, $current, app(GiftFeedback::class)->votesOn(
+                Owner::fromRequest($request),
+                $recipient,
+                array_map(fn (Suggestion $pick) => $pick->group->id, $picks),
+            )),
             'brief' => $validated,
             'recipientList' => $results->recipientList(Owner::fromRequest($request), $recipient, $current),
             /*
@@ -473,6 +517,9 @@ class GiftController extends Controller
             occasion: $validated['occasion'] ?? null,
             ageBand: $validated['age_band'] ?? null,
             limit: (int) config('giftcoves.gift.results'),
+            // The saved person, already scoped to the owner by recipient():
+            // the engine reads the thumbs given for them.
+            recipientId: $recipient?->id,
         );
     }
 

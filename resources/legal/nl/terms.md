@@ -65,6 +65,12 @@ en rangschikken juist wég van populariteit, richting producten die ongewoon zij
 voor hun categorie. Dat is de bedoeling van die pagina's en geen neveneffect van
 de rangschikking.
 
+Cadeau vinden weegt ook duimen omhoog en omlaag. Die van jou voor een van je
+personen tellen alleen voor die persoon: een idee dat je afwees tonen we voor hen
+niet meer, en ideeën zoals een idee dat je leuk vond komen iets hoger. De duimen
+van iedereen tellen een beetje mee zodra minstens 5 verschillende mensen over een
+product stemden.
+
 **Geen enkele verkoper betaalt voor plaatsing, positie of opname.**
 Commissietarieven spelen geen rol in de rangschikking, in welke aanbieding als
 goedkoopste getoond wordt, of in wat in een Cove verschijnt. Verandert dat ooit,

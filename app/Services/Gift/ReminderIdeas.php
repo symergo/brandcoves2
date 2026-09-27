@@ -71,6 +71,9 @@ final class ReminderIdeas
                 ...$this->onTheirLists($recipient),
             ])),
             limit: $count,
+            // The reminder goes to the owner: an idea they turned down for
+            // this person stays out of it too (docs/features/find-a-gift.md).
+            recipientId: $recipient->id,
         );
 
         foreach ($this->engine->suggest($brief) as $pick) {

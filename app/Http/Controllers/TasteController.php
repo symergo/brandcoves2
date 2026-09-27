@@ -9,6 +9,7 @@ use App\Enums\TasteSource;
 use App\Models\Event;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
+use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\SuggestionEngine;
@@ -161,7 +162,19 @@ class TasteController extends Controller
             given: $recipient === null ? [] : app(GiftHistory::class)->excludedGroupIds($recipient),
             relationship: $relationship,
             brief: $brief,
+            recipientId: $recipient?->id,
         );
+
+        /*
+         * The thumbs already given to these ideas, so a liked card is drawn
+         * pressed (docs/features/find-a-gift.md, "Thumbs up, thumbs down").
+         */
+        $votes = app(GiftFeedback::class)->votesOn(
+            Owner::fromRequest($request),
+            $recipient,
+            array_map(fn (array $pick) => (int) $pick['id'], $outcome['picks']),
+        );
+        $outcome['picks'] = array_map(fn (array $pick) => [...$pick, 'vote' => $votes[(int) $pick['id']] ?? null], $outcome['picks']);
 
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
@@ -371,6 +384,7 @@ class TasteController extends Controller
         array $given = [],
         ?RecipientType $relationship = null,
         ?TasteBrief &$brief = null,
+        ?string $recipientId = null,
     ): array {
         $choices = $reader->read($raw, $current->get());
         $profile = TasteProfiler::fromConfig()->profile($choices);
@@ -391,7 +405,10 @@ class TasteController extends Controller
             // Who "Find a gift" said it is for: an editor's `recipient:` tag
             // scores, and Coves others made for the same kind of person match.
             $relationship?->value,
-        );
+        )
+            // One of the owner's saved people, already scoped by the caller:
+            // the engine reads the thumbs given for them.
+            ->aboutRecipient($recipientId);
 
         $picks = $engine->suggest($brief);
 

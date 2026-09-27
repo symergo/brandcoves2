@@ -40,6 +40,8 @@ export type ToolKey =
     | 'cake'
     | 'plus'
     | 'vote'
+    | 'thumbsUp'
+    | 'thumbsDown'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -75,6 +77,27 @@ const paths: Record<ToolKey, ReactNode> = {
     // mark every voting board uses, so it needs no explaining. Not the heart
     // a group list's vote wears: that one says "this is the gift we want".
     vote: <path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" />,
+
+    /*
+     * Thumbs on Find a gift's ideas (2026-09-27): "more like this" and "not
+     * this, something else". A cuff and a hand, drawn once; the thumb down is
+     * the same drawing turned half a circle, so the two can never drift into
+     * different weights. Not the emoji the daily picks use: those render in
+     * the reader's own colours beside a price, these take the text colour,
+     * and the button around them shows the pressed state.
+     */
+    thumbsUp: (
+        <>
+            <rect x="3.5" y="10.5" width="3.5" height="9" rx="1" />
+            <path d="M7 11.5 10.6 5a1.6 1.6 0 0 1 2.9 1.2l-.8 3.8H18a2 2 0 0 1 2 2.3l-1.1 5.9a2 2 0 0 1-2 1.8H7" />
+        </>
+    ),
+    thumbsDown: (
+        <g transform="rotate(180 12 12)">
+            <rect x="3.5" y="10.5" width="3.5" height="9" rx="1" />
+            <path d="M7 11.5 10.6 5a1.6 1.6 0 0 1 2.9 1.2l-.8 3.8H18a2 2 0 0 1 2 2.3l-1.1 5.9a2 2 0 0 1-2 1.8H7" />
+        </g>
+    ),
 
     /*
      * The header's own rows: search and help beside the two menus, and the

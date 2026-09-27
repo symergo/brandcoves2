@@ -57,7 +57,6 @@ return [
         ],
     ],
 
-
     'browser-button' => [
         'status' => 'considering',
         'sort' => 30,
@@ -99,12 +98,6 @@ return [
             'body' => 'Suscribe tu calendario (Google, Apple, Outlook) a los cumpleaños y ocasiones de tu gente. Lo que cambies en GiftCoves aparece solo en tu calendario.',
         ],
     ],
-
-
-
-
-
-
 
     'search-for-what-you-mean' => [
         'status' => 'done',
@@ -164,6 +157,26 @@ return [
         'es' => [
             'title' => 'Coves públicas',
             'body' => 'Publica una de tus listas como Cove de la comunidad, en Compartir. Cualquiera puede encontrarla, guardarla o convertirla en su propia lista. Los nombres, las notas y lo que ya se compró siguen ocultos.',
+        ],
+    ],
+    'thumbs-on-gift-ideas' => [
+        'status' => 'done',
+        'sort' => 40,
+        'nl' => [
+            'title' => 'Duim omhoog of omlaag bij cadeau-ideeën',
+            'body' => 'Geef een idee in Cadeau vinden een duim omhoog en het blijft staan, met meer zoals dit. Een duim omlaag ruilt het voor een ander. Voor iemand uit Mijn mensen onthouden we het alleen voor die persoon: wat je afwees komt voor hen niet meer terug. De duimen van iedereen samen tellen pas mee als genoeg verschillende mensen erover stemden, en nooit zichtbaar wie.',
+        ],
+        'en' => [
+            'title' => 'Thumbs up or down on gift ideas',
+            'body' => 'Give an idea in Find a gift a thumbs up and it stays, with more like it. A thumbs down swaps it for another. For one of your people we remember it for them only: what you turned down never comes back for them. Everybody\'s thumbs together count only once enough different people voted, and never show who.',
+        ],
+        'fr' => [
+            'title' => 'Pouce levé ou baissé sur les idées cadeaux',
+            'body' => "Un pouce levé sur une idée dans Trouver un cadeau la garde, avec d'autres du même genre. Un pouce baissé la remplace par une autre. Pour une de vos personnes, nous le retenons pour elle seule : ce que vous avez refusé ne revient plus pour elle. Les pouces de tout le monde ne comptent qu'une fois que suffisamment de personnes différentes ont voté, et on ne voit jamais qui.",
+        ],
+        'es' => [
+            'title' => 'Pulgar arriba o abajo en las ideas de regalo',
+            'body' => 'Un pulgar arriba en una idea de Encontrar un regalo la mantiene, con más como ella. Un pulgar abajo la cambia por otra. Para una de tus personas lo recordamos solo para ella: lo que rechazaste no vuelve para ella. Los pulgares de todos juntos solo cuentan cuando votaron suficientes personas distintas, y nunca se ve quién.',
         ],
     ],
 ];

@@ -47,6 +47,7 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
 | Op de pagina Denk mee: op welke ideeën je stemde, en de functies die je voorstelt | Elke stem één keer tellen, en je voorstel lezen | Gerechtvaardigd belang (art. 6(1)(f)): het onze om te weten wat we best bouwen, en het jouwe om meegeteld te worden |
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
+| Duim omhoog en omlaag bij cadeau-ideeën. Voor een van je personen: het product en de duim, bewaard bij die persoon. Voor iedereen: het product, de duim, voor wie het was ("een moeder"), en een eenrichtingscode in plaats van wie je bent | Betere ideeën voor die persoon, en voor wie zoekt voor iemand zoals die persoon | Overeenkomst (art. 6(1)(b)) voor je personen; gerechtvaardigd belang (art. 6(1)(f)) voor de aantallen: het onze en dat van andere zoekers in betere ideeën |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
 | Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Wil je geen uitnodigingen meer ontvangen?" is het bezwaar |
 | Verzoeken om geen uitnodigingen meer en meldingen "Meld als spam", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
@@ -79,6 +80,12 @@ dit" aanduidde op lijstjes voor die persoon telt ook mee; wat anderen aanduidden
 wordt daarvoor nooit gelezen. Alleen jij ziet het. Je kunt een regel altijd verwijderen, alles
 verdwijnt als je de persoon of je account verwijdert, en een regel wordt gewist
 zodra het jaar ervan 10 jaar terug ligt.
+
+Geef je een idee voor een van je personen een duim omhoog of omlaag, dan bewaren
+we dat bij die persoon, zodat latere ideeën voor hen ermee rekening houden: wat
+je afwees blijft weg, en wat je leuk vond brengt meer van die soort. Het verandert
+niets aan wat je over hen schreef. Alleen jij ziet het, en het verdwijnt als je
+de persoon of je account verwijdert.
 
 ### Je vrienden en je verlanglijsten
 
@@ -164,6 +171,13 @@ cadeau-idee voor anderen worden. Pas nadat een van ons het las en in eigen
 woorden opschreef. Wie het schreef, hoeveel mensen dat deden en jouw eigen woorden tonen
 we nooit. Foto's gebruiken we nooit.
 
+Duimen omhoog en omlaag bij cadeau-ideeën tellen ook samen mee. De duimen bij een
+product veranderen de ideeën van iemand anders pas als minstens 5 verschillende
+mensen erover stemden, en alleen als aantallen, nooit wie. Elke stem bewaren we
+met een eenrichtingscode in plaats van wie je bent, zodat je één stem per product
+hebt, en we wissen hem 365 dagen nadat je hem voor het laatst veranderde, of met
+je account.
+
 ## Waar je gegevens naartoe gaan
 
 Onze verwerkers, en wat de EER verlaat:
@@ -232,6 +246,8 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Zoektermen | 12 maanden, van meet af aan samengevoegd en losgekoppeld |
 | Account, lijstjes, ontvangers | Tot je ze verwijdert |
 | Cadeaugeschiedenis (wat je noteerde dat je iemand gaf) | Tot je ze verwijdert, of 10 jaar na het jaar waarin je het gaf |
+| Duimen bij ideeën voor een van je personen | Tot je de persoon of je account verwijdert |
+| Duimen bij cadeau-ideeën, geteld voor iedereen (een eenrichtingscode, niet wie je bent) | 365 dagen nadat je hem voor het laatst veranderde, of met je account |
 | Prijsgeschiedenis | 90 dagen |
 | Inschrijving nieuwsbrief | Tot je je uitschrijft |
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |

@@ -20,6 +20,8 @@ interface Props extends GiftResultsExtras {
     heading: string
     intro: string
     isRecipientPage: boolean
+    /** Who the page is for, in the closed vocabulary: sent with a thumb. */
+    relationship?: string
     /** The engine's best fits, as the Find-a-gift results' cards. */
     picks: GiftPick[]
     budget: {
@@ -59,6 +61,7 @@ export default function Landing({
     offlineIdeas = [],
     communityCoves = [],
     askUrl = null,
+    relationship,
 }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -119,6 +122,8 @@ export default function Landing({
             <GiftResults
                 picks={picks}
                 heading={null}
+                // Thumbs count for everybody here: no saved person on a public page.
+                thumbs={{ relationship: relationship ?? null }}
                 offlineIdeas={offlineIdeas}
                 communityCoves={communityCoves}
                 askUrl={askUrl}

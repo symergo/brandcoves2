@@ -46,6 +46,7 @@ you have the right to object, and section *Your rights* explains how.
 | Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
 | On the Contribute page: which ideas you voted for, and the features you suggest | Counting each person's vote once, and reading your suggestion | Legitimate interests (Art. 6(1)(f)): ours in knowing what to build next, and yours in being counted |
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
+| Thumbs up and down on gift ideas. For one of your people: the product and the thumb, kept with that person. For everybody: the product, the thumb, the kind of person it was for ("a mother"), and a one-way code instead of who you are | Better ideas for that person, and for people shopping for someone like them | Contract (Art. 6(1)(b)) for your people; legitimate interests (Art. 6(1)(f)) for the counts: ours and other shoppers' in better ideas |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
 | An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "Don't want to receive invitations any more?" link is the objection |
 | "No more invitations" requests and "Report as spam" reports, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
@@ -74,6 +75,12 @@ suggest what could come next. What you yourself marked "I'll get this" on lists
 for that person counts too; what anybody else marked is never read for it. Only you see it. You can remove a line
 at any time, it goes when you delete the person or your account, and a line is
 deleted once its year is 10 years back.
+
+If you give an idea for one of your people a thumb up or down, we keep that with
+the person, so later ideas for them follow it: what you turned down is left out,
+and what you liked brings more of its kind. It does not change anything you wrote
+about them. Only you see it, and it goes when you delete the person or your
+account.
 
 ### Your friends and your wish lists
 
@@ -156,6 +163,12 @@ gift idea for other people. Only after one of us has read it and written it in
 our own words. Who wrote it, how many did, and your own words are never shown. Photos
 are never used.
 
+Thumbs up and down on gift ideas count together too. A product's thumbs change
+anybody else's ideas only once at least 5 different people voted on it, and
+only as numbers, never who. Each vote is kept with a one-way code instead of who
+you are, so you have one vote per product, and it is deleted 365 days after you
+last changed it, or with your account.
+
 ## Where your data goes
 
 Our processors, and what leaves the EEA:
@@ -223,6 +236,8 @@ safeguards above.
 | Search terms | 12 months, aggregated and unlinked from the start |
 | Account, lists, recipients | Until you delete them |
 | Gift history (what you noted you gave someone) | Until you delete it, or 10 years after the year you gave it |
+| Thumbs on ideas for one of your people | Until you delete the person or your account |
+| Thumbs on gift ideas, counted for everybody (a one-way code, not who you are) | 365 days after you last changed it, or with your account |
 | Price history | 90 days |
 | Newsletter subscription | Until you unsubscribe |
 | Unconfirmed subscription | Deleted after 30 days |

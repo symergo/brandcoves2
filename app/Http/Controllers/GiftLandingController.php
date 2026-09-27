@@ -133,6 +133,9 @@ class GiftLandingController extends Controller
             'heading' => $copy->heading(),
             'intro' => $copy->intro(),
             'isRecipientPage' => $topic === null,
+            // Who the page is for, sent with a thumb on a card: the crowd's
+            // thumbs are counted per kind of person (find-a-gift.md).
+            'relationship' => $type->value,
             /*
              * Drawn by the same results component as "Find a gift", so a
              * landing page looks and behaves like the board the questions

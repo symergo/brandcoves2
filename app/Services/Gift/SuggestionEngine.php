@@ -85,12 +85,27 @@ class SuggestionEngine
         private readonly AngleMap $angles,
         private readonly ChartDemand $demand,
         private readonly CrowdPicks $crowdPicks,
+        private readonly GiftFeedback $feedback,
     ) {}
 
     /** @return list<Suggestion> */
     public function suggest(TasteBrief $brief): array
     {
         $profile = $brief->profile();
+
+        /*
+         * What the owner's thumbs said about ideas for this saved person
+         * (docs/features/find-a-gift.md, "Thumbs up, thumbs down"). A thumb
+         * down is final for them: excluded before retrieval, like a past
+         * gift, so it cannot come back on any board, today or next year.
+         */
+        $person = $brief->recipientId === null
+            ? PersonFeedback::none()
+            : $this->feedback->forRecipient($brief->recipientId);
+
+        if ($person->disliked !== []) {
+            $brief = $brief->excluding($person->disliked);
+        }
 
         $slots = $this->slots($brief);
         $queries = $this->flatten($slots);
@@ -111,6 +126,9 @@ class SuggestionEngine
 
         $matches = $this->matches($brief, $queries, $candidates->pluck('id')->all());
 
+        // Everybody's thumbs, once enough different people agree (CrowdVotes).
+        $votes = $this->feedback->crowd($candidates->pluck('id')->map(fn ($id) => (int) $id)->all(), $brief->relationship, $brief->market);
+
         $scored = $candidates
             ->map(fn (ProductGroup $group) => $this->score(
                 $group,
@@ -119,6 +137,8 @@ class SuggestionEngine
                 $matches[$group->id] ?? [],
                 $profile,
                 $crowd[$group->id] ?? null,
+                $person,
+                $votes[$group->id] ?? 0.0,
             ))
             ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
@@ -575,8 +595,16 @@ class SuggestionEngine
      * @param  list<array{interest: string, queries: list<string>}>  $slots
      * @param  array<int, float>  $matches  query index => strength, from {@see matches()}
      */
-    private function score(ProductGroup $group, TasteBrief $brief, array $slots, array $matches, SuggestionProfile $profile, ?CrowdPick $crowdPick = null): Suggestion
-    {
+    private function score(
+        ProductGroup $group,
+        TasteBrief $brief,
+        array $slots,
+        array $matches,
+        SuggestionProfile $profile,
+        ?CrowdPick $crowdPick = null,
+        ?PersonFeedback $person = null,
+        float $crowdVotes = 0.0,
+    ): Suggestion {
         $haystack = mb_strtolower($group->title.' '.($group->category ?? ''));
 
         // The strongest match per slot, and the terms that matched, in slot
@@ -681,6 +709,17 @@ class SuggestionEngine
              * profile; see docs/features/crowd-picks.md.
              */
             'crowd' => ($crowdPick?->strength ?? 0.0) * $profile->weight('crowd', 0),
+            /*
+             * The owner's thumbs for this saved person: like what they
+             * liked, -1..1 (PersonFeedback). Can go below zero, a little:
+             * a thumb down costs its neighbours half what a thumb up gives.
+             */
+            'feedback' => ($person?->affinity($group) ?? 0.0) * $profile->weight('feedback', 0),
+            /*
+             * Everybody's thumbs, -1..1, zero until enough different people
+             * voted on this product (CrowdVotes). A net "no" is halved there.
+             */
+            'crowd_votes' => $crowdVotes * $profile->weight('crowd_votes', 0),
         ];
 
         return new Suggestion(
