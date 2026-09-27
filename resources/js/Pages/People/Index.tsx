@@ -5,6 +5,7 @@ import InfoTip from '../../Components/InfoTip'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
 import Menu, { MenuItem } from '../../Components/Menu'
+import { budgetLabel, DayMonth, monthDay } from '../../Components/PersonParts'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import type { Cents, SharedProps } from '../../types'
@@ -60,67 +61,6 @@ interface Props {
     people: Person[]
     settings: { birthday: string | null; friendsSeeBirthday: boolean } | null
     relationships: { value: string; label: string }[]
-}
-
-/** `MM-DD`, or null when only half of it has been chosen. */
-function monthDay(month: string, day: string): string | null {
-    return month === '' || day === '' ? null : `${month}-${day}`
-}
-
-/**
- * A day and a month as two lists, and never a year.
- *
- * There is no browser control for a date without a year, and a year about
- * somebody else is their age written down by a third party. Day 1 to 31 in
- * any month: nobody picks 30 February from two lists, and the server refuses
- * a date that does not exist.
- */
-function DayMonth({
-    day,
-    month,
-    onDay,
-    onMonth,
-}: {
-    day: string
-    month: string
-    onDay: (v: string) => void
-    onMonth: (v: string) => void
-}) {
-    const { market } = usePage<SharedProps>().props
-    const { t } = useTranslations()
-    const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
-    const monthName = new Intl.DateTimeFormat(market.hrefLang, { month: 'long' })
-
-    return (
-        <span className="mt-1 flex gap-2">
-            <select
-                value={day}
-                onChange={(e) => onDay(e.target.value)}
-                aria-label={t('friends.day')}
-                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-            >
-                <option value="">--</option>
-                {days.map((d) => (
-                    <option key={d} value={d}>
-                        {Number(d)}
-                    </option>
-                ))}
-            </select>
-            <select
-                value={month}
-                onChange={(e) => onMonth(e.target.value)}
-                aria-label={t('friends.month')}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-            >
-                <option value="">--</option>
-                {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i} value={String(i + 1).padStart(2, '0')}>
-                        {monthName.format(new Date(2000, i, 1))}
-                    </option>
-                ))}
-            </select>
-        </span>
-    )
 }
 
 /**
@@ -387,8 +327,10 @@ function summaryOf(
         parts.push(rest > 0 ? `${shown} +${rest}` : shown)
     }
 
-    if (known !== null && (known.budgetMin !== null || known.budgetMax !== null)) {
-        parts.push(budgetLabel(known.budgetMin, known.budgetMax, t, money))
+    const budget = known === null ? null : budgetLabel(known.budgetMin, known.budgetMax, t, money)
+
+    if (budget !== null) {
+        parts.push(budget)
     }
 
     if (person.listsForThem > 0) {
@@ -398,20 +340,6 @@ function summaryOf(
     }
 
     return parts.join(' · ')
-}
-
-/** "tot €50", "vanaf €20" or "€20 tot €50". */
-function budgetLabel(
-    min: Cents | null,
-    max: Cents | null,
-    t: (key: string, replacements?: Record<string, string | number>) => string,
-    money: (cents: Cents) => string,
-): string {
-    if (min !== null && max !== null && min > 0) {
-        return t('people.budget_between', { min: money(min), max: money(max) })
-    }
-
-    return max !== null ? t('people.budget_to', { amount: money(max) }) : t('people.budget_from', { amount: money(min as Cents) })
 }
 
 /**

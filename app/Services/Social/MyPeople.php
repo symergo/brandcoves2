@@ -263,10 +263,14 @@ class MyPeople
      * (docs/features/wish-list-for-my-people.md), which needs no link: it
      * leaves this page when they switch it off or remove you as a friend.
      *
+     * Public because a person's page (PersonProfile) shows the same lists
+     * for one friend, and a second copy of this query is how the two pages
+     * would come to disagree about what a friend shared.
+     *
      * @param  Collection<int, Friendship>  $connections
      * @return Collection<int, Collection<int, Wishlist>>
      */
-    private function sharedWith(User $user, Collection $connections): Collection
+    public function sharedWith(User $user, Collection $connections): Collection
     {
         return Wishlist::query()
             ->whereIn('owner_user_id', $connections->pluck('friend_id'))
@@ -436,7 +440,7 @@ class MyPeople
     /**
      * "mother" as "Mama" in the reader's language; anything typed by hand as typed.
      */
-    private function relationshipLabel(?string $relationship): ?string
+    public function relationshipLabel(?string $relationship): ?string
     {
         $relationship = trim((string) $relationship);
 
@@ -453,7 +457,7 @@ class MyPeople
      * Theirs if they publish it, otherwise yours if you wrote one down. Day
      * and month either way: a year is their age, and not this page's to show.
      */
-    private function birthdayFor(Friendship $friendship): ?DayAndMonth
+    public function birthdayFor(Friendship $friendship): ?DayAndMonth
     {
         return $this->publishesBirthday($friendship)
             ? DayAndMonth::fromDate($friendship->friend->birthday)

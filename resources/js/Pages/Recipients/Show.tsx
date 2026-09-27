@@ -2,8 +2,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import { type FormEvent, useState } from 'react'
 import InfoTip from '../../Components/InfoTip'
 import NextSteps, { type NextStepCard } from '../../Components/NextSteps'
+import PersonProfile, { type Profile, type ProfileOptions, type ProfilePerson, type ProfileUrls } from '../../Components/PersonProfile'
 import SaveToList from '../../Components/SaveToList'
-import ToolIcon from '../../Components/ToolIcon'
 import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -36,13 +36,16 @@ interface Highlight {
 }
 
 interface Props {
-    person: { id: string; name: string; relationship: string | null }
+    person: ProfilePerson
+    profile: Profile
+    options: ProfileOptions
+    groupLists: number
     history: PastGift[]
     unmarked: Unmarked[]
     nextSteps: NextStepCard[]
     highlight: Highlight | null
     recipientList: SavingTo | null
-    urls: { finder: string; taste: string; gifts: string }
+    urls: ProfileUrls & { gifts: string }
     thisYear: number
 }
 
@@ -50,13 +53,27 @@ interface Props {
 const YEARS_BACK = 10
 
 /**
- * A saved person's page: what you gave them, and what could come next.
+ * A saved person's page: who they are, their lists, what you gave them, and
+ * what could come next.
  *
- * Only the owner reaches it. The history is theirs: what they wrote down, and
- * their own claims on lists for this person, never anybody else's. See
+ * Only the owner reaches it. The profile at the top is PersonProfile
+ * (docs/features/my-people.md). The history is theirs: what they wrote down,
+ * and their own claims on lists for this person, never anybody else's. See
  * docs/features/gift-history.md.
  */
-export default function RecipientShow({ person, history, unmarked, nextSteps, highlight, recipientList, urls, thisYear }: Props) {
+export default function RecipientShow({
+    person,
+    profile,
+    options,
+    groupLists,
+    history,
+    unmarked,
+    nextSteps,
+    highlight,
+    recipientList,
+    urls,
+    thisYear,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const [title, setTitle] = useState('')
@@ -94,28 +111,9 @@ export default function RecipientShow({ person, history, unmarked, nextSteps, hi
 
     return (
         <>
-            <Head title={t('gift_history.page_title', { name: person.name })} />
+            <Head title={person.name} />
 
-            <header className="max-w-2xl">
-                <h1 className="text-xl font-semibold sm:text-2xl">{t('gift_history.page_title', { name: person.name })}</h1>
-                <p className="mt-1 text-ink-soft">{t('gift_history.intro', { name: person.name })}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
-                        href={urls.finder}
-                        className="inline-flex items-center gap-2 rounded bg-accent px-4 py-2 text-sm font-medium text-white"
-                    >
-                        <ToolIcon name="whisperer" className="h-4 w-4" />
-                        {t('gift_history.finder', { name: person.name })}
-                    </Link>
-                    <Link
-                        href={urls.taste}
-                        className="inline-flex items-center gap-2 rounded border border-line px-4 py-2 text-sm hover:border-ink/40"
-                    >
-                        <ToolIcon name="taste" className="h-4 w-4" />
-                        {t('gift_history.taste', { name: person.name })}
-                    </Link>
-                </div>
-            </header>
+            <PersonProfile person={person} profile={profile} options={options} urls={urls} groupLists={groupLists} />
 
             {/*
               The idea a reminder email linked to. The email only opens this
@@ -123,7 +121,7 @@ export default function RecipientShow({ person, history, unmarked, nextSteps, hi
               link cannot add anything to the list.
             */}
             {highlight && (
-                <section className="mt-8 max-w-2xl rounded-card border border-accent/40 bg-accent/5 p-4">
+                <section className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-4">
                     <h2 className="text-sm font-medium text-ink-soft">{t('gift_history.from_email')}</h2>
                     <div className="mt-3 flex items-center gap-4">
                         {highlight.image && (
@@ -142,7 +140,7 @@ export default function RecipientShow({ person, history, unmarked, nextSteps, hi
                 </section>
             )}
 
-            <section className="mt-10 max-w-2xl">
+            <section className="mt-10">
                 <h2 className="flex items-center gap-1.5 text-lg font-medium">
                     {t('gift_history.history_title')}
                     <InfoTip>{t('gift_history.history_hint', { name: person.name })}</InfoTip>
@@ -231,7 +229,7 @@ export default function RecipientShow({ person, history, unmarked, nextSteps, hi
             </section>
 
             {unmarked.length > 0 && (
-                <section className="mt-10 max-w-2xl">
+                <section className="mt-10">
                     <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-soft">
                         {t('gift_history.from_lists_title', { name: person.name })}
                         <InfoTip>{t('gift_history.from_lists_hint')}</InfoTip>

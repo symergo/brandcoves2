@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
 use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Http\Requests\RecipientTasteRequest;
 use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\User;
+use App\Models\Wishlist;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -117,9 +119,32 @@ class RecipientController extends Controller
 
     public function destroy(Request $request, CurrentMarket $current, string $market, string $recipient): RedirectResponse
     {
+        $person = $this->findOwned($request, $recipient);
+
+        /*
+         * Not while a group gift is about them. The foreign key would set the
+         * group list's `recipient_id` to null, and a group list must name who
+         * it is for (CHECK wishlists_group_has_recipient), so Postgres refuses
+         * the delete and the visitor got a server error. Said in words instead;
+         * the person's page says it before the button is pressed.
+         */
+        if (Wishlist::query()->where('recipient_id', $person->id)->where('kind', ListKind::Group->value)->exists()) {
+            return back()->withErrors(['person' => __('site.people.delete_has_group', ['name' => $person->name])]);
+        }
+
         // Lists survive: the foreign key nulls out rather than cascading, so
         // deleting a person never destroys the gift research done for them.
-        $this->findOwned($request, $recipient)->delete();
+        // Their gift history and This or that links go with them (cascade).
+        $person->delete();
+
+        /*
+         * From the person's own page there is no "back" to go to: it is the
+         * page that was just deleted, and following the redirect there would
+         * be a 404. `then=people` lands on My people instead.
+         */
+        if ($request->input('then') === 'people') {
+            return redirect($current->url('people'))->with('success', __('site.lists.recipient_removed'));
+        }
 
         return back()->with('success', __('site.lists.recipient_removed'));
     }

@@ -64,6 +64,60 @@ shows one list and marks the people who are on GiftCoves themselves with a small
 
 Sorted by the next date, then by name (accents folded). People without a date come last.
 
+## The person's page
+
+`/{market}/people/{id}` (`PersonController::show`, `App\Services\Social\PersonProfile`,
+`Components/PersonProfile.tsx`). Until 2026-09-27 it was titled "Cadeaus voor Mama" and showed two
+buttons and the gift history; everything the site knew about her could only be seen inside Find a
+gift, and none of her lists were there. The owner asked for a page about the person. Now, in order,
+and each part left out when it would be empty (the owner's rule: no empty blocks; one column, full
+width, because there is nothing for a side column):
+
+1. **The person**: their name as the heading, relationship and birthday (`cake` icon) under it,
+   "op GiftCoves" when they are a friend. Then the actions: **Cadeau vinden** (the one filled
+   button), **Dit of dat**, **Vraag**, **Stuur hun profiellink** (their `/for/{token}` link, only
+   while they are not linked to an account), **Naam en verjaardag**, and **Verwijderen**. The brief
+   listed the actions last; they sit under the name because they are what the page is used for,
+   and at the bottom they would be under a gift history of any length.
+2. **Over {naam}**: what you know as chips: interests, style (vibe), what matters to them (values),
+   age, budget, what to avoid. **Aanpassen** edits them in place with Find a gift's own
+   vocabularies (`GiftController::options()`, the call `GiftProfileCardController` already made),
+   saved through the existing `PATCH /recipients/{id}`. When nothing is known the section is not
+   drawn; a "Vertel wat je over {naam} weet" button among the actions opens the same form.
+   - **Where it came from.** `taste_source` has two values: `suggested` (you: typed here, in Find a
+     gift, or a This or that you played for them) and `self` (they said it through their own link).
+     The page says "Ingevuld door jou" or "Ingevuld door {naam} zelf", the detail behind an
+     InfoTip. The brief also asked for "guessed from This or that"; that is stored as `suggested`
+     like anything else you enter, so the page cannot tell it apart without a new column. Not built.
+   - **Their answer wins.** `Recipient::describeTaste()` ignores a guess once they have answered
+     themselves. The form therefore does not offer their taste fields in that case (it says why),
+     rather than accepting an edit that would silently not be stored. Age and budget stay yours.
+3. **Verlanglijsten van {naam}**: their own wish lists (kind `mine`), only while the person is
+   linked to an account that is still your friend, and only what My people already shows of theirs
+   (`MyPeople::sharedWith()`, made public so the two pages share one query). A list they make for
+   somebody else is not their wish list and does not appear here.
+4. **Lijsten voor {naam}**: yours, kind `for_someone` or `group`, about this person.
+5. **Wat je gaf**, the gift history, unchanged ([gift-history.md](gift-history.md)).
+
+List names in these sections are drawn with `ListName` ([list-names-in-text.md](list-names-in-text.md)).
+
+### Renaming and deleting
+
+**Naam en verjaardag** edits name, relationship and birthday (day and month, the shared
+`DayMonth` picker in `Components/PersonParts.tsx`) through the same `PATCH /recipients/{id}`.
+
+**Verwijderen** opens a confirmation on the page, not `window.confirm`, which says what happens:
+lists you made for them stay but no longer say who they are for (`wishlists.recipient_id` is
+`ON DELETE SET NULL`); what you gave them and their This or that links go (`recipient_gifts` and
+`taste_invites` cascade). After deleting, `then=people` sends you to My people, because "back" is
+the page that no longer exists.
+
+**A person with a group gift cannot be deleted**, and the page says so instead of offering the
+button. This was a bug before the page existed: a group list must name its recipient (CHECK
+`wishlists_group_has_recipient`), so setting it to null made Postgres refuse the delete and the
+visitor got a server error. `RecipientController::destroy()` now answers with a sentence
+(`people.delete_has_group`) for any caller.
+
 ### Merging
 
 `App\Services\Social\MyPeople`. A friend and a saved person are the same row when
@@ -137,10 +191,11 @@ requests, that is a change to how friendships are made, not to this page.
 | Page | `resources/js/Pages/People/Index.tsx` |
 | Copy | `site.people.*` (four languages); the friend details reuse `site.friends.*`; `/help` has `people.help` |
 | Icons | `ToolIcon` (`cake` for a birthday, `more` for the Meer menu); the menu is `Components/Menu.tsx` |
-| Tests | `tests/Feature/MyPeopleTest.php`; `FriendsTest` reads the friend rows from `/people` now |
+| Person page | `PersonController::show`, `app/Services/Social/PersonProfile.php`, `resources/js/Components/PersonProfile.tsx` (in `Pages/Recipients/Show.tsx`) |
+| Tests | `tests/Feature/MyPeopleTest.php`, `tests/Feature/PersonProfileTest.php`; `FriendsTest` reads the friend rows from `/people` now |
 
 ## Not done
 
 - The header and account menu link is another change's work (`/people` is ready for it).
-- No editing of a saved person's name, relationship or birthday on this page; that stays where it
-  was.
+- No editing of a saved person's name, relationship or birthday on the list itself; since
+  2026-09-27 that is on the person's page.
