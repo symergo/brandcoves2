@@ -142,8 +142,14 @@ is doing: comparing, or being shown something new.
 
 ## Where it runs
 
-`ScoreSerendipity`, twice daily at 05:25 and 17:25 — after `ClassifyGiftability`, because the gate
-reads its verdict. `CatalogueStats` is built **once per run** and reused for every row: serendipity is
+> **Off the schedule since 2026-09-27.** The owner switched the engine off that day as a trial (the
+> score had ranked unrelated products high on a daily Cove), and the job was failing twice a day on a
+> timeout. The entry in `routes/console.php` is replaced by a comment holding the code to restore it;
+> the job, the stored scores and `bc:refresh-discovery` are untouched. A decision on removing it for
+> good is due around 2026-10-11.
+
+`ScoreSerendipity`, twice daily at 05:25 and 17:25 when scheduled — after `ClassifyGiftability`,
+because the gate reads its verdict. `CatalogueStats` is built **once per run** and reused for every row: serendipity is
 a comparison against the rest of the catalogue, so per-row statistics would be both wrong and tens of
 thousands of queries. Word frequencies are computed in Postgres (`unnest` + `regexp_split_to_array`)
 rather than by pulling 70,000 titles across the wire.

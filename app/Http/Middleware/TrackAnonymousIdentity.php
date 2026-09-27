@@ -48,6 +48,8 @@ class TrackAnonymousIdentity
         'health',
         'up',
         'webhooks/*',
+        // Pictures on list items. Fetched by an <img> tag, never navigated to.
+        'media/*',
     ];
 
     /**
@@ -69,6 +71,10 @@ class TrackAnonymousIdentity
         'bot/', 'bot;', 'bot)', 'crawler', 'spider', 'slurp', 'facebookexternalhit', 'whatsapp',
         'headlesschrome', 'python-requests', 'python-urllib', 'curl/', 'wget/', 'go-http-client',
         'okhttp', 'scrapy', 'httpclient', 'bingpreview', 'lighthouse', 'pingdom', 'uptimerobot',
+        // Link unfurlers and Google's URL inspection, none of which says "bot/"
+        // where the fragments above look (2026-09-27): "Slackbot-LinkExpanding
+        // 1.0", "Slackbot 1.0", "Google-InspectionTool/1.0".
+        'slackbot', 'linkexpanding', 'google-inspectiontool',
     ];
 
     public function handle(Request $request, Closure $next): Response

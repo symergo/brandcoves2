@@ -12,6 +12,7 @@ use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Services\Seo\OgImage;
 use App\Support\CurrentMarket;
+use Closure;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Number;
@@ -100,6 +101,7 @@ class OgImageController extends Controller
         // Rendered every time, deliberately. See the class docblock: this is the
         // one card whose cache entry was written far more often than it was read.
         return $this->render(
+            'product:'.$product->id,
             $og,
             $product->heading(),
             __('site.og.product', [], $language),
@@ -259,50 +261,94 @@ class OgImageController extends Controller
      */
     private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
     {
-        $png = Cache::remember(
-            // `?? 'dev'` because the config is null off a deployment. An empty
-            // segment would still work as a key, but every laptop and every
-            // deployment that lost its SHA would then share one — and sharing a
-            // cache key across builds is the exact failure this segment exists
-            // to prevent.
-            'og:'.(config('giftcoves.commit_sha') ?? 'dev').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
+        $version = self::version($scope, $title, $kicker, $footnote);
+
+        return $this->respond($version, fn (): string => Cache::remember(
+            'og:'.$version,
             self::TTL,
             fn (): string => $og->render($title, $kicker, $footnote),
-        );
-
-        return $this->respond($png);
+        ));
     }
 
     /**
      * The same card, drawn fresh and never stored. Used only by {@see self::product()}.
      *
-     * Takes no `$scope`, because it has no key — and that is the point rather
-     * than an omission. A caller that wanted to cache this would have to go
-     * through {@see self::card()} and say which record it is for.
+     * It still takes a `$scope`, but only for the ETag: nothing is stored under
+     * it. A caller that wanted to cache this would have to go through
+     * {@see self::card()}.
      */
-    private function render(OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
+    private function render(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
     {
-        return $this->respond($og->render($title, $kicker, $footnote));
+        return $this->respond(
+            self::version($scope, $title, $kicker, $footnote),
+            fn (): string => $og->render($title, $kicker, $footnote),
+        );
     }
 
     /**
-     * Identical headers either way.
+     * Identical headers either way, and a 304 before any drawing.
      *
      * A product card is not cached *here*, which is a fact about our memory and
      * nothing the platforms need to know: they still hold their copy for a week,
      * and that week is what keeps the render count survivable now that every
      * request draws. Weakening these headers for the uncached card would turn one
      * render per platform per week into one render per fetch.
+     *
+     * The ETag is derived from the card's version (commit, record, drawn text),
+     * not from the PNG bytes. Until 2026-09-27 it was md5 of the PNG, which
+     * meant the card had to be drawn (58ms for a product) or read from Redis
+     * just to learn whether the client's copy was still good, and a revalidating
+     * platform got the whole image back every time. Now the version is known
+     * after one row lookup, so a matching `If-None-Match` is answered with an
+     * empty 304 and no render. The two are equivalent: the version changes
+     * exactly when the drawn card would.
+     *
+     * @param  Closure(): string  $png  called only when the client lacks this version
      */
-    private function respond(string $png): Response
+    private function respond(string $version, Closure $png): Response
     {
-        return response($png, 200, [
-            'Content-Type' => 'image/png',
+        $headers = [
             // A week at the platforms, and the key already changes with the
             // content, so a stale card cannot outlive an edit by much.
             'Cache-Control' => 'public, max-age=604800',
-            'ETag' => '"'.md5($png).'"',
-        ]);
+            'ETag' => '"'.substr(hash('sha256', $version), 0, 32).'"',
+        ];
+
+        if (self::clientHas($headers['ETag'])) {
+            return response('', 304, $headers);
+        }
+
+        return response($png(), 200, ['Content-Type' => 'image/png'] + $headers);
+    }
+
+    /**
+     * Whether the request's If-None-Match names this ETag.
+     *
+     * A weak form (`W/"…"`) counts as the same: a proxy that recompresses may
+     * weaken an ETag on the way back, and a PNG's bytes do not change under it.
+     */
+    private static function clientHas(string $etag): bool
+    {
+        foreach (request()->getETags() as $candidate) {
+            if ($candidate === '*' || preg_replace('#^W/#', '', $candidate) === $etag) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Which card this is, exactly: the cache key's tail and the ETag's source.
+     *
+     * `?? 'dev'` because the commit is null off a deployment. An empty segment
+     * would still work as a key, but every laptop and every deployment that lost
+     * its SHA would then share one — and sharing a cache key across builds is
+     * the exact failure this segment exists to prevent.
+     */
+    private static function version(string $scope, ?string ...$drawn): string
+    {
+        return (config('giftcoves.commit_sha') ?? 'dev').':'.$scope.':'.self::fingerprint(...$drawn);
     }
 
     /**

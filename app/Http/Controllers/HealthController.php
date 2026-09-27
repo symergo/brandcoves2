@@ -53,7 +53,7 @@ class HealthController extends Controller
             'commit' => $this->commit(),
             'built' => $this->buildStamp(),
             'started' => $this->startedAt(),
-            'branch' => env('COOLIFY_BRANCH', 'local'),
+            'branch' => config('giftcoves.branch', 'local'),
             'migration' => $this->lastMigration(),
             'environment' => app()->environment(),
             'config' => $this->config(),

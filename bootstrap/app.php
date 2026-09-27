@@ -205,6 +205,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            /*
+             * The same reasoning for a route that runs without a session: the
+             * machine-read ones (App\Http\StatelessRoutes — the social cards,
+             * sitemaps, pictures). Our 404 page's shared props read flash
+             * messages from the session, so it would fail there, and a missing
+             * PNG wants a plain 404 rather than an HTML page anyway.
+             */
+            if (! $request->hasSession()) {
+                return null;
+            }
+
             return app(NotFoundController::class)->page($request);
         });
     })->create();

@@ -224,19 +224,34 @@ services:
     <<: *app
     expose:
       - "80"            # Coolify's Traefik routes the domain here. Never publish ports.
-    # `interval` is deploy latency, not just monitoring cadence: Traefik will not
-    # route to this container until the first probe passes, and the first probe
-    # happens one interval after start. At 15s every deploy paid ~15s of dead
-    # wait for a FrankenPHP that, with opcache and a pre-built view cache, is
-    # answering /health in about two. 5s buys that back. `start_period` stays at
-    # 40s — it governs how long failures are forgiven, and shortening it would
-    # only make a slow boot fail rather than wait.
+    # Two speeds, because the check does two jobs (2026-09-27).
+    #
+    # While the container starts, the probe is deploy latency: Traefik will not
+    # route to it until the first probe passes. `start_interval` probes every 2s
+    # during `start_period`, so a FrankenPHP that answers /health about two
+    # seconds after boot is routed within a probe of it. (Before this, a flat
+    # 5s interval did that job, and ran /health, with its database and Redis
+    # checks, 17,000 times a day per environment for nothing.)
+    #
+    # Once it is up, the probe is monitoring, and 30s is Docker's own default:
+    # the VPS once went down under healthchecks that probed every 2s (see
+    # docs/deployment.md, "Every curl carries a timeout").
+    #
+    # `start_period` stays at 40s: it is how long failures are forgiven, and
+    # shortening it would make a slow boot fail rather than wait. `start_interval`
+    # needs Docker Engine 25 or later; see docs/deployment.md for what an older
+    # engine does with it.
+    #
+    # The probe carries its own 4s ceiling as well as Docker's `timeout`, the
+    # same rule as `--max-time 5` on every curl: file_get_contents with no
+    # timeout waits for PHP's default_socket_timeout, 60s.
     healthcheck:
-      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:80/health') ? 0 : 1);"]
-      interval: 5s
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:80/health', false, stream_context_create(['http' => ['timeout' => 4]])) ? 0 : 1);"]
+      interval: 30s
       timeout: 5s
-      retries: 10
+      retries: 3
       start_period: 40s
+      start_interval: 2s
     depends_on:
       migrate:
         condition: service_completed_successfully

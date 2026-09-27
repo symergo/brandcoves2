@@ -74,7 +74,9 @@ Grouped by what a visitor is doing, not by file order:
   `/invites/accept/{token}` (the invitation's button: signs a new invitee straight in)
 - **Contribute** — `/contribute` ("Denk mee": feedback, the ideas board, votes and suggestions;
   features/contribute.md), `POST /contribute-bar` (unprefixed: closing the bar under the header)
-- **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`
+- **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`. The first three, robots.txt
+  and `/media/items/*` run without a session or cookies (`App\Http\StatelessRoutes`); a new route
+  of that kind should use it too
 
 ## Services, one line each
 

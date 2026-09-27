@@ -232,7 +232,7 @@ class Migration extends Page implements HasForms
 
         return [
             'environment' => app()->environment(),
-            'branch' => (string) env('COOLIFY_BRANCH', 'local'),
+            'branch' => (string) config('giftcoves.branch', 'local'),
             'built' => is_readable($stamp) ? trim((string) file_get_contents($stamp)) : 'dev',
             'migration' => (string) (DB::table('migrations')->orderByDesc('id')->value('migration') ?? 'none'),
         ];
