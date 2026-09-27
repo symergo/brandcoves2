@@ -831,7 +831,9 @@ and from then on that visitor bypasses.
 
 ### Check on staging after the push
 
-- `curl -sI --max-time 10 https://staging.giftcoves.com/be-nl/about` twice: the first says
+- `curl -s -o /dev/null -D - --max-time 10 https://staging.giftcoves.com/be-nl/about` twice (a
+  GET: a HEAD is answered from the cache but never fills it, since Laravel empties its body before
+  the middleware sees it, so `curl -I` alone stays at `miss` on a cold page): the first says
   `x-page-cache: miss`, the second `hit`, and neither has a `set-cookie` line. With the session
   cookie sent (`-H 'Cookie: <name>=x'`; the name is in the `set-cookie` of `GET /csrf`) it says
   `bypass`.
