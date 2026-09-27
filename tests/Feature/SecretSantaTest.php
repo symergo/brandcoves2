@@ -368,7 +368,10 @@ class SecretSantaTest extends TestCase
          */
         $this->actingAs($organiser)
             ->post("/be-nl/santa/{$group->id}/list", ['wishlist_id' => $list->id])
-            ->assertRedirect();
+            ->assertRedirect()
+            // The confirmation names the list, in the pieces a page draws it from.
+            ->assertSessionHas('success_list.name', $list->displayTitle())
+            ->assertSessionHas('success_list.url', "/be-nl/lists/{$list->id}");
 
         $member = $group->members()->where('user_id', $organiser->id)->firstOrFail();
         $this->assertSame($list->id, $member->wishlist_id);

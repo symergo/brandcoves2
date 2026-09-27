@@ -47,7 +47,7 @@ return [
                 ],
                 [
                     'title' => 'Créer une liste en une étape',
-                    'body' => "1. Touchez « Créer une Cove » sous [Mes Coves](lists) ou sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Pour quelqu’un d’autre, tapez son prénom ou touchez une personne que vous avez déjà.\n3. Touchez « Créer la liste ». Le nom est déjà rempli ; changez-le d’abord si vous voulez.\n\nLa liste s’ouvre avec la case pour ajouter déjà ouverte : collez un lien ou cherchez. L’occasion, le partage et les demandes d’idées sont sur la liste elle-même : Partager, et Réglages sous Plus.\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste d’envies, liste de cadeaux ou offrir ensemble](lists-help/kinds).",
+                    'body' => "1. Touchez « Créer une Cove » sous [Mes Coves](lists) ou sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Pour quelqu’un d’autre, tapez son prénom ou touchez une personne que vous avez déjà.\n3. Touchez « Créer une Cove » en bas. Le nom est déjà rempli ; changez-le d’abord si vous voulez.\n\nLa liste s’ouvre avec la case pour ajouter déjà ouverte : collez un lien ou cherchez. L’occasion, le partage et les demandes d’idées sont sur la liste elle-même : Partager, et Réglages sous Plus.\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste d’envies, liste de cadeaux ou offrir ensemble](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'Une nouvelle liste : la seule question, pour qui elle est.',
                 ],
@@ -115,7 +115,7 @@ return [
                 ],
                 [
                     'title' => 'Copier, pas déplacer',
-                    'body' => 'Sur votre propre liste, « Copier vers une autre liste » se trouve sous « ⋯ » sur chaque article. Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Ajouter à ma liste ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
+                    'body' => 'Sur votre propre liste, « Copier vers une autre liste » se trouve sous « ⋯ » sur chaque article. Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Enregistrer ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
                 ],
                 [
                     'title' => 'Quand le prix baisse',
@@ -191,7 +191,7 @@ return [
                 ],
                 [
                     'title' => 'Gardez-le aussi pour vous',
-                    'body' => 'Chaque article a un marque-page et « Ajouter à ma liste ». Ce que vous copiez arrive sur [votre liste](lists) sans la réservation.',
+                    'body' => 'Chaque article a un marque-page : « Enregistrer ». Ce que vous copiez arrive sur [votre liste](lists) sans la réservation.',
                 ],
             ],
         ],

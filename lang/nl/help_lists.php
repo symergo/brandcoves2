@@ -62,7 +62,7 @@ return [
                 ],
                 [
                     'title' => 'Een lijst maken in één stap',
-                    'body' => "1. Tik op “Maak een Cove” onder [Mijn Coves](lists) of op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Voor iemand anders typ je de naam, of tik je op iemand die je al hebt.\n3. Tik op “Lijst maken”. De naam is al ingevuld; verander hem eerst als je wilt.\n\nDe lijst opent met het vak om iets toe te voegen al open: plak een link of zoek. Gelegenheid, delen en om ideeën vragen staan op de lijst zelf: onder Delen, en Instellingen onder Meer.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of samen geven](lists-help/kinds).",
+                    'body' => "1. Tik op “Maak een Cove” onder [Mijn Coves](lists) of op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Voor iemand anders typ je de naam, of tik je op iemand die je al hebt.\n3. Tik onderaan op “Maak een Cove”. De naam is al ingevuld; verander hem eerst als je wilt.\n\nDe lijst opent met het vak om iets toe te voegen al open: plak een link of zoek. Gelegenheid, delen en om ideeën vragen staan op de lijst zelf: onder Delen, en Instellingen onder Meer.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of samen geven](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'Een nieuwe lijst: de ene vraag, voor wie het is.',
                 ],
@@ -130,7 +130,7 @@ return [
                 ],
                 [
                     'title' => 'Kopiëren, niet verplaatsen',
-                    'body' => 'Op je eigen lijst staat “Kopieer naar een andere lijst” onder “⋯” bij elk item. Op een [gedeelde lijst](lists-help/claiming) van iemand anders heet dat “Zet op mijn lijst”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
+                    'body' => 'Op je eigen lijst staat “Kopieer naar een andere lijst” onder “⋯” bij elk item. Op een [gedeelde lijst](lists-help/claiming) van iemand anders heet dat “Bewaren”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
                 ],
                 [
                     'title' => 'Als de prijs zakt',
@@ -206,7 +206,7 @@ return [
                 ],
                 [
                     'title' => 'Bewaar het ook voor jezelf',
-                    'body' => 'Elk item heeft een bladwijzer en “Zet op mijn lijst”. Wat je kopieert, komt zonder reservering op [jouw lijst](lists).',
+                    'body' => 'Elk item heeft een bladwijzer: “Bewaren”. Wat je kopieert, komt zonder reservering op [jouw lijst](lists).',
                 ],
             ],
         ],

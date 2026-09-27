@@ -17,6 +17,7 @@ use App\Services\Gift\SantaRepair;
 use App\Services\Gift\SecretSantaDraw;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\ListName;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -593,9 +594,19 @@ class SecretSantaController extends Controller
 
         $member->update(['wishlist_id' => $listId]);
 
-        return back()->with('success', $listId === null
-            ? __('site.santa.list_detached')
-            : __('site.santa.list_attached'));
+        if ($listId === null) {
+            return back()->with('success', __('site.santa.list_detached'));
+        }
+
+        // The list by name, drawn as a list name and leading to it
+        // (docs/features/list-names-in-text.md). Found again rather than
+        // loaded in ownsList(), which answers a yes or no on purpose.
+        $list = Wishlist::query()->findOrFail($listId);
+
+        return back()->with(ListName::flash(
+            ListName::mentionList('site.santa.list_attached', $list)
+                + ['url' => "/{$list->market->value}/lists/{$list->id}"],
+        ));
     }
 
     /**
@@ -692,10 +703,21 @@ class SecretSantaController extends Controller
                 groupTitle: $santa->title,
                 market: $santa->market,
                 meUrl: url($current->url("santa/{$santa->id}/me/{$member->join_token}")),
+                /*
+                 * In the group's market, as the pages show them (2026-09-27):
+                 * the mail wrote "Dec 20, 2026" and "€50.00" to a Dutch
+                 * reader. A budget is whole euros, like on the site, unless
+                 * somebody typed cents.
+                 */
                 budget: $santa->budget_max === null
                     ? null
-                    : Number::currency($santa->budget_max / 100, $santa->market->currency()),
-                exchangeDate: $santa->exchange_date?->toFormattedDateString(),
+                    : Number::currency(
+                        $santa->budget_max / 100,
+                        $santa->market->currency(),
+                        $santa->market->hrefLang(),
+                        $santa->budget_max % 100 === 0 ? 0 : 2,
+                    ),
+                exchangeDate: $santa->exchange_date?->locale($santa->market->language())->translatedFormat('j F Y'),
                 gifteeHasList: $giftee->wishlist_id !== null,
                 // "This has changed" rather than "here is your person". Somebody
                 // who already read the first mail needs to know the second one
