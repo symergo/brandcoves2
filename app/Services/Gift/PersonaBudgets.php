@@ -124,6 +124,22 @@ class PersonaBudgets
     }
 
     /**
+     * Whether a suggestion belongs to the persona, rather than being the
+     * engine's fallback.
+     *
+     * The engine answers a brief it cannot fill with a budget browse, so Find
+     * a gift is never empty; a tab, or a top 10, of that would be the
+     * persona's name on a random shelf. Shared with PersonaTopTen, so the two
+     * sections under a persona agree on what belongs to it.
+     */
+    public static function fits(TasteBrief $brief, Suggestion $suggestion): bool
+    {
+        return ($brief->interests === [] && ! $brief->hasEverything)
+            || $suggestion->matchedInterests !== []
+            || $suggestion->consumable;
+    }
+
+    /**
      * @param  list<ProductGroup>  $groups
      * @param  callable(ProductGroup): list<string>  $interestsOf
      * @return array<string, int> interest => products, most first
@@ -168,15 +184,9 @@ class PersonaBudgets
             foreach ($this->engine->suggest($brief->withBudget($min, $max)->withLimit($perBand)->excluding($shown)) as $suggestion) {
                 $group = $suggestion->group;
 
-                // The engine's fallback is a budget browse when nothing fits;
-                // a tab of that would be the persona's name on a random shelf.
-                $fits = ($brief->interests === [] && ! $brief->hasEverything)
-                    || $suggestion->matchedInterests !== []
-                    || $suggestion->consumable;
-
                 // The engine filters on price already; checked again because a
                 // tab that says "around 15" and shows 40 is a broken promise.
-                if (! $fits || $group->min_price === null || $group->min_price < $min || $group->min_price > $max) {
+                if (! self::fits($brief, $suggestion) || $group->min_price === null || $group->min_price < $min || $group->min_price > $max) {
                     continue;
                 }
 

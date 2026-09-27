@@ -10,6 +10,7 @@ use App\Jobs\CountOfflineIdeas;
 use App\Jobs\PlanPersonasFromDemand;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
+use App\Jobs\RefreshPersonaTopLists;
 use App\Jobs\RefreshRecentSearches;
 use App\Jobs\RunEditorialAutomation;
 use App\Jobs\SendCoveDigest;
@@ -373,6 +374,20 @@ Schedule::command('bc:plan-coves')
     ->weeklyOn(1, '03:50')
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+ * Every persona's top 10 of the week (docs/features/persona-top-ten.md).
+ *
+ * Monday at 08:20: after the catalogue run, so the ranking reads this
+ * morning's stock and charts, and after the personal-data prune (03:20), so a
+ * deleted wish list no longer counts. The list then holds until next Monday.
+ */
+foreach (Market::published() as $index => $market) {
+    Schedule::job(new RefreshPersonaTopLists($market))
+        ->name('refresh-persona-tops-'.$market->value)
+        ->weeklyOn(1, sprintf('08:%02d', 20 + $index * 4))
+        ->onOneServer();
+}
 
 /*
  * Give published guides their prose back, and keep it current.

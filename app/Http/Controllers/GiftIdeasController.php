@@ -11,6 +11,7 @@ use App\Services\Cove\EditionPresenter;
 use App\Services\Cove\SavedCoves;
 use App\Services\Gift\GiftLandingCopy;
 use App\Services\Gift\PersonaBudgets;
+use App\Services\Gift\PersonaTopTen;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -148,6 +149,9 @@ class GiftIdeasController extends Controller
         return Inertia::render('GiftIdeas/Persona', [
             'budgets' => $budgets['bands'],
             'offlineIdeas' => $budgets['ideas'],
+            // This week's top 10, at the end of the page; null when the
+            // persona cannot fill one. See docs/features/persona-top-ten.md.
+            'topTen' => app(PersonaTopTen::class)->forPage($persona, $current),
             // Save into My Coves; see docs/features/saved-coves.md.
             'saveCove' => app(SavedCoves::class)->button($persona->id),
             'preview' => $preview && ! $persona->isPublished(),

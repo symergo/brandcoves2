@@ -10,6 +10,7 @@ import SaveToList from '../../Components/SaveToList'
 import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
 import PersonaBudgets, { type BudgetBand } from '../../Components/PersonaBudgets'
 import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
+import PersonaTopTen, { type TopTen } from '../../Components/PersonaTopTen'
 
 interface Find {
     id: number
@@ -55,6 +56,8 @@ interface Props {
     budgets: BudgetBand[]
     /** Approved ideas without a shop that fit this persona's brief. */
     offlineIdeas: OfflineIdea[]
+    /** This week's top 10; see docs/features/persona-top-ten.md. */
+    topTen?: TopTen | null
 }
 
 /**
@@ -81,6 +84,7 @@ export default function Persona({
     saveCove,
     budgets = [],
     offlineIdeas = [],
+    topTen = null,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -248,6 +252,7 @@ export default function Persona({
                     {/* Additional to the curated shelf above, never instead of it. */}
                     <PersonaBudgets bands={budgets} />
                     <OfflineIdeas ideas={offlineIdeas} />
+                    <PersonaTopTen top={topTen} />
 
                     {guide && (
                         <section className="mt-10 rounded-lg border border-line p-5">

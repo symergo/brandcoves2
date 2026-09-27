@@ -242,4 +242,24 @@ return [
             'body' => 'Quita algo de tu lista y un mensaje abajo dice de qué lista salió, con Deshacer al lado. Púlsalo y vuelve a estar, con tu nota y todo lo que los demás hicieron con él.',
         ],
     ],
+    'persona-top-ten' => [
+        'status' => 'done',
+        'sort' => 70,
+        'nl' => [
+            'title' => 'Een top 10 van de week bij elk cadeau-idee',
+            'body' => 'Onderaan een cadeau-idee over een type persoon, zoals de thuiskok, staat een top 10: wat binnen dat thema nu het meest gekocht en gewenst wordt, uit de bestsellerlijsten van de winkels en hoeveel verlanglijsten het bevatten. Elke maandag opnieuw berekend, nooit met de hand.',
+        ],
+        'en' => [
+            'title' => 'A top 10 of the week on every gift idea',
+            'body' => 'At the bottom of a gift idea about a kind of person, such as the home cook, is a top 10: what is most bought and wanted in that theme right now, from the shops\' bestseller charts and how many wish lists hold it. Worked out again every Monday, never by hand.',
+        ],
+        'fr' => [
+            'title' => 'Un top 10 de la semaine sur chaque idée cadeau',
+            'body' => "En bas d'une idée cadeau sur un type de personne, comme le cuisinier du dimanche, un top 10 : ce qui se vend et se souhaite le plus dans ce thème en ce moment, d'après les meilleures ventes des boutiques et le nombre de listes de souhaits qui le contiennent. Recalculé chaque lundi, jamais à la main.",
+        ],
+        'es' => [
+            'title' => 'Un top 10 de la semana en cada idea de regalo',
+            'body' => 'Al final de una idea de regalo sobre un tipo de persona, como quien cocina en casa, hay un top 10: lo que más se compra y se desea en ese tema ahora mismo, según las listas de más vendidos de las tiendas y cuántas listas de deseos lo incluyen. Se recalcula cada lunes, nunca a mano.',
+        ],
+    ],
 ];

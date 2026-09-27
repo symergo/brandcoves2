@@ -1938,6 +1938,9 @@ return [
         // until a person renames it.
         'budgets_title' => 'Por presupuesto',
         'budgets_hint' => 'Más ideas para esta persona, elegidas por la web alrededor de cada importe. Los productos de arriba se eligieron a mano; estos no, y cambian con las tiendas.',
+        'top_title' => 'Top 10 de la semana',
+        'top_hint' => 'Lo que más se compra y se desea en este tema ahora mismo: las listas de más vendidos de las tiendas y cuántas listas de deseos de esta web lo incluyen. Se recalcula cada lunes, no se elige a mano.',
+        'top_updated' => 'Actualizado el :date',
         'budget_around' => 'Unos :price',
         'has_everything_chip' => 'Lo tiene todo',
         'has_everything_title' => 'Para quien lo tiene todo',
@@ -2333,7 +2336,7 @@ return [
         'find_taste_together' => '¿No sabes qué le gusta a alguien, y los demás tampoco? En la lista para esa persona, crea un enlace de Esto o aquello y compártelo. Cada uno juega sobre esa persona sin cuenta, y tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué. Añádelo a la persona con un solo clic.',
         'find_taste_card' => '¿Has jugado a Esto o aquello para ti? Crea una tarjeta de perfil de regalo, como «café, senderismo, entre 30 € y 60 €», y envía su enlace a quien te hace regalos. Abre «Encontrar un regalo» con tus gustos ya rellenados. Sin nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',
         'find_offline_ideas' => 'Debajo de las ideas de «Encontrar un regalo» y de Esto o aquello verás a veces Ideas sin tienda: cosas que muchas personas distintas apuntaron a mano en sus listas, como un taller o una salida. Solo mostramos una después de revisarla, nunca quién la escribió, y Guardar la pone en tu lista como artículo offline.',
-        'find_personas' => 'Una idea de regalo sobre un tipo de persona (quien cocina en casa, quien lo tiene todo) tiene también pestañas de unos 15, 40 y 100 euros bajo sus productos elegidos. Para quien lo tiene todo buscamos cosas que se gastan o se viven, como una cata, un taller o una recarga; escribe «que lo tiene todo» en el buscador y buscamos así también.',
+        'find_personas' => 'Una idea de regalo sobre un tipo de persona (quien cocina en casa, quien lo tiene todo) tiene también pestañas de unos 15, 40 y 100 euros bajo sus productos elegidos. Para quien lo tiene todo buscamos cosas que se gastan o se viven, como una cata, un taller o una recarga; escribe «que lo tiene todo» en el buscador y buscamos así también. Al final hay un top 10 de la semana: lo que más se compra y se desea en ese tema, recalculado cada lunes.',
         'find_browse' => 'Explora las Coves: una nueva cada día, ideas de regalo por persona y guías de compra.',
         'find_filters' => 'Desde una página de ideas de regalo, busca todo lo pensado para esa persona y esa afición. Los filtros aparecen encima de los resultados y cada uno se quita con un toque.',
         'find_pages' => 'Ideas de regalo según la persona y lo que le gusta, como «ideas de regalo para papá amante de la cocina», cada una en su propia página. «Encontrar un regalo» enlaza con la más cercana a tus respuestas con «Abrir como página».',
