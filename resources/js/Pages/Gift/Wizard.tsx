@@ -845,6 +845,23 @@ export default function GiftWizard(props: Props) {
                             </div>
 
                             {recipient && <div className="mt-3">{rememberBox(rememberNow)}</div>}
+
+                            {/*
+                              The same search card as on the ways step, on the
+                              ideas too (owner, 2026-09-27: "also add an inline
+                              search" here): somebody who sees the ideas and
+                              thinks of something else can look it up and put
+                              it on the same list without going back. A plain
+                              search, no ranking by the person (owner: "forget
+                              about the prioritisation").
+                            */}
+                            <SearchToListCard
+                                key={recipient?.id ?? kind ?? 'nobody'}
+                                recipient={recipient}
+                                kind={kind}
+                                kindLabel={whoLabel}
+                                market={market}
+                            />
                         </>
                     }
                     actions={
