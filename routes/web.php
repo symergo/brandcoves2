@@ -1169,6 +1169,12 @@ Route::prefix('{market}')->group(function () {
         ->middleware(['signed', 'throttle:30,1'])
         ->name('invites.not-wanted.undo');
 
+    Route::post('/invites/not-wanted/{inviter}/{hash}/spam', [InviteNotWantedController::class, 'report'])
+        ->whereNumber('inviter')
+        ->where('hash', '[a-f0-9]{64}')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('invites.not-wanted.spam');
+
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')
         ->middleware('throttle:60,1')

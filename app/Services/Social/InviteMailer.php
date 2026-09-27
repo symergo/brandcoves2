@@ -25,9 +25,11 @@ use Illuminate\Support\Facades\URL;
  * 1. **Limits on the member**: `giftcoves.invites.daily_limit` addresses a day
  *    and one email per address per `repeat_days`. Checked by
  *    {@see FriendInvites} before anything is recorded.
- * 2. **"This is spam"** in every email, a signed link that needs no account.
- *    It puts the address on a suppression list, so no invitation from anybody
- *    is emailed to it again, and counts a complaint against the member.
+ * 2. **"Wil je geen uitnodigingen meer ontvangen?"** in every email, a signed
+ *    link that needs no account. It puts the address on a suppression list, so
+ *    no invitation from anybody is emailed to it again. Only the separate
+ *    "Meld als spam" button on the page it opens counts a complaint against
+ *    the member.
  * 3. **Complaints stop a member's emails**: after `complaint_limit` of them,
  *    their invitations are still recorded but no longer emailed.
  *
@@ -150,12 +152,13 @@ class InviteMailer
     }
 
     /**
-     * "This is spam", in the email and its List-Unsubscribe header.
+     * "Wil je geen uitnodigingen meer ontvangen?", in the email and its
+     * List-Unsubscribe header.
      *
      * Permanent (no expiry): an unsubscribe link that stops working after a
      * week is one that makes people press the mail client's spam button
-     * instead. The signature is what stops anybody complaining on another
-     * address's behalf, or against another member.
+     * instead. The signature is what stops anybody silencing another address,
+     * or complaining against another member.
      */
     public function notWantedUrl(int $inviterId, string $hash, Market $market): string
     {
@@ -186,17 +189,49 @@ class InviteMailer
             >= (int) config('giftcoves.invites.complaint_limit', 3);
     }
 
+    /** The spam button on the page the link opens. */
+    public function spamUrl(int $inviterId, string $hash, Market $market): string
+    {
+        return URL::signedRoute('invites.not-wanted.spam', [
+            'market' => $market->value,
+            'inviter' => $inviterId,
+            'hash' => $hash,
+        ]);
+    }
+
+    public function isReported(int $inviterId, string $hash): bool
+    {
+        return DB::table('invite_complaints')
+            ->where('inviter_id', $inviterId)
+            ->where('email_hash', $hash)
+            ->exists();
+    }
+
     /**
-     * The address says it did not want this: no more invitations from anybody,
-     * and one complaint against the member who sent it. Pressing twice is still
-     * one complaint.
+     * "Wil je geen uitnodigingen meer ontvangen?": no more invitations from
+     * anybody, and nothing counted against the member who sent it.
+     *
+     * Not a complaint since 2026-09-27 (owner's decision). Saying "no thanks"
+     * is not saying the friend did something wrong, and counting it as one
+     * would stop a member's emails after three polite refusals. The complaint
+     * is its own button on the page, {@see report()}.
      */
-    public function complain(int $inviterId, string $hash): void
+    public function stop(string $hash): void
     {
         DB::table('invite_suppressions')->insertOrIgnore([
             'email_hash' => $hash,
             'created_at' => now(),
         ]);
+    }
+
+    /**
+     * "Meld als spam": stops the invitations like {@see stop()}, and counts
+     * one complaint against the member who sent it. Pressing twice is still
+     * one complaint.
+     */
+    public function report(int $inviterId, string $hash): void
+    {
+        $this->stop($hash);
 
         // A member deleted since the email went out has nobody left to count
         // against; the suppression above still stands.

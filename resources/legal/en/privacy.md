@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 ## The short version
@@ -46,8 +46,8 @@ you have the right to object, and section *Your rights* explains how.
 | Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
-| An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "This is spam" link is the objection |
-| "No more invitations" requests and "Not asked for" reports, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
+| An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "Don't want to receive invitations any more?" link is the objection |
+| "No more invitations" requests and "Report as spam" reports, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
 
 ### A note on the visitor cookie
 
@@ -110,7 +110,8 @@ for 90 days: it is what the two limits count.
 
 Every invitation email has a "Don't want to receive invitations any more?" link that works
 without an account. Pressing it means no invitation from anybody is emailed to
-that address again, and counts one complaint against the member who sent it.
+that address again. The same page has a separate "Report as spam" button: only
+that counts one complaint against the member who sent the invitation.
 For that we keep only the one-way code, never the address: the request for as
 long as it stands (the page it leads to has an undo), the complaint for 365
 days. A member with 3 complaints no longer has their invitations emailed, and

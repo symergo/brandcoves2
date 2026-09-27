@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 ## Kort samengevat
@@ -47,8 +47,8 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
-| Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Dit is spam" is het bezwaar |
-| Verzoeken om geen uitnodigingen meer en meldingen "Niet gevraagd", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
+| Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Wil je geen uitnodigingen meer ontvangen?" is het bezwaar |
+| Verzoeken om geen uitnodigingen meer en meldingen "Meld als spam", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
 
 ### Een woord over de bezoekerscookie
 
@@ -115,8 +115,9 @@ stuurde, met een eenrichtingscode gemaakt van het adres in plaats van het adres:
 dat is wat de twee grenzen tellen.
 
 Elke uitnodiging per e-mail heeft een link "Wil je geen uitnodigingen meer ontvangen?" die zonder
-account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail,
-en dat telt als één klacht tegen het lid dat ze stuurde. Daarvoor bewaren we
+account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail.
+Op dezelfde pagina staat een aparte knop "Meld als spam": alleen die telt als één
+klacht tegen het lid dat de uitnodiging stuurde. Daarvoor bewaren we
 alleen de eenrichtingscode, nooit het adres: het verzoek zolang het geldt (de
 pagina waar de link naartoe leidt kan het ongedaan maken), de klacht 365 dagen.
 Van een lid met 3 klachten mailen we de uitnodigingen niet meer, en wij kijken

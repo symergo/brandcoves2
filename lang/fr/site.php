@@ -2413,6 +2413,9 @@ return [
         'stopped_more' => 'La personne qui vous a invité n\'en est pas informée. Une erreur ? Vous pouvez l\'annuler ici.',
         'undo' => 'Annuler',
         'undone' => 'C\'est annulé. Vous pouvez de nouveau recevoir des invitations.',
+        'spam_ask' => 'Vous ne connaissez pas l\'expéditeur, ou vous ne l\'avez pas demandé ? Signalez-le comme spam et nous examinerons la situation.',
+        'spam' => 'Signaler comme spam',
+        'reported' => 'Signalé comme spam. Merci, nous allons examiner la situation.',
     ],
 
 ];

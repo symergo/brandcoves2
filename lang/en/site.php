@@ -2683,6 +2683,9 @@ return [
         'stopped_more' => 'The person who invited you is not told. Pressed it by mistake? You can undo it here.',
         'undo' => 'Undo',
         'undone' => 'Undone. You can receive invitations again.',
+        'spam_ask' => 'Don\'t know the sender, or did this come unasked? Report it as spam and we will look into it.',
+        'spam' => 'Report as spam',
+        'reported' => 'Reported as spam. Thank you, we will look into it.',
     ],
 
 ];

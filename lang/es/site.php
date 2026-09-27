@@ -2411,6 +2411,9 @@ return [
         'stopped_more' => 'A quien te invitó no se le avisa. ¿Te equivocaste? Puedes deshacerlo aquí.',
         'undo' => 'Deshacer',
         'undone' => 'Deshecho. Puedes volver a recibir invitaciones.',
+        'spam_ask' => '¿No conoces al remitente o no lo pediste? Denúncialo como spam y lo revisaremos.',
+        'spam' => 'Denunciar como spam',
+        'reported' => 'Denunciado como spam. Gracias, lo revisaremos.',
     ],
 
 ];

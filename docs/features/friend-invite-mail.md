@@ -32,7 +32,7 @@ have at the other person's).
 >
 > Geen interesse? Dan hoef je niets te doen.
 >
-> *Je krijgt deze e-mail omdat Anna je e-mailadres op GiftCoves invulde. [Niet gevraagd? Dit is spam]*
+> *Je krijgt deze e-mail omdat Anna je e-mailadres op GiftCoves invulde. [Wil je geen uitnodigingen meer ontvangen?]*
 
 The button opens `/{market}/login?email=…`, the sign-in page with the address filled in (the page
 drops anything that is not an address). Signing in by magic link creates the account, and
@@ -74,23 +74,32 @@ yourself would be a lie.
 (`status`: `sent`, `suppressed`, `sender_muted`), so an address that asked for no emails uses up the
 member's day exactly like one that did not. Otherwise the limit itself would tell them.
 
-## "Niet gevraagd? Dit is spam"
+## "Wil je geen uitnodigingen meer ontvangen?" and "Meld als spam"
 
-In the footer of every invitation email, and as `List-Unsubscribe` + `List-Unsubscribe-Post`
-(RFC 8058 one-click), so the mail client's own unsubscribe button does the same thing.
+The link is in the footer of every invitation email, and in the `List-Unsubscribe` +
+`List-Unsubscribe-Post` headers (RFC 8058 one-click), so the mail client's own unsubscribe button
+does the same thing.
+
+**Two answers, since 2026-09-27 (owner's decision).** The link, its page's main button and the mail
+client's one-click unsubscribe only *stop the emails* (`InviteMailer::stop()`). A separate, smaller
+"Meld als spam" button lower on the same page *also counts a complaint* against the member
+(`InviteMailer::report()`, route `invites.not-wanted.spam`). Before this, every press of the link
+counted as a complaint. That was wrong: "no thanks" is not "your friend did something wrong", and
+three polite refusals would have silenced a member. The spam button is the only way a complaint is
+made; the page shows "Gemeld als spam" once it has been pressed (`reported`).
 
 `/{market}/invites/not-wanted/{inviter}/{hash}`, signed (`URL::signedRoute`, no expiry: a link
 that dies after a week is one that makes people press the spam button instead). It needs no account.
 The signature is what stops anybody silencing another address or complaining against another member;
 `a_tampered_spam_link_is_refused` changes each part and expects a 403.
 
-Pressing it:
+Stopping:
 
 1. puts the address on the **suppression list** (`invite_suppressions`, a keyed hash, never the
    address). No invitation email from anybody reaches it again. Invitations to it are still
    recorded and still connect people on sign-in, silently, so the member cannot tell;
-2. records a **complaint** against the member who sent it (`invite_complaints`, one per member and
-   address: pressing twice is one complaint);
+2. only with "Meld als spam": records a **complaint** against the member who sent it
+   (`invite_complaints`, one per member and address: pressing twice is one complaint);
 3. shows a page in the market's language: "Je krijgt geen uitnodigingen meer via GiftCoves.", that
    the person who invited them is not told, and an **undo** button. Undo removes the suppression and
    withdraws the complaint against that member: somebody who pressed by mistake should not leave a
@@ -98,9 +107,9 @@ Pressing it:
 
 ### Opening the link is not pressing it
 
-The link in the email opens a page with one button, and the button does it. This is a deliberate
+The link in the email opens a page, and its buttons do it. This is a deliberate
 difference from the reminder emails' stop link, which acts on the GET. Company mail filters open
-every link in an email to scan it; here a press also counts a complaint against a person, so a GET
+every link in an email to scan it; the spam button counts a complaint against a person, so a GET
 that complained would let a virus scanner stop a member's invitations after three colleagues'
 scanners had a look. The mail client's one-click button POSTs, which no scanner does, so that path
 stays one step. The page reads the current state rather than a flash, so opening the link again

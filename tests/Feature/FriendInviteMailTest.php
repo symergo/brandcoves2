@@ -24,8 +24,9 @@ use Tests\TestCase;
  *
  * What these hold: the email goes out and reads the same whether or not the
  * address has an account; the two limits and "never your own address"; the
- * "this is spam" link, which needs no account, is signed, silences an address
- * for every member and counts a complaint; enough complaints stop a member's
+ * "no more invitations" link, which needs no account, is signed and silences an
+ * address for every member; only the separate spam button on its page counts a
+ * complaint against the member; enough complaints stop a member's
  * emails without the member being able to tell; and the invitation still
  * turns into a connection when the person signs in.
  * See docs/features/friend-invite-mail.md.
@@ -155,7 +156,7 @@ class FriendInviteMailTest extends TestCase
     }
 
     #[Test]
-    public function the_spam_link_silences_the_address_for_everybody_and_counts_a_complaint(): void
+    public function the_no_more_invitations_link_silences_the_address_for_everybody_without_a_complaint(): void
     {
         $this->invite($this->anna, 'bo@example.com');
         $url = $this->notWantedUrlFor('bo@example.com');
@@ -163,21 +164,19 @@ class FriendInviteMailTest extends TestCase
         // Opening the link is not pressing it: mail scanners open every link.
         $this->get($url)->assertOk()->assertInertia(fn ($page) => $page
             ->component('Invites/NotWanted')
-            ->where('stopped', false));
-        $this->assertSame(0, InviteComplaint::query()->count());
+            ->where('stopped', false)
+            ->where('reported', false));
+        $this->assertSame(0, DB::table('invite_suppressions')->count());
 
-        // The press, with no account and no session.
+        // The press, with no account and no session. Saying "no thanks" is
+        // not a complaint against the friend who invited (owner, 2026-09-27).
         $this->post($url)->assertRedirect();
-        $this->get($url)->assertInertia(fn ($page) => $page->where('stopped', true));
+        $this->get($url)->assertInertia(fn ($page) => $page->where('stopped', true)->where('reported', false));
 
-        $this->assertSame(1, InviteComplaint::query()->where('inviter_id', $this->anna->id)->count());
+        $this->assertSame(0, InviteComplaint::query()->count());
         $this->assertDatabaseHas('invite_suppressions', ['email_hash' => InviteMailer::hash('bo@example.com')]);
         // A hash, never the address.
         $this->assertDatabaseMissing('invite_suppressions', ['email_hash' => 'bo@example.com']);
-
-        // Pressing again is still one complaint.
-        $this->post($url);
-        $this->assertSame(1, InviteComplaint::query()->count());
 
         // Another member invites the same address: recorded, answered as
         // always, and not emailed.
@@ -190,17 +189,35 @@ class FriendInviteMailTest extends TestCase
     }
 
     #[Test]
-    public function a_tampered_spam_link_is_refused(): void
+    public function the_spam_button_stops_the_invitations_and_counts_one_complaint(): void
     {
         $this->invite($this->anna, 'bo@example.com');
         $url = $this->notWantedUrlFor('bo@example.com');
 
-        $otherMember = str_replace("/not-wanted/{$this->anna->id}/", '/not-wanted/999/', $url);
-        $otherAddress = str_replace(InviteMailer::hash('bo@example.com'), InviteMailer::hash('x@example.com'), $url);
-        $unsigned = strtok($url, '?');
+        $this->post($this->spamUrlFor('bo@example.com'))->assertRedirect($url);
+        $this->get($url)->assertInertia(fn ($page) => $page->where('stopped', true)->where('reported', true));
 
-        foreach ([$otherMember, $otherAddress, $unsigned] as $bad) {
-            $this->post($bad)->assertForbidden();
+        $this->assertSame(1, InviteComplaint::query()->where('inviter_id', $this->anna->id)->count());
+        $this->assertDatabaseHas('invite_suppressions', ['email_hash' => InviteMailer::hash('bo@example.com')]);
+
+        // Pressing again is still one complaint.
+        $this->post($this->spamUrlFor('bo@example.com'));
+        $this->assertSame(1, InviteComplaint::query()->count());
+    }
+
+    #[Test]
+    public function a_tampered_spam_link_is_refused(): void
+    {
+        $this->invite($this->anna, 'bo@example.com');
+
+        foreach ([$this->notWantedUrlFor('bo@example.com'), $this->spamUrlFor('bo@example.com')] as $url) {
+            $otherMember = str_replace("/not-wanted/{$this->anna->id}/", '/not-wanted/999/', $url);
+            $otherAddress = str_replace(InviteMailer::hash('bo@example.com'), InviteMailer::hash('x@example.com'), $url);
+            $unsigned = strtok($url, '?');
+
+            foreach ([$otherMember, $otherAddress, $unsigned] as $bad) {
+                $this->post($bad)->assertForbidden();
+            }
         }
 
         $this->assertSame(0, InviteComplaint::query()->count());
@@ -214,7 +231,7 @@ class FriendInviteMailTest extends TestCase
 
         foreach (['a', 'b', 'c'] as $who) {
             $this->invite($this->anna, "{$who}@example.com");
-            $this->post($this->notWantedUrlFor("{$who}@example.com"));
+            $this->post($this->spamUrlFor("{$who}@example.com"));
         }
 
         Mail::assertQueuedCount(3);
@@ -236,7 +253,8 @@ class FriendInviteMailTest extends TestCase
     {
         $this->invite($this->anna, 'bo@example.com');
         $url = $this->notWantedUrlFor('bo@example.com');
-        $this->post($url);
+        $this->post($this->spamUrlFor('bo@example.com'));
+        $this->assertSame(1, InviteComplaint::query()->count());
 
         $undo = app(InviteMailer::class)->undoUrl($this->anna->id, InviteMailer::hash('bo@example.com'), Market::BeNl);
         $this->post($undo)->assertRedirect($url);
@@ -253,7 +271,7 @@ class FriendInviteMailTest extends TestCase
     public function an_admin_sees_who_was_complained_about(): void
     {
         $this->invite($this->anna, 'bo@example.com');
-        $this->post($this->notWantedUrlFor('bo@example.com'));
+        $this->post($this->spamUrlFor('bo@example.com'));
 
         $admin = User::factory()->create(['email' => 'admin@example.test']);
         $admin->forceFill(['is_admin' => true])->save();
@@ -267,7 +285,7 @@ class FriendInviteMailTest extends TestCase
     public function pruning_keeps_the_suppression_list_and_clears_the_rest_on_time(): void
     {
         $this->invite($this->anna, 'bo@example.com');
-        $this->post($this->notWantedUrlFor('bo@example.com'));
+        $this->post($this->spamUrlFor('bo@example.com'));
 
         $this->travel(400)->days();
         $this->artisan('bc:prune-personal-data')->assertSuccessful();
@@ -302,5 +320,13 @@ class FriendInviteMailTest extends TestCase
         $this->app['auth']->forgetGuards();
 
         return (string) $url;
+    }
+
+    /** The spam button on the page that link opens, for an invitation from Anna. */
+    private function spamUrlFor(string $email): string
+    {
+        $this->app['auth']->forgetGuards();
+
+        return app(InviteMailer::class)->spamUrl($this->anna->id, InviteMailer::hash($email), Market::BeNl);
     }
 }

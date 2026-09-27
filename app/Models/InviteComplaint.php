@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Somebody pressed "this is spam" under an invitation from this member.
+ * Somebody pressed "Meld als spam" on the page an invitation from this member
+ * links to (the "no more invitations" link alone is not a complaint).
  *
  * Holds a hash of the complaining address, never the address. One per
  * (member, address). See {@see InviteMailer}.

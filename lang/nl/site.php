@@ -2408,7 +2408,8 @@ return [
 
     /*
      * De e-mail die een uitnodiging vanuit Mijn mensen verstuurt, en de pagina
-     * achter "Niet gevraagd? Dit is spam" erin (docs/features/friend-invite-mail.md).
+     * achter "Wil je geen uitnodigingen meer ontvangen?" erin, met de aparte
+     * knop "Meld als spam" (docs/features/friend-invite-mail.md).
      * De lezer heeft misschien nooit van GiftCoves gehoord.
      */
     'invite_mail' => [
@@ -2425,6 +2426,9 @@ return [
         'stopped_more' => 'Wie je uitnodigde, krijgt dat niet te horen. Per vergissing gedrukt? Dan maak je het hier ongedaan.',
         'undo' => 'Ongedaan maken',
         'undone' => 'Ongedaan gemaakt. Je kunt weer uitnodigingen krijgen.',
+        'spam_ask' => 'Ken je de afzender niet, of kreeg je dit ongevraagd? Meld het dan als spam. Dan kijken wij ernaar.',
+        'spam' => 'Meld als spam',
+        'reported' => 'Gemeld als spam. Bedankt, we kijken ernaar.',
     ],
 
 ];
