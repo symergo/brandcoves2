@@ -19,8 +19,11 @@ bottom (`Pages/Home.tsx`):
 
 1. **Hero.** "Find things worth giving, getting and sharing." across the full width; under it the
    pitch with **Create a Cove** and **Explore Coves** beside the drawing; across the full width
-   underneath, *Search anything · Add anything · Share anything*, each with the icons of the ways
-   it is done (search; link, barcode, picture; people).
+   underneath, *Zoek · Verzamel · Deel* (Search · Collect · Share), each with the icons of the ways
+   it is done (search; link, barcode, picture; people). Since 2026-09-27 (owner) the words are
+   short and each is a link to where you do it: the search page (`/search`), My Coves (`/lists`)
+   and My people (`/people`, where you share with the people you give to). Until then they read
+   "Zoek alles · Voeg alles toe · Deel alles" and linked nowhere.
 2. **Three ways in**, one per audience: a gift (Find a gift, `/gift`), a wish list (Create my Cove),
    browsing (`/coves`).
 3. **From anywhere.** Paste a link, scan it, search it; the sources named generically ("Big online

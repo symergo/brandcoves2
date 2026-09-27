@@ -98,9 +98,10 @@ export default function Home({ today, coves, collected = [] }: Props) {
                 </div>
 
                 <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-4 text-sm text-ink-soft">
-                    <Way icons={['search']} label={t('home.way_search')} />
-                    <Way icons={['link', 'barcode', 'picture']} label={t('home.way_add')} />
-                    <Way icons={['people']} label={t('home.way_share')} />
+                    {/* Each word leads to where you do it (owner, 2026-09-27). */}
+                    <Way icons={['search']} label={t('home.way_search')} href={`${base}/search`} />
+                    <Way icons={['link', 'barcode', 'picture']} label={t('home.way_add')} href={`${base}/lists`} />
+                    <Way icons={['people']} label={t('home.way_share')} href={`${base}/people`} />
                 </ul>
             </section>
 
@@ -325,15 +326,17 @@ export default function Home({ today, coves, collected = [] }: Props) {
 }
 
 /** One of the hero's three verbs, with the icons for the ways it is done. */
-function Way({ icons, label }: { icons: ToolKey[]; label: string }) {
+function Way({ icons, label, href }: { icons: ToolKey[]; label: string; href: string }) {
     return (
-        <li className="inline-flex items-center gap-2 whitespace-nowrap">
-            <span className="inline-flex gap-1 text-ink">
-                {icons.map((icon) => (
-                    <ToolIcon key={icon} name={icon} className="h-5 w-5" />
-                ))}
-            </span>
-            {label}
+        <li>
+            <Link href={href} className="inline-flex items-center gap-2 whitespace-nowrap hover:text-ink hover:underline">
+                <span className="inline-flex gap-1 text-ink">
+                    {icons.map((icon) => (
+                        <ToolIcon key={icon} name={icon} className="h-5 w-5" />
+                    ))}
+                </span>
+                {label}
+            </Link>
         </li>
     )
 }
