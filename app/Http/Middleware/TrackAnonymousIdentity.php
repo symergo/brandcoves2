@@ -89,6 +89,22 @@ class TrackAnonymousIdentity
             return $next($request);
         }
 
+        /*
+         * A signed-out visitor reading a public page (a Cove, a brand, a
+         * product) gets no identity and no cookie: the page must be the same
+         * for everybody so it can be cached (CacheAnonymousPage), and nothing
+         * on those pages reads the identity. It is made the moment they first
+         * write something, because a write is a POST (or the GET /csrf the
+         * browser asks right before one), and every other route still runs
+         * the code below. Kept for the interactive GET pages (a shared list,
+         * the gift wizard, /for) because they ask `Owner::exists()` to decide
+         * what to offer: "suggest a gift" on a shared list is offered to a
+         * visitor who has an identity.
+         */
+        if (CacheAnonymousPage::servesAnonymously($request)) {
+            return $next($request);
+        }
+
         $id = $request->cookie(self::COOKIE);
         $identity = is_string($id) ? AnonymousIdentity::find($id) : null;
 

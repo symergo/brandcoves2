@@ -18,6 +18,56 @@ export function csrfToken(): string {
     )
 }
 
+let pendingToken: Promise<string> | null = null
+
+/**
+ * The CSRF token, fetched first when the page came without one.
+ *
+ * A page from the anonymous page cache is the same for every signed-out
+ * visitor, so its csrf-token meta tag is empty and no session was started
+ * (App\Http\Middleware\CacheAnonymousPage). Before the first write such a
+ * page asks `GET /csrf`, which starts the session, sets the session and
+ * XSRF-TOKEN cookies and returns the token; it is written into the meta tag,
+ * so the second write asks nothing. A page that already carries a token
+ * returns it at once.
+ *
+ * Every write needs it: `send()` below, the fetches that set their own
+ * headers, the market form, and every Inertia POST, which reads the
+ * XSRF-TOKEN cookie and waits for this through the request hook in app.tsx.
+ *
+ * A failure returns an empty token rather than throwing: the write then gets
+ * the server's 419, which every caller already handles as a failed write.
+ */
+export function ensureCsrfToken(): Promise<string> {
+    const existing = csrfToken()
+
+    if (existing !== '') {
+        return Promise.resolve(existing)
+    }
+
+    pendingToken ??= fetch('/csrf', {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+    })
+        .then((response): Promise<{ token?: string }> | { token?: string } => (response.ok ? response.json() : {}))
+        .then(({ token }) => {
+            const value = typeof token === 'string' ? token : ''
+
+            if (value !== '') {
+                document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.setAttribute('content', value)
+            }
+
+            return value
+        })
+        .catch(() => '')
+        .finally(() => {
+            pendingToken = null
+        })
+
+    return pendingToken
+}
+
 export class HttpError extends Error {
     constructor(
         public readonly status: number,
@@ -42,13 +92,15 @@ export async function send<T>(
     method: 'POST' | 'DELETE' | 'PATCH',
     body?: Record<string, unknown>,
 ): Promise<T> {
+    const token = await ensureCsrfToken()
+
     const response = await fetch(url, {
         method,
         headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken(),
+            'X-CSRF-TOKEN': token,
         },
         // Same-origin by default in modern browsers, but stated: the session
         // cookie is the whole authorisation story for these endpoints.

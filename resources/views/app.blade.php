@@ -49,7 +49,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- Empty on a page from the anonymous page cache: that page is the same for
+         every signed-out visitor and cannot carry one visitor's token. The
+         browser asks GET /csrf before its first write instead
+         (resources/js/http.ts, ensureCsrfToken). --}}
+    <meta name="csrf-token" content="{{ \App\Http\Middleware\CacheAnonymousPage::servesAnonymously(request()) ? '' : csrf_token() }}">
 
     @if ($tagId !== null)
         {{-- The consent defaults come FIRST, in a blocking inline script, before

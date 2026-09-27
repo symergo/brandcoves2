@@ -42,11 +42,11 @@ read once you know which feature you are in.
 
 Unprefixed by design, because they are about the *visitor* rather than the catalogue: `/`
 (302 to a market, never 301), `/market` (switcher POST — the only writer of the `bc_market` cookie),
-`/consent`, `/health`, `/robots.txt`, `/sitemap*.xml`, `/auth/google/callback`,
+`/consent`, `/csrf` (a token for a page from the page cache), `/health`, `/robots.txt`, `/sitemap*.xml`, `/auth/google/callback`,
 `/webhooks/ebay/account-deletion`.
 
 Middleware worth knowing by name: `SetMarket`, `HandleInertiaRequests`, `RedirectLegacyHost`
-(canonical host), `TrackAnonymousIdentity`, `EnsureUserIsAdmin`, `AuthenticateApiToken` +
+(canonical host), `TrackAnonymousIdentity`, `CacheAnonymousPage` (the whole page for signed-out visitors, opt-in per route; features/speed.md), `EnsureUserIsAdmin`, `AuthenticateApiToken` +
 `RequireApiAbility`.
 
 ## The route surface

@@ -1,4 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react'
+import { useEffect } from 'react'
+import { previousPath } from '../previousPath'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -44,6 +46,26 @@ export default function FeedbackForm({
         path: path ?? '',
         website: '',
     })
+
+    /*
+      No path from the server on a page from the anonymous page cache (it
+      cannot carry one visitor's Referer), so the browser fills it in: the page
+      they were on before. After mount rather than in the initial state, so the
+      server-rendered form and the first client render agree.
+    */
+    useEffect(() => {
+        if (path !== null) {
+            return
+        }
+
+        const before = previousPath()
+
+        if (before !== null) {
+            form.setData('path', before)
+        }
+        // Once, on arrival: a path the reporter typed must not be overwritten.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     function submit(event: React.FormEvent) {
         event.preventDefault()
