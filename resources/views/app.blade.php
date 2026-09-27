@@ -276,7 +276,11 @@
          the HTML is still arriving saves the DNS, TCP and TLS round trips from
          the first product photo, which is often the largest thing on the
          page. No `crossorigin`: images are fetched without CORS, and a
-         preconnect in the wrong mode is a connection nobody uses. --}}
+         preconnect in the wrong mode is a connection nobody uses.
+
+         With the image proxy on (docs/features/image-proxy.md), search cards
+         and the product page's main picture come from our own origin; this
+         stays for the rails, Coves and lists that still link bol directly. --}}
     <link rel="preconnect" href="https://media.s-bol.com">
 
     {{-- The page's own chunk, alongside the app entry, as the Laravel React

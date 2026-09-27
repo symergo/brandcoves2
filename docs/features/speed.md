@@ -153,7 +153,9 @@ only when `resources/js/Pages/{component}.tsx` exists. Every component rendered
 on 2026-09-27 has its file; the check is for the next rename.
 
 A `preconnect` to `media.s-bol.com`, where most product images come from, opens
-that connection while the HTML is still arriving.
+that connection while the HTML is still arriving. Since the image proxy (wave 4), search cards and
+the product page's main picture come from our own origin instead; the preconnect stays for the
+rails, Coves and lists that still link bol's pictures directly.
 
 ### Server-side rendering
 
@@ -693,3 +695,185 @@ products are loaded. See [taste-discovery.md](taste-discovery.md).
 - After the next grouping run, the cache key `bc:search:gen:be-nl` (with the store's prefix) holds a
   higher number, and a repeated search is slow once, then fast again.
 - `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.
+
+## Fonts, images and worker mode
+
+Wave 4 of the audit (2026-09-27): three changes to what the browser downloads and how the server
+runs PHP, each measured before and after where that was possible.
+
+### Inter is served from our own origin
+
+The page loaded `fonts.bunny.net/css?family=inter:400,500,600` in `<head>`. That stylesheet blocks
+rendering, and it lives on another host. So before the first paint the browser had to look up
+bunny's DNS, open a TLS connection to it, and download 9,270 bytes of CSS. Only after that could it
+ask for the font files.
+
+Now Inter 400, 500 and 600 are in `resources/fonts/inter/`, as woff2 files in two subsets:
+
+- `latin`, about 24 KB per weight, which covers Dutch, French, English and German;
+- `latin-ext`, about 35 KB per weight, which the browser downloads only when a page contains one of
+  its characters (the `unicode-range` rule in the CSS).
+
+The `@font-face` rules are at the top of `resources/css/app.css`. Vite hashes the files into
+`/build/assets/`, and the Caddyfile caches that directory for a year as immutable. The regular
+latin weight is preloaded from `app.blade.php`, so it downloads alongside the stylesheet instead of
+after it. The bunny `preconnect` and stylesheet are gone.
+
+Before and after:
+
+| | Before | After |
+|---|---|---|
+| Third-party requests before first paint | 1 (the CSS), plus a DNS lookup and TLS handshake to bunny.net | none |
+| Font CSS | 9,270 B from bunny.net | about 1.5 KB inside our own stylesheet |
+| First font file | requested after bunny's CSS had arrived | preloaded in the first round of requests |
+
+Details:
+
+- **Licence.** Inter is under the SIL Open Font License 1.1. The licence text sits beside the font
+  files (`resources/fonts/inter/LICENSE.txt`). The OFL allows bundling and self-hosting; it asks
+  that the licence travel with the fonts and that the fonts are not sold on their own.
+- **Greek, Cyrillic and Vietnamese were dropped.** No market writes in them, and a stray character
+  falls back to the system font.
+- **The admin panel never used bunny.** Filament ships its own Inter under `public/fonts/filament/`.
+- **The social cards are unchanged.** They draw with `resources/fonts/Inter-Bold.ttf`, which was
+  already on our side.
+
+### Product pictures through our own image resizer
+
+The full write-up is [image-proxy.md](image-proxy.md). In short: `/img/{width}/{signature}/{source}`
+fetches a shop's picture once, shrinks it to the width asked for (never enlarging it), encodes it as
+WebP, keeps it on the `media_data` volume and serves it with a year's cache. Search cards, brand
+cards and the product page's main picture now carry a `srcset` built from it.
+
+The route is not an open proxy:
+
+- the source URL is signed with an HMAC derived from `APP_KEY`;
+- the image server must be on a host allowlist;
+- `https` only, fetched through `SafeFetch`;
+- five widths only;
+- Amazon is refused everywhere (invariant 6);
+- making new copies is rate limited.
+
+It is switched off with `IMAGE_PROXY_ENABLED=false`.
+
+Measured on real feed pictures:
+
+| Picture | Before | After |
+|---|---|---|
+| Coolblue's PNG on a phone search card | 174,077 B | 11,424 B (320 wide) or 4,538 B (160 wide) |
+| bol thumbnail as the product page's main picture | 20,676 B JPEG, 250×200 | 14,800 B WebP, 250×200 |
+
+The bol picture on the product page is **not sharper**. bol's URLs name one fixed size, and asking
+for another size returns 404 (tested). A sharp main picture needs bol's product media endpoint at
+ingestion, which is a decision for the owner; see image-proxy.md.
+
+### Worker mode (Octane): prepared, not switched on
+
+In **classic mode** (today), FrankenPHP starts the application for every request: it loads the
+config, registers the providers and routes, and then answers.
+
+In **worker mode**, each worker boots the application once and keeps it in memory. Every request
+after that skips the boot. The price is that anything one request leaves in memory can reach the
+next request. That is why the audit below comes first, and why worker mode is behind a switch that
+is off.
+
+#### What was installed
+
+- `laravel/octane` 2.20 (supports Laravel 13 and FrankenPHP 1.12, the version in the image).
+- `config/octane.php`, as Octane publishes it, plus the settings listener described below.
+- `public/frankenphp-worker.php`, Octane's worker script. In classic mode, a direct request for it
+  gets a 404 from Caddy.
+- `docker/caddy/`: a pair of Caddy snippets per mode, `frankenphp-{classic,worker}.caddy` and
+  `php-{classic,worker}.caddy`. `docker/Caddyfile` imports the pair named by `GIFTCOVES_PHP_MODE`.
+- `docker/entrypoint.sh` sets `GIFTCOVES_PHP_MODE` from `OCTANE_WORKERS`:
+  - `true`, `1`, `yes` or `on` gives `worker`;
+  - anything else gives `classic`;
+  - if the worker files are missing from the image, it falls back to `classic` and says so in the
+    log.
+
+We do not use Octane's own `octane:frankenphp` command because it writes its own Caddyfile. That
+would drop our cache headers and our access log.
+
+- **Checked:** in classic mode, the Caddy config adapted to JSON is identical to the one before this
+  change, except for the 404 on the worker script.
+
+#### The audit: what could carry over from one request to the next
+
+Octane makes a fresh copy of the booted application for each request. Everything bound or resolved
+during a request is thrown away with that copy. Octane's own listeners reset the framework's shared
+pieces: config, auth, session, cookies, locale, URL generator, Vite, `once()`, Inertia and Livewire.
+So the audit looked for what those listeners would miss: state set at boot, `static` properties,
+and process-wide settings.
+
+- **Container bindings in `AppServiceProvider`.** PageMeta, BrandLinker, MergedProducts,
+  InterestGuesser, PageCopy, ChartDemand and the SSR gateway are all `scoped()`: safe.
+  `ConnectorRegistry` is a singleton, but it holds only connector objects built from config, and it
+  is resolved during requests, not at boot: safe.
+- **`CurrentMarket`** is bound by `SetMarket` during the request, on that request's copy of the
+  application: safe. The 404 fallback's `bound()` check still sees "not bound" on an unprefixed
+  route.
+- **`static` memos in `app/`**: `HandleInertiaRequests::translationVersion`,
+  `NextSteps::families`, `BriefUrl::$slugs`, `RegionRegistry`, `PlaceholderRegistry` and
+  `OgImage::assertFontsUsable`. Each is derived from code or from files in the image, which only a
+  deploy changes, and a deploy restarts the workers: safe.
+- **Found, and fixed: the admin's settings.** `AppServiceProvider::boot()` lays the settings saved
+  in the admin (AI, reminders, shop and affiliate keys) over the config. A worker runs boot once,
+  and every request starts from the config as it was at that boot. So a key rotated in the admin
+  would have reached no page until the workers restarted.
+  `App\Listeners\Octane\ReapplySettingsOverlays` applies them again at the start of each request,
+  task and tick, after Octane has made that request's config copy. It costs what classic mode
+  already paid: one cache read per settings store.
+- **Found, and removed: `setlocale(LC_TIME, …)` in `SetMarket`.** `setlocale()` changes the whole
+  PHP process. Under FrankenPHP's threads, even in classic mode, one request's market could change
+  another's while both were running. Nothing read it: there is no `strftime`, and dates and
+  numbers are formatted by Carbon's translator and in the browser.
+
+`tests/Feature/WorkerModeStateTest.php` runs requests through Octane's own worker loop
+(`FakeWorker`), one after another through the same booted application: `/nl-nl`, `/be-fr`,
+`/be-nl/help`, `/en`, `/nl-nl`. Each response must carry its own `Content-Language`, `<html lang>`,
+canonical link and Inertia `market` prop, and no signed-in user. It also checks that the settings
+listener is registered and brings in a setting saved after boot.
+
+- **Tested outside the test suite too.** The worktree ran in the locally built runtime image, on
+  FrankenPHP 1.12 in worker mode, against the test database. Three rounds of eight requests, mixing
+  markets, `/health`, a 404 and the worker script, each answered with its own language and status.
+- **Timing, with a caveat.** Classic mode took 1.5 to 2.3 s per request; worker mode took 0.04 to
+  0.13 s. Those numbers are dominated by the Windows bind mount the container read its files
+  through, so they show the direction, not the size, of the gain on the server. Measure on staging.
+
+#### Switching it on (staging first)
+
+1. In Coolify, on **GiftCoves-staging**, set `OCTANE_WORKERS=true`. `OCTANE_WORKER_NUM` (default 4)
+   and `OCTANE_MAX_REQUESTS` (default 500) can stay as they are. The compose file names all three,
+   so they reach the container.
+2. Restart or redeploy the application. The entrypoint reads the flag when the container starts.
+3. Check:
+   - `docker logs <app container> 2>&1 | grep -v handled` shows no `entrypoint:` fallback line and
+     no `[octane bootstrap]` error;
+   - `/health` answers, and its `started` value is the restart time;
+   - the JSON access log's `duration` for the same pages is lower than before (compare the audit's
+     `measure.mjs` run);
+   - switch market back and forth (`/nl-nl`, `/be-fr`) and sign in and out: each page shows its own
+     language, and nobody else's name;
+   - save a setting in the admin (for example the AI model) and see it apply on the next request;
+   - watch memory for a day (`docker stats`). Each worker holds a booted application, very roughly
+     60–100 MB, and a worker restarts after `OCTANE_MAX_REQUESTS` requests.
+4. Production only after a quiet day on staging, and only on the owner's word.
+
+#### Switching it off
+
+Set `OCTANE_WORKERS=false` (or delete it) and restart. The container serves in classic mode again,
+exactly as before. Nothing else depends on the flag.
+
+#### What to watch once it is on
+
+- **Code that keeps state in a `static` property or a singleton.** Under workers, it lasts for the
+  life of the worker. Bind per-request services with `scoped()`, as the existing ones are, and keep
+  `static` for things derived from code or files.
+- **A change to config that is written at boot** (anything like `AppServiceProvider::boot()`
+  calling `config([...])` from a database or cache) must also be re-applied per request, the way
+  `ReapplySettingsOverlays` does.
+- **Memory growth.** Look at `docker stats` over days. `OCTANE_MAX_REQUESTS` is the safety valve.
+- **Long requests hold a worker.** An image proxy miss (up to 4 s) or a slow page occupies one of
+  the four workers for its whole length. If the access log shows requests queueing, raise
+  `OCTANE_WORKER_NUM`, as memory allows.
