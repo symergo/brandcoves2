@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import { useEffect } from 'react'
 import type { SharedProps } from '../types'
-import { formatPrice } from '../types'
+import { formatBudget, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import Badge from '../Components/Badge'
@@ -277,7 +277,7 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                                 {signals.band && (
                                     <RelatedChip
                                         href={signals.band.url}
-                                        label={t('product.under', { price: formatPrice(signals.band.euros * 100, market) })}
+                                        label={t('product.under', { price: formatBudget(signals.band.euros * 100, market) })}
                                     />
                                 )}
                             </ul>

@@ -4,6 +4,7 @@ import type { CurrentMarket } from '../types'
 import { formatPrice } from '../types'
 import InfoTip from './InfoTip'
 import ListName from './ListName'
+import ToolIcon from './ToolIcon'
 import { markSaved } from '../savedItems'
 import { useTranslations } from '../useTranslations'
 
@@ -162,7 +163,10 @@ export default function TheirWishes({
 
                                 <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-0 sm:shrink-0">
                                     {already ? (
-                                        <span className="text-sm text-sage">✓ {t('lists.on_your_list')}</span>
+                                        <span className="inline-flex items-center gap-1 text-sm text-sage">
+                                            <ToolIcon name="check" className="h-4 w-4" />
+                                            {t('lists.on_your_list')}
+                                        </span>
                                     ) : (
                                         <button
                                             type="button"
@@ -170,7 +174,10 @@ export default function TheirWishes({
                                             disabled={busy === wish.id}
                                             className="rounded-lg border border-accent px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent hover:text-white disabled:opacity-50"
                                         >
-                                            + {t('lists.add_to_my_list')}
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <ToolIcon name="plus" className="h-4 w-4" />
+                                                {t('lists.add_to_my_list')}
+                                            </span>
                                         </button>
                                     )}
 

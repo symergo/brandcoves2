@@ -6,6 +6,7 @@ import { rich, useTranslations } from '../useTranslations'
 import type { ListKind } from '../Components/ListKindBadge'
 import ListName from '../Components/ListName'
 import InfoTip from '../Components/InfoTip'
+import ToolIcon from '../Components/ToolIcon'
 
 interface Notice {
     id: number
@@ -212,28 +213,36 @@ export default function Notifications({
                                   a Secret Friend exchange, the date on a list —
                                   and arrived wearing a down arrow.
                                 */}
-                                <span aria-hidden>
-                                    {notice.kind === 'restock'
-                                        ? '📦'
-                                        : notice.kind === 'search_match'
-                                          ? '🔎'
-                                        : notice.kind.startsWith('occasion.')
-                                          ? '🎁'
-                                        : notice.kind.startsWith('ask.')
-                                          ? '💬'
-                                          : /*
-                                              List activity: somebody shared,
-                                              suggested, added, wrote or chipped
-                                              in. A fourth family, and without
-                                              its own mark every one of them
-                                              arrived wearing the price-drop
-                                              arrow — which is how the two kinds
-                                              that are not price drops already
-                                              got here.
-                                            */
-                                            notice.kind.startsWith('list.')
-                                            ? '📋'
-                                            : '↓'}
+                                {/*
+                                  Line icons since 2026-09-27, not emoji: the
+                                  emoji were the reader's operating system's
+                                  pictures in its colours (ToolIcon's header).
+                                  The price drop is the vote arrow turned down.
+                                */}
+                                <span className="mt-0.5 shrink-0 self-start text-accent">
+                                    {notice.kind === 'restock' ? (
+                                        <ToolIcon name="package" className="h-4 w-4" />
+                                    ) : notice.kind === 'search_match' ? (
+                                        <ToolIcon name="search" className="h-4 w-4" />
+                                    ) : notice.kind.startsWith('occasion.') ? (
+                                        <ToolIcon name="gift" className="h-4 w-4" />
+                                    ) : notice.kind.startsWith('ask.') ? (
+                                        <ToolIcon name="board" className="h-4 w-4" />
+                                    ) : /*
+                                          List activity: somebody shared,
+                                          suggested, added, wrote or chipped
+                                          in. A fourth family, and without
+                                          its own mark every one of them
+                                          arrived wearing the price-drop
+                                          arrow — which is how the two kinds
+                                          that are not price drops already
+                                          got here.
+                                        */
+                                    notice.kind.startsWith('list.') ? (
+                                        <ToolIcon name="list" className="h-4 w-4" />
+                                    ) : (
+                                        <ToolIcon name="vote" className="h-4 w-4 rotate-180" />
+                                    )}
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     {notice.url ? (

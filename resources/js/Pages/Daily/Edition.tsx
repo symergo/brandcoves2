@@ -5,6 +5,7 @@ import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
 import Badge from '../../Components/Badge'
 import ImagePlaceholder from '../../Components/ImagePlaceholder'
+import ToolIcon from '../../Components/ToolIcon'
 import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
@@ -136,12 +137,16 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                 key={kind}
                 type="button"
                 aria-pressed={reactions[find.id] === kind}
-                className={`min-h-10 rounded-full border px-3 py-1 text-sm sm:min-h-0 ${
+                aria-label={`${t(kind === 'mindblown' ? 'daily.react_up' : 'daily.react_down')} (${n(counts[find.id]?.[kind] ?? 0)})`}
+                title={t(kind === 'mindblown' ? 'daily.react_up' : 'daily.react_down')}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 py-1 text-sm sm:min-h-0 ${
                     reactions[find.id] === kind ? 'border-accent' : 'border-line'
                 }`}
                 onClick={() => react(find.id, kind)}
             >
-                {kind === 'mindblown' ? '👍' : '👎'} {n(counts[find.id]?.[kind] ?? 0)}
+                {/* The thumbs Find a gift uses, not the emoji (2026-09-27): see ToolIcon's header. */}
+                <ToolIcon name={kind === 'mindblown' ? 'thumbsUp' : 'thumbsDown'} className="h-4 w-4" />
+                {n(counts[find.id]?.[kind] ?? 0)}
             </button>
         ))
 

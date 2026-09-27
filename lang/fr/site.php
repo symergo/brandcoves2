@@ -599,8 +599,6 @@ return [
 
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
-        'save' => 'Enregistrer',
-        'saved' => 'Enregistrée',
         'copy' => 'En faire ma liste',
         'unsave' => 'Retirer',
         'copied' => ':list fait maintenant partie de vos listes. Modifiez-la comme vous voulez.',
@@ -751,10 +749,10 @@ return [
         'add_note_placeholder' => 'taille M, en bleu',
         'add_live_title_note' => 'Le titre et le prix viennent directement de :shop et ne peuvent pas être modifiés ici.',
         'back' => 'Retour',
-        'new_list' => 'Nouvelle liste',
+        'new_list' => 'Créer une Cove',
         'make_new' => 'Créer une Cove',
         'list_name' => 'Nom de la liste',
-        'create' => 'Créer la liste',
+        'create' => 'Créer une Cove',
         'for_whom' => 'Pour qui ?',
         'empty' => 'Rien enregistré pour le moment.',
         'empty_hint' => 'Cherchez un produit et appuyez sur Enregistrer.',
@@ -770,7 +768,6 @@ return [
         'empty_group_step3' => 'Ils votent pour celui à offrir et disent ce qu’ils peuvent mettre.',
         'items' => ':count articles',
         'one_item' => '1 article',
-        'added' => 'Enregistré dans votre liste.',
         'removed' => 'Retiré.',
         'remove' => 'Retirer',
         'save' => 'Enregistrer',
@@ -820,7 +817,7 @@ return [
         'copy_to' => 'Copier vers une autre liste',
         'copy_to_which' => 'Vers quelle liste ?',
         'copied_to' => 'Copié vers :list.',
-        'add_to_my_list' => 'Ajouter à ma liste',
+        'add_to_my_list' => 'Ajouter',
         'birthday_day' => 'Jour',
         'birthday_month' => 'Mois',
         'price_now' => 'Maintenant :price',
@@ -893,7 +890,7 @@ return [
         'their_wishes' => 'De la liste d\'envies de :name',
         'their_wishes_tip' => 'Ce que :name a mis sur une liste d\'envies qu\'il ou elle vous montre. Ajoutez un article à cette liste en un geste, ou indiquez que vous l\'achetez : :name ne le voit jamais.',
         'their_wishes_open' => 'Ouvrir la liste',
-        'on_your_list' => 'Sur votre liste',
+        'on_your_list' => 'Sur cette liste',
         'share_with' => 'Partager avec :name',
         'enable_sharing' => 'Activer le partage',
         'send_via' => 'Envoyer via…',
@@ -992,8 +989,8 @@ return [
         'email_no_list' => 'Ils n’ont pas encore fait de liste, vous partez donc à l’aveugle. Nous pouvons aider :',
         'attach_hint' => 'Reliez un groupe à cette liste pour que la personne qui vous a tiré ait de quoi se guider.',
         'attach_list' => 'Utiliser cette liste',
-        'list_attached' => 'Ce groupe voit maintenant cette liste.',
-        'list_attached_short' => 'Utilisee',
+        'list_attached' => 'Ce groupe voit maintenant votre liste :list.',
+        'list_attached_short' => 'Utilisée',
         'invite_text' => 'Rejoignez notre Ami Secret : :title',
         'delete' => 'Supprimer ce groupe',
         'delete_confirm' => 'Supprimer :title ? Tous ceux qui ont rejoint le perdront.',
@@ -1077,13 +1074,13 @@ return [
 
         'giftlist_title' => "Une liste pour quelqu'un d'autre",
         'giftlist_body' => 'Rassemblez des idées pour une personne. Gardez-la pour vous, ou partagez-la : vous construisez alors la liste ensemble et chaque personne réserve ce qu\'elle achète, pour que rien ne soit acheté deux fois.',
-        'giftlist_step1' => 'Appuyez sur Nouvelle liste, choisissez « Pour quelqu’un d’autre » et nommez la personne. Cette carte ouvre le formulaire déjà réglé ainsi.',
+        'giftlist_step1' => 'Appuyez sur Créer une Cove, choisissez « Pour quelqu’un d’autre » et nommez la personne. Cette carte ouvre le formulaire déjà réglé ainsi.',
         'giftlist_step2' => 'Ajoutez-y ce que vous trouvez, comme sur n’importe quelle autre liste.',
         'giftlist_step3' => 'Gardez-la pour vous, ou appuyez sur Partager : les autres la voient alors et peuvent indiquer ce qu’ils offrent, pour éviter les doublons.',
 
         'collab_title' => 'Offrir ensemble',
         'collab_body' => "Invitez d'autres personnes sur une liste pour choisir ensemble, ou participez à un cadeau plus important que l'un de vous achètera.",
-        'collab_step1' => 'Appuyez sur Nouvelle liste, choisissez « À plusieurs, pour quelqu’un » et nommez la personne concernée.',
+        'collab_step1' => 'Appuyez sur Créer une Cove, choisissez « À plusieurs, pour quelqu’un » et nommez la personne concernée.',
         'collab_step2' => 'Appuyez sur Partager et envoyez le lien à chaque co-offrant. Toute personne qui l’a peut regarder et réserver ; vous décidez si elle peut aussi ajouter des articles.',
         'collab_step3' => 'Choisissez ensemble, et indiquez ce que vous offrez pour éviter les doublons. Sous Partager, vous décidez aussi si les noms sont visibles.',
 
@@ -1204,7 +1201,7 @@ return [
         'stopped' => 'Les rappels par e-mail sont désactivés. Ils restent visibles dans vos notifications.',
         'ideas_heading' => 'Trois idées pour :name',
         'idea_from' => 'À partir de :price',
-        'idea_add' => 'Ajouter à la liste pour :name',
+        'idea_add' => 'Enregistrer pour :name',
         'ideas_finder' => 'Plus d’idées dans « Trouver un cadeau »',
         'ideas_why' => 'Choisies d’après ce que vous avez enregistré sur cette personne et son budget, sans ce que vous lui avez déjà offert.',
         'email_toggle' => 'Recevoir les rappels par e-mail',
@@ -1366,8 +1363,8 @@ return [
         'offline_ideas' => [
             'title' => 'Idées hors boutique',
             'hint' => 'Des choses que d\'autres ont notées eux-mêmes sur leur liste, comme un atelier ou une sortie. Nous ne les vendons pas : vous les achetez vous-même, où vous voulez. Nous relisons chaque idée avant de l\'afficher ici.',
-            'add' => 'Ajouter à ma liste',
-            'added' => 'Sur votre liste',
+            'add' => 'Enregistrer',
+            'added' => 'Enregistré',
         ],
         'results_title' => 'Huit idées',
         'no_results' => 'Rien ne correspondait. Essayez un budget plus large ou un autre centre d’intérêt.',
@@ -1570,7 +1567,6 @@ return [
 
         'title' => 'Demandez aux autres',
         'intro' => 'Besoin d’inspiration ? Décrivez pour qui vous cherchez et laissez la communauté GiftCoves proposer quelque chose. Les réponses arrivent avec de vrais produits, pas seulement des conseils.',
-        'nav_hint' => 'Décrivez pour qui c’est et laissez les autres proposer quelque chose.',
 
         // Filled in from Find a gift or a list page (AskPrefill), and sent to
         // your people once published (QuestionToPeople).
@@ -1945,6 +1941,9 @@ return [
     ],
 
     'daily' => [
+        // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
+        'react_up' => 'J\'aime',
+        'react_down' => 'Pas pour moi',
         'title' => 'La Cove Quotidienne',
         'seo_title' => ':theme — idées cadeaux',
         'seo_description' => 'Une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
@@ -2330,7 +2329,7 @@ return [
         'find_taste' => 'Vous ne savez pas ce que quelqu’un aime ? Dans Ceci ou cela, vous choisissez une douzaine de fois entre deux produits. Nous en tirons ses goûts et un budget, montrons des idées, et vous pouvez garder le résultat pour une personne.',
         'find_taste_together' => 'Vous ne savez pas ce que quelqu’un aime, et les autres non plus ? Sur la liste pour cette personne, créez un lien Ceci ou cela et faites-le circuler. Chacun joue pour cette personne sans compte, et vous voyez combien ont joué et ce qu’ils ont trouvé ensemble, jamais qui a choisi quoi. Ajoutez-le à la personne d’un seul geste.',
         'find_taste_card' => 'Vous avez joué à Ceci ou cela pour vous-même ? Créez une carte de profil cadeau, comme « café, marche, environ 30 € à 60 € », et envoyez son lien à ceux qui vous offrent des cadeaux. Elle ouvre l’Assistant cadeau avec vos goûts déjà remplis. Aucun nom sauf si vous en tapez un, et vous pouvez la supprimer à tout moment.',
-        'find_offline_ideas' => 'Sous les idées de « Trouver un cadeau » et de Ceci ou cela, vous verrez parfois des Idées hors boutique : des choses que beaucoup de personnes différentes ont notées elles-mêmes sur leur liste, comme un atelier ou une sortie. Nous n\'en montrons une qu\'après l\'avoir relue, jamais qui l\'a écrite, et Ajouter à ma liste la met sur la vôtre comme article hors ligne.',
+        'find_offline_ideas' => 'Sous les idées de « Trouver un cadeau » et de Ceci ou cela, vous verrez parfois des Idées hors boutique : des choses que beaucoup de personnes différentes ont notées elles-mêmes sur leur liste, comme un atelier ou une sortie. Nous n\'en montrons une qu\'après l\'avoir relue, jamais qui l\'a écrite, et Enregistrer la met sur votre liste comme article hors ligne.',
         'find_personas' => 'Une idée cadeau autour d\'un type de personne (le cuisinier, celui qui a déjà tout) propose aussi, sous ses produits choisis, des onglets autour de 15, 40 et 100 euros. Pour qui a déjà tout, nous cherchons ce qui se consomme ou se vit, comme une dégustation, un atelier ou une recharge ; tapez « qui a déjà tout » dans la recherche et nous cherchons ainsi aussi.',
         'find_browse' => 'Parcourez les Coves : une nouvelle chaque jour, des idées cadeaux par personne, et des guides d\'achat.',
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',
@@ -2387,7 +2386,6 @@ return [
         'remove_confirm' => 'Retirer :name ? Vous disparaissez de la liste d\'amis de l\'autre, dans les deux sens.',
         'save' => 'Enregistrer',
         'email' => 'Son e-mail',
-        'add' => 'Ajouter',
         'added' => 'Invitation envoyée. La personne apparaîtra ici une fois connectée.',
         'settings_title' => 'Ce que vos amis voient',
         'settings_saved' => 'Enregistré.',
@@ -2448,7 +2446,7 @@ return [
         'lists_for' => 'Listes pour :name',
         'lists_for_tip' => 'Les listes que vous faites avec des idées de cadeaux pour :name, cadeau commun compris. :name ne les voit pas.',
         'lists_for_none' => 'Pas encore de liste pour :name. Commencez-en une pour rassembler des idées ou offrir ensemble.',
-        'new_list' => 'Nouvelle liste',
+        'new_list' => 'Créer une Cove',
         'list_actions' => 'Actions pour :name',
         'edit_details' => 'Nom et anniversaire',
         'send_profile_link' => 'Envoyer son lien de profil',

@@ -120,7 +120,12 @@ class FriendController extends Controller
     /**
      * Your side of the page: what your friends see of you.
      *
-     * The one place a year may be given, and only by the person it belongs to.
+     * A day and a month since 2026-09-27, like every other birthday on the
+     * site: the page asked a full date here and nowhere else, and the year does
+     * nothing (friends only ever see day and month, DayAndMonth::fromDate). It
+     * is stored under the placeholder year (Recipient::BIRTHDAY_YEAR), except
+     * that a year somebody gave before stays while the day and month do not
+     * change: saving the "friends see it" switch must not rewrite a date.
      *
      * Lists are deliberately not here, and there is no switch for them
      * anywhere. Which of your lists a friend sees is decided by an act — you
@@ -131,18 +136,33 @@ class FriendController extends Controller
     public function settings(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            /*
-             * A full date here, unlike everywhere else.
-             *
-             * `before:today` rather than a range: a birthday in the future is a
-             * typo every time, and a lower bound would be a guess at how old
-             * somebody's grandmother is allowed to be.
-             */
-            'birthday' => ['nullable', 'date', 'before:today'],
+            'birthday' => ['nullable', 'string', 'regex:/^\d{2}-\d{2}$/'],
             'friends_see_birthday' => ['required', 'boolean'],
         ]);
 
-        $request->user()->update($validated);
+        $user = $request->user();
+        $day = DayAndMonth::fromString($validated['birthday'] ?? null);
+        $birthday = null;
+
+        if ($day !== null) {
+            $birthday = Recipient::birthdayFrom($day->day, $day->month);
+
+            // 31 February: refused rather than stored as 2 March.
+            if ($birthday === null) {
+                return back()->withErrors(['birthday' => __('validation.date', ['attribute' => 'birthday'])]);
+            }
+
+            $current = $user->birthday;
+
+            if ($current !== null && $current->day === $day->day && $current->month === $day->month) {
+                $birthday = $current->toDateString();
+            }
+        }
+
+        $user->update([
+            'birthday' => $birthday,
+            'friends_see_birthday' => $validated['friends_see_birthday'],
+        ]);
 
         return back()->with('success', __('site.friends.settings_saved'));
     }

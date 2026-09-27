@@ -30,7 +30,7 @@ use Tests\TestCase;
  * The promises held here: nothing is proposed below five different people,
  * nothing is shown before a person approves it, a visitor never sees who
  * wrote it, how many, or what they typed, ideas stay in their market, and
- * "Add to my list" puts the approved wording on the visitor's own list.
+ * "Save" puts the approved wording on the visitor's own list.
  */
 class OfflineIdeasTest extends TestCase
 {

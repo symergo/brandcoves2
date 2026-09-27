@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { rich, useTranslations } from '../useTranslations'
 import ListName from './ListName'
+import ToolIcon from './ToolIcon'
 
 /**
  * What the server just said.
@@ -39,7 +40,9 @@ export default function FlashMessage() {
             aria-live={isError ? 'assertive' : 'polite'}
             className={`mb-6 flex items-start gap-3 rounded-card border p-4 text-sm ${
                 isError
-                    ? 'border-accent/40 bg-accent/5 text-ink'
+                    ? // Errors are the danger token, never the accent: the accent is the
+                      // colour of the button that caused them (design-system.md).
+                      'border-danger/40 bg-danger/5 text-danger'
                     : 'border-sage/40 bg-sage/10 text-ink'
             }`}
         >
@@ -75,9 +78,9 @@ export default function FlashMessage() {
                 type="button"
                 onClick={() => setDismissed(true)}
                 aria-label={t('nav.close')}
-                className="shrink-0 text-ink-soft hover:text-ink"
+                className="-my-1 -mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-soft hover:text-ink"
             >
-                ×
+                <ToolIcon name="close" className="h-4 w-4 shrink-0" />
             </button>
         </div>
     )

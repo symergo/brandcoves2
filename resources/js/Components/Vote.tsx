@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react'
 import { useTranslations } from '../useTranslations'
+import ToolIcon from './ToolIcon'
 
 /**
  * "This is the one we should get."
@@ -56,7 +57,7 @@ export default function Vote({
                     : 'border border-line hover:border-ink'
             }`}
         >
-            <span aria-hidden>{votedByMe ? '♥' : '♡'}</span>
+            <ToolIcon name="heart" className={`h-4 w-4 ${votedByMe ? 'fill-current' : ''}`} />
             <span>{votedByMe ? t('votes.voted') : t('votes.vote')}</span>
             {votes > 0 && <span className="tabular-nums opacity-80">{n(votes)}</span>}
         </button>

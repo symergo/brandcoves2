@@ -87,6 +87,13 @@ Site (13):
   of the grid while the clipboard and the two figures keep a margin, and read a size larger next
   to them); a new `list` icon for a list with no kind.
 
+Added 2026-09-27 (the consistency review):
+
+- `SecretSantaController::attachList()`: "Die groep ziet nu je lijst …" names the list, through
+  `ListName::flash()` with its url, like a save's confirmation. It said "deze lijst" before.
+- `People/Index`: the "Wat zij zien" chips under a friend's Details are `ListName`s in the same
+  bordered link as their lists above; they were dashed chips with an arrow, a third style.
+
 E-mail (2):
 
 - `mail/list-invitation`: "… op een lijst met de naam **Camping**", unquoted.
@@ -99,7 +106,7 @@ E-mail (2):
   …"), a picker row's tooltip, and texts sent out of the site (the share text, "Ideeën voor …?"
   message). An element cannot go there.
 - **A list's own title where it is the subject**: page headings, cards, picker rows, the
-  `<select>` options on the Secret Santa pages, and the list chips on My people. These already
+  `<select>` options on the Secret Santa pages. These already
   read as a list by where they stand.
 - **"Uit de verlanglijst van Anna"** names a person, not a list; the list names under it are
   styled.

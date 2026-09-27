@@ -523,10 +523,10 @@ function Chrome({ children }: PropsWithChildren) {
                         {auth.user && unreadCount > 0 && (
                             <Link
                                 href={`${base}/notifications`}
-                                className="relative text-sm hover:text-ink"
+                                className="relative inline-flex text-sm hover:text-ink"
                                 aria-label={`${t('nav.notifications')} (${unreadCount})`}
                             >
-                                <span aria-hidden>🔔</span>
+                                <ToolIcon name="bell" className="h-5 w-5" />
                                 <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-2xs leading-4 font-semibold text-white">
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>

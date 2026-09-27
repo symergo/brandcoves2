@@ -2,7 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import SaveToList from '../../Components/SaveToList'
 import type { SavingTo, SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
@@ -193,7 +193,7 @@ export default function AskShow({
                     {question.budget !== null && (
                         <>
                             <span aria-hidden>·</span>
-                            <span>{t('ask.budget_up_to', { amount: formatPrice(question.budget, market) })}</span>
+                            <span>{t('ask.budget_up_to', { amount: formatBudget(question.budget, market) })}</span>
                         </>
                     )}
                 </p>
@@ -325,7 +325,7 @@ export default function AskShow({
                                                 onClick={() => setPicks(picks.filter((p) => p.id !== pick.id))}
                                                 aria-label={t('lists.remove')}
                                             >
-                                                ✕
+                                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                             </button>
                                         </li>
                                     ))}

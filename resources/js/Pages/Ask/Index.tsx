@@ -4,7 +4,7 @@ import { takeAskBrief } from '../../askBrief'
 import InfoTip from '../../Components/InfoTip'
 import CoveIcon from '../../Components/CoveIcon'
 import type { SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
@@ -300,7 +300,7 @@ export default function AskIndex({
                         {question.budget !== null && (
                             <>
                                 <span aria-hidden>·</span>
-                                <span>{t('ask.budget_up_to', { amount: formatPrice(question.budget, market) })}</span>
+                                <span>{t('ask.budget_up_to', { amount: formatBudget(question.budget, market) })}</span>
                             </>
                         )}
 

@@ -1,6 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { SharedProps } from '../../types'
+import { formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import Button from '../../Components/Button'
@@ -211,7 +212,7 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                                     when there is no date. */}
                                 <p className="mt-1 text-sm text-ink-soft">
                                     {t('santa.members_count', { count: String(group.members) })}
-                                    {group.exchangeDate && ` · ${group.exchangeDate}`}
+                                    {group.exchangeDate && ` · ${formatDay(group.exchangeDate, market, { year: 'auto' })}`}
                                     {group.drawn && ` · ${t('santa.drawn')}`}
                                 </p>
                             </Link>

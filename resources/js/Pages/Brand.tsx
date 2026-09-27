@@ -9,6 +9,7 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
+import ToolIcon from '../Components/ToolIcon'
 
 interface Props {
     brand: {
@@ -188,7 +189,7 @@ export default function Brand({
                                 onClick={() => go({ q: narrowedTo.filter((w) => w !== word).join(' ') })}
                                 className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 transition hover:border-accent hover:text-accent"
                             >
-                                <span aria-hidden>×</span>
+                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
                                 {word}
                                 {/* Names the word it drops, not "clear filters":
                                     this button removes one, and a screen reader
@@ -295,7 +296,7 @@ export default function Brand({
                     onClick={() => setFiltersOpen(!filtersOpen)}
                 >
                     <span>{t('search.filters')}</span>
-                    <span aria-hidden>{filtersOpen ? '▲' : '▼'}</span>
+                    <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${filtersOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* A sheet on a phone, a rail on a desktop — see Search.tsx. */}

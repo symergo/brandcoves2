@@ -154,7 +154,7 @@ return [
          */
         'hero_title' => 'Find things worth giving, getting and sharing.',
         'hero_intro' => 'GiftCoves is an open place to discover products from shops, brands and independent sellers, and save them in Coves you can keep, share or give.',
-        'cta_create' => 'Create a Cove',
+        'cta_create' => 'Make a Cove',
         'cta_explore' => 'Explore Coves',
         'entries_label' => 'Three ways to start',
         'entry_gift_title' => 'Looking for a gift?',
@@ -569,7 +569,7 @@ return [
         'waiting' => ':count waiting',
         'one_waiting' => '1 waiting',
         'note_label' => 'Add a note',
-        'accept' => 'Add it',
+        'accept' => 'Add',
         'dismiss' => 'No thanks',
         'sent' => 'Sent. They decide whether it goes on the list.',
         'accepted' => 'Added to your list.',
@@ -747,8 +747,6 @@ return [
 
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
-        'save' => 'Save',
-        'saved' => 'Saved',
         'copy' => 'Make it my list',
         'unsave' => 'Remove',
         'copied' => ':list is now one of your lists. Change it as you like.',
@@ -876,7 +874,7 @@ return [
         'save_changes' => 'Save',
         'manual_url' => 'Link (optional)',
         'manual_price' => 'Price (optional)',
-        'manual_save' => 'Add it',
+        'manual_save' => 'Add',
         'manual_url_invalid' => 'A link has to start with https://',
         'added_to' => 'Saved to :list',
         'view_list' => 'View list',
@@ -911,13 +909,13 @@ return [
         'add_note_placeholder' => 'size M, in blue',
         'add_live_title_note' => 'The title and price come straight from :shop, so they cannot be edited here.',
         'back' => 'Back',
-        'new_list' => 'New list',
+        'new_list' => 'Make a Cove',
         // The front page's version of the same button. Longer on
         // purpose: on /lists it sits under a heading that already says
         // "lists", and on the home page it has to say what it makes.
-        'make_new' => 'Create a Cove',
+        'make_new' => 'Make a Cove',
         'list_name' => 'List name',
-        'create' => 'Create list',
+        'create' => 'Make a Cove',
         'for_whom' => 'Who is it for?',
         'empty' => 'Nothing saved yet.',
         'empty_hint' => 'Search for a product and press Save.',
@@ -933,7 +931,6 @@ return [
         'empty_group_step3' => 'They vote for the one to get and say what they can put in.',
         'items' => ':count items',
         'one_item' => '1 item',
-        'added' => 'Saved to your list.',
         'removed' => 'Removed.',
         'remove' => 'Remove',
         'save' => 'Save',
@@ -983,7 +980,7 @@ return [
         'copy_to' => 'Copy to another list',
         'copy_to_which' => 'Which list?',
         'copied_to' => 'Copied to :list.',
-        'add_to_my_list' => 'Add to my list',
+        'add_to_my_list' => 'Add',
         'birthday_day' => 'Day',
         'birthday_month' => 'Month',
         'price_now' => 'Now :price',
@@ -1059,7 +1056,7 @@ return [
         'their_wishes' => 'From :name\'s wish list',
         'their_wishes_tip' => 'What :name put on a wish list they show you. Put something on this list in one tap, or say you will buy it: :name never sees that.',
         'their_wishes_open' => 'Open the list',
-        'on_your_list' => 'On your list',
+        'on_your_list' => 'On this list',
         'share_with' => 'Share with :name',
         'enable_sharing' => 'Turn sharing on',
         'send_via' => 'Send via…',
@@ -1175,7 +1172,7 @@ return [
         'email_no_list' => 'They have not made a list yet, so you are going in blind. We can help with that:',
         'attach_hint' => 'Point a group at this list so whoever drew you has something to go on.',
         'attach_list' => 'Use this list',
-        'list_attached' => 'That group now sees this list.',
+        'list_attached' => 'That group now sees your list :list.',
         'list_attached_short' => 'In use',
         'invite_text' => 'Join our Secret Friend: :title',
         'delete' => 'Delete this group',
@@ -1279,13 +1276,13 @@ return [
 
         'giftlist_title' => 'A list for someone else',
         'giftlist_body' => 'Gather ideas for one person. Keep it to yourself, or share it: then you build the list together and everybody claims what they buy, so nothing is bought twice.',
-        'giftlist_step1' => 'Press New list, choose "For someone else" and name the person. This card opens that form already on that setting.',
+        'giftlist_step1' => 'Press Make a Cove, choose "For someone else" and name the person. This card opens that form already on that setting.',
         'giftlist_step2' => 'Save things to it as you come across them, exactly as you would to any other list.',
         'giftlist_step3' => 'Keep it to yourself, or press Share: then the others can see it and mark what they are getting, so nobody buys the same thing twice.',
 
         'collab_title' => 'Give together',
         'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
-        'collab_step1' => 'Press New list, choose "Together, for someone", and name the person it is for.',
+        'collab_step1' => 'Press Make a Cove, choose "Together, for someone", and name the person it is for.',
         'collab_step2' => 'Press Share and send the link to each co-giver. Anyone holding it can look and claim; you decide whether they can add things too.',
         'collab_step3' => 'Choose together, and mark what you are getting so two of you never buy the same thing. Under Share you also decide whether names are shown.',
 
@@ -1317,7 +1314,7 @@ return [
         'suggestions_body' => 'People who know you can put things forward for your list. Nothing appears on it until you say yes.',
         'suggestions_step1' => 'Share your wish list. A suggestion can only come from somebody holding the link.',
         'suggestions_step2' => 'When one arrives it waits at the top of the list, with the name of whoever sent it.',
-        'suggestions_step3' => 'Press "Add it" and it joins the list, or "No thanks" and it goes. Nothing lands on the list before you decide.',
+        'suggestions_step3' => 'Press "Add" and it joins the list, or "No thanks" and it goes. Nothing lands on the list before you decide.',
 
         'whisperer_title' => 'Find a gift',
         'whisperer_body' => 'Describe a person and get eight ideas, each showing what it has in common with your description. For when you know who it is for and not what to buy.',
@@ -1407,7 +1404,7 @@ return [
         'stopped' => 'Reminder emails are off. Reminders still appear in your notifications.',
         'ideas_heading' => 'Three ideas for :name',
         'idea_from' => 'From :price',
-        'idea_add' => 'Add to the list for :name',
+        'idea_add' => 'Save for :name',
         'ideas_finder' => 'More ideas in Find a gift',
         'ideas_why' => 'Picked from what you saved about them and their budget, leaving out what you already gave them.',
         'email_toggle' => 'Email me reminders',
@@ -1569,8 +1566,8 @@ return [
         'offline_ideas' => [
             'title' => 'Ideas without a shop',
             'hint' => 'Things other people put on their own lists by hand, like a workshop or a day out. We do not sell them: you buy them yourself, where you like. We read each one before it appears here.',
-            'add' => 'Add to my list',
-            'added' => 'On your list',
+            'add' => 'Save',
+            'added' => 'Saved',
         ],
         'results_title' => 'Eight ideas',
         'no_results' => 'Nothing fit that brief. Try a wider budget or another interest.',
@@ -1790,7 +1787,6 @@ return [
 
         'title' => 'Ask others',
         'intro' => 'Need inspiration? Describe who you are buying for and let the GiftCoves community suggest something. Answers come with actual products, not just advice.',
-        'nav_hint' => 'Describe who it is for and let other people suggest something.',
 
         // Filled in from Find a gift or a list page (AskPrefill), and sent to
         // your people once published (QuestionToPeople).
@@ -2206,6 +2202,9 @@ return [
     ],
 
     'daily' => [
+        // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
+        'react_up' => 'I like this',
+        'react_down' => 'Not for me',
         'title' => 'The Daily Cove',
         'seo_title' => ':theme — gift tips',
         'seo_description' => 'A handful of things you did not know existed, and a buying guide built from what people actually searched for.',
@@ -2585,7 +2584,7 @@ return [
         'coves_body1' => 'A Cove is a collection of things around one idea: things you want, presents for Emma\'s birthday, your new home, Christmas this year.',
         'coves_body2' => 'You make your own Coves. Some you keep for yourself, some you make for somebody else, and some you fill together with other people. GiftCoves makes Coves too: something new every day, gift ideas for a kind of person, and buying guides.',
         'coves_body3' => 'Anything can go in a Cove, from any shop, and every Cove can be shared.',
-        'coves_make' => 'To make one, press Create a Cove and say who it is for: you, somebody else, or several of you together. It is made at once, with a name you can change, and opens ready for the first thing: paste a link or search. The occasion, sharing and asking for ideas are on the Cove itself.',
+        'coves_make' => 'To make one, press Make a Cove and say who it is for: you, somebody else, or several of you together. It is made at once, with a name you can change, and opens ready for the first thing: paste a link or search. The occasion, sharing and asking for ideas are on the Cove itself.',
         'coves_body4' => 'Press Save on a Cove and choose. Keep it in My Coves to find it again under My Coves, in Saved; it keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change. It is the same Save button as on a product.',
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices.',
@@ -2599,7 +2598,7 @@ return [
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
         'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens Find a gift with your taste filled in. No name unless you type one, and you can remove it any time.',
-        'find_offline_ideas' => 'Under Find a gift\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Add to my list puts it on yours as an offline item.',
+        'find_offline_ideas' => 'Under Find a gift\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Save puts it on your list as an offline item.',
         'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
@@ -2656,7 +2655,6 @@ return [
         'remove_confirm' => 'Remove :name? You will each disappear from the other\'s friends.',
         'save' => 'Save',
         'email' => 'Their email',
-        'add' => 'Add',
         'added' => 'Invitation sent. They will show up here once they are signed in.',
         'settings_title' => 'What your friends see',
         'settings_saved' => 'Saved.',
@@ -2717,7 +2715,7 @@ return [
         'lists_for' => 'Lists for :name',
         'lists_for_tip' => 'Lists you are making with gift ideas for :name, a group gift included. :name does not see them.',
         'lists_for_none' => 'No list for :name yet. Start one to collect ideas or to give together.',
-        'new_list' => 'New list',
+        'new_list' => 'Make a Cove',
         'list_actions' => 'Actions for :name',
         'edit_details' => 'Name and birthday',
         'send_profile_link' => 'Send their profile link',

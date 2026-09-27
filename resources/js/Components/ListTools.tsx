@@ -627,10 +627,10 @@ export default function ListTools({
                                                             className="group inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-xs text-ink-soft hover:border-accent hover:text-accent"
                                                         >
                                                             <span aria-hidden className="text-sage group-hover:hidden">
-                                                                ✓
+                                                                <ToolIcon name="check" className="h-3.5 w-3.5" />
                                                             </span>
                                                             <span aria-hidden className="hidden group-hover:inline">
-                                                                ✕
+                                                                <ToolIcon name="close" className="h-3.5 w-3.5" />
                                                             </span>
                                                             {friend.name}
                                                         </button>

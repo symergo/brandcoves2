@@ -92,9 +92,9 @@ waits its turn, and the description has the same ~70-character measure as every 
   across 36 files (counted 2026-09-15), including the list wizard that replaced the list create
   form.
 - Three h1 tiers with no rule for which page gets which; two prose measures on editorial pages.
-- Four icon stroke widths, and glyph characters (`▲ ▼ ✕ ×`, one emoji) standing in for icons on
-  the search, list, brand and question pages; the header's ☰ and ✕ became `ToolIcon`s on
-  2026-09-07.
+- Four icon stroke widths. The glyph characters that stood in for icons (`▲ ▼ ✕ × ✓ ♥ ♡`, the
+  header's 🔔, the notification emoji, the Daily's 👍 👎) became `ToolIcon`s on 2026-09-27; see
+  below.
 - Self-hosting Inter: the TTFs are vendored for the social cards and the site still loads a
   render-blocking stylesheet from bunny.net.
 - The footer carries no mark; the social card palette (teal and amber) and the site palette
@@ -227,3 +227,62 @@ cards.
 - **This or that's duel**: two product photos side by side. Full width would make each photo about
   580px tall and push the buttons off the screen, so it is centred (`mx-auto max-w-2xl`).
 - **The help pages** (`/help`, `/lists-help`, `/search-help`): centred reading pages.
+
+## The consistency review, round 1 (2026-09-27)
+
+A read-only review found the same thing said several ways across the list, people and Santa
+pages. The owner approved the fixes in three rounds; this is the first, the quick ones.
+
+**Words: "Cove + lijst".** *Mijn Coves* is the overview's name; the thing in it is a *lijst*,
+everywhere: never "lijstje", "verlanglijstje" or "cadeaulijstje" (the diminutive made one object
+sound like three). Making one is **Maak een Cove** on every button that makes one: the header,
+the picker's "+ …" row, the wizard's submit and a person's page ("Nieuwe lijst" and "Lijst maken"
+are gone). Keeping a product from anywhere outside a list (product page, search, gift ideas,
+offline ideas, a reminder's idea) is **Bewaren**; inside a list you are on, putting something on
+it is **Toevoegen** (a suggestion accepted, a wish taken from their wish list, something typed by
+hand). "Zet erop" and "Op mijn lijst" are gone. English says *Make a Cove*, *Save*, *Add*; French
+and Spanish keep their words for list, save and add, with *Créer une Cove* and *Crear una Cove*.
+The legal and about pages (`resources/legal/nl`) still say "lijstje": changing a contract's
+wording is the owner's call, not a sweep's.
+
+**Row actions are outlined.** `rowActionClasses()` in `Button.tsx` is the one recipe for an action
+on a row of a list of rows (Mijn Coves, Mijn mensen): outlined, icon and words on a wide screen,
+the icon alone on a phone. Never filled: twenty filled buttons down a page are twenty primary
+actions, and the header's one ("Maak een Cove", "Iemand toevoegen") stops being the one. A
+person's own page keeps "Cadeau vinden" filled: there it is the page's one primary action.
+
+**One field recipe.** `fieldClasses()` in `Button.tsx`: the text field, select and textarea class
+the people, person and Santa forms repeated by hand.
+
+**Dates, countdowns and budgets have one formatter each**, beside `formatPrice` in `types.ts`:
+
+- `formatDay(iso, market, { year, month })`: a `YYYY-MM-DD` date or an `MM-DD` birthday, parsed as
+  a local midnight (a bare date read by `new Date()` is UTC, and west of Greenwich shows the day
+  before). `year` is `false` (default), `true`, or `'auto'` (only when not this year). The four
+  Santa pages showed the server's raw `2026-12-20`; the Santa mail said "Dec 20, 2026" in every
+  language and now uses the group's market.
+- `formatCountdown(days, t)`: "vandaag", "morgen", "over 12 dagen", which three pages each wrote.
+- `formatBudget(cents, market)`: "€ 50", not "€ 50,00", for anything somebody chose as a limit (a
+  person's budget, a Santa budget, "Cadeaus onder € 100", a search's price chip, a watched search's
+  threshold, a question's budget). Odd cents are kept, since rounding would state a different
+  budget. Real prices keep their cents.
+
+**Icons, not glyphs.** New `ToolIcon`s: `check`, `bell` (the alerts drawing), `package`, `gift`
+and `heart` (the wish list's drawing; filled with `className="fill-current"`, because CSS outranks
+the `<svg>`'s `fill` attribute). They replace ✓ (save picker, "on this list", suggested, shared
+with), × and ✕ (every remove and dismiss), ▲ ▼ (the chevron, turned), ♥ ♡ (the vote), the
+header's 🔔, the notification kinds' emoji and arrow, and the Daily's 👍 👎 (which gained words for
+a screen reader, `daily.react_up` / `react_down`, since the emoji had been the only label).
+
+**Status pills are `Badge`s**: Privé / Gedeeld / Standaard / "N wachten" on Mijn Coves, "op
+GiftCoves" on a person, "nieuw" on the shops page. A flash error is `danger`, not accent.
+
+**Copying a link is `useCopy()`** (`resources/js/useCopy.ts`), shared by `ShareRow` and
+`ShareMenu`, which had each written the clipboard call, the failure message and the three-second
+status.
+
+**Unused keys** (`ask.nav_hint`, `friends.add`, `lists.added`, `saved_coves.save`,
+`saved_coves.saved`) were deleted after a one-off scan found them used neither literally nor under
+a dynamic prefix in any language. The scan is not committed: it flags about thirty keys that *are*
+used, built from parts (`lists.about_${kind}_${visibility}`), and a test that has to be taught
+every such pattern would be noise.

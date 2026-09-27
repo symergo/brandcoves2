@@ -213,6 +213,55 @@ class FriendsTest extends TestCase
     }
 
     #[Test]
+    public function your_own_birthday_is_a_day_and_a_month_too(): void
+    {
+        /*
+         * The settings asked a full date, the one place on the site that did
+         * (until 2026-09-27). Now day and month, stored under the placeholder
+         * year, and sent back as `MM-DD` like every other birthday.
+         */
+        $me = User::factory()->create();
+
+        $this->actingAs($me)
+            ->patch('/be-nl/friends/settings', ['birthday' => '06-05', 'friends_see_birthday' => true])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(Recipient::BIRTHDAY_YEAR.'-06-05', $me->fresh()->birthday->toDateString());
+
+        $this->actingAs($me)->get('/be-nl/people')
+            ->assertInertia(fn ($page) => $page->where('settings.birthday', '06-05'));
+
+        // A day the month does not have is refused, not moved to March.
+        $this->actingAs($me)
+            ->patch('/be-nl/friends/settings', ['birthday' => '02-31', 'friends_see_birthday' => true])
+            ->assertSessionHasErrors('birthday');
+
+        // A full date is not what the form sends any more.
+        $this->actingAs($me)
+            ->patch('/be-nl/friends/settings', ['birthday' => '1990-06-05', 'friends_see_birthday' => true])
+            ->assertSessionHasErrors('birthday');
+    }
+
+    #[Test]
+    public function saving_the_switch_keeps_a_year_given_before(): void
+    {
+        // Somebody who gave a year when the form asked one: turning the switch
+        // off sends the same day and month, which must not rewrite the date.
+        $me = User::factory()->create(['birthday' => '1988-11-30']);
+
+        $this->actingAs($me)
+            ->patch('/be-nl/friends/settings', ['birthday' => '11-30', 'friends_see_birthday' => false])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('1988-11-30', $me->fresh()->birthday->toDateString());
+
+        $this->actingAs($me)
+            ->patch('/be-nl/friends/settings', ['birthday' => null, 'friends_see_birthday' => false]);
+
+        $this->assertNull($me->fresh()->birthday);
+    }
+
+    #[Test]
     public function switching_a_birthday_off_hides_it_from_friends(): void
     {
         $inviter = User::factory()->create();

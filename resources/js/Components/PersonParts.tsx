@@ -1,5 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react'
-import Button from './Button'
+import Button, { fieldClasses } from './Button'
 import InfoTip from './InfoTip'
 import type { Cents, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -46,7 +46,7 @@ export function DayMonth({
                 value={day}
                 onChange={(e) => onDay(e.target.value)}
                 aria-label={t('friends.day')}
-                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                className={fieldClasses('', { inline: true })}
             >
                 <option value="">--</option>
                 {days.map((d) => (
@@ -59,7 +59,7 @@ export function DayMonth({
                 value={month}
                 onChange={(e) => onMonth(e.target.value)}
                 aria-label={t('friends.month')}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                className={fieldClasses('min-w-0 flex-1', { inline: true })}
             >
                 <option value="">--</option>
                 {Array.from({ length: 12 }, (_, i) => (
@@ -144,7 +144,7 @@ export function InvitePerson({
                     required
                     value={form.data.email}
                     onChange={(e) => form.setData('email', e.target.value)}
-                    className="mt-1 block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
             <label className="block text-xs font-medium">

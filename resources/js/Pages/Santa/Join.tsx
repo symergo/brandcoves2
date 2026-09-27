@@ -1,6 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget, formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SantaBadge from '../../Components/SantaBadge'
 
@@ -46,8 +46,8 @@ export default function SantaJoin({ group, members, you }: Props) {
         group.budgetMax === null
             ? null
             : group.budgetMin === null || group.budgetMin === group.budgetMax
-              ? formatPrice(group.budgetMax, market)
-              : `${formatPrice(group.budgetMin, market)} – ${formatPrice(group.budgetMax, market)}`
+              ? formatBudget(group.budgetMax, market)
+              : `${formatBudget(group.budgetMin, market)} – ${formatBudget(group.budgetMax, market)}`
 
     return (
         <>
@@ -74,7 +74,7 @@ export default function SantaJoin({ group, members, you }: Props) {
                     {group.exchangeDate && (
                         <div>
                             <dt className="inline">{t('santa.exchange_date')}: </dt>
-                            <dd className="inline font-medium text-ink">{group.exchangeDate}</dd>
+                            <dd className="inline font-medium text-ink">{formatDay(group.exchangeDate, market, { year: 'auto' })}</dd>
                         </div>
                     )}
                     <div>

@@ -47,7 +47,7 @@ return [
                 ],
                 [
                     'title' => 'Making a list in one step',
-                    'body' => "1. Tap “Create a Cove” under [My Coves](lists) or on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. For someone else, type their name or tap somebody you already have.\n3. Tap “Create list”. The name is filled in for you; change it first if you like.\n\nThe list opens with the box to add something already open: paste a link or search. The occasion, sharing and asking for ideas are on the list itself: Share, and Settings under More.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or give together](lists-help/kinds).",
+                    'body' => "1. Tap “Make a Cove” under [My Coves](lists) or on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. For someone else, type their name or tap somebody you already have.\n3. Tap “Make a Cove” at the bottom. The name is filled in for you; change it first if you like.\n\nThe list opens with the box to add something already open: paste a link or search. The occasion, sharing and asking for ideas are on the list itself: Share, and Settings under More.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or give together](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'A new list: the one question, who it is for.',
                 ],
@@ -115,7 +115,7 @@ return [
                 ],
                 [
                     'title' => 'Copying, not moving',
-                    'body' => 'On your own list, “Copy to another list” is under “⋯” on each item. On someone else’s [shared list](lists-help/claiming) it is “Add to my list”. The original stays; the note and the price come along, whoever is buying it does not.',
+                    'body' => 'On your own list, “Copy to another list” is under “⋯” on each item. On someone else’s [shared list](lists-help/claiming) it is “Save”. The original stays; the note and the price come along, whoever is buying it does not.',
                 ],
                 [
                     'title' => 'When the price drops',
@@ -191,7 +191,7 @@ return [
                 ],
                 [
                     'title' => 'Keep it for yourself too',
-                    'body' => 'Every item has a bookmark and “Add to my list”. What you copy lands on [your list](lists) without the reservation.',
+                    'body' => 'Every item has a bookmark: “Save”. What you copy lands on [your list](lists) without the reservation.',
                 ],
             ],
         ],

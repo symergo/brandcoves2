@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import type { Cents, SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface PageLink {
@@ -68,16 +68,16 @@ export default function Landing({
 
     const bandLabel = (option: BudgetOption): string => {
         if (option.min === null && option.max !== null) {
-            return t('gift_landing.budget_under', { max: formatPrice(option.max, market) })
+            return t('gift_landing.budget_under', { max: formatBudget(option.max, market) })
         }
 
         if (option.max === null && option.min !== null) {
-            return t('gift_landing.budget_over', { min: formatPrice(option.min, market) })
+            return t('gift_landing.budget_over', { min: formatBudget(option.min, market) })
         }
 
         return t('gift_landing.budget_between', {
-            min: formatPrice(option.min ?? 0, market),
-            max: formatPrice(option.max ?? 0, market),
+            min: formatBudget(option.min ?? 0, market),
+            max: formatBudget(option.max ?? 0, market),
         })
     }
 

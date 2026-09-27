@@ -108,14 +108,14 @@ class SearchCovesAndSignalsTest extends TestCase
 
         $cards = collect($this->props(['q' => 'koffiemolen'])['results']['items'])->keyBy('id');
 
-        $this->assertSame('Op de lijstjes van 3 mensen', $cards[$popular->id]['kept']);
+        $this->assertSame('Op de lijsten van 3 mensen', $cards[$popular->id]['kept']);
         $this->assertSame('In 1 Cove', $cards[$rare->id]['kept'], 'Two people is under the threshold; the Cove still counts.');
 
         // A claim changes nothing: being bought is not being wanted.
         Cache::flush();
         $claimed->forceFill(['claimed_by_hash' => str_repeat('b', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
         $cards = collect($this->props(['q' => 'koffiemolen'])['results']['items'])->keyBy('id');
-        $this->assertSame('Op de lijstjes van 3 mensen', $cards[$popular->id]['kept']);
+        $this->assertSame('Op de lijsten van 3 mensen', $cards[$popular->id]['kept']);
     }
 
     #[Test]
@@ -139,7 +139,7 @@ class SearchCovesAndSignalsTest extends TestCase
         $claimed->forceFill(['claimed_by_hash' => str_repeat('c', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
 
         $props = $this->props(['q' => 'koffiemolen']);
-        $this->assertSame('Mensen hebben 2 producten met "koffiemolen" op hun lijstjes', $props['keptSummary']);
+        $this->assertSame('Mensen hebben 2 producten met "koffiemolen" op hun lijsten', $props['keptSummary']);
 
         // Counts only: no claim, no name, no list reaches the page.
         $json = (string) json_encode([$props['keptSummary'], $props['results'], $props['coves']]);

@@ -47,7 +47,7 @@ return [
                 ],
                 [
                     'title' => 'Crear una lista en un paso',
-                    'body' => "1. Toca «Crear una Cove» en [Mis Coves](lists) o en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Para otra persona, escribe su nombre o toca a alguien que ya tengas.\n3. Toca «Crear lista». El nombre ya viene puesto; cámbialo antes si quieres.\n\nLa lista se abre con la casilla para añadir ya abierta: pega un enlace o busca. La ocasión, compartir y pedir ideas están en la propia lista: Compartir, y Ajustes bajo Más.\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalar juntos](lists-help/kinds).",
+                    'body' => "1. Toca «Crear una Cove» en [Mis Coves](lists) o en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Para otra persona, escribe su nombre o toca a alguien que ya tengas.\n3. Toca «Crear una Cove» abajo. El nombre ya viene puesto; cámbialo antes si quieres.\n\nLa lista se abre con la casilla para añadir ya abierta: pega un enlace o busca. La ocasión, compartir y pedir ideas están en la propia lista: Compartir, y Ajustes bajo Más.\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalar juntos](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'Una lista nueva: la única pregunta, para quién es.',
                 ],
@@ -115,7 +115,7 @@ return [
                 ],
                 [
                     'title' => 'Copiar, no mover',
-                    'body' => 'En tu propia lista, «Copiar a otra lista» está bajo «⋯» en cada artículo. En la [lista compartida](lists-help/claiming) de otra persona es «Añadir a mi lista». El original se queda; la nota y el precio van con él, quien lo compra no.',
+                    'body' => 'En tu propia lista, «Copiar a otra lista» está bajo «⋯» en cada artículo. En la [lista compartida](lists-help/claiming) de otra persona es «Guardar». El original se queda; la nota y el precio van con él, quien lo compra no.',
                 ],
                 [
                     'title' => 'Cuando baja el precio',
@@ -191,7 +191,7 @@ return [
                 ],
                 [
                     'title' => 'Guárdalo también para ti',
-                    'body' => 'Cada artículo tiene un marcador y «Añadir a mi lista». Lo que copias llega a [tu lista](lists) sin la reserva.',
+                    'body' => 'Cada artículo tiene un marcador: «Guardar». Lo que copias llega a [tu lista](lists) sin la reserva.',
                 ],
             ],
         ],
