@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\Interest;
 use App\Enums\Market;
 use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Which products to show next in taste discovery.
@@ -43,6 +44,10 @@ use Illuminate\Support\Collection;
  * ones: they still teach the price band, and a page that shows nothing is
  * worse. A tenth of the pool is kept for proven gifts, products enough
  * different people keep on their lists (see PROVEN), once there are any.
+ *
+ * Since 2026-09-27 each request draws from a per-market pool cached for ten
+ * minutes (pool()) instead of sorting the catalogue at random twice, and only
+ * the products actually shown are loaded. The shares above are unchanged.
  */
 final class TasteDeck
 {
@@ -73,6 +78,26 @@ final class TasteDeck
     /** The proven gifts that share is drawn from at random, the most kept first. */
     private const PROVEN_CANDIDATES = 200;
 
+    /**
+     * How long a market's pool is kept (see pool()). Ten minutes: the same
+     * window as the search caches, and long enough that the random sorts run
+     * a few times an hour instead of on every card batch.
+     */
+    private const POOL_TTL = 600;
+
+    /**
+     * Tagged products in the pool. Above the ~700 per market production
+     * holds (2026-09-26), so today the pool carries all of them.
+     */
+    private const POOL_TAGGED = 1500;
+
+    /**
+     * The random sample of everything else. About half survive
+     * worthChoosing() (measured 2026-09-26), which leaves over a thousand to
+     * draw a request's ~80 from.
+     */
+    private const POOL_OTHER = 2500;
+
     private const EXPLORE_MIN_RATIO = 1.5;
 
     private const EXPLORE_MAX_RATIO = 4.0;
@@ -97,20 +122,34 @@ final class TasteDeck
             return [];
         }
 
-        $groups = $this->draw($market, $exclude);
-        $byId = $groups->keyBy('id');
+        $rounds = $this->compose($this->draw($market, $exclude), $choices, $from, $count);
 
-        $rounds = $this->compose(
-            $groups->map(fn (ProductGroup $g) => TasteCard::fromGroup($g))->values()->all(),
-            $choices,
-            $from,
-            $count,
-        );
+        /*
+         * Only now are products loaded, and only the ones shown, with the
+         * columns a card prints. Presentable again because the pool is up to
+         * POOL_TTL old: a product that went out of stock since is dropped with
+         * its round rather than shown, which the page absorbs (it asks for
+         * more by index).
+         */
+        $ids = array_merge([], ...array_map(fn (array $round) => array_map(fn (TasteCard $c) => $c->id, $round), $rounds));
 
-        return array_map(
-            fn (array $round) => array_map(fn (TasteCard $card) => $byId[$card->id], $round),
-            $rounds,
-        );
+        $byId = $ids === [] ? collect() : ProductGroup::query()
+            ->presentable()
+            ->whereIn('id', $ids)
+            ->get(['id', 'market', 'title', 'display_title', 'brand', 'image_url', 'min_price'])
+            ->keyBy('id');
+
+        $shown = [];
+
+        foreach ($rounds as $round) {
+            $groups = array_map(fn (TasteCard $card) => $byId->get($card->id), $round);
+
+            if (! in_array(null, $groups, true)) {
+                $shown[] = $groups;
+            }
+        }
+
+        return $shown;
     }
 
     /**
@@ -323,18 +362,133 @@ final class TasteDeck
     }
 
     /**
-     * A random draw of what may be shown.
+     * A random draw of what may be shown, as cards, shuffled.
+     *
+     * Sampled in PHP from the market's cached pool (see pool()), where it used
+     * to be two `ORDER BY random()` reads of every giftable product per
+     * request, one of them with a `gift_tags::text like` no index can serve.
+     * The shares are the same as they were: the proven gifts, then tagged
+     * products up to half the draw, then the rest.
      *
      * @param  list<int>  $exclude
-     * @return Collection<int, ProductGroup>
+     * @return list<TasteCard>
      */
-    private function draw(Market $market, array $exclude): Collection
+    private function draw(Market $market, array $exclude): array
     {
-        return $this->worthChoosing($this->drawRaw($market, $exclude));
+        $proven = $this->proven($market, $exclude);
+        $skip = array_flip([...$exclude, ...array_map(fn (TasteCard $c) => $c->id, $proven)]);
+
+        $pool = $this->pool($market);
+
+        // At most half the pool. Tagged products are the surest evidence,
+        // but on production they are some 700 per market, heavy on a few
+        // interests (fitness, wellness), and a pool of only those showed
+        // one music product in twelve rounds (simulated 2026-09-26).
+        $tagged = $this->sample($pool['tagged'], $skip, max(0, intdiv(self::POOL, 2) - count($proven)));
+
+        foreach ($tagged as $card) {
+            $skip[$card->id] = true;
+        }
+
+        // The pool is already only what worthChoosing() keeps, so this takes
+        // what is missing rather than the twice-that it drew when half of an
+        // untagged draw was thrown away afterwards.
+        $untagged = $this->sample($pool['other'], $skip, self::POOL - count($tagged) - count($proven));
+
+        $cards = [...$proven, ...$tagged, ...$untagged];
+        shuffle($cards);
+
+        return $cards;
     }
 
     /**
-     * Only what can teach something and what somebody would unwrap.
+     * Up to `$take` random cards from these pool rows, skipping the ids given.
+     *
+     * @param  list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>  $rows
+     * @param  array<int, mixed>  $skip  ids as keys
+     * @return list<TasteCard>
+     */
+    private function sample(array $rows, array $skip, int $take): array
+    {
+        if ($take <= 0) {
+            return [];
+        }
+
+        shuffle($rows);
+
+        $cards = [];
+
+        foreach ($rows as $row) {
+            if (isset($skip[$row['id']])) {
+                continue;
+            }
+
+            $cards[] = self::card($row);
+
+            if (count($cards) >= $take) {
+                break;
+            }
+        }
+
+        return $cards;
+    }
+
+    /**
+     * What the deck draws from in one market: a random few thousand of its
+     * giftable products, as plain rows with only what composing needs (id,
+     * price, tags, the interests read from the title), cached POOL_TTL.
+     *
+     * Plain arrays, not models: the cache store refuses to rebuild objects
+     * (`serializable_classes` is false), so a cached model comes back broken.
+     *
+     * A sample rather than the whole catalogue, and fresh every ten minutes,
+     * so the deck varies across sessions as it did when every request drew
+     * its own; twenty cards a session out of thousands never feels repeated.
+     * The work the per-request draw did, the two random sorts and the
+     * interest guessing, is paid once per window.
+     *
+     * @return array{tagged: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>, other: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>}
+     */
+    private function pool(Market $market): array
+    {
+        return Cache::remember('bc:taste-deck:pool:'.$market->value, self::POOL_TTL, function () use ($market): array {
+            $interests = '{'.implode(',', array_map(
+                fn (string $v) => '"'.GiftTags::interest($v).'"',
+                Interest::values(),
+            )).'}';
+
+            /*
+             * The operator `?|` (written `??|` past PDO), which the GIN
+             * indexes on both tag columns serve. The `::text like` it
+             * replaces read every giftable row. See SearchService's tag
+             * filter for the same change.
+             */
+            $tagged = $this->base($market, [])
+                ->where(fn (Builder $q) => $q
+                    ->whereRaw('product_groups.gift_tags ??| ?::text[]', [$interests])
+                    ->orWhereRaw('product_groups.crowd_tags ??| ?::text[]', [$interests]))
+                ->inRandomOrder()
+                ->limit(self::POOL_TAGGED)
+                ->get(self::POOL_COLUMNS);
+
+            $other = $this->base($market, [])
+                ->inRandomOrder()
+                ->limit(self::POOL_OTHER)
+                ->get(self::POOL_COLUMNS);
+
+            return [
+                'tagged' => $this->worthChoosing($tagged),
+                'other' => $this->worthChoosing($other),
+            ];
+        });
+    }
+
+    /** The columns a pool row is built from: nothing a card prints. */
+    private const POOL_COLUMNS = ['id', 'title', 'category', 'min_price', 'gift_tags', 'crowd_tags'];
+
+    /**
+     * Only what can teach something and what somebody would unwrap, as pool
+     * rows.
      *
      * Before 2026-09-26 a pair could be a cooker-hood part against a phone
      * case: `giftable` lets through parts, cases, cables and supplies, and a
@@ -342,59 +496,60 @@ final class TasteDeck
      * saw was "not adapted": a vacuum nozzle, a blood-pressure meter, an
      * insect killer. Both tests read the product's own words (InterestGuesser).
      *
-     * @param  Collection<int, ProductGroup>  $groups
-     * @return Collection<int, ProductGroup>
+     * @param  iterable<ProductGroup>  $groups
+     * @return list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>
      */
-    private function worthChoosing(Collection $groups): Collection
+    private function worthChoosing(iterable $groups): array
     {
         $guesser = app(InterestGuesser::class);
+        $rows = [];
 
-        return $groups
-            ->reject(fn (ProductGroup $group) => $guesser->isNotAGift((string) $group->title, $group->category))
-            ->filter(fn (ProductGroup $group) => TasteCard::fromGroup($group)->interests() !== [])
-            ->values();
+        foreach ($groups as $group) {
+            if ($guesser->isNotAGift((string) $group->title, $group->category)) {
+                continue;
+            }
+
+            $card = TasteCard::fromGroup($group);
+
+            if ($card->interests() === []) {
+                continue;
+            }
+
+            $rows[] = [
+                'id' => $card->id,
+                'price' => $card->price,
+                'tags' => $card->tags,
+                'crowd' => $card->crowdTags,
+                'guessed' => $card->guessed,
+            ];
+        }
+
+        return $rows;
     }
 
-    /**
-     * @param  list<int>  $exclude
-     * @return Collection<int, ProductGroup>
-     */
-    private function drawRaw(Market $market, array $exclude): Collection
+    /** @param  array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}  $row */
+    private static function card(array $row): TasteCard
     {
-        $proven = $this->proven($market, $exclude);
-        $exclude = [...$exclude, ...$proven->pluck('id')->all()];
-
-        $tagged = $this->base($market, $exclude)
-            ->where(fn (Builder $q) => $q
-                ->whereRaw('product_groups.gift_tags::text like ?', ['%"interest:%'])
-                ->orWhereRaw('product_groups.crowd_tags::text like ?', ['%"interest:%']))
-            ->inRandomOrder()
-            // At most half the pool. Tagged products are the surest evidence,
-            // but on production they are some 700 per market, heavy on a few
-            // interests (fitness, wellness), and a pool of only those showed
-            // one music product in twelve rounds (simulated 2026-09-26).
-            ->limit(max(0, intdiv(self::POOL, 2) - $proven->count()))
-            ->get();
-
-        // Twice what is missing: about half of the untagged have no
-        // recognisable interest or are not a gift (measured 2026-09-26), and
-        // worthChoosing() drops those.
-        $untagged = $this->base($market, [...$exclude, ...$tagged->pluck('id')->all()])
-            ->inRandomOrder()
-            ->limit(2 * (self::POOL - $tagged->count() - $proven->count()))
-            ->get();
-
-        return $proven->concat($tagged)->concat($untagged)->shuffle()->values();
+        return new TasteCard(
+            id: $row['id'],
+            tags: $row['tags'],
+            crowdTags: $row['crowd'],
+            price: $row['price'],
+            guessed: $row['guessed'],
+        );
     }
 
     /**
      * A random few of the market's proven gifts (see PROVEN). None at all
      * until five people agree on anything, which on day one is the case.
      *
+     * Read per request, by primary key: sixteen rows, and they must pass the
+     * same filters the pool does.
+     *
      * @param  list<int>  $exclude
-     * @return Collection<int, ProductGroup>
+     * @return list<TasteCard>
      */
-    private function proven(Market $market, array $exclude): Collection
+    private function proven(Market $market, array $exclude): array
     {
         $ids = array_values(array_diff(
             app(CrowdPicks::class)->provenGifts($market, self::PROVEN_CANDIDATES),
@@ -402,14 +557,16 @@ final class TasteDeck
         ));
 
         if ($ids === []) {
-            return new Collection;
+            return [];
         }
 
         shuffle($ids);
 
-        return $this->base($market, $exclude)
+        $rows = $this->worthChoosing($this->base($market, $exclude)
             ->whereIn('id', array_slice($ids, 0, self::PROVEN))
-            ->get();
+            ->get(self::POOL_COLUMNS));
+
+        return array_map(self::card(...), $rows);
     }
 
     /**
