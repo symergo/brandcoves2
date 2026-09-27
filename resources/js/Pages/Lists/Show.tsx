@@ -12,6 +12,8 @@ import SaveToList from '../../Components/SaveToList'
 import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
+import PageHeader from '../../Components/PageHeader'
+import { useHiddenItems } from '../../pendingRemovals'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import OwnItemMenu from '../../Components/OwnItemMenu'
 import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
@@ -149,7 +151,7 @@ export default function ListShow({
     friends,
     role,
     ownerName,
-    items,
+    items: allItems,
     pot,
     target,
     asked,
@@ -171,6 +173,10 @@ export default function ListShow({
     const { market, flash } = usePage<SharedProps>().props
     const pageUrl = usePage().url
     const { t } = useTranslations()
+    // An item you just took off is gone from the page while its Undo is on
+    // screen, before the server hears of it (pendingRemovals.ts).
+    const hidden = useHiddenItems()
+    const items = hidden.size === 0 ? allItems : allItems.filter((item) => !hidden.has(item.id))
 
     // Which hand-written item has its correction form open. One at a time: it
     // is a small fix, not a mode.
@@ -310,27 +316,22 @@ export default function ListShow({
               the first screen held no item at all. See list-surfaces.md,
               "Items first".
             */}
-            <header>
-                <Link href={`${base}/lists`} className="text-sm text-ink-soft hover:text-ink">
-                    ← {t('lists.title')}
-                </Link>
-                <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                        <h1 className="text-xl font-semibold sm:text-2xl">{list.title}</h1>
-                        {/*
-                          What kind of list this is — the fact that decides who
-                          may claim, who may vote and who sees the money. Only
-                          the kind: "Shared" is what the lit Share button says.
-                        */}
-                        <ListPills kind={list.kind as ListKind} role={role} ownerName={ownerName} />
-                    </div>
-
-                    {/*
-                      Share, and a More menu for everything else. The owner's:
-                      for anybody else it renders nothing.
-                    */}
-                    <ListToolsBar {...toolProps} />
-                </div>
+            <PageHeader
+                size="md"
+                back={{ href: `${base}/lists`, label: t('lists.title') }}
+                title={list.title}
+                /*
+                  What kind of list this is — the fact that decides who may
+                  claim, who may vote and who sees the money. Only the kind:
+                  "Shared" is what the lit Share button says.
+                */
+                beside={<ListPills kind={list.kind as ListKind} role={role} ownerName={ownerName} />}
+                /*
+                  Share, and a More menu for everything else. The owner's: for
+                  anybody else it renders nothing.
+                */
+                actions={<ListToolsBar {...toolProps} />}
+            >
                 {/*
                   The owner's note, under the name. Read-only here: it is
                   written in Settings. The shared page renders the same line
@@ -349,7 +350,7 @@ export default function ListShow({
                 {access.isOwner && !shared && list.kind === 'mine' && (
                     <p className="mt-1 max-w-prose text-sm text-ink-soft">{t('lists.quiz_unlocks')}</p>
                 )}
-            </header>
+            </PageHeader>
 
             {/*
               Whichever tool was opened from the header, directly under it, and
@@ -522,6 +523,7 @@ export default function ListShow({
                                             base={base}
                                             listId={list.id}
                                             itemId={item.id}
+                                            listTitle={list.title}
                                             title={item.title}
                                             groupId={item.groupId}
                                             manual={item.manual}

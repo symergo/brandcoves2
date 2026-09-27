@@ -29,6 +29,8 @@ return [
         'info' => 'More about this',
         'share' => 'Share',
         'close' => 'Close',
+        'cancel' => 'Cancel',
+        'confirm' => 'Continue',
         'choose_market' => 'Choose your market',
 
         /*
@@ -748,7 +750,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'Make it my list',
-        'unsave' => 'Remove',
+        'unsave' => 'Remove from My Coves',
         'copied' => ':list is now one of your lists. Change it as you like.',
         'saved_flash' => ':list is saved in My Coves.',
         'sign_in_hint' => 'Sign in to keep this Cove in My Coves.',
@@ -932,6 +934,8 @@ return [
         'items' => ':count items',
         'one_item' => '1 item',
         'removed' => 'Removed.',
+        'removed_from' => 'Removed from :list.',
+        'remove_failed' => 'That did not work. It is back on the list.',
         'remove' => 'Remove',
         'save' => 'Save',
         'saved' => 'Saved',
@@ -2612,6 +2616,7 @@ return [
         'add_photo' => 'Add a photo of your own to something you wrote down yourself.',
         'add_write' => 'Or just write it down: a voucher, a book in one particular edition, a day out.',
         'add_overview' => 'You can also add straight from My Coves: press the + on a list, without opening it first. Something you cannot buy online? Add an offline item, with a photo if you like.',
+        'add_undo' => 'Took something off your list by mistake? Press Undo in the message at the bottom of the screen, and it is back as it was.',
         'share_title' => 'Sharing and giving',
         'share_link' => 'Share a Cove with a link. People can say they will buy something, and you do not see what has been claimed, so it stays a surprise.',
         'share_together' => 'Give together: several people suggest, vote and chip in for one present.',
@@ -2653,6 +2658,7 @@ return [
         'edit_birthday' => 'Edit birthday',
         'remove' => 'Remove',
         'remove_confirm' => 'Remove :name? You will each disappear from the other\'s friends.',
+        'unfriend' => 'Remove as friend',
         'save' => 'Save',
         'email' => 'Their email',
         'added' => 'Invitation sent. They will show up here once they are signed in.',

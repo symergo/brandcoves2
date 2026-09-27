@@ -5,7 +5,10 @@ import Button, { buttonClasses, fieldClasses, rowActionClasses } from '../../Com
 import InfoTip from '../../Components/InfoTip'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
-import Menu, { MenuItem } from '../../Components/Menu'
+import EmptyState from '../../Components/EmptyState'
+import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from '../../Components/Menu'
+import { useConfirm } from '../../Components/Modal'
+import PageHeader from '../../Components/PageHeader'
 import { budgetLabel, DayMonth, InvitePerson, monthDay } from '../../Components/PersonParts'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
@@ -107,56 +110,59 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
               on the left, the buttons on the right, the way to the other page
               first and this page's own actions after it.
             */}
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-x-1">
-                    <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('people.title')}</h1>
-                    {isSignedIn && <InfoTip>{t('people.intro_tip')}</InfoTip>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <Link href={`${base}/lists`} className={buttonClasses('secondary', 'md')}>
-                        <ToolIcon name="wishlist" className="h-4 w-4" />
-                        {t('lists.title')}
-                    </Link>
-                    {isSignedIn && (
-                        <>
-                            <Button
-                                variant={adding === 'person' ? 'secondary' : 'primary'}
-                                aria-expanded={adding === 'person'}
-                                aria-controls="people-add"
-                                onClick={() => setAdding(adding === 'person' ? null : 'person')}
-                            >
-                                <span className="inline-flex items-center gap-2">
-                                    <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
-                                    {t('people.add_person')}
-                                </span>
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                aria-expanded={adding === 'invite'}
-                                aria-controls="people-add"
-                                onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
-                            >
-                                <span className="inline-flex items-center gap-2">
-                                    <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
-                                    {t('people.invite')}
-                                </span>
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </header>
-            <p className="mt-2 text-ink-soft">{t('people.intro')}</p>
+            <PageHeader
+                title={t('people.title')}
+                note={isSignedIn ? t('people.intro_tip') : undefined}
+                actions={
+                    <>
+                        <Link href={`${base}/lists`} className={buttonClasses('secondary', 'md')}>
+                            <ToolIcon name="wishlist" className="h-4 w-4" />
+                            {t('lists.title')}
+                        </Link>
+                        {isSignedIn && (
+                            <>
+                                <Button
+                                    variant={adding === 'person' ? 'secondary' : 'primary'}
+                                    aria-expanded={adding === 'person'}
+                                    aria-controls="people-add"
+                                    onClick={() => setAdding(adding === 'person' ? null : 'person')}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                                        {t('people.add_person')}
+                                    </span>
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    aria-expanded={adding === 'invite'}
+                                    aria-controls="people-add"
+                                    onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
+                                        {t('people.invite')}
+                                    </span>
+                                </Button>
+                            </>
+                        )}
+                    </>
+                }
+            >
+                <p className="mt-2 text-ink-soft">{t('people.intro')}</p>
+            </PageHeader>
 
             {!isSignedIn ? (
-                <div className="mt-8 rounded-card border border-line bg-card p-6">
-                    <p className="text-ink-soft">{t('people.guest')}</p>
-                    <SignInLink
-                        hint={t('people.guest')}
-                        className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-accent px-5 py-2 font-medium text-white hover:bg-accent-dark sm:min-h-0"
-                    >
-                        {t('nav.sign_in')}
-                    </SignInLink>
-                </div>
+                <EmptyState
+                    className="mt-8"
+                    icon="people"
+                    action={
+                        <SignInLink hint={t('people.guest')} className={buttonClasses('primary', 'md')}>
+                            {t('nav.sign_in')}
+                        </SignInLink>
+                    }
+                >
+                    {t('people.guest')}
+                </EmptyState>
             ) : (
                 <>
                     {/*
@@ -301,9 +307,9 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                     )}
 
                     {people.length === 0 ? (
-                        <p className="mt-8 rounded-card border border-line bg-card p-5 text-sm text-ink-soft">
+                        <EmptyState className="mt-8" icon="people">
                             {t('people.empty')}
-                        </p>
+                        </EmptyState>
                     ) : (
                         <ul className="mt-8 divide-y divide-line rounded-card border border-line bg-card">
                             {people.map((p) => (
@@ -377,17 +383,23 @@ function summaryOf(
  * what pressing the name does is one more thing to read on every row.
  *
  * A friend's lists show without a click. They are the reason a friend is on
- * this page at all, and "Hun lijsten (2)" behind a toggle hid them. What stays
- * behind "Details" is about the connection: what they see of yours, your note
- * of their birthday, removing them.
+ * this page at all, and "Hun lijsten (2)" behind a toggle hid them. What is
+ * about the connection (what they see of yours, your note of their birthday,
+ * removing them) is in the ⋯ since 2026-09-27; it was a "Details" toggle.
  */
 function PersonRow({ person, base }: { person: Person; base: string }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const dateLabel = (iso: string) => formatDay(iso, market)
     const friend = person.friend
-    const [open, setOpen] = useState(false)
-    const [editing, setEditing] = useState(false)
+    /*
+     * What the ⋯ opened under the row: your note of their birthday, or the
+     * lists of yours they can see. These sat behind a "Details" toggle beside
+     * the ⋯ until 2026-09-27, a second "more" on the same row; folded into the
+     * ⋯, where the rest of what you do to a person already was.
+     */
+    const [open, setOpen] = useState<'birthday' | 'theySee' | null>(null)
+    const [confirm, confirmDialog] = useConfirm()
     const [note, setNote] = useState({
         day: friend?.birthdayIsMine ? (friend.birthday?.slice(3) ?? '') : '',
         month: friend?.birthdayIsMine ? (friend.birthday?.slice(0, 2) ?? '') : '',
@@ -405,7 +417,7 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
     // instead, which keeps its own line.
     const iconsOnTop = person.urls.finder !== null && !(person.personId === null && person.friend !== null)
     const [inviting, setInviting] = useState(false)
-    const more = invitable || [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
+    const more = friend !== null || invitable || [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
 
     const main = (
         <>
@@ -489,13 +501,7 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                     {more && (
                         <Menu
                             label={t('people.more_label', { name: person.name })}
-                            button={
-                                <>
-                                    <ToolIcon name="more" className="h-4 w-4 shrink-0" />
-                                    <span className="hidden sm:inline">{t('people.more')}</span>
-                                    <ToolIcon name="chevron" className="hidden h-3.5 w-3.5 shrink-0 text-ink-soft sm:inline" />
-                                </>
-                            }
+                            button={<MoreButtonContent word={t('people.more')} />}
                             buttonClassName={rowAction}
                         >
                             {(close) => (
@@ -531,6 +537,56 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                                             {t('people.invite')}
                                         </MenuItem>
                                     )}
+                                    {friend !== null && (
+                                        <>
+                                            <MenuItem
+                                                onSelect={() => {
+                                                    close()
+                                                    setOpen('birthday')
+                                                }}
+                                                icon={<ToolIcon name="cake" className="h-4 w-4" />}
+                                            >
+                                                {friend.birthday === null ? t('friends.add_birthday') : t('friends.edit_birthday')}
+                                            </MenuItem>
+                                            {friend.theySee.length > 0 && (
+                                                <MenuItem
+                                                    onSelect={() => {
+                                                        close()
+                                                        setOpen('theySee')
+                                                    }}
+                                                    icon={<ToolIcon name="wishlist" className="h-4 w-4" />}
+                                                >
+                                                    {t('friends.they_see', { name: person.name })} ({friend.theySee.length})
+                                                </MenuItem>
+                                            )}
+                                            <MenuSeparator />
+                                            {/*
+                                              It removes the connection for both
+                                              people, which is not what a single
+                                              stray tap should mean, so it asks.
+                                              A saved person linked to them stays.
+                                            */}
+                                            <MenuItem
+                                                danger
+                                                onSelect={async () => {
+                                                    close()
+
+                                                    if (
+                                                        await confirm({
+                                                            message: t('friends.remove_confirm', { name: person.name }),
+                                                            confirmLabel: t('friends.unfriend'),
+                                                            danger: true,
+                                                        })
+                                                    ) {
+                                                        router.delete(`${base}/friends/${friend.id}`, { preserveScroll: true })
+                                                    }
+                                                }}
+                                                icon={<ToolIcon name="friends" className="h-4 w-4" />}
+                                            >
+                                                {t('friends.unfriend')}
+                                            </MenuItem>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </Menu>
@@ -559,17 +615,6 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                             </Button>
                             <InfoTip>{t('people.save_known_tip')}</InfoTip>
                         </span>
-                    )}
-                    {friend !== null && (
-                        <button
-                            type="button"
-                            aria-expanded={open}
-                            onClick={() => setOpen((v) => !v)}
-                            className={`${link} text-ink-soft`}
-                        >
-                            {t('people.details')}
-                            <ToolIcon name="chevron" className={`ml-1 h-4 w-4 transition ${open ? 'rotate-180' : ''}`} />
-                        </button>
                     )}
                 </div>
             </div>
@@ -602,84 +647,67 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                 </div>
             )}
 
-            {friend !== null && open && (
-                <div className="mt-4 space-y-4 border-t border-line pt-4 sm:ml-13">
-                    {friend.theySee.length > 0 && (
-                        <div>
-                            {/*
-                              Drawn like their lists above (2026-09-27): a list
-                              name is a ListName wherever it appears, and the
-                              dashed chips with an arrow were a third style.
-                            */}
-                            <p className="text-xs font-medium text-ink-soft">{t('friends.they_see', { name: person.name })}</p>
-                            <ul className="mt-1.5 flex flex-wrap gap-2">
-                                {friend.theySee.map((list) => (
-                                    <li key={list.url}>
-                                        <a href={list.url} className={link}>
-                                            <ListName name={list.title} kind={list.kind ?? null} />
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {friend.birthday !== null && (
-                        <p className="flex flex-wrap items-center text-sm text-ink-soft">
-                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                            {formatDay(friend.birthday, market)}
-                            {friend.birthdayIsMine && <span className="ml-1 text-xs">({t('friends.your_note')})</span>}
-                        </p>
-                    )}
-
-                    <div className="flex items-center gap-4 text-xs text-ink-soft">
-                        <button type="button" onClick={() => setEditing((v) => !v)} className="underline hover:text-ink">
-                            {friend.birthday === null ? t('friends.add_birthday') : t('friends.edit_birthday')}
-                        </button>
+            {friend !== null && open === 'theySee' && friend.theySee.length > 0 && (
+                <div className="mt-4 border-t border-line pt-4 sm:ml-13">
+                    {/*
+                      Drawn like their lists above (2026-09-27): a list name is
+                      a ListName wherever it appears.
+                    */}
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium text-ink-soft">{t('friends.they_see', { name: person.name })}</p>
                         <button
                             type="button"
-                            onClick={() => {
-                                // It removes the connection for both people, which
-                                // is not what a single stray tap should mean. A
-                                // saved person linked to them stays.
-                                if (!window.confirm(t('friends.remove_confirm', { name: person.name }))) {
-                                    return
-                                }
-
-                                router.delete(`${base}/friends/${friend.id}`, { preserveScroll: true })
-                            }}
-                            className="underline hover:text-ink"
+                            onClick={() => setOpen(null)}
+                            aria-label={t('nav.close')}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-ink-soft hover:bg-line/40 hover:text-ink"
                         >
-                            {t('friends.remove')}
+                            <ToolIcon name="close" className="h-4 w-4" />
                         </button>
                     </div>
-
-                    {editing && (
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                router.patch(
-                                    `${base}/friends/${friend.id}`,
-                                    { birthday: monthDay(note.month, note.day) },
-                                    { preserveScroll: true, onSuccess: () => setEditing(false) },
-                                )
-                            }}
-                            className="flex flex-wrap items-end gap-2"
-                        >
-                            <label className="text-xs font-medium">
-                                {t('friends.their_birthday')}
-                                <DayMonth
-                                    day={note.day}
-                                    month={note.month}
-                                    onDay={(v) => setNote((n) => ({ ...n, day: v }))}
-                                    onMonth={(v) => setNote((n) => ({ ...n, month: v }))}
-                                />
-                            </label>
-                            <Button type="submit">{t('friends.save')}</Button>
-                        </form>
-                    )}
+                    <ul className="mt-1.5 flex flex-wrap gap-2">
+                        {friend.theySee.map((list) => (
+                            <li key={list.url}>
+                                <a href={list.url} className={link}>
+                                    <ListName name={list.title} kind={list.kind ?? null} />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
+
+            {friend !== null && open === 'birthday' && (
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        router.patch(
+                            `${base}/friends/${friend.id}`,
+                            { birthday: monthDay(note.month, note.day) },
+                            { preserveScroll: true, onSuccess: () => setOpen(null) },
+                        )
+                    }}
+                    className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4 sm:ml-13"
+                >
+                    <label className="text-xs font-medium">
+                        {t('friends.their_birthday')}
+                        {/* Whose date it is: theirs as they show it, or your own note. */}
+                        {friend.birthday !== null && friend.birthdayIsMine && (
+                            <span className="ml-1 font-normal text-ink-soft">({t('friends.your_note')})</span>
+                        )}
+                        <DayMonth
+                            day={note.day}
+                            month={note.month}
+                            onDay={(v) => setNote((n) => ({ ...n, day: v }))}
+                            onMonth={(v) => setNote((n) => ({ ...n, month: v }))}
+                        />
+                    </label>
+                    <Button type="submit">{t('friends.save')}</Button>
+                    <Button type="button" variant="secondary" onClick={() => setOpen(null)}>
+                        {t('people.cancel')}
+                    </Button>
+                </form>
+            )}
+            {confirmDialog}
         </li>
     )
 }

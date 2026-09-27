@@ -1186,6 +1186,17 @@ class WishlistController extends Controller
 
         $wishlist->delete();
 
+        /*
+         * `stay`: deleted from a row (Mijn Coves, a person's page), so back to
+         * that page. From the list page itself there is no page to go back to,
+         * so the overview. A row on a person's page used to have no delete; it
+         * has the same ⋯ as Mijn Coves since 2026-09-27, and landing on Mijn
+         * Coves after deleting a list from Mama's page would lose your place.
+         */
+        if ($request->boolean('stay')) {
+            return back();
+        }
+
         return redirect()->to($current->url('lists'));
     }
 

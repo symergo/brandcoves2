@@ -2,7 +2,7 @@ import { Link, usePage } from '@inertiajs/react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { send } from '../http'
 import { markRemoved } from '../savedItems'
-import { dismiss, snapshot, serverSnapshot, subscribe } from '../saveToast'
+import { dismiss, revert, snapshot, serverSnapshot, subscribe } from '../saveToast'
 import type { SharedProps } from '../types'
 import { rich, useTranslations } from '../useTranslations'
 import ListName from './ListName'
@@ -59,6 +59,14 @@ export default function SaveToast() {
     const isError = toast.tone === 'error'
 
     async function undo(): Promise<void> {
+        // A removal still waiting (pendingRemovals.ts): nothing was sent yet,
+        // so putting it back is local and immediate.
+        if (toast?.pending) {
+            revert(toast.key)
+
+            return
+        }
+
         if (!toast?.undo || undoing) return
 
         setUndoing(true)
@@ -114,7 +122,7 @@ export default function SaveToast() {
                         : toast.message}
                 </span>
 
-                {toast.undo && (
+                {(toast.undo || toast.pending) && (
                     <button
                         type="button"
                         onClick={() => void undo()}

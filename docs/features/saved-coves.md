@@ -42,6 +42,13 @@ reader lands on the new list.
 
 ## What the Saved section shows
 
+**As rows, like every other section of Mijn Coves** (owner, 2026-09-27: "when saving a daily cove
+to my coves, the layout is different then the other lists"). They were picture cards three to a
+row. Each is now a `ListRow`: the Cove's picture as the 48px thumbnail (white box), its title, its
+kind on the line under it, **Maak er mijn lijst van** as the row's action, and **Niet meer
+bewaren** (`saved_coves.unsave`, which said only "Verwijderen", ambiguous beside a Cove you do not
+own) in the ⋯, in red. No confirmation: saving it again is one press on the Cove.
+
 Published Coves only, newest save first, each linking in its own market. An unpublished Cove is
 hidden, not deleted: the bookmark comes back if the Cove is published again. Unsaving works whatever
 state the Cove is in. Saving or copying an unpublished Cove is a 404.

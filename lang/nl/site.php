@@ -23,6 +23,8 @@ return [
         'info' => 'Meer uitleg',
         'share' => 'Delen',
         'close' => 'Sluiten',
+        'cancel' => 'Annuleren',
+        'confirm' => 'Doorgaan',
         'choose_market' => 'Kies je regio',
         'countries' => [
             'be' => 'België',
@@ -603,7 +605,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'Maak er mijn lijst van',
-        'unsave' => 'Verwijderen',
+        'unsave' => 'Niet meer bewaren',
         'copied' => ':list staat nu bij je lijsten. Pas hem aan zoals je wilt.',
         'saved_flash' => ':list is bewaard in Mijn Coves.',
         'sign_in_hint' => 'Log in om deze Cove te bewaren in Mijn Coves.',
@@ -772,6 +774,8 @@ return [
         'items' => ':count items',
         'one_item' => '1 item',
         'removed' => 'Verwijderd.',
+        'removed_from' => 'Van :list gehaald.',
+        'remove_failed' => 'Dat lukte niet. Het staat weer op de lijst.',
         'remove' => 'Verwijderen',
         'save' => 'Bewaren',
         'saved' => 'Bewaard',
@@ -2354,6 +2358,7 @@ return [
         'add_photo' => 'Zet een eigen foto bij iets dat je zelf hebt opgeschreven.',
         'add_write' => 'Of schrijf het gewoon op: een cadeaubon, een boek in één bepaalde uitgave, een dagje uit.',
         'add_overview' => 'Je kunt ook meteen toevoegen vanuit Mijn Coves: klik op de + bij een lijst, zonder hem eerst te openen. Iets dat je niet online koopt? Voeg een offline artikel toe, eventueel met een foto.',
+        'add_undo' => 'Iets per ongeluk van je lijst gehaald? Druk op Ongedaan maken in het bericht onderaan het scherm, en het staat er weer op zoals het was.',
         'share_title' => 'Delen en geven',
         'share_link' => 'Deel een Cove met een link. Mensen kunnen laten weten dat ze iets kopen, en jij ziet niet wat al gekocht is, zodat het een verrassing blijft.',
         'share_together' => 'Samen geven: meerdere mensen stellen iets voor, stemmen en leggen samen in voor één cadeau.',
@@ -2395,6 +2400,7 @@ return [
         'edit_birthday' => 'Verjaardag wijzigen',
         'remove' => 'Verwijderen',
         'remove_confirm' => ':name verwijderen? Jullie verdwijnen allebei uit elkaars vriendenlijst.',
+        'unfriend' => 'Verwijder als vriend',
         'save' => 'Opslaan',
         'email' => 'Hun e-mailadres',
         'added' => 'Uitnodiging verstuurd. Ze verschijnen hier zodra ze zijn ingelogd.',

@@ -23,6 +23,8 @@ return [
         'info' => 'En savoir plus',
         'share' => 'Partager',
         'close' => 'Fermer',
+        'cancel' => 'Annuler',
+        'confirm' => 'Continuer',
         'choose_market' => 'Choisissez votre région',
         'countries' => [
             'be' => 'Belgique',
@@ -600,7 +602,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'En faire ma liste',
-        'unsave' => 'Retirer',
+        'unsave' => 'Retirer de Mes Coves',
         'copied' => ':list fait maintenant partie de vos listes. Modifiez-la comme vous voulez.',
         'saved_flash' => ':list est enregistrée dans Mes Coves.',
         'sign_in_hint' => 'Connectez-vous pour garder cette Cove dans Mes Coves.',
@@ -769,6 +771,8 @@ return [
         'items' => ':count articles',
         'one_item' => '1 article',
         'removed' => 'Retiré.',
+        'removed_from' => 'Retiré de :list.',
+        'remove_failed' => 'Cela n’a pas marché. Il est de retour sur la liste.',
         'remove' => 'Retirer',
         'save' => 'Enregistrer',
         'saved' => 'Enregistré',
@@ -2343,6 +2347,7 @@ return [
         'add_photo' => 'Ajoutez votre propre photo à quelque chose que vous avez écrit vous-même.',
         'add_write' => 'Ou écrivez-le simplement : un bon cadeau, un livre dans une édition précise, une sortie.',
         'add_overview' => 'Vous pouvez aussi ajouter directement depuis Mes Coves : touchez le + d\'une liste, sans l\'ouvrir. Quelque chose qui ne s\'achète pas en ligne ? Ajoutez un article hors ligne, avec une photo si vous voulez.',
+        'add_undo' => 'Vous avez retiré quelque chose de votre liste par erreur ? Appuyez sur Annuler dans le message en bas de l’écran, et il revient tel qu’il était.',
         'share_title' => 'Partager et offrir',
         'share_link' => 'Partagez une Cove avec un lien. Les gens peuvent indiquer qu\'ils achètent quelque chose, et vous ne voyez pas ce qui est réservé : la surprise reste entière.',
         'share_together' => 'Offrir ensemble : chacun propose, vote et participe pour un seul cadeau.',
@@ -2384,6 +2389,7 @@ return [
         'edit_birthday' => 'Modifier l\'anniversaire',
         'remove' => 'Retirer',
         'remove_confirm' => 'Retirer :name ? Vous disparaissez de la liste d\'amis de l\'autre, dans les deux sens.',
+        'unfriend' => 'Retirer des amis',
         'save' => 'Enregistrer',
         'email' => 'Son e-mail',
         'added' => 'Invitation envoyée. La personne apparaîtra ici une fois connectée.',

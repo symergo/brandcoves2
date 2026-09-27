@@ -63,8 +63,11 @@ are the same size.
   should lead (owner, 2026-09-27);
 - for a friend: their lists, **visible without a click**, drawn with `ListName` (the list-name
   style, with the kind's icon). They were behind a "Hun lijsten (N)" toggle, which hid the one thing
-  a friend is on this page for. **Details** still opens what is about the connection: which of
-  yours they see, your birthday note about them, and removing the connection.
+  a friend is on this page for. What is about the connection is in the row's ⋯ since 2026-09-27
+  (it was a separate **Details** toggle, a second "more" beside the ⋯): **Verjaardag
+  toevoegen/wijzigen** (your note of their birthday, opened under the row), **Jouw lijsten die
+  {naam} ziet (N)** (opened under the row), and, below a rule in red, **Verwijder als vriend**,
+  which asks first in the site's own popup (`ConfirmDialog`), not `window.confirm`.
   Since 2026-09-26 "their lists" includes every wish list they made "visible to my people", and
   "which of yours they see" every one of yours
   ([wish-list-for-my-people.md](wish-list-for-my-people.md)). Since 2026-09-27 "their lists" are
@@ -96,8 +99,8 @@ width, because there is nothing for a side column):
    for a friend, or **"Niet op GiftCoves · Nodig uit"** (see
    [Inviting a saved person](#inviting-a-saved-person)). Under that, the ways to an idea:
    **Cadeau vinden** (the one filled button; a full row on a phone), **Dit of dat** and **Vraag**
-   (sharing the next row on a phone). **Naam en verjaardag** and **Verwijderen** are in a ⋯ menu
-   beside the name.
+   (sharing the next row on a phone). **Naam en verjaardag**, **Verwijder als vriend** (a friend
+   only, asking first; the saved person stays) and **Verwijderen** are in a ⋯ menu beside the name.
    *Why (owner's review of a phone screenshot, 2026-09-27):* until then all seven actions were
    equal buttons, four rows of them before anything about the person, with a red "Verwijderen"
    among them and "Stuur hun profiellink" and "Nodig uit op GiftCoves" looking like the same thing.
@@ -129,12 +132,17 @@ width, because there is nothing for a side column):
    somebody else is not their wish list and does not appear here.
 4. **Lijsten voor {naam}**: yours, kind `for_someone` or `group`, about this person. Since
    2026-09-27 (owner) always drawn, with **Nieuwe lijst** beside the heading (a menu: Cadeaulijst or
-   Samen geven, `POST /lists` with `recipient_id` and `together`). Each row: the name with its kind
-   pill right after it (it says what the name is), a **share icon** (the action people come for),
-   and a ⋯ menu with **Vraag het aan anderen** and **Instellingen**. Each opens the list page on that tool through
-   `?panel=share|settings` (`Lists/Show.tsx` reads it, for someone who may edit the list) or the ask
-   form (`/ask?list=`). With no list yet the section says so and offers the button, because starting
-   a list for them is what the section is for.
+   Samen geven, `POST /lists` with `recipient_id` and `together`). Since 2026-09-27 (consistency
+   review, round 2) each row **is Mijn Coves' row** (`ListSummaryRow`): the pictures, the count and
+   occasion, the pills, and **Toevoegen**, **Delen** (the same share popup) and the same ⋯ per kind
+   (`listActionItems`: suggestions from {naam}, Vraag het aan anderen, Instellingen, and Verwijderen
+   in red with a confirmation). Until then this page drew the name, a kind pill, a share icon and
+   a ⋯ with two of those items, so the same list offered different things depending on which page
+   you met it on. "Wat je {naam} gaf" is left out here, being this page. `PersonProfile::
+   listsForThem()` sends the row's shape (`summarise()`'s fields plus covers). Deleting from a row
+   sends `stay`, and `WishlistController::destroy()` then returns to this page rather than to Mijn
+   Coves. With no list yet the section says so and offers the button, because starting a list for
+   them is what the section is for. **Their wish lists** use the same row without actions.
 
 The page opens with **"← Mijn mensen"** above the name, drawn like a list's "← Mijn Coves"
 (owner, 2026-09-27).
@@ -186,7 +194,8 @@ d. **No claim state** (invariant 4): no list's items are loaded, and nothing cou
 **Naam en verjaardag** edits name, relationship and birthday (day and month, the shared
 `DayMonth` picker in `Components/PersonParts.tsx`) through the same `PATCH /recipients/{id}`.
 
-**Verwijderen** opens a confirmation on the page, not `window.confirm`, which says what happens:
+**Verwijderen** opens a confirmation popup (`Modal`, since 2026-09-27; it was a red box under the
+header), not `window.confirm`, which says what happens:
 lists you made for them stay but no longer say who they are for (`wishlists.recipient_id` is
 `ON DELETE SET NULL`); what you gave them and their This or that links go (`recipient_gifts` and
 `taste_invites` cascade). After deleting, `then=people` sends you to My people, because "back" is

@@ -6,6 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import Button from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
+import PageHeader from '../../Components/PageHeader'
 
 interface Group {
     id: string
@@ -58,10 +59,9 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
         <>
             <Head title={t('santa.title')} />
 
-            <header className="max-w-2xl">
-                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{t('santa.title')}</h1>
+            <PageHeader className="max-w-2xl" title={t('santa.title')}>
                 <p className="mt-3 text-lg text-ink-soft">{t('santa.subtitle')}</p>
-            </header>
+            </PageHeader>
 
             {!isSignedIn ? (
                 <p className="mt-8 max-w-2xl rounded-card border border-line bg-card p-6">

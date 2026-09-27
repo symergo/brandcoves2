@@ -23,6 +23,8 @@ return [
         'info' => 'Más información',
         'share' => 'Compartir',
         'close' => 'Cerrar',
+        'cancel' => 'Cancelar',
+        'confirm' => 'Continuar',
         'choose_market' => 'Elige tu región',
         'countries' => [
             'be' => 'Bélgica',
@@ -599,7 +601,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'Hacerla mi lista',
-        'unsave' => 'Quitar',
+        'unsave' => 'Quitar de Mis Coves',
         'copied' => ':list ya es una de tus listas. Cámbiala como quieras.',
         'saved_flash' => ':list está guardada en Mis Coves.',
         'sign_in_hint' => 'Inicia sesión para guardar esta Cove en Mis Coves.',
@@ -768,6 +770,8 @@ return [
         'items' => ':count artículos',
         'one_item' => '1 artículo',
         'removed' => 'Eliminado.',
+        'removed_from' => 'Quitado de :list.',
+        'remove_failed' => 'No ha funcionado. Vuelve a estar en la lista.',
         'remove' => 'Eliminar',
         'save' => 'Guardar',
         'saved' => 'Guardado',
@@ -2341,6 +2345,7 @@ return [
         'add_photo' => 'Añade una foto tuya a algo que hayas escrito tú.',
         'add_write' => 'O simplemente escríbelo: un vale, un libro en una edición concreta, una excursión.',
         'add_overview' => 'También puedes añadir directamente desde Mis Coves: pulsa el + de una lista, sin abrirla. ¿Algo que no se compra en internet? Añade un artículo offline, con una foto si quieres.',
+        'add_undo' => '¿Has quitado algo de tu lista sin querer? Pulsa Deshacer en el mensaje de abajo de la pantalla y vuelve a estar como estaba.',
         'share_title' => 'Compartir y regalar',
         'share_link' => 'Comparte una Cove con un enlace. La gente puede decir que va a comprar algo, y tú no ves qué está reservado, así que sigue siendo una sorpresa.',
         'share_together' => 'Regalar juntos: varias personas proponen, votan y ponen dinero para un solo regalo.',
@@ -2382,6 +2387,7 @@ return [
         'edit_birthday' => 'Editar cumpleaños',
         'remove' => 'Quitar',
         'remove_confirm' => '¿Quitar a :name? Desaparecéis de la lista de amigos del otro, en ambos sentidos.',
+        'unfriend' => 'Quitar de amigos',
         'save' => 'Guardar',
         'email' => 'Su correo',
         'added' => 'Invitación enviada. Aparecerá aquí en cuanto inicie sesión.',

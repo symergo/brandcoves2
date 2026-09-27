@@ -1,11 +1,16 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import Badge from './Badge'
-import Button, { fieldClasses } from './Button'
+import Button, { buttonClasses, fieldClasses, rowActionClasses } from './Button'
+import EmptyState from './EmptyState'
 import InfoTip from './InfoTip'
 import ListKindBadge, { kindIcons, type ListKind } from './ListKindBadge'
 import ListName from './ListName'
-import Menu, { MenuItem, MenuSeparator } from './Menu'
+import ListRow, { ListRowBadges, ListRowMeta, ListRowTitle, ListThumb } from './ListRow'
+import ListSummaryRow, { type ListSummary } from './ListSummaryRow'
+import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
+import Modal, { useConfirm } from './Modal'
+import PageHeader from './PageHeader'
 import { budgetLabel, DayMonth, InvitePerson, monthDay } from './PersonParts'
 import ShareRow from './ShareRow'
 import ToolIcon from './ToolIcon'
@@ -31,6 +36,8 @@ export interface Profile {
     /** `MM-DD`, never a year. */
     birthday: string | null
     isFriend: boolean
+    /** Their account's id while they are your friend: "Remove as friend" in the ⋯. */
+    friendId: number | null
     about: {
         interests: Option[]
         vibe: string | null
@@ -43,7 +50,8 @@ export interface Profile {
         tasteSource: 'self' | 'suggested' | null
     }
     theirLists: ProfileList[]
-    listsForThem: ProfileList[]
+    /** Your lists for them, as rows of Mijn Coves (`ListSummaryRow`). */
+    listsForThem: ListSummary[]
     /** Friends only; null for somebody without an account. See App\Services\Social\InCommon. */
     together: {
         /** Lists they are making for somebody else that reached you. */
@@ -120,9 +128,13 @@ export default function PersonProfile({
     const { t } = useTranslations()
     const errors = usePage<SharedProps>().props.errors as Record<string, string> | undefined
     // One panel at a time, like the list page's tools: these are alternatives.
-    // A refused delete comes back with its panel open, so the reason is seen.
-    const [panel, setPanel] = useState<'details' | 'about' | 'link' | 'invite' | 'delete' | null>(errors?.person ? 'delete' : null)
+    const [panel, setPanel] = useState<'details' | 'about' | 'link' | 'invite' | null>(null)
     const toggle = (next: typeof panel) => setPanel(panel === next ? null : next)
+    // Deleting the person asks in a popup (Modal.tsx), like every other
+    // destructive action since 2026-09-27; it was a red box under the header.
+    // A refused delete comes back with the popup open, so the reason is seen.
+    const [deleting, setDeleting] = useState(Boolean(errors?.person))
+    const [confirm, confirmDialog] = useConfirm()
 
     const about = profile.about
     // "Samen met": drawn only when there is something in it.
@@ -176,59 +188,24 @@ export default function PersonProfile({
               - housekeeping (name, birthday, delete): the ⋯ menu, so the red
                 button is not the fourth thing a visitor reads.
             */}
-            <header>
-                {/* The way back, drawn like a list's "← Mijn Coves" (owner, 2026-09-27). */}
-                <Link href={urls.people} className="text-sm text-ink-soft hover:text-ink">
-                    ← {t('people.title')}
-                </Link>
-                <div className="mt-1 flex items-start gap-3">
+            {/* The way back, drawn like a list's "← Mijn Coves" (owner, 2026-09-27). */}
+            <PageHeader
+                back={{ href: urls.people, label: t('people.title') }}
+                size="md"
+                icon={
                     <span
                         aria-hidden
                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent/10 text-lg font-semibold text-accent"
                     >
                         {person.name.slice(0, 1).toUpperCase()}
                     </span>
-                    <div className="min-w-0 flex-1">
-                        <h1 className="text-2xl font-semibold tracking-tight break-words sm:text-3xl">{person.name}</h1>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                            {profile.relationshipLabel !== null &&
-                                profile.relationshipLabel.toLowerCase() !== person.name.toLowerCase() && <span>{profile.relationshipLabel}</span>}
-                            {profile.birthday !== null ? (
-                                <span className="inline-flex items-center">
-                                    <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                                    {formatDay(profile.birthday, market)}
-                                </span>
-                            ) : (
-                                <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
-                                    <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                                    {t('friends.add_birthday')}
-                                </button>
-                            )}
-                            {profile.isFriend ? (
-                                <Badge tone="accent">{t('people.on_giftcoves')}</Badge>
-                            ) : (
-                                urls.invite !== null && (
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <span>{t('people.not_on_giftcoves')}</span>
-                                        <span aria-hidden>·</span>
-                                        <button
-                                            type="button"
-                                            aria-expanded={panel === 'invite'}
-                                            onClick={() => toggle('invite')}
-                                            className={`${textButton} inline-flex items-center gap-1`}
-                                        >
-                                            <ToolIcon name="friends" className="h-4 w-4" />
-                                            {t('people.invite_short')}
-                                        </button>
-                                    </span>
-                                )
-                            )}
-                        </p>
-                    </div>
+                }
+                title={person.name}
+                actions={
                     <Menu
                         label={t('people.more_label', { name: person.name })}
-                        button={<ToolIcon name="more" className="h-5 w-5" />}
-                        buttonClassName="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line hover:border-ink sm:h-9 sm:w-9"
+                        button={<MoreButtonContent word={t('people.more')} />}
+                        buttonClassName={rowActionClasses()}
                     >
                         {(close) => (
                             <>
@@ -242,11 +219,38 @@ export default function PersonProfile({
                                     {t('people.edit_details')}
                                 </MenuItem>
                                 <MenuSeparator />
+                                {/*
+                                  Remove as friend, here as on My people
+                                  (2026-09-27): it ends the connection for both
+                                  of you and asks first. This saved person, and
+                                  what you know about them, stay.
+                                */}
+                                {profile.friendId !== null && (
+                                    <MenuItem
+                                        danger
+                                        onSelect={async () => {
+                                            close()
+
+                                            if (
+                                                await confirm({
+                                                    message: t('friends.remove_confirm', { name: person.name }),
+                                                    confirmLabel: t('friends.unfriend'),
+                                                    danger: true,
+                                                })
+                                            ) {
+                                                router.delete(`/${market.key}/friends/${profile.friendId}`, { preserveScroll: true })
+                                            }
+                                        }}
+                                        icon={<ToolIcon name="friends" className="h-4 w-4" />}
+                                    >
+                                        {t('friends.unfriend')}
+                                    </MenuItem>
+                                )}
                                 <MenuItem
                                     danger
                                     onSelect={() => {
                                         close()
-                                        setPanel('delete')
+                                        setDeleting(true)
                                     }}
                                     icon={<ToolIcon name="trash" className="h-4 w-4" />}
                                 >
@@ -255,7 +259,42 @@ export default function PersonProfile({
                             </>
                         )}
                     </Menu>
-                </div>
+                }
+            >
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+                    {profile.relationshipLabel !== null &&
+                        profile.relationshipLabel.toLowerCase() !== person.name.toLowerCase() && <span>{profile.relationshipLabel}</span>}
+                    {profile.birthday !== null ? (
+                        <span className="inline-flex items-center">
+                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                            {formatDay(profile.birthday, market)}
+                        </span>
+                    ) : (
+                        <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
+                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                            {t('friends.add_birthday')}
+                        </button>
+                    )}
+                    {profile.isFriend ? (
+                        <Badge tone="accent">{t('people.on_giftcoves')}</Badge>
+                    ) : (
+                        urls.invite !== null && (
+                            <span className="inline-flex items-center gap-1.5">
+                                <span>{t('people.not_on_giftcoves')}</span>
+                                <span aria-hidden>·</span>
+                                <button
+                                    type="button"
+                                    aria-expanded={panel === 'invite'}
+                                    onClick={() => toggle('invite')}
+                                    className={`${textButton} inline-flex items-center gap-1`}
+                                >
+                                    <ToolIcon name="friends" className="h-4 w-4" />
+                                    {t('people.invite_short')}
+                                </button>
+                            </span>
+                        )
+                    )}
+                </p>
 
                 {/*
                   The ways to an idea. On a phone the filled button takes the
@@ -263,10 +302,7 @@ export default function PersonProfile({
                   into a ragged third line.
                 */}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                    <Link
-                        href={urls.finder}
-                        className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark sm:min-h-0"
-                    >
+                    <Link href={urls.finder} className={buttonClasses('primary', 'md', 'col-span-2')}>
                         <ToolIcon name="whisperer" className="h-4 w-4" />
                         {t('people.find_gift')}
                     </Link>
@@ -293,30 +329,37 @@ export default function PersonProfile({
                 {panel === 'details' && (
                     <DetailsForm person={person} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
                 )}
+            </PageHeader>
 
-                {panel === 'delete' && (
-                    <div className="mt-4 rounded-card border border-danger/40 bg-card p-4 text-sm" role="alertdialog" aria-labelledby="person-delete">
-                        {groupLists > 0 || errors?.person ? (
-                            <p id="person-delete">{errors?.person ?? t('people.delete_has_group', { name: person.name })}</p>
-                        ) : (
-                            <>
-                                <p id="person-delete">{t('people.delete_confirm', { name: person.name })}</p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => router.delete(urls.recipient, { data: { then: 'people' } })}
-                                    >
-                                        {t('people.delete_yes')}
-                                    </Button>
-                                    <Button variant="secondary" onClick={() => setPanel(null)}>
-                                        {t('people.cancel')}
-                                    </Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-            </header>
+            {/*
+              Deleting the person. Refused while a group gift is about them
+              (the server says so again if it gets the request anyway, and the
+              page comes back with the popup open on its reason).
+            */}
+            {deleting &&
+                (groupLists > 0 || errors?.person ? (
+                    <Modal label={t('people.delete')} onClose={() => setDeleting(false)} width="sm" role="alertdialog">
+                        <p className="text-sm">{errors?.person ?? t('people.delete_has_group', { name: person.name })}</p>
+                        <div className="mt-5 flex justify-end">
+                            <Button variant="secondary" onClick={() => setDeleting(false)} autoFocus>
+                                {t('nav.close')}
+                            </Button>
+                        </div>
+                    </Modal>
+                ) : (
+                    <Modal label={t('people.delete')} onClose={() => setDeleting(false)} width="sm" role="alertdialog">
+                        <p className="text-sm">{t('people.delete_confirm', { name: person.name })}</p>
+                        <div className="mt-5 flex flex-wrap justify-end gap-2">
+                            <Button variant="secondary" onClick={() => setDeleting(false)} autoFocus>
+                                {t('people.cancel')}
+                            </Button>
+                            <Button variant="destructive" onClick={() => router.delete(urls.recipient, { data: { then: 'people' } })}>
+                                {t('people.delete_yes')}
+                            </Button>
+                        </div>
+                    </Modal>
+                ))}
+            {confirmDialog}
 
             {/*
               What you know. Always drawn: with nothing in it, it is not an
@@ -349,22 +392,28 @@ export default function PersonProfile({
                 {panel === 'about' ? (
                     <AboutForm person={person} profile={profile} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
                 ) : facts.length === 0 ? (
-                    <div className="rounded-card border border-dashed border-line p-4">
-                        <p className="text-sm text-ink-soft">{t('people.nothing_known', { name: person.name })}</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            <button type="button" onClick={() => setPanel('about')} className={secondary}>
-                                <ToolIcon name="edit" className="h-4 w-4" />
-                                {t('people.fill_in_yourself')}
-                            </button>
-                            {urls.selfDescribe !== null && (
-                                <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={secondary}>
-                                    <ToolIcon name="link" className="h-4 w-4" />
-                                    {t('people.let_them_fill_in', { name: person.name })}
-                                </button>
-                            )}
-                        </div>
+                    <>
+                        <EmptyState
+                            quiet
+                            action={
+                                <>
+                                    <button type="button" onClick={() => setPanel('about')} className={secondary}>
+                                        <ToolIcon name="edit" className="h-4 w-4" />
+                                        {t('people.fill_in_yourself')}
+                                    </button>
+                                    {urls.selfDescribe !== null && (
+                                        <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={secondary}>
+                                            <ToolIcon name="link" className="h-4 w-4" />
+                                            {t('people.let_them_fill_in', { name: person.name })}
+                                        </button>
+                                    )}
+                                </>
+                            }
+                        >
+                            {t('people.nothing_known', { name: person.name })}
+                        </EmptyState>
                         {linkPanel}
-                    </div>
+                    </>
                 ) : (
                     <>
                         <dl className="space-y-2">
@@ -395,7 +444,7 @@ export default function PersonProfile({
 
             {profile.theirLists.length > 0 && (
                 <Section title={t('people.their_wishlists', { name: person.name })} tip={t('people.their_wishlists_tip', { name: person.name })}>
-                    <Lists lists={profile.theirLists} format={(iso) => formatDay(iso, market, { year: true })} external />
+                    <TheirLists lists={profile.theirLists} format={(iso) => formatDay(iso, market, { year: true })} />
                 </Section>
             )}
 
@@ -444,10 +493,21 @@ export default function PersonProfile({
                     </Menu>
                 }
             >
+                {/*
+                  The same rows as Mijn Coves (ListSummaryRow, 2026-09-27):
+                  add, share (the same popup) and the same ⋯ per kind, where
+                  this page had a share link and two menu items of its own.
+                */}
                 {profile.listsForThem.length > 0 ? (
-                    <Lists lists={profile.listsForThem} format={(iso) => formatDay(iso, market, { year: true })} actions />
+                    <ul className="divide-y divide-line rounded-card border border-line bg-card">
+                        {profile.listsForThem.map((list) => (
+                            <li key={list.id}>
+                                <ListSummaryRow list={list} onPersonPage />
+                            </li>
+                        ))}
+                    </ul>
                 ) : (
-                    <p className="text-sm text-ink-soft">{t('people.lists_for_none', { name: person.name })}</p>
+                    <EmptyState quiet>{t('people.lists_for_none', { name: person.name })}</EmptyState>
                 )}
             </Section>
 
@@ -519,93 +579,27 @@ function Section({ title, tip, aside, children }: { title: string; tip?: string;
     )
 }
 
-function Lists({
-    lists,
-    format,
-    external = false,
-    actions = false,
-}: {
-    lists: ProfileList[]
-    format: (iso: string) => string
-    external?: boolean
-    /** Your own lists: a ⋯ menu per row with what the list page's tools do. */
-    actions?: boolean
-}) {
-    const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
-    const row = 'flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20'
-
+/**
+ * Their wish lists: the same row as every list (`ListRow`), without actions,
+ * since they are theirs. The kind as a word as well as the mark: two lists
+ * called "Voor David" and "David" read as the same thing until one says
+ * "Cadeaulijst" and the other "Samen geven" (owner's review). Opened by
+ * share link, a page people keep in a tab, so a real anchor.
+ */
+function TheirLists({ lists, format }: { lists: ProfileList[]; format: (iso: string) => string }) {
     return (
         <ul className="divide-y divide-line rounded-card border border-line bg-card">
-            {lists.map((list) => {
-                /*
-                  The kind as a word, not only an icon: two lists called "Voor
-                  David" and "David" read as the same thing until one says
-                  "Cadeaulijst" and the other "Samen geven" (owner's review).
-                */
-                // The kind right after the name (owner, 2026-09-27): it says
-                // what the name is, so it is read with it, not at the far end.
-                const body = (
-                    <>
-                        <span className="flex min-w-0 flex-wrap items-center gap-2">
-                            <ListName name={list.title} kind={list.kind} />
+            {lists.map((list) => (
+                <li key={list.id}>
+                    <ListRow href={list.url} external thumb={<ListThumb kind={list.kind} />}>
+                        <ListRowTitle>{list.title}</ListRowTitle>
+                        {list.eventDate && <ListRowMeta>{format(list.eventDate)}</ListRowMeta>}
+                        <ListRowBadges>
                             <ListKindBadge kind={list.kind} />
-                        </span>
-                        {list.eventDate && <span className="text-xs text-ink-soft">{format(list.eventDate)}</span>}
-                    </>
-                )
-
-                return (
-                    <li key={list.id} className="flex items-center">
-                        {/* Their lists open by share link, a page people often keep in a tab: a real anchor. */}
-                        {external ? (
-                            <a href={list.url} className={row}>
-                                {body}
-                            </a>
-                        ) : (
-                            <Link href={list.url} className={row}>
-                                {body}
-                            </Link>
-                        )}
-                        {/*
-                          The list page's tools, one tap from here: each item
-                          opens the list on that tool (`?panel=`).
-                        */}
-                        {actions && (
-                            <span className="flex items-center pr-2">
-                                {/* Share is the action people come for: its own icon; the rest under ⋯. */}
-                                <Link
-                                    href={`${list.url}?panel=share`}
-                                    aria-label={`${t('lists.share')}: ${list.title}`}
-                                    title={t('lists.share')}
-                                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink sm:h-8 sm:w-8"
-                                >
-                                    <ToolIcon name="shared" className="h-4 w-4" />
-                                </Link>
-                                <Menu
-                                    label={t('people.list_actions', { name: list.title })}
-                                    button={<ToolIcon name="more" className="h-4 w-4" />}
-                                    buttonClassName="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-line/40 sm:h-8 sm:w-8"
-                                >
-                                    {() => (
-                                        <>
-                                            <MenuItem
-                                                href={`/${market.key}/ask?list=${list.id}`}
-                                                icon={<ToolIcon name="board" className="h-4 w-4" />}
-                                            >
-                                                {t('lists.ask_others')}
-                                            </MenuItem>
-                                            <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
-                                                {t('lists.settings')}
-                                            </MenuItem>
-                                        </>
-                                    )}
-                                </Menu>
-                            </span>
-                        )}
-                    </li>
-                )
-            })}
+                        </ListRowBadges>
+                    </ListRow>
+                </li>
+            ))}
         </ul>
     )
 }

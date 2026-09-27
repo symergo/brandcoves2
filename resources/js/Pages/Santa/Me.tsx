@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react'
+import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
 import SaveToList from '../../Components/SaveToList'
 import { formatBudget, formatDay, formatPrice, type Cents, type SharedProps } from '../../types'
@@ -54,11 +55,13 @@ export default function SantaMe({ group, me }: Props) {
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
-            <header className="max-w-2xl">
-                <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
-                    <SantaBadge />
-                </div>
+            <PageHeader
+                className="max-w-2xl"
+                size="md"
+                back={{ href: `/${market.key}/santa`, label: t('santa.title') }}
+                title={group.title}
+                beside={<SantaBadge />}
+            >
 
                 {!group.drawn ? (
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
@@ -79,7 +82,7 @@ export default function SantaMe({ group, me }: Props) {
                         .filter(Boolean)
                         .join(' · ')}
                 </p>
-            </header>
+            </PageHeader>
 
             {/*
               Your own list, pushed before anything else.

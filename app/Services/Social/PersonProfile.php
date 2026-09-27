@@ -6,6 +6,7 @@ namespace App\Services\Social;
 
 use App\Enums\Interest;
 use App\Enums\ListKind;
+use App\Enums\ListVisibility;
 use App\Enums\TasteSource;
 use App\Models\Friendship;
 use App\Models\Recipient;
@@ -72,6 +73,9 @@ class PersonProfile
             'relationshipLabel' => $this->people->relationshipLabel($person->relationship),
             'birthday' => $birthday?->toString(),
             'isFriend' => $friendship !== null,
+            // Their account's id, for "Remove as friend" in the page's ⋯ menu
+            // (DELETE /friends/{id}, the same request as on My people).
+            'friendId' => $friendship === null ? null : (int) $friendship->friend_id,
             'about' => $this->about($person),
             'theirLists' => $friendship === null ? [] : $this->theirWishLists($shared[$friendship->friend_id] ?? collect(), $current),
             'listsForThem' => $this->listsForThem($viewer, $person, $current),
@@ -152,7 +156,13 @@ class PersonProfile
     }
 
     /**
-     * @return list<array{id: string, title: string, kind: string, url: string, eventDate: string|null}>
+     * Your lists for them, in the shape of a row on Mijn Coves (`summarise()`
+     * plus the overview's covers): since 2026-09-27 both pages draw the same
+     * row (`ListSummaryRow`), with the pictures, the count, the pills, and
+     * add, share and the same ⋯. Only what that row reads. The share link is
+     * given because these are your own lists.
+     *
+     * @return list<array<string, mixed>>
      */
     private function listsForThem(User $viewer, Recipient $person, CurrentMarket $current): array
     {
@@ -160,6 +170,12 @@ class PersonProfile
             ->where('owner_user_id', $viewer->id)
             ->where('recipient_id', $person->id)
             ->whereIn('kind', [ListKind::ForSomeone->value, ListKind::Group->value])
+            ->with([
+                // As on Mijn Coves: four stored pictures, which leaves Amazon
+                // out (invariant 6).
+                'items' => fn ($q) => $q->whereNotNull('snapshot_image_url')->latest('created_at')->limit(4),
+            ])
+            ->withCount(['items', 'suggestions'])
             ->latest()
             ->get()
             ->map(fn (Wishlist $list) => [
@@ -169,6 +185,23 @@ class PersonProfile
                 // Your own page of it, where you can edit it.
                 'url' => $current->url("lists/{$list->id}"),
                 'eventDate' => $list->event_date?->toDateString(),
+                'isDefault' => (bool) $list->is_default,
+                'visibility' => $list->visibility->value,
+                'itemCount' => (int) $list->items_count,
+                'covers' => $list->items->pluck('snapshot_image_url')->all(),
+                'recipient' => ['id' => $person->id, 'name' => $person->name],
+                'suggestions' => (int) $list->suggestions_count,
+                'sharedWithMe' => false,
+                'linkCanAdd' => $list->linkCanAdd(),
+                'ownerName' => null,
+                'role' => null,
+                'shareUrl' => $list->visibility === ListVisibility::Private
+                    ? null
+                    : url($current->url("l/{$list->share_token}")),
+                // Only a wish list of your own can be shown to your people.
+                'visibleToFriends' => null,
+                'pledgersVisible' => $list->pledgersVisible(),
+                'votingEnabled' => $list->votingEnabled(),
             ])
             ->values()
             ->all();

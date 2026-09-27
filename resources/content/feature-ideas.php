@@ -199,4 +199,24 @@ return [
             'body' => 'En Pregunta a los demás eliges a quién preguntas: la comunidad de GiftCoves en el tablón público, o solo tu gente. Tus amigos en GiftCoves reciben entonces un aviso enseguida, y tú recibes un enlace para enviarlo a quien quieras. Esa pregunta no está en el tablón.',
         ],
     ],
+    'undo-remove-from-list' => [
+        'status' => 'done',
+        'sort' => 60,
+        'nl' => [
+            'title' => 'Ongedaan maken als je iets van je lijst haalt',
+            'body' => 'Haal je iets van je lijst, dan zegt een bericht onderaan waar het vandaan kwam, met Ongedaan maken erbij. Druk erop en het staat er weer, met je notitie en alles wat anderen erbij deden.',
+        ],
+        'en' => [
+            'title' => 'Undo when you take something off your list',
+            'body' => 'Take something off your list and a message at the bottom says which list it left, with Undo beside it. Press it and it is back, with your note and everything other people did with it.',
+        ],
+        'fr' => [
+            'title' => 'Annuler quand vous retirez quelque chose de votre liste',
+            'body' => 'Retirez quelque chose de votre liste et un message en bas indique de quelle liste il est parti, avec Annuler à côté. Appuyez dessus et il revient, avec votre note et tout ce que les autres en avaient fait.',
+        ],
+        'es' => [
+            'title' => 'Deshacer cuando quitas algo de tu lista',
+            'body' => 'Quita algo de tu lista y un mensaje abajo dice de qué lista salió, con Deshacer al lado. Púlsalo y vuelve a estar, con tu nota y todo lo que los demás hicieron con él.',
+        ],
+    ],
 ];

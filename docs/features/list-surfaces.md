@@ -1023,9 +1023,11 @@ kind's mark on an empty list), always the same width so every name starts at the
   got the same treatment (Cadeau vinden and ⋯).
 - **Share is a popup** (owner: "share button should show popup interface"), `ShareListDialog`:
   whether it is shared, the link to copy or send (`ShareRow`), "Delen aanzetten" for a private
-  list (the list page's own `PATCH`, the popup staying open while the link arrives), and "Meer
-  deelopties" to the full panel on the list page (who may add, group options, handing it over).
-  The overview now sends each of your own shared lists' `shareUrl`.
+  list (the list page's own `PATCH`, the popup staying open while the link arrives). The overview
+  now sends each of your own shared lists' `shareUrl`. *Later the same day:* the popup gained the
+  sharing switches and lost "Meer deelopties"; since round 2 of the consistency review the
+  switches are `ShareSettings`, the same component as the list page's share panel (see
+  [design-system.md](design-system.md#the-consistency-review-round-2-2026-09-27)).
 
 **The overview's ⋯ is the list page's, per kind** (owner: "the ... menu for the group lists should
 contain more actions, check the list page itself"): on a list about somebody (Cadeaulijst, Samen

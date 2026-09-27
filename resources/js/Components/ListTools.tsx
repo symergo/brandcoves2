@@ -1,13 +1,16 @@
 import { router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
-import Menu, { MenuItem, MenuSeparator } from './Menu'
+import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
 import TasteTogetherPanel, { type TasteTogetherState } from './TasteTogetherPanel'
 import { invalidate } from '../savedItems'
 import ToolIcon, { type ToolKey } from './ToolIcon'
 import InfoTip from './InfoTip'
+import { useConfirm } from './Modal'
+import Option from './Option'
+import ShareSettings from './ShareSettings'
 import type { Wish } from './TheirWishes'
 import { useTranslations } from '../useTranslations'
 
@@ -124,58 +127,6 @@ interface Props {
 
 export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa' | 'together'
 
-/**
- * One choice, as a card you press rather than a dot you aim at.
- *
- * The sharing settings were bare inputs with their label and a grey hint
- * running the full width of the panel — about 1,100px on a laptop, so a
- * two-line explanation became one very long line and the eye had to travel back
- * across the whole page to find the next option. Four of them stacked like that
- * read as a form to fill in rather than a question to answer, which is the
- * opposite of what these are: nothing here is typed, every one is a choice
- * between two stated outcomes.
- *
- * So each option is a bordered card, the whole of it is the hit target, and the
- * selected one is tinted. That gives the group a shape you can take in without
- * reading it, makes the target a finger rather than a 13px circle, and — with
- * the column capped — puts the hint on two comfortable lines under its own
- * label instead of one line under all of them.
- */
-export function Option({
-    type,
-    name,
-    checked,
-    onChange,
-    label,
-    hint,
-}: {
-    type: 'radio' | 'checkbox'
-    name?: string
-    checked: boolean
-    onChange: () => void
-    label: string
-    hint?: string
-}) {
-    return (
-        <label
-            className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${
-                checked ? 'border-accent bg-accent/5' : 'border-line hover:border-ink/30'
-            }`}
-        >
-            <input
-                type={type}
-                name={name}
-                checked={checked}
-                onChange={onChange}
-                className="mt-0.5 shrink-0"
-            />
-            <span className="min-w-0">
-                <span className="block text-sm font-medium">{label}</span>
-                {hint && <span className="mt-0.5 block text-xs text-ink-soft">{hint}</span>}
-            </span>
-        </label>
-    )
-}
 
 /**
  * The panels behind a list's tools, opened one at a time from the header
@@ -248,25 +199,20 @@ export default function ListTools({
         return () => clearTimeout(timer)
     }, [saved])
 
-    const setting = (data: Record<string, string | number | boolean | null>) =>
+    const setting = (data: Record<string, string | number | boolean | null>, done?: () => void) =>
         router.patch(`${base}/lists/${list.id}`, data, {
             preserveScroll: true,
             onSuccess: () => setSaved(Date.now()),
+            onFinish: done,
         })
+
+    // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
+    const [confirm, confirmDialog] = useConfirm()
 
     // Only a wish list of your own is a registry; every kind may carry an
     // occasion. The delivery address is the half that stays behind this.
     const isRegistry = list.kind === 'mine'
 
-    /*
-     * Does the share panel have anything to say about what the link allows?
-     *
-     * The section used to render regardless and be empty on a private wish
-     * list of your own, which is most lists, so the panel opened onto a
-     * heading-less gap. Adding needs a live link on a list that is not about
-     * you; the two group switches need a group. Nothing else exists.
-     */
-    const linkOptions = access.isOwner && ((list.shareUrl !== null && list.kind !== 'mine') || list.kind === 'group')
 
 
     /*
@@ -435,117 +381,21 @@ export default function ListTools({
                         */
                         <div>
                             {/*
-                              What is true right now, as the heading, before
-                              any control. On a page where the mistake is
-                              thinking something is private when it is not,
-                              the state is worth being the first line.
+                              Whether it is shared, its link and what the link
+                              allows: the same component as the share popup on
+                              Mijn Coves and a person's page (ShareSettings), so
+                              the two cannot drift apart again. Who gets the
+                              link by name, who was let in before, publishing
+                              and handing over follow, and are the list page's
+                              alone.
                             */}
-                            <section>
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <h3 className="text-sm font-medium">
-                                            {list.shareUrl
-                                                ? t('lists.sharing_on')
-                                                : list.visibleToFriends
-                                                  ? t('lists.sharing_off_people')
-                                                  : t('lists.sharing_off')}
-                                        </h3>
-                                        {!list.shareUrl && !list.visibleToFriends && (
-                                            <p className="mt-1 text-xs text-ink-soft">{t('lists.share_hint')}</p>
-                                        )}
-                                    </div>
-                                    {/*
-                                      Stop sharing beside the sentence it ends,
-                                      quiet and second: a bordered secondary
-                                      button against a heading, not grey text
-                                      under the link.
-                                    */}
-                                    {list.shareUrl && access.isOwner && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (confirm(t('lists.disable_sharing_confirm'))) {
-                                                    setting({ visibility: 'private' })
-                                                }
-                                            }}
-                                            className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-soft hover:border-ink hover:text-ink"
-                                        >
-                                            {t('lists.disable_sharing')}
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/*
-                                  The press that publishes the list is a button
-                                  that says so. It used to be labelled "Share",
-                                  the same word as the chip that opened this
-                                  panel, so the panel appeared to ask the same
-                                  question twice; "Turn sharing on" is the
-                                  answer to the sentence above it.
-                                */}
-                                {!list.shareUrl && access.isOwner && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setting({ visibility: 'link' })}
-                                        className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-                                    >
-                                        {t('lists.enable_sharing')}
-                                    </button>
-                                )}
-
-                                {list.shareUrl && (
-                                    <div className="mt-3">
-                                        <ShareRow
-                                            url={list.shareUrl}
-                                            text={t('lists.share_text', { title: list.title })}
-                                        />
-                                    </div>
-                                )}
-                            </section>
-
-                            {/*
-                              "Visible to my people" (owner's request,
-                              2026-09-26): all of the owner's friends on
-                              GiftCoves see this wish list and can pick from it
-                              for a list they make for the owner. Independent
-                              of the link above: a private list with this on is
-                              seen by those friends and nobody else.
-
-                              friends.md records why a switch like this was
-                              pulled once: friendships accumulate by opening
-                              links, so "my friends" was an audience nobody
-                              could see. The answer here is to show it: the
-                              names are under the switch, the same names the
-                              picker below offers. See
-                              docs/features/wish-list-for-my-people.md.
-                            */}
-                            {access.isOwner && list.visibleToFriends !== null && (
-                                <section className="mt-6">
-                                    <label
-                                        className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${
-                                            list.visibleToFriends ? 'border-accent bg-accent/5' : 'border-line hover:border-ink/30'
-                                        }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={list.visibleToFriends}
-                                            onChange={() => setting({ visible_to_friends: !list.visibleToFriends })}
-                                            className="mt-0.5 shrink-0"
-                                        />
-                                        <span className="flex min-w-0 flex-1 flex-wrap items-center">
-                                            <span className="text-sm font-medium">{t('lists.visible_to_people')}</span>
-                                            <InfoTip>{t('lists.visible_to_people_tip')}</InfoTip>
-                                            <span className="block w-full text-xs text-ink-soft">
-                                                {friends.length > 0
-                                                    ? t('lists.visible_to_people_who', {
-                                                          names: friends.map((friend) => friend.name).join(', '),
-                                                      })
-                                                    : t('lists.visible_to_people_nobody')}
-                                            </span>
-                                        </span>
-                                    </label>
-                                </section>
-                            )}
+                            <ShareSettings
+                                list={list}
+                                friends={friends}
+                                onSetting={setting}
+                                saved={saved !== 0}
+                                readOnly={!access.isOwner}
+                            />
 
                             {/*
                               Share with friends: names you pick, not a switch.
@@ -568,15 +418,16 @@ export default function ListTools({
                             */}
                             {list.shareUrl && access.isOwner && friends.length > 0 && (
                                 <section className="mt-6">
-                                    <h3 className="text-sm font-medium">
+                                    {/* How the chips behave, behind the (i) (2026-09-27). */}
+                                    <h3 className="flex flex-wrap items-center text-sm font-medium">
                                         {t('lists.share_with_friends')}
                                         {list.sharedWith.length > 0 && (
                                             <span className="ml-1 font-normal text-ink-soft">
                                                 ({list.sharedWith.length})
                                             </span>
                                         )}
+                                        <InfoTip>{t('lists.share_with_friends_hint')}</InfoTip>
                                     </h3>
-                                    <p className="mt-1 text-xs text-ink-soft">{t('lists.share_with_friends_hint')}</p>
                                     {/*
                                       One tap per friend, and it acts. A chip
                                       used to be a checkbox and the row ended
@@ -605,13 +456,12 @@ export default function ListTools({
                                                     <li key={friend.id}>
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
+                                                            onClick={async () => {
                                                                 if (
-                                                                    !window.confirm(
-                                                                        t('lists.unshare_confirm', {
-                                                                            name: friend.name,
-                                                                        }),
-                                                                    )
+                                                                    !(await confirm({
+                                                                        message: t('lists.unshare_confirm', { name: friend.name }),
+                                                                        confirmLabel: t('lists.unshare_from', { name: friend.name }),
+                                                                    }))
                                                                 ) {
                                                                     return
                                                                 }
@@ -662,63 +512,6 @@ export default function ListTools({
                             )}
 
                             {/*
-                              What the link allows, as a short list of switches
-                              under one heading. Each is its own condition,
-                              because the three are answerable at different
-                              times: adding needs a live link on a list that is
-                              not about you (on your own wish list the holders
-                              are shopping for you, and "anyone can add" would
-                              invite them to write your list); the two group
-                              switches need a group. See the Wishlist model
-                              for what each defaults to when nobody has said.
-                            */}
-                            {linkOptions && (
-                                <section className="mt-6">
-                                    <div className="space-y-2">
-                                        {list.shareUrl && list.kind !== 'mine' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.linkCanAdd}
-                                                onChange={() => setting({ link_can_add: ! list.linkCanAdd })}
-                                                label={t('lists.anyone_can_add')}
-                                                hint={t('lists.anyone_can_add_hint')}
-                                            />
-                                        )}
-                                        {/*
-                                          Names only, never amounts: the ladder
-                                          of who put in how much stays the
-                                          organiser's whatever this says. See
-                                          ContributionView.
-                                        */}
-                                        {list.kind === 'group' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.pledgersVisible}
-                                                onChange={() => setting({ pledgers_visible: ! list.pledgersVisible })}
-                                                label={t('lists.pledgers_visible')}
-                                                hint={t('lists.pledgers_visible_hint')}
-                                            />
-                                        )}
-                                        {/*
-                                          Switching voting off deletes nothing:
-                                          a vote is somebody's opinion, and
-                                          turning it back on shows the tally as
-                                          it was.
-                                        */}
-                                        {list.kind === 'group' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.votingEnabled}
-                                                onChange={() => setting({ voting_enabled: ! list.votingEnabled })}
-                                                label={t('lists.voting_enabled')}
-                                                hint={t('lists.voting_enabled_hint')}
-                                            />
-                                        )}
-                                    </div>
-                                </section>
-                            )}
-
-                            {/*
                               The people who were let in one at a time, back
                               when that was how sharing worked. Nothing creates
                               collaborators any more, and people granted access
@@ -753,20 +546,6 @@ export default function ListTools({
                                         ))}
                                     </ul>
                                 </section>
-                            )}
-
-                            {/*
-                              One confirmation for the switches, at the foot,
-                              holding its height so a save never nudges the
-                              panel. Only when there is a switch to confirm:
-                              a private wish list of your own has none, and
-                              held blank height under a single button was part
-                              of the gap this redesign removed.
-                            */}
-                            {(linkOptions || (access.isOwner && list.kind === 'group')) && (
-                                <p role="status" aria-live="polite" className="mt-3 h-4 text-xs text-sage">
-                                    {saved !== 0 && t('lists.saved')}
-                                </p>
                             )}
                         </div>
                     )}
@@ -996,7 +775,7 @@ export default function ListTools({
                                                 })
                                             }
                                             label={t('lists.price_watch')}
-                                            hint={t('lists.price_watch_hint')}
+                                            tip={t('lists.price_watch_hint')}
                                         />
                                         {list.priceWatchPercent !== null && (
                                             <label className="flex items-center gap-2 pl-3 text-sm">
@@ -1093,7 +872,11 @@ export default function ListTools({
                     )}
                     {open === 'settings' && (
                         <div className="mt-8 border-t border-line pt-6">
-                            <h3 className="text-sm font-medium">{t('registry.badge')}</h3>
+                            {/* What the occasion is for, behind the (i) (2026-09-27). */}
+                            <h3 className="flex flex-wrap items-center text-sm font-medium">
+                                {t('registry.badge')}
+                                <InfoTip>{t('registry.hint')}</InfoTip>
+                            </h3>
 
                             <form
                                 className="mt-3 grid gap-3 sm:grid-cols-2"
@@ -1130,8 +913,6 @@ export default function ListTools({
                                     )
                                 }}
                             >
-                                <p className="text-xs text-ink-soft sm:col-span-2">{t('registry.hint')}</p>
-
                                 <label className="block text-sm">
                                     {t('registry.occasion')}
                                     <select
@@ -1172,15 +953,13 @@ export default function ListTools({
                                 {isRegistry && (
                                 <label className="block text-sm sm:col-span-2">
                                     {t('registry.address')}
+                                    <InfoTip>{t('registry.address_hint')}</InfoTip>
                                     <textarea
                                         name="delivery_address"
                                         rows={2}
                                         defaultValue={deliveryAddress ?? ''}
                                         className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
                                     />
-                                    <span className="mt-1 block text-xs text-ink-soft">
-                                        {t('registry.address_hint')}
-                                    </span>
                                 </label>
                                 )}
 
@@ -1242,20 +1021,26 @@ export default function ListTools({
 
                     {open === 'share' && canHandOver && (
                         <div className="mt-6">
-                        <h3 className="text-sm font-medium">{t('handover.badge')}</h3>
+                        <h3 className="flex flex-wrap items-center text-sm font-medium">
+                            {t('handover.badge')}
+                            <InfoTip>{t('handover.hint', { name: list.recipient?.name ?? '' })}</InfoTip>
+                        </h3>
                         <form
                             className="mt-3 flex flex-wrap gap-2"
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                                 e.preventDefault()
 
-                                if (confirm(t('handover.confirm', { name: handTo }))) {
+                                if (
+                                    await confirm({
+                                        message: t('handover.confirm', { name: handTo }),
+                                        confirmLabel: t('handover.action'),
+                                        danger: true,
+                                    })
+                                ) {
                                     router.post(`${base}/lists/${list.id}/handover`, { email: handTo })
                                 }
                             }}
                         >
-                            <p className="w-full text-xs text-ink-soft">
-                                {t('handover.hint', { name: list.recipient?.name ?? '' })}
-                            </p>
                             <input
                                 type="email"
                                 required
@@ -1307,6 +1092,7 @@ export default function ListTools({
             )}
 
             {suggestionsBlock}
+            {confirmDialog}
         </div>
     )
 }
@@ -1450,12 +1236,15 @@ export function ListToolsBar({
     // owner's people.
     const shareOn = (shared && Boolean(list.shareUrl)) || Boolean(list.visibleToFriends)
 
+    const [confirm, confirmDialog] = useConfirm()
+
     if (!access.isOwner) {
         return null
     }
 
     return (
         <div className="flex shrink-0 items-center gap-2">
+            {confirmDialog}
             {/*
               Share, the one primary action, as a button with its word.
               Lit (sage) while the list has a live link, the colour this
@@ -1483,13 +1272,7 @@ export function ListToolsBar({
             <Menu
                 label={t('lists.more_tools_label')}
                 width={280}
-                button={
-                    <>
-                        <ToolIcon name="more" className="h-4 w-4 shrink-0" />
-                        <span>{t('lists.more_tools')}</span>
-                        <ToolIcon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-soft" />
-                    </>
-                }
+                button={<MoreButtonContent word={t('lists.more_tools')} wordOnPhone />}
                 buttonClassName={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm whitespace-nowrap transition ${
                     open !== null && open !== 'share'
                         ? 'border-accent bg-accent/10 text-accent'
@@ -1556,10 +1339,10 @@ export function ListToolsBar({
                         <MenuItem
                             danger
                             icon={<ToolIcon name="trash" className="h-4 w-4" />}
-                            onSelect={() => {
+                            onSelect={async () => {
                                 close()
 
-                                if (confirm(t('lists.delete_confirm'))) {
+                                if (await confirm({ message: t('lists.delete_confirm'), confirmLabel: t('lists.delete'), danger: true })) {
                                     router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
                                 }
                             }}

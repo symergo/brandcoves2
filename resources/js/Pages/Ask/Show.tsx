@@ -8,6 +8,7 @@ import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import InfoTip from '../../Components/InfoTip'
+import PageHeader from '../../Components/PageHeader'
 import AskShareDialog from '../../Components/AskShareDialog'
 import { HitList, HitRow, SearchField } from '../../Components/ProductSearch'
 
@@ -119,28 +120,26 @@ export default function AskShow({
         <>
             <Head title={question.title} />
 
-            <nav className="text-sm">
-                <Link href={`${base}/ask`} className="text-ink-soft underline hover:text-ink">
-                    {t('ask.title')}
-                </Link>
-            </nav>
-
-            <header className="mt-4 max-w-2xl">
-                {/*
+            <PageHeader
+                className="max-w-2xl"
+                size="md"
+                back={{ href: `${base}/ask`, label: t('ask.title') }}
+                /*
                   Who can see it, before what it says: a friend opening it
                   from a notification should know it is not on a public page.
-                */}
-                {question.audience === 'people' && (
-                    <p className="mb-2 flex items-center gap-1.5 text-sm text-ink-soft">
-                        <ToolIcon name="people" className="h-4 w-4" />
-                        {t('ask.people_only.badge')}
-                        <InfoTip>{t('ask.people_only.badge_hint')}</InfoTip>
-                    </p>
-                )}
-
-                <div className="flex items-start justify-between gap-3">
-                    <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{question.title}</h1>
-                    {question.shareUrl && (
+                */
+                before={
+                    question.audience === 'people' ? (
+                        <p className="flex items-center gap-1.5 text-sm text-ink-soft">
+                            <ToolIcon name="people" className="h-4 w-4" />
+                            {t('ask.people_only.badge')}
+                            <InfoTip>{t('ask.people_only.badge_hint')}</InfoTip>
+                        </p>
+                    ) : undefined
+                }
+                title={question.title}
+                actions={
+                    question.shareUrl ? (
                         <button
                             type="button"
                             onClick={() => setSharing(true)}
@@ -150,9 +149,9 @@ export default function AskShow({
                             <span className="hidden sm:inline">{t('ask.share')}</span>
                             <span className="sr-only sm:hidden">{t('ask.share')}</span>
                         </button>
-                    )}
-                </div>
-
+                    ) : undefined
+                }
+            >
                 {sharing && question.shareUrl && (
                     <AskShareDialog
                         title={question.title}
@@ -216,7 +215,7 @@ export default function AskShow({
                         {question.status === 'rejected' ? t('ask.rejected_notice') : t('ask.pending_notice')}
                     </p>
                 )}
-            </header>
+            </PageHeader>
 
             <section className="mt-10">
                 <h2 className="text-lg font-medium">
