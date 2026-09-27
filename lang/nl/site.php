@@ -775,6 +775,7 @@ return [
         'one_item' => '1 item',
         'removed' => 'Verwijderd.',
         'removed_from' => 'Van :list gehaald.',
+        'remove_failed' => 'Dat lukte niet. Het staat weer op de lijst.',
         'remove' => 'Verwijderen',
         'save' => 'Bewaren',
         'saved' => 'Bewaard',

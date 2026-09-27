@@ -935,6 +935,7 @@ return [
         'one_item' => '1 item',
         'removed' => 'Removed.',
         'removed_from' => 'Removed from :list.',
+        'remove_failed' => 'That did not work. It is back on the list.',
         'remove' => 'Remove',
         'save' => 'Save',
         'saved' => 'Saved',

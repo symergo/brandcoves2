@@ -772,6 +772,7 @@ return [
         'one_item' => '1 article',
         'removed' => 'Retiré.',
         'removed_from' => 'Retiré de :list.',
+        'remove_failed' => 'Cela n’a pas marché. Il est de retour sur la liste.',
         'remove' => 'Retirer',
         'save' => 'Enregistrer',
         'saved' => 'Enregistré',

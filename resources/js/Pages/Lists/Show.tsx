@@ -13,6 +13,7 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import PageHeader from '../../Components/PageHeader'
+import { useHiddenItems } from '../../pendingRemovals'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import OwnItemMenu from '../../Components/OwnItemMenu'
 import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
@@ -150,7 +151,7 @@ export default function ListShow({
     friends,
     role,
     ownerName,
-    items,
+    items: allItems,
     pot,
     target,
     asked,
@@ -172,6 +173,10 @@ export default function ListShow({
     const { market, flash } = usePage<SharedProps>().props
     const pageUrl = usePage().url
     const { t } = useTranslations()
+    // An item you just took off is gone from the page while its Undo is on
+    // screen, before the server hears of it (pendingRemovals.ts).
+    const hidden = useHiddenItems()
+    const items = hidden.size === 0 ? allItems : allItems.filter((item) => !hidden.has(item.id))
 
     // Which hand-written item has its correction form open. One at a time: it
     // is a small fix, not a mode.
@@ -518,6 +523,7 @@ export default function ListShow({
                                             base={base}
                                             listId={list.id}
                                             itemId={item.id}
+                                            listTitle={list.title}
                                             title={item.title}
                                             groupId={item.groupId}
                                             manual={item.manual}

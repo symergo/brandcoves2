@@ -40,6 +40,13 @@ export interface SaveToast {
     tone: 'ok' | 'error'
     /** Present only when there is a row to take back out again. */
     undo?: { itemId: number; groupId?: number }
+    /**
+     * A removal that has not happened yet (`pendingRemovals.ts`): `commit`
+     * sends it when the toast goes (its six seconds run out, it is closed,
+     * another message replaces it, the page is left), `revert` puts the item
+     * back when Undo is pressed instead. Exactly one of the two runs.
+     */
+    pending?: { commit: () => void; revert: () => void }
     /** Where the thing went, for a "View list" link. */
     listId?: string
 }
@@ -82,8 +89,34 @@ export function listFrom(result: { listTitle: string; listKind?: ListKind; messa
 }
 
 export function show(toast: Omit<SaveToast, 'key'>): void {
+    // A removal waiting on the message being replaced goes through now.
+    current?.pending?.commit()
     current = { ...toast, key: nextKey++ }
     notify()
+}
+
+/** Undo on a pending removal: put it back, and the removal never happens. */
+export function revert(key: number): void {
+    if (current?.key !== key || current.pending === undefined) return
+
+    current.pending.revert()
+    current = null
+    notify()
+}
+
+/*
+ * Leaving the page (a closed tab, a reload) commits a pending removal: the
+ * request is sent with `keepalive`, which outlives the page. If it is lost
+ * anyway the item is simply still on the list, the safe way to fail.
+ */
+if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', () => {
+        current?.pending?.commit()
+
+        if (current?.pending) {
+            current = { ...current, pending: undefined }
+        }
+    })
 }
 
 /**
@@ -94,6 +127,7 @@ export function show(toast: Omit<SaveToast, 'key'>): void {
 export function dismiss(key?: number): void {
     if (key !== undefined && current?.key !== key) return
 
+    current?.pending?.commit()
     current = null
     notify()
 }

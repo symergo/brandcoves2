@@ -1,9 +1,10 @@
 import { router } from '@inertiajs/react'
 import { useState } from 'react'
 import type { CopyTarget } from './CopyToList'
-import Menu, { MenuItem, MenuSeparator } from './Menu'
+import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import ToolIcon from './ToolIcon'
-import { markRemoved, markSaved } from '../savedItems'
+import { markSaved } from '../savedItems'
+import { removeWithUndo } from '../pendingRemovals'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -33,8 +34,11 @@ import { useTranslations } from '../useTranslations'
  *   (`ItemMover::copy`). The saved-items cache is told, as `CopyToList` does.
  * - **Remove** — `DELETE /list-items/{id}`, the owner's alone, as it was from
  *   the bin (hand-written) and from unticking the bookmark (catalogue). No
- *   confirmation, as neither had one; the cache is told so a bookmark elsewhere
- *   on the next page does not still claim the product is here.
+ *   confirmation, as neither had one, and since 2026-09-27 an Undo instead:
+ *   the item leaves the page at once and "Van … gehaald · Ongedaan maken"
+ *   shows for six seconds before the request is sent (`pendingRemovals.ts`).
+ *   The cache is told so a bookmark elsewhere does not still claim the
+ *   product is here.
  */
 export default function OwnItemMenu({
     base,
@@ -45,9 +49,12 @@ export default function OwnItemMenu({
     manual,
     targets,
     onEdit,
+    listTitle,
 }: {
     base: string
     listId: string
+    /** The list's name, for "Van … gehaald" in the Undo message. */
+    listTitle: string
     itemId: number
     title: string
     groupId: number | null
@@ -88,7 +95,7 @@ export default function OwnItemMenu({
                     setView('main')
                     setName('')
                 }}
-                button={<ToolIcon name="more" className="h-5 w-5" />}
+                button={<MoreButtonContent />}
                 buttonClassName="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink shadow-sm backdrop-blur transition hover:border-ink lg:h-9 lg:w-9"
             >
                 {(close) =>
@@ -123,10 +130,7 @@ export default function OwnItemMenu({
                                 icon={<ToolIcon name="trash" className="h-4 w-4" />}
                                 onSelect={() => {
                                     close()
-                                    router.delete(`${base}/list-items/${itemId}`, {
-                                        preserveScroll: true,
-                                        onSuccess: () => groupId !== null && markRemoved(groupId, listId),
-                                    })
+                                    removeWithUndo({ base, listId, listTitle, itemId, groupId, t })
                                 }}
                             >
                                 {t('lists.remove_item')}
