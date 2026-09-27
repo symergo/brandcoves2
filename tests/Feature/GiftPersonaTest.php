@@ -100,7 +100,20 @@ class GiftPersonaTest extends TestCase
     {
         // The NULLS FIRST trap, on the two pages that ask for "the latest".
         $this->seedFinds();
-        app(EditionBuilder::class)->build(Market::BeNl);
+
+        // Today's Daily needs a theme its finds match and prose of its own,
+        // or it is held (2026-09-27) and there is no edition to confuse.
+        CovePlan::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => CarbonImmutable::today()->toDateString(),
+            'title' => 'Vreemde apparaten',
+            'queries' => ['apparaat'],
+            'status' => 'approved',
+            'writer' => 'authored',
+            'editorial' => 'Een dag vol vreemde apparaten.',
+        ]);
+
+        $this->assertNotNull(app(EditionBuilder::class)->build(Market::BeNl));
         $this->buildPersona();
 
         $this->get('/be-nl/tips')->assertOk()->assertDontSee('De kruidenliefhebber');

@@ -421,6 +421,9 @@ class EditorialApiTest extends TestCase
             'market' => Market::BeNl->value,
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Geschreven door een mens',
+            // The theme names the fixtures, so the engine's slots are filled:
+            // an uncurated slot takes only what the theme names (2026-09-27).
+            'queries' => ['apparaat'],
             'editorial' => $prose,
             'writer' => PlanWriter::Authored->value,
             'status' => 'approved',
@@ -459,6 +462,7 @@ class EditorialApiTest extends TestCase
             'market' => Market::BeNl->value,
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Met een kapotte link',
+            'queries' => ['apparaat'],
             'editorial' => "Zie [[product:{$pinned->id}|dit]] en [[brand:Verzonnen BV]].",
             'writer' => PlanWriter::Authored->value,
             'status' => 'approved',

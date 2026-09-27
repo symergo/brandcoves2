@@ -193,6 +193,11 @@
                                 @if ($day['plan']['published'])
                                     <x-filament::badge color="gray">live</x-filament::badge>
                                 @endif
+
+                                @if (filled($day['plan']['held'] ?? null))
+                                    {{-- The builder's own sentence, on hover: why this day did not publish. --}}
+                                    <x-filament::badge color="danger" :tooltip="$day['plan']['held']">not published</x-filament::badge>
+                                @endif
                             @endif
                         </li>
                     @endforeach

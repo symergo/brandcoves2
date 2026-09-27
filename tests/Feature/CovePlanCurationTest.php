@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Cove\ObservanceCalendar;
 use App\Services\Curation\PlanCurator;
 use ArrayObject;
 use Carbon\CarbonImmutable;
@@ -267,6 +268,7 @@ class CovePlanCurationTest extends TestCase
          * are good at.
          */
         $this->seedFinds(40);
+        $this->seedThemeFinds(4);
 
         $this->artisan('bc:plan-coves', ['--market' => Market::BeNl->value, '--days' => 3])
             ->assertSuccessful();
@@ -354,7 +356,11 @@ class CovePlanCurationTest extends TestCase
         $this->seedFinds();
 
         $plan = $this->plan();
-        $plan->update(['build_instructions' => 'Kort houden. Nadruk op nostalgie, niet op techniek.']);
+        $plan->update([
+            'build_instructions' => 'Kort houden. Nadruk op nostalgie, niet op techniek.',
+            'writer' => PlanWriter::Builder->value,
+            'editorial' => null,
+        ]);
         $plan->items()->create(['group_id' => $this->find('Kruidenpers', 4500)->id, 'rank' => 1]);
 
         $prompts = $this->captureAiPrompts();
@@ -424,6 +430,14 @@ class CovePlanCurationTest extends TestCase
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
+    /**
+     * An approved plan for today, themed on the fixtures' word, with prose.
+     *
+     * Both since 2026-09-27: an uncurated slot is filled only from what the
+     * theme names in a title or category, and a Daily with no editorial is
+     * held. The theme word matches `seedFinds()`; the prose is authored so
+     * the model is never needed unless a test asks for it.
+     */
     private function plan(PickMode $mode = PickMode::Open): CovePlan
     {
         return CovePlan::create([
@@ -432,7 +446,32 @@ class CovePlanCurationTest extends TestCase
             'title' => 'Gecureerd',
             'status' => 'approved',
             'pick_mode' => $mode->value,
+            'queries' => ['apparaat'],
+            'writer' => PlanWriter::Authored->value,
+            'editorial' => 'Gecureerd proza.',
         ]);
+    }
+
+    /**
+     * Products the calendar's own theme words name, for the days the planner drafts.
+     *
+     * The planner suggests from the theme alone now, as the build fills from
+     * it, so a fixture of anonymous "Bijzonder apparaat" rows gives it nothing
+     * to suggest. Titled after each day's search words instead.
+     */
+    private function seedThemeFinds(int $days): void
+    {
+        $calendar = app(ObservanceCalendar::class);
+
+        for ($d = 0; $d <= $days; $d++) {
+            $theme = $calendar->themeFor(CarbonImmutable::today()->addDays($d), Market::BeNl);
+
+            foreach ($theme?->queries ?? [] as $q => $query) {
+                for ($n = 0; $n < 3; $n++) {
+                    $this->find("{$query} {$d}{$q}{$n}", 3000 + $n * 700, "Thema{$d}{$q}{$n}", 70 - $n);
+                }
+            }
+        }
     }
 
     private function seedFinds(int $count = 8): void

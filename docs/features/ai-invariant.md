@@ -36,7 +36,9 @@ Three failure modes it prevents, all of which are cheap to create and expensive 
   persistently failing feature retries forever at full cost.
 - **`AI_ENABLED=false` is a supported mode.** The site works without an API key: daily picks fall
   back to a curated theme rotation, guides to template copy. This is what makes the invariant
-  testable rather than aspirational.
+  testable rather than aspirational. One exception, since 2026-09-27: a Daily with no editorial is
+  held rather than published bare, so with the model off only an authored Daily publishes and the
+  column shows the last edition (see daily-cove.md, "No prose, no page").
 
 ## Visitor writes stay AI-free too
 

@@ -272,7 +272,9 @@ class CoveQueueApiTest extends TestCase
         $this->find('Drie');
         $this->find('Vier');
 
-        $plan = $this->plan();
+        // Search words the fixtures' titles are, because an uncurated slot
+        // takes only what the theme names (2026-09-27).
+        $plan = $this->plan(['queries' => ['een', 'twee', 'drie', 'vier']]);
         $revision = $this->revision($plan);
 
         $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))

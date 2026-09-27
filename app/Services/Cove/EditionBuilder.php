@@ -112,10 +112,13 @@ class EditionBuilder
 
             // Recorded on the plan where there is one, for the same reason the
             // article path records it: a quiet morning and a broken pipeline
-            // look identical from every screen otherwise.
-            if ($plan !== null) {
-                $this->recordFailedBuild($plan, sprintf(
-                    '%d of the %d finds a Cove needs. The catalogue could not fill it.',
+            // look identical from every screen otherwise. The day's draft
+            // counts too, since 2026-09-27: an uncurated day is exactly the one
+            // most likely to come up short now that its theme is read
+            // strictly, and the draft is where an editor would fix it.
+            if (($onDate = $plan ?? $this->planOn($market, $date)) !== null) {
+                $this->recordFailedBuild($onDate, sprintf(
+                    '%d of the %d finds a Cove needs on its theme. The catalogue could not fill it; curate the day to publish it.',
                     count($finds) + count($liveFinds),
                     (int) config('giftcoves.picks.minimum'),
                 ));
@@ -151,6 +154,44 @@ class EditionBuilder
         };
 
         $editorial = $this->editorial($market, $finds, $observance, $theme['title'], $plan);
+
+        /*
+         * No prose, no page.
+         *
+         * be-nl's 27 Sep 2026 edition published as a headline over six
+         * products: the writer was asked and nothing came back, and the page
+         * went out bare at 09:00 with nothing anywhere saying so. A Daily is an
+         * article; without the article it is a list with a title, and the one
+         * reader who arrives from a search result is the one who notices.
+         *
+         * Held rather than published, whatever the cause: the model switched
+         * off, the day's cap spent, a refusal, a timeout, or an answer with no
+         * editorial in it. Held means nothing is written at all, so a rebuild
+         * that fails leaves an edition that already published exactly as it
+         * was (the same rule refreshCopy() holds to: real prose is never traded
+         * for none). The column goes on showing the latest published edition,
+         * which is what the front page and /tips already do on a fresh deploy.
+         *
+         * An authored plan never reaches this: `editorial()` returns its prose
+         * without asking the model. The reason goes on the plan for the day,
+         * where /admin shows it, because a missing edition and a quiet morning
+         * look the same from every other screen.
+         */
+        if ($editorial['text'] === null && (bool) config('giftcoves.picks.require_editorial')) {
+            Log::warning('Edition held: no editorial', [
+                'market' => $market->value,
+                'date' => $date->toDateString(),
+                'ai_enabled' => $this->ai->isEnabled(),
+            ]);
+
+            if (($onDate = $plan ?? $this->planOn($market, $date)) !== null) {
+                $this->recordFailedBuild($onDate, $this->ai->isEnabled()
+                    ? 'Held: the writer returned no editorial (capped, refused or failed). Write it here or over the editorial API and rebuild.'
+                    : 'Held: AI is switched off and the plan carries no editorial. Write it here or over the editorial API and rebuild.');
+            }
+
+            return null;
+        }
 
         return DB::transaction(function () use ($market, $date, $finds, $liveFinds, $theme, $editorial): DailyPickSet {
             /*
@@ -743,6 +784,25 @@ class EditionBuilder
             'last_build_failed_at' => now(),
             'last_build_note' => Str::limit($why, 300, ''),
         ])->save();
+    }
+
+    /**
+     * The plan for a Daily's date, whatever its status.
+     *
+     * `approvedFor()` is the question "what may this build publish"; this is
+     * "where does a note about this day go". A draft counts for the second:
+     * `bc:plan-coves` drafts every day ahead, and the draft is the row an
+     * editor opens to fix the day.
+     */
+    private function planOn(Market $market, CarbonImmutable $date): ?CovePlan
+    {
+        return CovePlan::query()
+            ->where('market', $market->value)
+            ->where('kind', CoveKind::Daily->value)
+            ->where('drop_date', $date->toDateString())
+            ->where('status', '!=', 'rejected')
+            ->orderByRaw("status = 'approved' desc")
+            ->first();
     }
 
     /** A build worked, so whatever the last one said no longer applies. */

@@ -14,6 +14,7 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,7 +56,7 @@ class DailyCoveTest extends TestCase
         ]);
     }
 
-    private function find(string $title, int $price, ?string $category = null, float $score = 60): ProductGroup
+    private function find(string $title, int $price, ?string $category = null, float $score = 60, ?string $description = null): ProductGroup
     {
         $group = ProductGroup::create([
             'market' => Market::BeNl,
@@ -80,6 +81,7 @@ class DailyCoveTest extends TestCase
             'group_id' => $group->id,
             'external_id' => 'e'.bin2hex(random_bytes(5)),
             'title' => $title,
+            'description' => $description,
             'price' => $price,
             'currency' => 'EUR',
             'affiliate_url' => 'https://example.test/buy',
@@ -98,9 +100,34 @@ class DailyCoveTest extends TestCase
         }
     }
 
+    /**
+     * An approved plan for a day, themed on the fixtures' own word, with prose.
+     *
+     * Every Daily needs both since 2026-09-27: finds its theme names (not the
+     * pool), and editorial (not a bare page). An authored plan is how a test
+     * that is about something else gets both without a model.
+     *
+     * @param  list<string>  $queries
+     * @param  array<string, mixed>  $extra
+     */
+    private function planDay(?CarbonImmutable $date = null, array $queries = ['apparaat'], array $extra = []): CovePlan
+    {
+        return CovePlan::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => ($date ?? CarbonImmutable::today())->toDateString(),
+            'title' => 'Apparaten van de dag',
+            'queries' => $queries,
+            'status' => 'approved',
+            'writer' => 'authored',
+            'editorial' => 'Een dag vol vreemde apparaten.',
+            ...$extra,
+        ]);
+    }
+
     private function buildEdition(): DailyPickSet
     {
         $this->seedFinds();
+        $this->planDay();
 
         $edition = app(EditionBuilder::class)->build(Market::BeNl);
         $this->assertNotNull($edition);
@@ -114,6 +141,7 @@ class DailyCoveTest extends TestCase
     public function building_the_same_day_twice_produces_one_edition(): void
     {
         $this->seedFinds();
+        $this->planDay();
         $builder = app(EditionBuilder::class);
 
         $builder->build(Market::BeNl);
@@ -132,6 +160,8 @@ class DailyCoveTest extends TestCase
     public function an_edition_never_repeats_a_recent_find(): void
     {
         $this->seedFinds(16);
+        $this->planDay();
+        $this->planDay(CarbonImmutable::tomorrow());
         $builder = app(EditionBuilder::class);
 
         $today = $builder->build(Market::BeNl);
@@ -281,6 +311,8 @@ class DailyCoveTest extends TestCase
             'title' => 'De sportschool op de logeerkamer',
             'queries' => ['hometrainer', 'halterset', 'dumbbell'],
             'status' => 'approved',
+            'writer' => 'authored',
+            'editorial' => 'Een sportschool thuis.',
         ]);
 
         $edition = app(EditionBuilder::class)->build(Market::BeNl);
@@ -318,6 +350,8 @@ class DailyCoveTest extends TestCase
             'title' => 'Alles in één hoek',
             'queries' => ['halterset', 'hometrainer'],
             'status' => 'approved',
+            'writer' => 'authored',
+            'editorial' => 'Alles in één hoek.',
         ]);
 
         $shortlist = ['Halterset gietijzer', 'Halterset vinyl', 'Halterset verstelbaar'];
@@ -358,30 +392,187 @@ class DailyCoveTest extends TestCase
     }
 
     #[Test]
-    public function a_theme_too_thin_to_publish_is_filled_rather_than_dropped(): void
+    public function a_theme_too_thin_to_publish_holds_the_day_rather_than_padding_it(): void
     {
         /*
-         * The floor under the rule above, and it is load-bearing rather than
-         * theoretical: the observance calendar's queries are Dutch, so on an
-         * unplanned day in `en` or `es` the themed lane matches nothing at all.
-         * Below `picks.minimum` the builder refuses to publish, so an off-theme
-         * find there is the difference between a padded page and no page —
-         * which is the one trade where padding wins.
+         * This test used to assert the opposite: below `picks.minimum` the
+         * market's highest-scoring products filled the page, because a padded
+         * page beat no page. It stopped beating it on 27 Sep 2026, when a day
+         * titled after World Tourism Day published strangers under that title
+         * with nobody having looked. A themed day that its theme cannot fill
+         * now publishes nothing, and says why on the plan.
          */
         $this->seedFinds();
         $this->find('Hometrainer compact', 4000, 'Fitness', 40);
 
-        CovePlan::create([
-            'market' => Market::BeNl->value,
-            'drop_date' => CarbonImmutable::today()->toDateString(),
-            'title' => 'Eén product diep',
-            'queries' => ['hometrainer'],
-            'status' => 'approved',
-        ]);
+        $plan = $this->planDay(queries: ['hometrainer']);
+
+        $this->assertNull(app(EditionBuilder::class)->build(Market::BeNl));
+        $this->assertSame(0, DailyPickSet::query()->count());
+        $this->assertNotNull($plan->fresh()->last_build_failed_at);
+        $this->assertStringContainsString('1 of the 3', (string) $plan->fresh()->last_build_note);
+    }
+
+    // ── An uncurated day reads its theme strictly (27 Sep 2026) ──────────
+
+    #[Test]
+    public function an_uncurated_day_takes_only_what_its_theme_names_in_a_title_or_category(): void
+    {
+        /*
+         * be-nl's "Werelddag van het toerisme", reproduced. Every wrong product
+         * outscores every right one, which is how it happened: ranked by
+         * surprise, the strangest match wins, and the strangest match for
+         * "koffer" is never a suitcase.
+         */
+        $wrong = [
+            // A tool case: "koffer" ends the compound, and the first part
+            // makes it a tool.
+            $this->find('STANLEY gereedschapkoffer voor onderhoud 142-delig', 8900, null, 95),
+            // Hole saws and a drill sold in a case: the case is the packaging.
+            $this->find('IRWIN gatenzagen set 9-delig in koffer', 3900, 'Gatzagen', 94),
+            $this->find('DeWalt DCD796P2 accu schroefboormachine 18V in TSTAK koffer', 29900, null, 93),
+            // A toy.
+            $this->find('Bumba dokterskoffer', 2500, null, 92),
+            // Matched only on its description, which the stored search vector
+            // reads and this rule does not.
+            $this->find(
+                'Sensual Desire Red Lady 3-in-1 Vibrator - Stil & Waterdicht',
+                3500,
+                'Vibrator',
+                91,
+                'Discreet en compact: past in elke koffer of handbagage.',
+            ),
+            // A chest freezer: "koffer" starts the compound rather than ending it.
+            $this->find('Diepvries CHAE 2002C', 29900, 'Kofferdiepvriezers', 90),
+        ];
+
+        $right = [
+            $this->find("Samsonite S'Cure Spinner 55cm Koffer", 12900, null, 68),
+            $this->find('Princess Traveller Singapore - Large - 78cm', 8900, 'Reiskoffer', 67),
+            $this->find('Samsonite Handbagagekoffer 55x40x20 Zwart', 9900, null, 66),
+            $this->find('Universele reisadapter wereldwijd met USB-C', 2400, 'Reisadapter', 65),
+            $this->find('Traagschuim nekkussen voor op reis', 1900, null, 64),
+        ];
+
+        $this->planDay(queries: ['koffer', 'reisadapter', 'nekkussen'], extra: ['title' => 'Werelddag van het toerisme']);
 
         $edition = app(EditionBuilder::class)->build(Market::BeNl);
-        $this->assertNotNull($edition, 'a thin theme dropped the edition instead of filling it');
-        $this->assertSame(6, $edition->picks()->count());
+        $this->assertNotNull($edition);
+
+        $ids = $edition->picks()->pluck('group_id')->all();
+
+        foreach ($wrong as $group) {
+            $this->assertNotContains($group->id, $ids, "off-theme product published: {$group->title}");
+        }
+
+        $this->assertCount(count($right), $ids);
+
+        foreach ($right as $group) {
+            $this->assertContains($group->id, $ids, "on-theme product missing: {$group->title}");
+        }
+    }
+
+    #[Test]
+    public function a_curated_product_is_not_held_to_the_theme(): void
+    {
+        /*
+         * Curation overrides the engine, and the relevance rule is the
+         * engine's. A person who puts a tool case on a travel day meant it.
+         */
+        $toolCase = $this->find('STANLEY gereedschapkoffer voor onderhoud 142-delig', 8900, null, 95);
+        $this->find("Samsonite S'Cure Spinner 55cm Koffer", 12900, null, 68);
+        $this->find('Samsonite Handbagagekoffer 55x40x20 Zwart', 9900, null, 66);
+
+        $plan = $this->planDay(queries: ['koffer']);
+        $plan->items()->create(['group_id' => $toolCase->id, 'rank' => 1]);
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertNotNull($edition);
+
+        $this->assertSame($toolCase->id, $edition->picks()->orderBy('rank')->value('group_id'));
+        $this->assertSame(3, $edition->picks()->count());
+    }
+
+    // ── No prose, no page ────────────────────────────────────────────────
+
+    #[Test]
+    public function an_edition_whose_writer_returns_nothing_is_held_not_published(): void
+    {
+        $this->seedFinds();
+        $plan = $this->planDay(extra: ['writer' => 'builder', 'editorial' => null]);
+
+        $this->mock(AiClient::class, function ($mock): void {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            // What be-nl got on 27 Sep 2026: the writer was asked, and what
+            // came back had no editorial in it.
+            $mock->shouldReceive('json')->andReturn(['editorial' => '']);
+        });
+
+        $this->assertNull(app(EditionBuilder::class)->build(Market::BeNl));
+        $this->assertSame(0, DailyPickSet::query()->count());
+
+        $plan->refresh();
+        $this->assertNotNull($plan->last_build_failed_at);
+        $this->assertStringContainsString('Held', (string) $plan->last_build_note);
+
+        // Nothing was published, so the column has nothing to show.
+        $this->get('/be-nl/tips')->assertNotFound();
+    }
+
+    #[Test]
+    public function a_failed_rewrite_leaves_a_published_edition_as_it_was(): void
+    {
+        $this->seedFinds();
+        $this->planDay(extra: ['writer' => 'builder', 'editorial' => null]);
+
+        // The first build is written; every call after the first two comes
+        // back empty. (The first build may make two calls: prose that names
+        // none of its products is retried once.)
+        $answers = [['editorial' => 'Zes vreemde apparaten, en waarom.'], ['editorial' => '']];
+
+        $this->mock(AiClient::class, function ($mock) use (&$answers): void {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            $mock->shouldReceive('json')->andReturnUsing(function () use (&$answers): array {
+                return count($answers) > 1 ? array_shift($answers) : $answers[0];
+            });
+        });
+
+        $builder = app(EditionBuilder::class);
+        $first = $builder->build(Market::BeNl);
+        $this->assertNotNull($first);
+        $this->assertSame('Zes vreemde apparaten, en waarom.', $first->editorial);
+
+        // A rebuild whose writer comes back empty is held, and the page that
+        // is live keeps its prose rather than being rebuilt bare.
+        $this->assertNull($builder->build(Market::BeNl));
+        $this->assertSame('Zes vreemde apparaten, en waarom.', $first->fresh()->editorial);
+        $this->assertTrue($first->fresh()->isPublished());
+    }
+
+    #[Test]
+    public function with_the_model_off_an_unwritten_day_is_held_and_an_authored_one_publishes(): void
+    {
+        $this->seedFinds(16);
+        $this->assertFalse(app(AiClient::class)->isEnabled(), 'the suite runs with AI off');
+
+        // Yesterday was written by a person: it publishes without a model.
+        $yesterday = $this->planDay(CarbonImmutable::yesterday());
+        $published = app(EditionBuilder::class)->build(Market::BeNl, CarbonImmutable::yesterday());
+        $this->assertNotNull($published);
+        $this->assertSame('planned', $published->editorial_source);
+        $this->assertSame('Een dag vol vreemde apparaten.', $published->editorial);
+        $this->assertNull($yesterday->fresh()->last_build_failed_at);
+
+        // Today nobody wrote anything and the model is off: held.
+        $today = $this->planDay(extra: ['writer' => 'builder', 'editorial' => null]);
+        $this->assertNull(app(EditionBuilder::class)->build(Market::BeNl));
+        $this->assertStringContainsString('AI is switched off', (string) $today->fresh()->last_build_note);
+
+        // The column and the front page carry on with yesterday's edition.
+        $this->get('/be-nl/tips')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('edition.id', $published->id)->etc());
+        $this->get('/be-nl')->assertOk();
     }
 
     #[Test]
