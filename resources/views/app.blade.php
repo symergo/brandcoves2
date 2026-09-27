@@ -258,8 +258,19 @@
         <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endforeach
 
-    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet">
+    {{-- Inter is self-hosted (resources/css/app.css says why). The regular
+         weight is on every line of body text, so it is asked for now, beside
+         the stylesheet, instead of after the stylesheet has arrived and been
+         parsed. Only that one: preloading all three weights would make the
+         browser fetch bold text's file before it knows a page has any.
+         `crossorigin` is required on a font preload even from our own origin;
+         without it the preloaded copy is fetched in the wrong mode and thrown
+         away. rescue(): a preload hint is not worth a 500 if the manifest has
+         no entry for it. --}}
+    @php($interRegular = rescue(fn () => \Illuminate\Support\Facades\Vite::asset('resources/fonts/inter/inter-latin-400-normal.woff2'), null, false))
+    @if ($interRegular)
+        <link rel="preload" href="{{ $interRegular }}" as="font" type="font/woff2" crossorigin>
+    @endif
 
     {{-- Most product images come from bol's CDN. Opening that connection while
          the HTML is still arriving saves the DNS, TCP and TLS round trips from
