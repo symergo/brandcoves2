@@ -250,12 +250,18 @@ class GiftLandingTest extends TestCase
     }
 
     #[Test]
-    public function the_gift_ideas_shelf_links_each_recipients_page(): void
+    public function recipient_pages_are_linked_from_discover_and_not_from_the_persona_shelf(): void
     {
         $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
         PlanGiftLandingPages::dispatchSync(Market::BeNl);
 
+        // Owner, 2026-09-28: the shelf is for personas only.
         $this->get('/be-nl/gift-ideas')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->missing('forWhom'));
+
+        // Still reachable: Discover's "Of per persoon" row.
+        $this->get('/be-nl/discover-cove')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where(
                 'forWhom',

@@ -1837,7 +1837,6 @@ return [
         'intro_recipient' => 'Ideeën voor :recipient, per ding waar die van houdt en gekozen uit de winkels die we vergelijken. Elke prijs wordt dagelijks gecontroleerd.',
         'seo_description' => 'Cadeau-ideeën voor :recipient :who :interest houdt: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
         'seo_description_recipient' => 'Cadeau-ideeën voor :recipient, per interesse: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
-        'by_recipient' => 'Ideeën per persoon',
         'search_all' => 'Zoek alles wat voor hen bedoeld is',
         'more_for' => 'Meer voor :recipient',
         'same_interest' => 'Ook voor iemand die van :interest houdt',

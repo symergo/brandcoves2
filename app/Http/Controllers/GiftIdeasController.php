@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\DailyPickSet;
-use App\Models\GiftLanding;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Cove\SavedCoves;
-use App\Services\Gift\GiftLandingCopy;
 use App\Services\Gift\PersonaBudgets;
 use App\Services\Gift\PersonaTopTen;
 use App\Services\Seo\PageMeta;
@@ -84,21 +82,10 @@ class GiftIdeasController extends Controller
 
         return Inertia::render('GiftIdeas/Index', [
             /*
-             * The gift landing pages for a whole person ("gift ideas for
-             * dad"), each leading on to that person's interests. The shelf is
-             * the one page that links to all of them, so a visitor and a
-             * crawler both find them without the sitemap.
+             * No row of "gift ideas for dad" links here any more (owner,
+             * 2026-09-28): the shelf is for personas. The recipient pages stay
+             * reachable from Discover ("Of per persoon") and the sitemap.
              */
-            'forWhom' => GiftLanding::query()
-                ->forMarket($current->get())
-                ->whereNull('interest')
-                ->orderByDesc('product_count')
-                ->get(['recipient', 'path'])
-                ->map(fn (GiftLanding $page) => [
-                    'label' => (new GiftLandingCopy($current->get(), $page->recipient))->heading(),
-                    'url' => $page->path,
-                ])
-                ->all(),
             'personas' => $personas->map(fn (DailyPickSet $set) => [
                 'slug' => $set->slug,
                 'title' => $set->theme_title,

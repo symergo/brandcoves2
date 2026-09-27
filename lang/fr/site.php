@@ -1834,7 +1834,6 @@ return [
         'intro_recipient' => 'Des idées pour :recipient, classées par passion et choisies dans les boutiques que nous comparons. Chaque prix est vérifié tous les jours.',
         'seo_description' => 'Idées cadeaux pour :recipient :who :interest : :count produits des boutiques que nous comparons, avec des prix vérifiés tous les jours.',
         'seo_description_recipient' => 'Idées cadeaux pour :recipient, par passion : :count produits des boutiques que nous comparons, avec des prix vérifiés tous les jours.',
-        'by_recipient' => 'Des idées selon la personne',
         'search_all' => 'Chercher tout ce qui leur est destiné',
         'more_for' => 'Plus d\'idées pour :recipient',
         'same_interest' => 'Aussi pour quelqu\'un qui aime :interest',

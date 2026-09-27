@@ -1833,7 +1833,6 @@ return [
         'intro_recipient' => 'Ideas para :recipient, ordenadas por afición y elegidas en las tiendas que comparamos. Cada precio se revisa a diario.',
         'seo_description' => 'Ideas de regalo para :recipient :who :interest: :count productos de las tiendas que comparamos, con cada precio revisado a diario.',
         'seo_description_recipient' => 'Ideas de regalo para :recipient, por afición: :count productos de las tiendas que comparamos, con cada precio revisado a diario.',
-        'by_recipient' => 'Ideas según para quién sea',
         'search_all' => 'Buscar todo lo pensado para esa persona',
         'more_for' => 'Más para :recipient',
         'same_interest' => 'También para alguien :who :interest',

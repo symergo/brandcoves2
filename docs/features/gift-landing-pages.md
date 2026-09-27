@@ -107,8 +107,9 @@ All from templates (`GiftLandingCopy`), never from a model: the page is a web re
   filters (`/be-nl/search?for=father&interest=cooking`, [search.md](search.md)): the page is the
   engine's best 24, the search is every tagged product with sorting and the other filters.
 - **Sideways links only to recorded pages**: the same person's other interests, the same interest
-  for other people, and the person's own page. The gift ideas shelf (`/gift-ideas`) links every
-  person's page, so a visitor and a crawler find them without the sitemap.
+  for other people, and the person's own page. Discover ("Of per persoon") links the person pages,
+  and the sitemap lists them all. The gift ideas shelf (`/gift-ideas`) linked every person's page
+  too, until the owner took that row off on 2026-09-28: the shelf is for personas.
 
 Products are cached a day per page and budget, keyed on the night's `checked_at`, so the engine
 runs once per page per day, not once per visitor.

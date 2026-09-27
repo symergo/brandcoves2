@@ -2142,7 +2142,6 @@ return [
         'intro_recipient' => 'Ideas for :recipient, grouped by what they love and picked from the shops we compare. Every price is checked daily.',
         'seo_description' => 'Gift ideas for :recipient :who :interest: :count products from the shops we compare, with every price checked daily.',
         'seo_description_recipient' => 'Gift ideas for :recipient, by what they love: :count products from the shops we compare, with every price checked daily.',
-        'by_recipient' => 'Ideas by who it is for',
         'search_all' => 'Search everything tagged for them',
         'more_for' => 'More for :recipient',
         'same_interest' => 'Also for someone who loves :interest',
