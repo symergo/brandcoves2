@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Services\Cove\CoveCaches;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
@@ -108,6 +109,10 @@ class BuildDailyEdition implements ShouldQueue
             $this->market,
             $this->date === null ? null : CarbonImmutable::parse($this->date),
         );
+
+        // The Cove lists of this market (/coves, Discover, the rail) cache for
+        // minutes; a new edition should not wait for them. See CoveCaches.
+        CoveCaches::forgetMarket($this->market);
 
         Log::info('Daily Cove built', [
             'market' => $this->market->value,

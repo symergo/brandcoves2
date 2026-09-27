@@ -54,7 +54,12 @@ class GuideController extends Controller
             ->where('status', PublishStatus::Published->value)
             ->orderByDesc('published_at')
             ->limit(60)
-            ->get()
+            /*
+             * Only what a card shows. Every column came back before, the
+             * article's body, FAQ and stored prose included, for sixty cards
+             * that print a title and a line.
+             */
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
             ->map(fn (DailyPickSet $guide) => [
                 'title' => $guide->theme_title,
                 // A card blurb, not an article: tokens flattened to their

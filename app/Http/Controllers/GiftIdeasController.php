@@ -54,7 +54,19 @@ class GiftIdeasController extends Controller
             ->forMarket($current->get())
             ->personas()
             ->published()
-            ->with(['picks.group'])
+            // Only what a card shows. Before `withCount()`, which adds to the
+            // column list rather than replacing it; a `get([...])` after it
+            // would be ignored.
+            ->select(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
+            /*
+             * The in-stock finds counted by the database. Every pick and its
+             * product used to be loaded, for one number per card: sixty
+             * personas of a dozen picks each is seven hundred rows and two
+             * queries, where this is one query and a number per persona.
+             * A pick without a catalogue product (an Amazon decision) has no
+             * group row, so `whereHas` leaves it out, as the old filter did.
+             */
+            ->withCount(['picks as find_count' => fn ($q) => $q->whereHas('group', fn ($g) => $g->where('in_stock', true))])
             // Newest first. A persona has no date to sort on, and `published_at`
             // is stamped once at first build and never refreshed by a rebuild,
             // so this is a stable shelf rather than one that reshuffles itself
@@ -103,9 +115,7 @@ class GiftIdeasController extends Controller
                  * `someone` and draws a figure. See App\Enums\CoveScene.
                  */
                 'scene' => $set->scene?->value,
-                'findCount' => $set->picks
-                    ->filter(fn ($pick) => $pick->group !== null && $pick->group->in_stock)
-                    ->count(),
+                'findCount' => (int) $set->find_count,
             ])->values()->all(),
         ]);
     }

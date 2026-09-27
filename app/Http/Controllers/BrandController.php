@@ -29,6 +29,7 @@ use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -98,6 +99,15 @@ class BrandController extends Controller
 {
     /** Built once per request; three regions ask for the same facts. */
     private ?BrandContext $pageContext = null;
+
+    /**
+     * An hour for "Coves mentioning this brand": the slowest part of the page
+     * (a regex over every published article) with the slowest-moving answer.
+     */
+    private const COVES_TTL = 3600;
+
+    /** Half an hour for the lists built from `brand_stats`, rebuilt nightly. */
+    private const LISTS_TTL = 1800;
 
     /**
      * `string $marketSegment` is declared and unused on purpose.
@@ -538,12 +548,26 @@ class BrandController extends Controller
     {
         $market = $current->get();
 
-        $brands = BrandStat::query()
-            ->forMarket($market)
-            ->pageworthy()
-            ->orderByDesc('product_count')
-            ->limit(500)
-            ->get(['brand', 'slug', 'product_count']);
+        /*
+         * Cached for half an hour per market, as the rows the page prints:
+         * 500 brands sorted out of `brand_stats` on every view, for a list
+         * that is rebuilt nightly.
+         */
+        $brands = Cache::remember(
+            'bc:brands:'.$market->value,
+            self::LISTS_TTL,
+            fn (): array => BrandStat::query()
+                ->forMarket($market)
+                ->pageworthy()
+                ->orderByDesc('product_count')
+                ->limit(500)
+                ->get(['brand', 'slug', 'product_count'])
+                ->map(fn (BrandStat $stat) => [
+                    'name' => $stat->brand,
+                    'url' => $current->url("brand/{$stat->slug}"),
+                ])
+                ->all(),
+        );
 
         /*
                  * `product_count` orders these and is not sent.
@@ -562,10 +586,7 @@ class BrandController extends Controller
         );
 
         return Inertia::render('Brands', [
-            'brands' => $brands->map(fn (BrandStat $stat) => [
-                'name' => $stat->brand,
-                'url' => $current->url("brand/{$stat->slug}"),
-            ])->all(),
+            'brands' => $brands,
         ]);
     }
 
@@ -751,6 +772,24 @@ class BrandController extends Controller
      */
     private function coves(BrandStat $stat, CurrentMarket $current): array
     {
+        /*
+         * Cached for an hour per market and brand. The regex match below reads
+         * every published article of the market on each view of each brand
+         * page, and its answer only changes when an article is published or
+         * rewritten. An article about a brand reaching that brand's page up to
+         * an hour after it goes out is late in a way nobody can see. Plain
+         * arrays, which the cache can hold.
+         */
+        return Cache::remember(
+            'bc:brand:coves:'.$current->value().':'.$stat->slug,
+            self::COVES_TTL,
+            fn (): array => $this->findCoves($stat, $current),
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function findCoves(BrandStat $stat, CurrentMarket $current): array
+    {
         $spellings = $stat->brandSpellings();
 
         $featured = DailyPickSet::query()
@@ -841,6 +880,18 @@ class BrandController extends Controller
             return [];
         }
 
+        // Half an hour per market and brand: `brand_stats` is rebuilt nightly,
+        // so within a day this answer does not move at all.
+        return Cache::remember(
+            'bc:brand:related:'.$current->value().':'.$stat->slug,
+            self::LISTS_TTL,
+            fn (): array => $this->findRelated($stat, $current),
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function findRelated(BrandStat $stat, CurrentMarket $current): array
+    {
         return BrandStat::query()
             ->forMarket($current->get())
             ->pageworthy()

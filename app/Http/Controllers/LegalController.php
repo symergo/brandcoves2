@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -97,8 +98,27 @@ class LegalController extends Controller
             throw new NotFoundHttpException("No {$page} document in {$language}.");
         }
 
-        $raw = File::get($path);
+        /*
+         * Rendered once a day at most. The Markdown pass over a full privacy
+         * policy ran on every view, for text that changes when somebody edits
+         * the file and deploys. The key carries the file's modification time
+         * and the company details it is filled with, so a changed file or a
+         * changed imprint is a new key and shows at once, never a day late.
+         */
+        return Cache::remember(
+            'bc:legal:'.$page.':'.$language.':'.File::lastModified($path).':'.md5((string) json_encode(config('giftcoves.company'))),
+            86400,
+            fn (): array => $this->render($page, File::get($path)),
+        );
+    }
 
+    /**
+     * Front matter off, company details in, Markdown to HTML.
+     *
+     * @return array{title: string, summary: string, html: string, updated: string|null}
+     */
+    private function render(string $page, string $raw): array
+    {
         // Front matter: title, summary and the date the text last changed. The
         // date is written by hand rather than taken from the file's mtime — a
         // typo fix is not a policy change, and "last updated" on a legal page is
