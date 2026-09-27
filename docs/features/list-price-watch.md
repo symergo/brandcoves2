@@ -32,7 +32,10 @@ this much since you last told me", one mail per person.
 - **The price** is `AlertEligibility::trackablePrice()`: the cheapest in-stock offer from a source
   whose programme allows price tracking. It used to be a private method on
   `RefreshWishlistedProducts`; both callers now share it.
-- **`SendListPriceDigests`** runs once a day at 07:40, after the 05:20 live refresh, whose group set
+- **`SendListPriceDigests`** runs once a day at 07:40, after the live refresh (since 2026-09-28 the
+  last step of the morning catalogue run rather than a fixed 05:20). Since the same day it walks
+  owners in chunks, marks each done for the day in `users.list_digest_on` (so a retried run skips
+  them rather than processing them twice), and queues the mail on the `mail` queue. The refresh's group set
   now includes the items on watched lists so a bol-only price is today's. That last clause only
   became true on 2026-09-18: the refresh asked bol with a `bolProductId`, which bol's product
   endpoint refuses, so a bol-only item was in fact compared against whatever ingestion last wrote.

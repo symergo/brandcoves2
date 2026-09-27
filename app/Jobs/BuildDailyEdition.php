@@ -12,8 +12,10 @@ use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
 use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -25,11 +27,26 @@ use Illuminate\Support\Facades\Log;
  * reads like something a page could do on demand. It cannot: that would put
  * model latency and model cost on every visitor, seven markets over.
  */
-class BuildDailyEdition implements ShouldQueue
+#[Queue('editorial')]
+class BuildDailyEdition implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $timeout = 900;
+
+    /**
+     * One run per market and day at a time, however often it is queued (2026-09-28).
+     * The schedule's `withoutOverlapping()` only guards the moment of
+     * dispatch, which is over in milliseconds; this holds until the job has
+     * run. Released when it finishes or fails, and after `$uniqueFor` at the
+     * latest if a worker is killed mid-run.
+     */
+    public int $uniqueFor = 900;
+
+    public function uniqueId(): string
+    {
+        return $this->market->value.':'.($this->date ?? 'today');
+    }
 
     public int $tries = 2;
 

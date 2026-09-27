@@ -21,6 +21,7 @@ use App\Services\Alerts\ListPriceWatch;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -101,9 +102,39 @@ class ListPriceWatchTest extends TestCase
         return $list->fresh();
     }
 
+    /**
+     * One morning's pass, then on to the next day: since 2026-09-28 an owner
+     * is done once per day (`users.list_digest_on`), so a second pass the same
+     * day does nothing, and the tests that run two passes mean two mornings.
+     */
     private function runDigest(): void
     {
         (new SendListPriceDigests)->handle(app(ListPriceWatch::class));
+
+        $this->travel(1)->days();
+    }
+
+    #[Test]
+    public function a_second_pass_the_same_day_leaves_a_done_owner_alone(): void
+    {
+        Mail::fake();
+        $user = $this->user();
+        $group = $this->group();
+        $offer = $this->offer($group, Source::Awin, 32999);
+        $this->watchedList($user, [$group], 10);
+
+        (new SendListPriceDigests)->handle(app(ListPriceWatch::class));
+        $this->assertSame(now()->toDateString(), DB::table('users')->where('id', $user->id)->value('list_digest_on'));
+
+        // A drop after the morning's pass, and a retry of that pass: the owner
+        // was done today, so nothing is read or mailed until tomorrow.
+        $offer->update(['price' => 25000]);
+        (new SendListPriceDigests)->handle(app(ListPriceWatch::class));
+        Mail::assertNothingOutgoing();
+
+        $this->travel(1)->days();
+        (new SendListPriceDigests)->handle(app(ListPriceWatch::class));
+        Mail::assertQueued(ListPriceDigestMail::class, 1);
     }
 
     #[Test]
@@ -170,7 +201,7 @@ class ListPriceWatchTest extends TestCase
         $offer->update(['price' => 29000]);
         $this->runDigest();
 
-        Mail::assertSent(ListPriceDigestMail::class, function (ListPriceDigestMail $mail) use ($user, $list, $group): bool {
+        Mail::assertQueued(ListPriceDigestMail::class, function (ListPriceDigestMail $mail) use ($user, $list, $group): bool {
             $section = $mail->sections[0];
 
             return $mail->hasTo($user->email)
@@ -191,7 +222,7 @@ class ListPriceWatchTest extends TestCase
         // The reference moved, so tomorrow's pass says nothing about the same drop.
         $this->assertSame(29000, $list->items()->firstOrFail()->watch_reference_price);
         $this->runDigest();
-        Mail::assertSent(ListPriceDigestMail::class, 1);
+        Mail::assertQueued(ListPriceDigestMail::class, 1);
     }
 
     #[Test]
@@ -206,7 +237,7 @@ class ListPriceWatchTest extends TestCase
         $offer->update(['price' => 31000]);
         $this->runDigest();
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         $this->assertSame(0, Notification::query()->count());
     }
 
@@ -221,14 +252,14 @@ class ListPriceWatchTest extends TestCase
         // Up to 30000: silent, but remembered.
         $offer->update(['price' => 30000]);
         $this->runDigest();
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         $this->assertSame(30000, $list->items()->firstOrFail()->watch_reference_price);
 
         // Back to 25000: 17% under the new reference, though still dearer
         // than the day the watch started. That is the drop a person sees.
         $offer->update(['price' => 25000]);
         $this->runDigest();
-        Mail::assertSent(ListPriceDigestMail::class, 1);
+        Mail::assertQueued(ListPriceDigestMail::class, 1);
     }
 
     #[Test]
@@ -244,7 +275,7 @@ class ListPriceWatchTest extends TestCase
         $offer->update(['availability' => Availability::InStock]);
         $this->runDigest();
 
-        Mail::assertSent(ListPriceDigestMail::class, function (ListPriceDigestMail $mail): bool {
+        Mail::assertQueued(ListPriceDigestMail::class, function (ListPriceDigestMail $mail): bool {
             $section = $mail->sections[0];
 
             return $section['drops'] === []
@@ -267,7 +298,7 @@ class ListPriceWatchTest extends TestCase
         $amazon->update(['price' => 19999]);
         $this->runDigest();
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         $this->assertSame(32999, $list->items()->firstOrFail()->watch_reference_price);
     }
 
@@ -287,8 +318,8 @@ class ListPriceWatchTest extends TestCase
         $secondOffer->update(['price' => 15000]);
         $this->runDigest();
 
-        Mail::assertSent(ListPriceDigestMail::class, 1);
-        Mail::assertSent(ListPriceDigestMail::class, fn (ListPriceDigestMail $mail) => count($mail->sections) === 2);
+        Mail::assertQueued(ListPriceDigestMail::class, 1);
+        Mail::assertQueued(ListPriceDigestMail::class, fn (ListPriceDigestMail $mail) => count($mail->sections) === 2);
         $this->assertSame(2, Notification::query()->where('kind', 'list_price_digest')->count());
     }
 
@@ -303,7 +334,7 @@ class ListPriceWatchTest extends TestCase
         $offer->update(['price' => 10000]);
         $this->runDigest();
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         $this->assertNull($list->items()->firstOrFail()->watch_seeded_at);
     }
 

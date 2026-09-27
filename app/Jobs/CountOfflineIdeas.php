@@ -8,6 +8,7 @@ use App\Services\Ideas\OfflineIdeaCounter;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Log;
  * Nothing is shown until a person approves it. See OfflineIdeaCounter and
  * docs/features/offline-ideas.md.
  */
+#[Queue('batch')]
 class CountOfflineIdeas implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

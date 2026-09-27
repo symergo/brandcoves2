@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Gift\GiftLandingPlanner;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -18,18 +19,21 @@ use Illuminate\Support\Facades\Log;
  * The decisions are GiftLandingPlanner's; this only runs it and clears the
  * sitemap, which lists the pages. About 400 engine runs per market, each a few
  * database queries and no AI. See docs/features/gift-landing-pages.md.
+ *
+ * A step of the morning catalogue run since 2026-09-28, after the market's
+ * brand statistics. One run per market at a time, checked when it runs rather
+ * than with ShouldBeUnique; see RunsOneAtATime.
  */
-class PlanGiftLandingPages implements ShouldBeUnique, ShouldQueue
+#[Queue('batch')]
+class PlanGiftLandingPages implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 1800;
 
-    public int $uniqueFor = 3600;
-
     public function __construct(public Market $market) {}
 
-    public function uniqueId(): string
+    protected function overlapKey(): string
     {
         return $this->market->value;
     }

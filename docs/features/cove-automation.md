@@ -23,7 +23,7 @@ grid per market** — kinds down, stages across — it is thirty-five cells that
 The shape then carries information. `plan` is dead for advice, shop and brand because nothing in the
 catalogue proposes one, and `curate` is dead for the same three, which carry no products. Brand was
 switchable until 2026-09-18, when `PlanDrafter` learned to refuse it: the cell offered a stage that
-would have thrown on the 05:00 walk. Each disabled cell shows its reason on hover rather than sitting
+would have thrown on the morning walk. Each disabled cell shows its reason on hover rather than sitting
 blank, because a blank cell reads as an oversight.
 
 | Stage | Control | Notes |
@@ -69,7 +69,7 @@ opposite of what happens. The cell now carries a note ("Publishes daily anyway�
 text names the Daily as the exception, and each column heading has an info icon saying what the
 stage does (`Automation::stageHint()`, `cellNote()`).
 
-Leaving the Daily's `approve` **off** is the recommended setting. On, the 05:00 walk approves any
+Leaving the Daily's `approve` **off** is the recommended setting. On, the 06:00 walk approves any
 written Daily draft unread, and it then replaces the automatic edition. Off, a draft you approved is
 used and one you did not get to falls back to the automatic edition.
 
@@ -97,15 +97,17 @@ hand with `PATCH /coves/{id}` `{"writer": "authored"}` when that is what you wan
 ## Two jobs are gated, not absorbed
 
 `RunEditorialAutomation` walks one market's enabled stages **in order** — staggered stages would
-mean a plan drafted at 03:50 waits until tomorrow to be curated. It runs at 05:00, before the Daily
-builds and well before `PublishDueCoves`, so anything it approves is honoured the same morning.
+mean a plan drafted at 03:50 waits until tomorrow to be curated. It runs at 06:00 (05:00 until
+2026-09-28, which put it on top of the catalogue's grouping), before the Daily builds (06:40) and
+`PublishDueCoves` (07:30), so anything it approves is honoured the same morning. It is
+`ShouldBeUnique` per market: a second walk of one market never runs while the first does.
 
 It deliberately does **not** absorb the two jobs that already build:
 
-- **`BuildDailyEdition`** runs at 06:00 for a 09:00 drop, and those three hours are a deliberate
-  retry window — enough for a failure to be retried or noticed before the page is due. A walk that
-  also curated and approved could not hold that window without running the whole pipeline at six in
-  the morning.
+- **`BuildDailyEdition`** runs at 06:40 for a 09:00 drop (06:00 until 2026-09-28, moved after the
+  walk), and those two hours are a deliberate retry window — enough for a failure to be retried or
+  noticed before the page is due. A walk that also curated and approved could not hold that window
+  without running the whole pipeline at dawn.
 - **`PublishDueCoves`** carries logic belonging to *seasons* rather than to automation: `built_for`,
   so a re-dated part comes round without rebuilding nightly; the window guard, so an approved
   Halloween part cannot appear in December; and series order on a catch-up after an outage.
@@ -134,7 +136,7 @@ during a Docker build or a `migrate` against a fresh schema there is no reachabl
 provider that throws takes out the one command that would fix it.
 
 It is less obviously right here, because it now gates `BuildDailyEdition`. **A database or Redis
-failure at exactly 06:00 would skip that market's Daily and log it**, where previously the job would
+failure at exactly 06:40 would skip that market's Daily and log it**, where previously the job would
 have thrown and been retried.
 
 The risk is low — the job queries the database several times before reaching the gate, so the

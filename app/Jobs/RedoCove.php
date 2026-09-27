@@ -10,6 +10,7 @@ use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\RedoOptions;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Log;
  * redo, not a resumption of the first. Better to leave the Cove as it stands and
  * have somebody press the button again knowing what happened.
  */
+#[Queue('editorial')]
 class RedoCove implements ShouldQueue
 {
     use Queueable;

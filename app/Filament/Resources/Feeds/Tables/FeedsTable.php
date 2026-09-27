@@ -20,6 +20,7 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Bus;
 
 class FeedsTable
 {
@@ -99,8 +100,11 @@ class FeedsTable
                     ->requiresConfirmation()
                     ->modalDescription('Queues a full ingestion of this feed. It resumes from its saved position unless you reset it first.')
                     ->action(function (Feed $feed): void {
-                        IngestFeed::dispatch($feed->id);
-                        GroupProducts::dispatch($feed->market);
+                        // Grouped when the ingest is done, not at the same
+                        // moment: the two used to be queued side by side, so
+                        // the market was usually grouped before the feed had
+                        // arrived (2026-09-28).
+                        Bus::chain([new IngestFeed($feed->id), new GroupProducts($feed->market)])->dispatch();
 
                         Notification::make()
                             ->title('Ingestion queued')

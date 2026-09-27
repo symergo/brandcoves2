@@ -17,6 +17,7 @@ use App\Services\PageReading\SlugTitle;
 use App\Services\Wishlist\ItemLinker;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -31,6 +32,7 @@ use Throwable;
  * page only for a shop nothing recognises. Whatever happens, the item survives
  * as the person typed it; the worst case is that nothing gets filled in.
  */
+#[Queue('default')]
 class ReadItemLink implements ShouldQueue
 {
     use Queueable;

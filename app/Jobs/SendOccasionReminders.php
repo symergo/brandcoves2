@@ -17,8 +17,10 @@ use App\Services\Gift\ReminderIdeas;
 use App\Services\Settings\ReminderSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +89,8 @@ use Illuminate\Support\Number;
  * `users.reminder_emails_off_at`, set from the link in every reminder email
  * or the switch on the notifications page. The inbox row is still written.
  */
-class SendOccasionReminders implements ShouldQueue
+#[Queue('mail')]
+class SendOccasionReminders implements ShouldBeUnique, ShouldQueue
 {
     /**
      * When a friend's birthday is announced: a fortnight, five days, and the day.
@@ -104,6 +107,20 @@ class SendOccasionReminders implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+
+    /**
+     * One run at a time, however often it is queued (2026-09-28).
+     * The schedule's `withoutOverlapping()` only guards the moment of
+     * dispatch, which is over in milliseconds; this holds until the job has
+     * run. Released when it finishes or fails, and after `$uniqueFor` at the
+     * latest if a worker is killed mid-run.
+     */
+    public int $uniqueFor = 1800;
+
+    public function uniqueId(): string
+    {
+        return 'all';
+    }
 
     public function handle(): void
     {
@@ -598,6 +615,7 @@ class SendOccasionReminders implements ShouldQueue
             // Permanent, like the Cove digest's: an unsubscribe link that
             // expires fails exactly when somebody is annoyed enough to use it.
             unsubscribeUrl: URL::signedRoute('reminders.stop', ['market' => $market->value, 'user' => $user->id]),
-        ));
+            // With the other scheduled mail, not on `default` where visitors wait.
+        )->onQueue('mail'));
     }
 }

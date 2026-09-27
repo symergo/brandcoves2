@@ -236,9 +236,30 @@ Or from `/admin/feeds`: **Ingest now** and **Reset cursor** per feed, with live
 progress under **Ingestion jobs** (polls every 10s) and a sidebar badge counting
 failing feeds.
 
-Scheduled: ingest at 04:10 and 16:10, group at 05:00 and 17:00, prune rank history at 03:30. Twice a
-day rather than hourly because Awin regenerates a feed once or twice a day, so an hourly run
-re-downloaded an unchanged file (see `routes/console.php`).
+Scheduled: the catalogue run at 04:10 and 16:10, prune rank history at 03:30. Twice a day rather
+than hourly because Awin regenerates a feed once or twice a day, so an hourly run re-downloaded an
+unchanged file (see `routes/console.php`). Since 2026-09-28 grouping is no longer at a fixed 05:00
+and 17:00: `App\Services\Ingestion\CatalogueRun` groups a market when its feeds are in, then
+classifies it, and so on, market after market ([speed.md](speed.md), "The catalogue run").
+
+### Only what changed is written (2026-09-28)
+
+`OfferUpserter` writes an offer only when one of its columns differs from what is stored (`WHERE
+(...) IS DISTINCT FROM (excluded...)`, via `App\Support\ChangedRowsUpsert`). An unchanged offer is
+not rewritten twice a day with its search vector and index entries. Consequences:
+
+- `last_seen_at` and `updated_at` move only when an offer changes or comes back from stale.
+- **Retiring offers** is no longer "`last_seen_at` before the run began". `IngestFeed` records every
+  chunk's external ids in `ingestion_seen_offers` (UNLOGGED) and at the end marks stale the feed's
+  active offers that are not there. If a Postgres crash emptied that table mid-run (the cursor
+  counts what was recorded), the run retires nothing and the next run catches up.
+- **A resumed run keeps its start.** The run's start is stored in the cursor (`run_started_at`)
+  before the first chunk; it used to be `now()` per attempt, which retired every offer an earlier
+  attempt of the same run had committed.
+- **A deploy pauses it.** On SIGTERM the job finishes its chunk, records its place and releases
+  itself, so the new worker resumes at once (`$tries = 5`, `$maxExceptions = 2`).
+
+Details: [speed.md](speed.md), "Background work".
 
 ## Files
 

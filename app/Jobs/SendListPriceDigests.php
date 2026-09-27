@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Enums\Market;
 use App\Mail\ListPriceDigestMail;
 use App\Models\Notification;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Alerts\ListPriceWatch;
@@ -14,7 +15,9 @@ use App\Support\ListName;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -35,6 +38,7 @@ use Illuminate\Support\Facades\Mail;
  * Unique, as the other scheduled jobs are: a replayed schedule must not seed
  * twice or mail twice. See docs/features/list-price-watch.md.
  */
+#[Queue('mail')]
 class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
@@ -57,66 +61,35 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
         $lists = 0;
         $reported = 0;
         $mails = 0;
+        $today = today();
 
-        Wishlist::query()
-            ->whereNotNull('price_watch_percent')
-            ->whereNotNull('owner_user_id')
-            ->with('owner')
-            ->orderBy('owner_user_id')
-            ->orderBy('id')
-            ->get()
-            ->groupBy('owner_user_id')
-            ->each(function (Collection $owned) use ($watch, &$lists, &$reported, &$mails): void {
-                $owner = $owned->first()?->owner;
+        /*
+         * Owner by owner, in chunks, skipping anyone already done today
+         * (2026-09-28). It used to load every watched list at once and start
+         * from the top on a retry, so a run cut off halfway processed the
+         * first owners twice. `users.list_digest_on` is set once an owner is
+         * done, mailed or not.
+         */
+        User::query()
+            ->whereIn('id', Wishlist::query()->select('owner_user_id')->whereNotNull('price_watch_percent')->whereNotNull('owner_user_id'))
+            ->where(fn ($q) => $q->whereNull('list_digest_on')->orWhere('list_digest_on', '<', $today->toDateString()))
+            ->chunkById(100, function (Collection $owners) use ($watch, $today, &$lists, &$reported, &$mails): void {
+                $listsByOwner = Wishlist::query()
+                    ->whereNotNull('price_watch_percent')
+                    ->whereIn('owner_user_id', $owners->modelKeys())
+                    ->orderBy('id')
+                    ->get()
+                    ->groupBy('owner_user_id');
 
-                if ($owner === null) {
-                    return;
-                }
+                foreach ($owners as $owner) {
+                    $owned = $listsByOwner->get($owner->id);
 
-                $market = Market::tryFrom((string) $owner->preferred_market) ?? $owned->first()->market;
-                $language = $market->language();
-                $sections = [];
-
-                foreach ($owned as $list) {
-                    $lists++;
-                    $watch->seed($list);
-
-                    $changes = $watch->changes($list);
-                    $watch->apply($changes);
-
-                    $section = $this->section($list, $changes, $language);
-
-                    if ($section === null) {
-                        continue;
+                    if ($owned !== null && $owned->isNotEmpty()) {
+                        $this->digestFor($owner, $owned, $watch, $lists, $reported, $mails);
                     }
 
-                    $count = count($section['drops']) + count($section['back']);
-                    $reported += $count;
-                    $sections[] = $section;
-
-                    Notification::create([
-                        'user_id' => $list->owner_user_id,
-                        'kind' => 'list_price_digest',
-                        'title' => $section['title'],
-                        'body' => null,
-                        'url' => "/{$list->market->value}/lists/{$list->id}",
-                        // The title *is* the list's name, so the inbox draws it
-                        // as one (App\Support\ListName): the template is the
-                        // name alone.
-                        'payload' => [
-                            'list_id' => $list->id,
-                            'count' => $count,
-                            'list' => ['template' => ListName::TOKEN, 'name' => $section['title'], 'kind' => $list->kind->value],
-                        ],
-                    ]);
+                    DB::table('users')->where('id', $owner->id)->update(['list_digest_on' => $today->toDateString()]);
                 }
-
-                if ($sections === [] || blank($owner->email)) {
-                    return;
-                }
-
-                Mail::to($owner)->send(new ListPriceDigestMail($market, $sections));
-                $mails++;
             });
 
         Log::info('List price digests complete', [
@@ -124,6 +97,62 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
             'reported' => $reported,
             'mails' => $mails,
         ]);
+    }
+
+    /**
+     * One owner's lists: seed, classify, one inbox row per list with news, and
+     * at most one mail.
+     *
+     * @param  Collection<int, Wishlist>  $owned
+     */
+    private function digestFor(User $owner, Collection $owned, ListPriceWatch $watch, int &$lists, int &$reported, int &$mails): void
+    {
+        $market = Market::tryFrom((string) $owner->preferred_market) ?? $owned->first()->market;
+        $language = $market->language();
+        $sections = [];
+
+        foreach ($owned as $list) {
+            $lists++;
+            $watch->seed($list);
+
+            $changes = $watch->changes($list);
+            $watch->apply($changes);
+
+            $section = $this->section($list, $changes, $language);
+
+            if ($section === null) {
+                continue;
+            }
+
+            $count = count($section['drops']) + count($section['back']);
+            $reported += $count;
+            $sections[] = $section;
+
+            Notification::create([
+                'user_id' => $list->owner_user_id,
+                'kind' => 'list_price_digest',
+                'title' => $section['title'],
+                'body' => null,
+                'url' => "/{$list->market->value}/lists/{$list->id}",
+                // The title *is* the list's name, so the inbox draws it
+                // as one (App\Support\ListName): the template is the
+                // name alone.
+                'payload' => [
+                    'list_id' => $list->id,
+                    'count' => $count,
+                    'list' => ['template' => ListName::TOKEN, 'name' => $section['title'], 'kind' => $list->kind->value],
+                ],
+            ]);
+        }
+
+        if ($sections === [] || blank($owner->email)) {
+            return;
+        }
+
+        // Queued on `mail` rather than sent here, so a slow SMTP server
+        // holds a mail worker for one message, not this whole pass.
+        Mail::to($owner)->queue((new ListPriceDigestMail($market, $sections))->onQueue('mail'));
+        $mails++;
     }
 
     /**

@@ -10,8 +10,10 @@ use App\Models\CoveSubscriber;
 use App\Models\DailyPickSet;
 use App\Services\Cove\DigestBuilder;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -37,11 +39,26 @@ use Illuminate\Support\Facades\Mail;
  * the work — the same reason ingestion is chunked. `last_sent_on` is written
  * per subscriber immediately after the send, so a crash costs at most one mail.
  */
-class SendCoveDigest implements ShouldQueue
+#[Queue('mail')]
+class SendCoveDigest implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $timeout = 1800;
+
+    /**
+     * One run per market and day at a time, however often it is queued (2026-09-28).
+     * The schedule's `withoutOverlapping()` only guards the moment of
+     * dispatch, which is over in milliseconds; this holds until the job has
+     * run. Released when it finishes or fails, and after `$uniqueFor` at the
+     * latest if a worker is killed mid-run.
+     */
+    public int $uniqueFor = 1800;
+
+    public function uniqueId(): string
+    {
+        return $this->market->value.':'.($this->date ?? 'today');
+    }
 
     /**
      * One retry.

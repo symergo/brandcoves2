@@ -207,7 +207,8 @@ request per market proves the credentials, the endpoint and — the part that fa
 — the response envelope. When it returns nothing at all it says so explicitly and points at
 `bc:check-bol`, because "empty chart" and "broken parser" look identical otherwise.
 
-Scheduled daily at **03:40**, deliberately ahead of feed ingestion (04:10) and grouping (05:00), so
+Scheduled daily at **03:40**, deliberately ahead of the catalogue run (04:10: ingestion, then
+grouping per market as each market's feeds are in), so
 the chart's products are grouped in the same overnight cycle rather than waiting a day to become
 suggestable. Once a day and no more: a bestseller chart does not turn over hourly, and a second pull
 would only overwrite the same snapshot.

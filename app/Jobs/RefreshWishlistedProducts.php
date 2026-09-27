@@ -5,35 +5,46 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\AlertState;
+use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
-use App\Mail\AlertMail;
-use App\Models\Notification;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Models\RestockAlert;
 use App\Models\WishlistItem;
-use App\Services\Alerts\AlertEligibility;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Ingestion\OfferUpserter;
+use App\Services\Ingestion\ProductGrouper;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Number;
 use Throwable;
 
 /**
- * Re-checks the products people actually care about, and fires alerts.
+ * Re-checks the products people actually care about, then has the alerts fired.
  *
  * Feed ingestion runs twice a day over the whole catalogue; this runs over the
- * tiny subset that is on someone's list or under an alert, so it can run more
- * often and notice a drop sooner. It reads what ingestion already wrote rather
- * than re-fetching, so it costs a query rather than a download.
+ * tiny subset that is on someone's list or under an alert, and asks the live
+ * sources (bol) for today's price on it.
+ *
+ * Since 2026-09-28:
+ *
+ * - it is the last step of the catalogue run (App\Services\Ingestion\
+ *   CatalogueRun), after every market is grouped, rather than at 05:20;
+ * - it stops fetching after TIME_BUDGET seconds, so a slow or throttled
+ *   source cannot keep a batch worker for the job's whole timeout;
+ * - it recomputes the groups whose offers it changed, so a watched product's
+ *   cheapest price and stock are today's at once, not after the next grouping
+ *   twelve hours later (a restock alert reads the group's `in_stock`);
+ * - the alerts are fired by their own job, FireWatchAlerts, on the `mail`
+ *   queue.
  */
+#[Queue('batch')]
 class RefreshWishlistedProducts implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 600;
 
@@ -47,24 +58,37 @@ class RefreshWishlistedProducts implements ShouldQueue
      */
     private const REFRESH_CAP = 500;
 
-    public function handle(?ConnectorRegistry $registry = null, ?OfferUpserter $upserter = null): void
+    /**
+     * Seconds of fetching per run. Half the timeout, so what was fetched is
+     * always written and recomputed before the worker would kill the job.
+     */
+    private const TIME_BUDGET = 300;
+
+    protected function overlapKey(): string
+    {
+        return 'all';
+    }
+
+    public function handle(?ConnectorRegistry $registry = null, ?OfferUpserter $upserter = null, ?ProductGrouper $grouper = null): void
     {
         // Injected by the queue; resolved here for the tests that run the job
         // by hand, as they did before it had dependencies.
         $registry ??= app(ConnectorRegistry::class);
         $upserter ??= app(OfferUpserter::class);
+        $grouper ??= app(ProductGrouper::class);
 
-        $refreshed = $this->refreshLiveOffers($registry, $upserter);
-        $rearmed = $this->rearmAlerts();
-        $priceDrops = $this->firePriceAlerts();
-        $restocks = $this->fireRestockAlerts();
+        [$refreshed, $touched] = $this->refreshLiveOffers($registry, $upserter);
+
+        foreach ($touched as $market => $groupIds) {
+            $grouper->recomputeGroups(Market::from($market), $groupIds);
+        }
 
         Log::info('Wishlist refresh complete', [
             'refreshed' => $refreshed,
-            'rearmed' => $rearmed,
-            'price_drops' => $priceDrops,
-            'restocks' => $restocks,
+            'groups_recomputed' => array_sum(array_map('count', $touched)),
         ]);
+
+        FireWatchAlerts::dispatch();
     }
 
     /**
@@ -90,8 +114,11 @@ class RefreshWishlistedProducts implements ShouldQueue
      * every bol offer here was skipped, silently, and a watched bol product's
      * price never moved. The job cannot make that choice itself — which key a
      * source accepts is a fact about the source.
+     *
+     * @return array{0: int, 1: array<string, list<int>>} rows written, and the
+     *                                                    groups they belong to per market
      */
-    private function refreshLiveOffers(ConnectorRegistry $registry, OfferUpserter $upserter): int
+    private function refreshLiveOffers(ConnectorRegistry $registry, OfferUpserter $upserter): array
     {
         $groupIds = PriceAlert::query()
             ->whereIn('state', [AlertState::Active->value, AlertState::Triggered->value])
@@ -114,17 +141,20 @@ class RefreshWishlistedProducts implements ShouldQueue
             ->values();
 
         if ($groupIds->isEmpty()) {
-            return 0;
+            return [0, []];
         }
 
         $liveSources = array_map(fn (Source $s) => $s->value, $registry->liveSources());
 
         if ($liveSources === []) {
-            return 0;
+            return [0, []];
         }
 
         $fetched = [];
+        $asked = 0;
         $written = 0;
+        $touched = [];
+        $deadline = microtime(true) + self::TIME_BUDGET;
 
         Product::query()
             ->whereIn('group_id', $groupIds)
@@ -134,10 +164,14 @@ class RefreshWishlistedProducts implements ShouldQueue
             // with; every other column here was already needed.
             ->select(['id', 'source', 'external_id', 'ean', 'market', 'group_id'])
             ->orderBy('id')
-            ->chunkById(100, function ($products) use ($registry, $upserter, &$fetched, &$written): bool {
+            ->chunkById(100, function ($products) use ($registry, $upserter, &$fetched, &$asked, &$written, &$touched, $deadline): bool {
+                $stop = false;
+
                 foreach ($products as $product) {
-                    if (count($fetched) >= self::REFRESH_CAP) {
-                        return false;
+                    if ($asked >= self::REFRESH_CAP || microtime(true) >= $deadline) {
+                        $stop = true;
+
+                        break;
                     }
 
                     $connector = $registry->live($product->source);
@@ -145,6 +179,8 @@ class RefreshWishlistedProducts implements ShouldQueue
                     if ($connector === null || $connector->isCoolingDown() || ! $connector->supports($product->market)) {
                         continue;
                     }
+
+                    $asked++;
 
                     try {
                         $offer = $connector->refresh($product->external_id, $product->ean, $product->market);
@@ -156,202 +192,20 @@ class RefreshWishlistedProducts implements ShouldQueue
 
                     if ($offer !== null) {
                         $fetched[] = $offer;
+                        $touched[$product->market->value][] = (int) $product->group_id;
                     }
                 }
 
+                // Written per chunk, and also when the budget ran out, so
+                // nothing already fetched is thrown away.
                 if ($fetched !== []) {
                     $written += (int) ($upserter->upsert($fetched)['written'] ?? 0);
                     $fetched = [];
                 }
 
-                return true;
+                return ! $stop;
             });
 
-        if ($fetched !== []) {
-            $written += (int) ($upserter->upsert($fetched)['written'] ?? 0);
-        }
-
-        return $written;
-    }
-
-    /**
-     * Put a fired alert back on watch once the thing it fired for has passed.
-     *
-     * A fired alert used to stay `triggered` forever: one notification, ever,
-     * unless the person pressed "watch" again by hand. A price that dropped,
-     * recovered and dropped again is exactly what somebody watching a price
-     * wants to hear about twice, so a price alert re-arms when the price is
-     * back at or above what it was watching — with today's price as the new
-     * baseline, so the next drop is measured from here — and a restock alert
-     * re-arms when the product is out of stock again.
-     */
-    private function rearmAlerts(): int
-    {
-        $rearmed = 0;
-
-        PriceAlert::query()
-            ->where('state', AlertState::Triggered->value)
-            ->chunkById(200, function ($alerts) use (&$rearmed): void {
-                foreach ($alerts as $alert) {
-                    $current = $this->trackablePrice($alert->group_id);
-
-                    if ($current === null) {
-                        continue;
-                    }
-
-                    if ($current < ($alert->target_price ?? $alert->baseline_price)) {
-                        continue;
-                    }
-
-                    $alert->update([
-                        'state' => AlertState::Active->value,
-                        'baseline_price' => $current,
-                        'notified_at' => null,
-                    ]);
-                    $rearmed++;
-                }
-            });
-
-        RestockAlert::query()
-            ->where('state', AlertState::Triggered->value)
-            ->with('group')
-            ->chunkById(200, function ($alerts) use (&$rearmed): void {
-                foreach ($alerts as $alert) {
-                    if ($alert->group?->in_stock !== false) {
-                        continue;
-                    }
-
-                    $alert->update(['state' => AlertState::Active->value, 'notified_at' => null]);
-                    $rearmed++;
-                }
-            });
-
-        return $rearmed;
-    }
-
-    /**
-     * Notify when a watched product is cheaper than when the alert was set.
-     *
-     * COMPLIANCE: only offers from sources that permit price tracking count
-     * toward the current price. An Amazon offer being cheapest cannot trigger
-     * an alert. See docs/features/amazon-compliance.md.
-     */
-    private function firePriceAlerts(): int
-    {
-        $fired = 0;
-
-        PriceAlert::query()
-            ->where('state', AlertState::Active->value)
-            ->with('group')
-            ->chunkById(200, function ($alerts) use (&$fired): void {
-                foreach ($alerts as $alert) {
-                    $current = $this->trackablePrice($alert->group_id);
-
-                    if ($current === null) {
-                        continue;
-                    }
-
-                    // A target beats the baseline when set: someone who asked
-                    // for "under €300" does not want to hear about €5 off.
-                    $threshold = $alert->target_price ?? $alert->baseline_price;
-
-                    if ($current >= $threshold) {
-                        continue;
-                    }
-
-                    $this->notify($alert, $current, 'price_drop');
-                    $alert->update([
-                        'state' => AlertState::Triggered->value,
-                        'notified_at' => now(),
-                    ]);
-                    $fired++;
-                }
-            });
-
-        return $fired;
-    }
-
-    private function fireRestockAlerts(): int
-    {
-        $fired = 0;
-
-        RestockAlert::query()
-            ->where('state', AlertState::Active->value)
-            ->with('group')
-            ->chunkById(200, function ($alerts) use (&$fired): void {
-                foreach ($alerts as $alert) {
-                    if ($alert->group?->in_stock !== true) {
-                        continue;
-                    }
-
-                    $this->notify($alert, $alert->group->min_price, 'restock');
-                    $alert->update([
-                        'state' => AlertState::Triggered->value,
-                        'notified_at' => now(),
-                    ]);
-                    $fired++;
-                }
-            });
-
-        return $fired;
-    }
-
-    /**
-     * The cheapest offer we are allowed to build an alert on.
-     *
-     * Lives on AlertEligibility since the per-list watch needed the same
-     * number; kept as a one-liner here so the call sites above read as they
-     * always did.
-     */
-    private function trackablePrice(int $groupId): ?int
-    {
-        return app(AlertEligibility::class)->trackablePrice($groupId);
-    }
-
-    private function notify(PriceAlert|RestockAlert $alert, ?int $price, string $kind): void
-    {
-        if ($alert->user_id === null) {
-            return;
-        }
-
-        $group = $alert->group;
-        $url = $group === null ? null : "/{$group->market->value}/p/{$group->id}/{$group->slug}";
-
-        Notification::create([
-            'user_id' => $alert->user_id,
-            'kind' => $kind,
-            'title' => $group?->title ?? '',
-            'body' => null,
-            'url' => $url,
-            'payload' => [
-                'group_id' => $alert->group_id,
-                'price' => $price,
-                'baseline' => $alert instanceof PriceAlert ? $alert->baseline_price : null,
-            ],
-        ]);
-
-        /*
-         * And the inbox. The price here came from `trackablePrice()`, which
-         * reads trackable sources only, so a source whose programme forbids
-         * product data in email cannot reach the template — that is the
-         * filtering-by-source the old in-app-only note was waiting for, done
-         * once at the point the number is chosen. See App\Mail\AlertMail.
-         */
-        $user = $alert->user;
-
-        if ($user === null || $group === null || $url === null || blank($user->email)) {
-            return;
-        }
-
-        $language = $group->market->language();
-
-        Mail::to($user)->send(new AlertMail(
-            kind: $kind,
-            title: $group->displayTitle(),
-            url: url($url),
-            language: $language,
-            price: $price === null ? null : Number::currency($price / 100, 'EUR', $language),
-            was: $alert instanceof PriceAlert ? Number::currency($alert->baseline_price / 100, 'EUR', $language) : null,
-        ));
+        return [$written, array_map(fn (array $ids) => array_values(array_unique($ids)), $touched)];
     }
 }

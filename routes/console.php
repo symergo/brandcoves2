@@ -5,26 +5,18 @@ declare(strict_types=1);
 use App\Enums\Market;
 use App\Jobs\BuildDailyEdition;
 use App\Jobs\CheckSearchAlerts;
-use App\Jobs\ClassifyGiftability;
 use App\Jobs\CountListSignals;
 use App\Jobs\CountOfflineIdeas;
-use App\Jobs\FindMatchCandidates;
-use App\Jobs\GroupProducts;
-use App\Jobs\IngestFeed;
-use App\Jobs\LinkBarcodeItems;
-use App\Jobs\PlanGiftLandingPages;
 use App\Jobs\PlanPersonasFromDemand;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
-use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshRecentSearches;
-use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\RunEditorialAutomation;
 use App\Jobs\SendCoveDigest;
 use App\Jobs\SendListPriceDigests;
 use App\Jobs\SendOccasionReminders;
 use App\Jobs\WidenGiftAngles;
-use App\Models\Feed;
+use App\Services\Ingestion\CatalogueRun;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -52,54 +44,31 @@ use Illuminate\Support\Facades\Schedule;
  * of products someone actually cares about.
  *
  * 04:10 and 16:10: after the overnight regeneration, and again mid-afternoon.
+ *
+ * THE CATALOGUE RUN (since 2026-09-28). One entry starts everything that used
+ * to have its own clock time: per market, ingest its feeds, then group,
+ * classify, brand statistics, match candidates and (mornings) gift landing
+ * pages; market after market; then barcode links and the watched products'
+ * refresh. Each step starts when the one before it is done. Before, grouping
+ * ran at 05:00 whether the feeds were in or not, classification at 05:10,
+ * brand statistics and barcode links at 05:30, match review and landing pages
+ * at 05:40, the watched products at 05:20 (and 16:10–17:40 likewise).
+ * App\Services\Ingestion\CatalogueRun has the order and the reasons.
+ *
+ * `withoutOverlapping()` here guards only the dispatch, which takes a moment;
+ * each step guards itself when it runs (App\Jobs\Concerns\RunsOneAtATime).
+ * name() must come first — the mutex is keyed on it.
  */
-Schedule::call(function (): void {
-    Feed::query()->enabled()->get()->each(
-        fn (Feed $feed) => IngestFeed::dispatch($feed->id)
-    );
-})
-    ->name('ingest-feeds')
-    ->twiceDailyAt(4, 16, 10)
-    // A run that overlaps the previous one would fight over the same cursor.
-    // name() must come first — the mutex is keyed on it.
+Schedule::call(fn () => CatalogueRun::start(Market::cases(), morning: true))
+    ->name('catalogue-run-morning')
+    ->dailyAt('04:10')
     ->withoutOverlapping()
     ->onOneServer();
 
-// Grouping runs after ingestion has had time to land. Separate from ingestion
-// because it is set-based over a whole market: doing it per feed would compute
-// a group's cheapest offer from a half-loaded catalogue.
-//
-// Offset by 50 minutes rather than a few, because a multi-hundred-megabyte feed
-// legitimately takes a while.
-Schedule::call(function (): void {
-    foreach (Market::cases() as $market) {
-        GroupProducts::dispatch($market);
-    }
-})
-    ->name('group-products')
-    ->twiceDailyAt(5, 17, 0)
+Schedule::call(fn () => CatalogueRun::start(Market::cases(), morning: false))
+    ->name('catalogue-run-afternoon')
+    ->dailyAt('16:10')
     ->withoutOverlapping()
-    ->onOneServer();
-
-// Products that may be one, proposed for a person to confirm at /admin,
-// Catalogue > Match review. Forty minutes after grouping starts, because it
-// reads the groups grouping writes and a large market takes a while. Nothing
-// merges here. See docs/features/match-review.md.
-Schedule::call(function (): void {
-    foreach (Market::cases() as $market) {
-        FindMatchCandidates::dispatch($market);
-    }
-})
-    ->name('find-match-candidates')
-    ->twiceDailyAt(5, 17, 40)
-    ->withoutOverlapping()
-    ->onOneServer();
-
-// Scanned barcodes saved before any shop sold them, joined to their product
-// once one does. Half an hour after grouping, so the groups are there.
-Schedule::job(new LinkBarcodeItems)
-    ->name('link-barcode-items')
-    ->twiceDailyAt(5, 17, 30)
     ->onOneServer();
 
 // What people's lists teach the catalogue: crowd tags on products, and
@@ -121,23 +90,17 @@ Schedule::job(new CountOfflineIdeas)
     ->dailyAt('04:00')
     ->onOneServer();
 
-// Which gift landing pages exist (/gift-ideas/for/papa/koken): the pairs the
-// catalogue can fill with eight products or more. After grouping (05:00) so
-// tonight's products count, and after the list signals (03:50) so tonight's
-// crowd tags do. See docs/features/gift-landing-pages.md.
-Schedule::call(function (): void {
-    foreach (Market::published() as $market) {
-        PlanGiftLandingPages::dispatch($market);
-    }
-})
-    ->name('plan-gift-landing-pages')
-    ->dailyAt('05:40')
-    ->onOneServer();
+// Which gift landing pages exist (/gift-ideas/for/papa/koken) is a step of the
+// morning catalogue run above since 2026-09-28, after each market's grouping
+// and brand statistics. It ran at 05:40. See docs/features/gift-landing-pages.md.
 
 // Gift personas drafted from what people search for: readings searched often
 // enough that no persona or landing page answers yet. Drafts only, for a
-// person to approve. After the landing pages (05:40) so a pair that got its
-// page tonight is not also drafted as a persona.
+// person to approve. After the landing pages so a pair that got its page
+// tonight is not also drafted as a persona: those are planned by the morning
+// catalogue run, which should be through the markets by 06:30 on a normal
+// night; if it is not, a pair may be drafted a day early, which a person
+// rejecting a draft already covers.
 // See docs/features/persona-demand.md.
 Schedule::call(function (): void {
     foreach (Market::published() as $market) {
@@ -173,25 +136,12 @@ Schedule::call(function (): void {
     ->onOneServer();
 
 /*
- * Re-classify giftability after grouping.
+ * Giftability, brand statistics, match candidates, barcode links and the
+ * watched products' refresh are steps of the catalogue run at the top of this
+ * file since 2026-09-28, each started when grouping of its market is done.
  *
- * A full pass over the catalogue, not an incremental one: the classifier's
- * rules change more often than the products do, and a partial pass would leave
- * yesterday's verdict on most rows with no way to tell which. It is pure CPU
- * with no network, so a full pass is seconds.
- *
- * Ten minutes after grouping, because it reads the denormalised title, category
- * and cheapest price that grouping is what produces.
+ * Score serendipity: OFF THE SCHEDULE since 2026-09-27, as follows.
  */
-Schedule::call(function (): void {
-    foreach (Market::cases() as $market) {
-        ClassifyGiftability::dispatch($market);
-    }
-})
-    ->name('classify-giftability')
-    ->twiceDailyAt(5, 17, 10)
-    ->withoutOverlapping()
-    ->onOneServer();
 
 /*
  * Score serendipity: OFF THE SCHEDULE since 2026-09-27.
@@ -204,8 +154,8 @@ Schedule::call(function (): void {
  *
  * Only the schedule entry is gone. App\Jobs\ScoreSerendipity and the stored
  * scores stay, and `bc:refresh-discovery` still runs it by hand. To bring it
- * back, restore this entry, which ran at 05:25 and 17:25 (after giftability,
- * because its quality gate reads that verdict):
+ * back, add it to CatalogueRun::stepsFor() right after ClassifyGiftability
+ * (its quality gate reads that verdict). It ran at 05:25 and 17:25 as:
  *
  *   Schedule::call(function (): void {
  *       foreach (Market::cases() as $market) {
@@ -214,25 +164,6 @@ Schedule::call(function (): void {
  *   })->name('score-serendipity')->twiceDailyAt(5, 17, 25)
  *     ->withoutOverlapping()->onOneServer();
  */
-
-/*
- * Recompute brand statistics.
- *
- * Brand pages are made entirely of these numbers — "N products, from €X, M of
- * them reduced" — so this has to follow grouping, which is what produces the
- * cheapest price and the median those sentences quote. Twenty minutes after
- * giftability, which with serendipity off the schedule is the last thing
- * that touches product_groups.
- */
-Schedule::call(function (): void {
-    foreach (Market::cases() as $market) {
-        RefreshBrandStats::dispatch($market);
-    }
-})
-    ->name('refresh-brand-stats')
-    ->twiceDailyAt(5, 17, 30)
-    ->withoutOverlapping()
-    ->onOneServer();
 
 /*
  * Widen the gift angle map, one market per night.
@@ -250,11 +181,66 @@ foreach (Market::cases() as $index => $market) {
 }
 
 /*
+ * The morning, in order (reshaped 2026-09-28 so nothing editorial runs while
+ * the catalogue run is grouping, which is the heaviest thing the database
+ * does all day):
+ *
+ *   04:10        catalogue run starts (top of this file)
+ *   06:00–06:24  editorial automation, one market every six minutes
+ *   06:30        persona drafts from demand
+ *   06:40–07:04  the Daily builds, one market every six minutes
+ *   07:15        watched searches
+ *   07:30–07:54  due Coves published
+ *   07:40        list price digest
+ *   08:10        occasion reminders
+ *   09:00        the Daily drops (a property of the edition, not a job)
+ *   09:15–09:31  Cove digest mails
+ *
+ * These are still clock times rather than steps of the catalogue run, because
+ * each answers to a promise about the time of day (a mail over breakfast, a
+ * Daily ready well before 09:00), not to the catalogue being done. On a night
+ * the catalogue run is late they read a catalogue a few hours old, which is
+ * what they did before whenever grouping failed.
+ */
+
+/*
+ * The editorial pipeline, walked once per market.
+ *
+ * The same stages an instruction drives — plan, curate, write, approve, build —
+ * on the scheduler instead of on somebody asking. Which of them run is a switch
+ * per market and per kind, and the grid ships seeded to reproduce exactly what
+ * the entries below already do, so the first deploy changes nothing. See
+ * App\Services\Settings\AutomationSettingsStore.
+ *
+ * One job per market that walks the enabled stages **in order**, rather than one
+ * per stage: staggered stages mean a plan drafted at 03:50 waits until tomorrow
+ * to be curated, where a sequential walk takes a plan from nothing to approved
+ * in a single run.
+ *
+ * 06:00 (05:00 until 2026-09-28, which put it on top of grouping), before the
+ * Daily builds below and before `PublishDueCoves` at 07:30, so anything this
+ * approves is honoured the same morning rather than waiting a day. Staggered
+ * per market for the same reason everything else here is: each build holds a
+ * catalogue-wide selection in memory.
+ *
+ * It cannot publish on its own. `buildArticle()` refuses a plan nobody
+ * approved, and `approve` ships off for every kind.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new RunEditorialAutomation($market))
+        ->name('editorial-automation-'.$market->value)
+        ->dailyAt(sprintf('06:%02d', $index * 6))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
+
+/*
  * Build the day's Daily Cove edition, one market at a time.
  *
- * At 06:00, three hours before the 09:00 drop time. The gap is deliberate: the
- * build can fail — a thin catalogue day, an AI hiccup, a feed that arrived late
- * — and three hours is enough for the retry to land or for someone to notice
+ * At 06:40 (06:00 until 2026-09-28), after the editorial automation and more
+ * than two hours before the 09:00 drop time. The gap is deliberate: the build
+ * can fail — a thin catalogue day, an AI hiccup, a feed that arrived late —
+ * and two hours is enough for the retry to land or for someone to notice
  * before the page is meant to be there.
  *
  * Staggered per market so five editions do not build at once, each holding a
@@ -263,37 +249,8 @@ foreach (Market::cases() as $index => $market) {
 foreach (Market::cases() as $index => $market) {
     Schedule::job(new BuildDailyEdition($market))
         ->name('build-daily-cove-'.$market->value)
-        ->dailyAt(sprintf('06:%02d', $index * 6))
-        ->withoutOverlapping()
-        ->onOneServer();
-}
-
-/*
- * The editorial pipeline, walked once per market.
- *
- * The same stages an instruction drives — plan, curate, write, approve, build —
- * on the scheduler instead of on somebody asking. Which of them run is a switch
- * per market and per kind, and the grid ships seeded to reproduce exactly what
- * the entries above already do, so the first deploy changes nothing. See
- * App\Services\Settings\AutomationSettingsStore.
- *
- * One job per market that walks the enabled stages **in order**, rather than one
- * per stage: staggered stages mean a plan drafted at 03:50 waits until tomorrow
- * to be curated, where a sequential walk takes a plan from nothing to approved
- * in a single run.
- *
- * 05:00, before the Daily builds above and well before `PublishDueCoves` at
- * 07:00 — so anything this approves is honoured the same morning rather than
- * waiting a day. Staggered per market for the same reason everything else here
- * is: each build holds a catalogue-wide selection in memory.
- *
- * It cannot publish on its own. `buildArticle()` refuses a plan nobody
- * approved, and `approve` ships off for every kind.
- */
-foreach (Market::cases() as $index => $market) {
-    Schedule::job(new RunEditorialAutomation($market))
-        ->name('editorial-automation-'.$market->value)
-        ->dailyAt(sprintf('05:%02d', $index * 6))
+        // 06:40, 06:46, 06:52, 06:58, 07:04.
+        ->dailyAt(sprintf('%02d:%02d', 6 + intdiv(40 + $index * 6, 60), (40 + $index * 6) % 60))
         ->withoutOverlapping()
         ->onOneServer();
 }
@@ -301,10 +258,11 @@ foreach (Market::cases() as $index => $market) {
 /*
  * Publish the approved Coves whose date has arrived.
  *
- * 07:00, after the last market's Daily has built. Seasonal Coves are laid out as
- * a series of dated parts across their window, and this is what makes that date
- * mean something — an editor approves the part and it goes live on the day they
- * scheduled it for, rather than whenever somebody remembers to press Build.
+ * 07:30 (07:00 until 2026-09-28), after the last market's Daily has built.
+ * Seasonal Coves are laid out as a series of dated parts across their window,
+ * and this is what makes that date mean something — an editor approves the
+ * part and it goes live on the day they scheduled it for, rather than whenever
+ * somebody remembers to press Build.
  *
  * Not automatic publishing: `buildArticle()` refuses anything that is not
  * approved, so a draft on a past date sits here for ever. See
@@ -317,7 +275,7 @@ foreach (Market::cases() as $index => $market) {
 foreach (Market::cases() as $index => $market) {
     Schedule::job(new PublishDueCoves($market))
         ->name('publish-due-coves-'.$market->value)
-        ->dailyAt(sprintf('07:%02d', $index * 6))
+        ->dailyAt(sprintf('07:%02d', 30 + ($index * 6)))
         // A second pass overlapping the first would dispatch every due plan
         // twice, and two builds of one article race over the same edition row.
         ->withoutOverlapping()
@@ -346,36 +304,28 @@ foreach (Market::cases() as $index => $market) {
 }
 
 /*
- * Fire price and restock alerts.
+ * Watched searches. Once a day, after the morning catalogue run has grouped
+ * the markets: the catalogue changes with ingestion, and a check between two
+ * ingests re-reads the same rows. 07:15 since 2026-09-28 (06:30 before), out of
+ * the way of the Daily builds. See App\Jobs\CheckSearchAlerts.
  *
- * Twenty minutes after grouping, not on its own cadence: the only thing that
- * moves a stored price is a feed ingest, and grouping is what turns that into
- * the aggregates an alert compares against. Running more often than the data
- * changes would burn queries to re-read the same numbers.
- */
-/*
- * Watched searches. Once a day, after the overnight grouping (05:00) has
- * landed: the catalogue changes with ingestion, and a check between two
- * ingests re-reads the same rows. See App\Jobs\CheckSearchAlerts.
+ * The price and restock alerts are fired at the end of the catalogue run
+ * (RefreshWishlistedProducts, then FireWatchAlerts), no longer at 05:20.
  */
 Schedule::job(new CheckSearchAlerts)
     ->name('check-search-alerts')
-    ->dailyAt('06:30')
-    ->onOneServer();
-
-Schedule::job(new RefreshWishlistedProducts)
-    ->name('refresh-wishlisted')
-    ->twiceDailyAt(5, 17, 20)
-    ->withoutOverlapping()
+    ->dailyAt('07:15')
     ->onOneServer();
 
 /*
  * The list price digest: bstore's wishlist mail, on GiftCoves.
  *
- * Once a day, after the 05:20 live refresh above has made a bol price today's.
- * Not after the 17:20 one as well: a second pass would mail the same person
- * twice a day about one product, and a digest that arrives twice is a digest
- * that gets muted. See App\Jobs\SendListPriceDigests and
+ * Once a day, after the morning catalogue run's live refresh of the watched
+ * products has made a bol price today's (it ran at 05:20 before; it is now the
+ * last step of the run, which on a normal night is done well before 07:40).
+ * Not after the afternoon run as well: a second pass would mail the same
+ * person twice a day about one product, and a digest that arrives twice is a
+ * digest that gets muted. See App\Jobs\SendListPriceDigests and
  * docs/features/list-price-watch.md.
  */
 Schedule::job(new SendListPriceDigests)
@@ -434,7 +384,8 @@ Schedule::command('bc:plan-coves')
  * Daily and small. The per-feature cap is the real limiter, and a run that walks
  * a handful of guides a night clears the backlog inside a fortnight without ever
  * competing with the morning editions for the day's budget. 04:40 is after the
- * prunes and well before the 06:00 Cove builds.
+ * prunes and well before the editorial automation (06:00) and Daily builds
+ * (06:40).
  */
 Schedule::command('bc:refresh-guide-copy --limit=8')
     ->name('refresh-guide-copy')
@@ -475,13 +426,17 @@ Schedule::command('bc:prune-image-cache')
  * happens here and not in the request. The homepage had three COUNT(*) queries
  * removed for being too expensive; six searches per page view would be worse.
  *
- * Staggered by a minute per market so five markets do not run their searches in
- * the same second, and published markets only: an unpublished market has no
+ * Staggered by two minutes per market so five markets do not run their searches
+ * in the same second, and published markets only: an unpublished market has no
  * visitors and therefore no searches to resolve.
+ *
+ * From :05 rather than :00 (2026-09-28): on the hour is when every other
+ * hourly and daily entry fires, and the first market's searches used to land
+ * on top of them.
  */
 foreach (Market::published() as $index => $market) {
     Schedule::job(new RefreshRecentSearches($market))
         ->name("refresh-recent-searches-{$market->value}")
-        ->hourlyAt($index * 2)
+        ->hourlyAt(5 + $index * 2)
         ->onOneServer();
 }

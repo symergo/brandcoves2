@@ -17,6 +17,7 @@ use App\Services\Connectors\PopularityConnector;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -34,6 +35,7 @@ use Throwable;
  * rather than restarting, which matters because restarting would spend the whole
  * budget re-pulling the charts it already has.
  */
+#[Queue('batch')]
 class PullPopularCharts implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

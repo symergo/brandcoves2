@@ -1030,3 +1030,212 @@ exactly as before. Nothing else depends on the flag.
 - **Long requests hold a worker.** An image proxy miss (up to 4 s) or a slow page occupies one of
   the four workers for its whole length. If the access log shows requests queueing, raise
   `OCTANE_WORKER_NUM`, as memory allows.
+
+## Background work
+
+Wave 3 of the audit (2026-09-28): the night jobs rewrote whole tables that had not changed, ran at
+guessed clock times, shared one queue with visitors, and a deploy in the middle of an ingest lost
+the work or, worse, retired good offers.
+
+### Four queues
+
+Horizon ran on the package defaults: one queue (`default`), up to ten workers, and one
+`retry_after` (65 minutes) sized for the slowest job. A pasted link (`ReadItemLink`, seconds) queued
+behind a 300 MB feed and a Cove build, and a visitor job orphaned by a dead worker waited an hour.
+
+`config/horizon.php` now runs four supervisors, one per kind of work:
+
+| Queue | Holds | Workers | Default timeout | Read through |
+|---|---|---|---|---|
+| `default` | somebody is waiting: pasted links, questions to people, live shop searches, AI triage, mail sent from a request | 2–4 | 90 s | `redis` (retry_after 180 s) |
+| `mail` | Cove digest, list price digest, occasion reminders, price and restock alerts (`FireWatchAlerts`) | 1–2 | 1800 s | `redis-long` (3900 s) |
+| `editorial` | editorial automation, the Daily, due Coves, `BuildCove`, `RedoCove`, gift angles, merge rules, topic queue | 1–2 | 900 s, 512 MB | `redis-long` |
+| `batch` | ingestion, grouping, classification, brand statistics, charts, list signals, the other night jobs | 1–2 | 3600 s, 512 MB, nice 5 | `redis-long` |
+
+Ten processes at most, as before. Things worth knowing:
+
+- **Every job names its queue** with `#[Queue('batch')]` on the class (Laravel 13 reads the
+  attribute at dispatch). `QueueRoutingTest` fails for a job without one, and `QueueRetryAfterTest`
+  checks each job's `$timeout` against the connection that reads its queue.
+- **Two connections onto the same Redis keys.** A job is pushed onto `redis` with a queue name; the
+  key (`queues:batch`) is the same whichever connection reads it, and the reading connection's
+  `retry_after` applies, because Redis sets it when a worker reserves the job. So the slow queues are
+  read through `redis-long` and `default` keeps a short one. Nothing in the application pushes onto
+  `redis-long`, and the test suite's `sync` connection is untouched.
+- **A long job that forgets its attribute lands on `default`** and is handed to a second worker after
+  three minutes while still running. That is the failure that broke the Daily every morning until
+  2026-09-01; the tests above exist so it cannot ship.
+- **The AI jobs** (`WidenGiftAngles`, `TriageCommunityPost`, `TestAiCredential`) have `$timeout = 120`
+  and `$backoff = 60`: one model call whose HTTP timeout is 60 s. Before, they took the worker's
+  default, so a hung call held a worker that long.
+- **The `queue` container's `stop_grace_period` is 120 s** (was 60), so a feed chunk in progress can
+  finish when a deploy stops the worker. See "A deploy pauses an ingest" below.
+- **Jobs queued before the deploy** sit on `default` and are read with the new 180 s `retry_after`.
+  A long one among them (an `IngestFeed` queued at 16:10 and not yet started) could be re-reserved
+  while it runs. Deploy outside the catalogue run's hours, as the plan already says.
+
+### Write only what changed
+
+An UPDATE in Postgres writes a new copy of the row and a new entry in every index on it, whether or
+not a value moved. The feeds are mostly the same from one day to the next, yet every ingest rewrote
+every offer (recomputing the stored `search_vector` and adding GIN and trigram entries), and grouping,
+classification and brand statistics rewrote every group and brand. Now each writes only rows whose
+values differ, with `WHERE (columns) IS DISTINCT FROM (new values)`:
+
+- `OfferUpserter`, through `App\Support\ChangedRowsUpsert`, which compiles Laravel's own upsert and
+  adds that condition (`IS DISTINCT FROM` rather than `<>`, because `<>` is NULL when either side is,
+  and NULL to text is a change).
+- `ProductGrouper::recomputeAggregates()`, `ClassifyGiftability`, `BrandStats`.
+- `BrandStats` compares `share` within 1% rather than exactly: it is each brand's fraction of the
+  whole market, so one product more anywhere moves every brand's share in the sixth decimal. It only
+  orders the brand index. Absent brands are zeroed with one JSON parameter instead of one binding
+  per slug (thousands, with a hard ceiling at 65,535), and rows already at zero are skipped.
+
+Side effects, on purpose: `updated_at` on offers and groups and `computed_at` on brands now mean
+"changed", which makes the brand sitemap's `lastmod` honest. The admin offer table's "Last seen"
+column is now labelled "Last changed".
+
+### Retiring offers without `last_seen_at`
+
+The ingest used to retire offers "not seen since the run began" by `last_seen_at`. With unchanged
+rows no longer written, `last_seen_at` stays put on an offer the feed still lists, and that rule
+would retire every one of them. So `IngestFeed` records each chunk's external ids in
+`ingestion_seen_offers` and at the end retires the feed's active offers that are not there, with
+one anti-join. The table is emptied when a run starts from the top and when it finishes.
+
+It is **UNLOGGED**: no WAL, which is most of the saving, at the price that Postgres empties it after
+a crash (not after a clean shutdown). The job keeps a running count of what it recorded in its
+cursor (an ordinary row); if the table holds fewer at the end, a crash emptied it, and that run
+retires nothing rather than retiring offers it can no longer prove it saw. The next run catches up.
+
+The alternative was bumping `last_seen_at` only on rows not touched in 20 hours: it sounds safer,
+but it still rewrites every offer once a day, so it halves the churn instead of removing it, and it
+delays retiring a dropped offer by up to a day.
+
+### A resumed ingest keeps its run start
+
+`IngestFeed` took `now()` as the run start on every attempt. A run cut off by a deploy resumed at,
+say, row 40,000 with a new start, skipped the first 40,000 rows (the cursor said they were done) and
+then retired them as "not seen since this run began": every offer the first attempt had committed
+went stale. The run start now lives in the cursor, written before the first chunk, and every attempt
+of the same run reuses it. With the seen list above, a resumed run's first chunks are remembered too.
+
+### A deploy pauses an ingest
+
+A deploy stops the `queue` container with SIGTERM. `IngestFeed` now hears it (a handler installed on
+top of the worker's, which it still calls), finishes the chunk it is writing, records its place,
+puts itself back on the queue and returns. The new Horizon resumes it at once, instead of the old
+outcome: the whole feed finished inside the grace period, or the worker was killed and the job
+waited `retry_after` (65 minutes). That is also why the job now has `$tries = 5` with
+`$maxExceptions = 2`: each pause is an attempt, and two exceptions is still one retry. Other long
+jobs still run to their end or are killed at the limit; every one of them is idempotent.
+
+### The catalogue run: steps, not clock times
+
+`routes/console.php` guessed how long each step took: ingest 04:10, group 05:00, classify 05:10,
+brand statistics and barcode links 05:30, match review and landing pages 05:40, watched products
+05:20, and the same from 16:10. A feed that took longer than fifty minutes was grouped half-loaded;
+a quick night left the database idle; and every market grouped at the same moment.
+
+Now `App\Services\Ingestion\CatalogueRun` starts at 04:10 and 16:10 and, per market:
+
+1. a batch of the market's enabled feeds (`allowFailures`: a failing feed does not stop its
+   siblings or the grouping of what arrived);
+2. `GroupProducts` → `ClassifyGiftability` → `RefreshBrandStats` → `FindMatchCandidates` →
+   `PlanGiftLandingPages` (morning run, published markets);
+3. `ContinueCatalogueRun`, which starts the next market.
+
+After the last market: `LinkBarcodeItems`, then `RefreshWishlistedProducts`, which hands the alerts
+to `FireWatchAlerts` on the `mail` queue. A step that fails for good stops only its market: the
+chain's `catch` starts the next one.
+
+One market at a time, so one market's catalogue pass holds the database at once; the two `batch`
+workers let two feeds of one market download side by side.
+
+**The steps are not `ShouldBeUnique`**, and that is deliberate. Laravel checks uniqueness when a
+chain dispatches its next job, and a job refused there is dropped *with the rest of the chain*: a
+"Group now" pressed in the admin at the wrong moment would silently have cancelled that night's
+grouping for every market still to come. Instead each step carries `WithoutOverlapping` middleware
+(`App\Jobs\Concerns\RunsOneAtATime`), checked when it runs: a second copy finds the lock taken and
+is deleted without running, which a chain counts as done and moves on from. `IngestFeed` keeps
+`ShouldBeUnique` (for its own dispatches) and adds the same middleware, because Laravel never checks
+uniqueness for the jobs of a batch.
+
+The scheduled one-offs that must not overlap themselves are `ShouldBeUnique` per market (and day):
+`BuildDailyEdition`, `RunEditorialAutomation`, `PublishDueCoves`, `SendCoveDigest`,
+`RefreshRecentSearches`, `SendOccasionReminders`. `withoutOverlapping()` on a schedule entry only
+guards the dispatch, which is over in milliseconds.
+
+The morning around the run moved off the grouping hours:
+
+| | Before | Since 2026-09-28 |
+|---|---|---|
+| Editorial automation | 05:00–05:24 | 06:00–06:24 |
+| Daily builds | 06:00–06:24 | 06:40–07:04 |
+| Watched searches | 06:30 | 07:15 |
+| Due Coves published | 07:00–07:24 | 07:30–07:54 |
+| Recent searches | :00 hourly | from :05 hourly |
+
+The 09:00 drop is a property of the edition and did not move; neither did the list price digest
+(07:40), reminders (08:10) and the Cove digest (09:15). Those keep clock times because each answers
+a promise about the time of day, not about the catalogue being done. On a night the run is late,
+they read a catalogue a few hours old, as they did before whenever grouping failed.
+
+### Smaller jobs made resumable or cheaper
+
+- `RefreshWishlistedProducts`: stops asking the live shops after 300 s (it had the whole 600 s
+  timeout, and a throttled source could hold a worker that long), recomputes the groups whose
+  offers it changed (`ProductGrouper::recomputeGroups()`) so a watched product's cheapest price and
+  stock are today's at once, and leaves the alerts to `FireWatchAlerts`, which marks an alert fired
+  before its mail goes so a retry cannot send twice.
+- `CheckSearchAlerts`: only watches not checked today, so a retried run resumes; each distinct
+  (market, term, ceiling) searched once per run, however many people watch it.
+- `SendListPriceDigests`: owners in chunks of 100 instead of every watched list in memory at once;
+  `users.list_digest_on` marks an owner done for the day, so a retry skips them; the mail is queued
+  on `mail`.
+- `LinkBarcodeItems`: one join finds the unlinked barcode items that now have a product, instead of
+  a lookup per item (nearly all of which found nothing).
+- `bc:prune-personal-data`: the pictures in use are read once, not one query per file on disk.
+- `CountListSignals` already replaced its tables inside one transaction; nothing changed there.
+- Admin "Ingest now" chains the market's grouping after the ingest; it used to queue both at once,
+  so the market was usually grouped before the feed arrived.
+
+### Postgres settings and indexes
+
+- `jit=off`: compiling a query costs 50–200 ms and pays off only on queries that run for seconds;
+  ours are short or nightly.
+- `max_wal_size=4GB`: fewer forced checkpoints while a feed is ingested or a market grouped.
+- **Not set, for the owner to decide:** `random_page_cost=1.1` and `effective_io_concurrency=200`.
+  They are right on an SSD or NVMe disk and wrong on a spinning one, and nothing in this repository
+  records which the VPS has. `lsblk -d -o name,rota` on the host answers it (ROTA 0 is solid state).
+- Migration `2026_09_28_001520_drop_the_indexes_nothing_reads` drops, `CONCURRENTLY`:
+  `products_status_last_seen_at_index` (the stale sweep no longer reads `last_seen_at`),
+  `product_groups_market_slug_index`, `events_kind_created_at_index` (the firehose table; its one
+  possible reader is a hand-called editorial endpoint) and `products_merchant_id_index` (superseded
+  by `(merchant_id, market, status)`, dropped only when that one is valid).
+  **`products_title_trgm_idx` is kept**, although the audit listed it: the admin offer search uses it
+  since wave 1.
+
+### Migrations in this wave
+
+All expand-only and guarded, because a failing migration is an outage:
+
+- `2026_09_28_001500_ingestion_remembers_what_it_saw`: `CREATE UNLOGGED TABLE IF NOT EXISTS
+  ingestion_seen_offers`.
+- `2026_09_28_001510_a_list_price_digest_remembers_its_day`: `ALTER TABLE users ADD COLUMN IF NOT
+  EXISTS list_digest_on date` (nullable, no rewrite).
+- `2026_09_28_001520_drop_the_indexes_nothing_reads`: `DROP INDEX CONCURRENTLY IF EXISTS`.
+
+### Check on staging after the push
+
+- Horizon's dashboard lists four supervisors (`visitors`, `mail`, `editorial`, `batch`).
+- After 04:10 (or by hand in tinker:
+  `App\Services\Ingestion\CatalogueRun::start(App\Enums\Market::cases(), true)`), Horizon shows
+  `ChainedBatch`, the market's `IngestFeed`s, then `GroupProducts`, `ClassifyGiftability`, ... for
+  be-nl, then `ContinueCatalogueRun`, then be-fr. No feed's offers go stale that the feed still
+  lists (`select status, count(*) from products group by 1` before and after).
+- A second ingest of an unchanged feed writes few rows: `n_tup_upd` for `products` in
+  `pg_stat_user_tables` grows by the number of changed offers, not the size of the feed.
+- A deploy during an ingest: the log says "Feed ingest paused for a restart", and the job is
+  running again within a minute of the new container.
+- `/be-nl/daily` is there at 09:00; the list price digest and search alerts arrive in the morning.

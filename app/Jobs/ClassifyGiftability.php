@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Models\ProductGroup;
 use App\Services\Gift\GiftabilityClassifier;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -18,18 +20,25 @@ use Illuminate\Support\Facades\Log;
  * Runs after grouping, because the classifier reads the group's denormalised
  * title, category and cheapest price — all of which grouping is what produces.
  *
- * Rewrites every row rather than only the new ones: the classifier's rules
+ * Classifies every row rather than only the new ones: the classifier's rules
  * change more often than the catalogue does, and a partial pass would leave the
  * old verdict on 60,000 rows with no way to tell which. A full pass over the
- * catalogue is a few seconds of CPU and no network at all.
+ * catalogue is a few seconds of CPU and no network at all. Since 2026-09-28 it
+ * WRITES only the verdicts that changed.
  */
+#[Queue('batch')]
 class ClassifyGiftability implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 900;
 
     public function __construct(public Market $market) {}
+
+    protected function overlapKey(): string
+    {
+        return $this->market->value;
+    }
 
     public function handle(GiftabilityClassifier $classifier): void
     {
@@ -115,7 +124,12 @@ class ClassifyGiftability implements ShouldQueue
                  giftable_reason = v.reason,
                  updated_at = now()
              FROM (VALUES {$placeholders}) AS v(id, giftable, worth_showing, reason)
-             WHERE g.id = v.id",
+             WHERE g.id = v.id
+               -- Only a verdict that changed (2026-09-28): nearly all stay the
+               -- same from run to run, and a rewrite of an unchanged row is a
+               -- new row version plus new index entries.
+               AND (g.giftable, g.worth_showing, g.giftable_reason)
+                   IS DISTINCT FROM (v.giftable, v.worth_showing, v.reason)",
             $bindings,
         );
     }

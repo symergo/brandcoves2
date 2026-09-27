@@ -10,6 +10,7 @@ use App\Services\Discovery\CatalogueStats;
 use App\Services\Discovery\SerendipityEngine;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Log;
  * every row: serendipity is a comparison against the rest of the catalogue, so
  * per-row stats would be both wrong and tens of thousands of queries.
  */
+#[Queue('batch')]
 class ScoreSerendipity implements ShouldQueue
 {
     use Queueable;

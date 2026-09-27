@@ -9,6 +9,7 @@ use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 
 /**
  * Refresh one market's guide-topic queue: mine the search log, then seed the
@@ -23,6 +24,7 @@ use Illuminate\Foundation\Queue\Queueable;
  * Both passes are idempotent and never overturn a decision made on the
  * screen, so a double click or a retry costs time, not correctness.
  */
+#[Queue('editorial')]
 class RefreshTopicQueue implements ShouldQueue
 {
     use Queueable;

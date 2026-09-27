@@ -9,6 +9,7 @@ use App\Services\Cove\CoveCaches;
 use App\Services\Cove\EditionBuilder;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Log;
  * seasonal ones — and an editor pressing "build" on next Tuesday should not
  * advance the topic queue.
  */
+#[Queue('editorial')]
 class BuildCove implements ShouldQueue
 {
     use Queueable;

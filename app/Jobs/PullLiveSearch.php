@@ -11,6 +11,7 @@ use App\Services\Search\SearchService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 
 /**
  * Ask the live shops (bol, eBay, Tradedoubler) about a search, and store what
@@ -31,6 +32,7 @@ use Illuminate\Foundation\Queue\Queueable;
  * Unique on the same key the request throttles with (`liveCacheKey()`), so a
  * burst of identical searches before the marker lands is still one fetch.
  */
+#[Queue('default')]
 class PullLiveSearch implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;

@@ -86,7 +86,11 @@ class ProductsTable
                     ->tooltip(fn (Product $r) => $r->identity_key ?? 'No EAN and no usable brand+title — left ungrouped on purpose'),
 
                 TextColumn::make('status')->badge()->toggleable(),
-                TextColumn::make('last_seen_at')->since()->label('Last seen')->sortable()->toggleable(),
+                // "Last changed", not "Last seen", since 2026-09-28: the ingest
+                // writes an offer only when something in it changed, so this is
+                // the last time the feed said something new about it. Whether
+                // the feed still lists it is the status column.
+                TextColumn::make('last_seen_at')->since()->label('Last changed')->sortable()->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('market')->options(Market::class),

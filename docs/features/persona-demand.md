@@ -96,10 +96,11 @@ session, sent authored over the editorial API.
 
 ## Running it
 
-- Nightly: `PlanPersonasFromDemand`, 06:30, per published market, after the landing pages (05:40)
-  so a pair that got its page tonight is not also drafted. The two are separate schedule entries,
-  not a chain: if tonight's landing run is still going, a new pair may be drafted once and should
-  be rejected.
+- Nightly: `PlanPersonasFromDemand`, 06:30, per published market, after the landing pages so a
+  pair that got its page tonight is not also drafted. The landing pages are a step of the morning
+  catalogue run since 2026-09-28 (05:40 before), which on a normal night is through the markets by
+  then. The persona drafts stay a separate schedule entry, not a step of that chain: if tonight's
+  run is late, a new pair may be drafted once and should be rejected.
 - By hand: `php artisan bc:plan-demand-personas --market=be-nl` is a dry run that lists what would
   be drafted and why the rest were skipped; `--write` creates the drafts.
 

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Ingestion\ProductGrouper;
 use App\Services\Search\SearchGenerations;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -18,25 +19,29 @@ use Illuminate\Support\Facades\Log;
  * Runs after ingestion rather than inside it: grouping is set-based SQL over
  * the whole market, so doing it once at the end is both faster and more correct
  * than doing it per chunk, where a group's "cheapest offer" would be computed
- * from a catalogue that is still half-loaded.
+ * from a catalogue that is still half-loaded. Since 2026-09-28 the nightly run
+ * starts it when the market's feeds are in (App\Services\Ingestion\CatalogueRun)
+ * rather than at a fixed time fifty minutes after the ingest began.
  */
-class GroupProducts implements ShouldBeUnique, ShouldQueue
+#[Queue('batch')]
+class GroupProducts implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 900;
-
-    // One grouping per market at a time. `uniqueId()` below only counts on a
-    // job that implements ShouldBeUnique — see the note on IngestFeed.
-    public int $uniqueFor = 900;
 
     public function __construct(
         public readonly Market $market,
     ) {}
 
-    public function uniqueId(): string
+    /**
+     * One grouping per market at a time, checked when the job runs. It was
+     * `ShouldBeUnique` until 2026-09-28; see RunsOneAtATime for why a step of
+     * the nightly chain must not be.
+     */
+    protected function overlapKey(): string
     {
-        return 'group-products-'.$this->market->value;
+        return $this->market->value;
     }
 
     public function handle(ProductGrouper $grouper): void

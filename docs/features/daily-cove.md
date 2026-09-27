@@ -489,7 +489,8 @@ The three things it changed here:
 - **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`, from the theme alone, read strictly and never padded (above);
   `locked` publishes exactly the shortlist, in order, with `spread()` skipped so the variety trim
   cannot reorder a hand-built list. The publish floor is now `picks.minimum` in config rather than a
-  literal 3, so the curation screen can warn about a short locked plan before 06:00.
+  literal 3, so the curation screen can warn about a short locked plan before the morning build
+  (06:40 since 2026-09-28).
 - **The editorial prompt is handed the shortlist and its notes.** Every edition, curated or not, is
   told to write about every product in its own paragraph; what curation adds is the order and the
   reason each product is on the list. That rule used to flip — see
@@ -617,6 +618,13 @@ setting they never opened.
 The accepted cost: a job orphaned by a worker that really did die now waits 65 minutes for its retry.
 Everything here is scheduled daily and idempotent, so a late retry is cheap — a guaranteed daily
 failure was not.
+
+**Since 2026-09-28 the 3900 applies only to the slow queues.** Horizon runs four supervisors, and
+the Daily builds on `editorial`, read through the `redis-long` connection (3900 s); visitor jobs on
+`default` are read through `redis` with 180 s, so a visitor job orphaned by a dead worker is retried
+in three minutes rather than an hour. `QueueRetryAfterTest` now checks each job against the
+connection that reads its own queue. The build itself moved from 06:00 to 06:40, after the editorial
+automation, and is `ShouldBeUnique` per market and day. See [speed.md](speed.md), "Background work".
 
 **Still open.** `nl-nl` hit the real 900s timeout on 2026-09-01 (`15m 1s FAIL`), so the build itself
 is getting slow as the catalogue grows; raising `retry_after` stops the retry storm but does not make

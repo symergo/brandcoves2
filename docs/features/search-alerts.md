@@ -20,7 +20,10 @@ the only thing that could be watched was one product at a time.
   watch was set — that is what the person was looking at, so none of it is news — and extended
   with every id the search has matched since. Capped at 1,000; the oldest fall off, and a product
   that left the results for months and came back is, from the watcher's chair, new again.
-- **`CheckSearchAlerts`** runs once a day at 06:30, after the overnight grouping. It runs each
+- **`CheckSearchAlerts`** runs once a day at 07:15 (06:30 until 2026-09-28), after the morning
+  catalogue run. Since that day it reads only watches not checked today, so a retried run resumes
+  where it stopped, and runs each distinct (market, term, ceiling) once however many people watch
+  it. It runs each
   watch through `SearchService::matchingGroupIds()` — the stored query only, no live connectors
   (`liveTerm: ''`), no pagination, no facets, no logging — and writes one `search_match`
   notification naming how many new products matched, linking to the search with its ceiling.

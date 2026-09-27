@@ -327,14 +327,24 @@ class PrunePersonalDataCommand extends Command
         $cutoff = now()->subDay()->getTimestamp();
         $orphans = [];
 
+        /*
+         * Every picture in use, read once (2026-09-28). This asked the
+         * database once per file on disk, which is a query per picture every
+         * night, most of them answering "yes, in use". A set of the in-use
+         * paths is one query; a picture saved after it is read is under a
+         * day old, and the grace below already skips it.
+         */
+        $used = DB::table('wishlist_items')
+            ->where('snapshot_image_url', 'like', '/media/items/%')
+            ->pluck('snapshot_image_url')
+            ->flip();
+
         foreach ($disk->files('items') as $file) {
             if ($disk->lastModified($file) > $cutoff) {
                 continue;
             }
 
-            $used = DB::table('wishlist_items')->where('snapshot_image_url', '/media/'.$file)->exists();
-
-            if (! $used) {
+            if (! $used->has('/media/'.$file)) {
                 $orphans[] = $file;
             }
         }

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Catalogue\BrandStats;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -18,13 +20,19 @@ use Illuminate\Support\Facades\Log;
  * cheapest price, the median and the merchant count the copy quotes — and the
  * page itself never aggregates anything.
  */
+#[Queue('batch')]
 class RefreshBrandStats implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 900;
 
     public function __construct(public Market $market) {}
+
+    protected function overlapKey(): string
+    {
+        return $this->market->value;
+    }
 
     public function handle(BrandStats $stats): void
     {

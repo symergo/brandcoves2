@@ -8,6 +8,7 @@ use App\Models\CommunityQuestion;
 use App\Services\Community\QuestionToPeople;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 
 /**
  * Tell the asker's people about a question that was just published.
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Queue\Queueable;
  * reaches this too, and no way that stops short of the board does. The
  * deciding is in {@see QuestionToPeople}.
  */
+#[Queue('default')]
 class SendQuestionToPeople implements ShouldQueue
 {
     use Queueable;

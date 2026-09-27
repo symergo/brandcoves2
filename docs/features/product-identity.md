@@ -130,7 +130,9 @@ so the match rules never propose putting them back together.
 `in_stock` are denormalised onto the group so a results page is **one query**, not one query plus N.
 
 Recomputed set-based, in one statement over the whole market, by `GroupProducts` after ingestion has
-landed (05:00 and 17:00) and never per chunk: a cheapest offer computed from a half-loaded catalogue
+landed (the catalogue run starts it when the market's feeds are in, since 2026-09-28; 05:00 and
+17:00 before) and never per chunk. Only groups whose values moved are written (`IS DISTINCT FROM`),
+so an unchanged group keeps its row and its `updated_at`: a cheapest offer computed from a half-loaded catalogue
 is wrong. Ties broken on lowest id so repeated runs are stable and never churn `best_offer_id` — a
 group whose "best offer" flickers between two equally-priced merchants produces pointless cache
 invalidation and a jumpy UI.

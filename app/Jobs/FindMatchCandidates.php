@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Identity\MatchFinder;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -19,13 +20,14 @@ use Illuminate\Support\Facades\Log;
  * See App\Services\Identity\MatchFinder for the rules and
  * docs/features/match-review.md for why every pair goes to a person.
  */
-class FindMatchCandidates implements ShouldBeUnique, ShouldQueue
+#[Queue('batch')]
+class FindMatchCandidates implements ShouldQueue
 {
-    use Queueable;
+    // One run per market at a time, checked when it runs: a step of the
+    // nightly chain must not be ShouldBeUnique (see RunsOneAtATime).
+    use Queueable, RunsOneAtATime;
 
     public int $timeout = 900;
-
-    public int $uniqueFor = 900;
 
     /**
      * @param  bool  $full  compare every product's title, not only the ones
@@ -37,9 +39,9 @@ class FindMatchCandidates implements ShouldBeUnique, ShouldQueue
         public readonly bool $full = false,
     ) {}
 
-    public function uniqueId(): string
+    protected function overlapKey(): string
     {
-        return 'find-match-candidates-'.$this->market->value;
+        return $this->market->value;
     }
 
     public function handle(MatchFinder $finder): void

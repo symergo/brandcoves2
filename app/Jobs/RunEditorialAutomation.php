@@ -13,8 +13,10 @@ use App\Services\Cove\PlanDrafter;
 use App\Services\Cove\PlanState;
 use App\Services\Curation\PlanCurator;
 use App\Services\Settings\AutomationSettingsStore;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -45,11 +47,26 @@ use Illuminate\Support\Facades\Log;
  * has to avoid — so each stage logs what it did, per market, and the counts are
  * the ones a person would check.
  */
-class RunEditorialAutomation implements ShouldQueue
+#[Queue('editorial')]
+class RunEditorialAutomation implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $timeout = 900;
+
+    /**
+     * One run per market at a time, however often it is queued (2026-09-28).
+     * The schedule's `withoutOverlapping()` only guards the moment of
+     * dispatch, which is over in milliseconds; this holds until the job has
+     * run. Released when it finishes or fails, and after `$uniqueFor` at the
+     * latest if a worker is killed mid-run.
+     */
+    public int $uniqueFor = 900;
+
+    public function uniqueId(): string
+    {
+        return $this->market->value;
+    }
 
     /** One market's worth of drafting per run. Enough to keep a queue topped up. */
     private const DRAFT_BATCH = 5;

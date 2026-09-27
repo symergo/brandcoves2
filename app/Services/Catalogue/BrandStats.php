@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Catalogue;
 
 use App\Enums\Market;
-use App\Models\BrandStat;
+use App\Support\ChangedRowsUpsert;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -68,12 +68,32 @@ class BrandStats
             // can change spelling between runs, and keying on it would insert a
             // second row for the same slug the first time a feed's punctuation
             // shifted — which is exactly the collision the unique index caught.
-            BrandStat::query()->upsert($payload, ['market', 'slug'], [
-                'brand', 'aliases', 'product_count', 'merchant_count', 'share',
-                'min_price', 'max_price', 'discounted_count', 'in_stock_count',
-                'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
-                'computed_at',
-            ]);
+            //
+            // Written only where a figure changed (2026-09-28), so an unchanged
+            // brand keeps its row and its `computed_at`, which the sitemap
+            // gives crawlers as the brand page's last change: it now means
+            // that. `share` is left out of the comparison and compared with a
+            // tolerance instead: it is every brand's fraction of the whole
+            // market, so one product more anywhere moves every brand's share
+            // in the sixth decimal, and an exact test would rewrite them all.
+            // It only orders the brand index, which a 1% drift does not.
+            ChangedRowsUpsert::run(
+                'brand_stats',
+                $payload,
+                ['market', 'slug'],
+                [
+                    'brand', 'aliases', 'product_count', 'merchant_count', 'share',
+                    'min_price', 'max_price', 'discounted_count', 'in_stock_count',
+                    'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
+                    'computed_at',
+                ],
+                [
+                    'brand', 'aliases', 'product_count', 'merchant_count',
+                    'min_price', 'max_price', 'discounted_count', 'in_stock_count',
+                    'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
+                ],
+                orWhen: 'abs(brand_stats.share - excluded.share) > 0.01 * greatest(brand_stats.share, excluded.share)',
+            );
         }
 
         /*
@@ -82,20 +102,30 @@ class BrandStats
          * the page 404s — but the row remains as evidence for anyone asking why
          * a URL that used to work no longer does. Deleting makes that
          * unanswerable, and a brand often comes back with the next feed.
+         *
+         * An anti-join against the present slugs, sent as ONE json parameter.
+         * `whereNotIn` bound every slug separately: thousands of parameters,
+         * a statement Postgres re-plans each night, and a hard ceiling at
+         * 65,535 bindings. Rows already at zero are skipped rather than
+         * rewritten with the same zeros every night.
          */
         $present = array_map(fn (array $row) => $row['slug'], $rows);
 
-        BrandStat::query()
-            ->forMarket($market)
-            ->whereNotIn('slug', $present)
-            ->update([
-                'product_count' => 0,
-                'merchant_count' => 0,
-                'discounted_count' => 0,
-                'in_stock_count' => 0,
-                'best_discount_percent' => null,
-                'computed_at' => $now,
-            ]);
+        DB::update(
+            <<<'SQL'
+                UPDATE brand_stats b
+                SET product_count = 0, merchant_count = 0, discounted_count = 0,
+                    in_stock_count = 0, best_discount_percent = NULL, computed_at = ?
+                WHERE b.market = ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM jsonb_array_elements_text(?::jsonb) AS present(slug)
+                      WHERE present.slug = b.slug
+                  )
+                  AND (b.product_count <> 0 OR b.merchant_count <> 0 OR b.discounted_count <> 0
+                       OR b.in_stock_count <> 0 OR b.best_discount_percent IS NOT NULL)
+            SQL,
+            [$now, $market->value, json_encode(array_values($present))],
+        );
 
         return count($rows);
     }

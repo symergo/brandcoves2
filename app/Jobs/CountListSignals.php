@@ -14,6 +14,7 @@ use App\Services\Search\GiftIntentParser;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Queue;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -54,6 +55,7 @@ use Illuminate\Support\Facades\DB;
  *   back into a list's intent, so the crowd cannot feed on itself.
  * - Links stay inside one market (invariant 2).
  */
+#[Queue('batch')]
 class CountListSignals implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
