@@ -103,6 +103,17 @@ class User extends Authenticatable implements FilamentUser, HasName
     }
 
     /**
+     * The ideas on the contribute page this person voted for. Deleted with
+     * the account (cascade); see docs/features/contribute.md.
+     *
+     * @return HasMany<FeatureVote, $this>
+     */
+    public function featureVotes(): HasMany
+    {
+        return $this->hasMany(FeatureVote::class);
+    }
+
+    /**
      * Filament admin access.
      *
      * Deliberately a database flag with no self-service path: the admin panel

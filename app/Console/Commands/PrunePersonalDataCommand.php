@@ -74,6 +74,9 @@ class PrunePersonalDataCommand extends Command
         'friend_invites' => 365,
         'friend_invite_mails' => 90,
         'invite_complaints' => 365,
+        // A visitor's feature suggestion that was rejected, counted from the
+        // decision (2026-09-27, docs/features/contribute.md).
+        'feature_suggestions_rejected' => 365,
     ];
 
     /**
@@ -259,6 +262,24 @@ class PrunePersonalDataCommand extends Command
         $report['invitation complaints'] = $this->prune(
             'invite_complaints',
             fn () => DB::table('invite_complaints')->where('created_at', '<', now()->subDays(self::RETENTION['invite_complaints'])),
+            $dry,
+        );
+
+        /*
+         * Feature suggestions nobody will see (docs/features/contribute.md).
+         * A rejected suggestion is off every page from the moment it is
+         * rejected; a year after that it has done its job as a record of the
+         * decision, and it is free text from an account. Only visitors'
+         * suggestions: an idea the owner wrote and rejected is not personal
+         * data. Published ones stay while they are on the board, and a vote
+         * goes with the account or the idea.
+         */
+        $report['rejected feature suggestions'] = $this->prune(
+            'feature_ideas',
+            fn () => DB::table('feature_ideas')
+                ->where('source', 'visitor')
+                ->where('moderation', 'rejected')
+                ->where('decided_at', '<', now()->subDays(self::RETENTION['feature_suggestions_rejected'])),
             $dry,
         );
 

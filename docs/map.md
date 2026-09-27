@@ -71,6 +71,8 @@ Grouped by what a visitor is doing, not by file order:
   `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email),
   `/invites/not-wanted/{inviter}/{hash}` (signed, "this is spam" from every invitation email),
   `/invites/accept/{token}` (the invitation's button: signs a new invitee straight in)
+- **Contribute** — `/contribute` ("Denk mee": feedback, the ideas board, votes and suggestions;
+  features/contribute.md), `POST /contribute-bar` (unprefixed: closing the bar under the header)
 - **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`
 
 ## Services, one line each
@@ -85,6 +87,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Community/` | screening user-written posts and answers |
 | `Connectors/` | one subdirectory per vendor; `Offer` is the shared shape |
 | `Content/` | shipped editorial (advice coves), guide folding |
+| `Contribute/` | the contribute page's board: order and language (`FeatureBoard`), one vote per account (`FeatureVoting`), suggestions and their daily limit (`FeatureSuggestions`), the shipped ideas (`FeatureIdeaSeeder`); features/contribute.md |
 | `Cove/` | the daily edition: themes, observances, digests, plan slugs, seasonal series, the editorial year; personas drafted from search demand (`PersonaDemandPlanner`, features/persona-demand.md) |
 | `Curation/` | the human pass over a drafted plan |
 | `Discovery/` | catalogue-level signals: trends, serendipity, freshness |
@@ -125,6 +128,7 @@ Filament 5 at `/admin`, gated on `users.is_admin`.
 
 - **Resources** (CRUD over a model): AiUsage, ApiTokens, CommunityCoves (published lists, hide or
   show), CommunityPosts, CoveEditorials, CovePlans,
+  FeatureIdeas (Community > Feature ideas: the contribute board and visitors' suggestions),
   Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, ProductGroups (Catalogue >
   Products: merge and split), Products (the offers), PromptTemplates, Users (Operations > Accounts:
   find a person, grant or remove panel access, delete an account)

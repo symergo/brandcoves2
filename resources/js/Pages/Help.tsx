@@ -1,6 +1,7 @@
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
 import FeedbackForm from '../Components/FeedbackForm'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
+import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
@@ -36,6 +37,8 @@ interface Props {
  */
 export default function Help({ guides, path }: Props) {
     const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+    const base = `/${market.key}`
 
     return (
         <>
@@ -154,6 +157,16 @@ export default function Help({ guides, path }: Props) {
                     <div className="mt-4">
                         <FeedbackForm path={path} />
                     </div>
+                    {/* The ideas board and suggestions live on their own page
+                        (2026-09-27, docs/features/contribute.md); somebody
+                        at the end of the help page with an idea rather than
+                        a problem goes there. */}
+                    <p className="mt-8 text-ink-soft">
+                        {t('help.contribute_line')}{' '}
+                        <Link href={`${base}/contribute`} className="font-medium whitespace-nowrap text-accent-dark hover:text-ink">
+                            {t('contribute.title')} →
+                        </Link>
+                    </p>
                 </section>
             </div>
         </>

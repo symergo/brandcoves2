@@ -155,8 +155,9 @@ class LegalPagesTest extends TestCase
             );
 
             // This or that together and gift profile cards (2026-09-26).
-            // And invitations by email (2026-09-26).
-            foreach (['taste_runs', 'gift_profile_cards', 'friend_invites', 'friend_invite_mails', 'invite_complaints'] as $window) {
+            // And invitations by email (2026-09-26), and rejected feature
+            // suggestions on the contribute page (2026-09-27).
+            foreach (['taste_runs', 'gift_profile_cards', 'friend_invites', 'friend_invite_mails', 'invite_complaints', 'feature_suggestions_rejected'] as $window) {
                 $this->assertStringContainsString(
                     $windows[$window].($language === 'en' ? ' days' : ' dagen'),
                     $text,

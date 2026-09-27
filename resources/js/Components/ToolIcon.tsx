@@ -39,6 +39,7 @@ export type ToolKey =
     | 'taste'
     | 'cake'
     | 'plus'
+    | 'vote'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -70,6 +71,10 @@ const paths: Record<ToolKey, ReactNode> = {
     close: <path d="m6 6 12 12M18 6 6 18" />,
     // Start something new: "Nieuwe lijst voor …" on a person's page (2026-09-27).
     plus: <path d="M12 5v14M5 12h14" />,
+    // A vote on the contribute page's board (2026-09-27): an arrow up, the
+    // mark every voting board uses, so it needs no explaining. Not the heart
+    // a group list's vote wears: that one says "this is the gift we want".
+    vote: <path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" />,
 
     /*
      * The header's own rows: search and help beside the two menus, and the

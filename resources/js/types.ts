@@ -119,6 +119,12 @@ export interface SharedProps {
      * See App\Support\MarketPreference::bar() and Components/MarketBar.
      */
     marketBar: { suggest: string | null; remember: boolean } | null
+    /**
+     * Whether the contribute bar under the header shows: false for a visitor
+     * who closed it (a cookie), a crawler, and while the market bar is up.
+     * See App\Support\ContributeBar and Components/ContributeBar.
+     */
+    contributeBar: boolean
     translations: Translations
     translationVersion: string
     unreadCount: number

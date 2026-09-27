@@ -182,3 +182,10 @@ emailed to the owner by `FeedbackMail`, queued so a slow mail server never slows
 Tests: `FeedbackTest::the_owner_is_mailed_each_report_and_can_reply_to_it`,
 `it_falls_back_to_the_registrations_address`,
 `it_mails_nobody_it_was_not_told_about_and_nothing_it_did_not_store`.
+
+## The form is also on the contribute page (2026-09-27)
+
+`/contribute` ("Denk mee") opens with the same `FeedbackForm`, posting to the same `/feedback`, above
+the ideas board ([contribute.md](contribute.md)). There it does not take the focus
+(`autoFocus={false}`): it is one of three sections, and a phone's keyboard opening on arrival would
+hide the board. On /help it still does.

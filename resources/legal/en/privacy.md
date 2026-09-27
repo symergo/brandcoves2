@@ -44,6 +44,7 @@ you have the right to object, and section *Your rights* explains how.
 | Price and stock alerts | Sending the alert you asked for | Contract (Art. 6(1)(b)) |
 | Daily email address, confirmation date, signup IP | Sending the email, and proving consent | Consent (Art. 6(1)(a)) |
 | Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
+| On the Contribute page: which ideas you voted for, and the features you suggest | Counting each person's vote once, and reading your suggestion | Legitimate interests (Art. 6(1)(f)): ours in knowing what to build next, and yours in being counted |
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
 | An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "Don't want to receive invitations any more?" link is the objection |
@@ -125,6 +126,17 @@ days. A member with 3 complaints no longer has their invitations emailed, and
 we look at it. The member is not told about either.
 
 If you were invited and want the address removed, write to {{privacy_email}}.
+
+### The Contribute page
+
+Voting and suggesting a feature need an account, so we keep which ideas your
+account voted for and what you suggested. Other visitors see only how many
+votes an idea has, never who voted, and never who suggested an idea. A
+suggestion is read by a person before it can appear on the page; until then
+only you and we see it. You can take a vote back at any time. Your votes go
+when you delete your account. A suggestion that is on the page stays there
+after you delete your account, without any link to you; one we did not put on
+the page is deleted 365 days after that decision.
 
 ### No automated decision-making
 
@@ -215,6 +227,8 @@ safeguards above.
 | Newsletter subscription | Until you unsubscribe |
 | Unconfirmed subscription | Deleted after 30 days |
 | Feedback you send us | 12 months, message and reply address together |
+| Your votes on the Contribute page | Until you take one back, the idea is removed, or you delete your account |
+| A feature you suggested that we did not put on the page | 365 days after that decision |
 | Choices made through a This or that together link | 180 days, then the link too once nobody's choices are left on it |
 | Gift profile card | Until you remove it, or 365 days after anyone last opened it |
 | An invitation nobody has accepted yet (the invited address) | Until that person signs in, or 365 days after the member last invited them |
@@ -247,8 +261,8 @@ Under the GDPR you can:
 Write to {{privacy_email}}. We answer within one month, free of charge, and we
 will not ask you to justify the request.
 
-Deleting your account removes your lists, your recipients, your alerts and your
-notifications. It is immediate and it is not reversible.
+Deleting your account removes your lists, your recipients, your alerts, your
+notifications and your votes. It is immediate and it is not reversible.
 
 If you think we have handled your data badly you can complain to the Belgian Data
 Protection Authority (Gegevensbeschermingsautoriteit / Autorité de protection des
@@ -257,16 +271,18 @@ may also complain to the authority in the EU country where you live.
 
 ## Cookies
 
-Four that are necessary for something you asked for:
+Five that are necessary for something you asked for:
 
 - **Session:** keeps you signed in.
 - **Visitor identifier:** lets a list work before you have an account. See the
   note above about its second use.
 - **Market:** remembers which country and language you chose.
 - **CSRF token:** stops another site submitting forms as you.
+- **Contribute bar:** remembers for a year that you closed the bar under the
+  header that invites feedback, so it stays closed.
 
 Article 5(3) of the ePrivacy Directive requires consent for cookies that are not
-strictly necessary. Those four are, so they need none.
+strictly necessary. Those five are, so they need none.
 
 Two that are not, and that we therefore ask about:
 

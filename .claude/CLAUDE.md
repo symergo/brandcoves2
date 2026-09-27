@@ -155,6 +155,11 @@ php artisan bc:seed-advice-coves      # publish resources/content/advice-coves.p
                                       # overwrites a Cove a person edited (--replace does, and asks
                                       # first); --dry-run previews. Run it after editing the file
 php artisan bc:seed-shop-coves        # the same for resources/content/shop-coves.php
+php artisan bc:seed-feature-ideas     # the contribute page's shipped ideas, from
+                                      # resources/content/feature-ideas.php. Never overwrites an
+                                      # idea edited in the admin (--replace does, and asks);
+                                      # --dry-run previews. A deployed database gets them from a
+                                      # migration; run it once on a fresh one, and after editing the file
 php artisan bc:seed-help-demo         # local only: a throwaway account with a list, for the
                                       # /lists-help screenshots. Then: node scripts/help-screenshots.mjs
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
@@ -166,6 +171,7 @@ second, because the demand signal it collects has no other source and the guide-
 without it on a market with no search traffic yet. On a fresh, empty database also run
 `bc:seed-advice-coves`: the two migrations that seed the advice articles skip an empty database,
 because they would run today's content against an old schema (docs/features/advice-coves.md).
+`bc:seed-feature-ideas` likewise, for the same reason (docs/features/contribute.md).
 
 ---
 

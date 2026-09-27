@@ -10,6 +10,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\ListOptions;
 use App\Support\Analytics;
+use App\Support\ContributeBar;
 use App\Support\CookieConsent;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
@@ -60,6 +61,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $market = app(CurrentMarket::class)->get();
+        $marketBar = MarketPreference::bar($request, $market);
 
         return [
             ...parent::share($request),
@@ -202,7 +204,17 @@ class HandleInertiaRequests extends Middleware
              * parse, and the bar has to be in the first paint or the page
              * jumps down when it arrives.
              */
-            'marketBar' => MarketPreference::bar($request, $market),
+            'marketBar' => $marketBar,
+
+            /*
+             * The contribute bar under the header ("geef feedback, stel iets
+             * voor of stem"): whether to show it. A cookie read, not lazy, for
+             * the same reason as the market bar: it has to be in the first
+             * paint, or the page jumps when it arrives, and for somebody who
+             * closed it, it must never flash. Never while the market bar is
+             * up: one question at a time. See App\Support\ContributeBar.
+             */
+            'contributeBar' => ContributeBar::shows($request, $marketBar !== null),
 
             /*
              * Site copy for the current market's language.
