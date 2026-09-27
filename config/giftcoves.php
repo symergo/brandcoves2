@@ -175,24 +175,30 @@ return [
         // page variant of one term, and re-running three aggregates per click was
         // the largest remaining cost on a search page.
         //
-        // The cost is a sidebar that can trail the grid by this long: a search
-        // folds live offers in and moves merchant_count, so a count may be one
-        // behind. Raised from five minutes to ten on 2026-09-27 to match
-        // `results_cache_ttl`, so the grid and the sidebar go stale together
-        // rather than one trailing the other.
-        'facet_cache_ttl' => 600,
+        // Twelve hours, the same as `results_cache_ttl` and for the same reason:
+        // the key carries the same generations, so the sidebar and the grid are
+        // retired together, the moment the catalogue under them changes.
+        'facet_cache_ttl' => 43200,
 
         /*
          * The ordered result ids of one search, cached this long
          * (SearchService::page(), SearchQuery::resultsCacheKey()).
          *
-         * Ids only: prices, stock and offer counts are read fresh on every
-         * view. What can trail by this long is which products are in the list
-         * and in what order. Ten minutes because that is the settled design
-         * (2026-09-01) and a catalogue that changes by feed run, twice a day,
-         * does not move faster than that for a reader paging through.
+         * Twelve hours (owner's decision, 2026-09-27; it was ten minutes for a
+         * day). Long is safe because the TTL is no longer what keeps results
+         * current: the key carries generation numbers (SearchGenerations) that
+         * are bumped at the only moments the stored catalogue changes under a
+         * search — grouping finished for the market (the twice-daily update),
+         * a source withdrawn, an editor's merge or split, and a queued live
+         * fetch finished for the term. A bump retires every affected entry at
+         * once, so the list is stale by seconds, not by the TTL. Ids only:
+         * prices, stock and offer counts are read fresh on every view.
+         *
+         * The TTL is only a bound on memory, and twelve hours matches the gap
+         * between the two catalogue updates, after which a market's entries
+         * are retired anyway.
          */
-        'results_cache_ttl' => 600,
+        'results_cache_ttl' => 43200,
 
         /*
          * How many ids of one search are cached: twenty pages of 24. Past that

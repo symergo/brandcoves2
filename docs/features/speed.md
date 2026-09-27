@@ -404,15 +404,20 @@ request. It is answered from the catalogue, or offered as a link to add; adding 
 `ReadItemLink`, which asks the connector while the list page polls, as it already did for every
 other shop.
 
-### One search's ordered ids are cached for ten minutes
+### One search's ordered ids are cached for twelve hours
 
 Every page, sort and filter change ran the four-branch text union twice (count and page), and the
 audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
-cached per (market, term, filters, in-stock, sort) for 10 minutes, the first 480 of them. A page is
-a slice plus one lookup by primary key, the total needs no `count(*)` when the list is complete, and
-the by-store view reads the same list. Prices, stock and offer counts are still read on every view.
-The facet cache went from 5 to 10 minutes to match. No invalidation: short expiry only, the owner's
-rule. Details and reasoning: [search.md](search.md), "Search results are cached as ids".
+cached per (market, term, filters, in-stock, sort), the first 480 of them. A page is a slice plus
+one lookup by primary key, the total needs no `count(*)` when the list is complete, and the by-store
+view reads the same list. Prices, stock and offer counts are still read on every view.
+
+Kept twelve hours, facets too (owner's decision). They are retired the moment what they were
+computed from changes, by generation numbers in the key: a market's number goes up when grouping
+finishes (the twice-daily catalogue update), a source is withdrawn or an editor merges or splits
+products; a term's goes up when its queued live fetch finishes. So results are stale by seconds,
+not by the expiry. What still waits for the next grouping, and the reasoning:
+[search.md](search.md), "Twelve hours, retired by generation numbers".
 
 ### This or that draws from a cached pool
 
@@ -427,4 +432,6 @@ products are loaded. See [taste-discovery.md](taste-discovery.md).
 - Search for a word the catalogue lacks and bol has: the page answers without the old wait, and a
   reload a few seconds later shows bol's products. Horizon shows one `PullLiveSearch` for the term.
 - Page 2 of a broad search, and a filter click, answer faster than the first view.
+- After the next grouping run, the cache key `bc:search:gen:be-nl` (with the store's prefix) holds a
+  higher number, and a repeated search is slow once, then fast again.
 - `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.

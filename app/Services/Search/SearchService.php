@@ -54,9 +54,7 @@ class SearchService
             ? $this->pullLiveResults($query, $waitForLive)
             : ['written' => 0, 'unstored' => []];
 
-        // Fresh after a fold in this call: the ids cached a minute ago do not
-        // hold what was just written.
-        $groups = $this->page($query, fresh: $live['written'] > 0 || $waitForLive);
+        $groups = $this->page($query);
 
         if ($query->logged && $query->hasTerm() && $query->page === 1) {
             // Logged after the count is known, because zero-result queries are
@@ -89,19 +87,22 @@ class SearchService
      *
      * Only ids, never the rendered groups: price, stock and the offer count on
      * each card are read fresh at every view, so the cheapest-offer and discount
-     * badges (invariant 7) are exactly as right as they were. What can trail for
-     * up to the TTL is membership and order: a product that just went out of
-     * stock may still hold its slot, a new one may not have one yet.
+     * badges (invariant 7) are exactly as right as they were.
+     *
+     * Kept 12 hours and retired the moment what they were computed from
+     * changes (SearchGenerations): grouping for the market, the twice-daily
+     * catalogue update, or a finished live fetch for the term. Between those
+     * moments the stored query would return the same ids.
      *
      * Past the cached head (`results_cache_ids`, twenty pages) a deep page asks
      * the database for its slice, with the cached total.
      *
      * @return LengthAwarePaginator<int, ProductGroup>
      */
-    private function page(SearchQuery $query, bool $fresh): LengthAwarePaginator
+    private function page(SearchQuery $query): LengthAwarePaginator
     {
         $perPage = (int) config('giftcoves.search.per_page');
-        $found = $this->resultIds($query, $fresh);
+        $found = $this->resultIds($query);
         $offset = ($query->page - 1) * $perPage;
 
         $ids = $found['complete'] || $offset + $perPage <= count($found['ids'])
@@ -126,23 +127,22 @@ class SearchService
      * searches: the count is then the length of the list and the separate
      * count query is not run at all.
      *
-     * Not written while this term's live fetch is still queued
-     * (`pendingKey()`): the offers it is about to store would otherwise be
-     * missing from every view of the term for the whole TTL, which is exactly
-     * the "they appear on the next view" the queued fetch promises.
+     * Written even while this term's live fetch is queued. Until 2026-09-27
+     * a two-minute marker kept it from being written then, or a new term
+     * would have been cached without the shop's offers for the whole TTL. The
+     * term generation made that marker redundant: the job bumps it when it
+     * finishes, so whatever was cached while it was queued is retired at the
+     * moment the offers exist, and not two minutes later.
      *
      * @return array{ids: list<int>, total: int, complete: bool}
      */
-    private function resultIds(SearchQuery $query, bool $fresh = false): array
+    private function resultIds(SearchQuery $query): array
     {
         $key = $query->resultsCacheKey();
+        $hit = Cache::get($key);
 
-        if (! $fresh) {
-            $hit = Cache::get($key);
-
-            if (is_array($hit) && isset($hit['ids'], $hit['total'], $hit['complete'])) {
-                return $hit;
-            }
+        if (is_array($hit) && isset($hit['ids'], $hit['total'], $hit['complete'])) {
+            return $hit;
         }
 
         $limit = max(1, (int) config('giftcoves.search.results_cache_ids'));
@@ -161,9 +161,7 @@ class SearchService
             'complete' => $complete,
         ];
 
-        if (! ($query->hasLiveTerm() && Cache::has(self::pendingKey($query)))) {
-            Cache::put($key, $found, (int) config('giftcoves.search.results_cache_ttl'));
-        }
+        Cache::put($key, $found, (int) config('giftcoves.search.results_cache_ttl'));
 
         return $found;
     }
@@ -184,16 +182,6 @@ class SearchService
         $rows = ProductGroup::query()->whereIn('id', $ids)->get()->keyBy('id');
 
         return array_values(array_filter(array_map(fn (int $id) => $rows->get($id), $ids)));
-    }
-
-    /**
-     * Marks a queued live fetch for this query's live term. Short-lived by
-     * design: if the queue never gets to it, the search pages go back to
-     * caching after two minutes rather than never.
-     */
-    public static function pendingKey(SearchQuery $query): string
-    {
-        return $query->liveCacheKey().':pending';
     }
 
     /**
@@ -547,9 +535,12 @@ class SearchService
         )) {
             if ($waitForLive) {
                 $written = $this->foldFrom($query, array_values($mirrorable));
+
+                // What the queued job does when it finishes, and before this
+                // call reads its ids, so it reads them afresh.
+                SearchGenerations::bumpTerm($query->market, $query->liveTerm());
+                SearchGenerations::bumpBrands($query->market, $query->brands);
             } else {
-                // Before the dispatch, so this request's own id cache sees it.
-                Cache::put(self::pendingKey($query), true, 120);
                 PullLiveSearch::dispatch($query->market, $query->liveTerm(), $query->brands);
             }
         }

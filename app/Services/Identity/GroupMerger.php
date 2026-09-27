@@ -10,6 +10,7 @@ use App\Models\IdentityAlias;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ingestion\ProductGrouper;
+use App\Services\Search\SearchGenerations;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -159,6 +160,10 @@ final class GroupMerger
             // zeroed and drops out of every listing that wants stock and price.
             $this->grouper->recomputeGroups($loser->market, [$w, $l]);
         });
+
+        // One card where there were two: cached searches of the market would
+        // still list the loser's id (and drop it at render, a card short).
+        SearchGenerations::bumpMarket($loser->market);
 
         $loser->refresh();
         $winner->refresh();

@@ -7,11 +7,13 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Jobs\GroupProducts;
 use App\Jobs\PullLiveSearch;
 use App\Models\ProductGroup;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Search\SearchGenerations;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -168,6 +170,61 @@ class SearchLiveQueueTest extends TestCase
             array_map(fn (ProductGroup $g) => $g->id, $first->groups->items()),
             array_map(fn (ProductGroup $g) => $g->id, $second->groups->items()),
         ));
+    }
+
+    #[Test]
+    public function grouping_a_market_retires_its_cached_searches_and_no_other_markets(): void
+    {
+        // No Queue::fake() here: it would swallow GroupProducts::dispatchSync
+        // too, which runs through the sync queue.
+        $this->koptelefoons(3);
+        ProductGroup::factory()->create(['market' => Market::NlNl, 'title' => 'Draadloze koptelefoon NL']);
+
+        $search = app(SearchService::class);
+        $be = new SearchQuery(market: Market::BeNl, term: 'koptelefoon', logged: false);
+        $nl = new SearchQuery(market: Market::NlNl, term: 'koptelefoon', logged: false);
+        $search->search($be);
+        $search->search($nl);
+
+        GroupProducts::dispatchSync(Market::BeNl);
+        $this->assertSame(1, SearchGenerations::market(Market::BeNl));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $search->search($be);
+        $this->assertCount(1, $this->searchQueries(), 'Grouping should have retired be-nl.');
+
+        DB::flushQueryLog();
+        $search->search($nl);
+        $this->assertSame([], $this->searchQueries(), 'Grouping be-nl should leave nl-nl cached.');
+    }
+
+    #[Test]
+    public function a_finished_live_fetch_shows_its_offers_in_every_variant_of_that_term_only(): void
+    {
+        Queue::fake();
+        $this->koptelefoons(2);
+        $this->registerShop();
+
+        $search = app(SearchService::class);
+        $plain = new SearchQuery(market: Market::BeNl, term: 'tuinkabouter', logged: false);
+        $cheapest = new SearchQuery(market: Market::BeNl, term: 'tuinkabouter', sort: 'price_asc', logged: false);
+        $other = new SearchQuery(market: Market::BeNl, term: 'koptelefoon', logged: false, liveTerm: '');
+
+        // Cached before the shop answered: empty, both variants.
+        $this->assertSame(0, $search->search($plain)->groups->total());
+        $this->assertSame(0, $search->search($cheapest)->groups->total());
+        $this->assertSame(2, $search->search($other)->groups->total());
+
+        Queue::pushed(PullLiveSearch::class)->sole()->handle($search);
+
+        $this->assertSame(1, $search->search($plain)->groups->total());
+        $this->assertSame(1, $search->search($cheapest)->groups->total());
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $search->search($other);
+        $this->assertSame([], $this->searchQueries(), 'Another term should stay cached.');
     }
 
     #[Test]

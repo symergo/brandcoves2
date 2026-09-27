@@ -791,9 +791,10 @@ The details that matter:
 - **Two callers still wait**, with `search(..., waitForLive: true)`: curation in the admin
   (`CurationSearch`) and the editorial API's product lookup (`ProductLookup::pullLive()`). A person
   is waiting on exactly that answer, the volume is tiny, and neither is reachable by a crawler.
-- **The id cache is not written while the job is pending** (`SearchService::pendingKey()`, two
-  minutes at most), or a new term would be cached empty for ten minutes and "the next view" would
-  not show the shop's products.
+- **When the job finishes it retires the term's cached results** (every filter and sort of it, and
+  of a brand page and its sub-searches), whether the shops answered anything or not. See the term
+  generation below. For a day this was a two-minute "pending" marker that kept the id cache from
+  being written while the job was queued; the generation made it redundant and it is gone.
 - **One try, 90 s timeout.** A retry is more requests to a shop that just refused; the next search
   after the marker expires asks again anyway.
 
@@ -812,12 +813,13 @@ turns into the product a few seconds later.
 
 Designed on 2026-09-01 and deferred then; built as designed.
 
-**What.** The ordered group ids of one search are cached for `results_cache_ttl` (600 s) under
-`SearchQuery::resultsCacheKey()`: market, the term lowercased, every filter, in-stock and the sort.
-Not the page, the view, `logged` or the live term, because none of them changes which products match
-or their order. A page is a slice of the list plus one primary-key lookup (`SearchService::page()`).
-The by-store view reads the same list. The first `results_cache_ids` (480, twenty pages) are kept;
-a deeper page asks the database for its own slice, with the cached total.
+**What.** The ordered group ids of one search are cached for `results_cache_ttl` (43200 s, twelve
+hours) under `SearchQuery::resultsCacheKey()`: market, the term lowercased, every filter, in-stock
+and the sort, plus the generation numbers below. Not the page, the view or `logged`, because none of
+them changes which products match or their order. A page is a slice of the list plus one
+primary-key lookup (`SearchService::page()`). The by-store view reads the same list. The first
+`results_cache_ids` (480, twenty pages) are kept; a deeper page asks the database for its own slice,
+with the cached total.
 
 **Why.** Every page, sort and filter change ran the four-branch text union twice (the count and the
 page), and the audit saw a 3 s Inertia visit right after the same page had loaded in full. An
@@ -829,25 +831,57 @@ cheapest-offer and discount badges are exactly as right as before (invariant 7).
 a search still run on every view: `SearchLog::record()` (the demand signal) and the live marker.
 Nothing from Amazon is in the list, because nothing from Amazon is stored.
 
-**What can be stale, and for how long.** Membership and order, for up to ten minutes: a product that
-went out of stock may keep its slot, a new one from a feed run may not have one yet. A merged or
-deleted group simply drops out of the page. There is no invalidation on purpose; the owner's rule is
-short expiry and queued work, not "cache until something changes" machinery.
-
 **One query instead of two.** When the whole match set fits in the head, which is most searches, the
 total is the length of the list and the `count(*)` is not run at all.
 
-**Facets** now keep `facet_cache_ttl` = 600 s, raised from 300 so the sidebar and the grid go stale
-together. `brandLinks()` still reads the facet brands, and that costs nothing extra: the page renders
-the facets anyway and `SearchResult::facets()` resolves once.
+### Twelve hours, retired by generation numbers (owner's decision, 2026-09-27)
+
+It shipped with a ten-minute expiry. The owner asked for twelve hours and results that are never
+stale by more than seconds, which works because the list only changes at a few known moments. Every
+key carries **generation numbers** (`App\Services\Search\SearchGenerations`): plain ints kept in
+the cache forever. Bumping one makes every key built with the old number unreachable at once; the
+old entries expire unread. Nothing is searched for or deleted, and there is no race: a request that
+read the old number and writes late writes under a key nobody asks for any more.
+
+| Generation | Key | Bumped by | Retires |
+|---|---|---|---|
+| market | `bc:search:gen:{market}` | end of `GroupProducts` (the twice-daily catalogue update); `bc:withdraw-source --write`; an editor's merge (`GroupMerger`) or split (`GroupSplitter`) | every search and facet entry of the market |
+| term | `bc:search:termgen:{market}:{sha1(term)}` | `PullLiveSearch` finishing (found offers or not, failed or not); `search(..., waitForLive: true)` after its fold | every filter and sort of that term |
+| brand | `bc:search:brandgen:{market}:{sha1(spellings)}` | the same, for a brand page's fetch | the brand page and its sub-searches (`?q=` on a brand page asks no shop, so the term generation alone would miss them) |
+
+A key carries the generation of the term, of the live term when it differs (a brand page asks the
+shops for the brand's name), and of the brands. The facet key carries the market and term
+generations, so the sidebar and the grid are retired together; `facet_cache_ttl` is twelve hours
+too.
+
+Why these are all the moments that matter: the stored query reads `product_groups` (price, stock,
+image, brand, merchant count, tags) and, for the shop filter, `products.status`. Those change when
+grouping runs, when a source is withdrawn, when an editor merges or splits, and when a live fetch
+folds offers in.
+
+What is still not covered, and waits for the next grouping (at most about twelve hours):
+
+- A single product added outside a search: a pasted eBay link that `ReadItemLink` imported, or the
+  editors' bol browser extension (`BolPageImport`). It is on its product page and on the list at
+  once; it joins search results at the next grouping.
+- Tag changes between groupings: an editor's `gift_tags`, or the nightly crowd tags. They only
+  matter to the `?for=`, `?interest=` and `?occasion=` filters.
+- A product that went out of stock between groupings keeps its slot; its card shows the stock read
+  fresh. This was true of the uncached page too, because stock reaches `product_groups` only at
+  grouping.
 
 Only arrays of ints and booleans are cached. The cache store refuses to rebuild objects
 (`serializable_classes` is false), so a cached model or collection comes back broken.
 
+`brandLinks()` still reads the facet brands, and that costs nothing extra: the page renders the
+facets anyway and `SearchResult::facets()` resolves once.
+
 Tests: `SearchLiveQueueTest` (a miss renders without asking the shop and dispatches once; the job's
 offers show on the next view; a waiting caller gets them in the same call; page two runs no text
-search; an Inertia visit reuses what a full load cached), `PastedLinkTest` (a bol link we do not
-hold makes no request in `/list-search`).
+search; an Inertia visit reuses what a full load cached; grouping a market makes its next search
+miss and leaves another market cached; a finished live fetch shows its offers in every variant of
+that term and leaves another term cached), `PastedLinkTest` (a bol link we do not hold makes no
+request in `/list-search`).
 
 ## See also
 

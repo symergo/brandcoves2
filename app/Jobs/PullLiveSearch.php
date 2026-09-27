@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Services\Search\SearchGenerations;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Cache;
-use Throwable;
 
 /**
  * Ask the live shops (bol, eBay, Tradedoubler) about a search, and store what
@@ -66,14 +65,17 @@ class PullLiveSearch implements ShouldBeUnique, ShouldQueue
         try {
             $search->foldLive($this->query());
         } finally {
-            // The search pages stop skipping their id cache for this term.
-            Cache::forget(SearchService::pendingKey($this->query()));
+            /*
+             * Retire every cached result of this term, every filter and sort
+             * of it, and of this brand's page and its sub-searches, whether
+             * the shops answered anything or not. The results cached while the
+             * job was queued lack exactly what it just stored; the next view
+             * reads afresh and has it. Also on failure: a half-finished fold
+             * may still have written offers.
+             */
+            SearchGenerations::bumpTerm($this->market, $this->liveTerm);
+            SearchGenerations::bumpBrands($this->market, $this->brands);
         }
-    }
-
-    public function failed(?Throwable $e): void
-    {
-        Cache::forget(SearchService::pendingKey($this->query()));
     }
 
     private function query(): SearchQuery

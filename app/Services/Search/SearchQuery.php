@@ -410,12 +410,44 @@ final readonly class SearchQuery
      * recomputes nothing. Getting the key wrong in the other direction would be
      * worse than not caching, so it is derived here next to the fields rather
      * than assembled at the call site.
+     *
+     * Carries the market and term generations (generations()), like the
+     * result ids, so the sidebar and the grid are retired at the same moments.
      */
     public function facetCacheKey(): string
     {
         return 'bc:search:facets:'.$this->market->value
             .':'.($this->inStockOnly ? '1' : '0')
-            .':'.sha1(mb_strtolower($this->term));
+            .':'.sha1(mb_strtolower($this->term))
+            .':'.$this->generations(withBrands: false);
+    }
+
+    /**
+     * The generations that retire this search's cached results
+     * (SearchGenerations): the market's, the term's, the live term's when a
+     * page asks the shops for something else (a brand page asks for the
+     * brand's name), and the brand's for a brand page and its sub-searches.
+     *
+     * Read on every key build, never remembered on the object: a live fetch
+     * that finishes while a request runs must retire what that request is
+     * about to write.
+     */
+    private function generations(bool $withBrands = true): string
+    {
+        $parts = [
+            SearchGenerations::market($this->market),
+            SearchGenerations::term($this->market, $this->term),
+        ];
+
+        if (mb_strtolower($this->liveTerm()) !== mb_strtolower(trim($this->term))) {
+            $parts[] = SearchGenerations::term($this->market, $this->liveTerm());
+        }
+
+        if ($withBrands) {
+            $parts[] = SearchGenerations::brands($this->market, $this->brands);
+        }
+
+        return implode('.', $parts);
     }
 
     /**
@@ -434,6 +466,11 @@ final readonly class SearchQuery
      * The term is lowercased like the facet key: every branch of the text
      * match and the relevance order ignore case. The brands are not: the brand
      * filter is an exact `IN`.
+     *
+     * Last come the generations (generations()): the key is kept 12 hours and
+     * is retired the moment the catalogue under it changes, by grouping for
+     * the market or by a finished live fetch for the term or brand. The live
+     * term enters only there, as the generation of what the shops were asked.
      */
     public function resultsCacheKey(): string
     {
@@ -458,7 +495,7 @@ final readonly class SearchQuery
             $this->comparableOnly,
             $this->sort,
             $tags,
-        ], JSON_THROW_ON_ERROR));
+        ], JSON_THROW_ON_ERROR)).':'.$this->generations();
     }
 
     /** @return array<string, mixed> Query string for building filter links. */

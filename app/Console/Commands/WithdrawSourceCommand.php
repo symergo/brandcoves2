@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Search\SearchGenerations;
 use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -132,6 +133,10 @@ class WithdrawSourceCommand extends Command
 
         $this->newLine();
         $this->components->info(number_format($written).' offer(s) now '.$to->value.'.');
+
+        // The shop filter reads offer status directly, so cached searches of
+        // this market could still list the withdrawn shop's products.
+        SearchGenerations::bumpMarket($market);
 
         // Grouping reads offer status when it recomputes a group's cheapest
         // price and offer count, so those aggregates are wrong until it runs.
