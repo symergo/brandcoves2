@@ -131,9 +131,10 @@ export default function SelfDescribe({
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
-            <header className="max-w-2xl">
+            {/* Full width: nothing sits beside it (owner's rule, re-checked 2026-09-27); only the sentence keeps a reading width. */}
+            <header>
                 <h1 className="text-xl sm:text-2xl font-semibold">{t('recipients.self_title')}</h1>
-                <p className="mt-2 text-ink-soft">
+                <p className="mt-2 max-w-2xl text-ink-soft">
                     {t('recipients.self_intro', { name: person.name })}
                 </p>
                 {canClaim && (
@@ -199,7 +200,7 @@ export default function SelfDescribe({
                 )}
             </header>
 
-            <section className="mt-10 max-w-2xl">
+            <section className="mt-10">
                 <h2 className="text-lg font-medium">{t('recipients.about_you')}</h2>
 
                 {/*

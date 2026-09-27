@@ -237,7 +237,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
             </section>
 
             {canAnswer ? (
-                <section className="mt-12 max-w-2xl rounded-card border border-line bg-card p-6">
+                <section className="mt-12 rounded-card border border-line bg-card p-6">
                     <h2 className="font-medium">{t('ask.answer_heading')}</h2>
 
                     <form onSubmit={submit} className="mt-4 space-y-4">

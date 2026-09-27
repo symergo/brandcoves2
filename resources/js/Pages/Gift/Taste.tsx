@@ -323,7 +323,7 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
 
     if (forWhom === null) {
         return (
-            <section className="mt-8 max-w-2xl">
+            <section className="mt-8">
                 <h2 className="text-lg font-medium">{t('gift.taste.who_title')}</h2>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {(['someone', 'me'] as const).map((who) => (
@@ -346,7 +346,7 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
 
     if (rounds.length === 0) {
         return (
-            <section className="mt-8 max-w-2xl">
+            <section className="mt-8">
                 <Empty finder={urls.finder} />
             </section>
         )
@@ -355,7 +355,7 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
     const shown = Math.min(index + 1, total)
 
     return (
-        <section className="mt-6 max-w-2xl" aria-busy={finishing || (current === undefined && fetching)}>
+        <section className="mx-auto mt-6 max-w-2xl" aria-busy={finishing || (current === undefined && fetching)}>
             <div className="flex items-baseline justify-between gap-3">
                 <p className="text-xs text-ink-soft" aria-live="polite">
                     {t('gift.taste.round', { current: shown, total })}
@@ -663,7 +663,7 @@ function Outcome({ mode, person, urls, result, recipients, canCreate, carried }:
                 <>
                     <h2 className="text-lg font-medium">{t('gift.taste.result_title')}</h2>
 
-                    <div className="mt-3 max-w-2xl rounded-card bg-accent/5 p-5 sm:p-6">
+                    <div className="mt-3 rounded-card bg-accent/5 p-5 sm:p-6">
                         {learnedNothing ? (
                             <p className="text-ink-soft">{t('gift.taste.nothing')}</p>
                         ) : (
@@ -782,7 +782,7 @@ function KeepOnPerson({
     }
 
     return (
-        <div className="mt-5 max-w-2xl rounded-card border border-line bg-card p-5">
+        <div className="mt-5 rounded-card border border-line bg-card p-5">
             <h3 className="font-medium">{t('gift.taste.save_title')}</h3>
             <p className="mt-1 text-sm text-ink-soft">{t('gift.taste.save_hint')}</p>
 
@@ -852,7 +852,7 @@ function SelfSave({ urls, choices, name }: { urls: Props['urls']; choices: Choic
     const [failed, setFailed] = useState(false)
 
     return (
-        <div className="mt-5 flex max-w-2xl flex-wrap items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button
                 busy={busy}
                 aria-label={name ? `${t('gift.taste.self_save')} (${name})` : undefined}
@@ -917,7 +917,7 @@ function MakeCard({ url, choices }: { url: string; choices: Choice[] }) {
     }
 
     return (
-        <div className="mt-5 max-w-2xl rounded-card border border-line bg-card p-5">
+        <div className="mt-5 rounded-card border border-line bg-card p-5">
             <h3 className="font-medium">{t('gift.card.make_title')}</h3>
 
             {card ? (

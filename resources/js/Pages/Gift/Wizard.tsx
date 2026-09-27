@@ -808,7 +808,7 @@ export default function GiftWizard(props: Props) {
                     </div>
                 </section>
             ) : (
-                <section className="mt-8 max-w-3xl">
+                <section className="mt-8">
                     {forLine}
 
                     <div className={`${card ? '' : 'mt-5'} flex items-baseline justify-between gap-3`}>

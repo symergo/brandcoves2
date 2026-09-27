@@ -131,7 +131,7 @@ export default function Landing({
                 }
             />
 
-            <section className="mt-10 max-w-2xl rounded-card border border-line bg-card p-5">
+            <section className="mt-10 rounded-card border border-line bg-card p-5">
                 <h2 className="font-medium">{t('gift_landing.finder_title')}</h2>
                 <p className="mt-1 text-sm text-ink-soft">{t('gift_landing.finder_body')}</p>
                 <Link href={finderUrl} className="mt-3 inline-block text-sm font-medium text-accent-dark underline hover:text-ink">

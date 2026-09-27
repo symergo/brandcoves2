@@ -85,7 +85,7 @@ export default function SantaMe({ group, me }: Props) {
               nudge Secret Santa degrades into "here is a name, good luck".
             */}
             {!me.hasList && (
-                <section className="mt-8 max-w-2xl rounded-card border border-accent/40 bg-accent/5 p-4">
+                <section className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-4">
                     <h2 className="font-medium">{t('santa.build_yours')}</h2>
                     <p className="mt-1 text-sm text-ink-soft">{t('santa.build_yours_hint')}</p>
                     <a

@@ -90,7 +90,7 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
             </header>
 
             {me && (
-                <div className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm">
+                <div className="mt-6 rounded-card border border-line bg-card p-4 text-sm">
                     <Link href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
                         {group.drawn && me.giftee
                             ? t('santa.you_have', { name: me.giftee.name })

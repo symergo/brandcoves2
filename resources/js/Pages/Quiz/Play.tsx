@@ -75,7 +75,7 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
                     {t('quiz.owner_note')}
                 </p>
             ) : result ? (
-                <section className="mt-8 max-w-2xl">
+                <section className="mt-8">
                     <p className="text-2xl sm:text-3xl font-semibold">
                         {t('quiz.score', {
                             score: String(result.score),

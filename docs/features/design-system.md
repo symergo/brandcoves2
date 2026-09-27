@@ -205,3 +205,25 @@ The three kind icons are the ones `ListKindBadge` uses (`kindIcons`). The heart 
 same day at nine tenths of its size, so it matches the clipboard and the two figures when they sit
 side by side at text size. The My Coves section headings now carry the same icons.
 
+
+## Nothing beside it: full width (2026-09-26, re-checked page by page 2026-09-27)
+
+The owner's rule: when a right column would be empty, the content takes the full width. A block
+capped at `max-w-2xl` on the left of a wide screen reads as a page with a missing column.
+
+Checked across every page on 2026-09-27, after the owner found the `/for/{token}` page narrow with
+nothing beside it. Lifted: the `/for` page's header and "Over jou" form, This or that's who-step,
+empty state, result, save and profile-card blocks, Find a gift's questions, the answer form on a
+question, the Find-a-gift card on a gift landing page, the quiz result, and the two Secret Friend
+cards.
+
+**What keeps a width, on purpose:**
+
+- **A paragraph of running text** (an intro sentence, a Cove's editorial, a guide, a product
+  description, the legal pages): about 65 characters a line is what can be read. The cap sits on
+  the paragraph, never on the block around it.
+- **A small centred single-purpose screen** (sign-in, accepting an invitation, the "no more
+  invitations" page, joining a Secret Friend, the 404): centred, so no column is missing.
+- **This or that's duel**: two product photos side by side. Full width would make each photo about
+  580px tall and push the buttons off the screen, so it is centred (`mx-auto max-w-2xl`).
+- **The help pages** (`/help`, `/lists-help`, `/search-help`): centred reading pages.
