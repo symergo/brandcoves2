@@ -129,6 +129,12 @@ search sent from the suggestions page went to `/for/suggest/…` and 404'd. It n
 after `for`. And the controller's `suggestTerm` (what was typed) was sent and never read, so a
 direct visit to `?q=koptelefoon` showed an empty box; the box now starts from it.
 
+**The list search became the list page's (2026-09-27).** The owner asked for the search under
+"Dingen die je leuk zou vinden" to be the one on a list page, so it is: `AddProduct` for this
+person's list, shown when the server's `canAdd` says `/list-items` will take the visitor's post
+(signed in, and the list is theirs); signed out, the same field opens the sign-in dialog. "Laat me
+ideeën zien" stays beside it. See [inline-product-search.md](inline-product-search.md).
+
 **And the questions were in the wrong person.** The page reused `gift.step_interests` and its two
 siblings — copy written for the Gift Whisperer, where you describe *somebody else* — so it asked the
 reader "what are **they** into?" about themselves. `recipients.step_*` is a second set in the second

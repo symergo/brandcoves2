@@ -74,6 +74,11 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      chosen, or for a visitor who is not signed in, does the card search in place (`/list-search`)
      with the save picker on each result instead of going to /search. Without a saved person it
      is the site search, where Bewaar asks which list.
+     **Since the owner's third look (2026-09-27)** the card's field and rows are the list panel's own
+     (`ProductSearch`, [inline-product-search.md](inline-product-search.md)): the barcode, shops we do
+     not mirror and pasted links included. A signed-out visitor's search goes to `/search`: the
+     in-place search is signed-in only, and the card had been getting a refusal and showing
+     "nothing found".
    - **The type card is a dropdown** ("Kies een type…", up to 30 persona Coves, this kind of person's
      first). It was four cards inside a card, the tallest thing on the page, and every other card was
      stretched to its height.

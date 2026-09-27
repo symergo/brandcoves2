@@ -12,8 +12,7 @@ import Vote from '../../Components/Vote'
 import type { SharedProps } from '../../types'
 import { formatOccasionDate, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
-import ScanButton from '../../Components/ScanButton'
-import ToolIcon from '../../Components/ToolIcon'
+import { HitList, HitRow, SearchField } from '../../Components/ProductSearch'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import { send } from '../../http'
 import { useSignIn } from '../../signIn'
@@ -798,134 +797,104 @@ export default function SharedList({
                                 {addsDirectly ? t('suggestions.add_invite_hint') : t('suggestions.invite_hint')}
                             </p>
 
-                            <form
-                                className="mt-4 flex flex-wrap gap-2"
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-
-                                    /*
-                                      A GET back to this same URL, which re-renders the
-                                      page with `results`. One route, one token check —
-                                      a second endpoint would be a second place the
-                                      share token has to be resolved and gated.
-                                    */
-                                    router.get(
-                                        `${base}/l/${token}`,
-                                        { q: query },
-                                        { preserveState: true, preserveScroll: true },
-                                    )
-                                }}
-                            >
-                                <input
+                            {/*
+                              The field and the rows of a list's own add panel
+                              (`ProductSearch`, owner, 2026-09-27: every inline
+                              search the same as the list page's). What stays this
+                              page's own is where a press lands: a suggestion for
+                              the owner, or straight on a list that lets helpers
+                              add. The search itself is a GET back to this same
+                              URL, which re-renders the page with `results`. One
+                              route, one token check: a second endpoint would be a
+                              second place the share token has to be resolved and
+                              gated. Somebody suggesting a present is often holding
+                              it, so the barcode searches the same way.
+                            */}
+                            <div className="mt-4">
+                                <SearchField
                                     value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder={t('suggestions.search_placeholder')}
-                                    aria-label={t('suggestions.search_placeholder')}
-                                    className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                />
-                                {/*
-                                  Somebody suggesting a present is often holding it, or
-                                  looking at it in a shop. The same GET as the submit
-                                  button, with the barcode as the query — not a visit to
-                                  /search, which would leave the list behind.
-                                */}
-                                <ScanButton
-                                    className="shrink-0 rounded-lg border border-line px-3 py-2"
-                                    onScan={(gtin) => {
-                                        setQuery(gtin)
+                                    onChange={setQuery}
+                                    onSearch={(q) =>
                                         router.get(
                                             `${base}/l/${token}`,
-                                            { q: gtin },
+                                            { q },
                                             { preserveState: true, preserveScroll: true },
                                         )
-                                    }}
+                                    }
+                                    placeholder={t('suggestions.search_placeholder')}
                                 />
-                                <button
-                                    type="submit"
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark"
-                                >
-                                    <ToolIcon name="search" className="h-5 w-5" />
-                                    <span className="sr-only">{t('search.submit')}</span>
-                                </button>
-                            </form>
+                            </div>
 
                             {results !== null && results.length === 0 && (
-                                <p className="mt-4 text-sm text-ink-soft">{t('suggestions.none_found')}</p>
+                                <p className="mt-3 text-sm text-ink-soft">{t('suggestions.none_found')}</p>
+                            )}
+
+                            {results !== null && results.length > 0 && (
+                                <HitList>
+                                    {results.map((result) => (
+                                        <HitRow
+                                            key={result.id}
+                                            image={result.image}
+                                            title={result.title}
+                                            price={result.price}
+                                            action={
+                                                <button
+                                                    type="button"
+                                                    disabled={suggested.has(result.id)}
+                                                    onClick={() =>
+                                                        router.post(
+                                                            `${base}/l/${token}/suggest`,
+                                                            { group_id: result.id },
+                                                            {
+                                                                preserveScroll: true,
+                                                                onSuccess: (visited) => {
+                                                                    const flash = (visited.props as unknown as SharedProps).flash
+                                                                    const error = flash?.error ?? null
+
+                                                                    if (error === null) {
+                                                                        setSuggested((prev) => new Set(prev).add(result.id))
+                                                                    }
+
+                                                                    setSuggestNote({
+                                                                        text: error ?? flash?.success ?? '',
+                                                                        ok: error === null,
+                                                                    })
+                                                                },
+                                                            },
+                                                        )
+                                                    }
+                                                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                                                        suggested.has(result.id)
+                                                            ? 'border border-sage bg-sage/10 text-sage'
+                                                            : 'bg-accent text-white hover:bg-accent-dark'
+                                                    }`}
+                                                >
+                                                    {suggested.has(result.id)
+                                                        ? `✓ ${addsDirectly ? t('suggestions.added_short') : t('suggestions.suggested')}`
+                                                        : addsDirectly
+                                                          ? t('suggestions.add_action')
+                                                          : t('suggestions.suggest')}
+                                                </button>
+                                            }
+                                        />
+                                    ))}
+                                </HitList>
                             )}
 
                             {/*
                               The thing somebody most wants to put forward is often the
                               thing we do not sell — a voucher, the local bike shop, one
-                              particular edition of a book. Ending the search with "no
-                              results" wastes the one moment they were willing to help.
+                              particular edition of a book. Under the results, where a
+                              list's panel has its "offline article": ending the search
+                              with "no results" wastes the one moment they were willing
+                              to help.
                             */}
-                            <div className="mt-4">
+                            <div className="mt-4 border-t border-line pt-3">
                                 <ManualItem
                                     action={`${base}/l/${token}/suggest`}
                                     hint={t('suggestions.manual_hint')}
                                 />
                             </div>
-
-                            {results !== null && results.length > 0 && (
-                                <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                    {results.map((result) => (
-                                        <li key={result.id} className="flex flex-col rounded-card border border-line p-4">
-                                            {result.image && (
-                                                <img
-                                                    src={result.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="mx-auto h-28 w-auto max-w-full object-contain"
-                                                    onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
-                                                />
-                                            )}
-                                            <p className="mt-3 line-clamp-2 text-sm font-medium">{result.title}</p>
-                                            {result.price !== null && (
-                                                <p className="mt-1 text-sm text-ink-soft">
-                                                    {formatPrice(result.price, market)}
-                                                </p>
-                                            )}
-                                            <button
-                                                type="button"
-                                                disabled={suggested.has(result.id)}
-                                                onClick={() =>
-                                                    router.post(
-                                                        `${base}/l/${token}/suggest`,
-                                                        { group_id: result.id },
-                                                        {
-                                                            preserveScroll: true,
-                                                            onSuccess: (visited) => {
-                                                                const flash = (visited.props as unknown as SharedProps).flash
-                                                                const error = flash?.error ?? null
-
-                                                                if (error === null) {
-                                                                    setSuggested((prev) => new Set(prev).add(result.id))
-                                                                }
-
-                                                                setSuggestNote({
-                                                                    text: error ?? flash?.success ?? '',
-                                                                    ok: error === null,
-                                                                })
-                                                            },
-                                                        },
-                                                    )
-                                                }
-                                                className={`mt-3 w-full rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                                                    suggested.has(result.id)
-                                                        ? 'border border-sage bg-sage/10 text-sage'
-                                                        : 'bg-accent text-white hover:bg-accent-dark'
-                                                }`}
-                                            >
-                                                {suggested.has(result.id)
-                                                    ? `✓ ${addsDirectly ? t('suggestions.added_short') : t('suggestions.suggested')}`
-                                                    : addsDirectly
-                                                      ? t('suggestions.add_action')
-                                                      : t('suggestions.suggest')}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
 
                             {/* The server's answer, here where the press was. */}
                             {suggestNote !== null && suggestNote.text !== '' && (

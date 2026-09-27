@@ -320,6 +320,67 @@ class RecipientProfileTest extends TestCase
     }
 
     #[Test]
+    public function the_add_panel_is_offered_exactly_when_the_list_route_accepts_it(): void
+    {
+        /*
+         * Since 2026-09-27 the page offers the list page's own add panel
+         * (AddProduct), which posts to `/list-items`. `canAdd` must be true
+         * exactly when that route takes this visitor's post for this list, or
+         * the page shows a search whose every result is refused.
+         */
+        $recipient = $this->recipient();
+        $visitor = User::factory()->create();
+
+        $this->actingAs($visitor)
+            ->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canAdd', true)->whereType('listTitle', 'string'));
+
+        $listId = Wishlist::query()
+            ->where('recipient_id', $recipient->id)
+            ->where('owner_user_id', $visitor->id)
+            ->value('id');
+        $this->assertNotNull($listId);
+
+        $this->actingAs($visitor)
+            ->post('/be-nl/list-items', [
+                'wishlist_id' => $listId,
+                'source' => 'manual',
+                'title' => 'The blue pan',
+                'on_list_page' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('wishlist_items', ['wishlist_id' => $listId, 'snapshot_title' => 'The blue pan']);
+
+        // And it is on the page, which reads that same list.
+        $this->actingAs($visitor)
+            ->get("/be-nl/for/{$recipient->share_token}")
+            ->assertInertia(fn ($page) => $page->where('items.0.title', 'The blue pan'));
+
+        // Somebody else, signed in, cannot add to that list by naming it.
+        $this->actingAs(User::factory()->create())
+            ->post('/be-nl/list-items', ['wishlist_id' => $listId, 'source' => 'manual', 'title' => 'Not yours'])
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function a_visitor_who_is_not_signed_in_is_not_offered_the_add_panel(): void
+    {
+        // They have a list here (a cookie identity's, folded into their account
+        // when they sign in), but `/list-items` is behind sign-in, so the page
+        // shows the sign-in way instead of a search that would be refused.
+        $recipient = $this->recipient();
+
+        $this->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canAdd', false));
+
+        $this->post('/be-nl/list-items', ['source' => 'manual', 'title' => 'Pan'])
+            ->assertRedirect('/be-nl/login');
+    }
+
+    #[Test]
     public function a_private_list_of_theirs_is_not_pulled_in(): void
     {
         $owner = User::factory()->create();

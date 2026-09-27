@@ -6,10 +6,10 @@ import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
-import ScanButton from '../../Components/ScanButton'
 import ToolIcon from '../../Components/ToolIcon'
 import InfoTip from '../../Components/InfoTip'
 import AskShareDialog from '../../Components/AskShareDialog'
+import { HitList, HitRow, SearchField } from '../../Components/ProductSearch'
 
 interface Pick {
     id: number
@@ -338,58 +338,24 @@ export default function AskShow({
                               uses. One route and one search rather than a second
                               endpoint with its own gate. `preserveState` keeps
                               the half-typed answer and the picks already chosen.
+
+                              The field and rows are a list's own add panel's
+                              (`ProductSearch`, owner, 2026-09-27), `nested`
+                              because this sits inside the answer's form. The
+                              barcode is there because the best answer to "what
+                              should I buy" is often the thing the answerer
+                              already owns.
                             */}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                <input
+                            <div className="mt-3">
+                                <SearchField
+                                    nested
                                     value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault()
-                                            router.get(
-                                                question.url,
-                                                { q: query },
-                                                { preserveState: true, preserveScroll: true },
-                                            )
-                                        }
-                                    }}
-                                    placeholder={t('ask.picks_search')}
-                                    aria-label={t('ask.picks_search')}
-                                    className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                />
-                                {/*
-                                  The best answer to "what should I buy" is
-                                  often the thing the answerer already owns.
-                                  `preserveState` for the same reason the
-                                  buttons beside it use it: the half-typed
-                                  answer and the picks already chosen must
-                                  survive the search.
-                                */}
-                                <ScanButton
-                                    className="shrink-0 rounded-lg border border-line px-3 py-2"
-                                    onScan={(gtin) => {
-                                        setQuery(gtin)
-                                        router.get(
-                                            question.url,
-                                            { q: gtin },
-                                            { preserveState: true, preserveScroll: true },
-                                        )
-                                    }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        router.get(
-                                            question.url,
-                                            { q: query },
-                                            { preserveState: true, preserveScroll: true },
-                                        )
+                                    onChange={setQuery}
+                                    onSearch={(q) =>
+                                        router.get(question.url, { q }, { preserveState: true, preserveScroll: true })
                                     }
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark"
-                                >
-                                    <ToolIcon name="search" className="h-5 w-5" />
-                                    <span className="sr-only">{t('search.submit')}</span>
-                                </button>
+                                    placeholder={t('ask.picks_search')}
+                                />
                             </div>
 
                             {results !== null && results.length === 0 && (
@@ -397,57 +363,43 @@ export default function AskShow({
                             )}
 
                             {results !== null && results.length > 0 && (
-                                <ul className="mt-3 grid gap-3 sm:grid-cols-4">
+                                <HitList>
                                     {results.map((result) => {
                                         const chosen = picks.some((p) => p.id === result.id)
                                         const full = picks.length >= maxPicks
 
                                         return (
-                                            <li
+                                            <HitRow
                                                 key={result.id}
-                                                className="flex flex-col rounded-lg border border-line p-3"
-                                            >
-                                                {result.image && (
-                                                    <img
-                                                        src={result.image}
-                                                        alt=""
-                                                        loading="lazy"
-                                                        className="mx-auto h-20 w-auto max-w-full object-contain"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.visibility = 'hidden'
-                                                        }}
-                                                    />
-                                                )}
-                                                <p className="mt-2 line-clamp-2 text-xs font-medium">{result.title}</p>
-                                                {result.price !== null && (
-                                                    <p className="mt-1 text-xs text-ink-soft">
-                                                        {formatPrice(result.price, market)}
-                                                    </p>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    disabled={chosen || full}
-                                                    onClick={() =>
-                                                        setPicks([
-                                                            ...picks,
-                                                            {
-                                                                id: result.id,
-                                                                title: result.title,
-                                                                image: result.image,
-                                                                price: result.price,
-                                                                inStock: true,
-                                                                url: '',
-                                                            },
-                                                        ])
-                                                    }
-                                                    className="mt-2 rounded-lg border border-line px-2 py-1 text-xs disabled:opacity-50"
-                                                >
-                                                    {chosen ? t('ask.picks_added') : t('ask.picks_add')}
-                                                </button>
-                                            </li>
+                                                image={result.image}
+                                                title={result.title}
+                                                price={result.price}
+                                                action={
+                                                    <button
+                                                        type="button"
+                                                        disabled={chosen || full}
+                                                        onClick={() =>
+                                                            setPicks([
+                                                                ...picks,
+                                                                {
+                                                                    id: result.id,
+                                                                    title: result.title,
+                                                                    image: result.image,
+                                                                    price: result.price,
+                                                                    inStock: true,
+                                                                    url: '',
+                                                                },
+                                                            ])
+                                                        }
+                                                        className="rounded-lg border border-line px-3 py-1.5 text-sm hover:border-ink disabled:opacity-50"
+                                                    >
+                                                        {chosen ? t('ask.picks_added') : t('ask.picks_add')}
+                                                    </button>
+                                                }
+                                            />
                                         )
                                     })}
-                                </ul>
+                                </HitList>
                             )}
 
                             {picks.length >= maxPicks && (

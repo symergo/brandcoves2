@@ -18,6 +18,7 @@ use App\Services\Gift\TasteBrief;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\Friends;
 use App\Support\CurrentMarket;
+use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -155,6 +156,21 @@ class RecipientProfileController extends Controller
             'canSignInToClaim' => ! $owner->isSignedIn() && ! $recipient->isLinked(),
             'items' => $list === null ? [] : $this->items($list),
             'listId' => $list?->id,
+            'listTitle' => $list?->displayTitle($current->get()->language()),
+
+            /*
+             * May this visitor put things on that list from here?
+             *
+             * Since 2026-09-27 the page offers the list page's own add panel
+             * (`AddProduct`), which posts to `/list-items`. That route is
+             * behind `auth` and asks `ListAccess::canEdit()`, so this asks the
+             * same two questions rather than the client guessing from "is
+             * somebody signed in". A cookie visitor has a list here (it folds
+             * into their account when they sign in) but cannot add to it yet,
+             * and is shown the sign-in way instead of a search that would be
+             * refused.
+             */
+            'canAdd' => $owner->isSignedIn() && $list !== null && ListAccess::canEdit($list, $owner),
 
             /*
              * No `giverList`, no `pickedCount`, no claim state. Their absence is

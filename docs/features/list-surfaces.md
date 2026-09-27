@@ -1048,3 +1048,12 @@ gift "Iedereen ziet wie bijdraagt" and "Deelnemers kunnen stemmen"; then "Stop m
 asking once. The forms (how much each person chips in, sharing with one friend by name, who was let
 in before) stay on the list page's own share panel. The popup had a "Meer deelopties" link to it;
 the owner had it removed (2026-09-27), so the popup ends at "Stop met delen".
+
+## The list's search is the site's inline search (2026-09-27)
+
+The owner: the inline searches elsewhere "should be the same as the inline search on the list
+pages". The add panel's field and result rows moved into `ProductSearch`, and the person's own page
+(`/for/{token}`) now shows the add panel itself; Find a gift, a shared list's "suggest something" and
+Ask's answer picker draw the same field and rows, each keeping only its own press (the save picker,
+Suggest, Add to my answer). The list page itself looks and works as before. Why, and which searches
+were left alone: [inline-product-search.md](inline-product-search.md).

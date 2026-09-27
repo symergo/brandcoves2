@@ -12,6 +12,15 @@ import type { SceneKey } from '../../Components/SceneIllustration'
 import ShareRow from '../../Components/ShareRow'
 import SaveToList from '../../Components/SaveToList'
 import AddProduct from '../../Components/AddProduct'
+import {
+    HitList,
+    HitRow,
+    OwnItemFooter,
+    SearchField,
+    searchPanel,
+    useGroupBadge,
+    useListSearch,
+} from '../../Components/ProductSearch'
 import Button from '../../Components/Button'
 import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
@@ -230,55 +239,30 @@ function SearchToListCard({
                             />
                         </div>
                     ) : (
-                        // Drawn like AddProduct's own search, so nothing changes when it takes over.
-                        <div className="mt-4 w-full rounded-card border border-line bg-card p-4">
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    if (term.trim() !== '') start({ term, manual: false })
+                        // AddProduct's own field and footer (ProductSearch), so nothing changes when it takes over.
+                        <div className={`mt-4 ${searchPanel}`}>
+                            <SearchField
+                                value={term}
+                                onChange={setTerm}
+                                onSearch={(q) => {
+                                    if (q.trim() !== '') start({ term: q, manual: false })
                                 }}
-                                className="flex items-center gap-2"
-                            >
-                                <input
-                                    type="search"
-                                    value={term}
-                                    onChange={(e) => setTerm(e.target.value)}
-                                    placeholder={t('lists.add_search_placeholder')}
-                                    aria-label={t('lists.add_search_placeholder')}
-                                    className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={busy}
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
-                                >
-                                    <ToolIcon name="search" className="h-5 w-5" />
-                                    <span className="sr-only">{t('search.submit')}</span>
-                                </button>
-                            </form>
+                                busy={busy}
+                            />
                             {busy && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
                             {failed && (
                                 <p className="mt-3 text-sm text-danger" role="alert">
                                     {t('gift.way_search_failed')}
                                 </p>
                             )}
-                            <p className="mt-4 border-t border-line pt-3 text-sm">
-                                <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => start({ term: '', manual: true })}
-                                    className="font-medium text-accent underline hover:text-accent-dark"
-                                >
-                                    {t('lists.add_own_cta')}
-                                </button>
-                            </p>
+                            <OwnItemFooter disabled={busy} onClick={() => start({ term: '', manual: true })} />
                         </div>
                     )}
                 </>
             ) : (
                 <>
                     <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint_none')}</span>
-                    <InlineSearch base={base} />
+                    <InlineSearch base={base} signedIn={auth.user !== null} />
                 </>
             )}
         </div>
@@ -397,101 +381,104 @@ function PeopleCards({
     )
 }
 
-/** A catalogue hit from `/list-search`, the search a list's add panel uses. */
-interface FoundGroup {
-    id: number
-    title: string
-    image: string | null
-    price: number | null
-    merchantCount: number
-}
-
 /**
- * The search card without a saved person (a kind of person, or skipped):
- * results in the card, like a list's add panel, instead of leaving for
- * /search (owner, 2026-09-27). There is no list for "a colleague", so each
- * result carries the site's own save button, which asks which list (or
- * starts one); the full search page is one link away for more.
+ * The search card without a list: nobody chosen ("skip"), or a visitor who is
+ * not signed in.
+ *
+ * The same field and the same rows as a list's add panel (`ProductSearch`,
+ * owner, 2026-09-27: "the inline searches should be the same as the one on
+ * the list pages"): catalogue results, shops we do not mirror, and a pasted
+ * link. What differs is only the press. There is no list to put anything on
+ * yet, so each row carries the site's save button, which asks which list (or
+ * starts one); the full search page is one link away for more. No "offline
+ * article" footer: the typed-by-hand form belongs to a list, and here there
+ * is none to put it on.
+ *
+ * Signed out, the search leads to /search instead of searching here. The
+ * in-place search (`/list-search`) is behind sign-in, as a list's is (it
+ * reads shops live, and AddProductTest keeps it so); until 2026-09-27 this
+ * card called it anyway, got a refusal and said "nothing found".
  */
-function InlineSearch({ base }: { base: string }) {
+function InlineSearch({ base, signedIn }: { base: string; signedIn: boolean }) {
     const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
-    const [term, setTerm] = useState('')
-    const [found, setFound] = useState<FoundGroup[] | null>(null)
-    const [busy, setBusy] = useState(false)
-
-    const run = (q: string) => {
-        if (q.trim().length < 2) {
-            return
-        }
-        setBusy(true)
-        fetch(`${base}/list-search?q=${encodeURIComponent(q.trim())}`, { headers: { Accept: 'application/json' } })
-            .then((r) => r.json())
-            .then((data: { groups?: FoundGroup[] }) => setFound(data.groups ?? []))
-            .catch(() => setFound([]))
-            .finally(() => setBusy(false))
-    }
+    const found = useListSearch(base)
+    const groupBadge = useGroupBadge()
+    const { term, setTerm, groups, live, link, searching } = found
 
     return (
-        <div className="mt-4 w-full rounded-card border border-line bg-card p-4">
-            <form
-                onSubmit={(e) => {
-                    e.preventDefault()
-                    run(term)
-                }}
-                className="flex items-center gap-2"
-            >
-                <input
-                    type="search"
-                    value={term}
-                    onChange={(e) => setTerm(e.target.value)}
-                    placeholder={t('gift.way_search_placeholder')}
-                    aria-label={t('gift.way_search')}
-                    className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                />
-                <button
-                    type="submit"
-                    disabled={busy}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
-                >
-                    <ToolIcon name="search" className="h-5 w-5" />
-                    <span className="sr-only">{t('search.submit')}</span>
-                </button>
-            </form>
+        <div className={`mt-4 ${searchPanel}`}>
+            <SearchField
+                value={term}
+                onChange={setTerm}
+                onSearch={(q) =>
+                    signedIn
+                        ? found.search(q)
+                        : q.trim() !== '' && router.get(`${base}/search`, { q: q.trim() })
+                }
+                busy={searching}
+            />
 
-            {busy && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
+            {searching && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
 
-            {!busy && found !== null && found.length === 0 && (
-                <p className="mt-3 text-sm text-ink-soft">{t('gift.way_search_none_found')}</p>
+            {found.nothingFound && (
+                <p className="mt-3 text-sm text-ink-soft">{t('lists.add_nothing_found', { term: term.trim() })}</p>
             )}
+            {found.failed && <p className="mt-3 text-sm text-danger">{t('lists.search_failed')}</p>}
+            {found.linkRefused && <p className="mt-3 text-sm text-danger">{t('lists.link_refused')}</p>}
 
-            {!busy && found !== null && found.length > 0 && (
+            {!searching && (groups.length > 0 || live.length > 0 || link !== null) && (
                 <>
-                    <ul className="mt-3 divide-y divide-line">
-                        {found.map((hit) => (
-                            <li key={hit.id} className="flex items-center gap-3 py-2">
-                                {hit.image ? (
-                                    <img src={hit.image} alt="" className="h-12 w-12 shrink-0 rounded object-contain" loading="lazy" />
-                                ) : (
-                                    <span className="h-12 w-12 shrink-0 rounded bg-line/40" />
-                                )}
-                                <Link href={`${base}/p/${hit.id}`} className="min-w-0 flex-1 hover:underline">
-                                    <span className="line-clamp-2 block text-sm">{hit.title}</span>
-                                    <span className="text-xs text-ink-soft">
-                                        {hit.price !== null && formatPrice(hit.price, market)}
-                                        {hit.merchantCount > 1 && ` · ${t('product.across_shops', { count: hit.merchantCount })}`}
-                                    </span>
-                                </Link>
-                                <SaveToList groupId={hit.id} title={hit.title} imageUrl={hit.image} price={hit.price} compact />
-                            </li>
+                    <HitList>
+                        {groups.map((hit) => (
+                            <HitRow
+                                key={`g${hit.id}`}
+                                image={hit.image}
+                                title={hit.title}
+                                price={hit.price}
+                                badge={groupBadge(hit)}
+                                href={`${base}/p/${hit.id}`}
+                                action={<SaveToList groupId={hit.id} title={hit.title} imageUrl={hit.image} price={hit.price} compact />}
+                            />
                         ))}
-                    </ul>
-                    <Link
-                        href={`${base}/search?q=${encodeURIComponent(term.trim())}`}
-                        className="mt-3 inline-block text-sm font-medium text-accent-dark hover:text-ink"
-                    >
-                        {t('gift.way_search_all')} →
-                    </Link>
+                        {live.map((hit) => (
+                            <HitRow
+                                key={`l${hit.source}-${hit.externalId}`}
+                                image={hit.image}
+                                title={hit.title}
+                                price={hit.price}
+                                badge={hit.merchant}
+                                action={
+                                    <SaveToList
+                                        source={hit.source}
+                                        externalId={hit.externalId}
+                                        title={hit.title}
+                                        imageUrl={hit.image}
+                                        price={hit.price}
+                                        compact
+                                    />
+                                }
+                            />
+                        ))}
+                        {/* A link nothing we hold matched: saved as it is, and
+                            its page is read afterwards, as on a list. */}
+                        {link !== null && (
+                            <HitRow
+                                key={`u${link.url}`}
+                                image={null}
+                                title={link.host}
+                                price={null}
+                                action={<SaveToList url={link.url} compact />}
+                            />
+                        )}
+                    </HitList>
+                    {groups.length > 0 && (
+                        <Link
+                            href={`${base}/search?q=${encodeURIComponent(term.trim())}`}
+                            className="mt-3 inline-block text-sm font-medium text-accent-dark hover:text-ink"
+                        >
+                            {t('gift.way_search_all')} →
+                        </Link>
+                    )}
                 </>
             )}
         </div>

@@ -3,29 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 import { formatPrice } from '../types'
 import type { CurrentMarket } from '../types'
 import { useTranslations } from '../useTranslations'
-import ScanButton from './ScanButton'
-import ToolIcon from './ToolIcon'
+import {
+    HitList,
+    HitRow,
+    OwnItemFooter,
+    SearchField,
+    searchPanel,
+    useGroupBadge,
+    useListSearch,
+    type GroupHit,
+    type LiveHit,
+} from './ProductSearch'
 import TheirWishes, { type Wish } from './TheirWishes'
-
-interface GroupHit {
-    id: number
-    title: string
-    image: string | null
-    price: number | null
-    brand: string | null
-    merchantCount: number
-}
-
-interface LiveHit {
-    source: string
-    externalId: string
-    title: string
-    image: string | null
-    price: number | null
-    merchant: string
-    /** Whether we may keep a title of our own for it. See invariant #6. */
-    storable: boolean
-}
 
 /** What has been chosen and is about to be added, in whichever shape. */
 type Chosen =
@@ -57,6 +46,9 @@ type Chosen =
  *
  * Whichever is chosen, the wording is editable before it lands. Feed titles are
  * written for a search engine; a list is read by a person.
+ *
+ * The field and the result rows are `ProductSearch`, shared with every other
+ * inline search on the site (owner, 2026-09-27: they should all be this one).
  */
 export default function AddProduct({
     base,
@@ -68,6 +60,7 @@ export default function AddProduct({
     theirWishes = null,
     initialTerm = '',
     startManual = false,
+    autoFocus = true,
 }: {
     base: string
     listId: string
@@ -100,27 +93,32 @@ export default function AddProduct({
      */
     initialTerm?: string
     startManual?: boolean
+    /**
+     * Put the cursor in the field (and the field in view) when it opens on
+     * arrival. Off on a page where the panel is one section of several
+     * (`/for/{token}`): arriving there must not jump the page down to it or
+     * raise a phone's keyboard before anybody has asked to type.
+     */
+    autoFocus?: boolean
 }) {
     const { t } = useTranslations()
+    const groupBadge = useGroupBadge()
 
     const [open, setOpen] = useState(defaultOpen)
-    const [term, setTerm] = useState('')
-    const [groups, setGroups] = useState<GroupHit[]>([])
-    const [live, setLive] = useState<LiveHit[]>([])
-    const [searching, setSearching] = useState(false)
-    const [searched, setSearched] = useState(false)
 
     /*
-     * A pasted link, as the server understood it.
+     * The search itself, shared with every inline search (`ProductSearch`).
      *
-     * The server looks it up in our catalogue and through the connectors first
-     * (`LinkRouter`), so a bol, eBay or feed-shop link usually comes back as an
-     * ordinary result above. What it does not recognise comes back here, and
-     * one tap saves it as it is; the shop's page is read afterwards, in a
-     * queued job, and the row fills itself in.
+     * A pasted link the server does not recognise goes straight on the list
+     * (owner's call, 2026-09-26): a card asking "add this link?" was a step
+     * with only one sensible answer. The server looks a link up in our
+     * catalogue and through the connectors first (`LinkRouter`), so a bol,
+     * eBay or feed-shop link usually comes back as an ordinary result; what it
+     * does not recognise is saved as it is, and the shop's page is read
+     * afterwards, in a queued job, and the row fills itself in.
      */
-    const [link, setLink] = useState<{ url: string; host: string } | null>(null)
-    const [linkRefused, setLinkRefused] = useState(false)
+    const found = useListSearch(base, (pasted) => addLink(pasted))
+    const { term, setTerm, groups, live, link, linkRefused, searching, searched } = found
 
     const [chosen, setChosen] = useState<Chosen | null>(null)
     const [title, setTitle] = useState('')
@@ -155,116 +153,26 @@ export default function AddProduct({
     const field = useRef<HTMLInputElement>(null)
 
     /*
-     * On Enter, not as you type.
-     *
-     * A typeahead would fire a search per keystroke, and the live half of this
-     * one costs real requests to bol and Amazon — "koptelefoon" is eleven
-     * searches for one intention. `SearchService` caches the mirrorable
-     * connectors and the route is throttled, but the cheapest request is still
-     * the one never made.
-     *
+     * On Enter, not as you type (see `useListSearch` for the cost argument).
      * It also reads better here. A product search is a considered act: people
      * type two or three words and then look. Results reshuffling under a
      * half-typed word is noise, and the row you were reaching for moves.
-     *
-     * The request id guards against an earlier answer landing after a later one
-     * — two presses of Enter on a slow connection, where the first search would
-     * otherwise overwrite the second.
-     */
-    const latest = useRef(0)
-
-    function runSearch(event?: React.FormEvent): void {
-        event?.preventDefault()
-
-        search(term)
-    }
-
-    /*
-     * The query is a parameter, not read from state.
-     *
-     * A scan sets the field and searches in the same tick, and `term` would
-     * still be the old value at that point — so the camera would search
-     * whatever was typed before it, or nothing at all.
      */
     function search(raw: string): void {
-        const q = raw.trim()
-
         setError(null)
-
-        setLink(null)
-        setLinkRefused(false)
-
-        if (q.length < 2) {
-            setGroups([])
-            setLive([])
-            setSearched(false)
-            setSearching(false)
-
-            return
-        }
-
-        const id = ++latest.current
-
-        setSearching(true)
-
-        fetch(`${base}/list-search?q=${encodeURIComponent(q)}`, {
-            headers: { Accept: 'application/json' },
-        })
-            .then((r) => r.json())
-            .then(
-                (data: {
-                    groups: GroupHit[]
-                    live: LiveHit[]
-                    link?: { url: string; host: string } | null
-                    linkRefused?: boolean
-                }) => {
-                    if (id !== latest.current) return
-
-                    /*
-                     * A link nothing in the catalogue matched goes straight on
-                     * the list (owner's call, 2026-09-26): a card asking "add
-                     * this link?" was a step with only one sensible answer.
-                     * The shop's page is read afterwards and fills the row in.
-                     */
-                    if (data.link && (data.groups ?? []).length === 0 && (data.live ?? []).length === 0) {
-                        addLink(data.link)
-
-                        return
-                    }
-
-                    setGroups(data.groups ?? [])
-                    setLive(data.live ?? [])
-                    setLink(data.link ?? null)
-                    setLinkRefused(data.linkRefused ?? false)
-                    setSearched(true)
-                },
-            )
-            .catch(() => {
-                if (id !== latest.current) return
-
-                // An empty result and a failed request read identically
-                // otherwise, and the second invites somebody to type it again
-                // rather than to write it in by hand.
-                setError(t('lists.search_failed'))
-                setSearched(true)
-            })
-            .finally(() => {
-                if (id === latest.current) setSearching(false)
-            })
+        found.search(raw)
     }
 
+    // Not on arrival when the page asked not to (`autoFocus`); always when
+    // somebody pressed the button that opens it.
+    const arrived = useRef(true)
+
     useEffect(() => {
-        if (open) field.current?.focus()
+        if (open && (autoFocus || !arrived.current)) field.current?.focus()
+        arrived.current = false
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open])
 
-    /*
-     * Opened on arrival (an empty list, which is where the one-step create
-     * lands): bring the field into view as well. The focus above scrolls to
-     * it, but Inertia puts the page back at the top once the visit finishes,
-     * so on a phone the cursor sat in a field a screen and a half down that
-     * nobody could see. 'nearest' moves as little as it can, so on a tall
-     * screen the page does not move at all.
-     */
     // The start state handed over by Find a gift's search card. Once, on mount.
     useEffect(() => {
         if (startManual) {
@@ -276,8 +184,16 @@ export default function AddProduct({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    /*
+     * Opened on arrival (an empty list, which is where the one-step create
+     * lands): bring the field into view as well. The focus above scrolls to
+     * it, but Inertia puts the page back at the top once the visit finishes,
+     * so on a phone the cursor sat in a field a screen and a half down that
+     * nobody could see. 'nearest' moves as little as it can, so on a tall
+     * screen the page does not move at all.
+     */
     useEffect(() => {
-        if (!defaultOpen) return
+        if (!defaultOpen || !autoFocus) return
 
         const timer = window.setTimeout(() => field.current?.scrollIntoView({ block: 'nearest' }), 60)
 
@@ -298,12 +214,7 @@ export default function AddProduct({
 
     function close(): void {
         setOpen(false)
-        setTerm('')
-        setGroups([])
-        setLive([])
-        setLink(null)
-        setLinkRefused(false)
-        setSearched(false)
+        found.clear()
         reset()
         onClose?.()
     }
@@ -443,125 +354,48 @@ export default function AddProduct({
         )
     }
 
-    const nothingFound =
-        searched && !searching && groups.length === 0 && live.length === 0 && link === null && !linkRefused
-
-    function hitRow(key: string, hit: GroupHit | LiveHit, onPick: () => void, badge?: string) {
-        return (
-            <li key={key}>
-                <button
-                    type="button"
-                    onClick={onPick}
-                    className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-cream"
-                >
-                    {hit.image ? (
-                        <img
-                            src={hit.image}
-                            alt=""
-                            loading="lazy"
-                            className="h-12 w-12 shrink-0 object-contain"
-                            onError={(e) => {
-                                e.currentTarget.style.visibility = 'hidden'
-                            }}
-                        />
-                    ) : (
-                        <span className="h-12 w-12 shrink-0 rounded bg-cream" />
-                    )}
-
-                    <span className="min-w-0 flex-1">
-                        <span className="line-clamp-2 block text-sm">{hit.title}</span>
-                        <span className="text-xs text-ink-soft">
-                            {hit.price !== null && formatPrice(hit.price, market)}
-                            {badge && (hit.price !== null ? ' · ' : '') + badge}
-                        </span>
-                    </span>
-                </button>
-            </li>
-        )
-    }
-
     return (
-        <div className="w-full rounded-card border border-line bg-card p-4">
+        <div className={searchPanel}>
             {chosen === null ? (
                 <>
-                    {/*
-                      A form, so Enter searches.
+                    <SearchField value={term} onChange={setTerm} onSearch={search} busy={searching} inputRef={field} />
 
-                      That is the whole reason it is a form rather than a bare
-                      input: submitting is what a search field is for, it costs
-                      no key handler, and on a phone the keyboard shows a Search
-                      key instead of a newline for `type="search"` inside one.
-                    */}
-                    <form onSubmit={runSearch} className="flex items-center gap-2">
-                        <input
-                            ref={field}
-                            type="search"
-                            value={term}
-                            onChange={(e) => setTerm(e.target.value)}
-                            placeholder={t('lists.add_search_placeholder')}
-                            aria-label={t('lists.add_search_placeholder')}
-                            className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                        />
-                        {/*
-                          The barcode is the fastest way to put the thing in
-                          your hand on a list, and this panel is where somebody
-                          standing in a shop is. It fills the field and searches
-                          rather than leaving: navigating to /search here would
-                          take the list being added to with it.
-                        */}
-                        <ScanButton
-                            className="shrink-0 rounded-lg border border-line px-3 py-2"
-                            onScan={(gtin) => {
-                                setTerm(gtin)
-                                search(gtin)
-                            }}
-                        />
-                        {/* The magnifier, as on every search field of the site:
-                            the one glyph that says typing here does not search
-                            by itself. The word stays for screen readers. */}
-                        <button
-                            type="submit"
-                            disabled={searching}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
-                        >
-                            <ToolIcon name="search" className="h-5 w-5" />
-                            <span className="sr-only">{t('search.submit')}</span>
-                        </button>
-
-                    </form>
-
-                    {searching && (
-                        <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>
-                    )}
+                    {searching && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
 
                     {(groups.length > 0 || live.length > 0) && (
-                        <ul className="mt-3 space-y-1">
-                            {groups.map((g) =>
-                                hitRow(
-                                    `g${g.id}`,
-                                    g,
-                                    () => choose({ kind: 'group', hit: g }),
-                                    g.merchantCount > 1
-                                        ? t('product.across_shops', { count: g.merchantCount })
-                                        : (g.brand ?? undefined),
-                                ),
-                            )}
-                            {live.map((l) =>
-                                hitRow(
-                                    `l${l.source}-${l.externalId}`,
-                                    l,
-                                    () => choose({ kind: 'live', hit: l }),
-                                    l.merchant,
-                                ),
-                            )}
-                        </ul>
+                        <HitList>
+                            {groups.map((g) => (
+                                <HitRow
+                                    key={`g${g.id}`}
+                                    image={g.image}
+                                    title={g.title}
+                                    price={g.price}
+                                    badge={groupBadge(g)}
+                                    onPick={() => choose({ kind: 'group', hit: g })}
+                                />
+                            ))}
+                            {live.map((l) => (
+                                <HitRow
+                                    key={`l${l.source}-${l.externalId}`}
+                                    image={l.image}
+                                    title={l.title}
+                                    price={l.price}
+                                    badge={l.merchant}
+                                    onPick={() => choose({ kind: 'live', hit: l })}
+                                />
+                            ))}
+                        </HitList>
                     )}
 
-                    {nothingFound && (
+                    {found.nothingFound && (
                         <p className="mt-3 text-sm text-ink-soft">
                             {t('lists.add_nothing_found', { term: term.trim() })}
                         </p>
                     )}
+
+                    {/* Rather than an empty result, which invites typing it
+                        again instead of writing it in by hand. */}
+                    {found.failed && <p className="mt-3 text-sm text-danger">{t('lists.search_failed')}</p>}
 
                     {linkRefused && (
                         <p className="mt-3 text-sm text-danger">{t('lists.link_refused')}</p>
@@ -593,23 +427,9 @@ export default function AddProduct({
                         />
                     )}
 
-                    {/*
-                      Always present, never a consolation prize.
-
-                      Whether the catalogue has the thing is a question only we
-                      can answer, so making somebody search before they are
-                      allowed to write it down asks them to guess it. This is
-                      here from the moment the panel opens.
-                    */}
-                    <p className="mt-4 border-t border-line pt-3 text-sm">
-                        <button
-                            type="button"
-                            onClick={() => choose({ kind: 'manual' })}
-                            className="font-medium text-accent underline hover:text-accent-dark"
-                        >
-                            {t('lists.add_own_cta')}
-                        </button>
-                    </p>
+                    {/* Here from the moment the panel opens, never only after a
+                        search has failed. */}
+                    <OwnItemFooter onClick={() => choose({ kind: 'manual' })} />
                 </>
             ) : (
                 <form onSubmit={submit} className="space-y-3">

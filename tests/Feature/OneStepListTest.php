@@ -204,7 +204,12 @@ class OneStepListTest extends TestCase
         $add = (string) file_get_contents(resource_path('js/Components/AddProduct.tsx'));
 
         $this->assertMatchesRegularExpression('/<AddProduct[^>]*defaultOpen/', $show);
-        $this->assertStringContainsString('if (open) field.current?.focus()', $add);
+        // Unless a page opts out (`autoFocus={false}` on /for/{token}, where the
+        // panel is the third section and arriving must not jump to it); the
+        // list page does not, so the default must stay on.
+        $this->assertStringContainsString('autoFocus = true,', $add);
+        $this->assertStringContainsString('if (open && (autoFocus || !arrived.current)) field.current?.focus()', $add);
+        $this->assertDoesNotMatchRegularExpression('/<AddProduct[^>]*autoFocus/', $show);
     }
 
     #[Test]

@@ -1,9 +1,12 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import AddProduct from '../../Components/AddProduct'
+import { OwnItemFooter, SearchField, searchPanel } from '../../Components/ProductSearch'
+import SaveToList from '../../Components/SaveToList'
 import SignInLink from '../../Components/SignInLink'
+import { useSignIn } from '../../signIn'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
-import ScanButton from '../../Components/ScanButton'
 import ToolIcon from '../../Components/ToolIcon'
 
 interface Option {
@@ -56,8 +59,35 @@ interface Props {
     canSignInToClaim: boolean
     items: Item[]
     listId: string | null
+    listTitle: string | null
+    /** The server's answer to "may this visitor add to that list": signed in, and theirs. */
+    canAdd: boolean
     suggestions?: Suggestion[]
     suggestTerm?: string
+}
+
+/**
+ * The add panel's search, for a visitor who cannot add yet: not signed in.
+ *
+ * The same field and footer as the panel (`ProductSearch`), so the page looks
+ * the same either way; pressing either opens the sign-in dialog. Adding needs
+ * an account, like every other list, and `/list-search` behind the field is
+ * signed-in only. What they typed is not carried across the sign-in: the
+ * replay the site has (`PendingSave`) is for a chosen product, and a search
+ * term is not one. A suggestion's save button below does carry its product.
+ */
+function SignInToAdd() {
+    const { t } = useTranslations()
+    const signIn = useSignIn()
+    const [term, setTerm] = useState('')
+    const ask = () => signIn.open(t('recipients.add_sign_in'))
+
+    return (
+        <div className={searchPanel}>
+            <SearchField value={term} onChange={setTerm} onSearch={ask} />
+            <OwnItemFooter onClick={ask} />
+        </div>
+    )
 }
 
 /**
@@ -75,6 +105,8 @@ export default function SelfDescribe({
     canSignInToClaim,
     items,
     listId,
+    listTitle,
+    canAdd,
     suggestions = [],
     suggestTerm = '',
 }: Props) {
@@ -92,15 +124,15 @@ export default function SelfDescribe({
     const token = segments[segments.indexOf('for') + 1]
     const base = `/${market.key}/for/${token}`
 
-    // What they typed, still in the box when `/suggest?q=` is opened directly.
-    const [query, setQuery] = useState(suggestTerm)
-
     /*
      * Describing yourself needs only the link; keeping products needs an
      * account, like every other list. "This is me" above is the short path —
      * it signs them in and binds this person to the account in one go.
+     *
+     * Bumped after each add, which remounts the add panel open and empty for
+     * the next thing (it closes itself on a successful add, as on a list page).
      */
-    const canSave = Boolean(auth.user)
+    const [panelKey, setPanelKey] = useState(0)
 
     const form = useForm({
         interests: person.interests,
@@ -368,61 +400,58 @@ export default function SelfDescribe({
 
             <section className="mt-12">
                 <h2 className="text-lg font-medium">{t('recipients.your_list')}</h2>
+                {/*
+                  The list page's own add panel (owner, 2026-09-27: "the inline
+                  search under 'Dingen die je leuk zou vinden' should be the
+                  same as the one on the list pages"): one field for words, a
+                  barcode or a pasted link, catalogue results and shops we do
+                  not mirror, the wording step before it lands, and something
+                  typed by hand with a photo. It posts to `/list-items` like
+                  the list page; `canAdd` is the server asking the same
+                  questions that route asks.
+
+                  Open from the start, like an empty list's, but without taking
+                  the cursor: it is the third section of the page, and arriving
+                  must not scroll down to it or raise a phone's keyboard.
+                */}
+                <div className="mt-4">
+                    {canAdd && listId !== null ? (
+                        <AddProduct
+                            // A fresh panel after each add, so it stays open for the next one.
+                            key={panelKey}
+                            base={`/${market.key}`}
+                            listId={listId}
+                            market={market}
+                            defaultOpen
+                            autoFocus={false}
+                            onClose={() => setPanelKey((k) => k + 1)}
+                            // `/for/{token}/suggest?q=` is a real address; it opens with that search run.
+                            initialTerm={panelKey === 0 ? suggestTerm : ''}
+                        />
+                    ) : (
+                        !auth.user && <SignInToAdd />
+                    )}
+                </div>
 
                 {/*
-                  Two ways in, side by side. Typing assumes you already know what
-                  you want, which is exactly what somebody staring at an empty
-                  list does not.
+                  The other way in, for somebody who does not know yet what to
+                  type: ideas ranked for the person themselves.
                 */}
-                <div className="mt-4 flex flex-wrap gap-3">
-                    <form
-                        className="flex flex-1 gap-2"
-                        onSubmit={(e) => {
-                            e.preventDefault()
-                            router.get(`${base}/suggest`, { q: query }, { preserveState: true })
-                        }}
-                    >
-                        <input
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t('recipients.search_placeholder')}
-                            className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-                        />
-                        {/*
-                          The third way in, beside typing and "show me ideas":
-                          the thing you already own and would like another of,
-                          or the one you photographed in a shop window.
-                        */}
-                        <ScanButton
-                            className="shrink-0 rounded-lg border border-line px-3 py-2"
-                            onScan={(gtin) => {
-                                setQuery(gtin)
-                                router.get(`${base}/suggest`, { q: gtin }, { preserveState: true })
-                            }}
-                        />
-                        <button
-                            type="submit"
-                            className="rounded-lg border border-line px-4 py-2 text-sm"
-                        >
-                            {t('recipients.add_something')}
-                        </button>
-                    </form>
-
-                    <button
-                        type="button"
-                        onClick={() => router.get(`${base}/suggest`, {}, { preserveState: true })}
-                        className="rounded-lg border border-line px-4 py-2 text-sm"
-                    >
-                        {t('recipients.suggest')}
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => router.get(`${base}/suggest`, {}, { preserveState: true, preserveScroll: true })}
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                >
+                    <ToolIcon name="suggestions" className="h-4 w-4 text-accent" />
+                    {t('recipients.suggest')}
+                </button>
 
                 {suggestions.length > 0 && (
                     <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {suggestions.map((suggestion) => (
                             <li
                                 key={suggestion.id}
-                                className="rounded-card border border-line bg-card p-4"
+                                className="flex flex-col rounded-card border border-line bg-card p-4"
                             >
                                 {suggestion.image && (
                                     <img
@@ -438,21 +467,25 @@ export default function SelfDescribe({
                                         {formatPrice(suggestion.price, market)}
                                     </p>
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        canSave
-                                            ? router.post(
-                                                  `/${market.key}/list-items`,
-                                                  { group_id: suggestion.id, wishlist_id: listId },
-                                                  { preserveScroll: true },
-                                              )
-                                            : router.get(`/${market.key}/login`)
-                                    }
-                                    className="mt-3 w-full rounded-lg border border-line px-3 py-1.5 text-sm"
-                                >
-                                    {canSave ? t('lists.save') : t('nav.sign_in')}
-                                </button>
+                                {/*
+                                  The site's own save button: onto this list
+                                  when the visitor may add to it, and the
+                                  sign-in dialog with the product kept for
+                                  afterwards (PendingSave) when they may not.
+                                  The list under it is redrawn, since it is on
+                                  screen and the toast alone would leave it
+                                  one item short.
+                                */}
+                                <div className="mt-auto pt-3">
+                                    <SaveToList
+                                        groupId={suggestion.id}
+                                        title={suggestion.title}
+                                        imageUrl={suggestion.image}
+                                        price={suggestion.price}
+                                        into={canAdd && listId !== null ? { id: listId, title: listTitle ?? '', kind: 'mine' } : undefined}
+                                        onSaved={(saved) => saved === listId && router.reload({ only: ['items'] })}
+                                    />
+                                </div>
                             </li>
                         ))}
                     </ul>
