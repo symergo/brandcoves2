@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
-import Button from './Button'
+import Badge from './Badge'
+import Button, { fieldClasses } from './Button'
 import InfoTip from './InfoTip'
 import ListKindBadge, { kindIcons, type ListKind } from './ListKindBadge'
 import ListName from './ListName'
@@ -9,7 +10,7 @@ import { budgetLabel, DayMonth, InvitePerson, monthDay } from './PersonParts'
 import ShareRow from './ShareRow'
 import ToolIcon from './ToolIcon'
 import type { Cents, SharedProps } from '../types'
-import { formatPrice } from '../types'
+import { formatBudget, formatDay } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export interface Option {
@@ -89,7 +90,7 @@ const MAX_INTERESTS = 8
 
 const chip = (on: boolean) =>
     `inline-flex min-h-11 items-center rounded-full border px-3 py-1 text-sm sm:min-h-0 ${
-        on ? 'border-accent bg-accent/10 text-accent' : 'border-line hover:border-ink'
+        on ? 'border-accent bg-accent/10 text-accent-dark' : 'border-line hover:border-ink'
     }`
 
 /**
@@ -130,9 +131,7 @@ export default function PersonProfile({
         profile.together.lists.length + profile.together.groups.length + profile.together.santa.length > 0
             ? profile.together
             : null
-    const money = (cents: Cents) => formatPrice(cents, market)
-    const dayMonth = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long' })
-    const listDate = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long', year: 'numeric' })
+    const money = (cents: Cents) => formatBudget(cents, market)
 
     const interestLabel = (value: string) => options.interests.find((o) => o.value === value)?.label ?? value
     const avoidLabel = (word: string) => (word.startsWith(LEARNED) ? interestLabel(word.slice(LEARNED.length)) : word)
@@ -148,7 +147,7 @@ export default function PersonProfile({
     ].filter((fact) => fact.items.length > 0)
 
     const secondary = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink sm:min-h-0'
-    const textButton = 'text-sm text-accent underline underline-offset-2 hover:text-ink'
+    const textButton = 'text-sm text-accent-dark underline underline-offset-2 hover:text-ink'
 
     // The link that lets them fill in their own taste, shown inside "Over"
     // because that is what it fills (owner's review, 2026-09-27).
@@ -197,7 +196,7 @@ export default function PersonProfile({
                             {profile.birthday !== null ? (
                                 <span className="inline-flex items-center">
                                     <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                                    {dayMonth.format(new Date(`2000-${profile.birthday}T00:00:00`))}
+                                    {formatDay(profile.birthday, market)}
                                 </span>
                             ) : (
                                 <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
@@ -206,9 +205,7 @@ export default function PersonProfile({
                                 </button>
                             )}
                             {profile.isFriend ? (
-                                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                                    {t('people.on_giftcoves')}
-                                </span>
+                                <Badge tone="accent">{t('people.on_giftcoves')}</Badge>
                             ) : (
                                 urls.invite !== null && (
                                     <span className="inline-flex items-center gap-1.5">
@@ -398,7 +395,7 @@ export default function PersonProfile({
 
             {profile.theirLists.length > 0 && (
                 <Section title={t('people.their_wishlists', { name: person.name })} tip={t('people.their_wishlists_tip', { name: person.name })}>
-                    <Lists lists={profile.theirLists} format={(iso) => listDate.format(new Date(`${iso}T00:00:00`))} external />
+                    <Lists lists={profile.theirLists} format={(iso) => formatDay(iso, market, { year: true })} external />
                 </Section>
             )}
 
@@ -448,7 +445,7 @@ export default function PersonProfile({
                 }
             >
                 {profile.listsForThem.length > 0 ? (
-                    <Lists lists={profile.listsForThem} format={(iso) => listDate.format(new Date(`${iso}T00:00:00`))} actions />
+                    <Lists lists={profile.listsForThem} format={(iso) => formatDay(iso, market, { year: true })} actions />
                 ) : (
                     <p className="text-sm text-ink-soft">{t('people.lists_for_none', { name: person.name })}</p>
                 )}
@@ -466,7 +463,7 @@ export default function PersonProfile({
                                     </span>
                                     <span className="text-xs text-ink-soft">
                                         {t(group.role === 'organiser' ? 'people.role_organiser' : 'people.role_contributes', { name: person.name })}
-                                        {group.eventDate && ` · ${listDate.format(new Date(`${group.eventDate}T00:00:00`))}`}
+                                        {group.eventDate && ` · ${formatDay(group.eventDate, market, { year: true })}`}
                                     </span>
                                 </a>
                             </li>
@@ -480,7 +477,7 @@ export default function PersonProfile({
                                     </span>
                                     <span className="text-xs text-ink-soft">
                                         {t('people.made_by', { name: person.name })}
-                                        {list.eventDate && ` · ${listDate.format(new Date(`${list.eventDate}T00:00:00`))}`}
+                                        {list.eventDate && ` · ${formatDay(list.eventDate, market, { year: true })}`}
                                     </span>
                                 </a>
                             </li>
@@ -494,7 +491,7 @@ export default function PersonProfile({
                                     </span>
                                     <span className="text-xs text-ink-soft">
                                         {t('people.santa_both')}
-                                        {group.date && ` · ${listDate.format(new Date(`${group.date}T00:00:00`))}`}
+                                        {group.date && ` · ${formatDay(group.date, market, { year: true })}`}
                                     </span>
                                 </Link>
                             </li>
@@ -628,7 +625,7 @@ function DetailsForm({ person, options, url, onDone }: { person: ProfilePerson; 
 
     // A relationship typed elsewhere as free text stays selectable as typed.
     const known = options.relationships.some((r) => r.value === relationship)
-    const field = 'mt-1 block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal'
+    const field = fieldClasses()
 
     return (
         <form
@@ -745,7 +742,7 @@ function AboutForm({
     }
 
     const euros = (value: string) => (value.trim() === '' ? null : Number(value))
-    const field = 'mt-1 block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal'
+    const field = fieldClasses()
 
     return (
         <form

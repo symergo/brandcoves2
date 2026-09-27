@@ -298,7 +298,16 @@ requests, that is a change to how friendships are made, not to this page.
 - `POST /friends`, `PATCH /friends/settings`, `PATCH /friends/{id}` and `DELETE /friends/{id}` are
   unchanged and used by this page.
 - "What your friends see of you" (your birthday and whether friends see it) moved to the bottom of
-  this page.
+  this page. Since 2026-09-27 it asks **day and month** with the same two lists (`DayMonth`) as every
+  other birthday on the site; it was the one place that asked a full date with a year, and friends
+  only ever saw the day and month of it. `PATCH /friends/settings` takes `MM-DD` and stores it under
+  `Recipient::BIRTHDAY_YEAR`, refuses a day the month does not have, and keeps a year somebody gave
+  before while the day and month are unchanged, so saving the switch never rewrites a date. The page
+  gets `settings.birthday` as `MM-DD` (`FriendsTest::your_own_birthday_is_a_day_and_a_month_too`).
+- The row's "Cadeau vinden" is outlined since 2026-09-27 (`rowActionClasses()`): the header's
+  "Iemand toevoegen" is the page's one filled button. On the person's own page it stays filled,
+  because there it is that page's one primary action. "Op GiftCoves" is a `Badge`, and the "Wat
+  zij zien" chips under Details are `ListName`s like their lists above them.
 - `/people/{id}`, `/for/{token}` and the This or that links are unchanged.
 - The Gift Cove tile for friends now links to `/people` directly.
 

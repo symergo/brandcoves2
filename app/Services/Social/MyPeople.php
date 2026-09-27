@@ -220,7 +220,9 @@ class MyPeople
     public function settings(User $user): array
     {
         return [
-            'birthday' => $user->birthday?->toDateString(),
+            // `MM-DD`: the page asks day and month only (2026-09-27), and a
+            // year somebody gave earlier is kept in the column, not shown.
+            'birthday' => DayAndMonth::fromDate($user->birthday)?->toString(),
             'friendsSeeBirthday' => (bool) $user->friends_see_birthday,
         ];
     }

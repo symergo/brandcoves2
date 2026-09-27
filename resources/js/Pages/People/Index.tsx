@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import Button, { buttonClasses } from '../../Components/Button'
+import Badge from '../../Components/Badge'
+import Button, { buttonClasses, fieldClasses, rowActionClasses } from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
@@ -9,7 +10,7 @@ import { budgetLabel, DayMonth, InvitePerson, monthDay } from '../../Components/
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import type { Cents, SharedProps } from '../../types'
-import { formatPrice } from '../../types'
+import { formatBudget, formatCountdown, formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface ListLink {
@@ -95,17 +96,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
     const person = useForm({ name: '', relationship: '', day: '', month: '' })
     const invite = useForm({ email: '', day: '', month: '' })
 
-    const dateFormat = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long' })
-
-    function when(days: number): string {
-        if (days === 0) {
-            return t('people.today')
-        }
-
-        return days === 1 ? t('people.tomorrow') : t('people.in_days', { count: days })
-    }
-
-    const field = 'mt-1 block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal'
+    const field = fieldClasses()
 
     return (
         <>
@@ -320,9 +311,6 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     key={p.key}
                                     person={p}
                                     base={base}
-                                    when={when}
-                                    dateLabel={(iso) => dateFormat.format(new Date(`${iso}T00:00:00`))}
-                                    birthdayLabel={(md) => dateFormat.format(new Date(`2000-${md}T00:00:00`))}
                                 />
                             ))}
                         </ul>
@@ -393,21 +381,10 @@ function summaryOf(
  * behind "Details" is about the connection: what they see of yours, your note
  * of their birthday, removing them.
  */
-function PersonRow({
-    person,
-    base,
-    when,
-    dateLabel,
-    birthdayLabel,
-}: {
-    person: Person
-    base: string
-    when: (days: number) => string
-    dateLabel: (iso: string) => string
-    birthdayLabel: (md: string) => string
-}) {
+function PersonRow({ person, base }: { person: Person; base: string }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
+    const dateLabel = (iso: string) => formatDay(iso, market)
     const friend = person.friend
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState(false)
@@ -418,11 +395,10 @@ function PersonRow({
     const [saving, setSaving] = useState(false)
 
     const link = 'inline-flex min-h-11 items-center rounded-lg border border-line px-2.5 py-1.5 sm:px-3 text-sm hover:border-ink sm:min-h-0'
-    // Mijn Coves' row action (owner, 2026-09-27: "on mobile, replace the buttons with icons").
-    const rowAction =
-        'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-sm transition hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5'
+    // Mijn Coves' row action, outlined: the header's "Iemand toevoegen" is this page's one filled button.
+    const rowAction = rowActionClasses()
 
-    const summary = summaryOf(person, t, (cents) => formatPrice(cents, market))
+    const summary = summaryOf(person, t, (cents) => formatBudget(cents, market))
     const invitable = person.invitable && person.personId !== null
     // A saved person's two icons sit in the row's top right corner on a phone;
     // a friend nobody saved has a wide "Bewaar wat je over … weet" button
@@ -446,11 +422,7 @@ function PersonRow({
                     {person.relationship !== null && person.relationship.toLowerCase() !== person.name.toLowerCase() && (
                         <span className="text-sm text-ink-soft">{person.relationship}</span>
                     )}
-                    {friend !== null && (
-                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                            {t('people.on_giftcoves')}
-                        </span>
-                    )}
+                    {friend !== null && <Badge tone="accent">{t('people.on_giftcoves')}</Badge>}
                     {/*
                       You are both in a Secret Santa (owner, 2026-09-27): the
                       group's name and, while it is ahead, its day. Who drew
@@ -482,7 +454,7 @@ function PersonRow({
                         {/* Non-breaking: in a flex row a plain space at the edge of an item is dropped ("oktober ·over"). */}
                         {' · '}
                         <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>
-                            {when(person.next.days)}
+                            {formatCountdown(person.next.days, t)}
                         </span>
                     </span>
                 )}
@@ -508,7 +480,7 @@ function PersonRow({
                             href={person.urls.finder}
                             aria-label={t('people.find_gift')}
                             title={t('people.find_gift')}
-                            className={`${rowAction} border-accent bg-accent text-white hover:bg-accent-dark`}
+                            className={rowAction}
                         >
                             <ToolIcon name="whisperer" className="h-4 w-4 shrink-0" />
                             <span className="hidden sm:inline">{t('people.find_gift')}</span>
@@ -634,20 +606,17 @@ function PersonRow({
                 <div className="mt-4 space-y-4 border-t border-line pt-4 sm:ml-13">
                     {friend.theySee.length > 0 && (
                         <div>
-                            <p className="text-xs font-medium text-ink-soft">
-                                <span aria-hidden className="mr-1">
-                                    →
-                                </span>
-                                {t('friends.they_see', { name: person.name })}
-                            </p>
+                            {/*
+                              Drawn like their lists above (2026-09-27): a list
+                              name is a ListName wherever it appears, and the
+                              dashed chips with an arrow were a third style.
+                            */}
+                            <p className="text-xs font-medium text-ink-soft">{t('friends.they_see', { name: person.name })}</p>
                             <ul className="mt-1.5 flex flex-wrap gap-2">
                                 {friend.theySee.map((list) => (
                                     <li key={list.url}>
-                                        <a
-                                            href={list.url}
-                                            className="inline-block rounded-lg border border-dashed border-line px-3 py-1.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
-                                        >
-                                            {list.title}
+                                        <a href={list.url} className={link}>
+                                            <ListName name={list.title} kind={list.kind ?? null} />
                                         </a>
                                     </li>
                                 ))}
@@ -658,7 +627,7 @@ function PersonRow({
                     {friend.birthday !== null && (
                         <p className="flex flex-wrap items-center text-sm text-ink-soft">
                             <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                            {birthdayLabel(friend.birthday)}
+                            {formatDay(friend.birthday, market)}
                             {friend.birthdayIsMine && <span className="ml-1 text-xs">({t('friends.your_note')})</span>}
                         </p>
                     )}
@@ -717,12 +686,16 @@ function PersonRow({
 
 /**
  * Your own side: what your friends see of you. Read once, so it sits last.
- * The one place a year may be given, and only about yourself.
+ *
+ * Day and month, like every other birthday on the site (2026-09-27). It asked a
+ * full date with a year until then, the one place that did, and friends only
+ * ever saw the day and the month of it.
  */
 function Settings({ settings, base }: { settings: { birthday: string | null; friendsSeeBirthday: boolean }; base: string }) {
     const { t } = useTranslations()
     const prefs = useForm({
-        birthday: settings.birthday ?? '',
+        month: settings.birthday?.slice(0, 2) ?? '',
+        day: settings.birthday?.slice(3) ?? '',
         friends_see_birthday: settings.friendsSeeBirthday,
     })
 
@@ -733,20 +706,28 @@ function Settings({ settings, base }: { settings: { birthday: string | null; fri
             <form
                 onSubmit={(e) => {
                     e.preventDefault()
-                    // "" is not a date and not null either; the server wants one or the other.
-                    prefs.transform((data) => ({ ...data, birthday: data.birthday === '' ? null : data.birthday }))
+                    // `MM-DD`, or null while either half is empty.
+                    prefs.transform((data) => ({
+                        birthday: monthDay(data.month, data.day),
+                        friends_see_birthday: data.friends_see_birthday,
+                    }))
                     prefs.patch(`${base}/friends/settings`, { preserveScroll: true })
                 }}
                 className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-4"
             >
                 <label className="block text-xs font-medium">
                     {t('friends.my_birthday')}
-                    <input
-                        type="date"
-                        value={prefs.data.birthday}
-                        onChange={(e) => prefs.setData('birthday', e.target.value)}
-                        className="mt-1 block rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    <DayMonth
+                        day={prefs.data.day}
+                        month={prefs.data.month}
+                        onDay={(v) => prefs.setData('day', v)}
+                        onMonth={(v) => prefs.setData('month', v)}
                     />
+                    {(prefs.errors as Record<string, string>).birthday && (
+                        <span className="mt-1 block text-danger" role="alert">
+                            {(prefs.errors as Record<string, string>).birthday}
+                        </span>
+                    )}
                 </label>
 
                 <label className="flex min-h-11 items-center gap-2 text-sm">

@@ -10,7 +10,8 @@ import AddProduct from '../../Components/AddProduct'
 import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
-import { buttonClasses } from '../../Components/Button'
+import Badge from '../../Components/Badge'
+import { buttonClasses, rowActionClasses } from '../../Components/Button'
 import Menu, { MenuItem, MenuSeparator } from '../../Components/Menu'
 import { invalidate } from '../../savedItems'
 import ShareRow from '../../Components/ShareRow'
@@ -84,13 +85,8 @@ interface Props extends WizardOffer {
     isSignedIn: boolean
 }
 
-/**
- * A row's action: its words beside the icon on a wide screen, the icon alone
- * on a phone (owner, 2026-09-27: "on mobile, replace the buttons with icons").
- * The words stay for screen readers either way.
- */
-const rowAction =
-    'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-sm transition hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5'
+/** A row's action; the recipe and why it is never filled are in `rowActionClasses`. */
+const rowAction = rowActionClasses()
 
 /**
  * One list, as one row: the way My people draws a person (owner, 2026-09-27:
@@ -174,7 +170,7 @@ function ListCard({ list }: { list: ListSummary }) {
                     </span>
                     {/* Somebody else's wish list is how I shop for them: say so. */}
                     {theirs && list.kind === 'mine' && list.ownerName && (
-                        <span className="mt-0.5 block text-sm text-accent">{t('lists.shop_for', { name: list.ownerName })}</span>
+                        <span className="mt-0.5 block text-sm text-accent-dark">{t('lists.shop_for', { name: list.ownerName })}</span>
                     )}
                     <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-2xs">
                         <ListPills
@@ -183,23 +179,19 @@ function ListCard({ list }: { list: ListSummary }) {
                             ownerName={theirs ? list.ownerName : null}
                             canAdd={list.visibility !== 'private' && list.linkCanAdd}
                         />
-                        {list.isDefault && <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>}
+                        {list.isDefault && <Badge size="xs">{t('lists.default_badge')}</Badge>}
                         {!theirs && (
-                            <span
-                                className={
-                                    shared ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage' : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
-                                }
-                            >
+                            <Badge size="xs" tone={shared ? 'sage' : 'neutral'}>
                                 {shared ? t('lists.shared_short') : t('lists.private_short')}
-                            </span>
+                            </Badge>
                         )}
                         {/* Somebody put something forward and it is waiting on you. */}
                         {list.suggestions !== null && list.suggestions > 0 && (
-                            <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                            <Badge size="xs" tone="accent">
                                 {list.suggestions === 1
                                     ? t('suggestions.one_waiting')
                                     : t('suggestions.waiting', { count: n(list.suggestions) })}
-                            </span>
+                            </Badge>
                         )}
                     </span>
                 </span>
@@ -213,7 +205,7 @@ function ListCard({ list }: { list: ListSummary }) {
                             onClick={() => setAdding(true)}
                             aria-label={t('lists.add_product')}
                             title={t('lists.add_product')}
-                            className={`${rowAction} border-accent bg-accent text-white hover:bg-accent-dark`}
+                            className={rowAction}
                         >
                             <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
                             <span className="hidden sm:inline">{t('people.add')}</span>
@@ -448,7 +440,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                     <p className="mt-1 text-sm text-ink-soft">{t('lists.sign_in_hint')}</p>
                     <SignInLink
                         hint={t('lists.sign_in_hint')}
-                        className="mt-2 inline-block text-sm text-accent underline"
+                        className="mt-2 inline-block text-sm text-accent-dark underline"
                     >
                         {t('nav.sign_in')}
                     </SignInLink>
