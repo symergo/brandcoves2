@@ -15,6 +15,7 @@ use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\Ai\AiClient;
+use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -256,5 +257,24 @@ class FindAGiftTest extends TestCase
         $this->post('/be-nl/gift', ['interests' => ['cooking']])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('askUrl', '/be-nl/ask'));
+    }
+
+    #[Test]
+    public function who_is_it_for_offers_your_people_as_cards_friends_included(): void
+    {
+        // Owner, 2026-09-27: "the cards of the people you know / are connected with".
+        $me = User::factory()->create();
+        $friend = User::factory()->create(['name' => 'Sam']);
+        app(Friends::class)->link($me, $friend);
+        Recipient::create(['owner_user_id' => $me->id, 'name' => 'Mama', 'relationship' => 'mother']);
+
+        $this->actingAs($me)->get('/be-nl/gift')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Gift/Wizard')
+            ->has('people', 2)
+            ->where('people', fn ($people) => collect($people)->pluck('name')->sort()->values()->all() === ['Mama', 'Sam']));
+
+        // A visitor without an account has no people rows (the name chips stay).
+        $this->app['auth']->forgetGuards();
+        $this->get('/be-nl/gift')->assertOk()->assertInertia(fn ($page) => $page->where('people', []));
     }
 }

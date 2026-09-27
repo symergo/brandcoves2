@@ -27,6 +27,13 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    *Skip*. The kinds are the closed vocabulary products are tagged with (`RecipientType`), so the
    answer meets editors' `recipient:` tags, the gift landing pages and the persona Coves as one value
    instead of free text to be guessed at.
+   **Your people as cards** since 2026-09-27 (owner: "the cards of the people you know / are connected
+   with instead of just the name"): for a signed-in visitor the saved people and the friends on
+   GiftCoves come from the same `MyPeople` service as My people, one card each with the initial, the
+   relationship, the next date and up to three interests. A saved person is chosen with one tap. A
+   friend nobody saved yet is saved first (`POST /recipients` with `friend_id`, My people's "Bewaar
+   wat je over … weet") and then chosen, because Find a gift works on a saved person whose taste it
+   reads and whose list it fills. A visitor who is not signed in keeps the name chips.
 2. **Three ways, side by side**, under a "For Mum · change" line:
    - **Answer a few questions**: the old wizard's questions (interests, age, taste, budget, avoid),
      minus its own "who" step, which step 1 replaced.

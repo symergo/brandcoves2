@@ -22,6 +22,7 @@ use App\Services\Gift\TasteBrief;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\MyPeople;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -84,6 +85,15 @@ class GiftController extends Controller
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
             'recipients' => $this->recipients($request, $current),
+            /*
+             * "Who is it for?" as cards of the people you know (owner,
+             * 2026-09-27: "the cards of the people you know / are connected
+             * with instead of just the name"): the same rows as My people,
+             * saved people and friends alike, from the same service, so a
+             * card here and a row there never disagree. Signed-in only: a
+             * visitor without an account has no people.
+             */
+            'people' => $request->user() === null ? [] : app(MyPeople::class)->for($request->user(), $current),
             'picks' => null,
             'brief' => null,
             'recipientList' => null,

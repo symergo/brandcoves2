@@ -87,6 +87,21 @@ interface Props extends GiftResultsExtras {
     card?: GiftProfileCardProps | null
     /** This or that, the second way in. */
     tasteUrl?: string
+    /** Everybody you buy for, as My people lists them: saved people and friends. Signed-in only. */
+    people?: PersonCard[]
+}
+
+/** One row of My people, the parts "Who is it for?" draws as a card. */
+interface PersonCard {
+    key: string
+    name: string
+    relationship: string | null
+    /** The saved person's id; null for a friend nobody saved yet. */
+    personId: string | null
+    next: { date: string; days: number; kind: 'birthday' | 'occasion'; title: string | null } | null
+    friend: { id: number } | null
+    known: { interests: string[]; budgetMin: Cents | null; budgetMax: Cents | null } | null
+    listsForThem: number
 }
 
 /*
@@ -270,6 +285,118 @@ function SearchToListCard({
     )
 }
 
+/**
+ * "Who is it for?" as cards of the people you know (owner, 2026-09-27),
+ * instead of a row of names: the initial, the relationship, the next date and
+ * what you know, the same facts My people shows. A saved person is chosen
+ * with one tap. A friend nobody saved yet is saved first (the same
+ * `POST /recipients` with `friend_id` as My people's "Bewaar wat je over …
+ * weet"), then chosen: Find a gift works on a saved person, whose taste it
+ * reads and whose list it fills.
+ */
+function PeopleCards({
+    people,
+    chosen,
+    onChoose,
+    onSaved,
+}: {
+    people: PersonCard[]
+    chosen: string | null
+    onChoose: (personId: string) => void
+    onSaved: (fresh: Recipient[], name: string) => void
+}) {
+    const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+    const [saving, setSaving] = useState<string | null>(null)
+    const dateFormat = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long' })
+
+    const when = (days: number) =>
+        days === 0 ? t('people.today') : days === 1 ? t('people.tomorrow') : t('people.in_days', { count: days })
+
+    const choose = (person: PersonCard) => {
+        if (person.personId !== null) {
+            onChoose(person.personId)
+            return
+        }
+        if (person.friend === null) {
+            return
+        }
+        setSaving(person.key)
+        router.post(
+            `/${market.key}/recipients`,
+            { name: person.name, friend_id: person.friend.id },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => onSaved(((page.props as unknown as { recipients?: Recipient[] }).recipients ?? []), person.name),
+                onFinish: () => setSaving(null),
+            },
+        )
+    }
+
+    return (
+        <div className="mt-4">
+            <p className="text-sm text-ink-soft">{t('gift.who_people')}</p>
+            <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {people.map((person) => {
+                    const on = person.personId !== null && chosen === person.personId
+                    const interests = person.known?.interests ?? []
+
+                    return (
+                        <li key={person.key}>
+                            <button
+                                type="button"
+                                aria-pressed={on}
+                                disabled={saving === person.key}
+                                onClick={() => choose(person)}
+                                className={`flex h-full w-full items-start gap-3 rounded-card border p-4 text-left transition disabled:opacity-60 ${
+                                    on ? 'border-accent bg-accent/5' : 'border-line bg-card hover:border-ink'
+                                }`}
+                            >
+                                <span
+                                    aria-hidden
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 font-semibold text-accent"
+                                >
+                                    {person.name.slice(0, 1).toUpperCase()}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="flex flex-wrap items-center gap-x-2">
+                                        <span className="font-medium text-ink">{person.name}</span>
+                                        {person.relationship !== null &&
+                                            person.relationship.toLowerCase() !== person.name.toLowerCase() && (
+                                                <span className="text-sm text-ink-soft">{person.relationship}</span>
+                                            )}
+                                        {person.friend !== null && (
+                                            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-2xs font-medium text-accent">
+                                                {t('people.on_giftcoves')}
+                                            </span>
+                                        )}
+                                    </span>
+                                    {person.next !== null && (
+                                        <span className="mt-0.5 flex flex-wrap items-center text-sm text-ink-soft">
+                                            {person.next.kind === 'birthday' ? (
+                                                <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                                            ) : (
+                                                person.next.title && <span className="mr-1">{person.next.title} ·</span>
+                                            )}
+                                            {dateFormat.format(new Date(`${person.next.date}T00:00:00`))}
+                                            {'\u00a0·\u00a0'}
+                                            <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>{when(person.next.days)}</span>
+                                        </span>
+                                    )}
+                                    {interests.length > 0 && (
+                                        <span className="mt-0.5 block truncate text-sm text-ink-soft">{interests.slice(0, 3).join(', ')}</span>
+                                    )}
+                                </span>
+                            </button>
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    )
+}
+
 /** A catalogue hit from `/list-search`, the search a list's add panel uses. */
 interface FoundGroup {
     id: number
@@ -432,7 +559,7 @@ function AskThemCard({ recipient, peopleUrl }: { recipient: Recipient | null; pe
  * straight on the results. See docs/features/find-a-gift.md.
  */
 export default function GiftWizard(props: Props) {
-    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl } = props
+    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl, people = [] } = props
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -821,7 +948,21 @@ export default function GiftWizard(props: Props) {
                         {t('gift.who_title')}
                     </h2>
 
-                    {recipients.length > 0 && (
+                    {people.length > 0 ? (
+                        <PeopleCards
+                            people={people}
+                            chosen={recipientId}
+                            onChoose={(personId) => {
+                                const found = recipients.find((r) => r.id === personId)
+                                if (found) useRecipient(found)
+                            }}
+                            onSaved={(fresh, name) => {
+                                // A friend just saved as a person: pick the new row.
+                                const found = [...fresh].reverse().find((r) => r.name === name)
+                                if (found) useRecipient(found)
+                            }}
+                        />
+                    ) : recipients.length > 0 && (
                         <div className="mt-4">
                             <p className="text-sm text-ink-soft">{t('gift.who_people')}</p>
                             <div className="mt-2 flex flex-wrap gap-2">
