@@ -332,9 +332,18 @@ class Wishlist extends Model
      */
     public function hasCoGivers(): bool
     {
+        /*
+         * `collaborators_exists` when the query asked for it
+         * (`withExists('collaborators')`), which My Coves does so a page of
+         * lists is not a query per card. Deliberately not the loaded
+         * `collaborators` relation: on somebody else's list My Coves loads only
+         * the viewer's own row of it, which answers a different question.
+         */
         return ($this->visibility?->isShareable() ?? false)
             || $this->isVisibleToFriends()
-            || $this->collaborators()->exists();
+            || (array_key_exists('collaborators_exists', $this->attributes)
+                ? (bool) $this->attributes['collaborators_exists']
+                : $this->collaborators()->exists());
     }
 
     /**

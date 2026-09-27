@@ -110,12 +110,25 @@ class ClaimView
      * as sending the truth, because the moment it stops being 0 they have
      * learnt something.
      *
+     * `$items`, when the caller already holds the list's whole item set (the
+     * shared page does), is counted in memory instead of asking the database
+     * twice more. It must be all of `$list->items`, never a filtered page of
+     * them, or the count would be wrong; the gate above is the same either way.
+     *
+     * @param  Collection<int, WishlistItem>|null  $items
      * @return array{claimed: int, total: int}|null
      */
-    public function progress(Wishlist $list, bool $hideClaims): ?array
+    public function progress(Wishlist $list, bool $hideClaims, ?Collection $items = null): ?array
     {
         if (! $list->allowsClaiming() || $hideClaims) {
             return null;
+        }
+
+        if ($items !== null) {
+            return [
+                'claimed' => $items->filter(fn (WishlistItem $item): bool => $item->claimed_by_hash !== null)->count(),
+                'total' => $items->count(),
+            ];
         }
 
         return [

@@ -79,6 +79,25 @@ class SuggestionEngine
      */
     private const CROWD_POOL = 40;
 
+    /**
+     * The columns a candidate is read with: every one a caller of this engine
+     * reads (the scorer, the cards, and EditionBuilder, which keeps
+     * `surprise_breakdown` with a persona's picks), and not `display_vector`,
+     * a search index column no PHP ever reads, fetched 300 times a board.
+     *
+     * A column added to `product_groups` later is absent from suggestions
+     * until it is named here, and reads as null rather than failing, so add
+     * it here when a caller of suggest() needs it.
+     */
+    private const POOL_COLUMNS = [
+        'id', 'market', 'identity_key', 'identity_kind', 'title', 'slug', 'brand',
+        'image_url', 'category', 'best_offer_id', 'offer_count', 'merchant_count',
+        'min_price', 'max_price', 'previous_price', 'in_stock', 'giftable',
+        'giftable_reason', 'surprise_score', 'surprise_breakdown', 'first_seen_at',
+        'created_at', 'updated_at', 'worth_showing', 'display_title', 'gift_tags',
+        'crowd_tags', 'merged_into_id',
+    ];
+
     private ?HasEverything $hasEverythingWords = null;
 
     public function __construct(
@@ -90,6 +109,59 @@ class SuggestionEngine
 
     /** @return list<Suggestion> */
     public function suggest(TasteBrief $brief): array
+    {
+        [$scored, $brief, $profile] = $this->scored($brief);
+
+        return $this->pick($scored, $brief, $profile);
+    }
+
+    /**
+     * Two boards at once: the one `suggest()` gives, and the one it would
+     * give with those picks excluded. "Four more" needs both (the board on
+     * screen, to remember it, and the next one) and used to run the whole
+     * engine twice for them.
+     *
+     * Both are picked from one scored pool. The only difference from two
+     * runs is at the pool's far end: a second retrieval, with four more ids
+     * excluded, could reach up to four candidates past the 300th, newest
+     * first. Those would rarely place and the price was a full second run.
+     *
+     * @return array{0: list<Suggestion>, 1: list<Suggestion>}
+     */
+    public function suggestTwo(TasteBrief $brief): array
+    {
+        [$scored, $brief, $profile] = $this->scored($brief);
+
+        $first = $this->pick($scored, $brief, $profile);
+        $shown = array_map(fn (Suggestion $pick) => $pick->group->id, $first);
+
+        $rest = $scored
+            ->reject(fn (Suggestion $pick) => in_array($pick->group->id, $shown, true))
+            ->values();
+
+        return [$first, $this->pick($rest, $brief, $profile)];
+    }
+
+    /**
+     * @param  Collection<int, Suggestion>  $scored
+     * @return list<Suggestion>
+     */
+    private function pick(Collection $scored, TasteBrief $brief, SuggestionProfile $profile): array
+    {
+        if ($brief->hasEverything) {
+            return $this->usedUpFirst($scored, $brief->limit, $profile);
+        }
+
+        return $this->diversify($scored, $brief->limit, $profile);
+    }
+
+    /**
+     * Every candidate for the brief, scored and best first, with the brief as
+     * the person's thumbs left it.
+     *
+     * @return array{0: Collection<int, Suggestion>, 1: TasteBrief, 2: SuggestionProfile}
+     */
+    private function scored(TasteBrief $brief): array
     {
         $profile = $brief->profile();
 
@@ -143,11 +215,7 @@ class SuggestionEngine
             ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
 
-        if ($brief->hasEverything) {
-            return $this->usedUpFirst($scored, $brief->limit, $profile);
-        }
-
-        return $this->diversify($scored, $brief->limit, $profile);
+        return [$scored, $brief, $profile];
     }
 
     /**
@@ -416,6 +484,7 @@ class SuggestionEngine
     private function pool(TasteBrief $brief, array $queries, ?string $interest = null)
     {
         $groups = ProductGroup::query()
+            ->select(array_map(fn (string $column) => 'product_groups.'.$column, self::POOL_COLUMNS))
             ->forMarket($brief->market)
             ->giftable()
             ->presentable()

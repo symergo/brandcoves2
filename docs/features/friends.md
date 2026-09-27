@@ -65,6 +65,12 @@ the owner did:
 - **They sent you the link and you opened it** — `list_opens`, which has
   recorded this since long before friends existed.
 
+Opening a shared list writes the open and the friendship at most once an hour per reader
+(2026-09-27): after the first time the upserts only moved a timestamp.
+`Friends::linkFromSharedList()` and `ListOpen::recordFromRead()` skip the repeat on a cache marker,
+and `Friends::unlink()` clears it, so removing a friend and opening their link again reconnects at
+once, as it always did. See [speed.md](speed.md), "Lists, people and gifts".
+
 Nothing reaches a person who has done neither. That also settles the group gift
 without a rule of its own: its audience was always "the people who were sent the
 link", which is the second case.

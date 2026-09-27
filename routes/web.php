@@ -783,7 +783,15 @@ Route::prefix('{market}')->group(function () {
         Route::get('/for/{token}', [RecipientProfileController::class, 'show'])->name('recipients.self');
         Route::post('/for/{token}', [RecipientProfileController::class, 'update'])->name('recipients.self.update');
         Route::post('/for/{token}/claim', [RecipientProfileController::class, 'claim'])->name('recipients.self.claim');
-        Route::get('/for/{token}/suggest', [RecipientProfileController::class, 'suggest'])->name('recipients.self.suggest');
+        // Tighter than the group: every request runs the suggestion engine,
+        // for anybody holding the link. Its own counter (the third argument),
+        // since a bare `throttle` shares one per visitor with every other
+        // throttled route and would count this request twice.
+        Route::get('/for/{token}/suggest', [RecipientProfileController::class, 'suggest'])
+            ->middleware('throttle:30,1,for-suggest')
+            ->name('recipients.self.suggest');
+        Route::post('/for/{token}/list', [RecipientProfileController::class, 'startList'])
+            ->name('recipients.self.list');
         // This or that, chosen by the person themselves (TasteController).
         Route::get('/for/{token}/taste', [TasteController::class, 'selfShow'])->name('recipients.self.taste');
         Route::post('/for/{token}/taste', [TasteController::class, 'selfResult'])->name('recipients.self.taste.result');

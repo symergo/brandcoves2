@@ -173,10 +173,50 @@ class RecipientProfileController extends Controller
             'canAdd' => $owner->isSignedIn() && $list !== null && ListAccess::canEdit($list, $owner),
 
             /*
+             * No list yet, and this visitor would get one: the page asks for
+             * it with a POST as it opens (`startList()`), and draws the add
+             * panel once it is there. Until 2026-09-27 the GET made it, so a
+             * link preview, a prefetch or a crawler holding a cookie wrote a
+             * list for somebody who never looked. Signed in only: the list is
+             * for adding to, and only an account may add (`canAdd`). A cookie
+             * visitor gets theirs when they sign in and come back.
+             */
+            'startsList' => $owner->isSignedIn() && $list === null,
+
+            /*
              * No `giverList`, no `pickedCount`, no claim state. Their absence is
              * the feature — see the class docblock.
              */
         ];
+    }
+
+    /**
+     * Make this visitor's list for the person, if it is not there yet, and
+     * send them back to the page, which then has an add panel.
+     *
+     * The one place the list is created; the page asks for it as it opens
+     * when `startsList` says so. See `page()`.
+     */
+    public function startList(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
+    {
+        $recipient = $this->findByToken($token);
+        $owner = Owner::fromRequest($request);
+
+        abort_unless($owner->isSignedIn(), 403);
+
+        Wishlist::firstOrCreate(
+            [
+                'recipient_id' => $recipient->id,
+                'kind' => ListKind::Mine->value,
+                ...$owner->attributes(),
+            ],
+            [
+                'title' => __('site.recipients.my_list', ['name' => $recipient->name]),
+                'market' => $current->get(),
+            ],
+        );
+
+        return back();
     }
 
     /** Their own words about themselves, which outrank anyone's guess. */
@@ -294,12 +334,16 @@ class RecipientProfileController extends Controller
     }
 
     /**
-     * The list this person is building, created on demand.
+     * The list this person is building, if they have started one.
      *
-     * Owned by whoever opens the link — a signed-in user or the anonymous cookie
-     * identity — with `recipient_id` pointing back. That keeps the single-owner
-     * CHECK constraint intact and lets `IdentityMerger` fold the list into a
-     * real account later, the way every other anonymous list already works.
+     * Owned by whoever opened the link — a signed-in user or the anonymous
+     * cookie identity — with `recipient_id` pointing back. That keeps the
+     * single-owner CHECK constraint intact and lets `IdentityMerger` fold the
+     * list into a real account later, the way every other anonymous list
+     * already works.
+     *
+     * Read only. It was a `firstOrCreate` on every GET until 2026-09-27; it is
+     * created by `startList()`, a POST, now.
      */
     private function theirList(Recipient $recipient, Owner $owner, CurrentMarket $current): ?Wishlist
     {
@@ -307,17 +351,10 @@ class RecipientProfileController extends Controller
             return null;
         }
 
-        return Wishlist::firstOrCreate(
-            [
-                'recipient_id' => $recipient->id,
-                'kind' => ListKind::Mine->value,
-                ...$owner->attributes(),
-            ],
-            [
-                'title' => __('site.recipients.my_list', ['name' => $recipient->name]),
-                'market' => $current->get(),
-            ],
-        );
+        return $owner->scope(Wishlist::query())
+            ->where('recipient_id', $recipient->id)
+            ->where('kind', ListKind::Mine->value)
+            ->first();
     }
 
     /**

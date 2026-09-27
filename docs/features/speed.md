@@ -516,3 +516,123 @@ Measured locally on the first view (caches empty) and the second, same data as `
 | Persona | 21 queries, 114 ms | 6 queries, 33 ms |
 | Contribute | 2 queries | 1 query |
 | Privacy | 138 ms | 18 ms |
+
+## Lists, people and gifts
+
+Repeated queries on the pages a signed-in person uses most: My Coves (the overview of their lists),
+a list, a shared list, a person's page and Find a gift. Nothing here changes what anybody sees or may
+do; the pages ask the database fewer times for the same answer. Measured with
+`ListQueryCountTest`, on a fixture with lists of every kind and every way a list reaches somebody:
+
+| Page | Before | After |
+|---|---|---|
+| My Coves, 6 lists | 32 queries | 15 |
+| My Coves, 18 lists | 52 | 15 |
+| A list, 3 items, few lists to copy to | 22 | 19 |
+| A list, 12 items, more lists to copy to | 31 | 19 |
+| A shared list, a reader opening it again | 15 | 10 |
+
+The test holds the "after" numbers equal between the small and the large fixture: a query per row is
+what these pages had, and the equality is what catches it coming back.
+
+### Which lists may I open (`ListAccess::scope()`)
+
+The one question every list page asks, and a security boundary. It was one statement:
+`owner = ? OR EXISTS (a collaborator row) OR (not private AND (EXISTS (an open) OR EXISTS (a
+share)))`. Postgres cannot use an index for an OR of correlated EXISTS subqueries, so it read every
+row of `wishlists` and probed three tables for each.
+
+Now it is two steps. `ListAccess::reachableIds()` gets the lists a person was let into with one
+`UNION ALL` of three `user_id` index lookups (`wishlist_collaborators`, `list_opens`,
+`wishlist_shares`), split into *direct* (a collaborator row, which holds whatever the visibility) and
+*bookmarked* (a followed link or a share, which hold only while the list is not private). The outer
+query is `owner = ? OR id IN (direct) OR (not private AND id IN (bookmarked))`: an owner index and
+the primary key. Not memoised, because a request that records an open and then asks again must see
+it.
+
+`ListAccess::allows()` answers the same question for one list already loaded. The list page and the
+adding mode (on every page, through the shared props) load their one list by key and ask it, rather
+than resolving everything the person was let into to find one row.
+
+`ListAccessScopeTest` keeps the old one-statement query as a reference and holds the new scope,
+`allows()` and the list page's 200/404 to it for every route: owner, collaborator (viewer and editor,
+private list included), a followed link, a share, a list set back to private after it was opened or
+shared, strangers, other people's opens and collaborations, and an anonymous visitor (plain
+ownership; an open recorded against a cookie is never access).
+
+### My Coves
+
+- **Two queries, not six.** Each section (mine and theirs, per kind) was its own query, repeating the
+  eager loads. It is one query for my lists and one for the lists others let me into, cut into the
+  sections in PHP in the same order. Still two and never one: the suggestion count may only be
+  attached to rows I own (see `rows()`).
+- **`hasCoGivers()`** asked `collaborators()->exists()` per card (twice, through
+  `allowsClaiming()`). The query now carries `withExists('collaborators')` and the model reads it.
+  Deliberately not the loaded `collaborators` relation: on somebody else's list My Coves loads only
+  my own row of it, which answers a different question.
+- **`canEdit()`** asked for my collaborator row per card. It reads it from the rows already loaded
+  when there are any (My Coves: my own row; the list page: all of them), picking mine by user id.
+  Only those two places load the relation, and both hold my row if I have one.
+- **Saved Coves** loaded each saved Cove's whole shortlist and each saved Community Cove's every
+  item with its product, to show one picture. Now one pick with a picture per Cove and one item per
+  list, chosen by the rule `CommunityCoves::card()` uses: the newest item with a product picture
+  that does not render live (Amazon).
+
+### A list and a shared list
+
+- The list page loads the owner and the recipient's person with the list, counts its loaded items
+  instead of asking again, and counts quiz plays with `withCount`. The copy menu
+  (`ListOptions::copyTargets()`) loads my own collaborator row on each list, so its per-row
+  `canEdit()` asks nothing.
+- The shared page counts claims ("3 of 11 spoken for") and "have I claimed something" from the
+  items it has already loaded. The counting stays in `ClaimView::progress()`, now given the items,
+  so ClaimView remains the one place claim state is applied (invariant 4). Votes are loaded only
+  where voting is on.
+- **Opening a shared list writes at most once an hour.** Every open upserted `list_opens` and the two
+  `friendships` rows, and after the first time the upserts only moved a timestamp that nothing reads
+  to within an hour. `ListOpen::recordFromRead()` and `Friends::linkFromSharedList()` skip a repeat
+  inside the hour on a cache marker (a plain `true`, never an object). The first open always writes,
+  and that is the one that grants the bookmark. `Friends::unlink()` clears the marker, so somebody
+  who removed a friend and opens their link again is reconnected at once, as before.
+- **The save picker** in the shared props (`ListOptions::forPicker()`, on every signed-in page)
+  selects the six columns it draws plus the recipient's name, not whole rows with descriptions and
+  encrypted addresses. It is a closure there, so an Inertia partial reload that does not ask for
+  `lists` never runs it at all.
+
+### A person's page and Find a gift
+
+- **The next steps are kept an hour.** `NextSteps::forRecipient()` (three candidate queries, one a
+  24-word ILIKE, and the scoring) ran on every view of a person's page and every board for them. The
+  ranked ids are cached per person, market and limit, under a hash of everything that goes in: the
+  past gifts looked at (title, brand, category, product, year), the budget, the year and every
+  excluded product (their history, their lists, the board on screen). Change any of those and it is
+  a different key. The products themselves are loaded fresh, through the same "can be shown" filter,
+  so one that went out of stock inside the hour drops out. Plain arrays only: the Redis store
+  refuses to rebuild objects (see `config/cache.php`).
+- **The gift history is read once per request** in `GiftController` and handed to the exclusions and
+  the next steps; it was read two or three times.
+- **"Four more" is one engine run.** It needs the board on screen (to remember it) and the next one,
+  and ran the whole engine twice for them. `SuggestionEngine::suggestTwo()` picks both from one
+  scored pool. The one difference from two runs: a second retrieval, with four more products
+  excluded, could reach up to four candidates past the 300th (newest first). Those rarely place, and
+  the price was a full second run.
+- **The engine's candidates skip `display_vector`**, a search column no PHP reads. Everything else is
+  still read: `EditionBuilder` keeps `surprise_breakdown` with a persona's picks. A column added to
+  `product_groups` later is absent from suggestions until it is named in
+  `SuggestionEngine::POOL_COLUMNS`.
+- The person page fetched every friendship to pick out one; it fetches the one.
+
+### `/for/{token}` makes nothing on a GET
+
+A person's own link (`/for/{token}`, where they say what they like and keep their own list) made
+"my list for them" for whoever opened it, on the GET. A link preview, a prefetch or a crawler holding
+a cookie left a list behind, and a GET that writes is one no page cache can ever keep. The GET only
+reads now. A signed-in visitor with no list yet gets `startsList`, and the page POSTs
+`/for/{token}/list` as it opens, which makes it and comes back with the add panel. A visitor with
+only a cookie cannot add, so they get their list after signing in. See
+[gifting-lenses.md](gifting-lenses.md).
+
+`/for/{token}/suggest` runs the suggestion engine for anybody holding the link, so it has its own
+limit of 30 a minute on top of the group's 60. It has its own counter (`throttle:30,1,for-suggest`):
+a bare `throttle` shares one counter per visitor with every throttled route, and two on one route
+would count each request twice.

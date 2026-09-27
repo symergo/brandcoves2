@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import { OwnItemFooter, SearchField, searchPanel } from '../../Components/ProductSearch'
 import SaveToList from '../../Components/SaveToList'
@@ -62,6 +62,11 @@ interface Props {
     listTitle: string | null
     /** The server's answer to "may this visitor add to that list": signed in, and theirs. */
     canAdd: boolean
+    /**
+     * Signed in, and no list here yet: the page asks for one as it opens. The
+     * GET no longer makes it, so a preview or a crawler cannot.
+     */
+    startsList?: boolean
     suggestions?: Suggestion[]
     suggestTerm?: string
 }
@@ -107,6 +112,7 @@ export default function SelfDescribe({
     listId,
     listTitle,
     canAdd,
+    startsList = false,
     suggestions = [],
     suggestTerm = '',
 }: Props) {
@@ -133,6 +139,17 @@ export default function SelfDescribe({
      * the next thing (it closes itself on a successful add, as on a list page).
      */
     const [panelKey, setPanelKey] = useState(0)
+
+    /*
+     * The list is made by a POST, once, when a signed-in visitor opens the
+     * page and has none yet; the page comes back with it and the add panel.
+     * See RecipientProfileController::startList().
+     */
+    useEffect(() => {
+        if (startsList) {
+            router.post(`${base}/list`, {}, { preserveScroll: true, preserveState: true })
+        }
+    }, [startsList, base])
 
     const form = useForm({
         interests: person.interests,

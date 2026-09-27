@@ -331,10 +331,22 @@ class RecipientProfileTest extends TestCase
         $recipient = $this->recipient();
         $visitor = User::factory()->create();
 
+        // The first view makes nothing; it asks the page to start the list.
         $this->actingAs($visitor)
             ->get("/be-nl/for/{$recipient->share_token}")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('canAdd', true)->whereType('listTitle', 'string'));
+            ->assertInertia(fn ($page) => $page->where('canAdd', false)->where('startsList', true)->where('listId', null));
+
+        $this->assertDatabaseMissing('wishlists', ['recipient_id' => $recipient->id, 'owner_user_id' => $visitor->id]);
+
+        $this->actingAs($visitor)
+            ->post("/be-nl/for/{$recipient->share_token}/list")
+            ->assertRedirect();
+
+        $this->actingAs($visitor)
+            ->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canAdd', true)->where('startsList', false)->whereType('listTitle', 'string'));
 
         $listId = Wishlist::query()
             ->where('recipient_id', $recipient->id)
@@ -374,10 +386,44 @@ class RecipientProfileTest extends TestCase
 
         $this->get("/be-nl/for/{$recipient->share_token}")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('canAdd', false));
+            ->assertInertia(fn ($page) => $page->where('canAdd', false)->where('startsList', false));
 
         $this->post('/be-nl/list-items', ['source' => 'manual', 'title' => 'Pan'])
             ->assertRedirect('/be-nl/login');
+
+        // Nor may they start one: a list here is for adding to.
+        $this->post("/be-nl/for/{$recipient->share_token}/list")->assertForbidden();
+    }
+
+    #[Test]
+    public function opening_the_link_writes_nothing(): void
+    {
+        // A GET is a read: a link preview, a prefetch or a crawler holding a
+        // cookie must not leave a list behind (speed wave 2, 2026-09-27).
+        $recipient = $this->recipient();
+        $before = Wishlist::query()->count();
+
+        $this->actingAs(User::factory()->create())
+            ->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk();
+        $this->get("/be-nl/for/{$recipient->share_token}")->assertOk();
+
+        $this->assertSame($before, Wishlist::query()->count());
+    }
+
+    #[Test]
+    public function the_suggestions_have_their_own_tighter_limit(): void
+    {
+        $recipient = $this->recipient();
+
+        for ($i = 0; $i < 30; $i++) {
+            $this->get("/be-nl/for/{$recipient->share_token}/suggest")->assertOk();
+        }
+
+        $this->get("/be-nl/for/{$recipient->share_token}/suggest")->assertStatus(429);
+
+        // Its own counter: the page itself still answers.
+        $this->get("/be-nl/for/{$recipient->share_token}")->assertOk();
     }
 
     #[Test]

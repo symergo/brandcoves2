@@ -86,6 +86,7 @@ class GiftResults
      * saved person was given, and the way to ask other people.
      *
      * @param  list<int>  $shownIds  what is on the board, so a next step does not repeat a card
+     * @param  list<PastGift>|null  $past  the person's gift history when the caller already read it
      * @return array<string, mixed>
      */
     public function extras(
@@ -95,6 +96,7 @@ class GiftResults
         ?Recipient $recipient = null,
         array $shownIds = [],
         bool $withPageUrl = true,
+        ?array $past = null,
     ): array {
         return [
             /*
@@ -116,6 +118,7 @@ class GiftResults
             'nextSteps' => $recipient === null ? [] : app(NextSteps::class)->cards(
                 $recipient,
                 $current->get(),
+                past: $past,
                 alsoExclude: $shownIds,
             ),
             'personUrl' => $recipient !== null && $viewer !== null

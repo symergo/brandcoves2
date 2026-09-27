@@ -83,9 +83,14 @@ class AddingMode
             return null;
         }
 
-        $list = ListAccess::scope(Wishlist::query(), $owner)->find($id);
+        /*
+         * By its key first, then the access question on that one row. This
+         * runs on every page (the shared props carry it), and the whole scope
+         * to find one row cost a lookup per list the person was let into.
+         */
+        $list = Wishlist::query()->find($id);
 
-        if ($list === null || ! ListAccess::canEdit($list, $owner)) {
+        if ($list === null || ! ListAccess::allows($list, $owner) || ! ListAccess::canEdit($list, $owner)) {
             // Ended, rather than left to fail on the next save.
             $this->stop();
 

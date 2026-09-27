@@ -97,7 +97,10 @@ merged into it. `GroupMerger` also moves `recipient_gifts.group_id` to the produ
 ## The next step
 
 `NextSteps` fetches candidates three ways, and `NextStepScorer`, a pure class with its own unit
-test, decides:
+test, decides. The ranked ids are kept an hour (2026-09-27) under a key made of everything that
+goes in: the past gifts, the budget, the year and every excluded product. A change to any of them is
+a new key, and the products are loaded fresh, so stock still counts. See [speed.md](speed.md),
+"Lists, people and gifts".
 
 | reason | evidence | weight |
 |---|---|---|

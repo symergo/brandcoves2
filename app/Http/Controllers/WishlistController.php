@@ -9,6 +9,7 @@ use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\RecipientStatus;
+use App\Enums\Source;
 use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
@@ -110,11 +111,14 @@ class WishlistController extends Controller
             ->whereNot(fn ($q) => $owner->scope($q));
 
         /*
-         * Each section is its own query rather than one widened scope filtered
-         * afterwards, because the suggestion count may only be attached to
-         * rows I own — see `rows()`. A single `ListAccess::scope()` with a
-         * `withCount` would put a message addressed to somebody else on their
-         * card in my list.
+         * Two queries, mine and theirs, never one widened scope: the
+         * suggestion count may only be attached to rows I own — see `rows()`.
+         * A single `ListAccess::scope()` with a `withCount` would put a
+         * message addressed to somebody else on their card in my list.
+         *
+         * It was six, one per section and side (speed wave 2, 2026-09-27),
+         * each repeating the eager loads; the sections are now cut from the
+         * two results in PHP, each keeping the newest-first order it had.
          *
          * Split by whom the list is for (owner's call, 2026-09-13): the errand
          * a visitor arrives with is "what do I want" or "what am I giving".
@@ -125,16 +129,24 @@ class WishlistController extends Controller
          * lists my own gift lists first, then the gift lists and the wish lists
          * others shared with me; each card says whose it is.
          */
-        $section = fn (Collection $rows, string $name): Collection => $rows->map(fn (array $row) => [...$row, 'section' => $name]);
-        $shared = fn (array $kinds): Builder => (clone $sharedWithMe)->whereIn('kind', $kinds);
-        $mineOf = fn (ListKind $kind): Builder => (clone $owned)->where('kind', $kind->value);
+        $mineRows = $this->rows($owned, $owner, $current, owned: true);
 
-        $lists = $section($this->rows($mineOf(ListKind::Mine), $owner, $current, owned: true), 'mine')
-            ->concat($section($this->rows($mineOf(ListKind::ForSomeone), $owner, $current, owned: true), 'shared'))
-            ->concat($section($this->rows($shared([ListKind::ForSomeone->value]), $owner, $current, owned: false), 'shared'))
-            ->concat($section($this->rows($shared([ListKind::Mine->value]), $owner, $current, owned: false), 'shared'))
-            ->concat($section($this->rows($mineOf(ListKind::Group), $owner, $current, owned: true), 'group'))
-            ->concat($section($this->rows($shared([ListKind::Group->value]), $owner, $current, owned: false), 'group'))
+        // Nothing can be shared with an anonymous visitor (see above), so
+        // their half is not asked for.
+        $theirRows = $owner->user === null
+            ? collect()
+            : $this->rows($sharedWithMe, $owner, $current, owned: false);
+
+        $section = fn (Collection $rows, ListKind $kind, string $name): Collection => $rows
+            ->filter(fn (array $row): bool => $row['kind'] === $kind->value)
+            ->map(fn (array $row) => [...$row, 'section' => $name]);
+
+        $lists = $section($mineRows, ListKind::Mine, 'mine')
+            ->concat($section($mineRows, ListKind::ForSomeone, 'shared'))
+            ->concat($section($theirRows, ListKind::ForSomeone, 'shared'))
+            ->concat($section($theirRows, ListKind::Mine, 'shared'))
+            ->concat($section($mineRows, ListKind::Group, 'group'))
+            ->concat($section($theirRows, ListKind::Group, 'group'))
             ->values();
 
         /*
@@ -206,21 +218,43 @@ class WishlistController extends Controller
             ->where(fn ($q) => $q
                 ->whereHas('cove', fn ($c) => $c->published())
                 ->orWhereHas('list', fn ($l) => $l->communityCoves()))
-            ->with(['cove.picks.group', 'list.recipient', 'list.items.group'])
+            /*
+             * The one picture per card, not every product (speed wave 2,
+             * 2026-09-27). This loaded each saved Cove's whole shortlist and
+             * each saved list's every item with its product, to show one
+             * image. Now: the first pick with a picture, in the Cove's own
+             * order, and the newest public item with a picture, the one
+             * `CommunityCoves::card()` would have chosen: an item that renders
+             * live (Amazon) is never public, and only a product's picture is
+             * shown.
+             */
+            ->with([
+                'cove.picks' => fn ($q) => $q
+                    ->whereHas('group', fn ($g) => $g->whereNotNull('image_url'))
+                    ->limit(1),
+                'cove.picks.group:id,image_url',
+                'list.items' => fn ($q) => $q
+                    ->where(fn ($w) => $w->whereNull('source')->orWhereIn('source', self::storableSources()))
+                    ->whereHas('group', fn ($g) => $g->whereNotNull('image_url'))
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'list.items.group:id,image_url',
+            ])
             ->orderByDesc('created_at')
             ->get()
             ->map(function (SavedCove $saved) use ($community): array {
                 if ($saved->list !== null) {
                     $list = $saved->list;
-                    $card = $community->card($list);
                     $base = '/'.$list->market->value.'/coves/community/'.$list->public_slug;
 
                     return [
                         'id' => 'l'.$list->public_slug,
-                        'title' => $card['title'],
+                        // What `CommunityCoves::card()` gives for these three.
+                        'title' => (string) $list->public_title,
                         'kind' => 'community',
-                        'url' => $card['url'],
-                        'image' => $card['image'],
+                        'url' => $community->url($list),
+                        'image' => $list->items->first()?->group?->image_url,
                         'savedAt' => $saved->created_at?->toDateString(),
                         'saveUrl' => "{$base}/save",
                         'copyUrl' => "{$base}/copy",
@@ -248,6 +282,20 @@ class WishlistController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * The item sources that may be shown from storage: every source but the
+     * ones that render live (Amazon), mirroring `WishlistItem::rendersLive()`.
+     *
+     * @return list<string>
+     */
+    private static function storableSources(): array
+    {
+        return array_values(array_map(
+            fn (Source $source): string => $source->value,
+            array_filter(Source::cases(), fn (Source $source): bool => $source->allowsCatalogueStorage()),
+        ));
     }
 
     public function store(Request $request, CurrentMarket $current, ListMaker $maker): RedirectResponse
@@ -568,13 +616,19 @@ class WishlistController extends Controller
 
         // Collaborators see it too — a co-giver invited to help choose has to
         // be able to open the thing they were invited to.
-        $wishlist = ListAccess::scope(Wishlist::query(), $owner)
-            ->with(['recipient', 'items.group', 'collaborators.user'])
-            ->find($list);
+        /*
+         * By its key, then the access question on that row (the same answer
+         * as `ListAccess::scope()`, without resolving every list this person
+         * was let into to find one). Loaded only once access is settled.
+         */
+        $wishlist = Wishlist::query()->find($list);
 
-        if ($wishlist === null) {
+        if ($wishlist === null || ! ListAccess::allows($wishlist, $owner)) {
             throw new NotFoundHttpException;
         }
+
+        $wishlist->load(['recipient.person', 'owner', 'items.group', 'collaborators.user'])
+            ->loadExists('collaborators');
 
         $target = $wishlist->recipient === null
             ? null
@@ -774,10 +828,10 @@ class WishlistController extends Controller
              * gets built in the first place, because a list nobody has a reason
              * to fill in stays empty.
              */
-            'quizUrl' => ($quiz = ListQuiz::query()->where('wishlist_id', $wishlist->id)->first())
+            'quizUrl' => ($quiz = ListQuiz::query()->withCount('attempts')->where('wishlist_id', $wishlist->id)->first())
                 ? url($current->url("q/{$quiz->share_token}"))
                 : null,
-            'quizPlays' => $quiz?->attempts()->count() ?? 0,
+            'quizPlays' => $quiz?->attempts_count ?? 0,
 
             /*
              * "Help me find out what :name likes": This or that, played by
@@ -1345,6 +1399,8 @@ class WishlistController extends Controller
                 'collaborators' => fn ($c) => $c->where('user_id', $user->id),
             ]))
             ->withCount('items')
+            // For `hasCoGivers()`, which asked the database once per card.
+            ->withExists('collaborators')
             ->when($owned, fn ($q) => $q->withCount('suggestions'))
             ->latest('updated_at')
             ->get()
@@ -1487,7 +1543,10 @@ class WishlistController extends Controller
             'visibleToFriends' => $list->kind === ListKind::Mine && $list->owner_user_id !== null
                 ? $list->isVisibleToFriends()
                 : null,
-            'itemCount' => $list->items_count ?? $list->items()->count(),
+            // The list page has every item loaded already; My Coves loads four
+            // and counts in the query.
+            'itemCount' => $list->items_count
+                ?? ($list->relationLoaded('items') ? $list->items->count() : $list->items()->count()),
             'recipient' => $list->recipient === null ? null : [
                 'id' => $list->recipient->id,
                 'name' => $list->recipient->name,

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\ListVisibility;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Who may see and edit a list.
@@ -50,6 +52,21 @@ final class ListAccess
             return $owner->scope($query);
         }
 
+        /*
+         * Resolved in two steps rather than one `OR EXISTS … OR EXISTS …`
+         * (speed wave 2, 2026-09-27). Postgres cannot use an index for an OR
+         * of correlated EXISTS subqueries, so the one-statement form read every
+         * row of `wishlists` and probed three tables per row, on every page
+         * that asks "which lists may I open". The ids a person was let into are
+         * a handful, each found through a `user_id` index; with them in hand
+         * the outer query is `owner = ? OR id IN (…)`, two index lookups.
+         *
+         * The meaning is exactly the old one, and ListAccessScopeTest walks
+         * every route through it.
+         */
+        ['direct' => $direct, 'bookmarked' => $bookmarked] = self::reachableIds($user);
+        $key = $query->getModel()->getQualifiedKeyName();
+
         return $query->where(fn (Builder $q) => $q
             // Your own, whatever state they are in. A private list of your own
             // is the ordinary case, not an exception.
@@ -69,11 +86,7 @@ final class ListAccess
              * was, and `a_collaborator_can_open_a_private_list` says so by
              * name. Folding them in with the two bookmark routes broke that.
              */
-            ->orWhereExists(fn ($sub) => $sub
-                ->selectRaw('1')
-                ->from('wishlist_collaborators')
-                ->whereColumn('wishlist_collaborators.wishlist_id', 'wishlists.id')
-                ->where('wishlist_collaborators.user_id', $user->id))
+            ->when($direct !== [], fn (Builder $q) => $q->orWhereIn($key, $direct))
 
             /*
              * The two **bookmark** routes, and only while the list is still
@@ -94,20 +107,74 @@ final class ListAccess
              * Wrapped around both rather than repeated in each, so the next
              * bookmark route added here inherits it instead of forgetting it.
              */
-            ->orWhere(fn (Builder $q) => $q
+            ->when($bookmarked !== [], fn (Builder $q) => $q->orWhere(fn (Builder $q) => $q
                 ->where('visibility', '!=', ListVisibility::Private->value)
-                ->where(fn (Builder $q) => $q
-                    ->whereExists(fn ($sub) => $sub
-                        ->selectRaw('1')
-                        ->from('list_opens')
-                        ->whereColumn('list_opens.wishlist_id', 'wishlists.id')
-                        ->where('list_opens.user_id', $user->id))
+                ->whereIn($key, $bookmarked))));
+    }
 
-                    ->orWhereExists(fn ($sub) => $sub
-                        ->selectRaw('1')
-                        ->from('wishlist_shares')
-                        ->whereColumn('wishlist_shares.wishlist_id', 'wishlists.id')
-                        ->where('wishlist_shares.user_id', $user->id)))));
+    /**
+     * The lists somebody was let into, by route: `direct` (a collaborator row,
+     * which holds whatever the list's visibility) and `bookmarked` (a followed
+     * link or a share from a friend, which hold only while the list is shared).
+     *
+     * One statement, three `user_id` index lookups. Not memoised: a request
+     * that records an open and then asks again must see the new row.
+     *
+     * @return array{direct: list<string>, bookmarked: list<string>}
+     */
+    public static function reachableIds(User $user): array
+    {
+        $rows = DB::table('wishlist_collaborators')
+            ->selectRaw('wishlist_id, true as direct')
+            ->where('user_id', $user->id)
+            ->unionAll(DB::table('list_opens')
+                ->selectRaw('wishlist_id, false as direct')
+                ->where('user_id', $user->id))
+            ->unionAll(DB::table('wishlist_shares')
+                ->selectRaw('wishlist_id, false as direct')
+                ->where('user_id', $user->id))
+            ->get();
+
+        $ids = fn (bool $direct): array => $rows
+            ->filter(fn (object $row): bool => (bool) $row->direct === $direct)
+            ->pluck('wishlist_id')
+            ->map(fn ($id): string => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        return ['direct' => $ids(true), 'bookmarked' => $ids(false)];
+    }
+
+    /**
+     * May this person open this one list? The same answer as {@see scope()},
+     * for a row already in hand: a caller that knows the id loads it by its
+     * primary key and asks here, instead of running the whole scope to find
+     * one row.
+     */
+    public static function allows(Wishlist $list, Owner $owner): bool
+    {
+        if ($owner->user === null) {
+            return self::isOwner($list, $owner);
+        }
+
+        if ($list->owner_user_id === $owner->user->id) {
+            return true;
+        }
+
+        $userId = $owner->user->id;
+
+        if (WishlistCollaborator::query()->where('wishlist_id', $list->id)->where('user_id', $userId)->exists()) {
+            return true;
+        }
+
+        // A null visibility fails `!= 'private'` in SQL too.
+        if ($list->visibility === null || $list->visibility === ListVisibility::Private) {
+            return false;
+        }
+
+        return DB::table('list_opens')->where('wishlist_id', $list->id)->where('user_id', $userId)->exists()
+            || DB::table('wishlist_shares')->where('wishlist_id', $list->id)->where('user_id', $userId)->exists();
     }
 
     /**
@@ -125,6 +192,18 @@ final class ListAccess
 
         if ($list->owner_user_id === $owner->user->id) {
             return true;
+        }
+
+        /*
+         * From the rows already loaded, when there are any. Both places that
+         * load `collaborators` (the list page: all of them; My Coves: only my
+         * own row) hold my row if I have one, so picking it out by user id is
+         * the same answer without a query per list.
+         */
+        if ($list->relationLoaded('collaborators')) {
+            $mine = $list->collaborators->first(fn (WishlistCollaborator $c): bool => $c->user_id === $owner->user->id);
+
+            return $mine?->role->canEdit() ?? false;
         }
 
         // `->value('role')` would return the cast enum on this model and a raw
