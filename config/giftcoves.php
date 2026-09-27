@@ -27,13 +27,25 @@ return [
      *   *stored* variable, which then shadowed the injected one, so every image
      *   baked the literal string "unknown" for three weeks.
      *
-     * Read at runtime rather than baked, which works only because the Dockerfile
-     * deliberately does not run `config:cache` — see the comment there. Both
-     * carry an empty default on purpose: ConfigContractTest requires any env()
-     * without one to be passed through the compose app environment, and passing
-     * SOURCE_COMMIT through compose is precisely the bug above.
+     * Read from the running container rather than baked into the image, which
+     * works because the Dockerfile deliberately does not run `config:cache` at
+     * build: `docker/start.sh` runs it when the container starts, after Coolify
+     * has injected SOURCE_COMMIT. Both carry an empty default on purpose:
+     * ConfigContractTest requires any env() without one to be passed through the
+     * compose app environment, and passing SOURCE_COMMIT through compose is
+     * precisely the bug above.
      */
     'commit_sha' => env('GIT_COMMIT_SHA', '') ?: env('SOURCE_COMMIT', '') ?: null,
+
+    /*
+     * Which branch this deployment tracks, as Coolify injects it into the
+     * container. 'local' on a laptop. Here rather than an env() call in
+     * HealthController and the admin Migration page, because once config is
+     * cached at container start (docker/start.sh) env() outside config/ is the
+     * wrong place to ask: Laravel's rule is that only config files read the
+     * environment.
+     */
+    'branch' => env('COOLIFY_BRANCH', 'local'),
 
     // Staging must never be indexed. Production sets ROBOTS_ALLOW=true.
     'robots_allow' => (bool) env('ROBOTS_ALLOW', false),

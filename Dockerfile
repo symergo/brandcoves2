@@ -108,7 +108,9 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
 
 # Compiled once at build time rather than on first request. Deliberately NOT
 # config:cache — that would bake build-time env values into the image, and the
-# same image is deployed to staging and production with different config.
+# same image is deployed to staging and production with different config. The
+# config and route caches are built when each container starts instead, by
+# docker/entrypoint.sh, where the environment is the one it will serve with.
 RUN php artisan event:cache \
     && php artisan view:cache
 
@@ -193,4 +195,18 @@ EXPOSE 80
 # `loadbalancer.server.port` label to disambiguate, so it picked 80 — where
 # nothing was listening — and every request 502'd. Serving on the port Traefik
 # already assumes removes the ambiguity rather than papering over it.
-CMD ["frankenphp", "php-server", "--listen", ":80", "--root", "/app/public", "-v"]
+#
+# The listener, the document root and the access log live in docker/Caddyfile
+# (copied in with the rest of the source by `COPY . .`). It replaced
+# `frankenphp php-server --listen :80 --root /app/public -v` on 2026-09-27:
+# php-server could not put Cache-Control on the hashed Vite bundles, and `-v`
+# was Caddy's debug logging rather than an access log. The file says more.
+#
+# The entrypoint builds config:cache and route:cache when the container starts,
+# for every service that runs from this image (app, queue, scheduler, migrate),
+# then hands over to the base image's own entrypoint. Why at start and not in a
+# RUN above: see the event:cache/view:cache comment, and the script itself.
+# Run through `sh` so a lost executable bit on a Windows checkout cannot stop
+# the container from starting.
+ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
+CMD ["frankenphp", "run", "--config", "/app/docker/Caddyfile", "--adapter", "caddyfile"]

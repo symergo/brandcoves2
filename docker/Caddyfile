@@ -1,0 +1,86 @@
+# FrankenPHP's configuration for the `app` container.
+#
+# Until 2026-09-27 the container ran `frankenphp php-server --listen :80
+# --root /app/public -v`, which is this file's first half in one line. A
+# Caddyfile replaced it for the two things php-server cannot do:
+#
+#   1. Cache headers on static files. php-server serves public/ with no
+#      Cache-Control at all, so every visit revalidated Vite's hashed bundles,
+#      whose file names change whenever their content does and which can
+#      therefore be cached for a year.
+#   2. An access log we choose the shape of, instead of `-v`, which was
+#      Caddy's DEBUG logging: about 39,000 lines in ten hours, most of them
+#      noise, and not the one line per request that says how long it took.
+#
+# Everything else deliberately matches what php-server did: plain HTTP on :80
+# (Coolify's Traefik terminates TLS, and port 80 is the one Traefik assumes;
+# see the Dockerfile), root /app/public, compression zstd/br/gzip, php_server.
+#
+# Validate a change without building the image:
+#   docker run --rm -v "$PWD/docker/Caddyfile:/c" --entrypoint frankenphp \
+#     dunglas/frankenphp:php8.4-alpine validate --config /c --adapter caddyfile
+# and check the layout with `fmt /c` in place of `validate ...`: an unformatted
+# file still runs, but logs a warning at every start.
+{
+	# No local CA, no certificates, no redirect to HTTPS: TLS ends at Traefik.
+	skip_install_trust
+	auto_https off
+
+	# Caddy's admin API (localhost:2019) is not used by anything here: nothing
+	# reloads config at runtime, and the compose file replaces the base image's
+	# healthcheck, which is the only thing that ever called it.
+	admin off
+
+	frankenphp
+}
+
+:80 {
+	root * /app/public
+
+	# One JSON line per request on stderr, which `docker logs` and Coolify show.
+	# `duration` is in seconds; `status`, `size` and `request.uri` are there too.
+	#
+	# Caddy already writes Cookie, Set-Cookie and Authorization as REDACTED.
+	# The forwarded-for headers are deleted as well: they carry the visitor's
+	# IP address, which this log has no use for and would otherwise keep.
+	log {
+		output stderr
+		format filter {
+			wrap json
+			fields {
+				request>headers>X-Forwarded-For delete
+				request>headers>X-Real-Ip delete
+			}
+		}
+	}
+
+	# The healthcheck asks every 30 seconds; 2,880 lines a day that say nothing.
+	@health path /health
+	log_skip @health
+
+	encode zstd br gzip
+
+	# Vite's output: every file under build/assets has a content hash in its
+	# name, so a changed file is a new URL and the old one may be kept forever.
+	# `file` makes the header apply only to a file that exists. Without it, a
+	# request for an old bundle after a deploy falls through to Laravel's 404,
+	# and that 404 would be marked cacheable for a year.
+	# build/manifest.json is NOT under assets/ and is not hashed; the browser
+	# never asks for it, but it must not get this header either.
+	@hashed {
+		path /build/assets/*
+		file
+	}
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	# Icons and the favicon keep their names across deploys, so they cannot be
+	# immutable. A day is long enough to stop the per-page revalidation and
+	# short enough that a changed icon shows within one.
+	@icons {
+		path /icons/* /favicon.ico
+		file
+	}
+	header @icons Cache-Control "public, max-age=86400"
+
+	php_server
+}
