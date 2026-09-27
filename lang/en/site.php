@@ -29,6 +29,8 @@ return [
         'info' => 'More about this',
         'share' => 'Share',
         'close' => 'Close',
+        'cancel' => 'Cancel',
+        'confirm' => 'Continue',
         'choose_market' => 'Choose your market',
 
         /*
@@ -748,7 +750,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'Make it my list',
-        'unsave' => 'Remove',
+        'unsave' => 'Remove from My Coves',
         'copied' => ':list is now one of your lists. Change it as you like.',
         'saved_flash' => ':list is saved in My Coves.',
         'sign_in_hint' => 'Sign in to keep this Cove in My Coves.',
@@ -932,6 +934,7 @@ return [
         'items' => ':count items',
         'one_item' => '1 item',
         'removed' => 'Removed.',
+        'removed_from' => 'Removed from :list.',
         'remove' => 'Remove',
         'save' => 'Save',
         'saved' => 'Saved',
@@ -2653,6 +2656,7 @@ return [
         'edit_birthday' => 'Edit birthday',
         'remove' => 'Remove',
         'remove_confirm' => 'Remove :name? You will each disappear from the other\'s friends.',
+        'unfriend' => 'Remove as friend',
         'save' => 'Save',
         'email' => 'Their email',
         'added' => 'Invitation sent. They will show up here once they are signed in.',

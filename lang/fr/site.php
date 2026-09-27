@@ -23,6 +23,8 @@ return [
         'info' => 'En savoir plus',
         'share' => 'Partager',
         'close' => 'Fermer',
+        'cancel' => 'Annuler',
+        'confirm' => 'Continuer',
         'choose_market' => 'Choisissez votre région',
         'countries' => [
             'be' => 'Belgique',
@@ -600,7 +602,7 @@ return [
     // Saving a Cove into My Coves; see docs/features/saved-coves.md.
     'saved_coves' => [
         'copy' => 'En faire ma liste',
-        'unsave' => 'Retirer',
+        'unsave' => 'Retirer de Mes Coves',
         'copied' => ':list fait maintenant partie de vos listes. Modifiez-la comme vous voulez.',
         'saved_flash' => ':list est enregistrée dans Mes Coves.',
         'sign_in_hint' => 'Connectez-vous pour garder cette Cove dans Mes Coves.',
@@ -769,6 +771,7 @@ return [
         'items' => ':count articles',
         'one_item' => '1 article',
         'removed' => 'Retiré.',
+        'removed_from' => 'Retiré de :list.',
         'remove' => 'Retirer',
         'save' => 'Enregistrer',
         'saved' => 'Enregistré',
@@ -2384,6 +2387,7 @@ return [
         'edit_birthday' => 'Modifier l\'anniversaire',
         'remove' => 'Retirer',
         'remove_confirm' => 'Retirer :name ? Vous disparaissez de la liste d\'amis de l\'autre, dans les deux sens.',
+        'unfriend' => 'Retirer des amis',
         'save' => 'Enregistrer',
         'email' => 'Son e-mail',
         'added' => 'Invitation envoyée. La personne apparaîtra ici une fois connectée.',

@@ -1,59 +1,26 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useEffect, useRef, useState } from 'react'
-import { kindIcons, type ListKind } from '../../Components/ListKindBadge'
+import { useEffect, useState } from 'react'
+import { kindIcons } from '../../Components/ListKindBadge'
 import ToolIcon, { type ToolKey } from '../../Components/ToolIcon'
-import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
-import AddProduct from '../../Components/AddProduct'
 import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
-import Badge from '../../Components/Badge'
 import { buttonClasses, rowActionClasses } from '../../Components/Button'
-import Menu, { MenuItem, MenuSeparator } from '../../Components/Menu'
-import { invalidate } from '../../savedItems'
-import ShareRow from '../../Components/ShareRow'
-import { Option } from '../../Components/ListTools'
+import EmptyState from '../../Components/EmptyState'
+import ListRow, { ListRowMeta, ListRowTitle } from '../../Components/ListRow'
+import ListSummaryRow, { type ListSummary as RowSummary } from '../../Components/ListSummaryRow'
+import Menu, { MenuItem, MoreButtonContent } from '../../Components/Menu'
+import PageHeader from '../../Components/PageHeader'
 
-interface ListSummary {
-    id: string
-    title: string
-    kind: string
-    isDefault: boolean
-    visibility: string
-    itemCount: number
-    covers: string[]
-    url: string
-    recipient: { id: string; name: string } | null
-    /**
-     * Suggestions waiting on a decision. Null on a list somebody else owns —
-     * that message is addressed to them, not to me.
-     */
-    suggestions: number | null
-    /**
-     * Somebody else's list that I have been let into, rather than one of mine.
-     *
-     * My Lists shows both now, so the card has to carry the difference: what I
-     * may do with the two is not the same, and a list I merely have access to
-     * can be changed out from under me by the person who owns it.
-     */
-    sharedWithMe: boolean
-    /** May somebody who is not the owner put things on it? From `summarise()`. */
-    linkCanAdd: boolean
-    /** Who owns it. Null on my own rows, where the answer is me. */
-    ownerName: string | null
-    /** `viewer` or `editor`, on a list shared with me. */
-    role: string | null
-    /** Which section of the page it goes under; decided by the server. */
+/**
+ * A row of Mijn Coves (`ListSummaryRow`), plus the section of the page it
+ * goes under, which the server decides.
+ */
+interface ListSummary extends RowSummary {
     section: Exclude<ListsView, 'saved'>
-    /** Your own list's link once it is shared; null while private or not yours. */
-    shareUrl?: string | null
-    /** A wish list of yours shown to your people; null on other kinds. From `summarise()`. */
-    visibleToFriends?: boolean | null
-    pledgersVisible?: boolean
-    votingEnabled?: boolean
 }
 
 /** The page's sections, and the `?view=` values that scroll to them. */
@@ -83,219 +50,6 @@ interface Props extends WizardOffer {
     view: ListsView | null
     savedCoves: SavedCoveRow[]
     isSignedIn: boolean
-}
-
-/** A row's action; the recipe and why it is never filled are in `rowActionClasses`. */
-const rowAction = rowActionClasses()
-
-/**
- * One list, as one row: the way My people draws a person (owner, 2026-09-27:
- * "design the My Coves list in the same way as the My People list").
- *
- * A picture where My people has the initial (the first product, or the kind's
- * mark on an empty list), then the name, how many items and for whom, and the
- * pills; on the right what you do to it: add, share, and ⋯ with "Vraag het aan
- * anderen" and "Instellingen". Until that day each list was a card with a
- * strip of product pictures, three to a row, which the owner found
- * inconsistent with My people beside it.
- *
- * "Shared" means two different things here and must not be confused: `shared`
- * is *I have published this outward*, `theirs` is *this is not mine at all*.
- * Share and ⋯ are for your own lists only; somebody else's is theirs to share
- * and set up. Adding needs a list you may add to.
- */
-function ListCard({ list }: { list: ListSummary }) {
-    const { t, n } = useTranslations()
-    const { market } = usePage<SharedProps>().props
-    const shared = list.visibility !== 'private'
-    const theirs = list.sharedWithMe
-    const [adding, setAdding] = useState(false)
-    const [sharing, setSharing] = useState(false)
-    // A list about somebody (a gift list or a group gift): the kinds the list page offers more for.
-    const aboutSomebody = list.kind === 'for_someone' || list.kind === 'group'
-    const canAdd = !theirs || list.role === 'editor'
-
-    return (
-        <div className="relative flex gap-3 p-4 sm:items-center">
-            <Link
-                href={list.url}
-                className={`group flex min-w-0 flex-1 items-center gap-3 ${canAdd || !theirs ? 'pr-32 sm:pr-0' : ''}`}
-            >
-                {list.covers.length > 1 ? (
-                    /*
-                      Up to four products as a small 2x2 collage in one square:
-                      what is in it at a glance (the cards' strong point) while
-                      every name starts at the same place.
-                    */
-                    <span className="grid h-12 w-12 shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
-                        {list.covers.slice(0, 4).map((src, i) => (
-                            <img
-                                key={i}
-                                src={src}
-                                alt=""
-                                loading="lazy"
-                                className="h-full w-full bg-cream object-contain"
-                                onError={(e) => {
-                                    e.currentTarget.style.visibility = 'hidden'
-                                }}
-                            />
-                        ))}
-                    </span>
-                ) : list.covers.length === 1 ? (
-                    <img
-                        src={list.covers[0]}
-                        alt=""
-                        loading="lazy"
-                        className="h-12 w-12 shrink-0 rounded-lg border border-line bg-cream object-contain p-1"
-                        onError={(e) => {
-                            e.currentTarget.style.visibility = 'hidden'
-                        }}
-                    />
-                ) : (
-                    <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                        <ToolIcon name={kindIcons[(list.kind as ListKind) ?? 'mine'] ?? 'list'} className="h-5 w-5" />
-                    </span>
-                )}
-                <span className="min-w-0">
-                    <span className="block font-medium group-hover:underline">{list.title}</span>
-                    <span className="mt-0.5 block text-sm text-ink-soft">
-                        {list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })}
-                        {/*
-                          Who the list is for: on a list about somebody, the
-                          recipient; on a wish list somebody shared with me, its
-                          owner, because that is the person I shop for.
-                        */}
-                        {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
-                        {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
-                    </span>
-                    {/* Somebody else's wish list is how I shop for them: say so. */}
-                    {theirs && list.kind === 'mine' && list.ownerName && (
-                        <span className="mt-0.5 block text-sm text-accent-dark">{t('lists.shop_for', { name: list.ownerName })}</span>
-                    )}
-                    <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-2xs">
-                        <ListPills
-                            kind={list.kind as ListKind}
-                            role={theirs ? 'contributor' : 'owner'}
-                            ownerName={theirs ? list.ownerName : null}
-                            canAdd={list.visibility !== 'private' && list.linkCanAdd}
-                        />
-                        {list.isDefault && <Badge size="xs">{t('lists.default_badge')}</Badge>}
-                        {!theirs && (
-                            <Badge size="xs" tone={shared ? 'sage' : 'neutral'}>
-                                {shared ? t('lists.shared_short') : t('lists.private_short')}
-                            </Badge>
-                        )}
-                        {/* Somebody put something forward and it is waiting on you. */}
-                        {list.suggestions !== null && list.suggestions > 0 && (
-                            <Badge size="xs" tone="accent">
-                                {list.suggestions === 1
-                                    ? t('suggestions.one_waiting')
-                                    : t('suggestions.waiting', { count: n(list.suggestions) })}
-                            </Badge>
-                        )}
-                    </span>
-                </span>
-            </Link>
-
-            {(canAdd || !theirs) && (
-                <div className="absolute top-3 right-3 flex items-center gap-1.5 sm:static sm:gap-2">
-                    {canAdd && (
-                        <button
-                            type="button"
-                            onClick={() => setAdding(true)}
-                            aria-label={t('lists.add_product')}
-                            title={t('lists.add_product')}
-                            className={rowAction}
-                        >
-                            <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
-                            <span className="hidden sm:inline">{t('people.add')}</span>
-                        </button>
-                    )}
-                    {!theirs && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={() => setSharing(true)}
-                                aria-label={`${t('lists.share')}: ${list.title}`}
-                                title={t('lists.share')}
-                                className={rowAction}
-                            >
-                                <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
-                                <span className="hidden sm:inline">{t('lists.share')}</span>
-                            </button>
-                            <Menu
-                                label={t('people.list_actions', { name: list.title })}
-                                button={
-                                    <>
-                                        <ToolIcon name="more" className="h-4 w-4 shrink-0" />
-                                        <span className="hidden sm:inline">{t('people.more')}</span>
-                                    </>
-                                }
-                                buttonClassName={rowAction}
-                            >
-                                {/*
-                                  The list page's own ⋯, per kind (owner, 2026-09-27: "the
-                                  ... menu for the group lists should contain more actions,
-                                  check the list page itself"), under the same conditions
-                                  as ListToolsBar. Left out: This or that together and Secret
-                                  Friend, which the list page shows only while that list
-                                  has one, which this overview does not know.
-                                */}
-                                {(close) => (
-                                    <>
-                                        {aboutSomebody && list.recipient && (
-                                            <MenuItem href={`${list.url}?panel=ask`} icon={<ToolIcon name="suggestions" className="h-4 w-4" />}>
-                                                {t('lists.ask_tab', { name: list.recipient.name })}
-                                            </MenuItem>
-                                        )}
-                                        {aboutSomebody && (
-                                            <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
-                                                {t('lists.ask_others')}
-                                            </MenuItem>
-                                        )}
-                                        {aboutSomebody && list.recipient && (
-                                            <MenuItem href={`/${market.key}/people/${list.recipient.id}`} icon={<ToolIcon name="people" className="h-4 w-4" />}>
-                                                {t('gift_history.link', { name: list.recipient.name })}
-                                            </MenuItem>
-                                        )}
-                                        {list.kind === 'mine' && shared && (
-                                            <MenuItem href={`${list.url}?panel=quiz`} icon={<ToolIcon name="quiz" className="h-4 w-4" />}>
-                                                {t('quiz.badge')}
-                                            </MenuItem>
-                                        )}
-                                        <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
-                                            {t('lists.settings')}
-                                        </MenuItem>
-                                        <MenuSeparator />
-                                        <MenuItem
-                                            danger
-                                            icon={<ToolIcon name="trash" className="h-4 w-4" />}
-                                            onSelect={() => {
-                                                close()
-
-                                                if (confirm(t('lists.delete_confirm'))) {
-                                                    // As on the list page: the save buttons elsewhere must stop
-                                                    // reporting products as saved into a list that is gone.
-                                                    router.delete(`/${market.key}/lists/${list.id}`, {
-                                                        preserveScroll: true,
-                                                        onSuccess: () => invalidate(),
-                                                    })
-                                                }
-                                            }}
-                                        >
-                                            {t('lists.delete')}
-                                        </MenuItem>
-                                    </>
-                                )}
-                            </Menu>
-                        </>
-                    )}
-                </div>
-            )}
-            {adding && <AddToListDialog list={list} onClose={() => setAdding(false)} />}
-            {sharing && <ShareListDialog list={list} onClose={() => setSharing(false)} />}
-        </div>
-    )
 }
 
 export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn, savedCoves }: Props) {
@@ -383,52 +137,31 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
         <>
             <Head title={heading} />
 
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{heading}</h1>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {/*
-                      "New list" is the only action in this header, deliberately.
+            {/*
+              "Maak een Cove" is the page's one action; Mijn mensen, the other
+              half of "who and what", sits before it as a secondary button
+              (owner, 2026-09-27), and Mijn mensen has the mirror of it. A
+              "find things to add" button stood here until 2026-09-06: the
+              empty state offers that link at the moment it is the only thing
+              to do, and two buttons for one intention made the header compete
+              with the page under it. The button is the home page's
+              `NewListButton`, which opens the same `ListWizard` as the Gift
+              Cove (one-step-list.md); signed out it is the sign-in, which
+              remembers the answer and replays it on return.
+            */}
+            <PageHeader
+                title={heading}
+                actions={
+                    <>
+                        <Link href={`/${market.key}/people`} className={buttonClasses('secondary', 'md')}>
+                            <ToolIcon name="people" className="h-4 w-4" />
+                            {t('people.title')}
+                        </Link>
+                        <NewListButton open={creating} onToggle={() => setCreating((v) => !v)} controls="new-list-wizard" />
+                    </>
+                }
+            />
 
-                      A "find things to add" button stood beside it, on the
-                      reasoning that nothing goes into a list from this page —
-                      every save starts at a product — so somebody arriving here
-                      needed a way onward. It was removed on 2026-09-06: the
-                      empty state already offers exactly that link, at the moment
-                      it is the only thing to do, and the site header carries
-                      search on every page. Two buttons for one intention made
-                      the header compete with the page under it.
-                    */}
-                    {/*
-                      One button for everybody. What it opens is the same
-                      `ListWizard` the Gift Cove uses, which since 2026-09-26 is
-                      one question (who it is for) and a Create button; see
-                      docs/features/one-step-list.md. Signed out, the button is
-                      the sign-in, which remembers the answer and replays it on
-                      return.
-
-                      The button is the home page's `NewListButton` since
-                      2026-09-12. It was a plain "New list" here, smaller and
-                      without the glyph, and the two looked like different things
-                      that turned out to open the same form.
-                    */}
-                    {/*
-                      The other half of "who and what": Mijn mensen, as a
-                      secondary button before the page's own action (owner,
-                      2026-09-27). Mijn mensen has the mirror of it.
-                    */}
-                    <Link href={`/${market.key}/people`} className={buttonClasses('secondary', 'md')}>
-                        <ToolIcon name="people" className="h-4 w-4" />
-                        {t('people.title')}
-                    </Link>
-                    <NewListButton
-                        open={creating}
-                        onToggle={() => setCreating((v) => !v)}
-                        controls="new-list-wizard"
-                    />
-                </div>
-            </header>
 
             {/*
               Lists work before signup, so this is a nudge rather than a wall.
@@ -474,37 +207,38 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
             )}
 
             {filled.length === 0 && savedCoves.length === 0 ? (
-                <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                    {!isSignedIn ? (
-                        <>
-                            {/*
-                              Keeping anything needs an account now, so "find
-                              things to add" led to a bookmark that opened the
-                              sign-in dialog anyway — a loop that named its
-                              precondition at the last step. Say it here.
-                            */}
-                            <p className="font-medium">{t('lists.sign_in_to_keep')}</p>
-                            <p className="mt-1 text-sm text-ink-soft">{t('lists.sign_in_hint')}</p>
-                            <SignInLink
-                                hint={t('lists.sign_in_hint')}
-                                className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                            >
+                !isSignedIn ? (
+                    /*
+                      Keeping anything needs an account now, so "find things to
+                      add" led to a bookmark that opened the sign-in dialog
+                      anyway — a loop that named its precondition at the last
+                      step. Say it here.
+                    */
+                    <EmptyState
+                        className="mt-10"
+                        title={t('lists.sign_in_to_keep')}
+                        action={
+                            <SignInLink hint={t('lists.sign_in_hint')} className={buttonClasses('primary', 'md')}>
                                 {t('nav.sign_in')}
                             </SignInLink>
-                        </>
-                    ) : (
-                        <>
-                            <p className="font-medium">{t('lists.empty')}</p>
-                            <p className="mt-1 text-sm text-ink-soft">{t('lists.empty_hint')}</p>
-                            <Link
-                                href={`/${market.key}/search`}
-                                className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                            >
+                        }
+                    >
+                        {t('lists.sign_in_hint')}
+                    </EmptyState>
+                ) : (
+                    <EmptyState
+                        className="mt-10"
+                        icon="wishlist"
+                        title={t('lists.empty')}
+                        action={
+                            <Link href={`/${market.key}/search`} className={buttonClasses('primary', 'md')}>
                                 {t('lists.find_things')}
                             </Link>
-                        </>
-                    )}
-                </div>
+                        }
+                    >
+                        {t('lists.empty_hint')}
+                    </EmptyState>
+                )
             ) : (
                 <>
                     {filled.map((section) => (
@@ -513,7 +247,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                             <ul className="mt-3 divide-y divide-line rounded-card border border-line bg-card">
                                 {section.lists.map((list) => (
                                     <li key={list.id}>
-                                        <ListCard list={list} />
+                                        <ListSummaryRow list={list} friends={friends} />
                                     </li>
                                 ))}
                             </ul>
@@ -585,230 +319,90 @@ function SectionHeading({ id, label, count, hint, icon }: { id: string; label: s
 }
 
 /**
- * The Saved section: the Coves this person bookmarked, each with the way back
- * to it, "Make it my list" (a copy into a list of their own) and a way to let
- * go. Only drawn when there is at least one.
+ * The Saved section: the Coves this person bookmarked (a Daily, a guide, a
+ * list somebody published), each with the way back to it, "Make it my list"
+ * (a copy into a list of their own) and a way to let go. Only drawn when
+ * there is at least one.
+ *
+ * Rows like every other section since 2026-09-27 (owner: "when saving a daily
+ * cove to my coves, the layout is different then the other lists"). They were
+ * picture cards three to a row, the only section of the page that was not a
+ * list of rows. The Cove's picture is the row's thumbnail, its kind the line
+ * under the name; "Make it my list" is the row's action and letting go is in
+ * the ⋯, in red, since it is the one that loses something.
  */
 function SavedCoves({ coves }: { coves: SavedCoveRow[] }) {
-    const { t } = useTranslations()
-
     return (
-        <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-3 divide-y divide-line rounded-card border border-line bg-card">
             {coves.map((cove) => (
-                <li key={cove.id} className="flex flex-col rounded-card border border-line bg-card">
-                    <Link href={cove.url} className="group block p-4">
-                        <div className="aspect-[4/3] overflow-hidden rounded-lg bg-cream">
-                            {cove.image && (
-                                <img src={cove.image} alt="" loading="lazy" className="h-full w-full object-contain transition group-hover:scale-105" />
-                            )}
-                        </div>
-                        <span className="mt-3 block text-2xs font-medium tracking-wide text-ink-soft uppercase">
-                            {t(`home.cove_kind_${cove.kind}`)}
-                        </span>
-                        <span className="mt-1 block font-medium group-hover:text-accent">{cove.title}</span>
-                    </Link>
-                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3">
-                        <button
-                            type="button"
-                            onClick={() => router.post(cove.copyUrl)}
-                            className="text-sm font-medium text-accent-dark underline hover:text-ink"
-                        >
-                            {t('saved_coves.copy')}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => router.delete(cove.saveUrl, { preserveScroll: true })}
-                            className="text-sm text-ink-soft hover:text-danger"
-                        >
-                            {t('saved_coves.unsave')}
-                        </button>
-                    </div>
+                <li key={cove.id}>
+                    <SavedCoveListRow cove={cove} />
                 </li>
             ))}
         </ul>
     )
 }
 
-/**
- * The add panel of a list page, over the overview, for one list.
- *
- * A native <dialog> through showModal(), as SignInDialog does: focus stays
- * inside, Escape closes it, and the page behind is inert. The panel opens at
- * once; adding or cancelling closes the dialog, and the server answers with a
- * toast naming the list (`onListPage={false}`), since the list is not on screen.
- */
-/**
- * Share, as a popup over the overview (owner, 2026-09-27: "share button should
- * show popup interface"), rather than a trip to the list page. The part people
- * come for: is it shared, the link to copy or send, and switching sharing on.
- * Who may add, group options and handing a list over stay on the list page,
- * one link away ("Meer deelopties"). Switching on is the list page's own
- * PATCH; the page's props come back with the link and the popup stays open.
- */
-function ShareListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
-    const { market } = usePage<SharedProps>().props
+function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
     const { t } = useTranslations()
-    const ref = useRef<HTMLDialogElement>(null)
-    const [busy, setBusy] = useState(false)
-
-    // The list page's `setting`: one PATCH, the page's props come back with the
-    // new state, and the popup stays open over them.
-    const setting = (data: Record<string, string | number | boolean | null>) =>
-        router.patch(`/${market.key}/lists/${list.id}`, data, { preserveScroll: true, preserveState: true })
-
-    useEffect(() => {
-        const el = ref.current
-
-        if (el !== null && !el.open) {
-            el.showModal()
-        }
-    }, [])
+    const rowAction = rowActionClasses()
 
     return (
-        <dialog
-            ref={ref}
-            onClose={onClose}
-            onClick={(e) => {
-                if (e.target === ref.current) {
-                    onClose()
+        <>
+            <ListRow
+                href={cove.url}
+                slots={2}
+                thumb={
+                    cove.image ? (
+                        <img
+                            src={cove.image}
+                            alt=""
+                            loading="lazy"
+                            className="h-12 w-12 shrink-0 rounded-lg border border-line bg-cream object-contain p-1"
+                        />
+                    ) : (
+                        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                            <ToolIcon name="gift" className="h-5 w-5" />
+                        </span>
+                    )
                 }
-            }}
-            aria-label={`${t('lists.share')}: ${list.title}`}
-            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
-        >
-            <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold">{list.title}</h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label={t('nav.close')}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
-                >
-                    <ToolIcon name="close" className="h-4 w-4" />
-                </button>
-            </div>
-
-            <p className="mt-2 text-sm font-medium">{list.shareUrl ? t('lists.sharing_on') : t('lists.sharing_off')}</p>
-
-            {list.shareUrl ? (
-                <div className="mt-3">
-                    <ShareRow url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
-                </div>
-            ) : (
-                <>
-                    <p className="mt-1 text-sm text-ink-soft">{t('lists.share_hint')}</p>
-                    <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => {
-                            setBusy(true)
-                            router.patch(
-                                `/${market.key}/lists/${list.id}`,
-                                { visibility: 'link' },
-                                { preserveScroll: true, preserveState: true, onFinish: () => setBusy(false) },
-                            )
-                        }}
-                        className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
-                    >
-                        {t('lists.enable_sharing')}
-                    </button>
-                </>
-            )}
-
-            {/*
-              The share panel's switches, in the popup too (owner, 2026-09-27:
-              "for the sharing popup add also sharing settings"): who sees it,
-              what the link lets people do, and for a group gift whether
-              contributors are named and whether people vote. Each is the list
-              page's own PATCH and the list page's own switch (`Option`). The
-              forms (how much each person chips in, sharing with one friend by
-              name, who was let in before) stay behind "Meer deelopties".
-            */}
-            <div className="mt-5 space-y-2">
-                {list.visibleToFriends !== null && list.visibleToFriends !== undefined && (
-                    <Option
-                        type="checkbox"
-                        checked={list.visibleToFriends}
-                        onChange={() => setting({ visible_to_friends: !list.visibleToFriends })}
-                        label={t('lists.visible_to_people')}
-                        hint={t('lists.visible_to_people_tip')}
-                    />
-                )}
-                {list.shareUrl && list.kind !== 'mine' && (
-                    <Option
-                        type="checkbox"
-                        checked={list.linkCanAdd}
-                        onChange={() => setting({ link_can_add: !list.linkCanAdd })}
-                        label={t('lists.anyone_can_add')}
-                        hint={t('lists.anyone_can_add_hint')}
-                    />
-                )}
-                {list.kind === 'group' && (
+                actions={
                     <>
-                        <Option
-                            type="checkbox"
-                            checked={Boolean(list.pledgersVisible)}
-                            onChange={() => setting({ pledgers_visible: !list.pledgersVisible })}
-                            label={t('lists.pledgers_visible')}
-                            hint={t('lists.pledgers_visible_hint')}
-                        />
-                        <Option
-                            type="checkbox"
-                            checked={Boolean(list.votingEnabled)}
-                            onChange={() => setting({ voting_enabled: !list.votingEnabled })}
-                            label={t('lists.voting_enabled')}
-                            hint={t('lists.voting_enabled_hint')}
-                        />
+                        <button
+                            type="button"
+                            onClick={() => router.post(cove.copyUrl)}
+                            aria-label={t('saved_coves.copy')}
+                            title={t('saved_coves.copy')}
+                            className={rowAction}
+                        >
+                            <ToolIcon name="copy" className="h-4 w-4 shrink-0" />
+                            <span className="hidden sm:inline">{t('saved_coves.copy')}</span>
+                        </button>
+                        <Menu
+                            label={t('people.list_actions', { name: cove.title })}
+                            button={<MoreButtonContent word={t('people.more')} />}
+                            buttonClassName={rowAction}
+                        >
+                            {(close) => (
+                                <MenuItem
+                                    danger
+                                    icon={<ToolIcon name="trash" className="h-4 w-4" />}
+                                    onSelect={() => {
+                                        // No "are you sure": saving it again is one press on the Cove.
+                                        close()
+                                        router.delete(cove.saveUrl, { preserveScroll: true })
+                                    }}
+                                >
+                                    {t('saved_coves.unsave')}
+                                </MenuItem>
+                            )}
+                        </Menu>
                     </>
-                )}
-            </div>
-
-            {/* Stop sharing: quiet, last, and asking once, as on the list page. */}
-            {list.shareUrl && (
-                <button
-                    type="button"
-                    onClick={() => {
-                        if (confirm(t('lists.disable_sharing_confirm'))) {
-                            setting({ visibility: 'private' })
-                        }
-                    }}
-                    className="mt-4 text-sm text-ink-soft underline hover:text-danger"
-                >
-                    {t('lists.disable_sharing')}
-                </button>
-            )}
-        </dialog>
-    )
-}
-
-function AddToListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
-    const { market } = usePage<SharedProps>().props
-    const ref = useRef<HTMLDialogElement>(null)
-
-    useEffect(() => {
-        const el = ref.current
-
-        if (el !== null && !el.open) {
-            el.showModal()
-        }
-    }, [])
-
-    return (
-        <dialog
-            ref={ref}
-            onClose={onClose}
-            onClick={(e) => {
-                if (e.target === ref.current) {
-                    onClose()
                 }
-            }}
-            aria-label={list.title}
-            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
-        >
-            <h2 className="text-lg font-semibold">{list.title}</h2>
-            <div className="mt-3">
-                <AddProduct base={`/${market.key}`} listId={list.id} market={market} defaultOpen onListPage={false} onClose={onClose} />
-            </div>
-        </dialog>
+            >
+                <ListRowTitle>{cove.title}</ListRowTitle>
+                <ListRowMeta>{t(`home.cove_kind_${cove.kind}`)}</ListRowMeta>
+            </ListRow>
+        </>
     )
 }
