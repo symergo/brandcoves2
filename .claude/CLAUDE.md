@@ -155,6 +155,9 @@ php artisan bc:seed-advice-coves      # publish resources/content/advice-coves.p
                                       # overwrites a Cove a person edited (--replace does, and asks
                                       # first); --dry-run previews. Run it after editing the file
 php artisan bc:seed-shop-coves        # the same for resources/content/shop-coves.php
+php artisan bc:store-entity-links     # store the link list on shop and brand Coves built before
+                                      # 2026-09-27, so their page never works it out. Dry run
+                                      # unless --write; only that column is written
 php artisan bc:seed-feature-ideas     # the contribute page's shipped ideas, from
                                       # resources/content/feature-ideas.php. Never overwrites an
                                       # idea edited in the admin (--replace does, and asks);
