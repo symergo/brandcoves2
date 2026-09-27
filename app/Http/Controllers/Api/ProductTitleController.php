@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ProductGroup;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\UntitledProducts;
+use App\Services\Gift\Giftability;
 use App\Services\Gift\GiftTags;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -93,6 +94,13 @@ class ProductTitleController extends Controller
      * sending the set without it; an empty set clears. A tag outside the
      * vocabulary refuses the batch and names it, the same as a foreign id:
      * a vocabulary that grows by typo is not a vocabulary.
+     *
+     * An entry may also carry `giftable`, the editor's verdict on whether the
+     * product is a present at all. It lands in `giftable_override`, which the
+     * classification pass lets win, and in the verdict columns at once so the
+     * gift engine reads it on the next request. `null` withdraws it, and the
+     * rules decide again on their next pass. Left out, nothing about it
+     * changes. See docs/features/giftability.md.
      */
     public function storeTags(Request $request): JsonResponse
     {
@@ -102,6 +110,7 @@ class ProductTitleController extends Controller
             'tags.*.id' => ['required', 'integer'],
             'tags.*.tags' => ['present', 'array', 'max:20'],
             'tags.*.tags.*' => ['string', 'max:40'],
+            'tags.*.giftable' => ['sometimes', 'nullable', 'boolean'],
         ]);
 
         $market = Market::from($data['market']);
@@ -115,9 +124,14 @@ class ProductTitleController extends Controller
         }
 
         $sets = [];
+        $verdicts = [];
 
         foreach ($data['tags'] as $entry) {
             $sets[(int) $entry['id']] = GiftTags::normalise($entry['tags']);
+
+            if (array_key_exists('giftable', $entry)) {
+                $verdicts[(int) $entry['id']] = $entry['giftable'] === null ? null : (bool) $entry['giftable'];
+            }
         }
 
         $ids = array_keys($sets);
@@ -136,12 +150,25 @@ class ProductTitleController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($sets, $market): void {
+        DB::transaction(function () use ($sets, $verdicts, $market): void {
             foreach ($sets as $id => $tags) {
+                $columns = ['gift_tags' => json_encode($tags)];
+
+                if (array_key_exists($id, $verdicts)) {
+                    $columns['giftable_override'] = $verdicts[$id];
+
+                    if ($verdicts[$id] !== null) {
+                        $verdict = Giftability::byEditor($verdicts[$id]);
+                        $columns['giftable'] = $verdict->giftable;
+                        $columns['worth_showing'] = $verdict->worthShowing;
+                        $columns['giftable_reason'] = $verdict->reason;
+                    }
+                }
+
                 ProductGroup::query()
                     ->forMarket($market)
                     ->whereKey($id)
-                    ->update(['gift_tags' => json_encode($tags)]);
+                    ->update($columns);
             }
         });
 
@@ -149,7 +176,7 @@ class ProductTitleController extends Controller
             ->forMarket($market)
             ->whereIn('id', $ids)
             ->orderBy('id')
-            ->get(['id', 'title', 'display_title', 'gift_tags']);
+            ->get(['id', 'title', 'display_title', 'gift_tags', 'giftable', 'giftable_override']);
 
         return response()->json([
             'market' => $market->value,
@@ -158,6 +185,8 @@ class ProductTitleController extends Controller
                 'id' => $group->id,
                 'displayTitle' => $group->displayTitle(),
                 'tags' => $group->giftTags(),
+                'giftable' => $group->giftable,
+                'giftableByEditor' => $group->giftable_override,
             ])->all(),
         ]);
     }

@@ -101,6 +101,23 @@ lexical list was doing badly.
 cartridge scores well on every rarity signal, so they are concentrated exactly where the discovery
 surfaces would otherwise have surfaced them. The count understates the value.
 
+## An editor's verdict (2026-09-28)
+
+`giftable_override`, nullable, beside the two verdicts. When set it wins: `ClassifyGiftability`
+reads it back and writes `Giftability::byEditor()` in place of the rules' answer, with the reason
+`editor`. Without that read-back an editor's verdict written into `giftable` would last until the
+next pass, which rewrites every row.
+
+Both columns follow the editor. "Not a gift" is a judgment about what the product is (a spare part,
+a refill), and everything the rules exclude for what a product is they exclude from the page too;
+only price splits the two, and price is not what an editor is judging. "A gift" lifts the price
+ceiling as well: the giver's own budget still applies.
+
+Written over the editorial API, as an optional `giftable` on each entry of `POST /products/tags`
+(null withdraws it). The write also sets the verdict columns at once, so the gift engine reads it on
+the next request rather than the next morning. First used by the whole-catalogue tagging pass in
+[gift-tags.md](gift-tags.md), which only says `false`.
+
 ## Where it runs
 
 `ClassifyGiftability`, after grouping — the classifier reads the group's denormalised title, category

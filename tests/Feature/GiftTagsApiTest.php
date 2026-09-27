@@ -197,6 +197,45 @@ class GiftTagsApiTest extends TestCase
     }
 
     #[Test]
+    public function an_entry_can_carry_the_editors_giftable_verdict(): void
+    {
+        $refill = $this->group('Navulling voor zeepdispenser');
+        $mug = $this->group('Koffiemok');
+        $key = $this->key(ApiToken::abilities());
+
+        $this->withToken($key)
+            ->postJson('/api/editorial/products/tags', [
+                'market' => 'be-nl',
+                'tags' => [
+                    ['id' => $refill->id, 'tags' => [], 'giftable' => false],
+                    ['id' => $mug->id, 'tags' => ['interest:coffee']],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.0.giftable', false)
+            ->assertJsonPath('data.0.giftableByEditor', false)
+            // Left out, nothing about the verdict changes.
+            ->assertJsonPath('data.1.giftable', true)
+            ->assertJsonPath('data.1.giftableByEditor', null);
+
+        // Both verdict columns follow at once, so the gift engine reads it on
+        // the next request rather than after the nightly pass.
+        $refill->refresh();
+        $this->assertFalse($refill->giftable);
+        $this->assertFalse($refill->worth_showing);
+        $this->assertSame('editor', $refill->giftable_reason);
+
+        // Null withdraws the verdict; the rules decide again on their next pass.
+        $this->withToken($key)
+            ->postJson('/api/editorial/products/tags', [
+                'market' => 'be-nl',
+                'tags' => [['id' => $refill->id, 'tags' => [], 'giftable' => null]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.0.giftableByEditor', null);
+    }
+
+    #[Test]
     public function a_tag_outside_the_vocabulary_refuses_the_batch(): void
     {
         $group = $this->group('Koffiemolen');

@@ -124,6 +124,7 @@ class ProductGroup extends Model
             'crowd_tags' => 'array',
             'in_stock' => 'boolean',
             'giftable' => 'boolean',
+            'giftable_override' => 'boolean',
             'worth_showing' => 'boolean',
             'first_seen_at' => 'datetime',
         ];

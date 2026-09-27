@@ -24,9 +24,10 @@ use App\Enums\Vibe;
  * a brief says "coffee" and a product says `interest:coffee`, and the two meet
  * without a text match in between.
  *
- * Written by editors over the editorial API (`POST /products/tags`), for the
- * same few hundred products per market that get a display title; never by a
- * job and never by a model. See docs/features/gift-tags.md.
+ * Written by editors over the editorial API (`POST /products/tags`); never by
+ * a job and never by a model running on the server. Since 2026-09-28 that
+ * includes a whole-catalogue pass over every giftable product, judged in a
+ * Claude session and posted like any other batch. See docs/features/gift-tags.md.
  */
 class GiftTags
 {

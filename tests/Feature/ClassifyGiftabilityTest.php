@@ -90,6 +90,24 @@ class ClassifyGiftabilityTest extends TestCase
     }
 
     #[Test]
+    public function an_editors_verdict_survives_the_pass(): void
+    {
+        $spare = $this->group('Sony WH-1000XM5 vervangende oorkussens', 2499, 'Audio');
+        $spare->forceFill(['giftable_override' => false])->save();
+        $ink = $this->group('HP 305XL inktcartridge zwart', 3299, 'Printers');
+        $ink->forceFill(['giftable_override' => true])->save();
+
+        (new ClassifyGiftability(Market::BeNl))->handle(app(GiftabilityClassifier::class));
+
+        // The rules would say the reverse of both. Without the override read
+        // back, an editor's verdict would last until the next pass.
+        $this->assertFalse($spare->fresh()->giftable);
+        $this->assertFalse($spare->fresh()->worth_showing);
+        $this->assertSame('editor', $spare->fresh()->giftable_reason);
+        $this->assertTrue($ink->fresh()->giftable);
+    }
+
+    #[Test]
     public function a_chunk_larger_than_one_statement_still_writes_every_row(): void
     {
         // The job chunks at 1000. This is well under that, but it exercises the

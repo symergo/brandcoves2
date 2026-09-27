@@ -540,6 +540,8 @@ the application writes them. The why, the surfaces and the writing brief are in
 
 `GET /products/untagged` and `POST /products/tags`, the same shape as the display-title pair: the
 listing carries the vocabulary, the write is a publish, all or nothing, replacing a product's tags.
+Since 2026-09-28 an entry may also carry `giftable` (true, false, or null to withdraw), an editor's
+verdict the nightly classification lets win; see [giftability.md](giftability.md).
 The vocabulary, the engine's reading of them and the tagging brief are in
 [gift-tags.md](gift-tags.md).
 

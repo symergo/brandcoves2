@@ -139,7 +139,7 @@ change nothing about demand.
 - `GET /api/editorial/products/untagged?market=&limit=&after=` (read): the same editorial-surface
   listing as `/products/untitled` (a Cove, an open plan, a chart, the Surprise pool), filtered to
   products with no tags, each row with its surfaces, its display title and the `vocabulary`.
-- `POST /api/editorial/products/tags` (publish) with `{market, tags: [{id, tags: [...]}]}`, up to
+- `POST /api/editorial/products/tags` (publish) with `{market, tags: [{id, tags: [...], giftable?}]}`, up to
   200, all or nothing. Replaces what a product had, so a wrong tag comes off by leaving it out; an
   empty set clears. A tag outside the vocabulary refuses the batch and names it: a vocabulary that
   grows by typo is not a vocabulary. Tags are stored lower-cased, deduplicated, in vocabulary order.
@@ -160,6 +160,35 @@ signal for exactly this question, and a person's saved taste is not to be mined.
 Adding an interest stays a code change on purpose: a case on `Interest`, a seed of product nouns
 in `AngleMap`, a label in four languages. Each has to be written by a person, and a tag vocabulary
 that grew from typed words would grow by typo.
+
+## The whole-catalogue pass (2026-09-28)
+
+Until this date tags covered the editorial surfaces only, about 2,700 products. The owner asked for
+every product to carry interests, recipients and occasions, and a giftable verdict, from Claude's
+own reading of it. Scope, owner's pick: the giftable, untagged groups, about 343,000 across the four
+markets; the 111,000 the rules already reject were left alone.
+
+How it runs, and why that way:
+
+- **Judged in a Claude session, posted over the API.** Still no job and no model call on the server
+  (invariant 1 holds, and nothing here spends the site's AI budget). The products were read once from
+  production, split into files, judged by parallel agents in a workflow, and posted by one script
+  through `POST /products/tags` at the write limit. Agents never call the API themselves: the 20
+  writes a minute are shared, and forty agents would spend their time on 429s.
+- **Only three vocabularies, plus the verdict.** Interest, recipient and occasion, because those
+  were asked for. Age, vibe, preference and values stay as they were; a pass that guessed taste
+  across 343,000 titles would mostly be guessing.
+- **The brief is widened for recipients and occasions, not dropped.** A recipient or occasion goes
+  on where the product plausibly suits it, not only where it is unmistakably for it, since the ask
+  was coverage. A product that suits anyone still gets none: recipient fit scores 0.45 for "tagged
+  for somebody else" against 0.5 for "untagged", so a recipient tag on everything would quietly
+  push every product down for the people it was not tagged for.
+- **The giftable verdict goes where the nightly pass cannot undo it**: `giftable_override`, see
+  [giftability.md](giftability.md). The pass only ever says `false` there. Every product in scope
+  was already giftable by the rules, so `true` would change nothing.
+
+A product that gets no tag at all stays in `gift_tags = '[]'` and still looks untagged. That is
+right: nothing was decided about it.
 
 ## The tagging brief
 

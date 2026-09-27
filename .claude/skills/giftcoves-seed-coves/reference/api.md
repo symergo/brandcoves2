@@ -83,6 +83,8 @@ time rather than as a silently skipped pick at build time.
                                        Brief: docs/features/display-titles.md
     POST /products/tags                {market, tags: [{id, tags: [...]}]}, <=200,
                                        all or nothing, replaces; [] clears.
+                                       Optional per entry: giftable true|false|null
+                                       (editor's verdict, beats the rules; null withdraws).
                                        Brief: docs/features/gift-tags.md
 
 ## POST /coves — the full body

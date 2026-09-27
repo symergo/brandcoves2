@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Enums\Market;
 use App\Jobs\Concerns\RunsOneAtATime;
 use App\Models\ProductGroup;
+use App\Services\Gift\Giftability;
 use App\Services\Gift\GiftabilityClassifier;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -48,16 +49,16 @@ class ClassifyGiftability implements ShouldQueue
 
         ProductGroup::query()
             ->forMarket($this->market)
-            ->select(['id', 'title', 'category', 'min_price'])
+            ->select(['id', 'title', 'category', 'min_price', 'giftable_override'])
             ->chunkById(1000, function ($groups) use ($classifier, &$giftable, &$rejected, &$showable): void {
                 $updates = [];
 
                 foreach ($groups as $group) {
-                    $verdict = $classifier->classify(
-                        $group->title,
-                        $group->category,
-                        $group->min_price,
-                    );
+                    // An editor's verdict wins over the rules, or it would
+                    // last only until this pass ran again.
+                    $verdict = $group->giftable_override === null
+                        ? $classifier->classify($group->title, $group->category, $group->min_price)
+                        : Giftability::byEditor($group->giftable_override);
 
                     $verdict->giftable ? $giftable++ : $rejected++;
                     $verdict->worthShowing && $showable++;

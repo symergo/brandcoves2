@@ -39,6 +39,21 @@ final readonly class Giftability
     }
 
     /**
+     * An editor's verdict (`product_groups.giftable_override`), which the
+     * rules do not get a say in.
+     *
+     * Both columns follow it. An editor saying "not a gift" is saying what the
+     * product is (a spare part, a refill), and every rule that excludes a row
+     * for what it is excludes it from the page too; only price splits the two,
+     * and price is not what an editor is judging. Saying "a gift" lifts the
+     * price ceiling as well: a budget the giver sets still applies.
+     */
+    public static function byEditor(bool $giftable): self
+    {
+        return $giftable ? self::yes('editor') : self::no('editor');
+    }
+
+    /**
      * Not something to suggest as a present, but still a real object someone
      * would be glad to be shown.
      *
