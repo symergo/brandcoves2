@@ -139,6 +139,8 @@ change nothing about demand.
 - `GET /api/editorial/products/untagged?market=&limit=&after=` (read): the same editorial-surface
   listing as `/products/untitled` (a Cove, an open plan, a chart, the Surprise pool), filtered to
   products with no tags, each row with its surfaces, its display title and the `vocabulary`.
+- `GET /api/editorial/products/to-tag?market=&source=lists|new&days=&limit=&after=` (read): the
+  tagging queue, see above.
 - `POST /api/editorial/products/tags` (publish) with `{market, tags: [{id, tags: [...], giftable?}]}`, up to
   200, all or nothing. Replaces what a product had, so a wrong tag comes off by leaving it out; an
   empty set clears. A tag outside the vocabulary refuses the batch and names it: a vocabulary that
@@ -164,7 +166,7 @@ that grew from typed words would grow by typo.
 ## The whole-catalogue pass (2026-09-28)
 
 Until this date tags covered the editorial surfaces only, about 2,700 products. The owner asked for
-every product to carry interests, recipients and occasions, and a giftable verdict, from Claude's
+every product to carry interests, recipients and occasions, then vibe and preference, and a giftable verdict, from Claude's
 own reading of it. Scope, owner's pick: the giftable, untagged groups, about 343,000 across the four
 markets; the 111,000 the rules already reject were left alone.
 
@@ -175,9 +177,11 @@ How it runs, and why that way:
   production, split into files, judged by parallel agents in a workflow, and posted by one script
   through `POST /products/tags` at the write limit. Agents never call the API themselves: the 20
   writes a minute are shared, and forty agents would spend their time on 429s.
-- **Only three vocabularies, plus the verdict.** Interest, recipient and occasion, because those
-  were asked for. Age, vibe, preference and values stay as they were; a pass that guessed taste
-  across 343,000 titles would mostly be guessing.
+- **Five vocabularies, plus the verdict.** Interest, recipient and occasion were the ask; vibe and
+  preference were added on the owner's word the same day. Preference only at the poles a product
+  clearly sits at (a hand grinder is `manual`, a premium brand `luxurious`), never both ends of a
+  pair, and none when the title does not say; a guessed taste scores against the person it misses.
+  Age and values stay as they were: a title rarely says either.
 - **The brief is widened for recipients and occasions, not dropped.** A recipient or occasion goes
   on where the product plausibly suits it, not only where it is unmistakably for it, since the ask
   was coverage. A product that suits anyone still gets none: recipient fit scores 0.45 for "tagged
@@ -189,6 +193,32 @@ How it runs, and why that way:
 
 A product that gets no tag at all stays in `gift_tags = '[]'` and still looks untagged. That is
 right: nothing was decided about it.
+
+## The tagging queue (2026-09-28)
+
+After the whole-catalogue pass, new work arrives two ways: somebody saves a product to a wish list,
+or a feed brings a product in. **Catalogue > Product tagging** in the admin counts both per market
+and hands out a prompt to paste into a Claude session in this repository. That session runs the
+`giftcoves-tag-products` skill (`.claude/skills/`), reads `GET /products/to-tag` and posts through
+`POST /products/tags`.
+
+- **A prompt, not a button** (owner's call). The page tags nothing and calls no model, so the
+  site's AI budget is untouched and invariant 1 holds without a queued job. The judging is the
+  same session-side judgment as the bulk pass, from the same brief: the skill's
+  `reference/brief.md` is the text the bulk pass's agents worked from.
+- **"Waiting" is `gift_tags_at IS NULL`**, stamped by every tag write. Empty tags cannot say
+  "judged": a gift that no tag fits keeps an empty set, and would sit in the queue for ever. The
+  migration backfills it from `updated_at` on the products that already carried tags.
+- **Two sources.** `lists`: saved to a wish list within the period, whatever the rules said,
+  because somebody chose it; only the product comes out, never the list or who saved it. `new`:
+  `first_seen_at` within the period and giftable by the rules, the same scope as the bulk pass.
+- The page counts both queues for every market on each render: eight counts, about 100 ms each
+  warm on production's 450,000 groups (up to a second cold), through the existing
+  `(market, first_seen_at)` index. No new index for an admin page.
+
+Files: `app/Services/Gift/TaggingQueue.php`, `app/Filament/Pages/ProductTagging.php`,
+`resources/views/filament/pages/product-tagging.blade.php`, `tests/Feature/TaggingQueueTest.php`,
+`database/migrations/2026_09_28_001800_product_groups_remember_when_they_were_tagged.php`.
 
 ## The tagging brief
 

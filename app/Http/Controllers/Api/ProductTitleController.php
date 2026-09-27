@@ -11,6 +11,7 @@ use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\UntitledProducts;
 use App\Services\Gift\Giftability;
 use App\Services\Gift\GiftTags;
+use App\Services\Gift\TaggingQueue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,42 @@ class ProductTitleController extends Controller
     }
 
     /**
+     * The tagging queue: products saved to a wish list, or new in the
+     * catalogue, that nobody has judged yet. The admin's Product tagging page
+     * hands out a prompt that reads this. See TaggingQueue.
+     */
+    public function toTag(Request $request, TaggingQueue $queue): JsonResponse
+    {
+        $data = $request->validate([
+            'market' => ['required', 'string', Rule::in(Market::values())],
+            'source' => ['required', 'string', Rule::in(TaggingQueue::SOURCES)],
+            'days' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'after' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $market = Market::from($data['market']);
+        $days = (int) ($data['days'] ?? 7);
+        $rows = $queue->list(
+            $market,
+            $data['source'],
+            $days,
+            (int) ($data['limit'] ?? 200),
+            isset($data['after']) ? (int) $data['after'] : null,
+        );
+
+        return response()->json([
+            'market' => $market->value,
+            'source' => $data['source'],
+            'days' => $days,
+            'waiting' => $queue->count($market, $data['source'], $days),
+            'count' => count($rows),
+            'vocabulary' => GiftTags::vocabulary(),
+            'data' => $rows,
+        ]);
+    }
+
+    /**
      * Write gift tags, all or nothing, replacing what a product had.
      *
      * Replacing rather than merging, so a wrong tag can be taken off by
@@ -152,7 +189,9 @@ class ProductTitleController extends Controller
 
         DB::transaction(function () use ($sets, $verdicts, $market): void {
             foreach ($sets as $id => $tags) {
-                $columns = ['gift_tags' => json_encode($tags)];
+                // gift_tags_at says "judged", which empty tags cannot: it is
+                // what takes a product out of the tagging queue.
+                $columns = ['gift_tags' => json_encode($tags), 'gift_tags_at' => now()];
 
                 if (array_key_exists($id, $verdicts)) {
                     $columns['giftable_override'] = $verdicts[$id];

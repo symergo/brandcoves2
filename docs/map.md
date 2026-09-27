@@ -138,7 +138,7 @@ Filament 5 at `/admin`, gated on `users.is_admin`.
 - **Pages** (custom): AffiliateSettings, AiSettings, Automation, CoveCalendar, DiscoverAwinFeeds,
   EditPageTemplate, EmailTemplates, MarketSupply, MarketTrends, MatchReview (the queue of products
   that may be one), Migration, OfflineIdeaReview (hand-typed ideas waiting for a person),
-  ReminderSettings
+  ProductTagging (products waiting for gift tags, and a prompt to tag them in Claude), ReminderSettings
 
 Styling gotcha, and it looks exactly like a page nobody styled: Filament's prebuilt stylesheet ships
 **no** Tailwind utilities. `resources/css/filament/admin/theme.css` supplies them, scanned from

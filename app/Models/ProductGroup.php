@@ -127,6 +127,7 @@ class ProductGroup extends Model
             'giftable_override' => 'boolean',
             'worth_showing' => 'boolean',
             'first_seen_at' => 'datetime',
+            'gift_tags_at' => 'datetime',
         ];
     }
 

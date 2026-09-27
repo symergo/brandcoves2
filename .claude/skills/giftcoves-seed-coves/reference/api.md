@@ -81,6 +81,8 @@ time rather than as a silently skipped pick at build time.
     POST /products/titles              {market, titles: [{id, title|null}]}, <=200,
                                        all or nothing; a title reaches readers at once.
                                        Brief: docs/features/display-titles.md
+    GET  /products/to-tag              ?market=&source=lists|new&days=&limit=&after=
+                                       the tagging queue; skill giftcoves-tag-products
     POST /products/tags                {market, tags: [{id, tags: [...]}]}, <=200,
                                        all or nothing, replaces; [] clears.
                                        Optional per entry: giftable true|false|null
