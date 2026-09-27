@@ -96,6 +96,13 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      already connects people.
 3. **One results page** (below).
 
+**What you say about a saved person is kept on them by default** (owner, 2026-09-27: "the info about
+the person when searching gifts is not saved to the profile"). "Onthoud deze antwoorden voor Mama"
+starts ticked; it was unticked, so answers were forgotten unless somebody found the box. Untick for a
+one-off. The server still writes only when the page asks (`remember`, `remembering_is_opt_in`). This
+or that played for a saved person keeps its result on them on arrival, without the "Bewaar bij Mama"
+press that was the only way before; played for nobody in particular, the buttons stay.
+
 A gift profile card (`/gift/card/{token}`) opens straight on the questions, filled in from the card,
 as before. `/gift?for=<person>` (reminder emails, the person page) opens straight on the results.
 

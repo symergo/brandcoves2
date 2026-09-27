@@ -773,9 +773,23 @@ function KeepOnPerson({
             .finally(() => setBusy(null))
     }
 
+    /*
+     * Played for somebody already saved (Find a gift passed who it is for):
+     * kept on them without a press (owner, 2026-09-27: "the info about the
+     * person when searching gifts is not saved to the profile"). The button
+     * was the only way, and a result nobody pressed on was lost. Once, on
+     * arrival; their own answers still win over it on the server.
+     */
+    useEffect(() => {
+        if (first !== null && recipients.some((r) => r.id === first)) {
+            save({ recipient_id: first }, first)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     if (message) {
         return (
-            <p role="status" className="mt-5 max-w-2xl rounded-card border border-sage/40 bg-sage/10 p-4 text-sm">
+            <p role="status" className="mt-5 rounded-card border border-sage/40 bg-sage/10 p-4 text-sm">
                 {message}
             </p>
         )

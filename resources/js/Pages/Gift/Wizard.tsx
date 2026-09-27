@@ -593,7 +593,15 @@ export default function GiftWizard(props: Props) {
     // a product with the same strings, so the two meet as one value.
     const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
-    const [remember, setRemember] = useState<boolean>(brief?.remember ?? false)
+    /*
+     * Keep the answers on the person: on unless unticked (owner, 2026-09-27:
+     * "the info about the person when searching gifts is not saved to the
+     * profile"). It was off, so what somebody told Find a gift about Mama was
+     * forgotten unless they found the tick. It only acts when a saved person
+     * is chosen; the server still saves only when asked (`remember`), so an
+     * unticked box, or an old page, writes nothing. Untick for a one-off.
+     */
+    const [remember, setRemember] = useState<boolean>(brief?.remember ?? true)
 
     /*
      * "Adjust" shows the questions again with the answers kept, and no request:
