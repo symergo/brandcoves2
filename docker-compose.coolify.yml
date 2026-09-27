@@ -369,6 +369,25 @@ services:
       - log_min_duration_statement=300ms
       - -c
       - log_temp_files=0
+      # JIT off (2026-09-28). Postgres compiles a query to machine code when
+      # its estimated cost passes a threshold, which the catalogue's large
+      # aggregate queries do; the compile itself takes 50-200ms and pays off
+      # only on queries that run for seconds over millions of rows. Ours are
+      # OLTP-shaped plus a few night passes, where it was cost without gain.
+      - -c
+      - jit=off
+      # A checkpoint every 1GB of WAL (the default) is several an hour while a
+      # feed is ingested or a market grouped, and each one writes every dirty
+      # page out at once. 4GB spreads them; the price is a longer crash
+      # recovery, bounded by checkpoint_timeout (5 min) either way.
+      - -c
+      - max_wal_size=4GB
+      # NOT SET, waiting for the owner: random_page_cost=1.1 and
+      # effective_io_concurrency=200 tell the planner that a random read costs
+      # about as much as a sequential one, which is true on an SSD or NVMe disk
+      # and false on a spinning one. Nothing in this repository records what
+      # the VPS disk is; confirm it (e.g. `lsblk -d -o name,rota` on the host:
+      # ROTA 0 means solid state) before adding them.
     # Docker's default /dev/shm is 64MB, and parallel queries allocate their
     # shared hash tables there: with work_mem raised, a parallel hash join can
     # outgrow it and fail with "could not resize shared memory segment".
