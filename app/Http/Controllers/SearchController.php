@@ -450,7 +450,9 @@ class SearchController extends Controller
         return $this->context ??= new SearchContext(
             $query->market,
             $result->groups->items(),
-            $result->groups->total(),
+            // No total exists any more; `:count` renders nothing on a search
+            // page (SearchContext).
+            0,
             $query->term,
         );
     }
@@ -725,9 +727,9 @@ class SearchController extends Controller
         }
 
         return [
-            'total' => count($suggestions),
+            'empty' => false,
             'currentPage' => 1,
-            'lastPage' => 1,
+            'hasMore' => false,
             'items' => array_map(fn (Suggestion $s) => $this->card($s->group), $suggestions),
         ];
     }
@@ -838,12 +840,18 @@ class SearchController extends Controller
         ]);
     }
 
+    /**
+     * One page and whether another follows. No total and no last page (owner's
+     * decision, 2026-09-27): nothing counts the matches, and the page says
+     * neither a number nor a word standing in for one. See
+     * SearchService::page().
+     */
     private function present(SearchResult $result): array
     {
         return [
-            'total' => $result->groups->total(),
+            'empty' => $result->isEmpty(),
             'currentPage' => $result->groups->currentPage(),
-            'lastPage' => $result->groups->lastPage(),
+            'hasMore' => $result->groups->hasMorePages(),
             'items' => array_map($this->card(...), $result->groups->items()),
         ];
     }

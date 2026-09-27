@@ -66,7 +66,7 @@ class SearchTagFilterTest extends TestCase
         $this->get('/be-nl/zoek/mes?interest=underwater-basket-weaving&for=uncle')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 2)
+                ->has('results.items', 2)
                 ->where('tagFilters', []));
     }
 

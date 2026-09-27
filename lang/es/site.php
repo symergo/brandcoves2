@@ -250,7 +250,7 @@ return [
         'amazon_search' => 'Busca :term también en Amazon',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
-        'page_of' => 'Página :current de :last',
+        'page' => 'Página :current',
         'seo_term' => 'Encuentra :term en bol, Amazon y cientos de tiendas. Una ficha por producto, con el mejor precio y los descuentos.',
 
         /*

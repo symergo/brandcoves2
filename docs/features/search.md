@@ -775,10 +775,30 @@ worst one, and brand pages pass the brand's name as the live term, so a crawler 
 pages paid it once per brand. The work did not need to happen before the page: the offers stay in
 the catalogue for every later view anyway.
 
-**What a visitor sees differently.** Only one case changes: a term the catalogue does not hold and a
-live shop does. Its first view shows what we store (possibly nothing); a view a few seconds later has
-the shop's products. Everything else was already served from stored offers, because the marker made
-all but one request per fifteen minutes skip the live call.
+**Except when the stored results are thin (owner's decision, the same day).** A term only bol knew
+showed no bol products on its first view, and the owner ruled that out. So when a request claims the
+marker and the stored catalogue has fewer results than one page (`inline_live_below`, 24), the
+request asks the shops itself and renders with their products:
+
+- **All shops at once.** Each connector describes its search (`PooledSearch::searchRequest()`,
+  returning a `LiveRequest`) instead of sending it, and `SearchService::askNow()` sends them together
+  through `Http::pool`. The wait is the slowest shop's, not the sum. The connector's own cache, rate
+  limiter and status handling (a 429 backs off, a 401 drops the token) still apply; only the sending
+  moved. A connector without `PooledSearch` (a test stand-in, Amazon later) is asked the ordinary way.
+- **Bounded.** `inline_live_timeout` (3 s) per shop, connect and total, and no retry. A token fetch
+  on the way uses the same 3 s. The ordinary path stays at 8 s with two retries, for the job.
+- **A shop that times out or fails** leaves the stored results on the page, and the request still
+  queues `PullLiveSearch`, so the next view has what that shop would have said.
+- **The count costs nothing extra.** It is the cached id list `page()` reads next anyway. After the
+  fold the term's generation is bumped, so the page reads the list afresh once, with the new offers.
+- **Brand pages follow the same rule**: a brand with fewer than a page of stored products asks bol
+  inline for the brand's name.
+- **A search that already fills a page** renders at once and leaves the shops to the job, since they
+  can only add to a full page.
+
+**What a visitor sees differently.** A thin search waits up to about 3 s on its first view, once per
+fifteen minutes per term, and shows the shops' products straight away. A full one never waits;
+anything the shops add shows from the next view.
 
 The details that matter:
 
@@ -817,9 +837,7 @@ Designed on 2026-09-01 and deferred then; built as designed.
 hours) under `SearchQuery::resultsCacheKey()`: market, the term lowercased, every filter, in-stock
 and the sort, plus the generation numbers below. Not the page, the view or `logged`, because none of
 them changes which products match or their order. A page is a slice of the list plus one
-primary-key lookup (`SearchService::page()`). The by-store view reads the same list. The first
-`results_cache_ids` (480, twenty pages) are kept; a deeper page asks the database for its own slice,
-with the cached total.
+primary-key lookup (`SearchService::page()`). The by-store view reads the same list.
 
 **Why.** Every page, sort and filter change ran the four-branch text union twice (the count and the
 page), and the audit saw a 3 s Inertia visit right after the same page had loaded in full. An
@@ -831,8 +849,32 @@ cheapest-offer and discount badges are exactly as right as before (invariant 7).
 a search still run on every view: `SearchLog::record()` (the demand signal) and the live marker.
 Nothing from Amazon is in the list, because nothing from Amazon is stored.
 
-**One query instead of two.** When the whole match set fits in the head, which is most searches, the
-total is the length of the list and the `count(*)` is not run at all.
+### At most 25 per shop, and no total (owner's decisions, 2026-09-27)
+
+**25 per shop.** The list keeps at most `results_per_shop` (25) products per shop, in ranking order.
+A product counts toward the shop behind its best offer (`product_groups.best_offer_id`): the shop
+whose price the card leads with and where a click goes. A product several shops sell counts once,
+for that shop, rather than against every seller, which would crowd out the small shops the cap is
+there to make room for. The list is built from the first `results_scan_limit` (3000) ranked matches,
+read as id and shop in one query (the shop is a subselect on `best_offer_id`) and capped in PHP. The
+bound only stops a one-letter search reading the whole catalogue; 25 per shop reaches it only with
+over a hundred shops in one result. A product with no best offer recorded has no shop to count
+against and is not capped.
+
+**No total.** Nothing counts the matches: no `count(*)`, and no total in the cache. The page gets
+`results.empty`, `results.currentPage`, `results.hasMore` and the items; the previous/next buttons
+read `hasMore`, and the label says "Page 3", never "of 12", and no number or word stands in for how
+many there are. The same on brand pages. Where a total used to feed something else:
+
+- `:count` in the editable copy of a search page renders empty (`SearchContext`). On a brand page it
+  is the brand's product count from `brand_stats`, which is not this search, and so is the Entity
+  Cove header's `total`.
+- `SearchLog::record()` gets the length of the capped list. Zero is what matters there (a content
+  gap); past zero it is a floor, and nothing public prints it.
+- The thin rule above reads the same length.
+- `SearchResult::isEmpty()` asks whether the list is empty, not whether this page is.
+
+The cache entry is a plain list of ints. An entry in the old shape (with a total) is read as a miss.
 
 ### Twelve hours, retired by generation numbers (owner's decision, 2026-09-27)
 
@@ -876,7 +918,11 @@ Only arrays of ints and booleans are cached. The cache store refuses to rebuild 
 `brandLinks()` still reads the facet brands, and that costs nothing extra: the page renders the
 facets anyway and `SearchResult::facets()` resolves once.
 
-Tests: `SearchLiveQueueTest` (a miss renders without asking the shop and dispatches once; the job's
+Tests: `SearchShopCapTest` (a shop's 26th product onwards is left out and the ranking is kept; the
+page carries no total and pages by `hasMore`), `SearchThinLiveTest` (a term with nothing stored shows
+bol's products on the first response and queues nothing; a full page renders without asking and
+queues the fetch; a timed-out shop leaves the stored results and queues the fetch),
+`SearchLiveQueueTest` (a miss renders without asking the shop and dispatches once; the job's
 offers show on the next view; a waiting caller gets them in the same call; page two runs no text
 search; an Inertia visit reuses what a full load cached; grouping a market makes its next search
 miss and leaves another market cached; a finished live fetch shows its offers in every variant of

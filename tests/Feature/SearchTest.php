@@ -66,7 +66,7 @@ class SearchTest extends TestCase
         $this->search(['q' => 'koptelefoon'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 1)
+                ->has('results.items', 1)
                 ->where('results.items.0.merchantCount', 2)
                 ->where('results.items.0.offerCount', 2)
                 // Cheapest across shops, in cents.
@@ -81,7 +81,7 @@ class SearchTest extends TestCase
         // type either form.
         $this->search(['q' => 'koptelefoons'])
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
     }
 
     /**
@@ -114,7 +114,7 @@ class SearchTest extends TestCase
 
         $this->search(['q' => 'kopltelefon'])
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
     }
 
     /**
@@ -154,7 +154,7 @@ class SearchTest extends TestCase
         $this->search(['q' => 'bridge'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 1)
+                ->has('results.items', 1)
                 ->where('results.items.0.brand', 'Philips')
             );
     }
@@ -273,7 +273,7 @@ class SearchTest extends TestCase
         $this->search(['q' => '4006381333931'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 1)
+                ->has('results.items', 1)
                 ->where('results.items.0.merchantCount', 2)
             );
     }
@@ -283,8 +283,8 @@ class SearchTest extends TestCase
     {
         // A bare /search lists nothing since 2026-09-13 (it is the landing);
         // an explicit sort is an ask and lists the whole catalogue.
-        $all = $this->search(['sort' => 'newest'])->viewData('page')['props']['results']['total'];
-        $comparable = $this->search(['comparable' => '1'])->viewData('page')['props']['results']['total'];
+        $all = count($this->search(['sort' => 'newest'])->viewData('page')['props']['results']['items']);
+        $comparable = count($this->search(['comparable' => '1'])->viewData('page')['props']['results']['items']);
 
         $this->assertGreaterThan($comparable, $all, 'the filter must actually narrow the set');
         $this->assertSame(3, $comparable, 'Sony, Philips and Nedis are each sold by two shops');
@@ -308,10 +308,10 @@ class SearchTest extends TestCase
         ProductGroup::query()->update(['in_stock' => false]);
 
         $this->search(['q' => 'koptelefoon'])
-            ->assertInertia(fn ($page) => $page->where('results.total', 0));
+            ->assertInertia(fn ($page) => $page->has('results.items', 0));
 
         $this->search(['q' => 'koptelefoon', 'in_stock' => '0'])
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
     }
 
     #[Test]

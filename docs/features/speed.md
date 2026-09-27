@@ -651,8 +651,11 @@ brand pages paid that once per brand. Now the request takes the same marker and 
 `App\Jobs\PullLiveSearch`; the page renders from the stored catalogue at once and the shop's offers
 show from the next view. The marker still means one fetch per (market, term) per 15 minutes.
 
-What a visitor notices: only a term the catalogue does not hold and bol does. Its first view is
-thin; a view a few seconds later has bol's products. Curation in the admin and the editorial API's
+Except when the stored results are thinner than a page (owner's decision): then the request asks
+the shops itself, all at once through `Http::pool`, 3 s each, no retry, and renders with their
+products, so a term only bol knows shows bol's products on its first view. A shop that times out
+leaves the stored results and gets the queued fetch for the next view. A page that is already full
+never waits. Brand pages follow the same rule. Curation in the admin and the editorial API's
 product lookup still wait for the shops (`waitForLive: true`): a person is waiting on that answer
 and no crawler reaches them. Amazon, which must be fetched at render, would still be asked in the
 request; it has no connector.
@@ -666,9 +669,10 @@ other shop.
 
 Every page, sort and filter change ran the four-branch text union twice (count and page), and the
 audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
-cached per (market, term, filters, in-stock, sort), the first 480 of them. A page is a slice plus
-one lookup by primary key, the total needs no `count(*)` when the list is complete, and the by-store
-view reads the same list. Prices, stock and offer counts are still read on every view.
+cached per (market, term, filters, in-stock, sort), at most 25 per shop (by the shop behind each
+product's best offer). A page is a slice plus one lookup by primary key, and the by-store view reads
+the same list. No total is counted at all: the page shows "Page N" with previous and next, and no
+number of results (owner's decision). Prices, stock and offer counts are still read on every view.
 
 Kept twelve hours, facets too (owner's decision). They are retired the moment what they were
 computed from changes, by generation numbers in the key: a market's number goes up when grouping
