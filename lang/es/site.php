@@ -894,6 +894,7 @@ return [
         'on_your_list' => 'En tu lista',
         'share_with' => 'Compartir con :name',
         'enable_sharing' => 'Activar el uso compartido',
+        'more_share_options' => 'Más opciones para compartir',
         'unshare_from' => 'Dejar de compartir con :name',
         'unshare_confirm' => '¿Dejar de compartir esta lista con :name? Un enlace que ya tenga sigue funcionando.',
         'shared_with_nobody' => 'Nadie nuevo a quien enviarla.',

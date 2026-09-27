@@ -1008,3 +1008,21 @@ inside a link. Share and ⋯ appear on your own lists only (someone else's list 
 set up): **share** opens the list on its Share panel (`?panel=share`), **⋯** holds **Vraag het aan
 anderen** (`/ask?list=`) and **Instellingen** (`?panel=settings`). The same actions as a list's row
 on a person's page, so a list offers the same things wherever it is shown.
+
+## My Coves as rows, like My people (2026-09-27)
+
+Owner: "design the My Coves list in the same way as the My People list. On mobile, replace the
+buttons with icons", then "evaluate what looks better: cards or rows". Compared on the same data:
+rows fit seven lists on one desktop screen with the names aligned, and match My people; cards showed
+more of what is in a list but spent most of their space on "Deze lijst is leeg". Rows won, with the
+cards' strength kept: a square on the left shows one product, or up to four as a 2x2 collage (the
+kind's mark on an empty list), always the same width so every name starts at the same place.
+
+- **Right side:** "+ Toevoegen" (filled), "Delen", "⋯ Meer". On a phone the words go and the three
+  icons sit in the row's top right corner (owner), the name making room for them. My people's rows
+  got the same treatment (Cadeau vinden and ⋯).
+- **Share is a popup** (owner: "share button should show popup interface"), `ShareListDialog`:
+  whether it is shared, the link to copy or send (`ShareRow`), "Delen aanzetten" for a private
+  list (the list page's own `PATCH`, the popup staying open while the link arrives), and "Meer
+  deelopties" to the full panel on the list page (who may add, group options, handing it over).
+  The overview now sends each of your own shared lists' `shareUrl`.

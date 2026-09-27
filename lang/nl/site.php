@@ -898,6 +898,7 @@ return [
         'on_your_list' => 'Op je lijst',
         'share_with' => 'Delen met :name',
         'enable_sharing' => 'Delen aanzetten',
+        'more_share_options' => 'Meer deelopties',
         'unshare_from' => 'Niet meer delen met :name',
         'unshare_confirm' => 'Deze lijst niet meer delen met :name? Een link die ze al hebben blijft werken.',
         'shared_with_nobody' => 'Niemand nieuws om het naar te sturen.',

@@ -1352,6 +1352,11 @@ class WishlistController extends Controller
             ->map(fn (Wishlist $list) => [
                 ...$this->summarise($list, $current),
                 'covers' => $list->items->pluck('snapshot_image_url')->all(),
+                // The share popup on the overview (owner, 2026-09-27): your
+                // own list's link, once it is shared; the list page's rule.
+                'shareUrl' => $owned && $list->visibility !== ListVisibility::Private
+                    ? url($current->url("l/{$list->share_token}"))
+                    : null,
 
                 /*
                  * Somebody else's list opens the page built for a reader.

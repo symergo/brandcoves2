@@ -12,6 +12,7 @@ import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
 import { buttonClasses } from '../../Components/Button'
 import Menu, { MenuItem } from '../../Components/Menu'
+import ShareRow from '../../Components/ShareRow'
 
 interface ListSummary {
     id: string
@@ -44,6 +45,8 @@ interface ListSummary {
     role: string | null
     /** Which section of the page it goes under; decided by the server. */
     section: Exclude<ListsView, 'saved'>
+    /** Your own list's link once it is shared; null while private or not yours. */
+    shareUrl?: string | null
 }
 
 /** The page's sections, and the `?view=` values that scroll to them. */
@@ -75,111 +78,160 @@ interface Props extends WizardOffer {
     isSignedIn: boolean
 }
 
-/** A round icon button in a card's row under the pictures: add, share, more. */
-const cardIcon =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink-soft transition hover:border-ink hover:text-ink'
+/**
+ * A row's action: its words beside the icon on a wide screen, the icon alone
+ * on a phone (owner, 2026-09-27: "on mobile, replace the buttons with icons").
+ * The words stay for screen readers either way.
+ */
+const rowAction =
+    'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-sm transition hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5'
 
 /**
- * One card per list, in two groups.
+ * One list, as one row: the way My people draws a person (owner, 2026-09-27:
+ * "design the My Coves list in the same way as the My People list").
  *
- * Every list rendered the same way — a title and an item count — even though
- * `kind` was already in the payload. So a wishlist for yourself and private
- * research about your sister were indistinguishable, and the only way to tell
- * them apart was to open them. The save picker has always sorted them into "for
- * me" and "for someone else"; this page now uses the same two words, so the
- * place you save to and the place you look for it agree.
+ * A picture where My people has the initial (the first product, or the kind's
+ * mark on an empty list), then the name, how many items and for whom, and the
+ * pills; on the right what you do to it: add, share, and ⋯ with "Vraag het aan
+ * anderen" and "Instellingen". Until that day each list was a card with a
+ * strip of product pictures, three to a row, which the owner found
+ * inconsistent with My people beside it.
+ *
+ * "Shared" means two different things here and must not be confused: `shared`
+ * is *I have published this outward*, `theirs` is *this is not mine at all*.
+ * Share and ⋯ are for your own lists only; somebody else's is theirs to share
+ * and set up. Adding needs a list you may add to.
  */
 function ListCard({ list }: { list: ListSummary }) {
     const { t, n } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const shared = list.visibility !== 'private'
-
-    /*
-     * "Shared" means two different things on this page and they must not be
-     * confused: `shared` above is *I have published this outward*, and
-     * `sharedWithMe` is *this is not mine at all*. Same word, opposite
-     * direction, which is why the second one gets a badge naming the owner
-     * rather than a second grey pill.
-     */
     const theirs = list.sharedWithMe
-
-    /*
-     * Adding from the card (owner's call, 2026-09-26). A panel at the top of
-     * the page with a list picker came first; a button on the list itself is
-     * the obvious place, and it needs no picker. The card was one big link,
-     * and a button cannot sit inside a link, so the card is now a box holding
-     * the link and, below it, the button.
-     */
     const [adding, setAdding] = useState(false)
+    const [sharing, setSharing] = useState(false)
     const canAdd = !theirs || list.role === 'editor'
 
     return (
-        <div className="relative flex h-full flex-col rounded-card border border-line bg-card transition hover:border-ink/30">
-            <Link href={list.url} className="flex flex-1 flex-col">
-                {/*
-                  A strip of what is in it. An empty list gets a placeholder rather
-                  than a collapsed card, so the grid keeps its rhythm and an empty
-                  list still reads as a list.
-                */}
-                <div className="flex gap-1 overflow-hidden rounded-t-card border-b border-line bg-cream p-2">
-                    {list.covers.length === 0 ? (
-                        <span className="flex h-16 w-full items-center justify-center text-xs text-ink-soft">
-                            {t('lists.empty_list')}
-                        </span>
-                    ) : (
-                        list.covers.map((src, i) => (
+        <div className="relative flex gap-3 p-4 sm:items-center">
+            <Link
+                href={list.url}
+                className={`group flex min-w-0 flex-1 items-center gap-3 ${canAdd || !theirs ? 'pr-32 sm:pr-0' : ''}`}
+            >
+                {list.covers.length > 1 ? (
+                    /*
+                      Up to four products as a small 2x2 collage in one square:
+                      what is in it at a glance (the cards' strong point) while
+                      every name starts at the same place.
+                    */
+                    <span className="grid h-12 w-12 shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
+                        {list.covers.slice(0, 4).map((src, i) => (
                             <img
                                 key={i}
                                 src={src}
                                 alt=""
                                 loading="lazy"
-                                className="h-16 min-w-0 flex-1 object-contain"
+                                className="h-full w-full bg-cream object-contain"
                                 onError={(e) => {
                                     e.currentTarget.style.visibility = 'hidden'
                                 }}
                             />
-                        ))
+                        ))}
+                    </span>
+                ) : list.covers.length === 1 ? (
+                    <img
+                        src={list.covers[0]}
+                        alt=""
+                        loading="lazy"
+                        className="h-12 w-12 shrink-0 rounded-lg border border-line bg-cream object-contain p-1"
+                        onError={(e) => {
+                            e.currentTarget.style.visibility = 'hidden'
+                        }}
+                    />
+                ) : (
+                    <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                        <ToolIcon name={kindIcons[(list.kind as ListKind) ?? 'mine'] ?? 'list'} className="h-5 w-5" />
+                    </span>
+                )}
+                <span className="min-w-0">
+                    <span className="block font-medium group-hover:underline">{list.title}</span>
+                    <span className="mt-0.5 block text-sm text-ink-soft">
+                        {list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })}
+                        {/*
+                          Who the list is for: on a list about somebody, the
+                          recipient; on a wish list somebody shared with me, its
+                          owner, because that is the person I shop for.
+                        */}
+                        {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
+                        {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
+                    </span>
+                    {/* Somebody else's wish list is how I shop for them: say so. */}
+                    {theirs && list.kind === 'mine' && list.ownerName && (
+                        <span className="mt-0.5 block text-sm text-accent">{t('lists.shop_for', { name: list.ownerName })}</span>
                     )}
-                </div>
-
+                    <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-2xs">
+                        <ListPills
+                            kind={list.kind as ListKind}
+                            role={theirs ? 'contributor' : 'owner'}
+                            ownerName={theirs ? list.ownerName : null}
+                            canAdd={list.visibility !== 'private' && list.linkCanAdd}
+                        />
+                        {list.isDefault && <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>}
+                        {!theirs && (
+                            <span
+                                className={
+                                    shared ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage' : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
+                                }
+                            >
+                                {shared ? t('lists.shared_short') : t('lists.private_short')}
+                            </span>
+                        )}
+                        {/* Somebody put something forward and it is waiting on you. */}
+                        {list.suggestions !== null && list.suggestions > 0 && (
+                            <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                                {list.suggestions === 1
+                                    ? t('suggestions.one_waiting')
+                                    : t('suggestions.waiting', { count: n(list.suggestions) })}
+                            </span>
+                        )}
+                    </span>
+                </span>
             </Link>
-            {/*
-              The card's actions in a row of their own under the pictures, +
-              first (owner, 2026-09-27): add, share, then ⋯ with Vraag het aan
-              anderen and Instellingen. They sat in the corner of the pictures
-              and covered the products. Outside the links, because a button
-              cannot sit inside one, so the pictures and the text are each a
-              link to the list. Share and ⋯ on your own lists only: somebody
-              else's list is theirs to share and set up. Each opens the list
-              page on that tool (`?panel=`), as a list's row on a person's page.
-            */}
+
             {(canAdd || !theirs) && (
-                <div className="flex items-center gap-1.5 px-4 pt-3">
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 sm:static sm:gap-2">
                     {canAdd && (
                         <button
                             type="button"
                             onClick={() => setAdding(true)}
                             aria-label={t('lists.add_product')}
                             title={t('lists.add_product')}
-                            className={`${cardIcon} text-accent-dark`}
+                            className={`${rowAction} border-accent bg-accent text-white hover:bg-accent-dark`}
                         >
-                            <ToolIcon name="plus" className="h-5 w-5" />
+                            <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                            <span className="hidden sm:inline">{t('people.add')}</span>
                         </button>
                     )}
                     {!theirs && (
                         <>
-                            <Link
-                                href={`${list.url}?panel=share`}
+                            <button
+                                type="button"
+                                onClick={() => setSharing(true)}
                                 aria-label={`${t('lists.share')}: ${list.title}`}
                                 title={t('lists.share')}
-                                className={cardIcon}
+                                className={rowAction}
                             >
-                                <ToolIcon name="shared" className="h-5 w-5" />
-                            </Link>
+                                <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">{t('lists.share')}</span>
+                            </button>
                             <Menu
                                 label={t('people.list_actions', { name: list.title })}
-                                button={<ToolIcon name="more" className="h-5 w-5" />}
-                                buttonClassName={cardIcon}
+                                button={
+                                    <>
+                                        <ToolIcon name="more" className="h-4 w-4 shrink-0" />
+                                        <span className="hidden sm:inline">{t('people.more')}</span>
+                                    </>
+                                }
+                                buttonClassName={rowAction}
                             >
                                 {() => (
                                     <>
@@ -196,106 +248,8 @@ function ListCard({ list }: { list: ListSummary }) {
                     )}
                 </div>
             )}
-            <Link href={list.url} className="flex flex-1 flex-col">
-                <div className="flex flex-1 flex-col p-4">
-                    <h3 className="font-medium">{list.title}</h3>
-
-                    <p className="mt-1 text-sm text-ink-soft">
-                        {list.itemCount === 1
-                            ? t('lists.one_item')
-                            : t('lists.items', { count: n(list.itemCount) })}
-                        {/*
-                          Who the list is for. On a list about somebody, the
-                          recipient; on a wish list somebody shared with me, its
-                          owner, because that is the person I shop for. Never on
-                          a wish list of your own: there the recipient is you,
-                          and a handed-over list keeps your name as its record.
-                        */}
-                        {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
-                        {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
-                    </p>
-
-                    {/*
-                      What this card is FOR, on somebody else's wish list.
-
-                      A list Anna shared with me is, from where I stand, how I shop
-                      for Anna — and that is the commonest gifting act on the site.
-                      The card said "11 items" and nothing else, so the one row that
-                      answers "what do I get her?" read exactly like a row of my own
-                      filing.
-
-                      Only on a `mine` list of theirs: those are the ones with
-                      something to claim. A `for_someone` or `group` list I was
-                      invited to is co-giver coordination, and its own kind sentence
-                      covers it.
-                    */}
-                    {theirs && list.kind === 'mine' && list.ownerName && (
-                        <p className="mt-1 text-sm text-accent">
-                            {t('lists.shop_for', { name: list.ownerName })}
-                        </p>
-                    )}
-
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-2xs">
-                        {/*
-                          What kind of list this is.
-
-                          The kind lived only in the section heading, so a card read
-                          out of context — which is how a card is read — said
-                          nothing about what could be done with it.
-                        */}
-                        {/*
-                          Kind, whose it is, and what you may do — one component,
-                          the same order and the same colours as the list page and
-                          the shared page. These three pills were built here and
-                          copied outward by hand, which is how the same list came to
-                          describe itself differently depending on which page you
-                          reached it from.
-                        */}
-                        <ListPills
-                            kind={list.kind as ListKind}
-                            role={theirs ? 'contributor' : 'owner'}
-                            ownerName={theirs ? list.ownerName : null}
-                            canAdd={list.visibility !== 'private' && list.linkCanAdd}
-                        />
-                        {list.isDefault && (
-                            <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>
-                        )}
-                        {/*
-                          Shared or not is the fact people most need off this page —
-                          it is the difference between a private note and something
-                          anyone with the link can read.
-                        */}
-                        {!theirs && (
-                            <span
-                                className={
-                                    shared
-                                        ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage'
-                                        : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
-                                }
-                            >
-                                {shared ? t('lists.shared_short') : t('lists.private_short')}
-                            </span>
-                        )}
-
-                        {/*
-                          Somebody put something forward and it is waiting on you.
-
-                          This is the badge the Gift Cove's suggestions card was
-                          always pointing at: it sends you here so you can see which
-                          list received one, and until now the index said nothing
-                          about them at all.
-                        */}
-                        {list.suggestions !== null && list.suggestions > 0 && (
-                            <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
-                                {list.suggestions === 1
-                                    ? t('suggestions.one_waiting')
-                                    : t('suggestions.waiting', { count: n(list.suggestions) })}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </Link>
             {adding && <AddToListDialog list={list} onClose={() => setAdding(false)} />}
+            {sharing && <ShareListDialog list={list} onClose={() => setSharing(false)} />}
         </div>
     )
 }
@@ -512,7 +466,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                     {filled.map((section) => (
                         <section key={section.key} id={`section-${section.key}`} aria-labelledby={`heading-${section.key}`} className={sectionClass(section.key)}>
                             <SectionHeading id={`heading-${section.key}`} label={section.label} count={section.lists.length} hint={section.hint} icon={sectionIcons[section.key]} />
-                            <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <ul className="mt-3 divide-y divide-line rounded-card border border-line bg-card">
                                 {section.lists.map((list) => (
                                     <li key={list.id}>
                                         <ListCard list={list} />
@@ -639,6 +593,86 @@ function SavedCoves({ coves }: { coves: SavedCoveRow[] }) {
  * once; adding or cancelling closes the dialog, and the server answers with a
  * toast naming the list (`onListPage={false}`), since the list is not on screen.
  */
+/**
+ * Share, as a popup over the overview (owner, 2026-09-27: "share button should
+ * show popup interface"), rather than a trip to the list page. The part people
+ * come for: is it shared, the link to copy or send, and switching sharing on.
+ * Who may add, group options and handing a list over stay on the list page,
+ * one link away ("Meer deelopties"). Switching on is the list page's own
+ * PATCH; the page's props come back with the link and the popup stays open.
+ */
+function ShareListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const ref = useRef<HTMLDialogElement>(null)
+    const [busy, setBusy] = useState(false)
+
+    useEffect(() => {
+        const el = ref.current
+
+        if (el !== null && !el.open) {
+            el.showModal()
+        }
+    }, [])
+
+    return (
+        <dialog
+            ref={ref}
+            onClose={onClose}
+            onClick={(e) => {
+                if (e.target === ref.current) {
+                    onClose()
+                }
+            }}
+            aria-label={`${t('lists.share')}: ${list.title}`}
+            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
+        >
+            <div className="flex items-start justify-between gap-3">
+                <h2 className="text-lg font-semibold">{list.title}</h2>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label={t('nav.close')}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
+                >
+                    <ToolIcon name="close" className="h-4 w-4" />
+                </button>
+            </div>
+
+            <p className="mt-2 text-sm font-medium">{list.shareUrl ? t('lists.sharing_on') : t('lists.sharing_off')}</p>
+
+            {list.shareUrl ? (
+                <div className="mt-3">
+                    <ShareRow url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
+                </div>
+            ) : (
+                <>
+                    <p className="mt-1 text-sm text-ink-soft">{t('lists.share_hint')}</p>
+                    <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                            setBusy(true)
+                            router.patch(
+                                `/${market.key}/lists/${list.id}`,
+                                { visibility: 'link' },
+                                { preserveScroll: true, preserveState: true, onFinish: () => setBusy(false) },
+                            )
+                        }}
+                        className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                    >
+                        {t('lists.enable_sharing')}
+                    </button>
+                </>
+            )}
+
+            <Link href={`${list.url}?panel=share`} className="mt-5 block text-sm font-medium text-accent-dark hover:text-ink">
+                {t('lists.more_share_options')} →
+            </Link>
+        </dialog>
+    )
+}
+
 function AddToListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
     const { market } = usePage<SharedProps>().props
     const ref = useRef<HTMLDialogElement>(null)

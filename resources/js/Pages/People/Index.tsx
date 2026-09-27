@@ -418,9 +418,16 @@ function PersonRow({
     const [saving, setSaving] = useState(false)
 
     const link = 'inline-flex min-h-11 items-center rounded-lg border border-line px-2.5 py-1.5 sm:px-3 text-sm hover:border-ink sm:min-h-0'
+    // Mijn Coves' row action (owner, 2026-09-27: "on mobile, replace the buttons with icons").
+    const rowAction =
+        'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-sm transition hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5'
 
     const summary = summaryOf(person, t, (cents) => formatPrice(cents, market))
     const invitable = person.invitable && person.personId !== null
+    // A saved person's two icons sit in the row's top right corner on a phone;
+    // a friend nobody saved has a wide "Bewaar wat je over … weet" button
+    // instead, which keeps its own line.
+    const iconsOnTop = person.urls.finder !== null && !(person.personId === null && person.friend !== null)
     const [inviting, setInviting] = useState(false)
     const more = invitable || [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
 
@@ -486,19 +493,25 @@ function PersonRow({
 
     return (
         <li className="p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center">
                 {person.urls.person !== null ? (
-                    <Link href={person.urls.person} className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg">
+                    <Link href={person.urls.person} className={`group flex min-w-0 flex-1 items-center gap-3 rounded-lg ${iconsOnTop ? 'pr-24 sm:pr-0' : ''}`}>
                         {main}
                     </Link>
                 ) : (
                     <div className="flex min-w-0 flex-1 items-center gap-3">{main}</div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-1.5 sm:justify-end sm:gap-2">
+                <div className={iconsOnTop ? 'absolute top-0 right-0 flex items-center gap-1.5 sm:static sm:flex-wrap sm:justify-end sm:gap-2' : 'flex flex-wrap items-center gap-1.5 sm:justify-end sm:gap-2'}>
                     {person.urls.finder !== null && (
-                        <Link href={person.urls.finder} className={`${link} border-accent bg-accent text-white hover:bg-accent-dark`}>
-                            {t('people.find_gift')}
+                        <Link
+                            href={person.urls.finder}
+                            aria-label={t('people.find_gift')}
+                            title={t('people.find_gift')}
+                            className={`${rowAction} border-accent bg-accent text-white hover:bg-accent-dark`}
+                        >
+                            <ToolIcon name="whisperer" className="h-4 w-4 shrink-0" />
+                            <span className="hidden sm:inline">{t('people.find_gift')}</span>
                         </Link>
                     )}
                     {more && (
@@ -507,11 +520,11 @@ function PersonRow({
                             button={
                                 <>
                                     <ToolIcon name="more" className="h-4 w-4 shrink-0" />
-                                    <span>{t('people.more')}</span>
-                                    <ToolIcon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-soft" />
+                                    <span className="hidden sm:inline">{t('people.more')}</span>
+                                    <ToolIcon name="chevron" className="hidden h-3.5 w-3.5 shrink-0 text-ink-soft sm:inline" />
                                 </>
                             }
-                            buttonClassName={`${link} gap-1.5`}
+                            buttonClassName={rowAction}
                         >
                             {(close) => (
                                 <>
