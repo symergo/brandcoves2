@@ -89,10 +89,24 @@ export default function SaveToList({
     price,
     compact = false,
     into,
+    url,
+    onSaved,
 }: {
+    /**
+     * Told which list it landed in, for a page that shows that list beside the
+     * button (`/for/{token}`'s ideas, above the person's own list) and has to
+     * redraw it. Everywhere else the toast is the confirmation.
+     */
+    onSaved?: (listId: string) => void
     groupId?: number
     source?: string
     externalId?: string
+    /**
+     * A pasted link nothing we hold matched (Find a gift's search without a
+     * list, 2026-09-27): saved as a hand-written item carrying the link, as a
+     * list's own search does, and its page is read afterwards.
+     */
+    url?: string
     title?: string
     imageUrl?: string | null
     price?: number | null
@@ -165,7 +179,9 @@ export default function SaveToList({
     // product have no stored group; the server decides what may be kept.
     const payload = groupId
         ? { group_id: groupId }
-        : { source, external_id: externalId, title, image_url: imageUrl, price }
+        : url !== undefined
+          ? { source: 'manual', url }
+          : { source, external_id: externalId, title, image_url: imageUrl, price }
 
     /*
      * Named, in the order the save itself resolves: the list being filled, then
@@ -363,6 +379,8 @@ export default function SaveToList({
             if (extra.new_list !== undefined) {
                 router.reload({ only: ['lists'] })
             }
+
+            onSaved?.(result.listId)
 
             return true
         } catch (error) {
