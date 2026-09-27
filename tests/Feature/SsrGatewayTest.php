@@ -9,6 +9,7 @@ use App\Support\SsrGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Vite;
 use Inertia\Ssr\Gateway;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -27,6 +28,11 @@ class SsrGatewayTest extends TestCase
 
         // phpunit.xml switches SSR off for the suite; these tests are about it.
         config(['inertia.ssr.enabled' => true, 'inertia.ssr.url' => 'http://ssr.test']);
+
+        // With the local dev server running, `public/hot` exists and Inertia sends the render
+        // to Vite's hot SSR address instead of the configured one. Point Vite at a hot file
+        // that does not exist, so these tests pass with or without `composer dev` running.
+        Vite::useHotFile(storage_path('framework/testing/no-vite-hot-file'));
     }
 
     #[Test]
