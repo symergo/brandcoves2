@@ -43,6 +43,13 @@ class MarketTrends extends Page
     /** Which market is on screen. */
     public string $market = '';
 
+    /**
+     * One MarketTrends per render, so its remembered moves are shared by the
+     * four lists on the page. Protected, so Livewire does not carry it between
+     * requests: every request starts from fresh chart data.
+     */
+    protected ?Trends $trends = null;
+
     public function mount(): void
     {
         $this->market = $this->marketsWithData()[0] ?? Market::default()->value;
@@ -55,16 +62,23 @@ class MarketTrends extends Page
      */
     public function marketsWithData(): array
     {
-        $withData = DB::table('popular_ranks')
-            ->select('market')
-            ->distinct()
-            ->pluck('market')
-            ->all();
-
+        /*
+         * One EXISTS per market rather than a DISTINCT over the whole table.
+         *
+         * `SELECT DISTINCT market` reads every rank row ever captured, and the
+         * table only grows: a year of daily charts is millions of rows to learn
+         * five values. Each EXISTS stops at its first row, and there are only
+         * as many as there are markets.
+         */
         return array_values(array_filter(
             Market::values(),
-            fn (string $m) => in_array($m, $withData, true),
+            fn (string $m) => DB::table('popular_ranks')->where('market', $m)->exists(),
         ));
+    }
+
+    private function trends(): Trends
+    {
+        return $this->trends ??= app(Trends::class);
     }
 
     public function selected(): Market
@@ -100,24 +114,24 @@ class MarketTrends extends Page
     /** @return list<TrendMove> */
     public function risers(): array
     {
-        return app(Trends::class)->risers($this->selected());
+        return $this->trends()->risers($this->selected());
     }
 
     /** @return list<TrendMove> */
     public function newEntries(): array
     {
-        return app(Trends::class)->newEntries($this->selected());
+        return $this->trends()->newEntries($this->selected());
     }
 
     /** @return list<TrendMove> */
     public function fallers(): array
     {
-        return app(Trends::class)->fallers($this->selected());
+        return $this->trends()->fallers($this->selected());
     }
 
     /** @return list<array{category_external_id: string, name: string|null, entries: int, moved: int, new: int, churn: float}> */
     public function activeCategories(): array
     {
-        return app(Trends::class)->activeCategories($this->selected());
+        return $this->trends()->activeCategories($this->selected());
     }
 }

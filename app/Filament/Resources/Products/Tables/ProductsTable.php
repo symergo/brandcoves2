@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * The offer browser.
@@ -39,12 +40,26 @@ class ProductsTable
                         '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#ebe0cf"/></svg>'
                     )),
 
+                /*
+                 * `ilike` on the bare column, not Filament's default search.
+                 *
+                 * The default writes `lower(title) like '%x%'`, which no index
+                 * serves, so every keystroke read the whole offers table (668 ms
+                 * on production). `products_title_trgm_idx` is a trigram index
+                 * on `title` itself, and Postgres uses it for `ilike`. The `%`,
+                 * `_` and `\` a person types are escaped so they match
+                 * themselves rather than acting as wildcards.
+                 */
                 TextColumn::make('title')
-                    ->searchable()
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query
+                        ->where('title', 'ilike', '%'.addcslashes($search, '%_\\').'%'))
                     ->limit(60)
                     ->description(fn (Product $r) => $r->brand),
 
-                TextColumn::make('merchant.name')->label('Shop')->searchable(),
+                // Not searchable: a search on it joined every offer to its
+                // merchant per keystroke, and the shop filter below answers
+                // "this shop's products" with an index.
+                TextColumn::make('merchant.name')->label('Shop'),
                 TextColumn::make('market')->badge()->sortable(),
                 TextColumn::make('source')->badge(),
 

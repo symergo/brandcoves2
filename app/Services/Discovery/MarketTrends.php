@@ -28,6 +28,9 @@ class MarketTrends
     /** The default comparison window. A week smooths a chart's daily jitter. */
     public const WINDOW_DAYS = 7;
 
+    /** @var array<string, Collection<int, TrendMove>> see moves() */
+    private array $moves = [];
+
     /**
      * Products climbing a chart, biggest movers first.
      *
@@ -141,6 +144,22 @@ class MarketTrends
      * @return Collection<int, TrendMove>
      */
     public function moves(Market $market, int $windowDays = self::WINDOW_DAYS, ?Source $source = null): Collection
+    {
+        /*
+         * Remembered for the life of this object.
+         *
+         * The admin page asks for risers, new entries, fallers and active
+         * categories, and each of those is a filter over this one result: four
+         * identical joins over `popular_ranks` per render. The page holds one
+         * instance per request, so each render runs it once. Never a singleton,
+         * so a long-running queue worker cannot keep an old answer.
+         */
+        return $this->moves[$market->value.'|'.$windowDays.'|'.($source?->value ?? '')]
+            ??= $this->readMoves($market, $windowDays, $source);
+    }
+
+    /** @return Collection<int, TrendMove> */
+    private function readMoves(Market $market, int $windowDays, ?Source $source): Collection
     {
         $latest = PopularRank::latestCapturedOn($market, $source);
 

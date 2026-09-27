@@ -6,8 +6,7 @@ namespace App\Filament\Resources\GuideTopics\Pages;
 
 use App\Enums\Market;
 use App\Filament\Resources\GuideTopics\GuideTopicResource;
-use App\Services\Guides\SeasonalTopics;
-use App\Services\Guides\TopicMiner;
+use App\Jobs\RefreshTopicQueue;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -37,17 +36,22 @@ class ListGuideTopics extends ListRecords
                 ->requiresConfirmation()
                 ->modalDescription('Re-mines the search log and re-reads the seasonal calendar for every market. Existing decisions are left alone.')
                 ->action(function (): void {
-                    $mined = 0;
-                    $seasonal = 0;
-
+                    /*
+                     * Queued, one job per market, rather than run here.
+                     *
+                     * Both passes for all five markets ran inside this web
+                     * request: a search-log mine and a product count per
+                     * candidate topic, five times, with the admin waiting on
+                     * the spinner. The counts it used to report went with it;
+                     * the list itself is the report once the jobs have run.
+                     */
                     foreach (Market::cases() as $market) {
-                        $mined += app(TopicMiner::class)->mine($market);
-                        $seasonal += app(SeasonalTopics::class)->seed($market);
+                        RefreshTopicQueue::dispatch($market);
                     }
 
                     Notification::make()
-                        ->title('Queue refreshed')
-                        ->body("{$mined} mined candidates, {$seasonal} seasonal topics in season right now.")
+                        ->title('Queue refresh queued')
+                        ->body('Each market is re-mined in the background. Reload this list in a minute or two to see new topics.')
                         ->success()
                         ->send();
                 }),
