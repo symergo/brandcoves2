@@ -88,8 +88,7 @@ Friends on GiftCoves are people you are connected with: you opened each other's
 shared list, or added each other by email. A wish list of yours marked "Visible
 to my people" can be seen by them: what is on it, and what you wrote under an
 item. They can mark something "I'll get this" and put it on a list they make for
-you. You never see what they marked. Nobody else sees the list unless you also
-share its link. Wish lists you make from 26 September 2026 have it on, and lists
+you. You never see what they marked. Wish lists you make from 26 September 2026 have it on, and lists
 from before that have it off; you change it per list, under Share. Removing
 somebody as a friend, or switching it off, takes the list away from them at once.
 

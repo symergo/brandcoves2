@@ -94,8 +94,7 @@ elkaars gedeelde lijst, of voegden elkaar toe met een e-mailadres. Een
 verlanglijst van jou met "Zichtbaar voor mijn mensen" aan kunnen zij zien: wat
 erop staat, en wat je bij een item schreef. Ze kunnen iets aanduiden met "Ik koop
 dit" en het op een lijst zetten die ze voor jou maken. Jij ziet nooit wat ze
-aanduidden. Niemand anders ziet de lijst, tenzij je ook de link deelt.
-Verlanglijsten die je vanaf 26 september 2026 maakt staan aan, lijsten van
+aanduidden. Verlanglijsten die je vanaf 26 september 2026 maakt staan aan, lijsten van
 daarvoor staan uit; je zet het per lijst om, onder Delen. Verwijder je iemand als
 vriend, of zet je het uit, dan ziet die de lijst meteen niet meer.
 

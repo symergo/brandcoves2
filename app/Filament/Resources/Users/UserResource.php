@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Users;
 
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\RelationManagers\WishlistsRelationManager;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
@@ -25,7 +26,9 @@ use UnitEnum;
  * when they write in, deciding who may open this panel, and deleting an account
  * when somebody asks for that. Everything else about an account — lists,
  * recipients, friends, birthdays — belongs to the person and stays out of the
- * form. An administrator can see how much of it there is, and nothing more.
+ * form. Since 2026-09-28 (owner's call) the edit page also shows the person's
+ * lists and the products on them, read-only: never notes, who a list is for,
+ * or claims (WishlistsRelationManager). Recipients and friends stay a count.
  *
  * ## No create page
  *
@@ -73,6 +76,11 @@ class UserResource extends Resource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    public static function getRelations(): array
+    {
+        return [WishlistsRelationManager::class];
     }
 
     public static function getPages(): array

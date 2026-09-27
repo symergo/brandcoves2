@@ -6,10 +6,12 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\RelationManagers\WishlistsRelationManager;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -195,5 +197,32 @@ class UserAdminTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $shopper->id]);
         $this->assertDatabaseMissing('wishlists', ['id' => $list->id]);
         $this->assertDatabaseMissing('recipients', ['id' => $recipient->id]);
+    }
+
+    #[Test]
+    public function an_account_shows_its_lists_and_their_products_but_nothing_personal(): void
+    {
+        $shopper = $this->shopper();
+        $list = Wishlist::factory()->create(['owner_user_id' => $shopper->id, 'title' => 'Verjaardag Ann']);
+        $item = WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'snapshot_title' => 'Handkoffiemolen',
+            'snapshot_price' => 3495,
+            'note' => 'Graag in het zwart, voor op de boot',
+        ]);
+        // Claimed by somebody: the owner is not meant to know, and the admin
+        // reading this may be the owner.
+        $item->forceFill(['claimed_by_hash' => 'h', 'claimed_by_name' => 'Tante Mia', 'claimed_at' => now()])->save();
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->get("/admin/users/{$shopper->id}/edit")->assertOk();
+
+        Livewire::actingAs($admin)
+            ->test(WishlistsRelationManager::class, ['ownerRecord' => $shopper, 'pageClass' => EditUser::class])
+            ->assertCanSeeTableRecords([$list])
+            ->mountAction(TestAction::make('products')->table($list))
+            ->assertMountedActionModalSee(['Handkoffiemolen', '34,95'])
+            ->assertMountedActionModalDontSee(['Graag in het zwart', 'Tante Mia']);
     }
 }

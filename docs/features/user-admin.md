@@ -2,7 +2,7 @@
 
 **Status:** Active — added 2026-09-12.
 **Where:** `/admin/users`, in the navigation under *Operations > Accounts*.
-**Code:** `app/Filament/Resources/Users/`. **Test:** `tests/Feature/UserAdminTest.php`.
+**Code:** `app/Filament/Resources/Users/` (lists: `RelationManagers/WishlistsRelationManager.php`). **Test:** `tests/Feature/UserAdminTest.php`.
 
 ## What it does
 
@@ -57,9 +57,24 @@ lowercased value.
 toggle exists for the support case, "please stop emailing me", not for the marketing one. Consent
 is the person's to give.
 
-**What is deliberately not on the form.** Birthday, who may see it, avatar, friendships, lists,
+**What is deliberately not on the form.** Birthday, who may see it, avatar, friendships,
 recipients, the inbox. They belong to the person; an administrator can see how much of it there is
 (the counts on the list) and nothing more. This is a support screen, not a profile editor.
+
+**Lists are the exception, read-only (2026-09-28, owner's call).** The edit page has a *Lists* table:
+each list's title, kind, market, how it is shared, whether friends see it, how many products, and a
+*Products* button that shows the products on it (title, price, date added, a link to our own product
+page). Deliberately left out: the note under an item, who a list is for, the delivery address, and
+anything about claims. Claim state is kept from a list's owner by default (invariant 4), and the
+administrator reading this may be that owner, so it is not shown to anyone here. Every column is
+selected by name rather than loading whole rows, so what is not shown is never read and cannot end
+up in the page's HTML. A hand-added item has no link: its URL came from somewhere else and is
+hostile input (invariant 5). `UserAdminTest` pins that the note and the claimer's name stay out.
+
+The privacy policy used to say, of a wish list shared with friends, "Nobody else sees the list unless
+you also share its link". The owner had that sentence removed (English and Dutch, the only two
+languages the policy is written in) when this view was added, rather than adding a sentence about
+administrators.
 
 ## What deletion takes with it
 
