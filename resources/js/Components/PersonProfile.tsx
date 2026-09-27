@@ -4,7 +4,7 @@ import Button from './Button'
 import InfoTip from './InfoTip'
 import type { ListKind } from './ListKindBadge'
 import ListName from './ListName'
-import { budgetLabel, DayMonth, monthDay } from './PersonParts'
+import { budgetLabel, DayMonth, InvitePerson, monthDay } from './PersonParts'
 import ShareRow from './ShareRow'
 import ToolIcon from './ToolIcon'
 import type { Cents, SharedProps } from '../types'
@@ -76,6 +76,8 @@ export interface ProfileUrls {
     recipient: string
     people: string
     selfDescribe: string | null
+    /** `POST /friends`, while no account is behind this person; null otherwise. */
+    invite: string | null
 }
 
 /** Find a gift keeps a learned "not this interest" as `interest:<value>` in avoid. */
@@ -117,7 +119,7 @@ export default function PersonProfile({
     const errors = usePage<SharedProps>().props.errors as Record<string, string> | undefined
     // One panel at a time, like the list page's tools: these are alternatives.
     // A refused delete comes back with its panel open, so the reason is seen.
-    const [panel, setPanel] = useState<'details' | 'about' | 'link' | 'delete' | null>(errors?.person ? 'delete' : null)
+    const [panel, setPanel] = useState<'details' | 'about' | 'link' | 'invite' | 'delete' | null>(errors?.person ? 'delete' : null)
     const toggle = (next: typeof panel) => setPanel(panel === next ? null : next)
 
     const about = profile.about
@@ -205,6 +207,16 @@ export default function PersonProfile({
                             {t('people.send_profile_link')}
                         </button>
                     )}
+                    {/*
+                      Not on GiftCoves yet: invite them, and the connection
+                      lands on this person when they join (2026-09-27).
+                    */}
+                    {urls.invite !== null && (
+                        <button type="button" aria-expanded={panel === 'invite'} onClick={() => toggle('invite')} className={secondary}>
+                            <ToolIcon name="friends" className="h-4 w-4" />
+                            {t('people.invite')}
+                        </button>
+                    )}
                     <button type="button" aria-expanded={panel === 'details'} onClick={() => toggle('details')} className={secondary}>
                         <ToolIcon name="edit" className="h-4 w-4" />
                         {t('people.edit_details')}
@@ -230,6 +242,16 @@ export default function PersonProfile({
                             <ShareRow url={urls.selfDescribe} text={t('recipients.ask_them')} />
                         </div>
                     </div>
+                )}
+
+                {panel === 'invite' && urls.invite !== null && (
+                    <InvitePerson
+                        url={urls.invite}
+                        personId={person.id}
+                        name={person.name}
+                        birthday={profile.birthday}
+                        onDone={() => setPanel(null)}
+                    />
                 )}
 
                 {panel === 'details' && (

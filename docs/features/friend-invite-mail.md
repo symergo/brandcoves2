@@ -148,7 +148,7 @@ together:
 
 | what | kept |
 |---|---|
-| a pending invitation (`friend_invites`, holds the address) | until the person signs in, or 365 days after the member last invited them (`updated_at`, touched on every invite). It had no window before this |
+| a pending invitation (`friend_invites`, holds the address, and since 2026-09-27 which saved person it was for, `recipient_id`) | until the person signs in, or 365 days after the member last invited them (`updated_at`, touched on every invite). It had no window before this |
 | the invitation log (`friend_invite_mails`, hash) | 90 days: the limits need 30, the admin screen uses 90 |
 | complaints (`invite_complaints`, hash) | 365 days, which also lifts a stop nobody renewed |
 | suppressions (`invite_suppressions`, hash) | until undone; never pruned, on purpose |
@@ -164,6 +164,17 @@ away; one without does not. The sentence and the email are identical, the page i
 not before this change either. Closing it means holding every invitation until the other person
 accepts, which is friend requests (see [my-people.md](my-people.md#no-pending-requests)).
 
+**Inviting a saved person (2026-09-27) shows the same thing, and nothing more.** "Nodig uit op
+GiftCoves" on somebody saved on My people sends this same invitation with the saved person's id
+([my-people.md](my-people.md#inviting-a-saved-person)). With an account behind the address, the
+saved person turns "op GiftCoves" at once; without one, at their sign-in. That is the same fact
+the plain invitation already shows (a friend row appears at once), shown on a row that already
+existed instead of a new one. The response is still identical in both cases (status, redirect,
+sentence, email: `InviteSavedPersonTest::the_answer_is_the_same_with_or_without_an_account`).
+The rule against linking one account to two saved people (in my-people.md) does not add a
+signal: the member can only hit it with an address whose account they already saved, which they
+already know.
+
 A complaint does not delete the pending invitation (`friend_invites`, with the address) that the
 member made. The owner's brief was that invitations keep being recorded silently; the pending one
 goes after a year, and the privacy policy tells an invited person how to ask for removal sooner.
@@ -178,8 +189,8 @@ goes after a year, and the privacy policy tells an invited person how to ask for
 | The spam page | `InviteNotWantedController`, `resources/js/Pages/Invites/NotWanted.tsx` |
 | Pre-filled sign-in | `MagicLinkController::show()`, `Pages/Auth/Login.tsx` |
 | Admin | `App\Filament\Resources\InviteComplaints` |
-| Tables | `2026_09_28_000400_invitations_are_emailed` |
-| Tests | [`FriendInviteMailTest`](../../tests/Feature/FriendInviteMailTest.php) |
+| Tables | `2026_09_28_000400_invitations_are_emailed`; `friend_invites.recipient_id` in `2026_09_28_000500_an_invitation_can_name_a_saved_person` |
+| Tests | [`FriendInviteMailTest`](../../tests/Feature/FriendInviteMailTest.php), [`InviteSavedPersonTest`](../../tests/Feature/InviteSavedPersonTest.php) (inviting a saved person) |
 
 ## Invitations landing in spam (2026-09-26)
 

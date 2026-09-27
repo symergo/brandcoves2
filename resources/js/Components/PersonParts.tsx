@@ -1,4 +1,6 @@
-import { usePage } from '@inertiajs/react'
+import { useForm, usePage } from '@inertiajs/react'
+import Button from './Button'
+import InfoTip from './InfoTip'
 import type { Cents, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -83,4 +85,87 @@ export function budgetLabel(min: Cents | null, max: Cents | null, t: Translate, 
     }
 
     return min !== null && min > 0 ? t('people.budget_from', { amount: money(min) }) : null
+}
+
+/**
+ * "Nodig uit op GiftCoves" for a saved person nobody linked (2026-09-27).
+ *
+ * The friends' own invitation (`POST /friends`, the email with all its limits
+ * and the no-invitations list), with the saved person's id added, so the
+ * connection it makes lands on this person instead of a second row. The server
+ * checks the person is yours and not linked yet (FriendInvites::mayLink); the
+ * answer is the same sentence whether or not the address has an account.
+ *
+ * The birthday starts as the one you saved for them, so it is not typed twice.
+ */
+export function InvitePerson({
+    url,
+    personId,
+    name,
+    birthday,
+    onDone,
+}: {
+    /** `/{market}/friends`. */
+    url: string
+    personId: string
+    name: string
+    /** `MM-DD`, the saved person's. */
+    birthday: string | null
+    onDone: () => void
+}) {
+    const { t } = useTranslations()
+    const form = useForm({
+        email: '',
+        month: birthday?.slice(0, 2) ?? '',
+        day: birthday?.slice(3) ?? '',
+    })
+
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault()
+                form.transform((data) => ({
+                    email: data.email,
+                    birthday: monthDay(data.month, data.day),
+                    recipient_id: personId,
+                }))
+                form.post(url, { preserveScroll: true, onSuccess: onDone })
+            }}
+            className="mt-4 grid gap-4 rounded-card border border-line bg-card p-4 sm:grid-cols-3"
+        >
+            <p className="flex flex-wrap items-center text-sm font-medium sm:col-span-3">
+                {t('people.invite')}
+                <InfoTip>{t('people.invite_person_tip', { name })}</InfoTip>
+            </p>
+            <label className="block text-xs font-medium sm:col-span-2">
+                {t('friends.email')}
+                <input
+                    type="email"
+                    required
+                    value={form.data.email}
+                    onChange={(e) => form.setData('email', e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                />
+            </label>
+            <label className="block text-xs font-medium">
+                {t('friends.their_birthday_optional')}
+                <DayMonth
+                    day={form.data.day}
+                    month={form.data.month}
+                    onDay={(v) => form.setData('day', v)}
+                    onMonth={(v) => form.setData('month', v)}
+                />
+            </label>
+            <div className="sm:col-span-3">
+                <Button type="submit" busy={form.processing}>
+                    {t('people.invite_button')}
+                </Button>
+                {form.errors.email && (
+                    <p className="mt-2 text-sm text-danger" role="alert">
+                        {form.errors.email}
+                    </p>
+                )}
+            </div>
+        </form>
+    )
 }

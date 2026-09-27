@@ -46,9 +46,10 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   their ideas). The rest sit in a **Meer** menu, the same `Menu`/`MenuItem` component the list
   page's Meer menu uses: **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`:
   Ask others, the form opened and filled in with their relationship, interests, style and budget,
-  never a name or a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only
+  never a name or a note; added 2026-09-27 at the owner's request), **Dit of dat samen** only
   while a This-or-that-together link is open for them (it goes to the list about them, where that
-  panel lives). Four equal buttons on every row made the page a wall of buttons where the names
+  panel lives), and **Nodig uit op GiftCoves** while no account is behind them (see
+  [Inviting a saved person](#inviting-a-saved-person)). Four equal buttons on every row made the page a wall of buttons where the names
   should lead (owner, 2026-09-27);
 - for a friend: their lists, **visible without a click**, drawn with `ListName` (the list-name
   style, with the kind's icon). They were behind a "Hun lijsten (N)" toggle, which hid the one thing
@@ -83,7 +84,8 @@ width, because there is nothing for a side column):
 1. **The person**: their name as the heading, relationship and birthday (`cake` icon) under it,
    "op GiftCoves" when they are a friend. Then the actions: **Cadeau vinden** (the one filled
    button), **Dit of dat**, **Vraag**, **Stuur hun profiellink** (their `/for/{token}` link, only
-   while they are not linked to an account), **Naam en verjaardag**, and **Verwijderen**. The brief
+   while they are not linked to an account), **Nodig uit op GiftCoves** (the same condition; see
+   [Inviting a saved person](#inviting-a-saved-person)), **Naam en verjaardag**, and **Verwijderen**. The brief
    listed the actions last; they sit under the name because they are what the page is used for,
    and at the bottom they would be under a gift history of any length.
 2. **Over {naam}**: what you know as chips: interests, style (vibe), what matters to them (values),
@@ -168,7 +170,8 @@ visitor got a server error. `RecipientController::destroy()` now answers with a 
 
 `App\Services\Social\MyPeople`. A friend and a saved person are the same row when
 `recipients.user_id` is the friend's account id. That link is set when a person is saved "as one
-of my friends", by "Bewaar wat je weet" here, or when somebody claims their own `/for/{token}` link.
+of my friends", by "Bewaar wat je weet" here, when somebody claims their own `/for/{token}` link,
+or when an invitation sent from a saved person becomes a connection (since 2026-09-27).
 If two saved people point at one friend (saved twice), the friend joins the oldest and the other
 stays its own row: nothing the owner wrote disappears. A saved person with status `self` (you,
 kept by This or that "for me") is left out.
@@ -194,6 +197,55 @@ Two buttons at the top, one form open at a time:
   Since 2026-09-26 it emails the address (the owner asked for it and for the old "we do not
   email them, so tell them yourself" to go); the (i) says so. The email, its limits and its spam
   link: [friend-invite-mail.md](friend-invite-mail.md).
+
+### Inviting a saved person
+
+Added 2026-09-27 at the owner's request. A saved person with no account behind them
+(`recipients.user_id` is null) has **Nodig uit op GiftCoves** in the row's Meer menu and among the
+actions on their page. It opens a small form: email, and the birthday, filled in with the one you
+saved. It sends **the same invitation** as the button at the top (`POST /friends`,
+`FriendController::store`, `FriendInvites::invite()`, the email with its limits and the
+no-invitations list), with one more field, `recipient_id`. There is no second path.
+
+**Why the id.** Without it, the invited person would join as a friend row beside the saved one:
+Mama twice, with what you know and your lists for her on one row and her own lists on the other.
+With it, the saved person is linked to the account when the connection is made, exactly as
+"Bewaar wat je over Sam weet" links one: `user_id` set, status `linked`. From then on it is one
+row and one page, and what she says about herself through her own link outranks your guesses.
+
+- **An address with an account** is connected at once (as always), and the saved person is linked
+  in the same request.
+- **An address without one**: the invitation waits in `friend_invites` as always, now with
+  `recipient_id`, and `LinkSharerAsFriend` links the saved person when it turns the invitation into
+  a friendship at sign-in. The saved person is read fresh then: one that was deleted meanwhile
+  (the column is `ON DELETE SET NULL`) leaves an ordinary invitation, and one linked another way
+  meanwhile (they claimed their `/for/{token}` link) keeps the account it has.
+- Sending the plain form to the same address later does not forget whose invitation it was; naming
+  another saved person replaces it (one address, one account, one saved person).
+- A birthday typed in the form is kept on the saved person **if they had none**, so it shows on
+  their row before they join. One already saved is not replaced: it is what the reminder email
+  reads.
+
+**Only your own, unlinked saved person.** The controller looks the id up with your account in the
+query: somebody else's id is a 404 before anything is recorded or emailed, and their saved person is
+untouched. One of yours that is already linked (a stale page) is ignored and the invitation goes
+as from the plain form; the link is never re-pointed. `FriendInvites::mayLink()` holds the rule
+(yours, `user_id` null, not your own "self" row), and decides whether the button is offered.
+
+**One account, one saved person (decided without the owner).** If the account is already linked
+to another of your saved people (you saved "Sam" from the friend row, then invited Sam's address
+from an older "Sammy"), the earlier link stands and the second saved person stays as it was,
+unlinked. Merging the two would mean choosing whose interests, lists and history win, and nothing
+you wrote should disappear. The database agrees (`recipients_owner_user_idx` is unique on owner and
+account); the check comes first so a sign-in never meets that index as an error. Delete the
+duplicate yourself if you want one row.
+
+**What the member learns.** The answer is the same sentence, status and redirect whether or not the
+address has an account. What the page shows afterwards differs: a saved person linked at once is
+"op GiftCoves" at once. That is the disclosure the plain invitation already made (a friend row
+appears at once); see [friend-invite-mail.md](friend-invite-mail.md#what-this-does-not-close).
+Nothing on the row says an invitation is waiting, for the reason under
+[No pending requests](#no-pending-requests).
 
 ### No pending requests
 
@@ -241,7 +293,8 @@ requests, that is a change to how friendships are made, not to this page.
 | Icons | `ToolIcon` (`cake` for a birthday, `more` for the Meer menu); the menu is `Components/Menu.tsx` |
 | Person page | `PersonController::show`, `app/Services/Social/PersonProfile.php`, `resources/js/Components/PersonProfile.tsx` (in `Pages/Recipients/Show.tsx`) |
 | Samen met | `app/Services/Social/InCommon.php`, `Wishlist::scopeNotAbout()` |
-| Tests | `tests/Feature/MyPeopleTest.php`, `PersonProfileTest.php`, `PeopleTogetherTest.php` (the privacy rules); `FriendsTest` reads the friend rows from `/people` now |
+| Inviting a saved person | `FriendInvites::invite()` / `applyTo()` / `mayLink()`, `friend_invites.recipient_id` (`2026_09_28_000500_an_invitation_can_name_a_saved_person`), `InvitePerson` in `Components/PersonParts.tsx` |
+| Tests | `tests/Feature/MyPeopleTest.php`, `PersonProfileTest.php`, `PeopleTogetherTest.php` (the privacy rules), `InviteSavedPersonTest.php`; `FriendsTest` reads the friend rows from `/people` now |
 
 ## Not done
 

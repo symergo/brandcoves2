@@ -5,7 +5,7 @@ import InfoTip from '../../Components/InfoTip'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
 import Menu, { MenuItem } from '../../Components/Menu'
-import { budgetLabel, DayMonth, monthDay } from '../../Components/PersonParts'
+import { budgetLabel, DayMonth, InvitePerson, monthDay } from '../../Components/PersonParts'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import type { Cents, SharedProps } from '../../types'
@@ -54,6 +54,10 @@ interface Person {
     known: { interests: string[]; budgetMin: Cents | null; budgetMax: Cents | null } | null
     /** Lists you are making for them. */
     listsForThem: number
+    /** `MM-DD`, never a year: the date the row shows. */
+    birthday: string | null
+    /** A saved person with no account behind them: "Nodig uit op GiftCoves" is offered. */
+    invitable: boolean
     urls: { person: string | null; finder: string | null; taste: string | null; ask: string | null; together: string | null }
 }
 
@@ -396,7 +400,9 @@ function PersonRow({
     const link = 'inline-flex min-h-11 items-center rounded-lg border border-line px-2.5 py-1.5 sm:px-3 text-sm hover:border-ink sm:min-h-0'
 
     const summary = summaryOf(person, t, (cents) => formatPrice(cents, market))
-    const more = [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
+    const invitable = person.invitable && person.personId !== null
+    const [inviting, setInviting] = useState(false)
+    const more = invitable || [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
 
     const main = (
         <>
@@ -487,7 +493,7 @@ function PersonRow({
                             }
                             buttonClassName={`${link} gap-1.5`}
                         >
-                            {() => (
+                            {(close) => (
                                 <>
                                     {person.urls.taste !== null && (
                                         <MenuItem href={person.urls.taste} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
@@ -502,6 +508,22 @@ function PersonRow({
                                     {person.urls.together !== null && (
                                         <MenuItem href={person.urls.together} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
                                             {t('people.together')}
+                                        </MenuItem>
+                                    )}
+                                    {/*
+                                      Somebody you saved who is not on GiftCoves:
+                                      the invitation names them, so when they join
+                                      they stay this one row (2026-09-27).
+                                    */}
+                                    {invitable && (
+                                        <MenuItem
+                                            onSelect={() => {
+                                                close()
+                                                setInviting(true)
+                                            }}
+                                            icon={<ToolIcon name="friends" className="h-4 w-4" />}
+                                        >
+                                            {t('people.invite')}
                                         </MenuItem>
                                     )}
                                 </>
@@ -546,6 +568,18 @@ function PersonRow({
                     )}
                 </div>
             </div>
+
+            {invitable && inviting && person.personId !== null && (
+                <div className="sm:ml-13">
+                    <InvitePerson
+                        url={`${base}/friends`}
+                        personId={person.personId}
+                        name={person.name}
+                        birthday={person.birthday}
+                        onDone={() => setInviting(false)}
+                    />
+                </div>
+            )}
 
             {friend !== null && friend.lists.length > 0 && (
                 <div className="mt-3 sm:ml-13">

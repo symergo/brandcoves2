@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\InviteOutcome;
 use App\Models\Friendship;
+use App\Models\Recipient;
 use App\Services\Social\FriendInvites;
 use App\Services\Social\Friends;
 use App\Support\CurrentMarket;
@@ -72,13 +73,35 @@ class FriendController extends Controller
              * their own settings, which is the only place a year belongs.
              */
             'birthday' => ['nullable', 'string', 'regex:/^\d{2}-\d{2}$/'],
+            // "Nodig uit op GiftCoves" on a saved person (2026-09-27): the
+            // person to link once the invitation becomes a connection.
+            'recipient_id' => ['nullable', 'uuid'],
         ]);
+
+        /*
+         * Yours, or nothing happens at all.
+         *
+         * Looked up with the owner in the query, so an id that belongs to
+         * somebody else is a 404 before anything is recorded or emailed: a
+         * crafted request cannot touch another member's saved person. One that
+         * is yours but already linked (another tab, or they claimed their own
+         * link) is passed on and ignored by FriendInvites::mayLink(), and the
+         * invitation goes as it would from the plain form.
+         */
+        $person = null;
+
+        if (($validated['recipient_id'] ?? null) !== null) {
+            $person = Recipient::query()
+                ->where('owner_user_id', $request->user()->id)
+                ->findOrFail($validated['recipient_id']);
+        }
 
         $outcome = $invites->invite(
             $request->user(),
             $validated['email'],
             DayAndMonth::fromString($validated['birthday'] ?? null),
             $current->get(),
+            $person,
         );
 
         // Each answer is about the member's own actions; see InviteOutcome.
