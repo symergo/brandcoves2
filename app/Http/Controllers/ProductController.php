@@ -14,6 +14,7 @@ use App\Services\Alerts\AlertEligibility;
 use App\Services\Catalogue\ProductDescription;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Catalogue\ProductTitle;
+use App\Services\Images\ImageProxy;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
 use App\Services\Seo\BrandLinker;
@@ -97,6 +98,9 @@ class ProductController extends Controller
                  */
                 'brandUrl' => app(BrandLinker::class)->url($productGroup->brand, $current->get()),
                 'image' => $productGroup->image_url,
+                // The resized WebP copies (srcset) of the same picture, or null
+                // for the shop's URL as it is. docs/features/image-proxy.md.
+                'imageToken' => app(ImageProxy::class)->token($productGroup->image_url),
                 'category' => $productGroup->category,
                 'minPrice' => $productGroup->min_price,
                 'maxPrice' => $productGroup->max_price,

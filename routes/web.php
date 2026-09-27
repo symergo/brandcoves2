@@ -37,6 +37,7 @@ use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ImageProxyController;
 use App\Http\Controllers\InviteAcceptController;
 use App\Http\Controllers\InviteNotWantedController;
 use App\Http\Controllers\ItemTransferController;
@@ -132,6 +133,20 @@ Route::get('/media/items/{file}', MediaController::class)
     ->where('file', '[0-9a-f-]{36}\.webp')
     ->withoutMiddleware(StatelessRoutes::SKIPPED)
     ->name('media');
+
+/*
+ * A merchant's product picture, resized to WebP and kept (docs/features/image-proxy.md).
+ *
+ * Stateless like /media above: a page draws dozens of these, and each one
+ * starting a session would be dozens of Redis writes for a picture. The source
+ * is signed, so the route cannot be used to fetch anything our pages did not
+ * hand out; making a new copy is rate limited inside the controller, serving a
+ * stored one is not.
+ */
+Route::get('/img/{width}/{signature}/{source}', ImageProxyController::class)
+    ->where(['width' => '[0-9]{2,4}', 'signature' => '[0-9a-f]{32}', 'source' => '[A-Za-z0-9_-]{8,2800}'])
+    ->withoutMiddleware(StatelessRoutes::SKIPPED)
+    ->name('image-proxy');
 
 // Sitemaps and robots. Unprefixed: crawlers look for them at the root, and a
 // per-market copy would just be five competing files.

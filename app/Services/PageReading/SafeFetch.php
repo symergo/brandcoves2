@@ -41,10 +41,13 @@ class SafeFetch
 
     /**
      * @param  list<string>  $contentTypes  accepted media types, e.g. `text/html`
+     * @param  int|null  $timeout  seconds for the whole request; the page reader's
+     *                             setting when null. The image proxy answers a
+     *                             browser that is waiting, so it asks for less.
      *
      * @throws FetchRefused
      */
-    public function get(string $url, array $contentTypes, int $maxBytes): FetchedResponse
+    public function get(string $url, array $contentTypes, int $maxBytes, ?int $timeout = null): FetchedResponse
     {
         $current = $url;
 
@@ -80,7 +83,7 @@ class SafeFetch
                         'Accept-Language' => 'nl-BE,nl;q=0.9,fr;q=0.8,en;q=0.7',
                         'Accept' => implode(', ', $contentTypes),
                     ])
-                    ->timeout((int) config('giftcoves.page_reading.timeout', 5))
+                    ->timeout($timeout ?? (int) config('giftcoves.page_reading.timeout', 5))
                     ->connectTimeout((int) config('giftcoves.page_reading.connect_timeout', 3))
                     ->get($current);
             } catch (FetchRefused $e) {

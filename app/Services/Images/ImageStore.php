@@ -82,6 +82,34 @@ class ImageStore
      */
     public function store(string $bytes): ?string
     {
+        $encoded = $this->webp($bytes, self::MAX_SIDE, 82);
+
+        if ($encoded === null) {
+            return null;
+        }
+
+        $name = 'items/'.Str::uuid()->toString().'.webp';
+
+        Storage::disk(self::DISK)->put($name, $encoded);
+
+        return '/media/'.$name;
+    }
+
+    /**
+     * Decode, turn upright, shrink so the longest side is at most `$maxSide`
+     * (never enlarge), and encode as WebP. The bytes, or null for anything
+     * that is not a JPEG, PNG, WebP or GIF picture of a sane size.
+     *
+     * `$coverSide` shrinks further, but only as far as keeps the SHORTER side
+     * at least that long: what a picture needs to fill a square slot of that
+     * width with `object-cover` without being enlarged again by the browser.
+     *
+     * Shared with the image proxy ({@see ImageProxy}), which needs the same
+     * guards (the type check, the decompression-bomb cap, metadata dropped) on
+     * pictures it fetches from shops.
+     */
+    public function webp(string $bytes, int $maxSide, int $quality, ?int $coverSide = null): ?string
+    {
         $info = @getimagesizefromstring($bytes);
 
         if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
@@ -101,26 +129,18 @@ class ImageStore
         }
 
         $image = $this->oriented($image, $bytes, $info[2]);
-        $image = $this->shrunk($image);
+        $image = $this->shrunk($image, $maxSide, $coverSide);
 
         imagepalettetotruecolor($image);
         imagealphablending($image, true);
         imagesavealpha($image, true);
 
         ob_start();
-        imagewebp($image, null, 82);
+        imagewebp($image, null, $quality);
         $encoded = (string) ob_get_clean();
         imagedestroy($image);
 
-        if ($encoded === '') {
-            return null;
-        }
-
-        $name = 'items/'.Str::uuid()->toString().'.webp';
-
-        Storage::disk(self::DISK)->put($name, $encoded);
-
-        return '/media/'.$name;
+        return $encoded === '' ? null : $encoded;
     }
 
     /** Delete a stored picture by its public path. Anything else is ignored. */
@@ -157,17 +177,22 @@ class ImageStore
         return $rotated instanceof GdImage ? $rotated : $image;
     }
 
-    private function shrunk(GdImage $image): GdImage
+    private function shrunk(GdImage $image, int $maxSide, ?int $coverSide = null): GdImage
     {
         $width = imagesx($image);
         $height = imagesy($image);
         $longest = max($width, $height);
 
-        if ($longest <= self::MAX_SIDE) {
+        $scale = min(1.0, $maxSide / $longest);
+
+        if ($coverSide !== null) {
+            $scale = min($scale, $coverSide / min($width, $height));
+        }
+
+        if ($scale >= 1.0) {
             return $image;
         }
 
-        $scale = self::MAX_SIDE / $longest;
         $resized = imagescale($image, max(1, (int) round($width * $scale)), max(1, (int) round($height * $scale)));
 
         return $resized instanceof GdImage ? $resized : $image;

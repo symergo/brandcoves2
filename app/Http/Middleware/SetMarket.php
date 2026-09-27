@@ -40,9 +40,12 @@ class SetMarket
         // else's page.
         app(PageMeta::class)->reset();
 
-        // Formatting follows the market, not the language: nl-BE and nl-NL
-        // agree on words and disagree on number formatting.
-        setlocale(LC_TIME, $market->hrefLang());
+        // There was a `setlocale(LC_TIME, …)` here until 2026-09-27. Nothing
+        // read it (no strftime, no LC_TIME-dependent call; dates and numbers are
+        // formatted by Carbon's translator and in the browser), and setlocale()
+        // is process-wide: under FrankenPHP's threads, and worse under worker
+        // mode, one request's market would change another's in flight. Formatting
+        // that follows the market belongs to the formatter, given the market.
 
         // Caches and CDNs must not serve a Dutch page to a French visitor.
         $response = $next($request);

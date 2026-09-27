@@ -1,0 +1,9 @@
+# Classic mode: every PHP request runs public/index.php afresh.
+#
+# The worker script sits in public/ because worker mode routes to it by name.
+# In classic mode nobody should reach it: asked for directly, it would only
+# print "FrankenPHP must be in worker mode" and exit.
+@octane_worker path /frankenphp-worker.php
+respond @octane_worker 404
+
+php_server

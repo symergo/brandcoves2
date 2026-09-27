@@ -1,0 +1,7 @@
+# Worker mode: a request for a file that exists in public/ is served as that
+# file; everything else goes to the worker script, which hands it to the booted
+# app. This is the routing of Octane's own FrankenPHP Caddyfile.
+php_server {
+	index frankenphp-worker.php
+	try_files {path} frankenphp-worker.php
+}

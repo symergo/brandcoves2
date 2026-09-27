@@ -14,6 +14,7 @@ use App\Models\ProductGroup;
 use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
+use App\Services\Images\ImageProxy;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\EntityCoveContext;
@@ -993,6 +994,7 @@ class BrandController extends Controller
             'slug' => $group->slug,
             'brand' => $group->brand,
             'image' => $group->image_url,
+            'imageToken' => app(ImageProxy::class)->token($group->image_url),
             'minPrice' => $group->min_price,
             'maxPrice' => $group->max_price,
             'offerCount' => $group->offer_count,

@@ -74,8 +74,8 @@ Grouped by what a visitor is doing, not by file order:
   `/invites/accept/{token}` (the invitation's button: signs a new invitee straight in)
 - **Contribute** — `/contribute` ("Denk mee": feedback, the ideas board, votes and suggestions;
   features/contribute.md), `POST /contribute-bar` (unprefixed: closing the bar under the header)
-- **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`. The first three, robots.txt
-  and `/media/items/*` run without a session or cookies (`App\Http\StatelessRoutes`); a new route
+- **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`. The first three, robots.txt,
+  `/img/*` (the image proxy) and `/media/items/*` run without a session or cookies (`App\Http\StatelessRoutes`); a new route
   of that kind should use it too
 
 ## Services, one line each
@@ -108,7 +108,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Social/` | friends (`Friends`, `FriendInvites`, `ShareReferral`), the invitation email and its limits and spam link (`InviteMailer`), sharing a list with a named friend (`ListSharer`), My people (`MyPeople`: saved people and friends on one list); `FollowGraph` is built and unused |
 | `Wishlist/` | saving (`ItemSaver`), making a list in one step (`ListMaker`, `DefaultTitle`), claim visibility (`ClaimView` — see invariant 4), the group-gift board |
 | `PageReading/` | a pasted link, read in a queued job: known sources first (`LinkRouter`), then Iframely or the page itself through `SafeFetch` (private addresses refused); see features/pasted-links.md |
-| `Images/` | a picture copied to our own storage and re-encoded (`ImageStore`) |
+| `Images/` | a picture copied to our own storage and re-encoded (`ImageStore`); the `/img/{width}/...` proxy for shop pictures (`ImageProxy`, `ProxiedImages`, docs/features/image-proxy.md) |
 | `Notifications/` | the inbox rows list activity writes (`ListActivity`) |
 | `Mail/` | admin-editable email templates (`MailTemplates`) |
 | `Shops/` | the shop directory |

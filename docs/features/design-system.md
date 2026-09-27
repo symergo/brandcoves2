@@ -98,8 +98,9 @@ waits its turn, and the description has the same ~70-character measure as every 
 - Four icon stroke widths. The glyph characters that stood in for icons (`▲ ▼ ✕ × ✓ ♥ ♡`, the
   header's 🔔, the notification emoji, the Daily's 👍 👎) became `ToolIcon`s on 2026-09-27; see
   below.
-- Self-hosting Inter: the TTFs are vendored for the social cards and the site still loads a
-  render-blocking stylesheet from bunny.net.
+- ~~Self-hosting Inter~~ *Done 2026-09-27:* the site's Inter (400/500/600, latin and latin-ext
+  woff2) is in `resources/fonts/inter/` and built by Vite; the bunny.net stylesheet is gone. See
+  speed.md, "Fonts, images and worker mode".
 - The footer carries no mark; the social card palette (teal and amber) and the site palette
   (cream, and amber since 2026-09-13) are strangers — a decision to make, not a bug.
 - A sticky header, and tap targets under 40px on the picker chevron, pagination and chips.

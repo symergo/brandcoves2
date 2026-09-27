@@ -1,0 +1,4 @@
+# Classic mode (the default): FrankenPHP starts the app for each request,
+# exactly as `php-server` did. Imported into the global options block of
+# docker/Caddyfile when GIFTCOVES_PHP_MODE is unset or `classic`.
+frankenphp

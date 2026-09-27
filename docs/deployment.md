@@ -128,7 +128,7 @@ migration surfaces before real visitors meet it — and the whole stack idles at
 | Service | Role |
 |---|---|
 | `migrate` | one-shot, runs `migrate --force --isolated`, exits. Everything else waits on it |
-| `app` | FrankenPHP on :80 from `docker/Caddyfile`, Traefik routes the domain here |
+| `app` | FrankenPHP on :80 from `docker/Caddyfile`, Traefik routes the domain here. Classic mode; worker mode (Octane) is prepared behind `OCTANE_WORKERS`, off (features/speed.md, "Worker mode") |
 | `queue` | `php artisan horizon` — **exactly one replica** |
 | `scheduler` | `php artisan schedule:work` — **exactly one replica** |
 | `postgres`, `redis` | state; both volumes backed up |
@@ -408,6 +408,128 @@ Most of the time no dump is needed — the catalogue is regenerable from the fee
 - **VPS headroom:** v2 adds Postgres + Redis + three PHP containers *per environment* to a box that
   ran v1's MySQL and Apache alongside them until v1's containers were retired at the end of the
   post-cutover watch period. Check free memory before standing a new environment up.
+
+## Proposal: Postgres and Redis out of the app deploy (for the owner to decide)
+
+*Written 2026-09-27, speed audit wave 4. Nothing here is built. It is a plan with options.*
+
+**The problem.** `postgres` and `redis` are services in `docker-compose.coolify.yml`, so they
+belong to the application resource. Coolify stops and recreates them on every deploy. Each deploy
+therefore costs:
+
+- **Postgres's memory.** The 1 GB of shared buffers and the OS file cache for its 3.4 GB working set
+  start cold. The first minutes after a deploy read from disk. After an unclean stop on 2026-09-14,
+  Whisperer requests hit the 30-second limit.
+- **Every Redis cache.** Redis reloads from its appendonly file, so queued jobs survive. But until
+  it has finished loading, it refuses commands; that once made `migrate` fail and production answer
+  503 (see the Redis healthcheck comment in the compose file). And everything built with an expiry
+  (search ids, translations, shop lists, the anonymous page cache planned in wave 3b) is rebuilt by
+  the first visitors after the deploy.
+- **Deploy time and risk.** The app waits for Postgres to be healthy after a restart it did not
+  need. A database stopped mid-checkpoint goes through crash recovery.
+
+The databases change a few times a year (a version, a setting). The app changes several times a day.
+They should not share a lifecycle.
+
+### Options
+
+| | What | For | Against |
+|---|---|---|---|
+| **A. Coolify database resources** | Create a standalone PostgreSQL 16 and a standalone Redis 7 in Coolify (per environment). The app compose loses its `postgres` and `redis` services and points `DB_HOST` / `REDIS_HOST` at them. | Coolify's own scheduled backups (to S3) and restore buttons for Postgres. Deploying the app never touches them. | The settings move out of git and into Coolify's UI: `shared_buffers`, `pg_stat_statements`, `shm_size`, Redis `maxmemory` and `volatile-lru` would all have to be entered there, and they drift silently. The compose file's comments, which record why each setting exists, stop describing what runs. |
+| **B. A second compose resource, "state"** | A new file, `docker-compose.state.yml`, holding only `postgres` and `redis` exactly as they are today, deployed as its own Coolify resource. It is deployed only when that file changes. It joins a shared Docker network with the app. | The configuration stays in the repository, with its reasons. The app deploy no longer restarts the databases. Closest to what exists now. | Coolify has to be told to put both resources on one network ("Connect to Predefined Network" on each resource). Backups stay what they are today: the scheduled dump, not Coolify's database backups. One more resource per environment. |
+| **C. Leave them, soften the cost** | Keep the compose as is. Add `pg_prewarm` (autoprewarm reloads the buffer cache after a restart), and keep the stop grace period. | No migration, no downtime. | Redis caches still empty on every deploy, and the restart itself stays. It treats the symptom. |
+
+**Recommendation: B.** The settings that make Postgres and Redis behave (all written down with
+their reasons in the compose file) stay in git, and deploying the app stops restarting them.
+Option A's backup buttons are the one thing B lacks; they can be added later by pointing a Coolify
+scheduled task at `pg_dump`.
+
+### Steps for B (per environment, staging first)
+
+1. **Write `docker-compose.state.yml`.** Move the `postgres` and `redis` services and the `pg_data`
+   and `redis_data` volumes into it unchanged. Give the stack a fixed network name, for example
+   `giftcoves-state-staging`, declared as external in both files.
+2. **Create the "state" resource** in Coolify from that file, on the same server. Enable "Connect to
+   Predefined Network" on it and on the app resource, and check that `app` can resolve and reach
+   the new hosts: `getent hosts` and `pg_isready` from inside the app container.
+3. **Move the data.** This is the step with downtime. It is also the step to rehearse on staging.
+   - Stop the app's `queue` and `scheduler` so nothing writes.
+   - `pg_dump -Fc` from the old Postgres, then `pg_restore` into the new one.
+   - Before stopping the old Redis, wait for Horizon to finish its jobs, or copy its
+     `appendonly.aof` into the new volume.
+   - Expect minutes for staging. For production, measure the dump on the laptop copy first; a few
+     GB is typically 10–30 minutes.
+   - Alternatively, attach the existing named volumes to the new stack, so no data is copied at all.
+     Coolify prefixes volume names with the resource UUID, so check the real names with
+     `docker volume ls` first.
+4. **Point the app at the new hosts** (`DB_HOST`, `REDIS_HOST`). Then remove `postgres` and `redis`
+   from `docker-compose.coolify.yml`, along with the `depends_on` entries on them in the `x-app`
+   anchor. Deploy.
+5. **Keep the `migrate` service's safety.** Today `migrate` waits for Postgres and Redis to be
+   healthy through `depends_on`. Across resources that wait is gone, so `migrate` should wait
+   itself: a few retries of `pg_isready` and a Redis `PING`, then run.
+6. **Watch a deploy.** The Postgres and Redis containers' `StartedAt` must not change, the first
+   page after the deploy must be fast, and Horizon must keep its queue.
+7. **Only then, production.** Do it outside the night windows (05:40–09:45 and 18:10–19:45 Belgian
+   time), with a fresh `pg_dump` taken just before.
+
+### Risks
+
+- **The network step is the unknown.** If the app cannot resolve the new hosts, every request fails.
+  Rehearse on staging, and keep the old services in the compose file, unused, until the new ones
+  have served for a day (expand/contract, as for migrations).
+- **A wrong host is an outage at `migrate`.** Coolify stops the old containers before `migrate`
+  runs. Check that the new `DB_HOST` answers from inside a
+  running app container **before** deploying the change.
+- **Two copies of the data** while both exist. Remove the old volumes deliberately, after the
+  backups have run from the new ones.
+- **Backups.** The scheduled dump and the `media_data` backup must be repointed at the new
+  containers. A backup script that greps for `postgres-<app uuid>` finds nothing after the move.
+  See "Getting production data onto the laptop" above for the container naming.
+
+## Proposal: Cloudflare in front (optional, needs the owner's DNS)
+
+*Written 2026-09-27. Not set up. It needs `giftcoves.com`'s DNS moved to Cloudflare (the account
+already holds the bstore zones).*
+
+What it would add: a cache near the visitor for everything we already mark cacheable, absorbing
+crawler bursts before they reach the VPS, and HTTP/3. With the orange cloud on, Traefik keeps
+terminating TLS behind Cloudflare. Use SSL mode **Full (strict)**: Let's Encrypt keeps renewing
+through the proxy on HTTP-01.
+
+The rules, matching speed plan section 4 (the anonymous page cache):
+
+1. **Static, cache everything, respect the origin's headers:** `/build/assets/*` (a year,
+   immutable), `/img/*` (the image proxy, a year), `/media/items/*` (a year), `/icons/*` and
+   `/favicon.ico` (a day). The origin already sends these headers; Cloudflare only has to honour them.
+2. **Pages: cache only what the origin marks public, and only for visitors without a session.**
+   - Bypass the cache when the request carries `laravel_session`, `remember_web_*` or `XSRF-TOKEN`.
+   - Otherwise, "Cache eligible, respect origin": after wave 3b, anonymous pages carry
+     `Cache-Control: public, max-age=60, stale-while-revalidate=600`, and everything else stays
+     `private` or `no-cache` and is not stored.
+   - The cache key must include `X-Inertia` (via a custom cache key or `Vary`). Otherwise an Inertia
+     JSON response is served to a browser asking for HTML.
+3. **Never cache:** `/admin*`, `/api/*`, `/livewire/*`, `/horizon*`, `/health`, any method other
+   than GET or HEAD, and search results (`/*/search*`), as in plan section 4.
+4. **Visitor IP.** Behind Cloudflare, every request arrives from a Cloudflare address.
+   - `TrustProxies` must trust Cloudflare's published ranges, and the app must read
+     `CF-Connecting-IP`.
+   - Otherwise every IP-keyed limit (the image proxy's per-visitor budget, the social-card
+     throttle, the editorial API's fallback) would count all visitors as one.
+   - Do this **before** switching the orange cloud on.
+5. **Bots.** Leave Bot Fight Mode off at first. It has blocked Google's image and feed fetchers on
+   other sites. Block the Amazon crawlers the same way the bstore zones do, if wanted.
+
+Risks:
+
+- The IP rule above.
+- Stale HTML for up to 60 s plus the revalidation window, which the plan already accepts for
+  anonymous visitors.
+- A purge is one more step when a page must change at once. Only the Cove release does, and the
+  plan's cache-forget on publish does not reach Cloudflare. Either keep the page cache at the
+  origin only (Cloudflare caching static files only, rule 1), or purge by URL from
+  `PublishDueCoves`. **Start with rule 1 alone**; it is risk-free and carries most of the byte
+  savings.
 
 ## Every curl carries a timeout
 

@@ -31,7 +31,11 @@
 	# healthcheck, which is the only thing that ever called it.
 	admin off
 
-	frankenphp
+	# Classic or worker mode, chosen per container by docker/entrypoint.sh
+	# from OCTANE_WORKERS (default: classic). The same variable picks the
+	# php_server half at the end of the site block; the two snippets always
+	# go together. See docker/caddy/ and docs/features/speed.md, "Worker mode".
+	import /app/docker/caddy/frankenphp-{$GIFTCOVES_PHP_MODE:classic}.caddy
 }
 
 :80 {
@@ -82,5 +86,5 @@
 	}
 	header @icons Cache-Control "public, max-age=86400"
 
-	php_server
+	import /app/docker/caddy/php-{$GIFTCOVES_PHP_MODE:classic}.caddy
 }

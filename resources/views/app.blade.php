@@ -262,14 +262,29 @@
         <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endforeach
 
-    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet">
+    {{-- Inter is self-hosted (resources/css/app.css says why). The regular
+         weight is on every line of body text, so it is asked for now, beside
+         the stylesheet, instead of after the stylesheet has arrived and been
+         parsed. Only that one: preloading all three weights would make the
+         browser fetch bold text's file before it knows a page has any.
+         `crossorigin` is required on a font preload even from our own origin;
+         without it the preloaded copy is fetched in the wrong mode and thrown
+         away. rescue(): a preload hint is not worth a 500 if the manifest has
+         no entry for it. --}}
+    @php($interRegular = rescue(fn () => \Illuminate\Support\Facades\Vite::asset('resources/fonts/inter/inter-latin-400-normal.woff2'), null, false))
+    @if ($interRegular)
+        <link rel="preload" href="{{ $interRegular }}" as="font" type="font/woff2" crossorigin>
+    @endif
 
     {{-- Most product images come from bol's CDN. Opening that connection while
          the HTML is still arriving saves the DNS, TCP and TLS round trips from
          the first product photo, which is often the largest thing on the
          page. No `crossorigin`: images are fetched without CORS, and a
-         preconnect in the wrong mode is a connection nobody uses. --}}
+         preconnect in the wrong mode is a connection nobody uses.
+
+         With the image proxy on (docs/features/image-proxy.md), search cards
+         and the product page's main picture come from our own origin; this
+         stays for the rails, Coves and lists that still link bol directly. --}}
     <link rel="preconnect" href="https://media.s-bol.com">
 
     {{-- The page's own chunk, alongside the app entry, as the Laravel React

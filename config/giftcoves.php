@@ -766,6 +766,71 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Image proxy (docs/features/image-proxy.md)
+    |--------------------------------------------------------------------------
+    |
+    | Product pictures resized to WebP on our own address instead of hot-linked
+    | from the shop. IMAGE_PROXY_ENABLED=false switches it off: the pages go
+    | back to the original URLs at once (they carry both), and nothing else
+    | changes. Stored copies stay on the media volume until pruned.
+    */
+    'image_proxy' => [
+        'enabled' => (bool) env('IMAGE_PROXY_ENABLED', true),
+
+        // The widths a page may ask for. 160 and 320 are a phone's search card
+        // at 1x and 2x; 480 and 640 a desktop card and the product picture at
+        // 1x; 960 the product picture on a 2x screen. A width not listed is a
+        // 404, so the disk holds at most five copies of any picture.
+        'widths' => [160, 320, 480, 640, 960],
+
+        /*
+         * The image servers a picture may come from: a host, or any subdomain
+         * of it. A picture on another host keeps its original URL. These are
+         * the servers in our feeds (bol, eBay, Tradedoubler, Awin's
+         * productserve, Coolblue's Bynder); `php artisan bc:image-hosts` lists
+         * the hosts the catalogue actually holds and which are covered.
+         * IMAGE_PROXY_HOSTS adds more, comma-separated, without a deploy.
+         *
+         * Amazon is refused in code whatever is listed here (invariant 6).
+         */
+        'hosts' => array_values(array_filter(array_merge(
+            [
+                'media.s-bol.com',
+                'i.ebayimg.com',
+                'img.tradedoubler.com',
+                'images.awin.com',
+                'productserve.com',
+                'bynder.com',
+            ],
+            array_map('trim', explode(',', (string) env('IMAGE_PROXY_HOSTS', ''))),
+        ))),
+
+        // WebP quality. 80 is where product shots on white stop showing
+        // ringing around edges; each step above adds size for no visible gain.
+        'quality' => 80,
+
+        // A browser is waiting for this, so less than the page reader's 5 s.
+        // A shop that has not answered in four seconds is sent to the original.
+        'timeout' => 4,
+
+        // Before decoding. A product shot is 50-800 KB; five megabytes is room
+        // for a heavy PNG and a ceiling on anything that is not a picture.
+        'max_bytes' => 5 * 1024 * 1024,
+
+        // New copies made per minute, per visitor and site-wide. A search page
+        // is 24 cards; 120 is five fresh pages a minute from one browser.
+        // Serving a stored copy never counts.
+        'fetches_per_minute' => 120,
+        'fetches_per_minute_total' => 1200,
+
+        // Copies older than this are deleted by bc:prune-image-cache (nightly)
+        // and made again on the next view: how a picture a shop replaced behind
+        // the same URL eventually shows, and a ceiling on the disk.
+        'keep_days' => 30,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Gift Whisperer
     |--------------------------------------------------------------------------
     */
