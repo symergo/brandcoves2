@@ -141,7 +141,7 @@ export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa' | 'together'
  * the column capped — puts the hint on two comfortable lines under its own
  * label instead of one line under all of them.
  */
-function Option({
+export function Option({
     type,
     name,
     checked,

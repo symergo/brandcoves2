@@ -1039,3 +1039,11 @@ shows them only while that list has one.
 clicked already on delen"). `ShareMenu`'s default label beside "Link kopiëren" is now "Stuur via…"
 (WhatsApp, e-mail, Instagram, copy the message) everywhere it sits in a `ShareRow`. A page where it
 is the only share button (a product, a guide, the daily Cove) passes its own "Delen".
+
+**The share popup carries the settings too** (owner: "for the sharing popup add also sharing
+settings"): under the link, the share panel's own switches (`Option`, exported from ListTools),
+each the list page's own `PATCH` with the popup staying open: "Zichtbaar voor mijn mensen" on a wish
+list of yours, "Iedereen met de link mag toevoegen" on a shared list about somebody, and on a group
+gift "Iedereen ziet wie bijdraagt" and "Deelnemers kunnen stemmen"; then "Stop met delen", quiet and
+asking once. The forms (how much each person chips in, sharing with one friend by name, who was let
+in before) stay behind "Meer deelopties".

@@ -14,6 +14,7 @@ import { buttonClasses } from '../../Components/Button'
 import Menu, { MenuItem, MenuSeparator } from '../../Components/Menu'
 import { invalidate } from '../../savedItems'
 import ShareRow from '../../Components/ShareRow'
+import { Option } from '../../Components/ListTools'
 
 interface ListSummary {
     id: string
@@ -48,6 +49,10 @@ interface ListSummary {
     section: Exclude<ListsView, 'saved'>
     /** Your own list's link once it is shared; null while private or not yours. */
     shareUrl?: string | null
+    /** A wish list of yours shown to your people; null on other kinds. From `summarise()`. */
+    visibleToFriends?: boolean | null
+    pledgersVisible?: boolean
+    votingEnabled?: boolean
 }
 
 /** The page's sections, and the `?view=` values that scroll to them. */
@@ -654,6 +659,11 @@ function ShareListDialog({ list, onClose }: { list: ListSummary; onClose: () => 
     const ref = useRef<HTMLDialogElement>(null)
     const [busy, setBusy] = useState(false)
 
+    // The list page's `setting`: one PATCH, the page's props come back with the
+    // new state, and the popup stays open over them.
+    const setting = (data: Record<string, string | number | boolean | null>) =>
+        router.patch(`/${market.key}/lists/${list.id}`, data, { preserveScroll: true, preserveState: true })
+
     useEffect(() => {
         const el = ref.current
 
@@ -711,6 +721,69 @@ function ShareListDialog({ list, onClose }: { list: ListSummary; onClose: () => 
                         {t('lists.enable_sharing')}
                     </button>
                 </>
+            )}
+
+            {/*
+              The share panel's switches, in the popup too (owner, 2026-09-27:
+              "for the sharing popup add also sharing settings"): who sees it,
+              what the link lets people do, and for a group gift whether
+              contributors are named and whether people vote. Each is the list
+              page's own PATCH and the list page's own switch (`Option`). The
+              forms (how much each person chips in, sharing with one friend by
+              name, who was let in before) stay behind "Meer deelopties".
+            */}
+            <div className="mt-5 space-y-2">
+                {list.visibleToFriends !== null && list.visibleToFriends !== undefined && (
+                    <Option
+                        type="checkbox"
+                        checked={list.visibleToFriends}
+                        onChange={() => setting({ visible_to_friends: !list.visibleToFriends })}
+                        label={t('lists.visible_to_people')}
+                        hint={t('lists.visible_to_people_tip')}
+                    />
+                )}
+                {list.shareUrl && list.kind !== 'mine' && (
+                    <Option
+                        type="checkbox"
+                        checked={list.linkCanAdd}
+                        onChange={() => setting({ link_can_add: !list.linkCanAdd })}
+                        label={t('lists.anyone_can_add')}
+                        hint={t('lists.anyone_can_add_hint')}
+                    />
+                )}
+                {list.kind === 'group' && (
+                    <>
+                        <Option
+                            type="checkbox"
+                            checked={Boolean(list.pledgersVisible)}
+                            onChange={() => setting({ pledgers_visible: !list.pledgersVisible })}
+                            label={t('lists.pledgers_visible')}
+                            hint={t('lists.pledgers_visible_hint')}
+                        />
+                        <Option
+                            type="checkbox"
+                            checked={Boolean(list.votingEnabled)}
+                            onChange={() => setting({ voting_enabled: !list.votingEnabled })}
+                            label={t('lists.voting_enabled')}
+                            hint={t('lists.voting_enabled_hint')}
+                        />
+                    </>
+                )}
+            </div>
+
+            {/* Stop sharing: quiet, last, and asking once, as on the list page. */}
+            {list.shareUrl && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (confirm(t('lists.disable_sharing_confirm'))) {
+                            setting({ visibility: 'private' })
+                        }
+                    }}
+                    className="mt-4 text-sm text-ink-soft underline hover:text-danger"
+                >
+                    {t('lists.disable_sharing')}
+                </button>
             )}
 
             <Link href={`${list.url}?panel=share`} className="mt-5 block text-sm font-medium text-accent-dark hover:text-ink">
