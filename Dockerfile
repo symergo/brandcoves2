@@ -202,6 +202,11 @@ EXPOSE 80
 # php-server could not put Cache-Control on the hashed Vite bundles, and `-v`
 # was Caddy's debug logging rather than an access log. The file says more.
 #
+# Worker mode (Octane) is prepared and off: the same CMD serves either way, and
+# docker/entrypoint.sh picks classic or worker from OCTANE_WORKERS, which the
+# Caddyfile reads through the snippets in docker/caddy/. See
+# docs/features/speed.md, "Worker mode".
+#
 # The entrypoint builds config:cache and route:cache when the container starts,
 # for every service that runs from this image (app, queue, scheduler, migrate),
 # then hands over to the base image's own entrypoint. Why at start and not in a

@@ -34,6 +34,29 @@ if ! php artisan route:cache --no-interaction >/dev/null; then
     php artisan route:clear --no-interaction >/dev/null 2>&1 || rm -f bootstrap/cache/routes-v7.php
 fi
 
+# Classic or worker mode for FrankenPHP (docker/Caddyfile imports the matching
+# pair of snippets from docker/caddy/). Worker mode is Octane: the app boots
+# once per worker and stays in memory. Off unless OCTANE_WORKERS says
+# true/1/yes/on, and prepared rather than switched on (2026-09-27); see
+# docs/features/speed.md, "Worker mode". Only the app container reads it: the
+# queue and the scheduler never start Caddy.
+#
+# Falls back to classic, and says so, when the pieces worker mode needs are not
+# in the image. A container that refuses to start is an outage (see above); a
+# container that serves the old way is not.
+case "$(printf '%s' "${OCTANE_WORKERS:-}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on) GIFTCOVES_PHP_MODE=worker ;;
+    *) GIFTCOVES_PHP_MODE=classic ;;
+esac
+
+if [ "$GIFTCOVES_PHP_MODE" = worker ] \
+    && { [ ! -f public/frankenphp-worker.php ] || [ ! -f vendor/laravel/octane/bin/frankenphp-worker.php ]; }; then
+    echo "entrypoint: OCTANE_WORKERS is on but the Octane worker files are missing, serving in classic mode" >&2
+    GIFTCOVES_PHP_MODE=classic
+fi
+
+export GIFTCOVES_PHP_MODE
+
 # Hand over to the base image's own entrypoint, which is what ran before this
 # script was put in front of it (it prefixes `frankenphp run` when the command
 # starts with a flag, and otherwise just execs the command). `exec` so the

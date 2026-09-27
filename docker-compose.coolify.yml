@@ -177,6 +177,20 @@ x-app: &app
 
     # Staging leaves this false so it never enters the index.
     ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
+
+    # The image proxy (docs/features/image-proxy.md). On unless set to false;
+    # named here because a variable the compose file does not name never
+    # reaches the container, and then the switch in Coolify would do nothing.
+    # IMAGE_PROXY_HOSTS adds image servers to the built-in list, comma-separated.
+    IMAGE_PROXY_ENABLED: ${IMAGE_PROXY_ENABLED:-true}
+    IMAGE_PROXY_HOSTS: ${IMAGE_PROXY_HOSTS:-}
+
+    # Worker mode (Octane on FrankenPHP), prepared and OFF. Read by
+    # docker/entrypoint.sh on the app container only; see docs/features/speed.md,
+    # "Worker mode", before setting OCTANE_WORKERS=true on staging.
+    OCTANE_WORKERS: ${OCTANE_WORKERS:-false}
+    OCTANE_WORKER_NUM: ${OCTANE_WORKER_NUM:-4}
+    OCTANE_MAX_REQUESTS: ${OCTANE_MAX_REQUESTS:-500}
     # Server-side rendering, in its own container. If it is unreachable Laravel
     # falls back to client rendering rather than erroring.
     #
