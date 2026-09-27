@@ -719,6 +719,27 @@ return [
         'budget_sweet_spot' => 0.85,
 
         /*
+         * Thumbs up and down on the ideas (docs/features/find-a-gift.md).
+         *
+         * `min_voters`: different people (one vote each per product) who must
+         * have voted before everybody's thumbs move a product for anybody
+         * else. It is the privacy guarantee of the crowd signal: below it, one
+         * person's taste, or what they think of their mum's, would show in a
+         * stranger's results. Deliberately NOT tied to GIFT_MIN_OWNERS, which
+         * production has lowered to 1 for the list signals: a thumb costs one
+         * click, so one person must never be enough. Never lower it to fill a
+         * page; GiftFeedback::minVoters() refuses anything under two.
+         *
+         * A crowd vote is deleted a year after it was last changed
+         * (PrunePersonalDataCommand::RETENTION['gift_votes'], quoted on the
+         * privacy page). Tastes move; a year of votes is what "people liked
+         * this" should mean.
+         */
+        'feedback' => [
+            'min_voters' => (int) env('GIFT_FEEDBACK_MIN_VOTERS', 5),
+        ],
+
+        /*
         |----------------------------------------------------------------------
         | Suggestion profiles
         |----------------------------------------------------------------------
@@ -787,6 +808,23 @@ return [
                      * that answers the interests on its own.
                      */
                     'crowd' => 10,
+                    /*
+                     * Thumbs (docs/features/find-a-gift.md, "Thumbs up,
+                     * thumbs down"). `feedback` is the owner's own thumbs
+                     * for this saved person: a candidate sharing a liked
+                     * idea's interest, category and brand gains up to 12,
+                     * a little over vibe, because the owner told us about
+                     * this very person; well under interest fit, because
+                     * one click must not outweigh the whole brief. Weights
+                     * inside the signal: App\Services\Gift\PersonFeedback.
+                     *
+                     * `crowd_votes` is everybody's thumbs, once enough
+                     * different people voted (giftcoves.gift.feedback). Six,
+                     * a little over half of `crowd`: a thumb costs a second,
+                     * keeping something on a list is a stronger act.
+                     */
+                    'feedback' => 12,
+                    'crowd_votes' => 6,
                 ],
                 'mmr_lambda' => 0.65,
                 'budget_shape' => 'sweet_spot',
@@ -821,6 +859,10 @@ return [
                     // it, which breaks ties on your own list rather than
                     // choosing for you.
                     'crowd' => 5,
+                    // No saved person on your own list, so no `feedback`;
+                    // everybody's thumbs at half the gift case, as `crowd`.
+                    'feedback' => 0,
+                    'crowd_votes' => 3,
                 ],
                 // Slightly stronger diversification: a wishlist of four
                 // variations on one thing is less useful than a gift page of

@@ -60,6 +60,11 @@ Discovery surfaces such as "surprise me" deliberately invert the usual order and
 rank *away* from popularity, toward products that are unusual for their category.
 That is the purpose of those pages rather than an accident of the ranking.
 
+Find a gift also weighs thumbs up and down. Yours for one of your people count
+for that person only: an idea you turned down is not shown for them again, and
+ones like an idea you liked rank a little higher. Everybody's thumbs count, a
+little, once at least 5 different people voted on a product.
+
 **No retailer pays for placement, position, or inclusion.** Commission rates play
 no part in ranking, in which shop is listed first, or in what appears in a Cove.
 If that ever changes, this section changes with it and the change will be marked.

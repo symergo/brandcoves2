@@ -38,9 +38,10 @@ class GiftResults
      * page draws one kind of card.
      *
      * @param  list<Suggestion>  $picks
+     * @param  array<int, string>  $votes  group id => 'up' | 'down', the thumbs already given (GiftFeedback::votesOn)
      * @return list<array<string, mixed>>
      */
-    public function cards(array $picks, CurrentMarket $current): array
+    public function cards(array $picks, CurrentMarket $current, array $votes = []): array
     {
         return array_map(fn (Suggestion $pick) => $this->card(
             $pick->group,
@@ -50,6 +51,7 @@ class GiftResults
             $pick->fits(),
             // Five or more different people's lists (crowd-picks.md).
             $pick->chosenByOthers(),
+            $votes[$pick->group->id] ?? null,
         ), $picks);
     }
 
@@ -61,7 +63,7 @@ class GiftResults
      * @param  list<array{kind: string, value: string}>  $fits
      * @return array<string, mixed>
      */
-    public function card(ProductGroup $group, CurrentMarket $current, array $fits = [], bool $chosenByOthers = false): array
+    public function card(ProductGroup $group, CurrentMarket $current, array $fits = [], bool $chosenByOthers = false, ?string $vote = null): array
     {
         return [
             'id' => $group->id,
@@ -73,6 +75,8 @@ class GiftResults
             'url' => $current->url("p/{$group->id}/{$group->slug}"),
             'fits' => $fits,
             'chosenByOthers' => $chosenByOthers,
+            // The thumb already given, to draw it pressed (find-a-gift.md).
+            'vote' => $vote,
         ];
     }
 

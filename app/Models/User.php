@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Market;
+use App\Services\Gift\GiftFeedback;
 use App\Services\Social\Friends;
+use App\Support\Owner;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
@@ -26,6 +28,19 @@ class User extends Authenticatable implements FilamentUser, HasName
     use HasFactory;
 
     use Notifiable;
+
+    protected static function booted(): void
+    {
+        /*
+         * Their thumbs on Find a gift's ideas go with the account. The thumbs
+         * for their saved people go by cascade with the people; the crowd
+         * votes hold only a one-way code, which the database cannot join to
+         * the account, so they are found by computing that code here.
+         */
+        static::deleting(function (self $user): void {
+            GiftFeedback::forgetVoter(new Owner($user, null));
+        });
+    }
 
     /**
      * @return array<string, string>

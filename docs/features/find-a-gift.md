@@ -154,11 +154,107 @@ line. A section added to `GiftResults` reaches all of them.
   named the page, in the four languages, because the header item and the page must say the same
   thing (navigation.md, "one name per page").
 
+## Thumbs up, thumbs down (2026-09-27)
+
+The owner's request: "Add thumbs up or down to the gift suggestions and use this info to teach the
+engine."
+
+### What a thumb does
+
+Every card on the results page has two small line icons (`ToolIcon` `thumbsUp` / `thumbsDown`), with
+their meaning in the button labels and one (i) beside the heading (`gift.thumbs_hint`).
+
+- **Thumbs up** keeps the card, drawn pressed; pressing it again takes the thumb back. It is sent on
+  its own (`POST /{market}/gift/feedback`, `GiftFeedbackController`), without re-ranking the board
+  under the visitor. Cards already liked come back pressed (`GiftResults::cards`, `vote`).
+- **Thumbs down is the old "Something else"**: on the questions' board it is the swap
+  (`GiftController::swap`), which now also records the vote, so the replacement and the learning
+  are one request. On This or that's result and a gift landing page, which cannot re-rank on the
+  spot, the card leaves the board and the vote is sent on its own. The "Iets anders" link is gone:
+  two controls that both mean "not this" was one too many.
+- Where: the questions, This or that's result (for a giver only: not on the person's own page or a
+  "help me find out" link) and the gift landing pages. The landing pages are cached per day, so
+  their thumbs teach everybody else, not the page itself.
+
+### What it teaches, per saved person (`recipient_feedback`)
+
+When the ideas are for one of your people, the thumb is stored against that person
+(`recipient_feedback`: person, product, `up`/`down`, one row per person and product) and the engine
+reads it whenever a brief is about them: Find a gift, This or that for them, and the reminder
+emails' ideas (`TasteBrief::aboutRecipient`, set only by a caller that scoped the person to the
+owner).
+
+- **A thumb down is final for that person**: the product is excluded before retrieval, like a past
+  gift, on every board and in every later sitting. The session's `RejectionMemory` still covers the
+  sitting for everybody else.
+- **Liked and disliked products lend their likeness** (`PersonFeedback`, pure): each product is its
+  interests (editors' and crowd tags), its category and its brand. **Up is +1, down is -0.5**,
+  because a "no" is often about that product (a colour, one they have, the price), not about cooking
+  or the brand, and the product itself already never returns. **Interest 0.5, category 0.35, brand
+  0.15**: an interest is what the person is about, a category what kind of present, a brand the
+  weakest hint. Each part is clamped to one thumb's worth, so three liked cookbooks do not bury the
+  person's other interests.
+- The result (-1..1) is the `feedback` signal, **weight 12** for someone else: a candidate sharing a
+  liked idea's interest, category and brand gains 12 points, a little over vibe (10), well under
+  interest fit (40). It reorders good answers; one click never replaces the brief. Zero on your own
+  list, where there is no saved person.
+- **It does not touch the person's interests or avoid list.** A thumb is its own signal: rewriting
+  what the owner typed from one click would be the site deciding for them, and it would be invisible.
+- Nothing new on the person page. A "what you liked" list there could come later (not built).
+
+### What it teaches everybody (`gift_votes`)
+
+Every thumb also counts for the crowd: one row per voter and product (`gift_votes`: product, a
+one-way code of the visitor made with `Owner::identityHash('gift-vote')`, the kind of person it was
+for in the `RecipientType` vocabulary or null, the vote). Pressing twice, or changing your mind,
+replaces the row, so **one person can never move a product twice**.
+
+- **Nothing counts below `giftcoves.gift.feedback.min_voters` different people (5,
+  `GIFT_FEEDBACK_MIN_VOTERS`)**, checked in the query's `HAVING` and again in `CrowdVotes`, and never
+  below two whatever the environment says. It is the privacy guarantee: below it, one person's taste,
+  or their opinion of their mum's, would show in a stranger's results. **Deliberately not tied to
+  `GIFT_MIN_OWNERS`**, which production has at 1 for the list signals: a thumb costs one click.
+- Votes for the same kind of person decide when there are enough of them; otherwise all votes on the
+  product. A saved person's free-text relationship ("mama") is read as the vocabulary, so a vote for
+  Mama and one for "a mother" meet.
+- Approval is `(up - down) / votes`; a net "no" is **halved** (a thumb down is more often about one
+  person's taste than about the product). Confidence is 0.7 at the threshold rising to 1.0 at twenty
+  people on a log scale, the crowd picks' curve.
+- The `crowd_votes` signal, **weight 6** for someone else (a little over half of `crowd`, 10: a
+  thumb costs a second, keeping something on a list is a stronger act), 3 on your own list.
+- Counted when read, one grouped query over the candidates by the unique index, not kept as
+  counters: counters drift from their rows, and pruning votes after a year would leave counts nobody
+  can explain.
+- Without a saved person (a kind of person, or Skip) only this and the session's `RejectionMemory`
+  apply.
+
+### Privacy
+
+- The thumbs for a saved person are the owner's data about somebody else: they cascade with the
+  person, and the person with the account. Only the owner's own briefs read them.
+- A crowd vote holds no identity, only the one-way code; it is deleted **365 days after it last
+  changed** (`PrunePersonalDataCommand::RETENTION['gift_votes']`), and with the account
+  (`User::booted` computes the code and deletes its rows, since the database cannot join a code to an
+  account).
+- `bc:scrub` deletes both tables. The privacy page (en, nl) has a row in "What we process", a
+  paragraph under Recipients and under "What lists teach together", and two retention rows; the
+  terms' "How results are ranked" says the thumbs weigh in.
+- `GroupMerger` moves both tables to the winning product, keeping the winner's row where both had
+  one, or a product turned down for somebody would return under the winner's id.
+
+### Files
+
+`app/Services/Gift/GiftFeedback.php` (store, read), `PersonFeedback.php` and `CrowdVotes.php` (the
+arithmetic, pure), `SuggestionEngine` (`feedback`, `crowd_votes`, the exclusion),
+`app/Http/Controllers/GiftFeedbackController.php`, migration
+`2026_09_28_001000_gift_ideas_learn_from_thumbs`, `resources/js/Components/GiftResults.tsx`
+(`thumbs`), tests `tests/Feature/GiftFeedbackTest.php` and `tests/Unit/PersonFeedbackTest.php`.
+
 ## No AI
 
-Nothing here calls a model: the suggestion engine, the crowd picks, the offline ideas and the
-Community Coves are retrieval and arithmetic (invariant 1). `FindAGiftTest` mocks `AiClient` to
-refuse any call.
+Nothing here calls a model: the suggestion engine, the crowd picks, the offline ideas, the thumbs and
+the Community Coves are retrieval and arithmetic (invariant 1). `FindAGiftTest` and
+`GiftFeedbackTest` mock `AiClient` to refuse any call.
 
 ## Files
 

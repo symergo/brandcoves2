@@ -37,6 +37,9 @@ final readonly class TasteBrief
      * @param  bool  $hasEverything  "someone who has everything": prefer things that get used up or
      *                               done (tasting boxes, refills, workshops) over more things to keep.
      *                               See docs/features/has-everything.md
+     * @param  string|null  $recipientId  the owner's saved person this brief is about, whose thumbs the
+     *                                    engine reads (GiftFeedback). Set only by a caller that scoped the
+     *                                    person to the owner, through {@see aboutRecipient()}
      */
     public function __construct(
         public Market $market,
@@ -55,6 +58,7 @@ final readonly class TasteBrief
         public ?SuggestionProfile $profile = null,
         public ?string $query = null,
         public bool $hasEverything = false,
+        public ?string $recipientId = null,
     ) {}
 
     public static function fromRecipient(Recipient $recipient, Market $market, int $limit = 4): self
@@ -393,6 +397,18 @@ final readonly class TasteBrief
     }
 
     /**
+     * The same brief, about one of the owner's saved people: the engine then
+     * reads the thumbs the owner gave ideas for them (GiftFeedback). The
+     * caller must have scoped the person to the owner; the brief cannot.
+     * Not part of {@see toArray()}: a stored brief describes a kind of
+     * person, never a particular one.
+     */
+    public function aboutRecipient(?string $recipientId): self
+    {
+        return new self(...[...get_object_vars($this), 'recipientId' => $recipientId]);
+    }
+
+    /**
      * The same brief with another budget, in cents. Its own method because
      * `with()` cannot tell "clear it" from "keep it" for a nullable number.
      */
@@ -415,6 +431,7 @@ final readonly class TasteBrief
             profile: $this->profile,
             query: $this->query,
             hasEverything: $this->hasEverything,
+            recipientId: $this->recipientId,
         );
     }
 
@@ -476,6 +493,7 @@ final readonly class TasteBrief
             profile: $profile ?? $this->profile,
             query: $query ?? $this->query,
             hasEverything: $this->hasEverything,
+            recipientId: $this->recipientId,
         );
     }
 }

@@ -1,9 +1,12 @@
 import { Link, usePage } from '@inertiajs/react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
+import { send } from '../http'
 import type { Cents, SavingTo, SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import InfoTip from './InfoTip'
 import ListName from './ListName'
+import ToolIcon from './ToolIcon'
 import CommunityCoveCards, { type CommunityCoveCard } from './CommunityCoveCards'
 import NextSteps, { type NextStepCard } from './NextSteps'
 import OfflineIdeas, { type OfflineIdea } from './OfflineIdeas'
@@ -22,6 +25,19 @@ export interface GiftPick {
     fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
     /** On the lists of at least five people shopping for someone like this (crowd-picks.md). */
     chosenByOthers?: boolean
+    /** The thumb already given: the saved person's, or this visitor's own (find-a-gift.md). */
+    vote?: Thumb | null
+}
+
+type Thumb = 'up' | 'down'
+
+/**
+ * Who a thumb is about, sent with it. A saved person's id (the server checks
+ * it is the visitor's own) or a kind of person; neither says who the visitor is.
+ */
+export interface ThumbContext {
+    recipientId?: string | null
+    relationship?: string | null
 }
 
 /** Everything under the cards, from GiftResults::extras(). Each part is optional and hides when empty. */
@@ -59,8 +75,14 @@ interface Props extends GiftResultsExtras {
     canSave?: boolean
     /** "Chosen by others with the same interests", when choosing for yourself. */
     forMe?: boolean
-    /** "Something else": only where the brief can be posted again (the questions). */
+    /** "Something else": only where the brief can be posted again (the questions). The thumb down calls it. */
     onSwap?: (pickId: number) => void
+    /**
+     * Thumbs up and down on each card, and who they are about. Without
+     * `onSwap`, a thumb down hides the card here instead of replacing it.
+     * Off where nobody is shopping (the person's own page).
+     */
+    thumbs?: ThumbContext | null
     /** An interest's label; defaults to the site's own words, then the word as typed. */
     interestLabel?: (value: string) => string
     /** Buttons under the cards (Eight more, Start over, Choose again); "Open as a page" is added here. */
@@ -92,6 +114,7 @@ export default function GiftResults({
     canSave = true,
     forMe = false,
     onSwap,
+    thumbs = null,
     interestLabel,
     actions,
     pageUrl = null,
@@ -124,13 +147,55 @@ export default function GiftResults({
 
     const hasActions = actions != null || pageUrl !== null
 
+    /*
+      Thumbs (docs/features/find-a-gift.md, "Thumbs up, thumbs down"). What
+      was pressed here overrides what the server said, until the next board.
+      A thumb down with a swap re-ranks on the server (the swap records it);
+      without one the card leaves this board and the vote is sent on its own.
+    */
+    const withThumbs = thumbs !== null || onSwap !== undefined
+    const [votes, setVotes] = useState<Record<number, Thumb | null>>({})
+    const [gone, setGone] = useState<number[]>([])
+    const voteOf = (pick: GiftPick): Thumb | null => (pick.id in votes ? votes[pick.id] : (pick.vote ?? null))
+
+    const sendVote = (pick: GiftPick, vote: Thumb | null) =>
+        send(`/${market.key}/gift/feedback`, 'POST', {
+            group_id: pick.id,
+            vote: vote ?? '',
+            recipient_id: thumbs?.recipientId ?? null,
+            relationship: thumbs?.relationship ?? null,
+        })
+
+    const thumbUp = (pick: GiftPick) => {
+        const before = voteOf(pick)
+        const next = before === 'up' ? null : 'up'
+
+        setVotes((all) => ({ ...all, [pick.id]: next }))
+        // Put back what was there if the server said no: a pressed thumb
+        // that was never stored would promise something false.
+        sendVote(pick, next).catch(() => setVotes((all) => ({ ...all, [pick.id]: before })))
+    }
+
+    const thumbDown = (pick: GiftPick) => {
+        if (onSwap) {
+            onSwap(pick.id)
+            return
+        }
+
+        setGone((ids) => [...ids, pick.id])
+        sendVote(pick, 'down').catch(() => setGone((ids) => ids.filter((id) => id !== pick.id)))
+    }
+
+    const shown = picks.filter((pick) => !gone.includes(pick.id))
+
     return (
         <section className="mt-8">
             {top}
 
             {heading !== null && (
-                <h2 className={`${top ? 'mt-6' : ''} text-sm font-medium text-ink-soft`}>
+                <h2 className={`${top ? 'mt-6' : ''} flex flex-wrap items-center gap-x-1 text-sm font-medium text-ink-soft`}>
                     {heading ?? t('gift.results_title')}
+                    {withThumbs && <InfoTip>{t('gift.thumbs_hint')}</InfoTip>}
                 </h2>
             )}
 
@@ -149,7 +214,7 @@ export default function GiftResults({
 
             {note}
 
-            {picks.length === 0 ? (
+            {shown.length === 0 ? (
                 <p className="mt-4 text-ink-soft">{emptyText ?? t('gift.no_results')}</p>
             ) : (
                 /*
@@ -158,7 +223,7 @@ export default function GiftResults({
                   scroll before the sections under it.
                 */
                 <ul className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-                    {picks.map((pick) => (
+                    {shown.map((pick) => (
                         <li key={pick.id} className="flex flex-col rounded-card border border-line bg-card p-3 sm:p-4">
                             <Link href={pick.url}>
                                 <span className="flex h-28 items-center justify-center sm:h-36">
@@ -197,17 +262,42 @@ export default function GiftResults({
                                 <span className="block font-semibold">
                                     {pick.price === null ? '' : formatPrice(pick.price, market)}
                                 </span>
-                                {(canSave || onSwap) && (
+                                {(canSave || withThumbs) && (
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                                         {canSave && <SaveToList groupId={pick.id} into={into ?? undefined} />}
-                                        {onSwap && (
-                                            <button
-                                                type="button"
-                                                className="text-xs text-ink-soft underline hover:text-ink"
-                                                onClick={() => onSwap(pick.id)}
-                                            >
-                                                {t('gift.swap')}
-                                            </button>
+                                        {withThumbs && (
+                                            /*
+                                              Two small line icons, the words in
+                                              their labels. The thumb up stays
+                                              pressed (and a second press takes
+                                              it back); the thumb down is the
+                                              old "Something else".
+                                            */
+                                            <span className="ml-auto flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={voteOf(pick) === 'up'}
+                                                    aria-label={t('gift.thumb_up')}
+                                                    title={t('gift.thumb_up')}
+                                                    onClick={() => thumbUp(pick)}
+                                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                                                        voteOf(pick) === 'up'
+                                                            ? 'border-sage bg-sage/15 text-sage'
+                                                            : 'border-transparent text-ink-soft hover:border-line hover:text-ink'
+                                                    }`}
+                                                >
+                                                    <ToolIcon name="thumbsUp" className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    aria-label={t(onSwap ? 'gift.thumb_down' : 'gift.thumb_down_hide')}
+                                                    title={t(onSwap ? 'gift.thumb_down' : 'gift.thumb_down_hide')}
+                                                    onClick={() => thumbDown(pick)}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-ink-soft transition hover:border-line hover:text-ink"
+                                                >
+                                                    <ToolIcon name="thumbsDown" className="h-4 w-4" />
+                                                </button>
+                                            </span>
                                         )}
                                     </div>
                                 )}

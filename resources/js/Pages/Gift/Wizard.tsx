@@ -861,6 +861,8 @@ export default function GiftWizard(props: Props) {
                     into={recipientList}
                     personName={recipient?.name ?? null}
                     onSwap={swap}
+                    // Thumbs: about the saved person, or the kind of person picked.
+                    thumbs={{ recipientId, relationship: kind ?? relationship }}
                     interestLabel={interestLabel}
                     top={
                         <>

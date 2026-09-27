@@ -83,6 +83,12 @@ class ScrubDatabase extends Command
              */
             DB::statement("DELETE FROM feature_ideas WHERE source = 'visitor' AND moderation <> 'published'");
 
+            // Thumbs on Find a gift's ideas (2026-09-27): what an owner said
+            // about ideas for a real person, and one-way codes of real
+            // visitors. Nothing on a laptop needs either.
+            DB::statement('DELETE FROM recipient_feedback');
+            DB::statement('DELETE FROM gift_votes');
+
             DB::statement(<<<'SQL'
                 UPDATE recipients
                 SET name = 'Recipient ' || left(id::text, 8),

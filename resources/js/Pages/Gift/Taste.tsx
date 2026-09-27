@@ -659,6 +659,9 @@ function Outcome({ mode, person, urls, result, recipients, canCreate, carried }:
             nextSteps={giver ? result.nextSteps : []}
             personUrl={giver ? result.personUrl : null}
             askUrl={giver ? result.askUrl : null}
+            // Thumbs only for a giver: on the person's own page and a shared
+            // link nobody is shopping. About the saved person when there is one.
+            thumbs={giver ? { recipientId: carried?.person?.id ?? null, relationship: carried?.relationship ?? null } : null}
             top={
                 <>
                     <h2 className="text-lg font-medium">{t('gift.taste.result_title')}</h2>

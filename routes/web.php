@@ -26,6 +26,7 @@ use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
 use App\Http\Controllers\GiftCoveManualController;
+use App\Http\Controllers\GiftFeedbackController;
 use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\GiftLandingController;
 use App\Http\Controllers\GiftPledgeController;
@@ -949,6 +950,8 @@ Route::prefix('{market}')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
         Route::post('/gift/more', [GiftController::class, 'more'])->name('gift.more');
+        // Thumbs up and down on an idea (docs/features/find-a-gift.md).
+        Route::post('/gift/feedback', GiftFeedbackController::class)->name('gift.feedback');
 
         /*
          * This or that: taste discovery by choosing. The page holds the

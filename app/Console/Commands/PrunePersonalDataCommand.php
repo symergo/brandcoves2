@@ -77,6 +77,8 @@ class PrunePersonalDataCommand extends Command
         // A visitor's feature suggestion that was rejected, counted from the
         // decision (2026-09-27, docs/features/contribute.md).
         'feature_suggestions_rejected' => 365,
+        // Everybody's thumbs on Find a gift's ideas (2026-09-27).
+        'gift_votes' => 365,
     ];
 
     /**
@@ -280,6 +282,21 @@ class PrunePersonalDataCommand extends Command
                 ->where('source', 'visitor')
                 ->where('moderation', 'rejected')
                 ->where('decided_at', '<', now()->subDays(self::RETENTION['feature_suggestions_rejected'])),
+            $dry,
+        );
+
+        /*
+         * Thumbs on Find a gift's ideas, for the crowd signal (find-a-gift.md).
+         * A one-way code of the visitor, never the visitor, but still a code
+         * per person, so it gets a clock: a year after the vote last changed.
+         * Tastes move, and a year of votes is what "people liked this" should
+         * mean. The thumbs an owner gave for one of their saved people are
+         * not on this clock: they go with the person or the account, like the
+         * rest of what the owner keeps there.
+         */
+        $report['gift votes'] = $this->prune(
+            'gift_votes',
+            fn () => DB::table('gift_votes')->where('updated_at', '<', now()->subDays(self::RETENTION['gift_votes'])),
             $dry,
         );
 

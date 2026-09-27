@@ -104,6 +104,22 @@ final class GroupMerger
             DB::update('UPDATE community_answer_picks SET group_id = ? WHERE group_id = ?', [$w, $l]);
 
             /*
+             * Thumbs on Find a gift's ideas (find-a-gift.md). One per person
+             * and product, and one per voter and product: where both products
+             * had one, the winner's is kept. Moved rather than left on the
+             * loser, or a product turned down for somebody would come back
+             * under the winner's id.
+             */
+            foreach (['recipient_feedback' => 'recipient_id', 'gift_votes' => 'voter_hash'] as $table => $who) {
+                DB::delete(
+                    "DELETE FROM {$table} l WHERE l.group_id = ?
+                       AND EXISTS (SELECT 1 FROM {$table} k WHERE k.group_id = ? AND k.{$who} = l.{$who})",
+                    [$l, $w],
+                );
+                DB::update("UPDATE {$table} SET group_id = ? WHERE group_id = ?", [$w, $l]);
+            }
+
+            /*
              * A published Cove holding both keeps its loser card rather than
              * showing the same product twice. That card shows the loser's
              * (now empty) offers, which is how a vanished product already
