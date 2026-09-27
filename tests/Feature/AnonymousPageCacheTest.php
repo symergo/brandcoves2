@@ -210,7 +210,7 @@ class AnonymousPageCacheTest extends TestCase
         $this->guest()->get(self::PAGE);
         $key = $this->storedKey();
 
-        $this->travel(6)->minutes();
+        $this->travel(11)->minutes();
 
         // Another request holds the rebuild.
         $lock = Cache::lock($key.':lock', 30);
@@ -235,7 +235,7 @@ class AnonymousPageCacheTest extends TestCase
         $this->guest()->get(self::PAGE);
         $key = $this->storedKey();
 
-        $this->travel(6)->minutes();
+        $this->travel(11)->minutes();
 
         // What the page answers now: pretend the rebuild failed its render.
         $this->app['router']->matched(function ($event): void {

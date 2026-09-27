@@ -60,15 +60,16 @@ return [
      * a test that opens one page twice around a change sees the change; the
      * cache's own tests switch it on.
      *
-     * Five minutes fresh because that is how late a signed-out visitor may see
-     * a new Cove, a price or a removed product (the owner's rule: everybody who
-     * changes something is signed in and never gets a cached page). An hour
+     * Ten minutes fresh (owner, 2026-09-27: "5 min can be 10 min") because that
+     * is how late a signed-out visitor may see a new Cove, a price or a removed
+     * product (the owner's rule: everybody who changes something is signed in
+     * and never gets a cached page). An hour
      * stale because a stale page served at once, while one request rebuilds,
      * beats every visitor after a quiet spell waiting for the rebuild.
      */
     'page_cache' => [
         'enabled' => (bool) env('PAGE_CACHE_ENABLED', true),
-        'fresh_seconds' => 300,
+        'fresh_seconds' => 600,
         'stale_seconds' => 3600,
     ],
 

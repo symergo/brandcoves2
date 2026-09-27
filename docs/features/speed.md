@@ -700,11 +700,11 @@ products are loaded. See [taste-discovery.md](taste-discovery.md).
 
 ## Anonymous page cache
 
-Layer 3 of the plan: the finished page, kept five minutes for visitors who are not signed in. A
+Layer 3 of the plan: the finished page, kept ten minutes (the owner raised it from five, 2026-09-27) for visitors who are not signed in. A
 public page (a Cove, a brand, a product) is the same for every signed-out visitor, and crawlers and
 first visits are most of the traffic, so the HTML (or, for an Inertia visit, the JSON) is built once
 and handed out. Anybody who changes something is signed in and never gets a cached page, so nobody
-waits to see their own change; a signed-out visitor sees a new Cove or price at most five minutes
+waits to see their own change; a signed-out visitor sees a new Cove or price at most ten minutes
 late (the owner's rule, 2026-09-27).
 
 The middleware is `App\Http\Middleware\CacheAnonymousPage`; the switch is
@@ -733,7 +733,7 @@ A GET or HEAD with no session cookie, no `remember_*` cookie and nobody signed i
 URL. Without a session there is no flash message and no validation error to leak. Only a 200 is
 stored, and only when the page set no cookie of its own, the session holds nothing but what every
 request puts there (`_token`, `_previous`), and the server-side render did not fail (`SsrGateway`
-marks the request; a page without its SSR HTML would reach every crawler for five minutes).
+marks the request; a page without its SSR HTML would reach every crawler for ten minutes).
 
 Query parameters: only the ones the pages read (`page`, `sort`, `view`, `budget`, `for`,
 `interest`, `occasion`, `in_stock`, `discounted`, `comparable`), each with a value pattern, and no
@@ -794,7 +794,7 @@ own check. **A shared prop that starts to differ per guest must be added to
 
 ### Fresh, stale, rebuilt
 
-Fresh five minutes, kept an hour. A request that finds a stale copy tries `Cache::lock`: the one that
+Fresh ten minutes, kept an hour. A request that finds a stale copy tries `Cache::lock`: the one that
 gets it builds the page inline and stores it, and every request meanwhile gets the stale copy at
 once. A rebuild that may not be stored (the Cove was unpublished and now answers 404) drops the stale
 copy. The entry is a plain array (body, status, headers without `Set-Cookie`), because the cache

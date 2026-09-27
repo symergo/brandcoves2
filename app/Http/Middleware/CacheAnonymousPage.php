@@ -24,9 +24,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Layer 3 of the speed plan (docs/features/speed.md, "Anonymous page cache").
  * A public page (a Cove, a brand, a product) is the same for every signed-out
  * visitor, and a crawler or a first visit is most of the traffic, so the HTML
- * (or the Inertia JSON) is built once and handed out for five minutes. Anybody
+ * (or the Inertia JSON) is built once and handed out for ten minutes. Anybody
  * who changes something is signed in, and a signed-in visitor never gets a
- * cached page, so nobody waits five minutes to see their own change.
+ * cached page, so nobody waits ten minutes to see their own change.
  *
  * ## Opt-in, per route
  *
@@ -41,7 +41,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * signed in. Without a session there is no flash message and no validation
  * error to leak. Only a 200 is stored, only when the page set no cookie of its
  * own, and never when the server-side render failed (a page without its SSR
- * HTML would be handed to every crawler for five minutes).
+ * HTML would be handed to every crawler for ten minutes).
  *
  * ## Such a visitor gets no cookie at all
  *
@@ -81,7 +81,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *
  * ## Fresh, stale, rebuilt
  *
- * Fresh for five minutes. Kept an hour. A request that finds a stale copy
+ * Fresh for ten minutes. Kept an hour. A request that finds a stale copy
  * tries a lock: the one that gets it rebuilds the page and stores it, every
  * other request meanwhile gets the stale copy at once.
  *
