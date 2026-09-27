@@ -272,6 +272,24 @@ is how you lose the visit. Everything built under that id is merged into the acc
 `last_seen_at` is updated at most once a day: this middleware runs on every request and a write per
 page view would be a needless load on the primary.
 
+Not on every request any more (2026-09-27): a signed-out visitor reading a public page that the
+anonymous page cache serves gets no identity and no cookie, because the page has to be the same for
+everybody. The identity is made on their first write instead (a POST, or the `GET /csrf` the browser
+asks right before one). See [speed.md](speed.md), "Anonymous page cache".
+
+## The market choice and the page cache
+
+A cached public page is the same for every signed-out visitor, but the market bar is not: it depends
+on the `bc_market` choice, the browser's language and whether the visitor is a crawler. So the cache
+key holds the bar itself, computed by `MarketPreference::bar()` exactly as the shared props compute
+it, and a visitor who chose the Netherlands gets a different stored copy of a Belgian page from one
+who chose nothing. The contribute bar and the cookie-consent answer are in the key the same way.
+
+The switcher's POST now fetches a CSRF token first when the page came from the cache (that page
+carries none; `ensureCsrfToken()` in `resources/js/http.ts`). The rule itself is unchanged: only the
+switcher writes the cookie. Cached responses say `Vary: Cookie, Accept-Language`, so a browser does
+not reuse a copy after its choice changed.
+
 ## Files
 
 - `app/Enums/Market.php` — including `isPublished()` / `published()`

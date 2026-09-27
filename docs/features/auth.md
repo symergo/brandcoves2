@@ -102,6 +102,14 @@ once on a first sign-in, silent on a second, silent with no address.
 The site is useful before you sign up: `TrackAnonymousIdentity` issues a `bc_visitor` cookie and
 lists attach to that. On sign-in, `IdentityMerger` moves that work onto the real account.
 
+**Not on a public page read from the cache (2026-09-27).** A signed-out visitor reading a Cove, a
+brand, a product or another page the anonymous page cache serves gets no identity and no cookie: the
+page must be the same for everybody. The identity is made on the first write, since every write is a
+POST (or the `GET /csrf` the browser asks right before one), and those still run the middleware.
+Nothing on the cached pages reads the identity. The interactive GET pages (a shared list, the gift
+wizard, `/for`) still make one on a view, because they decide what to offer from `Owner::exists()`.
+See [speed.md](speed.md), "Anonymous page cache".
+
 **The merge runs before `Auth::login()`, deliberately** — see
 [GoogleController::callback()](../../app/Http/Controllers/Auth/GoogleController.php). Once the session
 regenerates, the anonymous cookie is no longer the thing identifying this browser, and the window to

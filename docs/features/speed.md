@@ -693,3 +693,150 @@ products are loaded. See [taste-discovery.md](taste-discovery.md).
 - After the next grouping run, the cache key `bc:search:gen:be-nl` (with the store's prefix) holds a
   higher number, and a repeated search is slow once, then fast again.
 - `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.
+
+## Anonymous page cache
+
+Layer 3 of the plan: the finished page, kept five minutes for visitors who are not signed in. A
+public page (a Cove, a brand, a product) is the same for every signed-out visitor, and crawlers and
+first visits are most of the traffic, so the HTML (or, for an Inertia visit, the JSON) is built once
+and handed out. Anybody who changes something is signed in and never gets a cached page, so nobody
+waits to see their own change; a signed-out visitor sees a new Cove or price at most five minutes
+late (the owner's rule, 2026-09-27).
+
+The middleware is `App\Http\Middleware\CacheAnonymousPage`; the switch is
+`giftcoves.page_cache.enabled` (`PAGE_CACHE_ENABLED`, on by default, off in the test suite). Turned
+off, everything returns to how it was, cookies included.
+
+### Which pages
+
+Opted in per route with `->middleware(CacheAnonymousPage::ALIAS)` in `routes/web.php`: home, the
+Cove pages (`/tips`, dated and named; personas under `/gift-ideas/{slug}`; guides and advice under
+`/guides/{slug}`; shop Coves under `/shops/{slug}`), brand and shop pages and their indexes, the
+product page, `/coves`, community Coves (index and page), `/gift-ideas` and its landing pages,
+`/guides`, popular searches, the help pages (`/help`, `/search-help`, `/lists-help`, the Find-a-gift
+manual) and the legal pages.
+
+Never: search results, Discover and `/surprise` (they differ per visit), lists and claims, anything
+under an account, `/for`, Santa, the quiz, Ask, contribute, token pages, and every POST.
+`PageCacheRoutesTest` walks the route table: the opted-in routes must be exactly its list, reads
+only, with no `auth`, `signed` or `guest` middleware and no `{token}`, and no list, claim or account
+route may carry the middleware. A cached list page would show one visitor what another claimed
+(invariant 4).
+
+### Who gets a cached page
+
+A GET or HEAD with no session cookie, no `remember_*` cookie and nobody signed in, on a `/{market}/`
+URL. Without a session there is no flash message and no validation error to leak. Only a 200 is
+stored, and only when the page set no cookie of its own, the session holds nothing but what every
+request puts there (`_token`, `_previous`), and the server-side render did not fail (`SsrGateway`
+marks the request; a page without its SSR HTML would reach every crawler for five minutes).
+
+Query parameters: only the ones the pages read (`page`, `sort`, `view`, `budget`, `for`,
+`interest`, `occasion`, `in_stock`, `discounted`, `comparable`), each with a value pattern, and no
+arrays. Anything else is a bypass rather than ignored. Free text (`q`, prices) would let anyone fill
+the cache by varying it. Tracking parameters (`utm_*`, `gclid`) cannot simply be left out of the key,
+because the Inertia page object carries the full URL: a stored page would put one visitor's `gclid`
+in the next visitor's address bar. Such a visit is served normally, just not from the cache.
+
+### No cookie at all for such a visitor
+
+This is what makes the page the same for everybody, and also what lets a browser keep it.
+
+- **Session.** The middleware runs before `StartSession`: `bootstrap/app.php` puts it there in the
+  middleware priority list, so although routes name it after the `web` group, Laravel sorts it
+  forward. A hit is answered before a session starts, a query runs or the controller is reached. On
+  a miss the request's session is switched to the in-memory driver, so `StartSession`, the CSRF
+  check, the shared props and the 404 page still have one, but nothing is written to Redis, and the
+  session and `XSRF-TOKEN` cookies are taken off the response.
+
+  Why not `withoutMiddleware(StartSession)` on these routes, as the machine-read routes do
+  (`StatelessRoutes`): the same route serves a signed-in visitor, and a guest who already has a
+  session because they saved something (a flash message or adding mode lives there). Middleware is
+  fixed per route; this decides per request.
+- **Identity.** `TrackAnonymousIdentity` skips such a request, so reading public pages makes no
+  `anonymous_identities` row and no `bc_visitor` cookie. The identity is made on the first write: a
+  POST runs the middleware as before, and so does `GET /csrf`, which the browser asks right before
+  its first write. The interactive GET pages that are not cached (a shared list, the gift wizard,
+  `/for`) still make one on a view, because they ask `Owner::exists()` to decide what to offer
+  ("suggest a gift" on a shared list). Making those lazy too means going through each of them, and
+  was left out of this step.
+- **CSRF token.** `app.blade.php` leaves the `csrf-token` meta tag empty on such a page. Before its
+  first write the browser asks `GET /csrf` (`CsrfTokenController`: starts the session, sets the
+  session and `XSRF-TOKEN` cookies, returns the token, `no-store`) through `ensureCsrfToken()` in
+  `resources/js/http.ts`, which writes the token into the meta tag so the next write asks nothing.
+  Every write goes through it: `send()`, the fetches that set their own headers (contribute bar,
+  list board, pick reactions, the undo of a removal), both market-choice paths, and every Inertia
+  request that is not a GET, through `http.onRequest` in `app.tsx` (Inertia then reads the fresh
+  `XSRF-TOKEN` cookie). From that moment the visitor has a session and gets fresh pages.
+- **The help page's Referer.** `/help` prefilled the feedback form's "which page" from the Referer.
+  On a cached page it is null, and the form fills it in the browser (`resources/js/previousPath.ts`:
+  the page the last Inertia visit left, else a same-site `document.referrer`).
+
+### The key
+
+Scheme and host; path; the known query parameters, sorted by name; the market; every `X-Inertia*`
+request header and `Purpose`, so a full load, an Inertia visit, a partial reload and a prefetch are
+separate entries, and a browser that already holds the translations (named in the once-props header)
+never gets a page stored for one that did not; the deployed commit and the asset version; and the
+per-guest parts of the shared props, computed exactly as `HandleInertiaRequests` computes them: the
+market bar (from the `bc_market` choice, the browser language and whether it is a crawler), the
+contribute bar (closed or not) and the cookie-consent answer. The key holds the answer rather than
+the cookies, so two visitors who would see the same bar share an entry.
+
+The asset version matters: Inertia answers a browser on an old build with a 409 that makes it
+reload. A cached JSON page would skip that, so an old version header is a miss and reaches Inertia's
+own check. **A shared prop that starts to differ per guest must be added to
+`CacheAnonymousPage::variant()`**, or one guest sees another's version of it.
+
+### Fresh, stale, rebuilt
+
+Fresh five minutes, kept an hour. A request that finds a stale copy tries `Cache::lock`: the one that
+gets it builds the page inline and stores it, and every request meanwhile gets the stale copy at
+once. A rebuild that may not be stored (the Cove was unpublished and now answers 404) drops the stale
+copy. The entry is a plain array (body, status, headers without `Set-Cookie`), because the cache
+refuses to rebuild objects (`serializable_classes => false`).
+
+`X-Page-Cache` says `hit`, `miss`, `stale` or `bypass`. A cached response carries
+`Cache-Control: public, max-age=60, stale-while-revalidate=600` and
+`Vary: X-Inertia, X-Inertia-Version, X-Inertia-Partial-Data, Cookie, Accept-Language`. `Vary: Cookie`
+is what stops a browser from reusing its signed-out copy after signing in or saving something: the
+session cookie changes the Cookie header. A bypass keeps the ordinary headers.
+
+### Tests
+
+The suite runs with the cache off (`PAGE_CACHE_ENABLED=false` in `phpunit.xml`), because many tests
+open a page, change something and open it again, which with the cache on sees the first copy by
+design. With it forced on (2026-09-27), the feature suite's only failures were of that kind, tests
+that read the `bc_visitor` cookie off a GET of the home page, and the Referer prefill on `/help`; no
+page broke. `AnonymousPageCacheTest` switches it on and covers: a second guest view is a hit with no
+cookie and an empty token; signed in, a session cookie or a remember cookie bypass; a market choice
+and a consent answer are their own entries; Inertia JSON and HTML are separate; an old asset version
+still gets its 409; a page carrying session state is never stored; unknown or malformed parameters
+bypass; a stale page is served while another request holds the rebuild; a failed render or a gone
+page is not stored; HEAD is answered from the cache; and the write path end to end: after a cached
+page, `GET /csrf` starts the session, its token belongs to that session, a guest's save succeeds,
+and from then on that visitor bypasses.
+
+### Risks and follow-ups
+
+- Under Octane (wave 4) the per-request `config(['session.driver' => 'array'])` must not outlive the
+  request. Octane gives each request its own copy of the config, which is what makes it safe; check
+  it when switching.
+- A controller on an opted-in route that writes the session for a guest loses the write, because
+  that session is in memory. None does today. The session check keeps such a page out of the cache,
+  but the write is still lost, so a route that needs one must not be opted in.
+- Cloudflare in front (wave 4) could cache these responses too. It ignores `Vary: Cookie`, so a rule
+  must bypass on the session cookie itself, or it would hand a signed-out copy to a signed-in
+  visitor.
+
+### Check on staging after the push
+
+- `curl -sI --max-time 10 https://staging.giftcoves.com/be-nl/about` twice: the first says
+  `x-page-cache: miss`, the second `hit`, and neither has a `set-cookie` line. With the session
+  cookie sent (`-H 'Cookie: <name>=x'`; the name is in the `set-cookie` of `GET /csrf`) it says
+  `bypass`.
+- In a private window: open a Cove, press save on a product (the sign-in dialog appears), close the
+  market bar, send the help form. The network tab shows one `GET /csrf` before the first write and
+  none after, and nothing answers 419.
+- Signed in, the same Cove says `x-page-cache: bypass`, with your own state (saved marks, adding
+  mode).
