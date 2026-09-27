@@ -56,7 +56,14 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   yours they see, your birthday note about them, and removing the connection.
   Since 2026-09-26 "their lists" includes every wish list they made "visible to my people", and
   "which of yours they see" every one of yours
-  ([wish-list-for-my-people.md](wish-list-for-my-people.md));
+  ([wish-list-for-my-people.md](wish-list-for-my-people.md)). Since 2026-09-27 "their lists" are
+  their **own wish lists only** (kind `mine`): a list they make for somebody else sat among them and
+  read as if they wanted what was on their grandfather's list. Those lists, and its date, moved to
+  "Samen met" (below), counted in the line under the name as "samen: N";
+- for a friend you are in a **Secret Santa** with: a small mark beside "op GiftCoves", with the
+  `santa` line icon, the group's name and its day (owner's addition, 2026-09-27). Only a group whose
+  day is still ahead, or has none yet: last year's office draw is history, not news. Membership
+  only, never the draw (see [Samen met](#samen-met-naam));
 - for a friend nobody saved yet: **Bewaar wat je over [naam] weet**, which creates a saved person
   linked to their account through the existing `POST /recipients` with `friend_id`
   (`RecipientController::store`, which checks the friendship). From then on the row has everything
@@ -97,9 +104,48 @@ width, because there is nothing for a side column):
    (`MyPeople::sharedWith()`, made public so the two pages share one query). A list they make for
    somebody else is not their wish list and does not appear here.
 4. **Lijsten voor {naam}**: yours, kind `for_someone` or `group`, about this person.
-5. **Wat je gaf**, the gift history, unchanged ([gift-history.md](gift-history.md)).
+5. **Samen met {naam}**, for a friend only (below).
+6. **Wat je gaf**, the gift history, unchanged ([gift-history.md](gift-history.md)).
 
 List names in these sections are drawn with `ListName` ([list-names-in-text.md](list-names-in-text.md)).
+
+### Samen met {naam}
+
+What you and a friend do together (`App\Services\Social\InCommon`), on the person's page, and as a
+count ("samen: N") and a Secret Santa mark on My people. Friends on GiftCoves only: somebody without
+an account cannot be matched to a group gift or a Secret Santa, so a saved person with no account
+link has no such section at all.
+
+- **Lists they make for somebody else** that reached you (shared with you, or you opened the
+  link), with who they are for ("voor Opa"). The recipient's name is on the shared list's own page
+  for anybody who may open it, so it is not new here.
+- **Group gifts you both take part in**, with their part: "organiseert" or "doet mee". Taking part
+  means owning the list (organising), a pledge (`gift_pledges.user_id`) or being a collaborator. A
+  group gift you are both in is shown here and not again among their lists.
+- **Secret Santa groups you are both in** (as organiser or member, not removed), with the date and a
+  link to the group's page on its own market.
+
+**The privacy rules, each with a test in `PeopleTogetherTest`:**
+
+a. **Never a list about you.** A gift list or group gift whose recipient is linked to your account
+   (`recipients.user_id` = you) is left out everywhere: their lists on My people, the counts, the
+   next date, their page. `Wishlist::scopeNotAbout()` does it, inside `MyPeople::sharedWith()` and
+   the group-gift query, so no section can forget it. It applies even when the link reached you,
+   because showing it would show you your own surprise. A list about somebody with no account link
+   cannot be recognised as being about you, and is not.
+b. **A friend's part in a group gift only where the list would name them to you.** The organiser
+   decides whether contributors are named (`wishlists.pledgers_visible`, since 2026-09-01). Without
+   that, "Sam doet mee" would tell you something the list itself does not, so the group gift then
+   shows only when Sam is its organiser, which everybody on it sees anyway. One exception, decided
+   without the owner: a group gift **you** organise, whose page already names every contributor to
+   you (the organiser's breakdown in `ContributionView`). Collaborators fall under the same rule as
+   pledgers. Amounts never appear.
+c. **Secret Santa: shared membership only.** Never who drew whom, not even "you drew them". That is
+   the owner's default for now; he can opt into showing "you drew them" later, which would be a
+   change to `InCommon::santa()` and this paragraph. The pairing column (`assigned_member_id`) is
+   encrypted and `$hidden`, and the query never selects it. Members without an account are skipped.
+d. **No claim state** (invariant 4): no list's items are loaded, and nothing counts or labels by
+   what has been claimed.
 
 ### Renaming and deleting
 
@@ -177,6 +223,8 @@ requests, that is a change to how friendships are made, not to this page.
 - A friend row carries only what the friend shared: their published birthday (or your own note),
   and lists they shared with you or whose link you opened, never a private one, plus the wish
   lists they show to all their people (which may have no link at all; the option is the consent).
+- A list a friend is making about you never appears, however it reached you; a friend's part in a
+  group gift and Secret Santa membership follow the rules under [Samen met](#samen-met-naam).
 - No claim state (invariant 4). No list items are loaded; nothing counts, orders or labels by what
   has been claimed. A list's occasion date is shown, which the list's page already shows anybody
   who may open it.
@@ -192,7 +240,8 @@ requests, that is a change to how friendships are made, not to this page.
 | Copy | `site.people.*` (four languages); the friend details reuse `site.friends.*`; `/help` has `people.help` |
 | Icons | `ToolIcon` (`cake` for a birthday, `more` for the Meer menu); the menu is `Components/Menu.tsx` |
 | Person page | `PersonController::show`, `app/Services/Social/PersonProfile.php`, `resources/js/Components/PersonProfile.tsx` (in `Pages/Recipients/Show.tsx`) |
-| Tests | `tests/Feature/MyPeopleTest.php`, `tests/Feature/PersonProfileTest.php`; `FriendsTest` reads the friend rows from `/people` now |
+| Samen met | `app/Services/Social/InCommon.php`, `Wishlist::scopeNotAbout()` |
+| Tests | `tests/Feature/MyPeopleTest.php`, `PersonProfileTest.php`, `PeopleTogetherTest.php` (the privacy rules); `FriendsTest` reads the friend rows from `/people` now |
 
 ## Not done
 

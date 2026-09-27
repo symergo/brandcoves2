@@ -42,6 +42,15 @@ export interface Profile {
     }
     theirLists: ProfileList[]
     listsForThem: ProfileList[]
+    /** Friends only; null for somebody without an account. See App\Services\Social\InCommon. */
+    together: {
+        /** Lists they are making for somebody else that reached you. */
+        lists: (ProfileList & { forName: string | null })[]
+        /** Group gifts you are both in. Their part is here only where the list would show it to you. */
+        groups: (ProfileList & { forName: string | null; role: 'organiser' | 'contributes' })[]
+        /** Secret Santa groups you are both in. Membership only, never the draw. */
+        santa: { id: string; title: string; date: string | null; url: string }[]
+    } | null
 }
 
 export interface ProfileOptions {
@@ -112,6 +121,12 @@ export default function PersonProfile({
     const toggle = (next: typeof panel) => setPanel(panel === next ? null : next)
 
     const about = profile.about
+    // "Samen met": drawn only when there is something in it.
+    const together =
+        profile.together !== null &&
+        profile.together.lists.length + profile.together.groups.length + profile.together.santa.length > 0
+            ? profile.together
+            : null
     const money = (cents: Cents) => formatPrice(cents, market)
     const dayMonth = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long' })
     const listDate = new Intl.DateTimeFormat(market.hrefLang, { day: 'numeric', month: 'long', year: 'numeric' })
@@ -312,6 +327,55 @@ export default function PersonProfile({
             {profile.listsForThem.length > 0 && (
                 <Section title={t('people.lists_for', { name: person.name })} tip={t('people.lists_for_tip', { name: person.name })}>
                     <Lists lists={profile.listsForThem} format={(iso) => listDate.format(new Date(`${iso}T00:00:00`))} />
+                </Section>
+            )}
+
+            {together !== null && (
+                <Section title={t('people.together_title', { name: person.name })} tip={t('people.together_tip', { name: person.name })}>
+                    <ul className="divide-y divide-line rounded-card border border-line bg-card">
+                        {together.groups.map((group) => (
+                            <li key={`g:${group.id}`}>
+                                <a href={group.url} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20">
+                                    <span className="min-w-0">
+                                        <ListName name={group.title} kind={group.kind} />
+                                        {group.forName && <span className="text-ink-soft"> · {t('people.for_whom', { name: group.forName })}</span>}
+                                    </span>
+                                    <span className="text-xs text-ink-soft">
+                                        {t(group.role === 'organiser' ? 'people.role_organiser' : 'people.role_contributes', { name: person.name })}
+                                        {group.eventDate && ` · ${listDate.format(new Date(`${group.eventDate}T00:00:00`))}`}
+                                    </span>
+                                </a>
+                            </li>
+                        ))}
+                        {together.lists.map((list) => (
+                            <li key={`l:${list.id}`}>
+                                <a href={list.url} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20">
+                                    <span className="min-w-0">
+                                        <ListName name={list.title} kind={list.kind} />
+                                        {list.forName && <span className="text-ink-soft"> · {t('people.for_whom', { name: list.forName })}</span>}
+                                    </span>
+                                    <span className="text-xs text-ink-soft">
+                                        {t('people.made_by', { name: person.name })}
+                                        {list.eventDate && ` · ${listDate.format(new Date(`${list.eventDate}T00:00:00`))}`}
+                                    </span>
+                                </a>
+                            </li>
+                        ))}
+                        {together.santa.map((group) => (
+                            <li key={`s:${group.id}`}>
+                                <Link href={group.url} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20">
+                                    <span className="inline-flex min-w-0 items-center gap-1.5 font-medium">
+                                        <ToolIcon name="santa" className="h-4 w-4 shrink-0 text-accent" />
+                                        {group.title}
+                                    </span>
+                                    <span className="text-xs text-ink-soft">
+                                        {t('people.santa_both')}
+                                        {group.date && ` · ${listDate.format(new Date(`${group.date}T00:00:00`))}`}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
                 </Section>
             )}
         </>

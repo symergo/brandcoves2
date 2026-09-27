@@ -29,6 +29,10 @@ interface FriendPart {
     lists: ListLink[]
     /** Yours they can see. */
     theySee: ListLink[]
+    /** How many things you do together: their lists for others, group gifts, Secret Santas. */
+    inCommon: number
+    /** The next Secret Santa you are both in. Membership only, never the draw. */
+    santa: { title: string; date: string | null } | null
 }
 
 interface Person {
@@ -339,6 +343,11 @@ function summaryOf(
         )
     }
 
+    // "Samen met": listed on their page; a count is enough here.
+    if (person.friend !== null && person.friend.inCommon > 0) {
+        parts.push(t('people.in_common', { count: person.friend.inCommon }))
+    }
+
     return parts.join(' · ')
 }
 
@@ -407,6 +416,21 @@ function PersonRow({
                     {friend !== null && (
                         <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                             {t('people.on_giftcoves')}
+                        </span>
+                    )}
+                    {/*
+                      You are both in a Secret Santa (owner, 2026-09-27): the
+                      group's name and, while it is ahead, its day. Who drew
+                      whom is never on this page.
+                    */}
+                    {friend?.santa && (
+                        <span
+                            className="inline-flex max-w-full items-center gap-1 rounded-full border border-line px-2 py-0.5 text-xs text-ink-soft"
+                            title={t('people.santa_mark_tip', { title: friend.santa.title })}
+                        >
+                            <ToolIcon name="santa" className="h-3.5 w-3.5 shrink-0 text-accent" />
+                            <span className="truncate">{friend.santa.title}</span>
+                            {friend.santa.date && <span className="shrink-0">· {dateLabel(friend.santa.date)}</span>}
                         </span>
                     )}
                 </span>

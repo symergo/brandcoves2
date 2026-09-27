@@ -39,6 +39,8 @@ use Illuminate\Support\Collection;
  *   somebody else is not their wish list.
  * - **Lists for them** are yours: kind `for_someone` or `group`, about this
  *   person, owned by you.
+ * - **Together** ("Samen met"), for a friend only: {@see InCommon}, which
+ *   holds the privacy rules for it.
  *
  * No claim state (invariant 4): no list's items are loaded.
  */
@@ -47,6 +49,7 @@ class PersonProfile
     public function __construct(
         private readonly MyPeople $people,
         private readonly Friends $friends,
+        private readonly InCommon $inCommon,
     ) {}
 
     /**
@@ -61,13 +64,22 @@ class PersonProfile
         $birthday = DayAndMonth::fromDate($person->birthday)
             ?? ($friendship === null ? null : $this->people->birthdayFor($friendship));
 
+        // Their lists that reached you: their wish lists feed one section,
+        // the lists they make for others another ("Samen met").
+        $shared = $friendship === null ? collect() : $this->people->sharedWith($viewer, collect([$friendship]));
+
         return [
             'relationshipLabel' => $this->people->relationshipLabel($person->relationship),
             'birthday' => $birthday?->toString(),
             'isFriend' => $friendship !== null,
             'about' => $this->about($person),
-            'theirLists' => $friendship === null ? [] : $this->theirWishLists($viewer, $friendship, $current),
+            'theirLists' => $friendship === null ? [] : $this->theirWishLists($shared[$friendship->friend_id] ?? collect(), $current),
             'listsForThem' => $this->listsForThem($viewer, $person, $current),
+            // Friends only: somebody without an account cannot be matched to a
+            // group gift or a Secret Santa. See InCommon for what may show.
+            'together' => $friendship === null
+                ? null
+                : $this->inCommon->for($viewer, [(int) $friendship->friend_id], $shared, $current)[(int) $friendship->friend_id],
         ];
     }
 
@@ -119,13 +131,11 @@ class PersonProfile
     }
 
     /**
+     * @param  Collection<int, Wishlist>  $lists  their lists that reached you
      * @return list<array{id: string, title: string, kind: string, url: string, eventDate: string|null}>
      */
-    private function theirWishLists(User $viewer, Friendship $friendship, CurrentMarket $current): array
+    private function theirWishLists(Collection $lists, CurrentMarket $current): array
     {
-        /** @var Collection<int, Wishlist> $lists */
-        $lists = $this->people->sharedWith($viewer, collect([$friendship]))[$friendship->friend_id] ?? collect();
-
         return $lists
             ->filter(fn (Wishlist $list) => $list->kind === ListKind::Mine)
             ->sortByDesc('created_at')
