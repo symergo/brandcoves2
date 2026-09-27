@@ -60,8 +60,16 @@ final class ListOptions
      */
     public static function forPicker(Owner $owner): array
     {
+        /*
+         * The columns a row draws and nothing else. This runs on every
+         * signed-in page (it rides in the shared props), and whole rows carried
+         * descriptions, encrypted delivery addresses and a dozen settings the
+         * picker never reads. It is a closure there, so an Inertia partial
+         * reload that does not ask for `lists` never runs it at all.
+         */
         return self::query($owner)
-            ->get()
+            ->with('recipient:id,name')
+            ->get(['id', 'title', 'kind', 'is_default', 'created_at', 'recipient_id'])
             ->map(fn (Wishlist $list): array => [
                 'id' => $list->id,
                 'title' => $list->displayTitle(),
@@ -99,6 +107,14 @@ final class ListOptions
 
         return ListAccess::scope(Wishlist::query(), $owner)
             ->whereKeyNot($except->id)
+            /*
+             * My own collaborator row on each, and only mine, so `canEdit()`
+             * below reads the role from it instead of asking once per list.
+             * Never the whole roster: that is the owner's to see.
+             */
+            ->when($owner->user !== null, fn (Builder $q) => $q->with([
+                'collaborators' => fn ($c) => $c->where('user_id', $owner->user->id),
+            ]))
             ->orderBy('title')
             ->get(['id', 'title', 'kind', 'is_default', 'owner_user_id', 'owner_anon_id', 'recipient_id'])
             ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))

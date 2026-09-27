@@ -99,7 +99,7 @@ class SharedListController extends Controller
                 && Wishlist::query()->whereKey($list->id)->visibleToFriend($owner->user)->exists();
 
             if (! $throughPeople) {
-                ListOpen::record($list, $owner);
+                ListOpen::recordFromRead($list, $owner);
             }
 
             /*
@@ -130,7 +130,7 @@ class SharedListController extends Controller
              */
             if ($list->owner !== null) {
                 if ($owner->user !== null) {
-                    $friends->link($owner->user, $list->owner);
+                    $friends->linkFromSharedList($owner->user, $list->owner);
                 } else {
                     $referral->remember($list->owner->id);
                 }
@@ -169,23 +169,6 @@ class SharedListController extends Controller
         $term = $canSuggest ? trim((string) $request->query('q', '')) : '';
 
         /*
-         * Has this visitor claimed something on this list?
-         *
-         * The one question the delivery address is gated on, decided here and
-         * nowhere else. It reads **their own** hash, so the answer tells them
-         * nothing about anybody else — and it is short-circuited by `! $isOwner`
-         * so it can never become a second route to "has anybody claimed", which
-         * is `progress` and is already withheld from the owner.
-         *
-         * The dangerous variant of this query is `whereNotNull('claimed_by_hash')`.
-         * Do not write it.
-         */
-        $hasClaimed = ! $isOwner
-            && $claimable
-            && $hash !== null
-            && $list->items()->where('claimed_by_hash', $hash)->exists();
-
-        /*
          * On a group list with voting on, the items are candidates and the tally
          * is their order: most-backed first, so a shortlist that has been voted
          * on reads as one rather than as an unsorted pile. `latest()` is the
@@ -198,10 +181,12 @@ class SharedListController extends Controller
          * what the setting's own hint promises to stop.
          */
         $items = $list->items()
-            ->with(['group', 'votes'])
+            ->with('group')
             ->when(
                 $list->votingEnabled(),
-                fn ($q) => $q->withCount('votes')->orderByDesc('votes_count')->latest(),
+                // The votes themselves only where there is a tally to draw:
+                // every other list sent them to the page for nothing.
+                fn ($q) => $q->with('votes')->withCount('votes')->orderByDesc('votes_count')->latest(),
                 // Newest first everywhere else, which is the order the owner's
                 // own page shows. Unordered meant oldest first, so somebody who
                 // opened a shared link twice a week met the same nine things at
@@ -209,6 +194,26 @@ class SharedListController extends Controller
                 fn ($q) => $q->latest(),
             )
             ->get();
+
+        /*
+         * Has this visitor claimed something on this list?
+         *
+         * The one question the delivery address is gated on, decided here and
+         * nowhere else. It reads **their own** hash, so the answer tells them
+         * nothing about anybody else — and it is short-circuited by `! $isOwner`
+         * so it can never become a second route to "has anybody claimed", which
+         * is `progress` and is already withheld from the owner.
+         *
+         * Read off the items already loaded above (the whole list, the same
+         * relation) rather than asked of the database a second time.
+         *
+         * The dangerous variant of this test is "any item with a claim hash".
+         * Do not write it.
+         */
+        $hasClaimed = ! $isOwner
+            && $claimable
+            && $hash !== null
+            && $items->contains(fn (WishlistItem $item): bool => $item->claimed_by_hash === $hash);
 
         $list->load('pledges');
 
@@ -516,7 +521,7 @@ class SharedListController extends Controller
              * gift list about somebody else is exactly the person who needs to
              * know how much is still uncovered.
              */
-            'progress' => $claims->progress($list, $hideClaims),
+            'progress' => $claims->progress($list, $hideClaims, $items),
             'items' => $items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'title' => $item->displayTitle(),
