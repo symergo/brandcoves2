@@ -269,6 +269,26 @@ class AlertTest extends TestCase
     }
 
     #[Test]
+    public function a_sold_out_product_with_no_price_can_still_be_watched_for_its_return(): void
+    {
+        // Shops often drop the price when an item sells out. A restock watch
+        // compares no price, so it must not ask for one; a price watch still does.
+        $group = $this->group(inStock: false);
+        $this->offer($group, Source::Awin, null, inStock: false);
+        $user = $this->user();
+
+        $this->actingAs($user)
+            ->post('/be-nl/alerts', ['group_id' => $group->id, 'type' => 'restock'])
+            ->assertSessionMissing('error');
+        $this->assertSame(1, RestockAlert::query()->where('user_id', $user->id)->count());
+
+        $this->actingAs($user)
+            ->post('/be-nl/alerts', ['group_id' => $group->id, 'type' => 'price'])
+            ->assertSessionHas('error', __('site.alerts.not_available'));
+        $this->assertSame(0, PriceAlert::query()->count());
+    }
+
+    #[Test]
     public function a_restock_alert_fires_when_the_product_returns(): void
     {
         $group = $this->group(inStock: false);

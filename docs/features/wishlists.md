@@ -921,6 +921,13 @@ so a watch set before that date keeps firing and can still be stopped from the p
 strings the target-price panel used (`alerts.watch_price`, `target_label`, `confirm`,
 `any_drop_hint`, `excluded`) were removed from the four language files.
 
+**A restock watch needs no price (fixed 2026-09-27).** `AlertController::store()` used to look up
+the cheapest current price for both kinds and refuse with "Deze kunnen we niet volgen." when there
+was none. Only a price watch compares against a price. Shops often drop the price when an item
+sells out: in the production data, 9,221 of 22,374 sold-out products had no price on any offer. So
+the one button the page shows was refused on over 40% of the products it appears on. The price
+lookup now runs for price watches only (`a_sold_out_product_with_no_price_can_still_be_watched_for_its_return`).
+
 ### Signed-in only
 
 Unlike lists. An alert fires days later and has to reach someone; a cookie identity has no delivery

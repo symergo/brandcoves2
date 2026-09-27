@@ -50,15 +50,20 @@ class AlertController extends Controller
             return back()->with('error', __('site.alerts.not_available'));
         }
 
-        $baseline = $eligibility->watchableOffers($group)
-            ->whereNotNull('price')
-            ->min('price');
-
-        if ($baseline === null) {
-            return back()->with('error', __('site.alerts.not_available'));
-        }
-
         if ($validated['type'] === 'price') {
+            // Only a price watch needs a price to compare against. A restock
+            // watch must not ask for one: shops often drop the price when an
+            // item sells out, and in the production data that was 9,221 of
+            // 22,374 sold-out products (2026-09-27). Requiring it refused
+            // "tell me when it is back" on exactly the products it is for.
+            $baseline = $eligibility->watchableOffers($group)
+                ->whereNotNull('price')
+                ->min('price');
+
+            if ($baseline === null) {
+                return back()->with('error', __('site.alerts.not_available'));
+            }
+
             PriceAlert::updateOrCreate(
                 ['group_id' => $group->id, 'user_id' => $request->user()->id],
                 [
