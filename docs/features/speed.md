@@ -201,3 +201,117 @@ read one day on the server and the next in the browser.
   sixth section, well below the fold on a phone. Marking an off-screen image
   `fetchpriority="high"` takes bandwidth from what is on screen, so it stays
   lazy. Revisit if a product image moves into the hero.
+
+## Server and pipeline
+
+The container, the web server and the request path in front of the controllers.
+
+### Config and routes cached when the container starts
+
+Laravel can compile its config into one file (`config:cache`) and its ~300 routes into another
+(`route:cache`). Without them every request, and every artisan process the scheduler starts each
+minute, reads every config file and registers every route before doing any work.
+
+`config:cache` cannot run in the Dockerfile: it freezes the environment it runs in, and at build
+time that is the builder's, without Coolify's runtime variables. One image serves staging and
+production, and `SOURCE_COMMIT` only exists in the running container. So `docker/entrypoint.sh`
+builds both caches when each container starts (app, queue, scheduler and migrate all run from the
+image), then hands over to the base image's own entrypoint.
+
+- **A failed cache does not stop the container.** The script clears it and the container serves
+  uncached, as before, with a line on stderr. Coolify stops the old containers before the new ones
+  are healthy, so a container that refuses to start is an outage, and an uncached site is only
+  slower.
+- **`env()` only in `config/`.** Once config is cached, Laravel stops loading `.env`, and an `env()`
+  call elsewhere is the wrong place to ask. `COOLIFY_BRANCH` (read by `/health` and the admin
+  Migration page) became `config('giftcoves.branch')`. `bc:make-admin` still reads
+  `BC_ADMIN_PASSWORD` with `env()` on purpose: it is a shell variable set for that one command, and
+  a real process variable stays visible to `env()` under a cached config.
+- **Locally nothing is cached.** If you ever cache by hand, run `php artisan config:clear` and
+  `route:clear` afterwards, or a changed `.env` or route file will seem to do nothing.
+
+### A Caddyfile instead of `php-server -v`
+
+The app container ran `frankenphp php-server --listen :80 --root /app/public -v`. It now runs
+`frankenphp run --config /app/docker/Caddyfile`, which does the same (plain HTTP on :80, root
+`/app/public`, zstd/br/gzip, `php_server`) plus two things php-server cannot:
+
+- **Hashed bundles cached for a year.** `/build/assets/*` gets `Cache-Control: public,
+  max-age=31536000, immutable`: Vite puts a content hash in each file name, so a changed file is a
+  new URL. Only for a file that exists (the `file` matcher): otherwise a request for an old bundle
+  after a deploy would fall through to Laravel's 404, and that 404 would be cached for a year.
+  `/icons/*` and `/favicon.ico` keep their names across deploys, so they get a day. Before this,
+  none of them had any `Cache-Control`, and every visit revalidated every bundle.
+- **An access log instead of debug logging.** `-v` was Caddy's debug level: about 39,000 lines in
+  ten hours, and not the one line per request that says how long it took. The Caddyfile logs one
+  JSON line per request to stderr, with `duration` (seconds), `status`, `size` and `request.uri`.
+  `/health` is not logged (every 30 s, it would be most of the file). Caddy already redacts cookies
+  and `Authorization`, and `X-Forwarded-For` / `X-Real-Ip` are deleted because they carry the
+  visitor's IP address. Read it with `docker logs <app container> 2>&1 | grep handled`.
+
+The Caddy admin API is off (`admin off`): nothing reloads config at runtime, and the compose file
+replaces the only healthcheck that used it. The file's header says how to validate a change with
+the image, without building it.
+
+### The healthcheck probes every 30 s, every 2 s while starting
+
+The app healthcheck ran `/health` (a database and a Redis check) every 5 s, about 17,000 times a day
+per environment. The 5 s was there for deploy speed: Traefik routes to a new container only after
+its first passing probe. `start_interval: 2s` now keeps that speed during `start_period` (40 s), and
+`interval: 30s` applies once the container is up. Retries went from 10 to 3, so a container that
+stops answering is marked unhealthy after about 90 s (it was 50 s). The probe also has its own 4 s
+socket timeout: `file_get_contents` otherwise waits PHP's default of 60 s.
+
+`start_interval` needs Docker Engine 25 or later. Compose refuses the file on an older engine rather
+than ignoring the key, so the first staging deploy proves it; staging and production share the host.
+
+### Machine-read routes are stateless
+
+`/health`, `/media/items/*`, `robots.txt`, the sitemaps and `/{market}/og/*` went through the full
+`web` middleware group. Each fetch started a session (a Redis write; crawlers keep no cookie, so
+every fetch started a new one) and answered with two `Set-Cookie` headers, the session and
+`XSRF-TOKEN`. A response with `Set-Cookie` is one no shared cache keeps, so the one kind of URL that
+is the same for everybody could not be cached.
+
+They now skip `StartSession`, `ShareErrorsFromSession`, the CSRF check (`PreventRequestForgery`,
+Laravel 13's name for it), `AddQueuedCookiesToResponse`, `TrackAnonymousIdentity` and
+`HandleInertiaRequests`. The list is `App\Http\StatelessRoutes::SKIPPED`, applied with
+`withoutMiddleware()` in `routes/web.php`. `SetMarket` stays, because a social card draws in its
+market's language.
+
+Our 404 page is an Inertia page whose shared props read flash messages from the session, so it
+cannot render on these routes. `bootstrap/app.php` hands a request without a session the
+framework's plain 404, which is also the right answer for a missing PNG or sitemap chunk.
+
+`TrackAnonymousIdentity` (the `bc_visitor` cookie) also skips `media/*` now, and recognises three
+more link-preview agents: Slackbot, its `LinkExpanding` fetcher and `Google-InspectionTool`.
+
+Tested in `StatelessRoutesTest`: no cookie and no identity row on each route, a plain 404 for a
+missing card or picture, and a control page that does set cookies, so "no cookies" means something.
+
+### Social cards answer 304 without drawing
+
+The card's ETag was md5 of the PNG, so a platform revalidating its copy made us draw a product card
+(58 ms; product cards are never cached) or read another card from Redis, only to send the same
+bytes back. The ETag now comes from the card's version, the same commit + record + drawn-text hash
+the cache key uses, which is known after one row lookup. A matching `If-None-Match` gets an empty
+304. Tested in `OgImageCacheTest`. See [social-cards.md](social-cards.md).
+
+### The serendipity job is off the schedule
+
+`score-serendipity` ran at 05:25 and 17:25 and was failing on a timeout twice a day, while the owner
+has the surprise score switched off as a trial (2026-09-27, decision due around 2026-10-11). The
+schedule entry is replaced by a comment with the code to restore it; see
+[serendipity.md](serendipity.md).
+
+### Check on staging after the push
+
+- `/health` answers with the pushed `commit` and `branch: main`. Both come from the cached config,
+  so this proves `config:cache` ran with Coolify's variables and not the builder's.
+- `docker logs` on the app container: no `entrypoint: ... failed` line, and one JSON access line per
+  request with a `duration`.
+- A hashed bundle (`curl -sI --max-time 5 https://staging.giftcoves.com/build/assets/<file>.js`)
+  carries `Cache-Control: public, max-age=31536000, immutable`.
+- `curl -sI --max-time 5 https://staging.giftcoves.com/robots.txt` carries no `Set-Cookie`.
+- A client-side interaction still works. The `VITE_*` build variables are untouched by this, but
+  it is the failure that looks like nothing.

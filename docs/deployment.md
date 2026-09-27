@@ -128,7 +128,7 @@ migration surfaces before real visitors meet it — and the whole stack idles at
 | Service | Role |
 |---|---|
 | `migrate` | one-shot, runs `migrate --force --isolated`, exits. Everything else waits on it |
-| `app` | FrankenPHP on :8080, Traefik routes the domain here |
+| `app` | FrankenPHP on :80 from `docker/Caddyfile`, Traefik routes the domain here |
 | `queue` | `php artisan horizon` — **exactly one replica** |
 | `scheduler` | `php artisan schedule:work` — **exactly one replica** |
 | `postgres`, `redis` | state; both volumes backed up |
@@ -142,6 +142,32 @@ deploy disappear and their items show no picture.
 
 Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 60s` lets
 the in-flight job finish rather than abandoning a half-ingested chunk.
+
+### What runs when a container starts (since 2026-09-27)
+
+Every service built from the image (`migrate`, `app`, `queue`, `scheduler`) starts through
+`docker/entrypoint.sh`, which runs `php artisan config:cache` and `route:cache` and then execs the
+container's own command through the base image's entrypoint. The caches are built **here and not in
+the Dockerfile** because one image serves staging and production: `config:cache` freezes the
+environment it runs in, and only the running container has Coolify's variables (`APP_KEY`, the
+database, `SOURCE_COMMIT`). A failed cache is cleared and the container serves uncached, with an
+`entrypoint: ... failed` line in its log, because a container that will not start is an outage here.
+
+Two consequences:
+
+- **A changed environment variable needs a restart, not only a save.** It was always so for a
+  running PHP process; with the config cached per container start it is also the only way. A
+  redeploy or restart in Coolify rebuilds the cache.
+- **`env()` belongs in `config/` only.** Under a cached config Laravel no longer reads `.env`; code
+  that needs a setting reads `config()`. `ConfigContractTest` checks that every setting reaches the
+  compose file.
+
+`app` runs `frankenphp run --config /app/docker/Caddyfile` (it was `php-server ... -v`). The
+Caddyfile serves plain HTTP on :80 from `/app/public` exactly as php-server did, and adds a year of
+`immutable` caching on the hashed bundles under `/build/assets`, a day on the icons, and a JSON
+access log on stderr with each request's `duration`, without `/health` and without the
+forwarded-for headers. `-v` was Caddy's debug log, about 39,000 lines in ten hours. Details and the
+reasoning: [features/speed.md](features/speed.md), "Server and pipeline".
 
 ## Build speed
 
@@ -176,6 +202,15 @@ first probe passes, and the first probe is one interval after start, so `interva
 and not merely monitoring cadence. FrankenPHP with opcache and a pre-built view cache answers
 `/health` in about two seconds; it was waiting fifteen. `start_period` stays at 40s — that governs how
 long failures are *forgiven*, and shortening it would make a slow boot fail rather than wait.
+
+**2026-09-27: 30s once up, 2s while starting.** The 5s interval ran `/health` (a database and a Redis
+check) about 17,000 times a day per environment to buy a fast first route. `start_interval: 2s`
+buys that during `start_period` alone, and `interval: 30s` (Docker's default, and the rule in
+"Every curl carries a timeout" below) applies after; retries 3. The probe carries its own 4s socket
+timeout. `start_interval` needs **Docker Engine 25+**, and compose refuses the file on an older
+engine instead of ignoring the key: if a deploy fails with "healthcheck.start_interval ... requires
+Docker Engine v25", remove that one line and set `interval` back to 5s. Staging and production share
+the host, so the first staging deploy settles it for both.
 
 > **The cache mounts need BuildKit, and the Coolify host's builder is unverified.** `RUN --mount` is
 > a hard syntax error on the legacy builder rather than a slow path, so if that box is somehow not on

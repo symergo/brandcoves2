@@ -31,7 +31,7 @@ is true now.
 | [product-signals.md](product-signals.md) | Catalogue / Discovery | Active — price range, saved by (from 5 people), found in Coves, related |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active — filters behind one button, Coves above the products, what others keep (2026-09-26) |
-| [speed.md](speed.md) | Core / Frontend / Operations | Active — the 2026-09-27 speed audit follow-up: indexes and rewritten slow queries, translations sent once per language, page chunk preloaded, SSR clustered with a 2 s limit and off for signed-in visitors |
+| [speed.md](speed.md) | Core / Frontend / Operations | Active — the 2026-09-27 speed audit follow-up: indexes and rewritten slow queries, translations sent once per language, page chunk preloaded, SSR clustered with a 2 s limit and off for signed-in visitors; config and route caches at container start, a Caddyfile with immutable bundles and a JSON access log, a 30 s healthcheck, cookie-free machine-read routes, social-card 304s |
 | [list-signals.md](list-signals.md) | Gifting / Catalogue | Active — crowd tags and product links from lists, nightly; ideas in the same spirit on shared wish lists |
 | [crowd-picks.md](crowd-picks.md) | Gifting | Active — "chosen by others for someone like them": products on 5+ people's lists for the same kind of person rank higher in Find a gift and This or that; nothing shows until then |
 | [offline-ideas.md](offline-ideas.md) | Gifting / Wishlist / Admin | Active — hand-typed items five people wrote, approved by a person, shown under Find a gift and This or that results |

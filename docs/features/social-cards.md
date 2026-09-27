@@ -90,6 +90,13 @@ For every card except the product one: cached for a month, keyed on **the exact 
 draw** and **the commit that rendered it**. The response carries a week of `max-age` for platforms
 that respect it and an ETag for those that revalidate.
 
+Since 2026-09-27 the ETag is made from that same version (commit, record, hash of the drawn text)
+rather than from the PNG bytes, so it is known after one row lookup: a matching `If-None-Match` gets
+an empty 304 and nothing is drawn or read from Redis. It used to be md5 of the PNG, which meant
+drawing a product card (58 ms) just to learn that the platform's copy was still good. The card
+routes also run without a session and set no cookie (see [speed.md](speed.md), "Server and
+pipeline"), and a missing card is the framework's plain 404 rather than the site's 404 page.
+
 The commit half was learned the hard way, in public, within an hour of shipping. A card's content
 comes from the row *and* from the code and language files that lay it out, and only the first of
 those moves `updated_at`. The Daily Cove card first rendered during a container swap, picked up a
