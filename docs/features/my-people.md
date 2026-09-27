@@ -32,24 +32,137 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   language when it is one of the closed vocabulary (`mother` shows as "Mama"); a relationship typed
   by hand shows as typed, and one that equals the name is not repeated;
 - the next date: the nearest of their birthday and the occasion date on a list about them, with
-  "vandaag", "morgen" or "over N dagen";
-- for a saved person: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on their ideas),
-  **Hun pagina** (`/people/{id}`; on a phone the name is the link, to keep the buttons on one line),
-  **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`: Ask others, the
-  form opened and filled in with their relationship, interests, style and budget, never a name or
-  a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only while a This-or-that-
-  together link is open for them (it goes to the list about them, where that panel lives);
-- for a friend: **Hun lijsten (N)** or **Details**, which opens the old friends-page detail: their
-  lists, which of yours they see, your birthday note about them, and removing the connection.
+  "vandaag", "morgen" or "over N dagen". A birthday carries the `cake` line icon (`ToolIcon`), not
+  the 🎂 emoji it had until 2026-09-27: an emoji is the reader's operating system's picture, in its
+  colours, beside line icons in ours;
+- one line of what you know, for a saved person: up to three interests in the reader's language
+  and "+N" for the rest, your budget ("tot €50", "vanaf €20", "€20 tot €50"), and how many lists
+  you are making for them (kind `for_someone` or `group`, owned by you, about this person). A part
+  with nothing in it is left out, and so is the whole line when all three are empty: the owner's
+  rule is no empty blocks;
+- the name, and the whole left part of the row, links to the person's page (`/people/{id}`). The
+  "Hun pagina" button that did the same went on 2026-09-27;
+- for a saved person, **one** button: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on
+  their ideas). The rest sit in a **Meer** menu, the same `Menu`/`MenuItem` component the list
+  page's Meer menu uses: **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`:
+  Ask others, the form opened and filled in with their relationship, interests, style and budget,
+  never a name or a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only
+  while a This-or-that-together link is open for them (it goes to the list about them, where that
+  panel lives). Four equal buttons on every row made the page a wall of buttons where the names
+  should lead (owner, 2026-09-27);
+- for a friend: their lists, **visible without a click**, drawn with `ListName` (the list-name
+  style, with the kind's icon). They were behind a "Hun lijsten (N)" toggle, which hid the one thing
+  a friend is on this page for. **Details** still opens what is about the connection: which of
+  yours they see, your birthday note about them, and removing the connection.
   Since 2026-09-26 "their lists" includes every wish list they made "visible to my people", and
   "which of yours they see" every one of yours
-  ([wish-list-for-my-people.md](wish-list-for-my-people.md));
+  ([wish-list-for-my-people.md](wish-list-for-my-people.md)). Since 2026-09-27 "their lists" are
+  their **own wish lists only** (kind `mine`): a list they make for somebody else sat among them and
+  read as if they wanted what was on their grandfather's list. Those lists, and its date, moved to
+  "Samen met" (below), counted in the line under the name as "samen: N";
+- for a friend you are in a **Secret Santa** with: a small mark beside "op GiftCoves", with the
+  `santa` line icon, the group's name and its day (owner's addition, 2026-09-27). Only a group whose
+  day is still ahead, or has none yet: last year's office draw is history, not news. Membership
+  only, never the draw (see [Samen met](#samen-met-naam));
 - for a friend nobody saved yet: **Bewaar wat je over [naam] weet**, which creates a saved person
   linked to their account through the existing `POST /recipients` with `friend_id`
   (`RecipientController::store`, which checks the friendship). From then on the row has everything
   a saved person has.
 
 Sorted by the next date, then by name (accents folded). People without a date come last.
+
+## The person's page
+
+`/{market}/people/{id}` (`PersonController::show`, `App\Services\Social\PersonProfile`,
+`Components/PersonProfile.tsx`). Until 2026-09-27 it was titled "Cadeaus voor Mama" and showed two
+buttons and the gift history; everything the site knew about her could only be seen inside Find a
+gift, and none of her lists were there. The owner asked for a page about the person. Now, in order,
+and each part left out when it would be empty (the owner's rule: no empty blocks; one column, full
+width, because there is nothing for a side column):
+
+1. **The person**: their name as the heading, relationship and birthday (`cake` icon) under it,
+   "op GiftCoves" when they are a friend. Then the actions: **Cadeau vinden** (the one filled
+   button), **Dit of dat**, **Vraag**, **Stuur hun profiellink** (their `/for/{token}` link, only
+   while they are not linked to an account), **Naam en verjaardag**, and **Verwijderen**. The brief
+   listed the actions last; they sit under the name because they are what the page is used for,
+   and at the bottom they would be under a gift history of any length.
+2. **Over {naam}**: what you know as chips: interests, style (vibe), what matters to them (values),
+   age, budget, what to avoid. **Aanpassen** edits them in place with Find a gift's own
+   vocabularies (`GiftController::options()`, the call `GiftProfileCardController` already made),
+   saved through the existing `PATCH /recipients/{id}`. When nothing is known the section is not
+   drawn; a "Vertel wat je over {naam} weet" button among the actions opens the same form.
+   - **Where it came from.** `taste_source` has two values: `suggested` (you: typed here, in Find a
+     gift, or a This or that you played for them) and `self` (they said it through their own link).
+     The page says "Ingevuld door jou" or "Ingevuld door {naam} zelf", the detail behind an
+     InfoTip. The brief also asked for "guessed from This or that"; that is stored as `suggested`
+     like anything else you enter, so the page cannot tell it apart without a new column. Not built.
+   - **Their answer wins.** `Recipient::describeTaste()` ignores a guess once they have answered
+     themselves. The form therefore does not offer their taste fields in that case (it says why),
+     rather than accepting an edit that would silently not be stored. Age and budget stay yours.
+3. **Verlanglijsten van {naam}**: their own wish lists (kind `mine`), only while the person is
+   linked to an account that is still your friend, and only what My people already shows of theirs
+   (`MyPeople::sharedWith()`, made public so the two pages share one query). A list they make for
+   somebody else is not their wish list and does not appear here.
+4. **Lijsten voor {naam}**: yours, kind `for_someone` or `group`, about this person.
+5. **Samen met {naam}**, for a friend only (below).
+6. **Wat je gaf**, the gift history, unchanged ([gift-history.md](gift-history.md)).
+
+List names in these sections are drawn with `ListName` ([list-names-in-text.md](list-names-in-text.md)).
+
+### Samen met {naam}
+
+What you and a friend do together (`App\Services\Social\InCommon`), on the person's page, and as a
+count ("samen: N") and a Secret Santa mark on My people. Friends on GiftCoves only: somebody without
+an account cannot be matched to a group gift or a Secret Santa, so a saved person with no account
+link has no such section at all.
+
+- **Lists they make for somebody else** that reached you (shared with you, or you opened the
+  link), with who they are for ("voor Opa"). The recipient's name is on the shared list's own page
+  for anybody who may open it, so it is not new here.
+- **Group gifts you both take part in**, with their part: "organiseert" or "doet mee". Taking part
+  means owning the list (organising), a pledge (`gift_pledges.user_id`) or being a collaborator. A
+  group gift you are both in is shown here and not again among their lists.
+- **Secret Santa groups you are both in** (as organiser or member, not removed), with the date and a
+  link to the group's page on its own market.
+
+**The privacy rules, each with a test in `PeopleTogetherTest`:**
+
+a. **Never a list about you.** A gift list or group gift whose recipient is linked to your account
+   (`recipients.user_id` = you) is left out everywhere: their lists on My people, the counts, the
+   next date, their page. `Wishlist::scopeNotAbout()` does it, inside `MyPeople::sharedWith()` and
+   the group-gift query, so no section can forget it. It applies even when the link reached you,
+   because showing it would show you your own surprise. A list about somebody with no account link
+   cannot be recognised as being about you, and is not.
+b. **A friend's part in a group gift only where the list would name them to you.** The organiser
+   decides whether contributors are named (`wishlists.pledgers_visible`, since 2026-09-01). Without
+   that, "Sam doet mee" would tell you something the list itself does not, so the group gift then
+   shows only when Sam is its organiser, which everybody on it sees anyway. One exception, decided
+   without the owner: a group gift **you** organise, whose page already names every contributor to
+   you (the organiser's breakdown in `ContributionView`). Collaborators fall under the same rule as
+   pledgers. Amounts never appear.
+c. **Secret Santa: shared membership only.** Never who drew whom, not even "you drew them". That is
+   the owner's default for now; he can opt into showing "you drew them" later, which would be a
+   change to `InCommon::santa()` and this paragraph. The pairing column (`assigned_member_id`) is
+   encrypted and `$hidden`, and the query never selects it. Members without an account are skipped.
+d. **No claim state** (invariant 4): no list's items are loaded, and nothing counts or labels by
+   what has been claimed.
+
+### Renaming and deleting
+
+**Naam en verjaardag** edits name, relationship and birthday (day and month, the shared
+`DayMonth` picker in `Components/PersonParts.tsx`) through the same `PATCH /recipients/{id}`.
+
+**Verwijderen** opens a confirmation on the page, not `window.confirm`, which says what happens:
+lists you made for them stay but no longer say who they are for (`wishlists.recipient_id` is
+`ON DELETE SET NULL`); what you gave them and their This or that links go (`recipient_gifts` and
+`taste_invites` cascade). After deleting, `then=people` sends you to My people, because "back" is
+the page that no longer exists.
+
+**A person with a group gift cannot be deleted**, and the page says so instead of offering the
+button. This was a bug before the page existed: a group list must name its recipient (CHECK
+`wishlists_group_has_recipient`), so setting it to null made Postgres refuse the delete and the
+visitor got a server error. `RecipientController::destroy()` now answers with a sentence
+(`people.delete_has_group`) for any caller.
 
 ### Merging
 
@@ -110,6 +223,8 @@ requests, that is a change to how friendships are made, not to this page.
 - A friend row carries only what the friend shared: their published birthday (or your own note),
   and lists they shared with you or whose link you opened, never a private one, plus the wish
   lists they show to all their people (which may have no link at all; the option is the consent).
+- A list a friend is making about you never appears, however it reached you; a friend's part in a
+  group gift and Secret Santa membership follow the rules under [Samen met](#samen-met-naam).
 - No claim state (invariant 4). No list items are loaded; nothing counts, orders or labels by what
   has been claimed. A list's occasion date is shown, which the list's page already shows anybody
   who may open it.
@@ -123,10 +238,13 @@ requests, that is a change to how friendships are made, not to this page.
 | Merge | `app/Services/Social/MyPeople.php`, `App\Support\DayAndMonth::nextFrom()` |
 | Page | `resources/js/Pages/People/Index.tsx` |
 | Copy | `site.people.*` (four languages); the friend details reuse `site.friends.*`; `/help` has `people.help` |
-| Tests | `tests/Feature/MyPeopleTest.php`; `FriendsTest` reads the friend rows from `/people` now |
+| Icons | `ToolIcon` (`cake` for a birthday, `more` for the Meer menu); the menu is `Components/Menu.tsx` |
+| Person page | `PersonController::show`, `app/Services/Social/PersonProfile.php`, `resources/js/Components/PersonProfile.tsx` (in `Pages/Recipients/Show.tsx`) |
+| Samen met | `app/Services/Social/InCommon.php`, `Wishlist::scopeNotAbout()` |
+| Tests | `tests/Feature/MyPeopleTest.php`, `PersonProfileTest.php`, `PeopleTogetherTest.php` (the privacy rules); `FriendsTest` reads the friend rows from `/people` now |
 
 ## Not done
 
 - The header and account menu link is another change's work (`/people` is ready for it).
-- No editing of a saved person's name, relationship or birthday on this page; that stays where it
-  was.
+- No editing of a saved person's name, relationship or birthday on the list itself; since
+  2026-09-27 that is on the person's page.

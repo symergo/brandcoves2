@@ -8,12 +8,14 @@ use App\Enums\ListKind;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\RecipientGift;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\NextSteps;
 use App\Services\Gift\PastGift;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\PersonProfile;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -24,12 +26,15 @@ use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * A saved person's page: what you gave them, and what could come next.
+ * A saved person's page: who they are, their lists, what you gave them, and
+ * what could come next.
  *
- * `/people/{id}`, the owner's only. Shows the gift history (what they noted,
- * and their own claims on lists for this person), the items on their lists for
- * this person with an "I gave this" button, a short "next step" row, and the
- * ways into Find a gift and This or that for this person.
+ * `/people/{id}`, the owner's only. Since 2026-09-27 a profile first: what you
+ * know about them, editable in place, their own wish lists when they are a
+ * friend, and the lists you are making for them ({@see PersonProfile}). Then
+ * the gift history (what they noted, and their own claims on lists for this
+ * person), the items on their lists for this person with an "I gave this"
+ * button, and a short "next step" row.
  *
  * The reminder email lands here too: an idea's "add to the list" link opens
  * this page with `?add=<product>`, and the page shows that product at the top
@@ -39,14 +44,19 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class PersonController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current, GiftHistory $history, NextSteps $nextSteps, string $market, string $recipient): Response
+    public function show(Request $request, CurrentMarket $current, GiftHistory $history, NextSteps $nextSteps, PersonProfile $profile, string $market, string $recipient): Response
     {
         $person = $this->findOwned($request, $recipient);
         $past = $history->for($person);
         $steps = $nextSteps->cards($person, $current->get(), 4, $past);
         $highlight = $this->highlight($request);
 
-        app(PageMeta::class)->set(title: __('site.gift_history.page_title', ['name' => $person->name]), robots: 'noindex, nofollow');
+        // The person's name, not "Gifts for Mum": the page is about them now
+        // (2026-09-27, docs/features/my-people.md).
+        app(PageMeta::class)->set(title: $person->name, robots: 'noindex, nofollow');
+
+        /** @var User $viewer the route is behind `auth` */
+        $viewer = $request->user();
 
         return Inertia::render('Recipients/Show', [
             'person' => [
@@ -57,7 +67,29 @@ class PersonController extends Controller
                     'day' => $person->birthday->day,
                     'month' => $person->birthday->month,
                 ],
+                'isLinked' => $person->isLinked(),
             ],
+            'profile' => $profile->for($viewer, $person, $current),
+            /*
+             * Find a gift's own vocabularies, so an interest edited here is
+             * the same value the wizard and the engine read (the same call
+             * GiftProfileCardController makes).
+             */
+            'options' => array_intersect_key(
+                app(GiftController::class)->options(),
+                array_flip(['interests', 'vibes', 'values', 'ages', 'relationships']),
+            ),
+            /*
+             * Deleting fails at the database while a group gift is about
+             * them: `wishlists.recipient_id` is set to null on delete, and a
+             * group list must have a recipient (CHECK
+             * wishlists_group_has_recipient). The page says so up front
+             * instead of offering a button that cannot work.
+             */
+            'groupLists' => Wishlist::query()
+                ->where('recipient_id', $person->id)
+                ->where('kind', ListKind::Group->value)
+                ->count(),
             'history' => array_map(fn (PastGift $gift) => $gift->toArray(), $past),
             'unmarked' => $history->unmarkedItems($person)->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
@@ -70,7 +102,17 @@ class PersonController extends Controller
             'urls' => [
                 'finder' => $current->url('gift').'?for='.$person->id,
                 'taste' => $current->url('gift/taste').'?person='.$person->id,
+                'ask' => $current->url('ask').'?person='.$person->id,
                 'gifts' => $current->url("people/{$person->id}/gifts"),
+                'recipient' => $current->url("recipients/{$person->id}"),
+                'people' => $current->url('people'),
+                /*
+                 * Their own link, where they say what they like without
+                 * seeing anything you picked (RecipientProfileController).
+                 * Not offered once they are linked to an account: they have
+                 * answered for themselves, or can, as a friend.
+                 */
+                'selfDescribe' => $person->isLinked() ? null : url($current->url("for/{$person->share_token}")),
             ],
             'thisYear' => (int) now()->year,
         ]);

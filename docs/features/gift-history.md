@@ -22,13 +22,16 @@ A "saved person" is a `recipients` row: somebody a user buys for (see
 ## The person's page
 
 `/{market}/people/{id}`, the owner's only (behind sign-in, owner-scoped, 404 for anybody else,
-`noindex`). It shows:
+`noindex`). Since 2026-09-27 it is titled with the person's name and opens with a profile (what
+you know about them, their wish lists, your lists for them; see
+[my-people.md](my-people.md#the-persons-page)). Below that, unchanged, it shows:
 
 - **What you gave**, newest first, with a remove button on the lines you wrote;
 - **"I gave this"**: a line typed by hand (words and a year), or a button beside each item on your
   own lists about this person;
-- **The next step**: up to four products that follow on from what they were given;
-- buttons to Find a gift and This or that for this person.
+- **The next step**: up to four products that follow on from what they were given.
+
+The buttons to Find a gift and This or that moved into the profile's header.
 
 Linked from a list about somebody (under the description, owner only), from Find a gift's
 results when a saved person is chosen, from the reminder email, and since 2026-09-26 from **My

@@ -379,9 +379,13 @@ class FriendsTest extends TestCase
         $invited = User::factory()->create();
         $this->actingAs($invited)->get("/be-nl/l/{$group->share_token}")->assertOk();
 
+        // A group gift is not one of their wish lists: since 2026-09-27 it is
+        // counted under "Samen met" and listed on their page
+        // (App\Services\Social\InCommon, PeopleTogetherTest).
         $this->actingAs($invited)->get('/be-nl/people')->assertInertia(
-            fn ($page) => $page->where('people.0.friend.lists', fn ($lists) => count($lists) === 1
-                && $lists[0]['title'] === 'Leaving present'),
+            fn ($page) => $page
+                ->where('people.0.friend.lists', [])
+                ->where('people.0.friend.inCommon', 1),
         );
     }
 

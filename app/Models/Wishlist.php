@@ -376,6 +376,28 @@ class Wishlist extends Model
     }
 
     /**
+     * Leave out every list somebody is making about this user.
+     *
+     * "About" means the list's recipient is linked to the user's account
+     * (`recipients.user_id`): they were saved "as one of my friends", or
+     * claimed their own `/for/{token}` link. My people and a person's page
+     * show a friend's lists, and a gift list or group gift a friend is making
+     * for *you* must never be among them, even when its link reached you: it
+     * would show you your own surprise (docs/features/my-people.md). A list
+     * about somebody with no account link cannot be recognised, and is not.
+     *
+     * @param  Builder<Wishlist>  $query
+     */
+    public function scopeNotAbout(Builder $query, User $user): void
+    {
+        $query->whereNotExists(fn ($sub) => $sub
+            ->selectRaw('1')
+            ->from('recipients')
+            ->whereColumn('recipients.id', 'wishlists.recipient_id')
+            ->where('recipients.user_id', $user->id));
+    }
+
+    /**
      * Lists this viewer may open by their share token.
      *
      * Two audiences: anybody holding the link while sharing is on

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\Interest;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\RecipientStatus;
@@ -50,7 +51,10 @@ use Illuminate\Support\Str;
  */
 class MyPeople
 {
-    public function __construct(private readonly Friends $friends) {}
+    public function __construct(
+        private readonly Friends $friends,
+        private readonly InCommon $inCommon,
+    ) {}
 
     /**
      * One row per person, the nearest date first, then by name.
@@ -71,6 +75,12 @@ class MyPeople
 
         $connections = $this->friends->forUser($user);
         $friendLists = $this->sharedWith($user, $connections);
+        $inCommon = $this->inCommon->for(
+            $user,
+            $connections->pluck('friend_id')->map(fn ($id) => (int) $id)->values()->all(),
+            $friendLists,
+            $current,
+        );
         $theySee = $this->seenBy($user, $current);
 
         /*
@@ -103,7 +113,7 @@ class MyPeople
                 $claimed[$person->user_id] = true;
             }
 
-            $friend = $friendship === null ? null : $this->friendPart($friendship, $friendLists, $theySee, $today, $current);
+            $friend = $friendship === null ? null : $this->friendPart($friendship, $friendLists, $inCommon, $theySee, $today, $current);
 
             // The date you saved for them comes first: it is what the reminder
             // email reads. Theirs, when they share it, fills a gap.
@@ -122,6 +132,10 @@ class MyPeople
                     $friend['nextOccasion'] ?? null,
                 ], $today),
                 'friend' => $friend === null ? null : array_diff_key($friend, ['nextOccasion' => true]),
+                'known' => $this->known($person),
+                // Lists you are making for them (a gift list or a group gift
+                // about them), counted for the line under the name.
+                'listsForThem' => count($theirLists[$person->id] ?? []),
                 'urls' => [
                     'person' => $current->url("people/{$person->id}"),
                     'finder' => $current->url('gift').'?for='.$person->id,
@@ -133,7 +147,7 @@ class MyPeople
                     // "This or that together" runs on the list about them; the
                     // link is offered only while one is open.
                     'together' => isset($together[$person->id]) && isset($theirLists[$person->id])
-                        ? $current->url('lists/'.$theirLists[$person->id])
+                        ? $current->url('lists/'.end($theirLists[$person->id]))
                         : null,
                 ],
             ];
@@ -144,7 +158,7 @@ class MyPeople
                 continue;
             }
 
-            $friend = $this->friendPart($friendship, $friendLists, $theySee, $today, $current);
+            $friend = $this->friendPart($friendship, $friendLists, $inCommon, $theySee, $today, $current);
             $birthday = $this->birthdayFor($friendship);
 
             $rows[] = [
@@ -158,6 +172,9 @@ class MyPeople
                     $friend['nextOccasion'],
                 ], $today),
                 'friend' => array_diff_key($friend, ['nextOccasion' => true]),
+                // Nothing of yours about somebody you have not saved.
+                'known' => null,
+                'listsForThem' => 0,
                 'urls' => ['person' => null, 'finder' => null, 'taste' => null, 'ask' => null, 'together' => null],
             ];
         }
@@ -203,13 +220,24 @@ class MyPeople
      * The friend's half of a row.
      *
      * @param  Collection<int, Collection<int, Wishlist>>  $friendLists
+     * @param  array<int, array{lists: list<mixed>, groups: list<mixed>, santa: list<array{id: string, title: string, date: string|null, url: string}>}>  $inCommon
      * @param  callable(int): list<array{title: string, url: string}>  $theySee
      * @return array<string, mixed>
      */
-    private function friendPart(Friendship $friendship, Collection $friendLists, callable $theySee, CarbonImmutable $today, CurrentMarket $current): array
+    private function friendPart(Friendship $friendship, Collection $friendLists, array $inCommon, callable $theySee, CarbonImmutable $today, CurrentMarket $current): array
     {
-        /** @var Collection<int, Wishlist> $lists */
-        $lists = $friendLists[$friendship->friend_id] ?? collect();
+        /*
+         * Their own wish lists only. A list they are making for somebody else
+         * sat here until 2026-09-27 and read as if they wanted what was on
+         * their grandfather's list; it is counted under "Samen met" now
+         * (InCommon). Its date is not their occasion either.
+         *
+         * @var Collection<int, Wishlist> $lists
+         */
+        $lists = ($friendLists[$friendship->friend_id] ?? collect())
+            ->filter(fn (Wishlist $list) => $list->kind === ListKind::Mine);
+
+        $together = $inCommon[$friendship->friend_id] ?? ['lists' => [], 'groups' => [], 'santa' => []];
 
         $upcoming = $lists
             ->filter(fn (Wishlist $list) => $list->event_date !== null && $list->event_date->greaterThanOrEqualTo($today))
@@ -230,10 +258,19 @@ class MyPeople
             // theirs a visitor may open.
             'lists' => $lists->map(fn (Wishlist $list) => [
                 'title' => $list->displayTitle(),
+                // For the list-name style in text (ListName): its kind's icon.
+                'kind' => $list->kind->value,
                 'url' => $current->url("l/{$list->share_token}"),
             ])->values()->all(),
             // What you share with them.
             'theySee' => $theySee($friendship->friend_id),
+            // "Samen met": their lists for others that reached you, group
+            // gifts and Secret Santas you are both in. A count here; the
+            // person's page lists them.
+            'inCommon' => count($together['lists']) + count($together['groups']) + count($together['santa']),
+            // The mark beside "op GiftCoves" (owner, 2026-09-27): the next
+            // Secret Santa you are both in. Membership only, never the draw.
+            'santa' => $this->inCommon->nextSanta($together['santa'], $today),
             'nextOccasion' => $upcoming === null ? null : [
                 'date' => $upcoming->event_date->toDateString(),
                 'kind' => 'occasion',
@@ -253,10 +290,14 @@ class MyPeople
      * (docs/features/wish-list-for-my-people.md), which needs no link: it
      * leaves this page when they switch it off or remove you as a friend.
      *
+     * Public because a person's page (PersonProfile) shows the same lists
+     * for one friend, and a second copy of this query is how the two pages
+     * would come to disagree about what a friend shared.
+     *
      * @param  Collection<int, Friendship>  $connections
      * @return Collection<int, Collection<int, Wishlist>>
      */
-    private function sharedWith(User $user, Collection $connections): Collection
+    public function sharedWith(User $user, Collection $connections): Collection
     {
         return Wishlist::query()
             ->whereIn('owner_user_id', $connections->pluck('friend_id'))
@@ -267,6 +308,10 @@ class MyPeople
                         ->whereHas('shares', fn ($share) => $share->where('user_id', $user->id))
                         ->orWhereHas('opens', fn ($open) => $open->where('user_id', $user->id))))
                 ->orWhere(fn ($shown) => $shown->visibleToFriend($user)))
+            // Never a list they are making about you, even one whose link
+            // reached you: it is your own surprise.
+            ->notAbout($user)
+            ->with('recipient:id,name')
             ->get()
             ->groupBy('owner_user_id');
     }
@@ -349,10 +394,13 @@ class MyPeople
     }
 
     /**
-     * The newest list you made for each saved person, by id.
+     * The lists you made for each saved person, oldest first, by person id.
+     *
+     * The last one is the newest, which is where "This or that together"
+     * points; the count is the "2 lijsten voor hen" under the name.
      *
      * @param  Collection<int, Recipient>  $saved
-     * @return array<string, string>
+     * @return array<string, list<string>>
      */
     private function listsAbout(User $user, Collection $saved): array
     {
@@ -361,10 +409,31 @@ class MyPeople
             ->whereIn('recipient_id', $saved->modelKeys())
             ->whereIn('kind', [ListKind::ForSomeone->value, ListKind::Group->value])
             ->oldest()
-            ->get(['id', 'recipient_id'])
-            // Oldest first, so the newest overwrites.
-            ->mapWithKeys(fn (Wishlist $list) => [$list->recipient_id => $list->id])
+            ->get(['id', 'recipient_id', 'created_at'])
+            ->groupBy('recipient_id')
+            ->map(fn (Collection $lists) => $lists->pluck('id')->all())
             ->all();
+    }
+
+    /**
+     * What you know about a saved person, for the one line under their name:
+     * their interests in the reader's language, and your budget.
+     *
+     * Interests outside the closed vocabulary (typed by hand, "wielrennen")
+     * show as typed. Budget stays in cents (invariant 7); the page formats it.
+     *
+     * @return array{interests: list<string>, budgetMin: int|null, budgetMax: int|null}
+     */
+    private function known(Recipient $person): array
+    {
+        return [
+            'interests' => array_values(array_map(
+                fn (string $interest) => Interest::tryFrom($interest)?->label() ?? $interest,
+                array_filter((array) $person->interests, fn ($v) => is_string($v) && trim($v) !== ''),
+            )),
+            'budgetMin' => $person->budget_min === null ? null : (int) $person->budget_min,
+            'budgetMax' => $person->budget_max === null ? null : (int) $person->budget_max,
+        ];
     }
 
     /** @return array{date: string, kind: string, title: null}|null */
@@ -402,7 +471,7 @@ class MyPeople
     /**
      * "mother" as "Mama" in the reader's language; anything typed by hand as typed.
      */
-    private function relationshipLabel(?string $relationship): ?string
+    public function relationshipLabel(?string $relationship): ?string
     {
         $relationship = trim((string) $relationship);
 
@@ -419,7 +488,7 @@ class MyPeople
      * Theirs if they publish it, otherwise yours if you wrote one down. Day
      * and month either way: a year is their age, and not this page's to show.
      */
-    private function birthdayFor(Friendship $friendship): ?DayAndMonth
+    public function birthdayFor(Friendship $friendship): ?DayAndMonth
     {
         return $this->publishesBirthday($friendship)
             ? DayAndMonth::fromDate($friendship->friend->birthday)
