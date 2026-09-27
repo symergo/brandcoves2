@@ -2375,6 +2375,7 @@ return [
         'open' => 'Sa page',
         'find_gift' => 'Trouver un cadeau',
         'taste' => 'Ceci ou cela',
+        'ask' => 'Demander',
         'together' => 'Ceci ou cela ensemble',
         'their_lists' => 'Ses listes (:count)',
         'details' => 'Détails',
@@ -2393,7 +2394,7 @@ return [
         'invite_again' => 'Vous avez déjà invité cette adresse ces :days derniers jours : nous ne lui renvoyons pas d\'e-mail.',
         'invite_limit' => 'Vous avez déjà invité :count personnes aujourd\'hui. Réessayez demain.',
         'invite_self' => 'C\'est votre propre adresse e-mail.',
-        'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Pour chaque personne : sa page, Trouver un cadeau pour elle et les listes qu\'elle partage avec vous.',
+        'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Pour chaque personne : sa page, Trouver un cadeau pour elle, Demander (demandez des idées à d\'autres) et les listes qu\'elle partage avec vous.',
     ],
 
     /*

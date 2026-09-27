@@ -35,7 +35,9 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   "vandaag", "morgen" or "over N dagen";
 - for a saved person: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on their ideas),
   **Hun pagina** (`/people/{id}`; on a phone the name is the link, to keep the buttons on one line),
-  **Dit of dat** (`/gift/taste?person=<id>`), and **Dit of dat samen** only while a This-or-that-
+  **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`: Ask others, the
+  form opened and filled in with their relationship, interests, style and budget, never a name or
+  a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only while a This-or-that-
   together link is open for them (it goes to the list about them, where that panel lives);
 - for a friend: **Hun lijsten (N)** or **Details**, which opens the old friends-page detail: their
   lists, which of yours they see, your birthday note about them, and removing the connection.

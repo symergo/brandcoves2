@@ -2644,6 +2644,7 @@ return [
         'open' => 'Their page',
         'find_gift' => 'Find a gift',
         'taste' => 'This or that',
+        'ask' => 'Ask',
         'together' => 'This or that together',
         'their_lists' => 'Their lists (:count)',
         'details' => 'Details',
@@ -2662,7 +2663,7 @@ return [
         'invite_again' => 'You invited this address in the last :days days already, so we are not emailing it again.',
         'invite_limit' => 'You have invited :count people today. Try again tomorrow.',
         'invite_self' => 'That is your own email address.',
-        'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves. Add someone only you see, or invite someone by email. From each person you reach their page, Find a gift for them and the lists they share with you.',
+        'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves. Add someone only you see, or invite someone by email. From each person you reach their page, Find a gift for them, Ask (ask other people for ideas for them) and the lists they share with you.',
     ],
 
     /*

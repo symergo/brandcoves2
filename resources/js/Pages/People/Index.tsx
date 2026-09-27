@@ -39,7 +39,7 @@ interface Person {
         title: string | null
     } | null
     friend: FriendPart | null
-    urls: { person: string | null; finder: string | null; taste: string | null; together: string | null }
+    urls: { person: string | null; finder: string | null; taste: string | null; ask: string | null; together: string | null }
 }
 
 interface Props {
@@ -455,6 +455,12 @@ function PersonRow({
                         <Link href={person.urls.taste} className={link}>
                             <ToolIcon name="taste" className="mr-1 h-4 w-4" />
                             {t('people.taste')}
+                        </Link>
+                    )}
+                    {person.urls.ask !== null && (
+                        <Link href={person.urls.ask} className={link}>
+                            <ToolIcon name="board" className="mr-1 h-4 w-4" />
+                            {t('people.ask')}
                         </Link>
                     )}
                     {person.urls.together !== null && (

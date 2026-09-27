@@ -58,7 +58,9 @@ class MyPeopleTest extends TestCase
                 ->where('people.0.next.date', '2026-06-10')
                 ->where('people.0.next.days', 9)
                 ->where('people.0.urls.person', fn ($url) => str_ends_with($url, "/be-nl/people/{$mum->id}"))
-                ->where('people.0.urls.finder', fn ($url) => str_ends_with($url, "/be-nl/gift?for={$mum->id}")));
+                ->where('people.0.urls.finder', fn ($url) => str_ends_with($url, "/be-nl/gift?for={$mum->id}"))
+                // "Vraag": Ask others, filled in about them (2026-09-27).
+                ->where('people.0.urls.ask', fn ($url) => str_ends_with($url, "/be-nl/ask?person={$mum->id}")));
     }
 
     #[Test]
@@ -77,7 +79,8 @@ class MyPeopleTest extends TestCase
                 ->where('people.0.birthday', '07-04')
                 ->where('people.0.next.date', '2026-07-04')
                 // No person to find a gift for until you save one.
-                ->where('people.0.urls.finder', null));
+                ->where('people.0.urls.finder', null)
+                ->where('people.0.urls.ask', null));
     }
 
     #[Test]

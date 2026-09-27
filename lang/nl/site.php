@@ -2386,6 +2386,7 @@ return [
         'open' => 'Hun pagina',
         'find_gift' => 'Cadeau vinden',
         'taste' => 'Dit of dat',
+        'ask' => 'Vraag',
         'together' => 'Dit of dat samen',
         'their_lists' => 'Hun lijsten (:count)',
         'details' => 'Details',
@@ -2404,7 +2405,7 @@ return [
         'invite_again' => 'Je nodigde dit adres de afgelopen :days dagen al uit, dus we sturen niet nog een e-mail.',
         'invite_limit' => 'Je nodigde vandaag al :count mensen uit. Probeer het morgen opnieuw.',
         'invite_self' => 'Dat is je eigen e-mailadres.',
-        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen en de lijsten die ze met je delen.',
+        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Bij elke persoon vind je hun pagina, Cadeau vinden voor hen, Vraag (vraag anderen om ideeën voor hen) en de lijsten die ze met je delen.',
     ],
 
     /*

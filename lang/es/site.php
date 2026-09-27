@@ -2373,6 +2373,7 @@ return [
         'open' => 'Su página',
         'find_gift' => 'Buscar un regalo',
         'taste' => 'Esto o aquello',
+        'ask' => 'Preguntar',
         'together' => 'Esto o aquello juntos',
         'their_lists' => 'Sus listas (:count)',
         'details' => 'Detalles',
@@ -2391,7 +2392,7 @@ return [
         'invite_again' => 'Ya invitaste a esta dirección en los últimos :days días, así que no le enviamos otro correo.',
         'invite_limit' => 'Hoy ya has invitado a :count personas. Vuelve a intentarlo mañana.',
         'invite_self' => 'Es tu propio correo electrónico.',
-        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Desde cada persona llegas a su página, a Buscar un regalo para ella y a las listas que comparte contigo.',
+        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Desde cada persona llegas a su página, a Buscar un regalo para ella, a Preguntar (pide ideas a otras personas) y a las listas que comparte contigo.',
     ],
 
     /*

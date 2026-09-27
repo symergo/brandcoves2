@@ -126,6 +126,10 @@ class MyPeople
                     'person' => $current->url("people/{$person->id}"),
                     'finder' => $current->url('gift').'?for='.$person->id,
                     'taste' => $current->url('gift/taste').'?person='.$person->id,
+                    // "Vraag" (owner, 2026-09-27): the Ask others form, opened
+                    // and filled in with what we know about them. AskPrefill
+                    // never carries a name or a note onto the public board.
+                    'ask' => $current->url('ask').'?person='.$person->id,
                     // "This or that together" runs on the list about them; the
                     // link is offered only while one is open.
                     'together' => isset($together[$person->id]) && isset($theirLists[$person->id])
@@ -154,7 +158,7 @@ class MyPeople
                     $friend['nextOccasion'],
                 ], $today),
                 'friend' => array_diff_key($friend, ['nextOccasion' => true]),
-                'urls' => ['person' => null, 'finder' => null, 'taste' => null, 'together' => null],
+                'urls' => ['person' => null, 'finder' => null, 'taste' => null, 'ask' => null, 'together' => null],
             ];
         }
 
