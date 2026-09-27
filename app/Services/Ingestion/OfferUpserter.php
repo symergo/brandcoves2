@@ -9,6 +9,7 @@ use App\Models\Feed;
 use App\Models\Merchant;
 use App\Services\Connectors\Offer;
 use App\Services\Identity\IdentityResolver;
+use App\Support\ChangedRowsUpsert;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -26,12 +27,12 @@ class OfferUpserter
 
     /**
      * @param  list<Offer>  $offers
-     * @return array{written: int, skipped: int}
+     * @return array{written: int, skipped: int, external_ids: list<string>}
      */
     public function upsert(array $offers, ?Feed $feed = null): array
     {
         if ($offers === []) {
-            return ['written' => 0, 'skipped' => 0];
+            return ['written' => 0, 'skipped' => 0, 'external_ids' => []];
         }
 
         $now = Carbon::now();
@@ -87,13 +88,27 @@ class OfferUpserter
         }
 
         if ($rows === []) {
-            return ['written' => 0, 'skipped' => $skipped];
+            return ['written' => 0, 'skipped' => $skipped, 'external_ids' => []];
         }
 
         $rows = $this->deduplicate($rows);
 
         DB::transaction(function () use ($rows): void {
-            DB::table('products')->upsert(
+            /*
+             * Only rows that changed are written (2026-09-28). The feeds are
+             * mostly identical from one run to the next, and rewriting an
+             * unchanged offer cost a new copy of the row, a recomputed
+             * `search_vector` and fresh entries in every index on `products`,
+             * for every offer, twice a day. See App\Support\ChangedRowsUpsert.
+             *
+             * The consequence to know: `last_seen_at` and `updated_at` now
+             * move only when an offer changes (or comes back from stale), so
+             * they no longer mean "the feed still lists it". What the feed
+             * listed this run is recorded apart, by IngestFeed, in
+             * `ingestion_seen_offers`, and that is what retires the rest.
+             */
+            ChangedRowsUpsert::run(
+                'products',
                 $rows,
                 ['source', 'external_id', 'market'],
                 [
@@ -119,12 +134,29 @@ class OfferUpserter
                     'previous_price' => DB::raw('CASE WHEN products.price IS DISTINCT FROM excluded.price THEN products.price ELSE products.previous_price END'),
                     'price_changed_at' => DB::raw('CASE WHEN products.price IS DISTINCT FROM excluded.price THEN excluded.updated_at ELSE products.price_changed_at END'),
                 ],
+                // Every column the feed supplies. Not the dates, which would
+                // make every row look changed, and not the three prices,
+                // which follow `price` above.
+                self::COMPARED,
             );
-
         });
 
-        return ['written' => count($rows), 'skipped' => $skipped];
+        return [
+            'written' => count($rows),
+            'skipped' => $skipped,
+            // What IngestFeed records as seen this run, changed or not.
+            'external_ids' => array_map(fn (array $row) => (string) $row['external_id'], $rows),
+        ];
     }
+
+    /** The columns whose change is worth rewriting an offer for. */
+    private const COMPARED = [
+        'merchant_id', 'feed_id', 'title', 'description', 'brand',
+        'merchant_category', 'price', 'reference_price', 'currency',
+        'image_url', 'affiliate_url', 'merchant_deep_link',
+        'availability', 'ean', 'mpn', 'commission_rate',
+        'identity_key', 'identity_kind', 'status',
+    ];
 
     /**
      * One row per `(source, external_id, market)` before the upsert sees them.

@@ -117,7 +117,12 @@ class ClassifyGiftability implements ShouldQueue
                  giftable_reason = v.reason,
                  updated_at = now()
              FROM (VALUES {$placeholders}) AS v(id, giftable, worth_showing, reason)
-             WHERE g.id = v.id",
+             WHERE g.id = v.id
+               -- Only a verdict that changed (2026-09-28): nearly all stay the
+               -- same from run to run, and a rewrite of an unchanged row is a
+               -- new row version plus new index entries.
+               AND (g.giftable, g.worth_showing, g.giftable_reason)
+                   IS DISTINCT FROM (v.giftable, v.worth_showing, v.reason)",
             $bindings,
         );
     }

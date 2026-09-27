@@ -373,6 +373,18 @@ class ProductGrouper
             JOIN display ON display.group_id = stats.group_id
             LEFT JOIN previous ON previous.group_id = stats.group_id
             WHERE g.id = stats.group_id
+              -- Only groups whose numbers or display moved (2026-09-28). Most
+              -- do not between two runs, and rewriting an unchanged group
+              -- cost a new row version and new entries in every index on
+              -- product_groups, for the whole market twice a day. Also keeps
+              -- `updated_at` meaning "changed".
+              AND (g.offer_count, g.merchant_count, g.min_price, g.max_price,
+                   g.previous_price, g.in_stock, g.best_offer_id,
+                   g.title, g.brand, g.image_url, g.category)
+                  IS DISTINCT FROM
+                  (stats.offer_count::int, stats.merchant_count::int, stats.min_price, stats.max_price,
+                   previous.previous_price, stats.in_stock, best.best_offer_id,
+                   display.title, display.brand, display.image_url, display.merchant_category)
         SQL;
 
         /*
