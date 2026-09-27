@@ -26,12 +26,14 @@ const HIDDEN_ON = new Set([
 ])
 
 /**
- * One line under the header: feedback, suggestions and votes are welcome
- * (owner, 2026-09-27; docs/features/contribute.md).
+ * One line above the header, on every page: feedback, suggestions and votes
+ * are welcome (owner, 2026-09-27; docs/features/contribute.md). It sat under
+ * the header, in the card colour, until the owner asked the same day for a
+ * better place and "more visible".
  *
- * Visible but quiet: the card background and muted text the market bar uses,
- * small type, one line on a phone (the short sentence below `lg`), and a
- * close button. Closing hides it at once and posts `/contribute-bar`, whose
+ * Visible, not loud: a light accent tint (never the solid accent, which is
+ * each page's main action), the icon on every width, one line on a phone (the
+ * short sentence below `lg`), and a close button. Closing hides it at once and posts `/contribute-bar`, whose
  * answer carries a cookie the server reads for a year, so it never flashes
  * back on the next page's first paint (App\Support\ContributeBar). A failed
  * post is swallowed: the bar is already gone, and it comes back on the next
@@ -66,7 +68,7 @@ export default function ContributeBar() {
     }
 
     return (
-        <aside aria-label={t('contribute.bar_label')} className="border-b border-line bg-card text-sm">
+        <aside aria-label={t('contribute.bar_label')} className="border-b border-accent/20 bg-accent/10 text-sm">
             <div className="mx-auto flex max-w-6xl items-center gap-2 py-1 pr-1 pl-4 sm:pr-3">
                 {/*
                   The whole row is the link, not only "Denk mee" (owner,
@@ -75,9 +77,9 @@ export default function ContributeBar() {
                 */}
                 <Link
                     href={`/${market.key}/contribute`}
-                    className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 text-ink-soft hover:text-ink"
+                    className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 text-ink hover:text-ink"
                 >
-                    <span className="hidden shrink-0 text-accent sm:inline">
+                    <span className="shrink-0 text-accent-dark">
                         <ToolIcon name="suggestions" className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 flex-1 truncate">
