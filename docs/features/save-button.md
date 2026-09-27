@@ -74,7 +74,16 @@ Left alone on purpose. It saves a *taste* (answers about a person) rather than a
 saved state to show on the button afterwards (the box is replaced by a sentence), and one button per
 person is the choice itself. It already follows the wording pattern (the verb Bewaar, then who for),
 so it stays recognisably the same act without borrowing the bookmark, which would promise a filled
-state it cannot show.
+state it cannot show. Since 2026-09-27 the buttons are people cards (`PersonPicker`), friends
+included; see [taste-discovery.md](taste-discovery.md).
+
+### The sheet's rows are `ListPicker` (2026-09-27)
+
+The sheet's body (the hint line, three sections, a tick box per list, "+ Maak een Cove", and the
+form that names a new list) is `ListPicker` since the consistency review's round 3, shared with the
+two copy menus ([copying-items.md](copying-items.md)). Each row now carries its kind's icon before
+the name, as a list's name does in a sentence (`ListName`), and naming a new list has a Cancel back
+to the rows. What a tick does is unchanged and stays in `SaveToList`.
 
 ## How it is built
 

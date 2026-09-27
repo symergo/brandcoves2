@@ -26,6 +26,7 @@ import Button from '../../Components/Button'
 import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
+import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
 
 interface Option {
     value: string
@@ -97,21 +98,11 @@ interface Props extends GiftResultsExtras {
     card?: GiftProfileCardProps | null
     /** This or that, the second way in. */
     tasteUrl?: string
-    /** Everybody you buy for, as My people lists them: saved people and friends. Signed-in only. */
-    people?: PersonCard[]
-}
-
-/** One row of My people, the parts "Who is it for?" draws as a card. */
-interface PersonCard {
-    key: string
-    name: string
-    relationship: string | null
-    /** The saved person's id; null for a friend nobody saved yet. */
-    personId: string | null
-    next: { date: string; days: number; kind: 'birthday' | 'occasion'; title: string | null } | null
-    friend: { id: number } | null
-    known: { interests: string[]; budgetMin: Cents | null; budgetMax: Cents | null } | null
-    listsForThem: number
+    /**
+     * Everybody you buy for, as My people lists them: saved people and
+     * friends, one row each, drawn by `PersonPicker`. Signed-in only.
+     */
+    people?: PickablePerson[]
 }
 
 /*
@@ -266,114 +257,6 @@ function SearchToListCard({
                     <InlineSearch base={base} signedIn={auth.user !== null} />
                 </>
             )}
-        </div>
-    )
-}
-
-/**
- * "Who is it for?" as cards of the people you know (owner, 2026-09-27),
- * instead of a row of names: the initial, the relationship, the next date and
- * what you know, the same facts My people shows. A saved person is chosen
- * with one tap. A friend nobody saved yet is saved first (the same
- * `POST /recipients` with `friend_id` as My people's "Bewaar wat je over …
- * weet"), then chosen: Find a gift works on a saved person, whose taste it
- * reads and whose list it fills.
- */
-function PeopleCards({
-    people,
-    chosen,
-    onChoose,
-    onSaved,
-}: {
-    people: PersonCard[]
-    chosen: string | null
-    onChoose: (personId: string) => void
-    onSaved: (fresh: Recipient[], name: string) => void
-}) {
-    const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
-    const [saving, setSaving] = useState<string | null>(null)
-
-    const choose = (person: PersonCard) => {
-        if (person.personId !== null) {
-            onChoose(person.personId)
-            return
-        }
-        if (person.friend === null) {
-            return
-        }
-        setSaving(person.key)
-        router.post(
-            `/${market.key}/recipients`,
-            { name: person.name, friend_id: person.friend.id },
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: (page) => onSaved(((page.props as unknown as { recipients?: Recipient[] }).recipients ?? []), person.name),
-                onFinish: () => setSaving(null),
-            },
-        )
-    }
-
-    return (
-        <div className="mt-4">
-            <p className="text-sm text-ink-soft">{t('gift.who_people')}</p>
-            <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {people.map((person) => {
-                    const on = person.personId !== null && chosen === person.personId
-                    const interests = person.known?.interests ?? []
-
-                    return (
-                        <li key={person.key}>
-                            <button
-                                type="button"
-                                aria-pressed={on}
-                                disabled={saving === person.key}
-                                onClick={() => choose(person)}
-                                className={`flex h-full w-full items-start gap-3 rounded-card border p-4 text-left transition disabled:opacity-60 ${
-                                    on ? 'border-accent bg-accent/5' : 'border-line bg-card hover:border-ink'
-                                }`}
-                            >
-                                <span
-                                    aria-hidden
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 font-semibold text-accent"
-                                >
-                                    {person.name.slice(0, 1).toUpperCase()}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                    <span className="flex flex-wrap items-center gap-x-2">
-                                        <span className="font-medium text-ink">{person.name}</span>
-                                        {person.relationship !== null &&
-                                            person.relationship.toLowerCase() !== person.name.toLowerCase() && (
-                                                <span className="text-sm text-ink-soft">{person.relationship}</span>
-                                            )}
-                                        {person.friend !== null && (
-                                            <Badge tone="accent" size="xs">
-                                                {t('people.on_giftcoves')}
-                                            </Badge>
-                                        )}
-                                    </span>
-                                    {person.next !== null && (
-                                        <span className="mt-0.5 flex flex-wrap items-center text-sm text-ink-soft">
-                                            {person.next.kind === 'birthday' ? (
-                                                <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                                            ) : (
-                                                person.next.title && <span className="mr-1">{person.next.title} ·</span>
-                                            )}
-                                            {formatDay(person.next.date, market)}
-                                            {'\u00a0·\u00a0'}
-                                            <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>{formatCountdown(person.next.days, t)}</span>
-                                        </span>
-                                    )}
-                                    {interests.length > 0 && (
-                                        <span className="mt-0.5 block truncate text-sm text-ink-soft">{interests.slice(0, 3).join(', ')}</span>
-                                    )}
-                                </span>
-                            </button>
-                        </li>
-                    )
-                })}
-            </ul>
         </div>
     )
 }
@@ -692,6 +575,56 @@ export default function GiftWizard(props: Props) {
         setStage('ways')
     }
 
+    /*
+     * A card chosen. A saved person is used at once. A friend nobody saved yet
+     * is saved first (the same `POST /recipients` with `friend_id` as My
+     * people's "Bewaar wat je over … weet"), then used: Find a gift works on a
+     * saved person, whose taste it reads and whose list it fills.
+     */
+    const [savingFriend, setSavingFriend] = useState<string | null>(null)
+    const choosePerson = (person: PickablePerson) => {
+        if (person.personId !== null) {
+            const found = recipients.find((r) => r.id === person.personId)
+            if (found) useRecipient(found)
+            return
+        }
+        if (person.friend === null) {
+            return
+        }
+        setSavingFriend(person.key)
+        router.post(
+            `/${market.key}/recipients`,
+            { name: person.name, friend_id: person.friend.id },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => {
+                    // The friend just saved as a person: pick the new row.
+                    const fresh = (page.props as unknown as { recipients?: Recipient[] }).recipients ?? []
+                    const found = [...fresh].reverse().find((r) => r.name === person.name)
+                    if (found) useRecipient(found)
+                },
+                onFinish: () => setSavingFriend(null),
+            },
+        )
+    }
+
+    /*
+     * Without My people (not signed in, so no friends), the saved people as the
+     * same cards: what the page knows of them from their own record.
+     */
+    const pickable: PickablePerson[] =
+        people.length > 0
+            ? people
+            : recipients.map((r) => ({
+                  key: `p:${r.id}`,
+                  name: r.name,
+                  relationship: r.relationship,
+                  personId: r.id,
+                  friend: null,
+                  known: { interests: r.interests.map(interestLabel) },
+              }))
+
     /** A kind of person, or nobody in particular (null). Clears a saved person picked before. */
     const useKind = (value: string | null) => {
         if (recipientId !== null) {
@@ -942,36 +875,15 @@ export default function GiftWizard(props: Props) {
                         {t('gift.who_title')}
                     </h2>
 
-                    {people.length > 0 ? (
-                        <PeopleCards
-                            people={people}
-                            chosen={recipientId}
-                            onChoose={(personId) => {
-                                const found = recipients.find((r) => r.id === personId)
-                                if (found) useRecipient(found)
-                            }}
-                            onSaved={(fresh, name) => {
-                                // A friend just saved as a person: pick the new row.
-                                const found = [...fresh].reverse().find((r) => r.name === name)
-                                if (found) useRecipient(found)
-                            }}
-                        />
-                    ) : recipients.length > 0 && (
+                    {pickable.length > 0 && (
                         <div className="mt-4">
-                            <p className="text-sm text-ink-soft">{t('gift.who_people')}</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                                {recipients.map((person) => (
-                                    <button
-                                        key={person.id}
-                                        type="button"
-                                        aria-pressed={recipientId === person.id}
-                                        className={chip(recipientId === person.id)}
-                                        onClick={() => useRecipient(person)}
-                                    >
-                                        {person.name}
-                                    </button>
-                                ))}
-                            </div>
+                            <PersonPicker
+                                people={pickable}
+                                label={t('gift.who_people')}
+                                isChosen={(person) => person.personId !== null && person.personId === recipientId}
+                                onChoose={choosePerson}
+                                busyKey={savingFriend}
+                            />
                         </div>
                     )}
 

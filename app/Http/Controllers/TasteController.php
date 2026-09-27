@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecipientStatus;
 use App\Enums\RecipientType;
 use App\Enums\TasteSource;
 use App\Models\Event;
+use App\Models\Friendship;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Services\Gift\GiftFeedback;
@@ -22,6 +24,7 @@ use App\Services\Gift\TasteProfile;
 use App\Services\Gift\TasteProfiler;
 use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\MyPeople;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
@@ -178,6 +181,13 @@ class TasteController extends Controller
 
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
+            /*
+             * "Bewaar bij …" as the people cards Find a gift and the list
+             * wizard draw (consistency review round 3, 2026-09-27): My people's
+             * rows, friends included. On the result only, the one render that
+             * shows them; the rounds page does not pay for the query.
+             */
+            'people' => $request->user() === null ? [] : app(MyPeople::class)->for($request->user(), $current),
             'carried' => [
                 'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
                 'relationship' => $relationship?->value,
@@ -254,8 +264,10 @@ class TasteController extends Controller
     {
         $validated = $request->validate([
             ...$this->choiceRules('required'),
-            'recipient_id' => ['nullable', 'uuid', 'required_without:name'],
-            'name' => ['nullable', 'string', 'max:80', 'required_without:recipient_id'],
+            'recipient_id' => ['nullable', 'uuid', 'required_without_all:name,friend_id'],
+            'name' => ['nullable', 'string', 'max:80', 'required_without_all:recipient_id,friend_id'],
+            // A friend nobody saved yet, chosen from the people cards.
+            'friend_id' => ['nullable', 'integer'],
         ]);
 
         $owner = Owner::fromRequest($request);
@@ -263,7 +275,9 @@ class TasteController extends Controller
 
         abort_if($profile->isEmpty(), 422, __('site.gift.taste.nothing_to_save'));
 
-        if (! empty($validated['recipient_id'])) {
+        if (! empty($validated['friend_id']) && empty($validated['recipient_id'])) {
+            $recipient = $this->personForFriend($owner, (int) $validated['friend_id']);
+        } elseif (! empty($validated['recipient_id'])) {
             $recipient = $owner->scope(Recipient::query())->find($validated['recipient_id']);
 
             if ($recipient === null) {
@@ -303,6 +317,42 @@ class TasteController extends Controller
             // False when they described their own taste: theirs stays.
             'tasteWritten' => $written,
         ]);
+    }
+
+    /**
+     * The saved person behind a friend, made the first time.
+     *
+     * The same link `POST /recipients` with `friend_id` makes (a Linked person
+     * pointing at their account), so a friend chosen here becomes the row My
+     * people already merges with them, not a second one. An existing link is
+     * reused, oldest first, as My people joins a friend to the oldest. Only an
+     * actual friend: anything else is a 404, which says no more than a person
+     * id that is not yours does.
+     */
+    private function personForFriend(Owner $owner, int $friendId): Recipient
+    {
+        abort_unless($owner->isSignedIn(), 403);
+
+        $friendship = Friendship::query()
+            ->where('user_id', $owner->user->id)
+            ->where('friend_id', $friendId)
+            ->with('friend')
+            ->first();
+
+        if ($friendship === null || $friendship->friend === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return $owner->scope(Recipient::query())
+            ->where('user_id', $friendId)
+            ->oldest()
+            ->first()
+            ?? Recipient::create([
+                ...$owner->attributes(),
+                'name' => $friendship->friend->displayName(),
+                'user_id' => $friendId,
+                'status' => RecipientStatus::Linked,
+            ]);
     }
 
     public function selfShow(Request $request, CurrentMarket $current, TasteDeck $deck, string $market, string $token): Response

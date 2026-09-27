@@ -51,6 +51,24 @@ enum RecipientType: string
     }
 
     /**
+     * A saved relationship as a person reads it: "mother" as "Mama" in the
+     * current language, anything typed by hand as typed, nothing as null.
+     *
+     * Static and here, because My people, a person's page and the list
+     * wizard's person cards all show it, and each must say the same word.
+     */
+    public static function describe(?string $relationship): ?string
+    {
+        $relationship = trim((string) $relationship);
+
+        if ($relationship === '') {
+            return null;
+        }
+
+        return self::tryFrom(mb_strtolower($relationship))?->label() ?? $relationship;
+    }
+
+    /**
      * The "who is it to you" picker, as Find a gift and My people both offer
      * it. One list, so the two screens cannot drift apart.
      *

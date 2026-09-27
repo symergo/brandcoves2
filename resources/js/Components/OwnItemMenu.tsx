@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react'
 import { useState } from 'react'
 import type { CopyTarget } from './CopyToList'
+import ListPicker, { defaultFirst, ListPickerNameForm } from './ListPicker'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import ToolIcon from './ToolIcon'
 import { markSaved } from '../savedItems'
@@ -65,7 +66,6 @@ export default function OwnItemMenu({
 }) {
     const { t } = useTranslations()
     const [view, setView] = useState<'main' | 'copy' | 'new'>('main')
-    const [name, setName] = useState('')
     const [sending, setSending] = useState(false)
 
     const copy = (close: () => void, to: string | null, newList?: string) => {
@@ -78,7 +78,6 @@ export default function OwnItemMenu({
                 onSuccess: () => groupId !== null && markSaved(groupId, to),
                 onFinish: () => {
                     setSending(false)
-                    setName('')
                     close()
                 },
             },
@@ -93,7 +92,6 @@ export default function OwnItemMenu({
                 width={256}
                 onClose={() => {
                     setView('main')
-                    setName('')
                 }}
                 button={<MoreButtonContent />}
                 buttonClassName="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink shadow-sm backdrop-blur transition hover:border-ink lg:h-9 lg:w-9"
@@ -137,50 +135,34 @@ export default function OwnItemMenu({
                             </MenuItem>
                         </>
                     ) : view === 'copy' ? (
-                        <>
-                            <p className="px-3 py-2 text-xs text-ink-soft">{t('lists.copy_to_which')}</p>
-                            {targets.map((target) => (
-                                <MenuItem key={target.id} disabled={sending} onSelect={() => copy(close, target.id)}>
-                                    <span className="block truncate">{target.title}</span>
-                                </MenuItem>
-                            ))}
-                            <MenuItem onSelect={() => setView('new')}>
-                                <span className="text-accent">+ {t('lists.new_list')}</span>
-                            </MenuItem>
-                        </>
+                        // The save picker's rows (`ListPicker`), as menu items
+                        // so the arrow keys move through them.
+                        <ListPicker
+                            inMenu
+                            hint={t('lists.copy_to_which')}
+                            disabled={sending}
+                            onPick={(target) => copy(close, target.id)}
+                            sections={[
+                                {
+                                    key: 'targets',
+                                    lists: defaultFirst(targets),
+                                    create: { label: t('lists.new_list'), onClick: () => setView('new') },
+                                },
+                            ]}
+                        />
                     ) : (
                         /*
                           A list named on the spot, as `CopyToList` offers. A
                           text field inside a menu: the arrow keys are left to
                           the field (see `Menu`), Enter copies, Escape closes.
                         */
-                        <form
-                            className="p-2"
-                            onSubmit={(e) => {
-                                e.preventDefault()
-
-                                if (name.trim() !== '') copy(close, null, name.trim())
-                            }}
-                        >
-                            <label className="block text-xs font-medium">
-                                {t('lists.list_name')}
-                                <input
-                                    autoFocus
-                                    required
-                                    maxLength={120}
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="mt-1 w-full rounded border border-line bg-cream px-2 py-1.5 text-sm font-normal"
-                                />
-                            </label>
-                            <button
-                                type="submit"
-                                disabled={sending}
-                                className="mt-2 w-full rounded bg-accent px-2 py-1.5 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
-                            >
-                                {t('lists.create')}
-                            </button>
-                        </form>
+                        <ListPickerNameForm
+                            label={t('lists.list_name')}
+                            submitLabel={t('lists.create')}
+                            busy={sending}
+                            onCancel={() => setView('copy')}
+                            onSubmit={(name) => copy(close, null, name)}
+                        />
                     )
                 }
             </Menu>

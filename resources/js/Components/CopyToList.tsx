@@ -3,10 +3,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom'
 import { markSaved } from '../savedItems'
 import { useTranslations } from '../useTranslations'
+import type { ListKind } from './ListKindBadge'
+import ListPicker, { defaultFirst, ListPickerNameForm } from './ListPicker'
 
+/** A list an item can be copied to; see App\Services\Wishlist\ListOptions::copyTargets(). */
 export interface CopyTarget {
     id: string
     title: string
+    kind?: ListKind
+    /** My default list: first in the picker. */
+    isDefault?: boolean
 }
 
 /**
@@ -93,7 +99,6 @@ export default function CopyToList({
 
     // Naming a new list, inside the menu. Closed again whenever the menu is.
     const [creating, setCreating] = useState(false)
-    const [name, setName] = useState('')
     const box = useRef<HTMLDivElement>(null)
     const trigger = useRef<HTMLButtonElement>(null)
     const panel = useRef<HTMLDivElement>(null)
@@ -226,7 +231,6 @@ export default function CopyToList({
                     setSending(false)
                     setOpen(false)
                     setCreating(false)
-                    setName('')
                 },
             },
         )
@@ -313,78 +317,42 @@ export default function CopyToList({
                         maxHeight: place.maxHeight,
                     }}
                     className="z-50 w-56 overflow-y-auto rounded-card border border-line bg-card p-1 shadow-xl">
-                    <p className="px-3 py-2 text-xs text-ink-soft">{t('lists.copy_to_which')}</p>
-
                     {/*
-                      Plain buttons, one per list. Not a `role="menu"`: that
-                      promises arrow-key navigation, and a role whose behaviour
-                      is missing is worse than no role — a screen reader
-                      announces a menu and then the arrow keys scroll the page.
-                      Tab through them, as with any other stack of buttons.
-                    */}
-                    <ul>
-                        {targets.map((target) => (
-                            <li key={target.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => copy(target.id)}
-                                    disabled={sending}
-                                    className="block w-full truncate rounded px-3 py-2 text-left text-sm hover:bg-line/40 disabled:opacity-50"
-                                >
-                                    {target.title}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+                      The save picker's rows (`ListPicker`): plain buttons, one
+                      per list. Not a `role="menu"`: that promises arrow-key
+                      navigation, and a role whose behaviour is missing is worse
+                      than no role — a screen reader announces a menu and then
+                      the arrow keys scroll the page. Tab through them, as with
+                      any other stack of buttons.
 
-                    {/*
                       A list named on the spot, exactly as the save picker
-                      offers.
-
-                      Without it this menu could only file into a list that
-                      already existed, so somebody with none met a panel with
-                      nothing in it — and that, rather than any deliberate
+                      offers. Without it this menu could only file into a list
+                      that already existed, so somebody with none met a panel
+                      with nothing in it — and that, rather than any deliberate
                       choice, is why the shared page had to draw a different
                       control for a visitor who had not started a list yet.
                     */}
                     {creating ? (
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault()
-
-                                if (name.trim() === '') {
-                                    return
-                                }
-
-                                copy(null, name.trim())
-                            }}
-                            className="p-1"
-                        >
-                            <input
-                                autoFocus
-                                required
-                                maxLength={120}
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder={t('lists.list_name')}
-                                className="w-full rounded border border-line bg-cream px-2 py-1.5 text-sm"
-                            />
-                            <button
-                                type="submit"
-                                disabled={sending}
-                                className="mt-1 w-full rounded bg-accent px-2 py-1.5 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
-                            >
-                                {t('lists.create')}
-                            </button>
-                        </form>
+                        <ListPickerNameForm
+                            label={t('lists.list_name')}
+                            submitLabel={t('lists.create')}
+                            busy={sending}
+                            onCancel={() => setCreating(false)}
+                            onSubmit={(name) => copy(null, name)}
+                        />
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => setCreating(true)}
-                            className="block w-full rounded px-3 py-2 text-left text-sm text-accent hover:bg-line/40"
-                        >
-                            + {t('lists.new_list')}
-                        </button>
+                        <ListPicker
+                            hint={t('lists.copy_to_which')}
+                            disabled={sending}
+                            onPick={(target) => copy(target.id)}
+                            sections={[
+                                {
+                                    key: 'targets',
+                                    lists: defaultFirst(targets),
+                                    create: { label: t('lists.new_list'), onClick: () => setCreating(true) },
+                                },
+                            ]}
+                        />
                     )}
                 </div>,
                 document.body,

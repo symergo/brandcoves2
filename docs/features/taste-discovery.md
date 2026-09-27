@@ -129,6 +129,17 @@ interests found, no person, like `gift.suggest`.
   button on 2026-09-26 ([save-button.md](save-button.md)): they keep a *taste*, not a thing, and have
   no saved state to fill in, so the bookmark icon would promise something they cannot show. They
   already use the same verb.
+
+  **As people cards since 2026-09-27** (consistency review, round 3; see
+  [design-system.md](design-system.md)): the row of buttons became `PersonPicker`'s compact cards,
+  the ones Find a gift and the list wizard draw, so a person looks the same wherever they are
+  chosen. A press still saves at once (the card's spoken name ends in "Bewaar voor [naam]"). Signed
+  in, the cards are My people's rows, sent with the result only (`TasteController`, the rounds page
+  does not pay for the query), which brings two changes: **friends on GiftCoves are offered too**,
+  and a "self" person (This or that played "for me" before) is no longer listed, as My people does
+  not list it. A friend nobody saved is saved by the same request (`friend_id`): the linked person
+  `POST /recipients` with `friend_id` makes, reused the second time, and only for an actual friend
+  (anything else is a 404). Signed out, the saved people are the same cards with the name only.
 - **Choosing for yourself** ("Me") ranks the ideas as for yourself (`SuggestionProfile::forMyself`)
   and offers each one to your wish list. There is nowhere to store a taste on an account, and a
   person's own wish list already acts as their brief (`TasteBrief::fromList`, list-signals.md), so

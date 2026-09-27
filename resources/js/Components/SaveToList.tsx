@@ -27,7 +27,7 @@ import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import type { ListKind } from './ListKindBadge'
 import ListName from './ListName'
-import ToolIcon from './ToolIcon'
+import ListPicker, { ListPickerNameForm, type PickableList } from './ListPicker'
 import SaveButton from './SaveButton'
 import SaveSheet from './SaveSheet'
 
@@ -170,7 +170,6 @@ export default function SaveToList({
 
     const [open, setOpen] = useState(false)
     const [creating, setCreating] = useState<null | 'mine' | 'for_someone' | 'group'>(null)
-    const [name, setName] = useState('')
     // The Save button itself: the sheet is placed against it, and focus goes
     // back to it when the sheet closes.
     const trigger = useRef<HTMLButtonElement>(null)
@@ -350,7 +349,6 @@ export default function SaveToList({
             }
 
             setCreating(null)
-            setName('')
 
             if (savingTo && result.listId === savingTo.id) {
                 countAdded(result.listId)
@@ -483,50 +481,12 @@ export default function SaveToList({
      * saves to that list and leaves the others alone; unticking takes it off
      * that list only. "Get this off my lists" is unticking the rows that are
      * on, so the separate remove option at the top of the menu is gone.
+     *
+     * The rows themselves are `ListPicker`'s since 2026-09-27, shared with the
+     * two copy menus; the tick and what it does stay here.
      */
-    function row(list: ListOption, label: string) {
-        const holder = held.find((h) => h.listId === list.id) ?? null
-        const on = holder !== null
-
-        return (
-            <button
-                key={list.id}
-                type="button"
-                role="checkbox"
-                aria-checked={on}
-                disabled={busy}
-                onClick={() => {
-                    if (holder !== null) {
-                        void remove(holder.itemId, list.id)
-                    } else {
-                        void save({ wishlist_id: list.id }, false)
-                    }
-                }}
-                title={on ? t('lists.remove_from', { list: label }) : t('lists.save_to', { list: label })}
-                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm disabled:opacity-50 ${
-                    on
-                        ? 'border border-sage bg-sage/15 font-medium text-sage'
-                        : 'border border-transparent hover:bg-line/40'
-                }`}
-            >
-                {/*
-                  A real-looking box, because the row is a selection again and
-                  a box is the one shape everybody reads as "tick me". Sage
-                  when on, matching the filled bookmark and the tinted row, so
-                  the state is said three times for a reader who catches one.
-                */}
-                <span
-                    aria-hidden
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-2xs font-bold ${
-                        on ? 'border-sage bg-sage text-white' : 'border-line bg-card'
-                    }`}
-                >
-                    {on && <ToolIcon name="check" className="h-3 w-3" />}
-                </span>
-                <span className="min-w-0 flex-1 truncate">{label}</span>
-            </button>
-        )
-    }
+    const holderOf = (list: PickableList) => held.find((h) => h.listId === list.id) ?? null
+    const asRow = (l: ListOption, label: string): PickableList => ({ id: l.id, title: label, kind: l.kind })
 
     /*
      * No loading state, and no failure state, because there is nothing to wait
@@ -536,117 +496,91 @@ export default function SaveToList({
      * and the second of those invites somebody to duplicate a list they own.
      */
     const body = creating ? (
-            <form
-                className="p-2"
-                onSubmit={(e) => {
-                    e.preventDefault()
-                    /*
-                     * Both "for someone" shapes name a person and title the list
-                     * after them; a group list adds `together`, which is the
-                     * single bit that separates the two on the server.
-                     *
-                     * Through `save`, like a tick on an existing row: naming a
-                     * new list for this product puts it there and leaves the
-                     * other lists alone, now that a product may sit on several.
-                     */
-                    void save(
-                        creating === 'mine'
-                            ? { new_list: name }
-                            : {
-                                  new_list: t('lists.for_person', { name }),
-                                  new_recipient: name,
-                                  together: creating === 'group',
-                              },
-                        true,
-                    )
-                }}
-            >
-                <label className="block text-xs font-medium">
-                    {creating === 'mine' ? t('lists.list_name') : t('lists.recipient_label')}
-                </label>
-                <input
-                    autoFocus
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    maxLength={80}
-                    className="mt-1 w-full rounded border border-line px-2 py-1.5 text-sm"
-                />
-                <div className="mt-2 flex gap-2">
-                    <button
-                        type="submit"
-                        disabled={busy}
-                        className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                    >
-                        {t('lists.save')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setCreating(null)}
-                        className="rounded border border-line px-3 py-1.5 text-xs"
-                    >
-                        {t('lists.cancel')}
-                    </button>
-                </div>
-            </form>
-        ) : (
-            <>
-                {/*
-                  Says, in one line, what the button did or will do, so the
-                  one-press save is never a mystery: where a press goes before
-                  it is saved, and how to take it off after.
-                */}
-                <p className="px-2 pt-1 pb-2 text-sm text-ink-soft">
-                    {saved
-                        ? t('save_button.saved_hint')
-                        : quick
-                          ? tRich('save_button.quick_hint', { list: <ListName name={quick.title} kind={quickKind} /> })
-                          : t('save_button.pick_hint')}
-                </p>
-                <p className="border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
-                    {t('lists.for_me')}
-                </p>
-                {mine.map((l) => row(l, l.title))}
-                <button
-                    type="button"
-                    onClick={() => setCreating('mine')}
-                    className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
-                >
-                    + {t('lists.new_list')}
-                </button>
+        <ListPickerNameForm
+            label={creating === 'mine' ? t('lists.list_name') : t('lists.recipient_label')}
+            submitLabel={t('lists.save')}
+            maxLength={80}
+            busy={busy}
+            onCancel={() => setCreating(null)}
+            onSubmit={(name) =>
+                /*
+                 * Both "for someone" shapes name a person and title the list
+                 * after them; a group list adds `together`, which is the
+                 * single bit that separates the two on the server.
+                 *
+                 * Through `save`, like a tick on an existing row: naming a
+                 * new list for this product puts it there and leaves the
+                 * other lists alone, now that a product may sit on several.
+                 */
+                void save(
+                    creating === 'mine'
+                        ? { new_list: name }
+                        : {
+                              new_list: t('lists.for_person', { name }),
+                              new_recipient: name,
+                              together: creating === 'group',
+                          },
+                    true,
+                )
+            }
+        />
+    ) : (
+        <ListPicker
+            /*
+              Says, in one line, what the button did or will do, so the
+              one-press save is never a mystery: where a press goes before
+              it is saved, and how to take it off after.
+            */
+            hint={
+                saved
+                    ? t('save_button.saved_hint')
+                    : quick
+                      ? tRich('save_button.quick_hint', { list: <ListName name={quick.title} kind={quickKind} /> })
+                      : t('save_button.pick_hint')
+            }
+            disabled={busy}
+            isChecked={(list) => holderOf(list) !== null}
+            rowTitle={(list, on) =>
+                on ? t('lists.remove_from', { list: list.title }) : t('lists.save_to', { list: list.title })
+            }
+            onPick={(list) => {
+                const holder = holderOf(list)
 
-                <p className="mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
-                    {t('lists.for_someone_else')}
-                </p>
-                {forOthers.map((l) => row(l, l.recipient ?? l.title))}
-                <button
-                    type="button"
-                    onClick={() => setCreating('for_someone')}
-                    className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
-                >
-                    + {t('lists.add_person')}
-                </button>
-
-                {/*
+                if (holder !== null) {
+                    void remove(holder.itemId, list.id)
+                } else {
+                    void save({ wishlist_id: list.id }, false)
+                }
+            }}
+            sections={[
+                {
+                    key: 'mine',
+                    heading: t('lists.for_me'),
+                    lists: mine.map((l) => asRow(l, l.title)),
+                    create: { label: t('lists.new_list'), onClick: () => setCreating('mine') },
+                },
+                {
+                    key: 'for_someone',
+                    heading: t('lists.for_someone_else'),
+                    lists: forOthers.map((l) => asRow(l, l.recipient ?? l.title)),
+                    create: { label: t('lists.add_person'), onClick: () => setCreating('for_someone') },
+                },
+                /*
                   A third section, because a group gift is a third answer to
                   "who is this for?" — several of us, for one person. Its own
                   heading rather than a badge inside "for someone else": the two
                   carry different mechanisms, and a shortlist you are all
                   putting money into is not private research.
-                */}
-                <p className="mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
-                    {t('lists.group_gift')}
-                </p>
-                {groups.map((l) => row(l, l.recipient ?? l.title))}
-                <button
-                    type="button"
-                    onClick={() => setCreating('group')}
-                    className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
-                >
-                    + {t('lists.start_group_gift')}
-                </button>
-            </>
-        )
+                */
+                {
+                    key: 'group',
+                    heading: t('lists.group_gift'),
+                    lists: groups.map((l) => asRow(l, l.recipient ?? l.title)),
+                    create: { label: t('lists.start_group_gift'), onClick: () => setCreating('group') },
+                },
+            ]}
+        />
+    )
 
     const panel = (
         <SaveSheet open={open} onClose={close} anchor={trigger} label={t('lists.save_to_list')}>

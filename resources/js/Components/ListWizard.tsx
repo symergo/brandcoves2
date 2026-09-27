@@ -4,6 +4,7 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
+import PersonPicker, { type PickablePerson } from './PersonPicker'
 
 /**
  * The answers to "who is it for?". Three are list kinds; `santa` is a Secret
@@ -18,6 +19,10 @@ interface Person {
     name: string
     /** When their birthday next falls, resolved by the server; null when unknown. */
     birthday: string | null
+    /** "Mama", for the card; null when nothing was saved. */
+    relationship?: string | null
+    /** The birthday as the card's date line, with how many days away. */
+    next?: PickablePerson['next']
 }
 
 interface Friend extends Person {
@@ -303,27 +308,42 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
      * friends who have none yet (a friend with a profile is that profile, so
      * one person is offered once).
      */
-    const people: { key: string; name: string; pick: () => void; on: boolean }[] = [
+    /*
+     * As cards since the consistency review's round 3 (2026-09-27): the same
+     * `PersonPicker` Find a gift draws, compact because it sits in a form.
+     * A friend is marked "op GiftCoves"; a friend with a profile is picked as
+     * that profile, one without by their account (`friend_id`).
+     */
+    const people: PickablePerson[] = [
         ...recipients.map((r) => ({
-            key: `r:${r.id}`,
+            key: `p:${r.id}`,
             name: r.name,
-            on: form.data.recipient_id === r.id,
-            pick: () => form.setData((data) => ({ ...data, recipient_id: r.id, friend_id: '', new_recipient: '' })),
+            relationship: r.relationship ?? null,
+            personId: r.id,
+            friend: null,
+            next: r.next ?? null,
         })),
         ...friends
             .filter((f) => f.recipientId === null || !recipients.some((r) => r.id === f.recipientId))
             .map((f) => ({
                 key: `f:${f.id}`,
                 name: f.name,
-                on: f.recipientId !== null ? form.data.recipient_id === f.recipientId : form.data.friend_id === f.id,
-                pick: () =>
-                    form.setData((data) =>
-                        f.recipientId !== null
-                            ? { ...data, recipient_id: f.recipientId ?? '', friend_id: '', new_recipient: '' }
-                            : { ...data, friend_id: f.id, recipient_id: '', new_recipient: '' },
-                    ),
+                relationship: f.relationship ?? null,
+                personId: f.recipientId,
+                friend: { id: f.id },
+                next: f.next ?? null,
             })),
     ]
+
+    const isPicked = (p: PickablePerson) =>
+        p.personId !== null ? form.data.recipient_id === p.personId : p.friend !== null && form.data.friend_id === p.friend.id
+
+    const pick = (p: PickablePerson) =>
+        form.setData((data) =>
+            p.personId !== null
+                ? { ...data, recipient_id: p.personId, friend_id: '', new_recipient: '' }
+                : { ...data, friend_id: p.friend?.id ?? '', recipient_id: '', new_recipient: '' },
+        )
 
     const choices: { value: Kind; label: string; kindLabel: string; body: string }[] = [
         { value: 'mine', label: t('lists.for_me'), kindLabel: t('lists.kind_mine'), body: t('wizard.kind_mine_body') },
@@ -492,20 +512,8 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
                                 {t('lists.person_name')}
                             </label>
                             {people.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {people.map((p) => (
-                                        <button
-                                            key={p.key}
-                                            type="button"
-                                            aria-pressed={p.on}
-                                            onClick={p.pick}
-                                            className={`rounded-full border px-3 py-1 text-sm ${
-                                                p.on ? 'border-accent bg-accent/10 text-ink' : 'border-line bg-card text-ink-soft hover:border-ink'
-                                            }`}
-                                        >
-                                            {p.name}
-                                        </button>
-                                    ))}
+                                <div className="mt-2">
+                                    <PersonPicker variant="compact" people={people} isChosen={isPicked} onChoose={pick} />
                                 </div>
                             )}
                             <input

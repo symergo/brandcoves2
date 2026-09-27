@@ -28,6 +28,7 @@ use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ListMaker;
+use App\Services\Wishlist\ListOptions;
 use App\Services\Wishlist\OccasionDate;
 use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
@@ -618,26 +619,13 @@ class WishlistController extends Controller
              * row onto the list it is already on is a duplicate somebody would
              * have to tidy, and offering it invites the press.
              *
-             * Ids and titles only. The picker names destinations in words
-             * rather than asking somebody to drag a card at one, so it needs
-             * nothing else — and a summary per list would be a second query
-             * per row on a page that already has one.
-             *
-             * `ListAccess::scope()` unions the lists I own with the ones I have
-             * been let into; `canEdit()` is what says I may add to them, and it
-             * is asked again at the endpoint because a payload decides a
-             * control and nothing more.
+             * Ids, titles, kinds and which is my default. The picker names
+             * destinations in words rather than asking somebody to drag a card
+             * at one, so it needs nothing else — and a summary per list would
+             * be a second query per row on a page that already has one. See
+             * ListOptions::copyTargets(), shared with the shared page.
              */
-            'copyTargets' => ListAccess::scope(Wishlist::query(), $owner)
-                ->whereKeyNot($wishlist->id)
-                ->orderBy('title')
-                ->get(['id', 'title', 'owner_user_id', 'owner_anon_id'])
-                ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))
-                ->map(fn (Wishlist $other): array => [
-                    'id' => $other->id,
-                    'title' => $other->displayTitle(),
-                ])
-                ->values(),
+            'copyTargets' => ListOptions::copyTargets($owner, $wishlist),
 
             /*
              * The discussion beside the list.

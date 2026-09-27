@@ -23,6 +23,7 @@ use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ClaimView;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultTitle;
+use App\Services\Wishlist\ListOptions;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -385,16 +386,7 @@ class SharedListController extends Controller
              * and they own nothing. The page falls back to `SaveToList` there,
              * which is the only control that can make somebody's first list.
              */
-            'copyTargets' => ListAccess::scope(Wishlist::query(), $owner)
-                ->whereKeyNot($list->id)
-                ->orderBy('title')
-                ->get(['id', 'title', 'owner_user_id', 'owner_anon_id'])
-                ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))
-                ->map(fn (Wishlist $other): array => [
-                    'id' => $other->id,
-                    'title' => $other->displayTitle(),
-                ])
-                ->values(),
+            'copyTargets' => ListOptions::copyTargets($owner, $list),
 
             'canSuggest' => $canSuggest,
 

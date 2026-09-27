@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Wishlist;
 
 use App\Models\Wishlist;
+use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -69,6 +70,48 @@ final class ListOptions
                 'kind' => $list->kind->value,
                 'recipient' => $list->recipient?->name,
             ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Where an item on `$except` can be copied to: every list this person may
+     * write to, minus that one.
+     *
+     * One definition for the list page and the shared page, which each built
+     * it by hand. `ListAccess::scope()` unions the lists I own with the ones I
+     * have been let into; `canEdit()` is what says I may add to them, and it is
+     * asked again at the endpoint because a payload decides a control and
+     * nothing more.
+     *
+     * Kind and default ride along since the consistency review's round 3
+     * (2026-09-27), when the copy menus took the save picker's rows: the
+     * kind's icon beside each name, and my default list first, as the save
+     * picker has it (`query()` above). Then by title. Only *my* default is
+     * pinned: a list somebody let me into may be their default, which says
+     * nothing about where I save.
+     *
+     * @return list<array{id: string, title: string, kind: string, isDefault: bool}>
+     */
+    public static function copyTargets(Owner $owner, Wishlist $except): array
+    {
+        $mine = $owner->attributes();
+
+        return ListAccess::scope(Wishlist::query(), $owner)
+            ->whereKeyNot($except->id)
+            ->orderBy('title')
+            ->get(['id', 'title', 'kind', 'is_default', 'owner_user_id', 'owner_anon_id', 'recipient_id'])
+            ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))
+            ->map(fn (Wishlist $other): array => [
+                'id' => $other->id,
+                'title' => $other->displayTitle(),
+                'kind' => $other->kind->value,
+                'isDefault' => (bool) $other->is_default
+                    && $other->owner_user_id === $mine['owner_user_id']
+                    && $other->owner_anon_id === $mine['owner_anon_id'],
+            ])
+            // Stable: the title order above stays under the pinned default.
+            ->sortByDesc(fn (array $target): bool => $target['isDefault'])
             ->values()
             ->all();
     }

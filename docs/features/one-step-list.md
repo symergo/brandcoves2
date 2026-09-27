@@ -13,8 +13,11 @@ one question: **who is it for?**
 | Voor iemand anders / For someone else | gift list (`for_someone`) | Cadeaus voor Sara / Gifts for Sara |
 | Samen, voor iemand / Together, for someone | group gift (`group`) | Samen voor Sara / Together for Sara |
 
-For the two lists about somebody, a name field (with the people and friends you already have as
-one-tap chips above it). The list name is filled in and follows the person's name until it is
+For the two lists about somebody, a name field (with the people and friends you already have
+above it: one-tap chips until 2026-09-27, since then `PersonPicker`'s compact cards, the ones Find
+a gift draws, with the relationship, "op GiftCoves" for a friend and the next birthday; see
+[design-system.md](design-system.md)). `WizardOffer` sends each person's `relationship` and `next`
+for them. The list name is filled in and follows the person's name until it is
 typed over; it may be cleared, and the server writes the same default then. One button makes the
 list and lands on its page, with the add field open, focused and scrolled into view: the next thing
 to do is paste a link or search.

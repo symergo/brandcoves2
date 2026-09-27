@@ -131,6 +131,32 @@ class CopyItemToListTest extends TestCase
         ]);
     }
 
+    /**
+     * The copy menus draw the save picker's rows (`ListPicker`, consistency
+     * review round 3): the kind's icon, and my default list first. Only mine:
+     * a list somebody let me into may be their default, which says nothing
+     * about where I save.
+     */
+    #[Test]
+    public function copy_targets_carry_the_kind_and_put_my_default_list_first(): void
+    {
+        $me = User::factory()->create();
+        $here = $this->list($me, title: 'Here');
+        $this->list($me, ListKind::ForSomeone, title: 'Aaa for Dad');
+        $default = $this->list($me, title: 'Zzz default');
+        $default->update(['is_default' => true]);
+
+        $this->actingAs($me)->get("/be-nl/lists/{$here->id}")
+            ->assertInertia(fn ($page) => $page
+                ->has('copyTargets', 2)
+                ->where('copyTargets.0.id', $default->id)
+                ->where('copyTargets.0.isDefault', true)
+                ->where('copyTargets.0.kind', 'mine')
+                ->where('copyTargets.1.title', 'Aaa for Dad')
+                ->where('copyTargets.1.kind', 'for_someone')
+                ->where('copyTargets.1.isDefault', false));
+    }
+
     // ── Between my own lists ──────────────────────────────────────────────
 
     #[Test]
