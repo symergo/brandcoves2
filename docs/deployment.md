@@ -140,8 +140,43 @@ everything else in the image it must survive a deploy, and it is personal data: 
 backups next to Postgres. A missing volume does not break the site; pictures stored since the last
 deploy disappear and their items show no picture.
 
-Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 60s` lets
-the in-flight job finish rather than abandoning a half-ingested chunk.
+Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 120s`
+(60s until 2026-09-28) lets the in-flight job finish rather than abandoning a half-ingested chunk;
+`IngestFeed` itself hears the SIGTERM, finishes its chunk, records its place and puts itself back on
+the queue, so the new Horizon resumes it at once.
+
+### Horizon: four supervisors (since 2026-09-28)
+
+`config/horizon.php` (the package defaults before: one queue, ten workers). Staging and production
+both run `APP_ENV=production`, so both get these numbers:
+
+| Supervisor | Queue | Workers | Timeout | Reads through |
+|---|---|---|---|---|
+| `visitors` | `default` | 2–4 | 90 s | `redis`, `retry_after` 180 s |
+| `mail` | `mail` | 1–2 | 1800 s | `redis-long`, 3900 s |
+| `editorial` | `editorial` | 1–2 | 900 s, 512 MB | `redis-long` |
+| `batch` | `batch` | 1–2 | 3600 s, 512 MB | `redis-long` |
+
+Every job names its queue with a `#[Queue(...)]` attribute; `QueueRoutingTest` and
+`QueueRetryAfterTest` keep that and the timeouts honest. The two connections in `config/queue.php`
+share the Redis keys and differ only in `retry_after`, which the reading worker applies. Horizon's
+dashboard shows a long wait per queue from 30 s (`default`) to an hour (`batch`, which is expected to
+queue at night). Why each piece is the way it is: [features/speed.md](features/speed.md),
+"Background work".
+
+### The schedule's shape (since 2026-09-28)
+
+The catalogue is one run, not a list of clock times: at 04:10 and 16:10 `CatalogueRun` ingests a
+market's feeds, then groups, classifies, recomputes brand statistics, finds match candidates and
+(mornings) plans the gift landing pages, then does the next market; after the last it links barcode
+items and refreshes watched products. Each step starts when the one before it is done. The
+editorial morning follows from 06:00 (automation), 06:40 (Dailies), 07:30 (due Coves), with the
+09:00 drop unchanged. `php artisan schedule:list` shows the rest.
+
+**Operational:** do not deploy production while the catalogue run is going (roughly 04:10 to 07:00
+and 16:10 to 18:00 Belgian time) unless it has to be. An ingest pauses and resumes cleanly, but a
+grouping pass or a Cove build cut off at the grace period is retried only after `retry_after`
+(65 minutes), and jobs queued under the old code are read with the new, shorter retry.
 
 ### What runs when a container starts (since 2026-09-27)
 

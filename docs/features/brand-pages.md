@@ -594,7 +594,13 @@ nothing. `GuideController::show()` declares it for the same reason.
 php artisan bc:refresh-discovery --market=be-nl   # includes brand stats
 ```
 
-Scheduled twice daily at 05:30 and 17:30, after grouping and serendipity.
+Twice daily, as a step of the catalogue run right after the market's grouping and classification
+(since 2026-09-28; at 05:30 and 17:30 before). Since the same day it writes only brands whose
+figures changed (`share` compared within 1%, because it is every brand's fraction of the whole
+market and moves in the sixth decimal whenever anything is added), so `computed_at`, which the
+sitemap gives as the brand page's `lastmod`, now means "changed". Brands that left the catalogue are
+zeroed with one anti-join against a JSON list of the present slugs (it bound one parameter per slug)
+and skipped when already zero. See [speed.md](speed.md), "Background work".
 
 ## The nightly aggregate is two queries, not three per brand (2026-09-06)
 

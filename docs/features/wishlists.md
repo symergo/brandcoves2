@@ -974,9 +974,16 @@ about €5 off.
 
 ### Cadence
 
-`RefreshWishlistedProducts` is scheduled twice daily at 05:20 and 17:20 — twenty minutes after
-grouping, which is what turns a feed ingest into the aggregates an alert compares against. Running
-more often than the underlying data changes would burn queries re-reading the same numbers.
+`RefreshWishlistedProducts` runs twice daily as the last step of the catalogue run, after every
+market is grouped (since 2026-09-28; at 05:20 and 17:20 before, twenty minutes after a grouping that
+might not have finished). Grouping is what turns a feed ingest into the aggregates an alert compares
+against. Running more often than the underlying data changes would burn queries re-reading the same
+numbers.
+
+Since the same day it asks the live shops for at most 300 seconds, recomputes the groups whose
+offers it changed (so a watched product's cheapest price and stock are today's before the alerts
+look), and leaves the alerts themselves to `FireWatchAlerts` on the `mail` queue, which marks an
+alert fired before sending its mail so a retried run cannot mail twice.
 
 It reads what ingestion already wrote rather than re-fetching, so the job costs a query per alert,
 not a download.

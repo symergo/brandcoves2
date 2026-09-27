@@ -1,7 +1,7 @@
 ---
 name: Gift landing pages
 area: Gifting / SEO
-status: Active — recorded nightly (05:40) per published market; recipient × interest only
+status: Active — recorded nightly (morning catalogue run) per published market; recipient × interest only
 date_added: 2026-09-26
 ---
 
@@ -51,7 +51,8 @@ suggestion engine answers. Two things make it something a page can be built from
 
 ## Only pages worth having exist
 
-`PlanGiftLandingPages` (nightly 05:40, after grouping and the list signals; by hand:
+`PlanGiftLandingPages` (nightly, a step of the morning catalogue run after the market's grouping
+and brand statistics since 2026-09-28, 05:40 before; after the list signals; by hand:
 `php artisan bc:plan-gift-landings --market=be-nl`) walks every recipient × interest, asks the
 suggestion engine for 24 products and counts the ones that **fit the interest** by the engine's own
 verdict (`Suggestion::matchedInterests`). "The engine returned something" is not enough: with

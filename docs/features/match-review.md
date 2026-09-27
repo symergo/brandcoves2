@@ -58,8 +58,10 @@ which never counts in a rule's precision.
 
 ## When it runs
 
-`FindMatchCandidates` per market at 05:40 and 17:40, forty minutes after grouping starts, because it
-reads the groups grouping writes. The nightly pass compares everything for rules 1 and 2, and for
+`FindMatchCandidates` per market in the catalogue run, twice a day, right after the market's grouping
+and brand statistics (since 2026-09-28; at 05:40 and 17:40 before, forty minutes after grouping
+started), because it reads the groups grouping writes. One run per market at a time, checked when it
+runs (`RunsOneAtATime`) rather than `ShouldBeUnique`, which would cut the chain. The nightly pass compares everything for rules 1 and 2, and for
 rule 3 starts only from products first seen in the last three days (`identity.matching.recent_days`),
 against every product. The first run on an environment is by hand:
 

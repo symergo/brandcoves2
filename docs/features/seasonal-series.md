@@ -140,7 +140,8 @@ inserting a second "part 2".
 
 ## Publishing on the day it was scheduled for
 
-`App\Jobs\PublishDueCoves` runs at 07:00 per market, after the last Daily has built, and dispatches
+`App\Jobs\PublishDueCoves` runs at 07:30 per market (07:00 until 2026-09-28, when the Daily builds
+moved to 06:40), after the last Daily has built, and dispatches
 `BuildCove` for every approved, unbuilt plan whose date has arrived.
 
 **This is not automatic publishing.** `buildArticle()` refuses anything that is not `approved`, and
