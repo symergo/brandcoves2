@@ -206,7 +206,8 @@ export default function ShareMenu({
                 className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm whitespace-nowrap hover:border-ink"
             >
                 <ShareIcon name="share" />
-                {label ?? t('lists.share')}
+                {/* "Stuur via…" beside "Link kopiëren": after pressing "Delen" to get here, a second "Delen" read as the same button again (owner, 2026-09-27). Pages where this is the only share button pass their own label. */}
+                {label ?? t('lists.send_via')}
             </button>
 
             {open && (

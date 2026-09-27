@@ -1026,3 +1026,16 @@ kind's mark on an empty list), always the same width so every name starts at the
   list (the list page's own `PATCH`, the popup staying open while the link arrives), and "Meer
   deelopties" to the full panel on the list page (who may add, group options, handing it over).
   The overview now sends each of your own shared lists' `shareUrl`.
+
+**The overview's ⋯ is the list page's, per kind** (owner: "the ... menu for the group lists should
+contain more actions, check the list page itself"): on a list about somebody (Cadeaulijst, Samen
+geven) "Vraag suggesties aan {naam}" (`?panel=ask`), "Vraag het aan anderen" and "Wat je {naam}
+gaf"; on your own shared wish list the quiz (`?panel=quiz`); on every list of yours Instellingen and,
+set apart in red with a confirmation, Verwijderen. "Vraag het aan anderen" left the wish list's
+menu, as on the list page. This or that together and Secret Friend stay on the list page, which
+shows them only while that list has one.
+
+**"Stuur via…", not a second "Delen"** (owner: "why is there a button delen in the popup when I
+clicked already on delen"). `ShareMenu`'s default label beside "Link kopiëren" is now "Stuur via…"
+(WhatsApp, e-mail, Instagram, copy the message) everywhere it sits in a `ShareRow`. A page where it
+is the only share button (a product, a guide, the daily Cove) passes its own "Delen".

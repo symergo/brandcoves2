@@ -11,7 +11,8 @@ import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/Lis
 import InfoTip from '../../Components/InfoTip'
 import NewListButton from '../../Components/NewListButton'
 import { buttonClasses } from '../../Components/Button'
-import Menu, { MenuItem } from '../../Components/Menu'
+import Menu, { MenuItem, MenuSeparator } from '../../Components/Menu'
+import { invalidate } from '../../savedItems'
 import ShareRow from '../../Components/ShareRow'
 
 interface ListSummary {
@@ -109,6 +110,8 @@ function ListCard({ list }: { list: ListSummary }) {
     const theirs = list.sharedWithMe
     const [adding, setAdding] = useState(false)
     const [sharing, setSharing] = useState(false)
+    // A list about somebody (a gift list or a group gift): the kinds the list page offers more for.
+    const aboutSomebody = list.kind === 'for_someone' || list.kind === 'group'
     const canAdd = !theirs || list.role === 'editor'
 
     return (
@@ -233,13 +236,57 @@ function ListCard({ list }: { list: ListSummary }) {
                                 }
                                 buttonClassName={rowAction}
                             >
-                                {() => (
+                                {/*
+                                  The list page's own ⋯, per kind (owner, 2026-09-27: "the
+                                  ... menu for the group lists should contain more actions,
+                                  check the list page itself"), under the same conditions
+                                  as ListToolsBar. Left out: This or that together and Secret
+                                  Friend, which the list page shows only while that list
+                                  has one, which this overview does not know.
+                                */}
+                                {(close) => (
                                     <>
-                                        <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
-                                            {t('lists.ask_others')}
-                                        </MenuItem>
+                                        {aboutSomebody && list.recipient && (
+                                            <MenuItem href={`${list.url}?panel=ask`} icon={<ToolIcon name="suggestions" className="h-4 w-4" />}>
+                                                {t('lists.ask_tab', { name: list.recipient.name })}
+                                            </MenuItem>
+                                        )}
+                                        {aboutSomebody && (
+                                            <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
+                                                {t('lists.ask_others')}
+                                            </MenuItem>
+                                        )}
+                                        {aboutSomebody && list.recipient && (
+                                            <MenuItem href={`/${market.key}/people/${list.recipient.id}`} icon={<ToolIcon name="people" className="h-4 w-4" />}>
+                                                {t('gift_history.link', { name: list.recipient.name })}
+                                            </MenuItem>
+                                        )}
+                                        {list.kind === 'mine' && shared && (
+                                            <MenuItem href={`${list.url}?panel=quiz`} icon={<ToolIcon name="quiz" className="h-4 w-4" />}>
+                                                {t('quiz.badge')}
+                                            </MenuItem>
+                                        )}
                                         <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
                                             {t('lists.settings')}
+                                        </MenuItem>
+                                        <MenuSeparator />
+                                        <MenuItem
+                                            danger
+                                            icon={<ToolIcon name="trash" className="h-4 w-4" />}
+                                            onSelect={() => {
+                                                close()
+
+                                                if (confirm(t('lists.delete_confirm'))) {
+                                                    // As on the list page: the save buttons elsewhere must stop
+                                                    // reporting products as saved into a list that is gone.
+                                                    router.delete(`/${market.key}/lists/${list.id}`, {
+                                                        preserveScroll: true,
+                                                        onSuccess: () => invalidate(),
+                                                    })
+                                                }
+                                            }}
+                                        >
+                                            {t('lists.delete')}
                                         </MenuItem>
                                     </>
                                 )}
