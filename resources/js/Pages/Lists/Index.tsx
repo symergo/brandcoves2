@@ -75,9 +75,9 @@ interface Props extends WizardOffer {
     isSignedIn: boolean
 }
 
-/** A round icon button over a card's pictures: add, share, more. */
+/** A round icon button in a card's row under the pictures: add, share, more. */
 const cardIcon =
-    'flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-ink-soft shadow-sm transition hover:border-ink hover:text-ink'
+    'flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink-soft transition hover:border-ink hover:text-ink'
 
 /**
  * One card per list, in two groups.
@@ -142,6 +142,61 @@ function ListCard({ list }: { list: ListSummary }) {
                     )}
                 </div>
 
+            </Link>
+            {/*
+              The card's actions in a row of their own under the pictures, +
+              first (owner, 2026-09-27): add, share, then ⋯ with Vraag het aan
+              anderen and Instellingen. They sat in the corner of the pictures
+              and covered the products. Outside the links, because a button
+              cannot sit inside one, so the pictures and the text are each a
+              link to the list. Share and ⋯ on your own lists only: somebody
+              else's list is theirs to share and set up. Each opens the list
+              page on that tool (`?panel=`), as a list's row on a person's page.
+            */}
+            {(canAdd || !theirs) && (
+                <div className="flex items-center gap-1.5 px-4 pt-3">
+                    {canAdd && (
+                        <button
+                            type="button"
+                            onClick={() => setAdding(true)}
+                            aria-label={t('lists.add_product')}
+                            title={t('lists.add_product')}
+                            className={`${cardIcon} text-accent-dark`}
+                        >
+                            <ToolIcon name="plus" className="h-5 w-5" />
+                        </button>
+                    )}
+                    {!theirs && (
+                        <>
+                            <Link
+                                href={`${list.url}?panel=share`}
+                                aria-label={`${t('lists.share')}: ${list.title}`}
+                                title={t('lists.share')}
+                                className={cardIcon}
+                            >
+                                <ToolIcon name="shared" className="h-5 w-5" />
+                            </Link>
+                            <Menu
+                                label={t('people.list_actions', { name: list.title })}
+                                button={<ToolIcon name="more" className="h-5 w-5" />}
+                                buttonClassName={cardIcon}
+                            >
+                                {() => (
+                                    <>
+                                        <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
+                                            {t('lists.ask_others')}
+                                        </MenuItem>
+                                        <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
+                                            {t('lists.settings')}
+                                        </MenuItem>
+                                    </>
+                                )}
+                            </Menu>
+                        </>
+                    )}
+                </div>
+            )}
+            <Link href={list.url} className="flex flex-1 flex-col">
                 <div className="flex flex-1 flex-col p-4">
                     <h3 className="font-medium">{list.title}</h3>
 
@@ -240,59 +295,6 @@ function ListCard({ list }: { list: ListSummary }) {
                     </div>
                 </div>
             </Link>
-            {/*
-              An icon in the corner of the pictures, not a line of text under
-              the card (owner, 2026-09-26: more compact). Outside the link, so
-              pressing it adds rather than opening the list.
-            */}
-            {/*
-              Share and ⋯ beside the + since 2026-09-27 (owner: "add the share
-              and more menu also to the cove cards", as icons), on your own
-              lists only: somebody else's list is theirs to share and set up.
-              Each opens the list page on that tool (`?panel=`), the same
-              actions as a list's row on a person's page.
-            */}
-            <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                {!theirs && (
-                    <>
-                        <Link
-                            href={`${list.url}?panel=share`}
-                            aria-label={`${t('lists.share')}: ${list.title}`}
-                            title={t('lists.share')}
-                            className={cardIcon}
-                        >
-                            <ToolIcon name="shared" className="h-5 w-5" />
-                        </Link>
-                        <Menu
-                            label={t('people.list_actions', { name: list.title })}
-                            button={<ToolIcon name="more" className="h-5 w-5" />}
-                            buttonClassName={cardIcon}
-                        >
-                            {() => (
-                                <>
-                                    <MenuItem href={`/${market.key}/ask?list=${list.id}`} icon={<ToolIcon name="board" className="h-4 w-4" />}>
-                                        {t('lists.ask_others')}
-                                    </MenuItem>
-                                    <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
-                                        {t('lists.settings')}
-                                    </MenuItem>
-                                </>
-                            )}
-                        </Menu>
-                    </>
-                )}
-                {canAdd && (
-                    <button
-                        type="button"
-                        onClick={() => setAdding(true)}
-                        aria-label={t('lists.add_product')}
-                        title={t('lists.add_product')}
-                        className={`${cardIcon} text-accent-dark`}
-                    >
-                        <ToolIcon name="plus" className="h-5 w-5" />
-                    </button>
-                )}
-            </div>
             {adding && <AddToListDialog list={list} onClose={() => setAdding(false)} />}
         </div>
     )
