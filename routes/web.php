@@ -18,6 +18,7 @@ use App\Http\Controllers\ContributeController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
+use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\Ebay\AccountDeletionController;
@@ -75,6 +76,7 @@ use App\Http\Controllers\TasteTogetherController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
+use App\Http\Middleware\CacheAnonymousPage;
 use App\Http\StatelessRoutes;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
@@ -155,6 +157,13 @@ Route::get('/', function (Request $request) {
         ->header('Cache-Control', 'no-store, private');
 })->name('root');
 
+// A CSRF token for a page served from the anonymous page cache, which carries
+// none. Asked by the browser right before its first write; it starts the
+// session. See App\Http\Controllers\CsrfTokenController.
+Route::get('/csrf', CsrfTokenController::class)
+    ->middleware('throttle:60,1')
+    ->name('csrf');
+
 // Where the switcher posts a choice. Unprefixed and POST-only; the reasoning is
 // in MarketPreferenceController.
 Route::post('/market', MarketPreferenceController::class)->name('market.choose');
@@ -226,7 +235,8 @@ Route::pattern('market', implode('|', array_map('preg_quote', Market::values()))
 */
 
 Route::prefix('{market}')->group(function () {
-    Route::get('/', HomeController::class)->name('home');
+    Route::get('/', HomeController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('home');
 
     /*
      * Throttled, for the reason `/list-search` gives below: the live half of a
@@ -256,7 +266,8 @@ Route::prefix('{market}')->group(function () {
     // than with about/privacy/terms: it is documentation of a tool, not a
     // document about the company, and the only pages that link to it are the
     // ones with a search field on them.
-    Route::get('/search-help', SearchHelpController::class)->name('search-help');
+    Route::get('/search-help', SearchHelpController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('search-help');
 
     /*
      * What people search for here, as one page.
@@ -266,7 +277,8 @@ Route::prefix('{market}')->group(function () {
      * page. Next to /search-help for the same reason that is here: it is about
      * the search box rather than about the company.
      */
-    Route::get('/popular-searches', PopularSearchesController::class)->name('popular-searches');
+    Route::get('/popular-searches', PopularSearchesController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('popular-searches');
 
     /*
      * Tell us what is wrong.
@@ -283,7 +295,8 @@ Route::prefix('{market}')->group(function () {
      * visitor who had already given up on that screen had nowhere to go. This
      * gathers them and puts the report form under them.
      */
-    Route::get('/help', HelpController::class)->name('help');
+    Route::get('/help', HelpController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('help');
 
     /*
      * Kept as a redirect, not a page.
@@ -327,6 +340,7 @@ Route::prefix('{market}')->group(function () {
     // The slug is decoration; the id is identity. A stale slug redirects rather
     // than 404s, so old shared links keep working after a retitle.
     Route::get('/p/{group}/{slug?}', ProductController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->whereNumber('group')
         ->name('product');
 
@@ -398,10 +412,12 @@ Route::prefix('{market}')->group(function () {
      * It mirrors `/search-help`, which sits beside `/search` for the same
      * reason: it documents a tool rather than the company.
      */
-    Route::get('/lists-help', [ListHelpController::class, 'index'])->name('lists-help');
+    Route::get('/lists-help', [ListHelpController::class, 'index'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('lists-help');
     // One page per capability. The allowlist is the controller's; the
     // pattern keeps anything that is not a plain word out of the log.
     Route::get('/lists-help/{topic}', [ListHelpController::class, 'topic'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where('topic', '[a-z]+')
         ->name('lists-help.topic');
 
@@ -946,7 +962,8 @@ Route::prefix('{market}')->group(function () {
      * a `#manual` anchor cannot be linked to from an email or a search
      * result.
      */
-    Route::get('/gift-cove/how-it-works', GiftCoveManualController::class)->name('gift-cove.manual');
+    Route::get('/gift-cove/how-it-works', GiftCoveManualController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('gift-cove.manual');
 
     /*
      * And the same for the discovery half: one page explaining the Daily Cove,
@@ -1091,14 +1108,17 @@ Route::prefix('{market}')->group(function () {
     ));
 
     Route::get('/{cove}', DailyCoveController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where('cove', $coveSegment)
         ->name('daily');
 
     Route::get('/{cove}/{date}', [DailyCoveController::class, 'dated'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where(['cove' => $coveSegment, 'date' => '\d{4}-\d{2}-\d{2}'])
         ->name('daily.dated');
 
     Route::get('/{cove}/{slug}', DailyCoveController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where(['cove' => $coveSegment, 'slug' => '[a-z0-9-]+'])
         ->name('daily.edition');
 
@@ -1127,7 +1147,8 @@ Route::prefix('{market}')->group(function () {
     | would shadow all three the first time somebody named a persona
     | "subscribe".
     */
-    Route::get('/gift-ideas', [GiftIdeasController::class, 'index'])->name('gift-ideas');
+    Route::get('/gift-ideas', [GiftIdeasController::class, 'index'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('gift-ideas');
 
     /*
      * Gift landing pages: "gift ideas for dad who loves cooking" at
@@ -1138,9 +1159,11 @@ Route::prefix('{market}')->group(function () {
      * See docs/features/gift-landing-pages.md.
      */
     Route::get('/gift-ideas/for/{recipient}/{interest?}', GiftLandingController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where(['recipient' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'interest' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
         ->name('gift-ideas.landing');
     Route::get('/gift-ideas/{slug}', [GiftIdeasController::class, 'show'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where('slug', '[a-z0-9-]+')
         ->name('gift-ideas.persona');
 
@@ -1159,7 +1182,8 @@ Route::prefix('{market}')->group(function () {
     | three the first time somebody named a Cove "subscribe" — the reason
     | personas are at /gift-ideas rather than here in the first place.
     */
-    Route::get('/coves', CovesController::class)->name('coves');
+    Route::get('/coves', CovesController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('coves');
 
     /*
      * Community Coves: lists their owners chose to publish. Two literal
@@ -1167,8 +1191,10 @@ Route::prefix('{market}')->group(function () {
      * shadow /coves/subscribe or the other routes beside it. See
      * docs/features/community-coves.md.
      */
-    Route::get('/coves/community', [CommunityCoveController::class, 'index'])->name('community');
+    Route::get('/coves/community', [CommunityCoveController::class, 'index'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('community');
     Route::get('/coves/community/{slug}', [CommunityCoveController::class, 'show'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where('slug', '[a-z0-9-]+')
         ->name('community.show');
 
@@ -1278,8 +1304,10 @@ Route::prefix('{market}')->group(function () {
         ->middleware('throttle:60,1')
         ->name('picks.react');
 
-    Route::get('/guides', [GuideController::class, 'index'])->name('guides');
-    Route::get('/guides/{slug}', [GuideController::class, 'show'])->name('guides.show');
+    Route::get('/guides', [GuideController::class, 'index'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('guides');
+    Route::get('/guides/{slug}', [GuideController::class, 'show'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('guides.show');
 
     /*
     |----------------------------------------------------------------------
@@ -1312,6 +1340,7 @@ Route::prefix('{market}')->group(function () {
     | allowlist rather than concatenated into a path.
     */
     Route::get('/{page}', LegalController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->whereIn('page', ['about', 'privacy', 'terms'])
         ->name('legal');
 
@@ -1330,7 +1359,8 @@ Route::prefix('{market}')->group(function () {
     | finishes, and one switched off last week is gone before its rows are
     | pruned.
     */
-    Route::get('/shops', ShopsController::class)->name('shops');
+    Route::get('/shops', ShopsController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)->name('shops');
 
     /*
     | A Shop Cove: what a shop is like to buy from.
@@ -1345,11 +1375,14 @@ Route::prefix('{market}')->group(function () {
     | else is a probe rejected at the router.
     */
     Route::get('/shops/{slug}', [GuideController::class, 'shop'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
         ->name('shops.show');
 
-    Route::get('/brands', [BrandController::class, 'index'])->name('brands');
+    Route::get('/brands', [BrandController::class, 'index'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('brands');
     Route::get('/brand/{slug}', [BrandController::class, 'show'])
+        ->middleware(CacheAnonymousPage::ALIAS)
         // Slugs are what Str::slug() produces, so anything else is a probe
         // rather than a link — rejected at the router, not in the database.
         ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')

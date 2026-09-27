@@ -120,6 +120,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!-- The anonymous page cache is off for the suite: a test that opens a page, changes something
+             and opens it again would otherwise see the first copy. AnonymousPageCacheTest switches it
+             on (config/giftcoves.php, docs/features/speed.md). -->
+        <env name="PAGE_CACHE_ENABLED" value="false"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

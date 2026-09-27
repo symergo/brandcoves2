@@ -1,10 +1,30 @@
-import { createInertiaApp, router } from '@inertiajs/react'
+import { createInertiaApp, http, router } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import Layout from './Layouts/SiteLayout'
 import { installClickOutConversion, reportPageView, reportSignUp } from './analytics'
+import { ensureCsrfToken } from './http'
+import { rememberLeaving } from './previousPath'
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
+
+/*
+  Every Inertia write waits for a CSRF session first when the page has none.
+
+  A page from the anonymous page cache was served without a session, so there
+  is no XSRF-TOKEN cookie for Inertia to send, and the POST would be refused
+  with a 419. This hook runs before each request Inertia makes (router visits,
+  useForm, <Form>, useHttp) and, for anything but a GET, asks /csrf once
+  (resources/js/http.ts). The answer sets the cookie, which Inertia reads right
+  after this returns. On a page that has a token it costs nothing.
+*/
+http.onRequest(async (config) => {
+    if (String(config.method).toLowerCase() !== 'get') {
+        await ensureCsrfToken()
+    }
+
+    return config
+})
 
 createInertiaApp({
     /*
@@ -110,6 +130,13 @@ function updateCanonical(canonical: unknown): void {
     document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', canonical)
     document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', canonical)
 }
+
+// The page a visit leaves, for the feedback form's "which page" (previousPath.ts).
+router.on('start', (event) => {
+    if (event.detail.visit.method === 'get') {
+        rememberLeaving(window.location.pathname)
+    }
+})
 
 router.on('navigate', (event) => {
     updateCanonical(event.detail.page.props.canonical)

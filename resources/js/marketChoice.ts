@@ -1,3 +1,5 @@
+import { ensureCsrfToken } from './http'
+
 /**
  * Record a market choice and go there: a real form POST to `/market`.
  *
@@ -15,8 +17,9 @@
  * the chosen market is the one they are already on, and the market home for
  * everything else.
  */
-export function chooseMarket(marketKey: string): void {
-    const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
+export async function chooseMarket(marketKey: string): Promise<void> {
+    // A page from the anonymous page cache carries no token; see http.ts.
+    const token = await ensureCsrfToken()
 
     const form = document.createElement('form')
     form.method = 'post'
@@ -25,7 +28,7 @@ export function chooseMarket(marketKey: string): void {
 
     for (const [name, value] of [
         ['market', marketKey],
-        ['_token', token ?? ''],
+        ['_token', token],
         ['path', window.location.pathname],
     ]) {
         const field = document.createElement('input')
@@ -50,15 +53,17 @@ export function chooseMarket(marketKey: string): void {
  * was not recorded.
  */
 export function rememberMarket(marketKey: string): void {
-    const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
-
     const body = new FormData()
     body.append('market', marketKey)
 
-    void fetch('/market', {
-        method: 'POST',
-        body,
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token ?? '' },
-    }).catch(() => {})
+    void ensureCsrfToken()
+        .then((token) =>
+            fetch('/market', {
+                method: 'POST',
+                body,
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token },
+            }),
+        )
+        .catch(() => {})
 }

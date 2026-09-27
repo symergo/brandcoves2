@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ToolIcon from './ToolIcon'
+import { ensureCsrfToken } from '../http'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -55,16 +56,18 @@ export default function ContributeBar() {
     const close = () => {
         setOpen(false)
 
-        const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
-
-        void fetch('/contribute-bar', {
-            method: 'POST',
-            credentials: 'same-origin',
-            // Survives a full page load started right after the press, which
-            // would otherwise cancel the request and bring the bar back.
-            keepalive: true,
-            headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token ?? '' },
-        }).catch(() => {})
+        void ensureCsrfToken()
+            .then((token) =>
+                fetch('/contribute-bar', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    // Survives a full page load started right after the press, which
+                    // would otherwise cancel the request and bring the bar back.
+                    keepalive: true,
+                    headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token },
+                }),
+            )
+            .catch(() => {})
     }
 
     return (

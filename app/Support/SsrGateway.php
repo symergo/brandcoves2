@@ -42,11 +42,20 @@ use Inertia\Ssr\SsrException;
 class SsrGateway extends HttpGateway
 {
     /**
+     * Request attribute: the render was attempted and failed, so the page went
+     * out without its server-rendered HTML. CacheAnonymousPage does not store
+     * such a page: it would be handed to every crawler for five minutes.
+     */
+    public const FAILED = 'ssr.failed';
+
+    /**
      * @param  array<string, mixed>  $page
      */
     public function dispatch(array $page, ?Request $request = null): ?Response
     {
-        if (! $this->ssrIsEnabled($request ?? request())) {
+        $request ??= request();
+
+        if (! $this->ssrIsEnabled($request)) {
             return null;
         }
 
@@ -64,12 +73,15 @@ class SsrGateway extends HttpGateway
             $response = $this->http()->post($url, $page);
 
             if ($response->failed()) {
+                $request->attributes->set(self::FAILED, true);
                 $this->handleSsrFailure($page, $response->json());
 
                 return null;
             }
 
             if (! $data = $response->json()) {
+                $request->attributes->set(self::FAILED, true);
+
                 return null;
             }
 
@@ -81,6 +93,8 @@ class SsrGateway extends HttpGateway
             if ($e instanceof StrayRequestException || $e instanceof SsrException) {
                 throw $e;
             }
+
+            $request->attributes->set(self::FAILED, true);
 
             $this->handleSsrFailure($page, [
                 'error' => $e->getMessage(),

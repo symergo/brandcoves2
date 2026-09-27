@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\CacheAnonymousPage;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\RefererPath;
@@ -75,8 +76,13 @@ class HelpController extends Controller
              * The page they came from, for the form. `referer` is a header a
              * browser may withhold, so this is a hint rather than a fact - the
              * field is editable and the form works with it empty.
+             *
+             * Null on a page served from the anonymous page cache, which is the
+             * same for every signed-out visitor and so cannot carry one
+             * visitor's Referer. The form fills it in the browser instead
+             * (resources/js/previousPath.ts).
              */
-            'path' => RefererPath::of($request),
+            'path' => CacheAnonymousPage::servesAnonymously($request) ? null : RefererPath::of($request),
         ]);
     }
 }

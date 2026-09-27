@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import { ensureCsrfToken } from '../http'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -68,9 +69,6 @@ export default function ListBoard({ board, action }: { board: BoardState; action
      */
     const [messages, setMessages] = useState(board.messages)
 
-    const csrf = () =>
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? ''
-
     const post = async () => {
         if (body.trim() === '' || name.trim() === '') return
 
@@ -81,7 +79,7 @@ export default function ListBoard({ board, action }: { board: BoardState; action
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf(),
+                    'X-CSRF-TOKEN': await ensureCsrfToken(),
                     // What makes the endpoint answer with the row rather than
                     // with a redirect.
                     Accept: 'application/json',
@@ -102,7 +100,7 @@ export default function ListBoard({ board, action }: { board: BoardState; action
     const remove = async (id: number) => {
         const response = await fetch(`${action}/${id}`, {
             method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' },
+            headers: { 'X-CSRF-TOKEN': await ensureCsrfToken(), Accept: 'application/json' },
         })
 
         if (!response.ok) return

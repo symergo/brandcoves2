@@ -19,7 +19,7 @@
  */
 import { router } from '@inertiajs/react'
 import { useSyncExternalStore } from 'react'
-import { csrfToken } from './http'
+import { ensureCsrfToken } from './http'
 import { markRemoved } from './savedItems'
 import { show } from './saveToast'
 
@@ -86,16 +86,19 @@ export function removeWithUndo({
                 settled = true
 
                 // `keepalive`, so the request outlives a page being closed.
-                fetch(`${base}/list-items/${itemId}`, {
-                    method: 'DELETE',
-                    keepalive: true,
-                    credentials: 'same-origin',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken(),
-                    },
-                })
+                ensureCsrfToken()
+                    .then((token) =>
+                        fetch(`${base}/list-items/${itemId}`, {
+                            method: 'DELETE',
+                            keepalive: true,
+                            credentials: 'same-origin',
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': token,
+                            },
+                        }),
+                    )
                     .then((response) => {
                         if (!response.ok) throw new Error(String(response.status))
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Market;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Middleware\AuthenticateApiToken;
+use App\Http\Middleware\CacheAnonymousPage;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectLegacyHost;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -70,7 +72,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureUserIsAdmin::class,
             'api.token' => AuthenticateApiToken::class,
             'api.ability' => RequireApiAbility::class,
+            CacheAnonymousPage::ALIAS => CacheAnonymousPage::class,
         ]);
+
+        /*
+         * The page cache runs BEFORE the session starts, although routes/web.php
+         * names it after the `web` group. That position is the point: a hit is
+         * answered before a session is started, a query is run or a cookie is
+         * set, and on a miss it can hand the session an in-memory driver before
+         * StartSession asks for one. After EncryptCookies, which it needs: the
+         * market, consent and contribute-bar cookies it keys on are encrypted.
+         * See App\Http\Middleware\CacheAnonymousPage.
+         */
+        $middleware->prependToPriorityList(before: StartSession::class, prepend: CacheAnonymousPage::class);
 
         /*
          * Where a guest is sent when they hit an auth-only route.

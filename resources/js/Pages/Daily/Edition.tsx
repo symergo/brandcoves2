@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
+import { ensureCsrfToken } from '../../http'
 import PreviewBanner from '../../Components/PreviewBanner'
 import Badge from '../../Components/Badge'
 import ImagePlaceholder from '../../Components/ImagePlaceholder'
@@ -87,15 +88,12 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
         Object.fromEntries(finds.map((f) => [f.id, { mindblown: f.mindblown, meh: f.meh }])),
     )
 
-    const csrf = () =>
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? ''
-
     const react = async (pickId: number, reaction: 'mindblown' | 'meh') => {
         const response = await fetch(`/${market.key}/picks/${pickId}/react`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrf(),
+                'X-CSRF-TOKEN': await ensureCsrfToken(),
                 Accept: 'application/json',
             },
             body: JSON.stringify({ reaction }),
