@@ -75,6 +75,7 @@ use App\Http\Controllers\TasteTogetherController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
+use App\Http\StatelessRoutes;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
 use App\Support\SearchUrl;
@@ -90,8 +91,11 @@ use Illuminate\Support\Facades\Route;
 
 // Deployment health. Reports the commit that built the image and the last
 // migration applied — Coolify's healthcheck target, and the first thing to
-// check after a deploy.
-Route::get('/health', HealthController::class)->name('health');
+// check after a deploy. Stateless (no session, no cookies), like the pictures,
+// robots.txt, the sitemaps and the social cards: see App\Http\StatelessRoutes.
+Route::get('/health', HealthController::class)
+    ->withoutMiddleware(StatelessRoutes::SKIPPED)
+    ->name('health');
 
 /*
  * eBay Marketplace Account Deletion — eBay's compliance webhook.
@@ -124,15 +128,18 @@ Route::post('/webhooks/ebay/account-deletion', [AccountDeletionController::class
  */
 Route::get('/media/items/{file}', MediaController::class)
     ->where('file', '[0-9a-f-]{36}\.webp')
+    ->withoutMiddleware(StatelessRoutes::SKIPPED)
     ->name('media');
 
 // Sitemaps and robots. Unprefixed: crawlers look for them at the root, and a
 // per-market copy would just be five competing files.
-Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
-Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
-Route::get('/sitemap/{market}/{page}.xml', [SitemapController::class, 'market'])
-    ->whereNumber('page')
-    ->name('sitemap.market');
+Route::withoutMiddleware(StatelessRoutes::SKIPPED)->group(function (): void {
+    Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
+    Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+    Route::get('/sitemap/{market}/{page}.xml', [SitemapController::class, 'market'])
+        ->whereNumber('page')
+        ->name('sitemap.market');
+});
 
 // Root sends visitors to the market they chose, or failing that to our best
 // guess from Accept-Language. A 302, never a 301: this destination varies per
@@ -1361,8 +1368,11 @@ Route::prefix('{market}')->group(function () {
     | The other cards are cached for a month, keyed on the text they draw and
     | the commit that rendered them — not on updated_at, which was the first
     | version of this key and wrong twice over. See the controller.
+    |
+    | Stateless: no session, no cookies (App\Http\StatelessRoutes). SetMarket
+    | still runs, because a card draws in its market's language.
     */
-    Route::middleware('throttle:60,1')->group(function (): void {
+    Route::middleware('throttle:60,1')->withoutMiddleware(StatelessRoutes::SKIPPED)->group(function (): void {
         Route::get('/og/default.png', [OgImageController::class, 'default'])->name('og.default');
 
         Route::get('/og/p/{group}.png', [OgImageController::class, 'product'])
