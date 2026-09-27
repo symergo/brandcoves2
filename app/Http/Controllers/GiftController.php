@@ -566,6 +566,14 @@ class GiftController extends Controller
                 'avoid' => (array) $r->avoid,
                 'values' => (array) $r->values,
                 'ageBand' => $r->age_band,
+                /*
+                 * "Vraag het {naam} zelf" (owner, 2026-09-27): their own link,
+                 * where they play This or that, suggest products and say
+                 * "this is me". Null once an account is behind them: then
+                 * they keep their own wish lists, reached from their page.
+                 */
+                'selfUrl' => $r->isLinked() ? null : url($current->url("for/{$r->share_token}")),
+                'personUrl' => $current->url("people/{$r->id}"),
             ])
             ->all();
     }

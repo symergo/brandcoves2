@@ -9,12 +9,14 @@ use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Http\Requests\RecipientTasteRequest;
 use App\Models\Recipient;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\SuggestionProfile;
 use App\Services\Gift\TasteBrief;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\Friends;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -222,6 +224,21 @@ class RecipientProfileController extends Controller
             'user_id' => $user->id,
             'status' => RecipientStatus::Linked,
         ]);
+
+        /*
+         * And connect the two, since 2026-09-27 ("Vraag het {naam} zelf" on
+         * Find a gift, owner's request to let the person share their own
+         * list). A bound person whose owner was not a friend saw none of
+         * their wish lists: My people and the profile show a friend's lists
+         * only. Pressing "this is me" on a link the giver sent is at least as
+         * deliberate as opening each other's shared list, which already
+         * connects people, so it counts as that ('shared_list'). What they
+         * then see of each other is only what each made visible.
+         */
+        $owner = $recipient->owner_user_id === null ? null : User::query()->find($recipient->owner_user_id);
+        if ($owner !== null) {
+            app(Friends::class)->link($owner, $user, 'shared_list');
+        }
 
         return back()->with('success', __('site.recipients.linked'));
     }

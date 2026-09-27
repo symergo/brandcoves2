@@ -53,6 +53,9 @@ export default function InfoTip({ children, className = '' }: { children: ReactN
                 <span
                     id={id}
                     role="note"
+                    // Always under the title, never beside it: app.css wraps a
+                    // flex row that holds this and gives it the full width.
+                    data-infotip-note=""
                     className="mt-1 block w-full rounded-lg border border-line bg-card p-3 text-sm font-normal text-ink-soft normal-case tracking-normal"
                 >
                     {children}

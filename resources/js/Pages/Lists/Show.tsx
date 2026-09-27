@@ -169,6 +169,7 @@ export default function ListShow({
     tasteTogether = null,
 }: Props) {
     const { market, flash } = usePage<SharedProps>().props
+    const pageUrl = usePage().url
     const { t } = useTranslations()
 
     // Which hand-written item has its correction form open. One at a time: it
@@ -249,7 +250,15 @@ export default function ListShow({
     }, [fresh])
 
     const shared = list.visibility !== 'private'
-    const [panel, setPanel] = useState<Panel | null>(null)
+    // `?panel=share` (or another tool) opens the page on that tool: "Deel een
+    // lijst en laat anderen iets voorstellen" on Find a gift and the list
+    // actions on a person's page land here (2026-09-27).
+    const [panel, setPanel] = useState<Panel | null>(() => {
+        const asked = new URLSearchParams(pageUrl.split('?')[1] ?? '').get('panel')
+        const panels: Panel[] = ['share', 'ask', 'settings', 'quiz', 'santa', 'together']
+
+        return access.canEdit && panels.includes(asked as Panel) ? (asked as Panel) : null
+    })
 
     /*
      * Their wishes, on a list about somebody who lets this giver see a wish

@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import Button from './Button'
 import InfoTip from './InfoTip'
-import ListKindBadge, { type ListKind } from './ListKindBadge'
+import ListKindBadge, { kindIcons, type ListKind } from './ListKindBadge'
 import ListName from './ListName'
 import Menu, { MenuItem, MenuSeparator } from './Menu'
 import { budgetLabel, DayMonth, InvitePerson, monthDay } from './PersonParts'
@@ -178,7 +178,11 @@ export default function PersonProfile({
                 button is not the fourth thing a visitor reads.
             */}
             <header>
-                <div className="flex items-start gap-3">
+                {/* The way back, drawn like a list's "← Mijn Coves" (owner, 2026-09-27). */}
+                <Link href={urls.people} className="text-sm text-ink-soft hover:text-ink">
+                    ← {t('people.title')}
+                </Link>
+                <div className="mt-1 flex items-start gap-3">
                     <span
                         aria-hidden
                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent/10 text-lg font-semibold text-accent"
@@ -398,11 +402,57 @@ export default function PersonProfile({
                 </Section>
             )}
 
-            {profile.listsForThem.length > 0 && (
-                <Section title={t('people.lists_for', { name: person.name })} tip={t('people.lists_for_tip', { name: person.name })}>
-                    <Lists lists={profile.listsForThem} format={(iso) => listDate.format(new Date(`${iso}T00:00:00`))} />
-                </Section>
-            )}
+            {/*
+              Your lists for them, with what you do to a list from here (owner,
+              2026-09-27): share it, ask others about it, its settings, and a
+              new list for them. Drawn even with no list yet, because "start a
+              list for Bart" is exactly what this section is for.
+            */}
+            <Section
+                title={t('people.lists_for', { name: person.name })}
+                tip={t('people.lists_for_tip', { name: person.name })}
+                aside={
+                    <Menu
+                        label={t('people.new_list', { name: person.name })}
+                        button={
+                            <>
+                                <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                                <span>{t('people.new_list', { name: person.name })}</span>
+                            </>
+                        }
+                        buttonClassName={`${secondary} gap-1.5`}
+                    >
+                        {(close) => (
+                            <>
+                                <MenuItem
+                                    onSelect={() => {
+                                        close()
+                                        router.post(`/${market.key}/lists`, { recipient_id: person.id })
+                                    }}
+                                    icon={<ToolIcon name={kindIcons.for_someone} className="h-4 w-4" />}
+                                >
+                                    {t('lists.kind_for_someone')}
+                                </MenuItem>
+                                <MenuItem
+                                    onSelect={() => {
+                                        close()
+                                        router.post(`/${market.key}/lists`, { recipient_id: person.id, together: true })
+                                    }}
+                                    icon={<ToolIcon name={kindIcons.group} className="h-4 w-4" />}
+                                >
+                                    {t('lists.kind_group')}
+                                </MenuItem>
+                            </>
+                        )}
+                    </Menu>
+                }
+            >
+                {profile.listsForThem.length > 0 ? (
+                    <Lists lists={profile.listsForThem} format={(iso) => listDate.format(new Date(`${iso}T00:00:00`))} actions />
+                ) : (
+                    <p className="text-sm text-ink-soft">{t('people.lists_for_none', { name: person.name })}</p>
+                )}
+            </Section>
 
             {together !== null && (
                 <Section title={t('people.together_title', { name: person.name })} tip={t('people.together_tip', { name: person.name })}>
@@ -459,7 +509,8 @@ export default function PersonProfile({
 function Section({ title, tip, aside, children }: { title: string; tip?: string; aside?: ReactNode; children: ReactNode }) {
     return (
         <section className="mt-10">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            {/* items-start: an opened explanation grows the heading, and the button stays on the title's line. */}
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                 <h2 className="flex items-center gap-1.5 text-lg font-medium">
                     {title}
                     {tip && <InfoTip>{tip}</InfoTip>}
@@ -471,8 +522,21 @@ function Section({ title, tip, aside, children }: { title: string; tip?: string;
     )
 }
 
-function Lists({ lists, format, external = false }: { lists: ProfileList[]; format: (iso: string) => string; external?: boolean }) {
-    const row = 'flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20'
+function Lists({
+    lists,
+    format,
+    external = false,
+    actions = false,
+}: {
+    lists: ProfileList[]
+    format: (iso: string) => string
+    external?: boolean
+    /** Your own lists: a ⋯ menu per row with what the list page's tools do. */
+    actions?: boolean
+}) {
+    const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+    const row = 'flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm hover:bg-line/20'
 
     return (
         <ul className="divide-y divide-line rounded-card border border-line bg-card">
@@ -493,7 +557,7 @@ function Lists({ lists, format, external = false }: { lists: ProfileList[]; form
                 )
 
                 return (
-                    <li key={list.id}>
+                    <li key={list.id} className="flex items-center">
                         {/* Their lists open by share link, a page people often keep in a tab: a real anchor. */}
                         {external ? (
                             <a href={list.url} className={row}>
@@ -503,6 +567,36 @@ function Lists({ lists, format, external = false }: { lists: ProfileList[]; form
                             <Link href={list.url} className={row}>
                                 {body}
                             </Link>
+                        )}
+                        {/*
+                          The list page's tools, one tap from here: each item
+                          opens the list on that tool (`?panel=`).
+                        */}
+                        {actions && (
+                            <span className="pr-2">
+                                <Menu
+                                    label={t('people.list_actions', { name: list.title })}
+                                    button={<ToolIcon name="more" className="h-4 w-4" />}
+                                    buttonClassName="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-line/40 sm:h-8 sm:w-8"
+                                >
+                                    {() => (
+                                        <>
+                                            <MenuItem href={`${list.url}?panel=share`} icon={<ToolIcon name="shared" className="h-4 w-4" />}>
+                                                {t('lists.share')}
+                                            </MenuItem>
+                                            <MenuItem
+                                                href={`/${market.key}/ask?list=${list.id}`}
+                                                icon={<ToolIcon name="board" className="h-4 w-4" />}
+                                            >
+                                                {t('lists.ask_others')}
+                                            </MenuItem>
+                                            <MenuItem href={`${list.url}?panel=settings`} icon={<ToolIcon name="settings" className="h-4 w-4" />}>
+                                                {t('lists.settings')}
+                                            </MenuItem>
+                                        </>
+                                    )}
+                                </Menu>
+                            </span>
                         )}
                     </li>
                 )

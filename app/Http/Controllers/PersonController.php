@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftHistory;
+use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
 use App\Services\Gift\NextSteps;
 use App\Services\Gift\PastGift;
@@ -241,6 +242,26 @@ class PersonController extends Controller
         }
 
         return ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value];
+    }
+
+    /**
+     * The list for this person, opened on its Share panel, so friends and
+     * family can suggest things on it (owner, 2026-09-27, from "Vraag het aan
+     * anderen" on Find a gift). The same list Find a gift saves into
+     * (GiftResults::recipientList, which makes one when there is none).
+     * Sharing itself stays the owner's press on that panel: nothing here
+     * makes a list public.
+     */
+    public function shareList(Request $request, CurrentMarket $current, GiftResults $results, string $market, string $recipient): RedirectResponse
+    {
+        $person = $this->findOwned($request, $recipient);
+        $list = $results->recipientList(Owner::fromRequest($request), $person, $current);
+
+        if ($list === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return redirect()->to($current->url("lists/{$list['id']}").'?panel=share');
     }
 
     private function findOwned(Request $request, string $id): Recipient

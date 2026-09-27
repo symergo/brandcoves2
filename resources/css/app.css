@@ -224,3 +224,31 @@
         min-height: 2.75rem;
     }
 }
+
+/*
+ * An info icon's explanation opens under its title, never beside it (owner,
+ * 2026-09-27: "zet de info tekst altijd onder de titel, niet ernaast").
+ *
+ * `InfoTip` renders the explanation right after the icon, in whatever holds
+ * the title. That is almost always a flex row (`flex items-center`), where a
+ * block becomes one more item on the same line: the text sat beside the
+ * heading and squeezed it. Fixing it at each of the ~100 call sites would be
+ * missed at the next one, so it is fixed here, once: a row that holds an open
+ * explanation wraps, and the explanation takes the whole width, so it lands on
+ * the line under the title. In a grid it spans every column. `InfoTip`'s own
+ * wrapper is `display: contents`, which is why the selector reaches through it.
+ *
+ * Unlayered for the reason the rules above are: it must beat the utilities.
+ */
+:is(.flex, .inline-flex):has(> .contents > [data-infotip-note]) {
+    flex-wrap: wrap;
+}
+
+:is(.flex, .inline-flex) > .contents > [data-infotip-note] {
+    flex-basis: 100%;
+    order: 99;
+}
+
+.grid > .contents > [data-infotip-note] {
+    grid-column: 1 / -1;
+}

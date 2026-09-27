@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { Fragment, useState } from 'react'
+import { Fragment, type ReactNode, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -8,7 +8,8 @@ import CoveIcon from '../../Components/CoveIcon'
 import ChipInput from '../../Components/ChipInput'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import InfoTip from '../../Components/InfoTip'
-import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
+import type { SceneKey } from '../../Components/SceneIllustration'
+import ShareRow from '../../Components/ShareRow'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 
@@ -31,6 +32,9 @@ interface Recipient {
     avoid: string[]
     values: string[]
     ageBand: string | null
+    /** Their own link (`/for/{token}`); null once an account is behind them. */
+    selfUrl?: string | null
+    personUrl?: string
 }
 
 interface Brief {
@@ -94,8 +98,72 @@ const STEPS = ['interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-/** How many persona Coves the "Start from a type" column shows before "All". */
-const TYPES_SHOWN = 4
+/**
+ * How many persona Coves the "Start from a type" list offers before "All".
+ * Four while they were cards in the card; a dropdown holds more without
+ * growing the page (owner's review, 2026-09-27).
+ */
+const TYPES_SHOWN = 30
+
+/** One way to an idea: every card in the two rows is drawn the same. */
+const wayCard = 'group flex flex-col rounded-card border border-line bg-card p-5 text-left transition hover:border-ink'
+
+/** The icon beside the title rather than above it: a shorter card says the same. */
+function WayHead({ icon, title }: { icon: ReactNode; title: string }) {
+    return (
+        <span className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">{icon}</span>
+            <span className="font-medium text-ink">{title}</span>
+        </span>
+    )
+}
+
+/**
+ * "Vraag het {naam} zelf" (owner, 2026-09-27): let the person themselves say
+ * it, on their own link, where they play This or that, suggest gifts and say
+ * "this is me" (which connects them to you, so their own wish lists show).
+ *
+ * Three states: a saved person with no account (the link, to copy or share),
+ * one with an account (their page, where their lists and answers already
+ * are), and nobody saved yet (the way to save them, since the link belongs
+ * to a saved person).
+ */
+function AskThemCard({ recipient, peopleUrl }: { recipient: Recipient | null; peopleUrl: string }) {
+    const { t } = useTranslations()
+    const icon = <ToolIcon name="link" className="h-5 w-5" />
+
+    if (recipient !== null && recipient.selfUrl) {
+        return (
+            <div className={wayCard}>
+                <WayHead icon={icon} title={t('gift.ask_them_title', { name: recipient.name })} />
+                <span className="mt-1 text-sm text-ink-soft">{t('gift.ask_them_hint', { name: recipient.name })}</span>
+                <div className="mt-auto pt-4">
+                    <ShareRow url={recipient.selfUrl} text={t('recipients.ask_them')} />
+                </div>
+            </div>
+        )
+    }
+
+    if (recipient !== null && recipient.personUrl) {
+        return (
+            <Link href={recipient.personUrl} className={wayCard}>
+                <WayHead icon={icon} title={t('gift.ask_them_linked_title', { name: recipient.name })} />
+                <span className="mt-1 text-sm text-ink-soft">{t('gift.ask_them_linked_hint', { name: recipient.name })}</span>
+                <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">
+                    {t('gift.ask_them_linked_cta', { name: recipient.name })} →
+                </span>
+            </Link>
+        )
+    }
+
+    return (
+        <Link href={peopleUrl} className={wayCard}>
+            <WayHead icon={icon} title={t('gift.ask_them_none_title')} />
+            <span className="mt-1 text-sm text-ink-soft">{t('gift.ask_them_none_hint')}</span>
+            <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.ask_them_none_cta')} →</span>
+        </Link>
+    )
+}
 
 /**
  * "Find a gift": one flow, one results page.
@@ -551,94 +619,102 @@ export default function GiftWizard(props: Props) {
                     </h2>
 
                     {/*
-                      Four ways side by side, or three when this market has no
-                      persona Coves yet: nothing for a column means no column
-                      (owner, 2026-09-26), so the others share the width.
+                      Two rows since the owner's review of 2026-09-27: the ways
+                      you search yourself, then the ways you ask somebody. The
+                      type card was four cards in a card, the tallest thing on
+                      the page, and every other card was stretched to its
+                      height; it is now a card like the others with a list to
+                      pick from. The rows have 3 and 2 cards (or 2 and 2 with
+                      no persona Coves in this market), so no card is ever
+                      alone on a row.
                     */}
-                    <div className={`mt-4 grid gap-4 sm:grid-cols-2 ${types.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+                    <div className={`mt-4 grid gap-4 sm:grid-cols-2 ${types.length > 0 ? 'lg:grid-cols-3' : ''}`}>
                         <button
                             type="button"
                             onClick={() => {
                                 setStep(0)
                                 setStage('questions')
                             }}
-                            className="group flex flex-col rounded-card border border-line bg-card p-5 text-left transition hover:border-ink"
+                            className={wayCard}
                         >
-                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                                <ToolIcon name="suggestions" className="h-5 w-5" />
-                            </span>
-                            <span className="mt-3 font-medium">{t('gift.way_questions')}</span>
+                            <WayHead icon={<ToolIcon name="suggestions" className="h-5 w-5" />} title={t('gift.way_questions')} />
                             <span className="mt-1 text-sm text-ink-soft">{t('gift.way_questions_hint')}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_questions_cta')} →</span>
                         </button>
 
-                        <Link
-                            href={tasteHref}
-                            className="group flex flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
-                        >
-                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                                <ToolIcon name="taste" className="h-5 w-5" />
-                            </span>
-                            <span className="mt-3 font-medium text-ink">{t('gift.way_taste')}</span>
+                        <Link href={tasteHref} className={wayCard}>
+                            <WayHead icon={<ToolIcon name="taste" className="h-5 w-5" />} title={t('gift.way_taste')} />
                             <span className="mt-1 text-sm text-ink-soft">{t('gift.way_taste_hint')}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_taste_cta')} →</span>
                         </Link>
 
-                        {/*
-                          The fourth way (owner, 2026-09-26): ask other people,
-                          on a form already filled in with who it is for and
-                          what is known. It was only the last line of the
-                          results, which nobody reached who had not already
-                          looked the other ways.
-                        */}
-                        <Link
-                            href={askHref}
-                            onClick={stashForAsk}
-                            className={`group flex flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink ${
-                                types.length > 0 ? '' : 'sm:col-span-2 lg:col-span-1'
-                            }`}
-                        >
-                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                                <CoveIcon name="ask" className="h-5 w-5" />
-                            </span>
-                            <span className="mt-3 font-medium text-ink">{t('gift.way_ask')}</span>
-                            <span className="mt-1 text-sm text-ink-soft">{t('gift.way_ask_hint')}</span>
-                            <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_ask_cta')} →</span>
-                        </Link>
-
                         {types.length > 0 && (
-                            <div className="flex flex-col rounded-card border border-line bg-card p-5">
-                                <span className="font-medium">{t('gift.way_types')}</span>
+                            <div className={`${wayCard} sm:col-span-2 lg:col-span-1`}>
+                                <WayHead icon={<ToolIcon name="people" className="h-5 w-5" />} title={t('gift.way_types')} />
                                 <span className="mt-1 text-sm text-ink-soft">{t('gift.personas_hint')}</span>
-                                <ul className="mt-3 grid gap-2">
-                                    {types.map((persona) => (
-                                        <li key={persona.url}>
-                                            <Link
-                                                href={persona.url}
-                                                className="group flex items-center gap-3 rounded-lg border border-line p-2 transition hover:border-ink"
-                                            >
-                                                <SceneIllustration
-                                                    name={persona.scene}
-                                                    className="h-9 w-12 shrink-0 text-ink-soft transition group-hover:text-accent"
-                                                />
-                                                <span className="min-w-0">
-                                                    <span className="block text-sm font-medium text-ink">{persona.title}</span>
-                                                    {persona.intro && (
-                                                        <span className="line-clamp-1 block text-xs text-ink-soft">{persona.intro}</span>
-                                                    )}
-                                                </span>
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Link
-                                    href={`/${market.key}/gift-ideas`}
-                                    className="mt-auto pt-3 text-sm font-medium text-accent-dark hover:text-ink"
-                                >
+                                {/* A list to pick from: the persona Coves for this kind of person first. */}
+                                <label className="mt-auto block pt-4">
+                                    <span className="sr-only">{t('gift.way_types')}</span>
+                                    <select
+                                        defaultValue=""
+                                        onChange={(e) => e.target.value !== '' && router.visit(e.target.value)}
+                                        className="block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                    >
+                                        <option value="" disabled>
+                                            {t('gift.types_pick')}
+                                        </option>
+                                        {types.map((persona) => (
+                                            <option key={persona.url} value={persona.url}>
+                                                {persona.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <Link href={`/${market.key}/gift-ideas`} className="mt-2 text-sm font-medium text-accent-dark hover:text-ink">
                                     {t('discover_cove.persona_all')} →
                                 </Link>
                             </div>
                         )}
+                    </div>
+
+                    <h3 className="mt-8 text-base font-medium">{t('gift.ways_ask_title')}</h3>
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                        {/*
+                          Ask other people (owner, 2026-09-26): the ask form,
+                          already filled in with who it is for and what is
+                          known.
+                        */}
+                        {/*
+                          Two ways to ask others (owner, 2026-09-27): a public
+                          question on the board, or the list for this person
+                          shared with friends and family, who suggest things
+                          on it (SuggestionController). The second is a POST
+                          for a saved person, because it may make that list.
+                        */}
+                        <div className={wayCard}>
+                            <WayHead icon={<CoveIcon name="ask" className="h-5 w-5" />} title={t('gift.way_ask')} />
+                            <span className="mt-1 text-sm text-ink-soft">{t('gift.way_ask_hint')}</span>
+                            <span className="mt-auto flex flex-col items-start gap-2 pt-4 text-sm font-medium text-accent-dark">
+                                <Link href={askHref} onClick={stashForAsk} className="hover:text-ink">
+                                    {t('gift.way_ask_cta')} →
+                                </Link>
+                                {recipient !== null ? (
+                                    <button
+                                        type="button"
+                                        className="text-left hover:text-ink"
+                                        onClick={() => router.post(`/${market.key}/people/${recipient.id}/share-list`)}
+                                    >
+                                        {t('gift.way_ask_list', { name: recipient.name })} →
+                                    </button>
+                                ) : (
+                                    <Link href={`/${market.key}/lists?new`} className="hover:text-ink">
+                                        {t('gift.way_ask_list_none')} →
+                                    </Link>
+                                )}
+                            </span>
+                        </div>
+
+                        <AskThemCard recipient={recipient} peopleUrl={`/${market.key}/people`} />
                     </div>
                 </section>
             ) : (

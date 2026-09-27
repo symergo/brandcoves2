@@ -227,6 +227,13 @@ class RecipientProfileTest extends TestCase
         $this->assertSame($person->id, $recipient->user_id);
         $this->assertSame(RecipientStatus::Linked, $recipient->status);
         $this->assertTrue($recipient->isLinked());
+
+        // And the two are connected, both ways (2026-09-27): without it the
+        // giver saw none of their wish lists, which a friend's page shows.
+        if ($recipient->owner_user_id !== null) {
+            $this->assertDatabaseHas('friendships', ['user_id' => $recipient->owner_user_id, 'friend_id' => $person->id]);
+            $this->assertDatabaseHas('friendships', ['user_id' => $person->id, 'friend_id' => $recipient->owner_user_id]);
+        }
     }
 
     #[Test]

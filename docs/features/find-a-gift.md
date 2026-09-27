@@ -45,6 +45,31 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      address. The asker checks it and presses Ask; moderation is unchanged. Details:
      [ask-others.md](ask-others.md), "Filled in".
    Four cards side by side on a wide screen (three without personas), two by two on a tablet.
+
+   **Two rows since 2026-09-27** (owner's review). *Zoek zelf*: questions, This or that, and the type
+   card; then *Of vraag het iemand*: ask others, and ask the person themselves. Three and two cards
+   (two and two without personas), so no card is ever alone on a row. Each card has its icon beside
+   the title, which makes them shorter.
+   - **The type card is a dropdown** ("Kies een type…", up to 30 persona Coves, this kind of person's
+     first). It was four cards inside a card, the tallest thing on the page, and every other card was
+     stretched to its height.
+   - **Ask others has a second action**: "Deel de lijst voor {naam} en laat anderen iets
+     voorstellen". It POSTs to `/people/{id}/share-list` (`PersonController::shareList`), which finds
+     the list for this person, or makes it the way the results page does
+     (`GiftResults::recipientList`), and opens it with `?panel=share`. A POST because it may make a
+     list; a link must not. Sharing itself stays the owner's press on that panel: nothing here makes a
+     list public. Friends and family then suggest items on the shared list (`SuggestionController`).
+     Without a saved person it links to a new list instead.
+   - **"Vraag het {naam} zelf"** (new): the person's own link (`/for/{token}`, the same one My people
+     offers), to copy or share. There they play This or that, suggest gifts, fill in what they like,
+     or press "Dit ben ik". With an account behind them the card links to their page instead, and
+     without a saved person it explains that the link belongs to a saved person and leads to My
+     people.
+   - **"Dit ben ik" now also connects the two** (`RecipientProfileController::claim`, via
+     `Friends::link`, source `shared_list`). Until then it only bound the saved person to their
+     account, and the giver still saw none of their wish lists, which a friend's page shows. Pressing
+     it on a link the giver sent is at least as deliberate as opening each other's shared list, which
+     already connects people.
 3. **One results page** (below).
 
 A gift profile card (`/gift/card/{token}`) opens straight on the questions, filled in from the card,

@@ -231,6 +231,27 @@ class PersonProfileTest extends TestCase
 
         $this->actingAs($this->me)->get("/be-nl/people/{$theirs->id}")->assertNotFound();
         $this->actingAs($this->me)->patch("/be-nl/recipients/{$theirs->id}", ['name' => 'X'])->assertNotFound();
+        $this->actingAs($this->me)->post("/be-nl/people/{$theirs->id}/share-list")->assertNotFound();
+        $this->assertSame(0, Wishlist::query()->where('recipient_id', $theirs->id)->count());
+    }
+
+    #[Test]
+    public function sharing_the_list_for_a_person_opens_it_on_share_and_makes_one_only_when_needed(): void
+    {
+        // "Deel de lijst voor … en laat anderen iets voorstellen" (2026-09-27).
+        $mum = Recipient::create(['owner_user_id' => $this->me->id, 'name' => 'Mum']);
+
+        $first = $this->actingAs($this->me)->post("/be-nl/people/{$mum->id}/share-list");
+        $list = Wishlist::query()->where('recipient_id', $mum->id)->sole();
+        $first->assertRedirect("/be-nl/lists/{$list->id}?panel=share");
+
+        // Nothing is made public by it: sharing stays the owner's press.
+        $this->assertSame('private', $list->visibility->value);
+
+        // A second time finds the same list rather than making another.
+        $this->actingAs($this->me)->post("/be-nl/people/{$mum->id}/share-list")
+            ->assertRedirect("/be-nl/lists/{$list->id}?panel=share");
+        $this->assertSame(1, Wishlist::query()->where('recipient_id', $mum->id)->count());
     }
 
     #[Test]

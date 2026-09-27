@@ -130,7 +130,15 @@ the note breaks below the line the icon is on, and in a flex row it drops to the
 only if the row has `flex-wrap`. Without it the row does not break and the note opens beside the
 heading, hanging off the icon, which is how the section headings on My Lists looked. A flex row
 that holds an `InfoTip` gets `flex-wrap`; the two that do (My Lists' group headings, the Whisperer's
-"remember" tick) say so in a comment. This replaces the sentence under every label, the
+"remember" tick) say so in a comment.
+
+**Since 2026-09-27 that requirement is gone** (owner: "zet de info tekst altijd onder de titel,
+niet ernaast"). Most of the ~100 call sites had missed it, so the rule now lives once in
+`resources/css/app.css`: a `.flex`/`.inline-flex` row whose `InfoTip` note is open wraps
+(`:has(> .contents > [data-infotip-note])`), and the note takes the whole width and goes last
+(`flex-basis: 100%; order: 99`), so it lands under the title and under anything beside it. In a
+grid it spans every column. The note carries `data-infotip-note` for that. A new call site needs
+nothing. This replaces the sentence under every label, the
 paragraph in every choice card and the note at the foot of a form — each true, each a line, and
 on a phone a step of the list wizard was a screen of explanation with the controls between the
 paragraphs.

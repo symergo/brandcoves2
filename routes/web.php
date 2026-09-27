@@ -584,6 +584,13 @@ Route::prefix('{market}')->group(function () {
             ->whereUuid('recipient')
             ->whereNumber('gift')
             ->name('people.gifts.destroy');
+        // "Deel een lijst en laat anderen iets voorstellen", from Find a gift:
+        // the list for this person, made if there is none, opened on Share.
+        // A POST because it may create a list; a link must never do that.
+        Route::post('/people/{recipient}/share-list', [PersonController::class, 'shareList'])
+            ->whereUuid('recipient')
+            ->middleware('throttle:30,1')
+            ->name('people.share-list');
 
         // Hand a list to the person it was built for. It stops being research
         // and becomes theirs — which is what makes it claimable.
