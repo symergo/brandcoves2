@@ -62,7 +62,8 @@ Grouped by what a visitor is doing, not by file order:
 - **Discover** — `/daily`, `/daily/{date}`, `/discover-cove`, `/surprise`,
   `/coves`, `/coves/community`, `/coves/community/{slug}` (lists people published),
   `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-ideas/for/{recipient}/{interest?}`
-  (gift landing pages), `/gift-cove`, `/ask`
+  (gift landing pages), `/gift-cove`, `/ask`, `/ask/p/{token}` (a question for the asker's
+  people only)
 - **Organize** — `/lists`, `/lists/{list}`, `/list-options`, `/saved-items`, `/l/{token}` (shared
   list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`,
   `/people` (My people: saved people and friends on one list; `/friends` redirects here),

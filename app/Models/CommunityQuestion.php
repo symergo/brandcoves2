@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AskAudience;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
@@ -22,6 +23,8 @@ use Illuminate\Support\Str;
  *
  * @property ModerationStatus $status
  * @property Market $market
+ * @property AskAudience $audience
+ * @property string|null $share_token
  */
 class CommunityQuestion extends Model
 {
@@ -30,11 +33,19 @@ class CommunityQuestion extends Model
 
     protected $guarded = [];
 
+    /*
+     * The code in a people question's link is the whole of the permission to
+     * open it (see `peopleUrl()`), so it never rides along when a model is
+     * serialised by accident.
+     */
+    protected $hidden = ['share_token'];
+
     protected function casts(): array
     {
         return [
             'market' => Market::class,
             'status' => ModerationStatus::class,
+            'audience' => AskAudience::class,
             'published_at' => 'datetime',
             'people_notified_at' => 'datetime',
 
@@ -143,10 +154,43 @@ class CommunityQuestion extends Model
         return Str::slug($this->title) ?: 'question';
     }
 
-    /** @param Builder<$this> $query */
+    /**
+     * On the public board: published, and asked of the community.
+     *
+     * Every caller of this scope lists questions for strangers (the board,
+     * Discover, the sitemap), so a people question is excluded here, once,
+     * rather than at each of them: the next listing somebody writes gets the
+     * safe set without having to know people questions exist. A people
+     * question is found by its link code (`ask/p/{token}`) or as one of your
+     * friends' (`PeopleQuestions`), never through this.
+     *
+     * @param  Builder<$this>  $query
+     */
     public function scopePublished(Builder $query): void
     {
-        $query->where('status', ModerationStatus::Published->value);
+        $query->where('status', ModerationStatus::Published->value)
+            ->where('audience', AskAudience::Public->value);
+    }
+
+    /** Only for your people: friends and whoever holds the link. */
+    public function isForPeople(): bool
+    {
+        return $this->audience === AskAudience::People;
+    }
+
+    /**
+     * Where the question lives, in the market it was asked in.
+     *
+     * A board question by id and slug; a people question by its link code,
+     * because an id is sequential and "only your people" must not mean
+     * "anybody who counts". Relative to the market: callers wrap it in
+     * `CurrentMarket::url()` or put `/{market}/` in front.
+     */
+    public function path(): string
+    {
+        return $this->isForPeople()
+            ? "ask/p/{$this->share_token}"
+            : "ask/{$this->id}/{$this->slug()}";
     }
 
     /** @param Builder<$this> $query */
@@ -170,7 +214,10 @@ class CommunityQuestion extends Model
 
         /*
          * Now, and only now, the asker's people may hear about it: a question
-         * that is not on the board must not travel by another route. Queued
+         * that is not on the board must not travel by another route. (A
+         * people question is created published by `PeopleQuestions::ask()`,
+         * which queues the same job; an admin publishing one again after a
+         * refusal sends nothing twice, see `people_notified_at`.) Queued
          * after the commit, so the job never reads the row before it is
          * published. Sent once however often this runs (`people_notified_at`).
          */

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\AskAudience;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
 use App\Models\CommunityQuestion;
 use App\Models\User;
+use App\Support\ShareCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -60,5 +62,21 @@ class CommunityQuestionFactory extends Factory
     public function inMarket(Market $market): static
     {
         return $this->state(fn () => ['market' => $market]);
+    }
+
+    /**
+     * Asked of the asker's people only: visible at once, opened by its link
+     * code. `community_questions_people_have_a_link` refuses one without a
+     * code. Created the way `PeopleQuestions::ask()` creates it, minus the
+     * notification.
+     */
+    public function forPeople(): static
+    {
+        return $this->state(fn () => [
+            'audience' => AskAudience::People,
+            'share_token' => ShareCode::make(),
+            'status' => ModerationStatus::Published,
+            'published_at' => now(),
+        ]);
     }
 }

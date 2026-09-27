@@ -1000,11 +1000,25 @@ Route::prefix('{market}')->group(function () {
         ->whereNumber('question')
         ->name('ask.show');
 
+    /*
+     * A question for the asker's people only, by its link code. Never by id:
+     * ids can be counted, and the code is the permission (as on a shared
+     * list). Throttled like the list links, so the code cannot be guessed at
+     * speed.
+     */
+    Route::get('/ask/p/{token}', [AskController::class, 'showPeople'])
+        ->where('token', '[0-9a-z]{6,32}')
+        ->middleware('throttle:60,1')
+        ->name('ask.people.show');
+
     Route::middleware(['auth', 'throttle:10,1'])->group(function () {
         Route::post('/ask', [AskController::class, 'store'])->name('ask.store');
         Route::post('/ask/{question}/answers', [AskController::class, 'answer'])
             ->whereNumber('question')
             ->name('ask.answer');
+        Route::post('/ask/p/{token}/answers', [AskController::class, 'answerPeople'])
+            ->where('token', '[0-9a-z]{6,32}')
+            ->name('ask.people.answer');
     });
 
     /*

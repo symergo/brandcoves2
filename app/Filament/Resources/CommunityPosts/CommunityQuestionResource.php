@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CommunityPosts;
 
+use App\Enums\AskAudience;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\CommunityPosts\Pages\ListCommunityQuestions;
@@ -95,6 +96,15 @@ class CommunityQuestionResource extends Resource
                 // the column — which is what used to 500 this page.
                 TextColumn::make('status')->badge(),
 
+                // "people": asked of the asker's friends and link holders
+                // only, never on the board and not read first. Listed here so
+                // a report about one can still be acted on (Refuse closes its
+                // link). See docs/features/ask-others.md.
+                TextColumn::make('audience')
+                    ->badge()
+                    ->formatStateUsing(fn (AskAudience $state) => $state === AskAudience::People ? 'people only' : 'board')
+                    ->toggleable(),
+
                 // Why the job held or refused it. The single most useful column
                 // here: it turns "read this from scratch" into "check this one
                 // judgement".
@@ -108,6 +118,9 @@ class CommunityQuestionResource extends Resource
                         ->mapWithKeys(fn (ModerationStatus $s) => [$s->value => $s->label()])->all())
                     // The queue, on arrival.
                     ->default(ModerationStatus::Pending->value),
+
+                SelectFilter::make('audience')
+                    ->options(['public' => 'Board', 'people' => 'People only']),
 
                 SelectFilter::make('market')
                     ->options(collect(Market::cases())

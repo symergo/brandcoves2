@@ -9,6 +9,8 @@ import { useTranslations } from '../../useTranslations'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
+import AskShareDialog from '../../Components/AskShareDialog'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Question {
     id: number
@@ -21,7 +23,13 @@ interface Question {
     status: string
     askedAt: string
     url: string
+    /** `people`: only the asker's friends and whoever holds the link. */
+    audience: 'public' | 'people'
+    /** The link to send; set on your own published questions only. */
+    shareUrl: string | null
 }
+
+type Audience = Question['audience']
 
 interface Option {
     value: string
@@ -30,8 +38,12 @@ interface Option {
 
 interface Props {
     questions: Question[]
-    /** Your own posts that are not on the board yet. Empty for a stranger. */
+    /** Your own questions, held, on the board or for your people. Empty for a stranger. */
     mine: Question[]
+    /** Your friends' questions for their people only. Empty for a stranger. */
+    fromPeople?: Question[]
+    /** How many friends a question for your people reaches. */
+    friendCount?: number
     canAsk: boolean
     options: { interests: Option[]; vibes: Option[]; values: string[] }
     /**
@@ -86,10 +98,22 @@ interface Prefill {
  * the feature looks broken: you press Ask, the board reloads, and your question
  * is not there. `mine` carries your own unpublished posts back so the page can
  * say "we have it". It is not a disclosure — it is your own writing.
+ *
+ * ## The community, or your people (2026-09-27)
+ *
+ * The form opens on who you are asking: the board (the default, and what every
+ * question was before) or only your people, who hear at once and get a link.
+ * The community stays the default from every way in, Find a gift and a list
+ * page included: that is the feature people already know, and choosing the
+ * narrower audience should be a choice rather than something that happened
+ * because of where you came from. Your published questions carry a Share
+ * button in "Jouw vragen", where a people question's link is found again.
  */
 export default function AskIndex({
     questions,
     mine,
+    fromPeople = [],
+    friendCount = 0,
     canAsk,
     options,
     prefill = null,
@@ -105,6 +129,8 @@ export default function AskIndex({
       fourth way, a list page, or an "ask your question" button.
     */
     const [asking, setAsking] = useState(canAsk && (open || prefill !== null))
+    // Which of your questions the share popup is open for.
+    const [sharing, setSharing] = useState<Question | null>(null)
     // The optional half, folded away. A form that opens with nine fields is a
     // form people close; unfolded when something in it was filled in for them,
     // so they can see (and clear) what will be posted.
@@ -128,7 +154,9 @@ export default function AskIndex({
         age_band: string
         occasion: string
         list_id: string | null
+        audience: Audience
     }>({
+        audience: 'public',
         title: prefill?.title ?? '',
         body: '',
         budget_max: prefill?.budget_max ?? '',
@@ -204,16 +232,40 @@ export default function AskIndex({
         }`
     }
 
-    function card(question: Question, held = false) {
+    function card(question: Question) {
+        const held = question.status !== 'published'
+
         return (
-            <li key={question.id}>
+            <li key={question.id} className="relative">
+                {/*
+                  Share, on your own published questions: outside the anchor,
+                  which owns the click, in the corner the title leaves free.
+                */}
+                {question.shareUrl && (
+                    <button
+                        type="button"
+                        onClick={() => setSharing(question)}
+                        aria-label={`${t('ask.share')}: ${question.title}`}
+                        title={t('ask.share')}
+                        className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-card text-ink-soft hover:border-ink hover:text-ink"
+                    >
+                        <ToolIcon name="shared" className="h-4 w-4" />
+                    </button>
+                )}
                 <Link
                     href={question.url}
                     className={`flex h-full flex-col rounded-card border bg-card p-5 transition hover:border-ink ${
                         held ? 'border-amber/40' : 'border-line'
-                    }`}
+                    } ${question.shareUrl ? 'pr-14' : ''}`}
                 >
                     <h3 className="font-medium">{question.title}</h3>
+
+                    {question.audience === 'people' && (
+                        <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-soft">
+                            <ToolIcon name="people" className="h-3.5 w-3.5" />
+                            {t('ask.people_only.badge')}
+                        </p>
+                    )}
 
                     {/*
                       What they said about the person, if anything. Chips rather
@@ -317,6 +369,53 @@ export default function AskIndex({
             {asking && (
                 <form onSubmit={submit} className="mt-6 space-y-5 rounded-card border border-line bg-card p-6 lg:p-8">
                     <h2 className="font-medium">{t('ask.ask_heading')}</h2>
+
+                    {/*
+                      Who it is for, first: it decides what happens to
+                      everything below. Two cards rather than a select, so both
+                      promises are read before one is chosen.
+                    */}
+                    <fieldset>
+                        <legend className="text-sm font-medium">{t('ask.audience.legend')}</legend>
+                        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                            {(['public', 'people'] as const).map((value) => {
+                                const chosen = form.data.audience === value
+
+                                return (
+                                    <label
+                                        key={value}
+                                        className={`flex cursor-pointer gap-3 rounded-lg border p-4 transition ${
+                                            chosen ? 'border-accent bg-accent/5' : 'border-line hover:border-ink'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="audience"
+                                            value={value}
+                                            checked={chosen}
+                                            onChange={() => form.setData('audience', value)}
+                                            className="mt-1 accent-accent"
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="flex items-center gap-2 font-medium">
+                                                <ToolIcon name={value === 'public' ? 'board' : 'people'} className="h-4 w-4 shrink-0" />
+                                                {t(`ask.audience.${value}`)}
+                                                {value === 'people' && <InfoTip>{t('ask.audience.people_info')}</InfoTip>}
+                                            </span>
+                                            <span className="mt-1 block text-sm text-ink-soft">
+                                                {t(`ask.audience.${value}_hint`)}
+                                            </span>
+                                        </span>
+                                    </label>
+                                )
+                            })}
+                        </div>
+                        {/* Nobody to tell yet: the link is how they are reached. */}
+                        {form.data.audience === 'people' && friendCount === 0 && (
+                            <p className="mt-2 text-xs text-ink-soft">{t('ask.audience.no_friends')}</p>
+                        )}
+                    </fieldset>
+                    {form.errors.audience && <p className="text-sm text-danger">{form.errors.audience}</p>}
 
                     {/*
                       Asked from a list: say so, because it is why the answers
@@ -497,7 +596,7 @@ export default function AskIndex({
                           (i): once published it is sent to your people, and
                           the switch is on the notifications page.
                         */}
-                        {sendsToPeople && (
+                        {sendsToPeople && form.data.audience === 'public' && (
                             <span className="flex items-center gap-1 text-xs text-ink-soft sm:ml-auto">
                                 {t('ask.people.form_note')}
                                 <InfoTip>
@@ -516,9 +615,34 @@ export default function AskIndex({
                 <section className="mt-12">
                     <h2 className="text-lg font-medium">{t('ask.mine_heading')}</h2>
                     <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {mine.map((question) => card(question, true))}
+                        {mine.map((question) => card(question))}
                     </ul>
                 </section>
+            )}
+
+            {/*
+              Your friends' questions for their people: found again here after
+              the notification is gone. Never on the board below.
+            */}
+            {fromPeople.length > 0 && (
+                <section className="mt-12">
+                    <h2 className="flex items-center gap-1 text-lg font-medium">
+                        {t('ask.people_only.from_friends')}
+                        <InfoTip>{t('ask.people_only.from_friends_hint')}</InfoTip>
+                    </h2>
+                    <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {fromPeople.map((question) => card(question))}
+                    </ul>
+                </section>
+            )}
+
+            {sharing?.shareUrl && (
+                <AskShareDialog
+                    title={sharing.title}
+                    url={sharing.shareUrl}
+                    forPeople={sharing.audience === 'people'}
+                    onClose={() => setSharing(null)}
+                />
             )}
 
             <section className="mt-12">

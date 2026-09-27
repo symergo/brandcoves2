@@ -29,7 +29,11 @@ use Illuminate\Support\Facades\URL;
  *
  * ## When
  *
- * Only once the question is **published**, never when it is posted. A held or
+ * A question asked of your people only (`PeopleQuestions`) at once: that is
+ * its whole point, and it is never on the board. The asker's switch below
+ * does not stop it, because the form's choice is the more specific one.
+ *
+ * A board question only once it is **published**, never when it is posted. A held or
  * refused question is not on the board, and sending it to twenty people would
  * be publishing it by another route: the moderation is the whole reason the
  * board may exist (ask-others.md). `CommunityQuestion::publish()` queues the job
@@ -82,7 +86,14 @@ class QuestionToPeople
 
         $asker = User::query()->find($question->user_id);
 
-        if ($asker === null || $asker->ask_people_off_at !== null) {
+        /*
+         * The asker's switch is about board questions: "also send what I ask
+         * the community to my people". A question asked of your people only
+         * was sent to them by the choice made on the form, which is the more
+         * recent and the more specific decision, so the switch does not stop
+         * it. The receivers' switches below apply to both.
+         */
+        if ($asker === null || ($asker->ask_people_off_at !== null && ! $question->isForPeople())) {
             return 0;
         }
 
@@ -139,8 +150,10 @@ class QuestionToPeople
             'question' => $question->title,
         ], $language);
 
-        // The question lives in the market it was asked in; that is its address.
-        $path = '/'.$question->market->value."/ask/{$question->id}/{$question->slug()}";
+        // The question lives in the market it was asked in; that is its
+        // address. A people question's is its link, code and all: the
+        // receiver is one of the people it was asked of.
+        $path = '/'.$question->market->value.'/'.$question->path();
 
         Notification::create([
             'user_id' => $receiver->id,

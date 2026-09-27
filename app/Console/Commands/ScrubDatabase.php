@@ -122,6 +122,10 @@ class ScrubDatabase extends Command
             DB::statement('UPDATE taste_invites SET token = left(md5(random()::text || id::text), 16)');
             DB::statement('UPDATE gift_profile_cards SET token = left(md5(random()::text || id::text), 16), name = NULL');
 
+            // Ask others, a question for your people only: its link code is
+            // the permission to open it, the same as a list's.
+            DB::statement('UPDATE community_questions SET share_token = left(md5(random()::text || id::text), 16) WHERE share_token IS NOT NULL');
+
             /*
              * Secret Santa members: real names and email addresses, typed in by
              * people who never made an account here.

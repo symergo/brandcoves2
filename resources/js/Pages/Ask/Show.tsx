@@ -8,6 +8,8 @@ import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
 import ScanButton from '../../Components/ScanButton'
 import ToolIcon from '../../Components/ToolIcon'
+import InfoTip from '../../Components/InfoTip'
+import AskShareDialog from '../../Components/AskShareDialog'
 
 interface Pick {
     id: number
@@ -43,7 +45,15 @@ interface Props {
         url: string
         /** Only ever set for the author of the question. */
         note: string | null
+        /** `people`: only the asker's friends and whoever holds the link. */
+        audience: 'public' | 'people'
+        /** The link to send; for the asker alone, once it is visible. */
+        shareUrl: string | null
+        /** Where an answer is posted: by id on the board, by link code otherwise. */
+        answerUrl: string
     }
+    /** Straight after asking your people: open the link to send at once. */
+    openShare?: boolean
     answers: Answer[]
     canAnswer: boolean
     maxPicks: number
@@ -72,11 +82,21 @@ interface Props {
  * done nothing. The server decides who sees what — `isVisibleTo` on the model —
  * and this page renders what it is given.
  */
-export default function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm, into = null }: Props) {
+export default function AskShow({
+    question,
+    answers,
+    canAnswer,
+    maxPicks,
+    results,
+    searchTerm,
+    into = null,
+    openShare = false,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, tRich, n } = useTranslations()
     const base = `/${market.key}`
 
+    const [sharing, setSharing] = useState(openShare && question.shareUrl !== null)
     const [query, setQuery] = useState(searchTerm)
     const [picks, setPicks] = useState<Pick[]>([])
     const form = useForm({ body: '' })
@@ -86,7 +106,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
 
         form.transform((data) => ({ ...data, picks: picks.map((p) => p.id) }))
 
-        form.post(`${base}/ask/${question.id}/answers`, {
+        form.post(question.answerUrl, {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset()
@@ -106,7 +126,41 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
             </nav>
 
             <header className="mt-4 max-w-2xl">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{question.title}</h1>
+                {/*
+                  Who can see it, before what it says: a friend opening it
+                  from a notification should know it is not on a public page.
+                */}
+                {question.audience === 'people' && (
+                    <p className="mb-2 flex items-center gap-1.5 text-sm text-ink-soft">
+                        <ToolIcon name="people" className="h-4 w-4" />
+                        {t('ask.people_only.badge')}
+                        <InfoTip>{t('ask.people_only.badge_hint')}</InfoTip>
+                    </p>
+                )}
+
+                <div className="flex items-start justify-between gap-3">
+                    <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{question.title}</h1>
+                    {question.shareUrl && (
+                        <button
+                            type="button"
+                            onClick={() => setSharing(true)}
+                            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
+                        >
+                            <ToolIcon name="shared" className="h-4 w-4" />
+                            <span className="hidden sm:inline">{t('ask.share')}</span>
+                            <span className="sr-only sm:hidden">{t('ask.share')}</span>
+                        </button>
+                    )}
+                </div>
+
+                {sharing && question.shareUrl && (
+                    <AskShareDialog
+                        title={question.title}
+                        url={question.shareUrl}
+                        forPeople={question.audience === 'people'}
+                        onClose={() => setSharing(false)}
+                    />
+                )}
 
                 {question.body && (
                     // Plain text, never markup: this is a stranger's writing on
