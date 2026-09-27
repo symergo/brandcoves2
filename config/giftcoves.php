@@ -219,12 +219,19 @@ return [
         'results_cache_ttl' => 43200,
 
         /*
-         * How many ids of one search are cached: twenty pages of 24. Past that
-         * a page asks the database for its own slice. Kept at or above 300,
-         * the number the by-store view draws its lanes from, so that view
-         * reads the same list.
+         * At most this many products per shop in one search's list (owner's
+         * decision, 2026-09-27), counted by the shop behind each product's
+         * best offer. Keeps one shop with a huge feed from filling every page,
+         * the same problem `store_lane_cap` solves for the by-store view.
          */
-        'results_cache_ids' => 480,
+        'results_per_shop' => 25,
+
+        /*
+         * How many ranked matches the list is capped from. Far above what 25
+         * per shop lets through for any realistic number of shops; its only
+         * job is to stop a one-letter search reading the whole catalogue.
+         */
+        'results_scan_limit' => 3000,
 
         /*
          * The public "what people search for" page.

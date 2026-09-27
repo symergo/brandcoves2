@@ -19,7 +19,6 @@ use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -59,22 +58,25 @@ class SearchService
             ? $this->pullLiveResults($query, $waitForLive)
             : ['written' => 0, 'unstored' => []];
 
-        $groups = $this->page($query);
+        $ids = $this->resultIds($query);
 
         if ($query->logged && $query->hasTerm() && $query->page === 1) {
-            // Logged after the count is known, because zero-result queries are
-            // the most valuable rows in the table — they are content gaps.
-            SearchLog::record($query->term, $query->market, $groups->total());
+            // Logged with the size of the list, because zero-result queries are
+            // the most valuable rows in the table — they are content gaps. The
+            // list is capped per shop (resultIds()), so past zero this is a
+            // floor, not a count; nothing public reads it as one.
+            SearchLog::record($query->term, $query->market, count($ids));
         }
 
         return new SearchResult(
-            groups: $groups,
+            groups: $this->page($query, $ids),
             query: $query,
             liveOffersAdded: $live['written'],
             // Deferred: only the pages with a filter rail read these. See
             // SearchResult::facets().
             facets: fn (): array => $this->facets($query),
             liveOffers: $live['unstored'],
+            empty: $ids === [],
         );
     }
 
@@ -99,25 +101,25 @@ class SearchService
      * catalogue update, or a finished live fetch for the term. Between those
      * moments the stored query would return the same ids.
      *
-     * Past the cached head (`results_cache_ids`, twenty pages) a deep page asks
-     * the database for its slice, with the cached total.
+     * ## No total (owner's decision, 2026-09-27)
      *
-     * @return LengthAwarePaginator<int, ProductGroup>
+     * A simple paginator: this page and whether another follows, read off the
+     * list. No `count(*)` runs and no number of results reaches the page; the
+     * list is the whole answer, so there is no page past its end to ask the
+     * database for.
+     *
+     * @param  list<int>  $ids
+     * @return Paginator<int, ProductGroup>
      */
-    private function page(SearchQuery $query): LengthAwarePaginator
+    private function page(SearchQuery $query, array $ids): Paginator
     {
         $perPage = (int) config('giftcoves.search.per_page');
-        $found = $this->resultIds($query);
         $offset = ($query->page - 1) * $perPage;
 
-        $ids = $found['complete'] || $offset + $perPage <= count($found['ids'])
-            ? array_slice($found['ids'], $offset, $perPage)
-            : $this->storedQuery($query)->offset($offset)->limit($perPage)
-                ->pluck('product_groups.id')->map(fn ($id) => (int) $id)->all();
-
-        return new LengthAwarePaginator(
-            $this->hydrate($ids),
-            $found['total'],
+        // One more than a page: the paginator reads "is there a next page"
+        // off whether it got it.
+        return new Paginator(
+            $this->hydrate(array_slice($ids, $offset, $perPage + 1)),
             $perPage,
             $query->page,
             ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page'],
@@ -125,12 +127,22 @@ class SearchService
     }
 
     /**
-     * The ordered ids this search matches, the first `results_cache_ids` of
-     * them, and how many there are in all.
+     * The ordered ids this search shows, at most `results_per_shop` per shop.
      *
-     * One query when the whole match set fits in the head, which is most
-     * searches: the count is then the length of the list and the separate
-     * count query is not run at all.
+     * ## Twenty-five per shop (owner's decision, 2026-09-27)
+     *
+     * A product counts toward the shop behind its best offer
+     * (`product_groups.best_offer_id`), the one whose price the card leads
+     * with and the one a click goes to. A product several shops sell counts
+     * once, for that shop: the shop that makes it the best deal is the one
+     * the list is about, and counting it against every seller would crowd
+     * out the small shops the cap exists to make room for. Past 25 a shop's
+     * further products are left out, and the ranking order is kept.
+     *
+     * Read from the first `results_scan_limit` ranked matches, as id and
+     * shop, in one query; the capping is PHP. That bound is far above what
+     * the caps let through for any realistic number of shops, and keeps a
+     * one-letter search from reading the whole catalogue.
      *
      * Written even while this term's live fetch is queued. Until 2026-09-27
      * a two-minute marker kept it from being written then, or a new term
@@ -139,36 +151,56 @@ class SearchService
      * finishes, so whatever was cached while it was queued is retired at the
      * moment the offers exist, and not two minutes later.
      *
-     * @return array{ids: list<int>, total: int, complete: bool}
+     * A plain list of ints, because the cache store rebuilds no objects.
+     *
+     * @return list<int>
      */
     private function resultIds(SearchQuery $query): array
     {
         $key = $query->resultsCacheKey();
         $hit = Cache::get($key);
 
-        if (is_array($hit) && isset($hit['ids'], $hit['total'], $hit['complete'])) {
+        if (is_array($hit) && array_is_list($hit)) {
             return $hit;
         }
 
-        $limit = max(1, (int) config('giftcoves.search.results_cache_ids'));
+        $perShop = max(1, (int) config('giftcoves.search.results_per_shop', 25));
 
-        $ids = $this->storedQuery($query)->limit($limit + 1)
-            ->pluck('product_groups.id')->map(fn ($id) => (int) $id)->all();
+        $rows = $this->storedQuery($query)
+            ->select('product_groups.id')
+            ->selectSub(
+                DB::table('products')
+                    ->select('products.merchant_id')
+                    ->whereColumn('products.id', 'product_groups.best_offer_id')
+                    ->limit(1),
+                'shop',
+            )
+            ->limit(max(1, (int) config('giftcoves.search.results_scan_limit', 3000)))
+            ->toBase()
+            ->get();
 
-        $complete = count($ids) <= $limit;
-        $ids = array_slice($ids, 0, $limit);
+        $ids = [];
+        $taken = [];
 
-        $found = [
-            'ids' => $ids,
-            // getCountForPagination drops the ORDER BY, which Postgres would
-            // refuse beside a bare count(*).
-            'total' => $complete ? count($ids) : $this->storedQuery($query)->toBase()->getCountForPagination(),
-            'complete' => $complete,
-        ];
+        foreach ($rows as $row) {
+            // No best offer recorded (not expected for a priced product): no
+            // shop to count it against, so it is not capped.
+            if ($row->shop !== null) {
+                $shop = (int) $row->shop;
 
-        Cache::put($key, $found, (int) config('giftcoves.search.results_cache_ttl'));
+                if (($taken[$shop] ?? 0) >= $perShop) {
+                    continue;
+                }
 
-        return $found;
+                $taken[$shop] = ($taken[$shop] ?? 0) + 1;
+            }
+
+            $ids[] = (int) $row->id;
+        }
+
+        Cache::put($key, $ids, (int) config('giftcoves.search.results_cache_ttl'));
+
+        return $ids;
     }
 
     /**
@@ -545,7 +577,7 @@ class SearchService
             if ($waitForLive) {
                 $written = $this->foldFrom($query, array_values($mirrorable));
                 $this->retire($query);
-            } elseif ($this->resultIds($query)['total'] < (int) config('giftcoves.search.inline_live_below', 24)) {
+            } elseif (count($this->resultIds($query)) < (int) config('giftcoves.search.inline_live_below', 24)) {
                 /*
                  * Thin: fewer stored results than one page, the case where
                  * the shops are most of the answer (owner's decision,
@@ -931,10 +963,7 @@ class SearchService
 
         // The same cached id list the grid reads (see page()), when its head
         // reaches the 300 the lanes are drawn from.
-        $found = $this->resultIds($query);
-        $ids = collect($found['complete'] || count($found['ids']) >= 300
-            ? array_slice($found['ids'], 0, 300)
-            : $this->storedQuery($query)->limit(300)->pluck('id')->all());
+        $ids = collect(array_slice($this->resultIds($query), 0, 300));
 
         if ($ids->isEmpty()) {
             return [];

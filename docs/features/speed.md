@@ -411,9 +411,10 @@ other shop.
 
 Every page, sort and filter change ran the four-branch text union twice (count and page), and the
 audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
-cached per (market, term, filters, in-stock, sort), the first 480 of them. A page is a slice plus
-one lookup by primary key, the total needs no `count(*)` when the list is complete, and the by-store
-view reads the same list. Prices, stock and offer counts are still read on every view.
+cached per (market, term, filters, in-stock, sort), at most 25 per shop (by the shop behind each
+product's best offer). A page is a slice plus one lookup by primary key, and the by-store view reads
+the same list. No total is counted at all: the page shows "Page N" with previous and next, and no
+number of results (owner's decision). Prices, stock and offer counts are still read on every view.
 
 Kept twelve hours, facets too (owner's decision). They are retired the moment what they were
 computed from changes, by generation numbers in the key: a market's number goes up when grouping

@@ -7,12 +7,12 @@ namespace App\Services\Search;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use Closure;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 final class SearchResult
 {
     /**
-     * @param  LengthAwarePaginator<int, ProductGroup>  $groups
+     * @param  Paginator<int, ProductGroup>  $groups  one page, and whether another follows; no total (see SearchService::page())
      * @param  Closure(): array|array  $facets  resolved on first read — see facets()
      * @param  list<Offer>  $liveOffers  Live sources that may not be mirrored — Amazon.
      *                                   They are absent from `$groups` by construction: nothing
@@ -21,11 +21,13 @@ final class SearchResult
      *                                   docs/features/amazon-compliance.md.
      */
     public function __construct(
-        public readonly LengthAwarePaginator $groups,
+        public readonly Paginator $groups,
         public readonly SearchQuery $query,
         public readonly int $liveOffersAdded,
         private Closure|array $facets,
         public readonly array $liveOffers = [],
+        /** Whether the search found nothing at all; null reads it off this page. */
+        private readonly ?bool $empty = null,
     ) {}
 
     /**
@@ -36,7 +38,7 @@ final class SearchResult
     public static function none(SearchQuery $query): self
     {
         return new self(
-            groups: new LengthAwarePaginator([], 0, (int) config('giftcoves.search.per_page'), 1),
+            groups: new Paginator([], (int) config('giftcoves.search.per_page'), 1),
             query: $query,
             liveOffersAdded: 0,
             facets: fn (): array => [],
@@ -103,7 +105,9 @@ final class SearchResult
 
     public function isEmpty(): bool
     {
-        return $this->groups->total() === 0;
+        // Whether the search found anything at all, not whether this page
+        // holds anything: page 9 of a short list is empty and the search is not.
+        return $this->empty ?? $this->groups->isEmpty();
     }
 
     /**

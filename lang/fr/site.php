@@ -251,7 +251,7 @@ return [
         'amazon_search' => 'Cherchez aussi :term sur Amazon',
         'previous' => 'Précédent',
         'next' => 'Suivant',
-        'page_of' => 'Page :current sur :last',
+        'page' => 'Page :current',
         'seo_term' => 'Trouvez :term sur bol, Amazon et des centaines de boutiques. Une fiche par produit, avec le meilleur prix et les promotions.',
 
         /*

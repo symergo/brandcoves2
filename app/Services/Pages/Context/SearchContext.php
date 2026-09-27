@@ -55,9 +55,11 @@ final class SearchContext extends PageContext
 
         return [
             'term' => $this->term,
-            // The only number here that describes the catalogue rather than the
-            // page. Every other fact is checkable against the grid above it.
-            'count' => $this->number($this->total),
+            // Nothing, since 2026-09-27: a search counts no total (owner's
+            // decision), so `:count` on a search page renders empty rather
+            // than a number or a stand-in word. Brand pages still have one,
+            // from brand_stats.
+            'count' => null,
             'shown' => count($this->items),
             'shops' => $this->shops(),
             'comparable' => $this->comparable(),

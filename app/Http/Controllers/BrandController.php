@@ -185,10 +185,12 @@ class BrandController extends Controller
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
+            // One page and whether another follows: no total (see
+            // SearchController::present()).
             'results' => [
-                'total' => $result->groups->total(),
+                'empty' => $result->isEmpty(),
                 'currentPage' => $result->groups->currentPage(),
-                'lastPage' => $result->groups->lastPage(),
+                'hasMore' => $result->groups->hasMorePages(),
                 'items' => array_map($this->card(...), $result->groups->items()),
             ],
             /*
@@ -295,7 +297,7 @@ class BrandController extends Controller
             // The sidebar, not a page of results: these are the products the
             // reader can actually see next to the writing.
             items: [],
-            total: $result->groups->total(),
+            total: (int) $stat->product_count,
             page: EntityCoveRegions::BRAND,
             entity: $stat->brand,
             slug: $stat->slug,
@@ -325,7 +327,7 @@ class BrandController extends Controller
             'entity' => [
                 'name' => $stat->brand,
                 'kind' => 'brand',
-                'total' => $result->groups->total(),
+                'total' => (int) $stat->product_count,
                 'logo' => null,
             ],
             'cove' => $cove,
@@ -704,7 +706,7 @@ class BrandController extends Controller
         return $this->pageContext ??= new BrandContext(
             market: $market,
             items: $result->groups->items(),
-            total: $result->groups->total(),
+            total: (int) $stat->product_count,
             brand: $stat->brand,
             slug: $stat->slug,
             // displayName(), so the sentence naming the leading shop says

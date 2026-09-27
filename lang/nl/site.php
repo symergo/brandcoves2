@@ -250,7 +250,7 @@ return [
         'amazon_search' => 'Zoek :term ook op Amazon',
         'previous' => 'Vorige',
         'next' => 'Volgende',
-        'page_of' => 'Pagina :current van :last',
+        'page' => 'Pagina :current',
         'seo_term' => 'Vind :term bij bol, Amazon en honderden webshops. Één kaart per product, met de laagste prijs en elke korting erbij.',
 
         /*

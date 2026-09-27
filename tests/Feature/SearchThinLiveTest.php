@@ -86,7 +86,7 @@ class SearchThinLiveTest extends TestCase
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
 
         $this->assertSame(1, $this->searches());
 
@@ -108,7 +108,7 @@ class SearchThinLiveTest extends TestCase
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 24));
+            ->assertInertia(fn ($page) => $page->has('results.items', 24));
 
         $this->assertSame(0, $this->searches());
         Queue::assertPushed(PullLiveSearch::class, 1);
@@ -123,7 +123,7 @@ class SearchThinLiveTest extends TestCase
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
 
         // Asked once: no retry on this path.
         $this->assertSame(1, $this->searches());
