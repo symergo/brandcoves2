@@ -469,8 +469,8 @@ class SuggestionEngine
              * OR of the two because a tag is an editor's decision and a text
              * match is a guess, and the decision must not need the guess to
              * agree. Both branches are indexed: the tsquery on the offers'
-             * vector, the tags on their GIN index (`?|`, spelled as the
-             * function because a bare `?` is a placeholder to PDO).
+             * vector, the tags on their GIN index. How the two are combined is
+             * what lets them use those indexes; see below.
              */
             // Scoped to the slot when retrieval is per interest, or every
             // interest asked when it is one pool: a slot that also dragged in
@@ -495,24 +495,60 @@ class SuggestionEngine
              * selects exactly the same rows — and it doubles as the explicit
              * filter that makes that reasoning checkable.
              */
-            $groups->where(function ($either) use ($brief, $tsquery, $tags): void {
-                $either->whereExists(fn ($sub) => $sub
-                    ->select(DB::raw(1))
-                    ->from('products')
-                    ->whereColumn('products.group_id', 'product_groups.id')
-                    ->where('products.market', $brief->market->value)
-                    ->where('products.status', 'active')
-                    ->whereRaw(
-                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
-                        [$brief->market->value, $tsquery]
-                    ));
+            $market = $brief->market->value;
 
-                if ($tags !== []) {
-                    $either->orWhereRaw('jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$this->pgTextArray($tags)]);
-                    // What people's lists taught the catalogue (CountListSignals).
-                    $either->orWhereRaw('jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$this->pgTextArray($tags)]);
-                }
-            });
+            $byText = DB::table('products')
+                ->select('group_id')
+                ->where('market', $market)
+                ->where('status', 'active')
+                ->whereNotNull('group_id')
+                ->whereRaw(
+                    'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                    [$market, $tsquery]
+                );
+
+            /*
+             * Candidate ids first, as a UNION, not an OR on the group row
+             * (2026-09-27).
+             *
+             * This read `EXISTS (an offer matches the text) OR
+             * jsonb_exists_any(gift_tags, ...) OR jsonb_exists_any(crowd_tags,
+             * ...)` and measured 267-504 ms on production. Two things kept it
+             * off the indexes, the same two SearchService::applyTextMatch()
+             * describes:
+             *
+             * 1. `jsonb_exists_any()` is the function behind the `?|` operator,
+             *    and a GIN index serves operators, not functions: the two tag
+             *    indexes had been scanned zero times, ever. The operator is
+             *    written `??|` because a bare `?` is a placeholder to PDO, which
+             *    turns `??` back into a single `?` before Postgres sees it.
+             * 2. A correlated EXISTS cannot be a bitmap branch, and an OR is only
+             *    indexable when every branch is, so the whole predicate fell
+             *    back to reading every giftable group and probing its offers.
+             *
+             * As independent SELECTs each uses its own index
+             * (`products_search_vector_idx`, `product_groups_gift_tags_idx`,
+             * `product_groups_crowd_tags_gin`) and the union is hashed once.
+             * The rows that qualify are the same: an offer only ever belongs to
+             * a group in its own market (invariant 2), and the pool is already
+             * this market's.
+             */
+            if ($tags !== []) {
+                $array = $this->pgTextArray($tags);
+
+                $byText->union(DB::table('product_groups')
+                    ->select('id')
+                    ->where('market', $market)
+                    ->whereRaw('gift_tags ??| ?::text[]', [$array]));
+
+                // What people's lists taught the catalogue (CountListSignals).
+                $byText->union(DB::table('product_groups')
+                    ->select('id')
+                    ->where('market', $market)
+                    ->whereRaw('crowd_tags ??| ?::text[]', [$array]));
+            }
+
+            $groups->whereIn('product_groups.id', $byText);
         }
 
         // Comparable products first: a suggestion the shopper can price against
