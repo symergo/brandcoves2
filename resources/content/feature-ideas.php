@@ -99,6 +99,29 @@ return [
         ],
     ],
 
+    // Owner, 2026-09-27: a "Tinder style" swipe for yourself, with no end, that
+    // builds a long wish list and drives what others are suggested for you.
+    'swipe-for-yourself' => [
+        'status' => 'considering',
+        'sort' => 50,
+        'nl' => [
+            'title' => 'Swipe wat je zelf leuk vindt',
+            'body' => 'Veeg naar rechts wat je wilt, naar links wat niet, zo lang je zin hebt. Alles wat je leuk vond komt op je verlanglijst, en wie een cadeau voor jou zoekt, krijgt ideeën die daarop lijken.',
+        ],
+        'en' => [
+            'title' => 'Swipe what you like yourself',
+            'body' => 'Swipe right on what you want and left on what you don\'t, for as long as you like. Everything you liked goes on your wish list, and anyone looking for a present for you gets ideas like it.',
+        ],
+        'fr' => [
+            'title' => 'Swipez ce qui vous plaît',
+            'body' => "Glissez à droite ce que vous voulez, à gauche ce que vous ne voulez pas, aussi longtemps que vous le souhaitez. Tout ce qui vous a plu va sur votre liste d'envies, et qui cherche un cadeau pour vous reçoit des idées qui y ressemblent.",
+        ],
+        'es' => [
+            'title' => 'Desliza lo que te gusta',
+            'body' => 'Desliza a la derecha lo que quieres y a la izquierda lo que no, todo el tiempo que quieras. Todo lo que te gustó va a tu lista de deseos, y quien busque un regalo para ti recibe ideas parecidas.',
+        ],
+    ],
+
     'search-for-what-you-mean' => [
         'status' => 'done',
         'sort' => 10,
