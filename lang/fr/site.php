@@ -1433,7 +1433,6 @@ return [
         'ways_ask_title' => 'Ou demandez à quelqu\'un',
         'way_search' => 'Vous savez déjà ce que vous cherchez ?',
         'way_search_hint' => 'Cherchez un produit et mettez-le directement sur la liste pour :name. Il n\'est pas dans les boutiques que nous suivons ? Ajoutez-le vous-même.',
-        'way_search_cta' => 'Chercher et ajouter à la liste',
         'way_search_failed' => 'La liste n\'a pas pu être ouverte. Réessayez.',
         'way_search_hint_none' => 'Cherchez un produit. « Enregistrer » le met sur une liste.',
         'way_search_placeholder' => 'Par exemple : cafetière italienne',

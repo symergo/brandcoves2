@@ -55,7 +55,11 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      `/people/{id}/list` (`PersonController::listFor`, JSON), which returns the list for them and
      makes it the first time, then opens the list page's own add panel (`AddProduct`) for that list:
      catalogue results, shops we do not mirror and something typed by hand, as on the list itself.
-     Pressed, not on page load, so choosing a person never makes a list. Without a saved person it
+     Pressed, not on page load, so choosing a person never makes a list. Since the owner's second
+     look the same day it looks like a list's search box from the start ("Zoek, of plak een link…",
+     the magnifier, "Voeg een offline artikel toe"), not a button: the first search or the offline
+     link fetches the list and hands over to `AddProduct`, which starts with that search already run
+     (`initialTerm`) or on the typed-by-hand form (`startManual`), so nothing is asked twice. Without a saved person it
      is the site search, where Bewaar asks which list.
    - **The type card is a dropdown** ("Kies een type…", up to 30 persona Coves, this kind of person's
      first). It was four cards inside a card, the tallest thing on the page, and every other card was

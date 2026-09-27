@@ -1432,7 +1432,6 @@ return [
         'ways_ask_title' => 'O pregunta a alguien',
         'way_search' => '¿Ya sabes lo que buscas?',
         'way_search_hint' => 'Busca un producto y ponlo directamente en la lista para :name. ¿No está en las tiendas que seguimos? Añádelo tú.',
-        'way_search_cta' => 'Buscar y añadir a la lista',
         'way_search_failed' => 'No se pudo abrir la lista. Inténtalo de nuevo.',
         'way_search_hint_none' => 'Busca un producto. «Guardar» lo pone en una lista.',
         'way_search_placeholder' => 'Por ejemplo: cafetera italiana',

@@ -66,6 +66,8 @@ export default function AddProduct({
     onListPage = true,
     onClose,
     theirWishes = null,
+    initialTerm = '',
+    startManual = false,
 }: {
     base: string
     listId: string
@@ -90,6 +92,14 @@ export default function AddProduct({
      * searched, since that is when somebody is still deciding what to add.
      */
     theirWishes?: { name: string; wishes: Wish[]; onList: Set<number> } | null
+    /**
+     * Start with this search already run, or on "something typed by hand".
+     * Find a gift's search card (2026-09-27) looks like this panel before it
+     * has a list to add to: the first search or the offline link fetches the
+     * list, and the panel takes over from there without asking again.
+     */
+    initialTerm?: string
+    startManual?: boolean
 }) {
     const { t } = useTranslations()
 
@@ -255,6 +265,17 @@ export default function AddProduct({
      * nobody could see. 'nearest' moves as little as it can, so on a tall
      * screen the page does not move at all.
      */
+    // The start state handed over by Find a gift's search card. Once, on mount.
+    useEffect(() => {
+        if (startManual) {
+            choose({ kind: 'manual' })
+        } else if (initialTerm.trim() !== '') {
+            setTerm(initialTerm)
+            search(initialTerm)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     useEffect(() => {
         if (!defaultOpen) return
 

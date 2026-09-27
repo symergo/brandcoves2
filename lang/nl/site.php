@@ -1436,7 +1436,6 @@ return [
         'ways_ask_title' => 'Of vraag het iemand',
         'way_search' => 'Weet je al wat je zoekt?',
         'way_search_hint' => 'Zoek een product en zet het meteen op de lijst voor :name. Staat het niet in de winkels die wij volgen, dan voeg je het zelf toe.',
-        'way_search_cta' => 'Zoek en zet op de lijst',
         'way_search_failed' => 'De lijst kon niet geopend worden. Probeer het nog eens.',
         'way_search_hint_none' => 'Zoek een product. Met Bewaar zet je het op een lijst.',
         'way_search_placeholder' => 'Bijvoorbeeld: moka-potje',

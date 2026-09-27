@@ -137,16 +137,25 @@ function SearchToListCard({ recipient, market }: { recipient: Recipient | null; 
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [listId, setListId] = useState<string | null>(null)
-    const [open, setOpen] = useState(false)
+    // What the list's own panel starts with once it has the list: the first
+    // search, or "something typed by hand".
+    const [handOver, setHandOver] = useState<{ term: string; manual: boolean } | null>(null)
+    const [term, setTerm] = useState('')
     const [busy, setBusy] = useState(false)
     const [failed, setFailed] = useState(false)
 
-    const start = () => {
+    /*
+     * The card looks like a list's search box from the start (owner,
+     * 2026-09-27: "a search card like the ones used on lists"). The first
+     * search, or the offline link, fetches the list for this person (made the
+     * first time) and hands over to that list's own panel, which runs it.
+     */
+    const start = (next: { term: string; manual: boolean }) => {
         if (recipient === null) {
             return
         }
         if (listId !== null) {
-            setOpen(true)
+            setHandOver(next)
             return
         }
         setBusy(true)
@@ -154,7 +163,7 @@ function SearchToListCard({ recipient, market }: { recipient: Recipient | null; 
         send<{ id: string }>(`${base}/people/${recipient.id}/list`, 'POST')
             .then((list) => {
                 setListId(list.id)
-                setOpen(true)
+                setHandOver(next)
             })
             .catch(() => setFailed(true))
             .finally(() => setBusy(false))
@@ -166,23 +175,64 @@ function SearchToListCard({ recipient, market }: { recipient: Recipient | null; 
             {recipient !== null ? (
                 <>
                     <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint', { name: recipient.name })}</span>
-                    {open && listId !== null ? (
+                    {handOver !== null && listId !== null ? (
                         <div className="mt-4">
-                            <AddProduct base={base} listId={listId} market={market} defaultOpen onListPage={false} onClose={() => setOpen(false)} />
+                            <AddProduct
+                                // A new panel per hand-over, so its start state applies.
+                                key={`${handOver.manual ? 'manual' : 'search'}:${handOver.term}`}
+                                base={base}
+                                listId={listId}
+                                market={market}
+                                defaultOpen
+                                onListPage={false}
+                                initialTerm={handOver.term}
+                                startManual={handOver.manual}
+                                onClose={() => setHandOver(null)}
+                            />
                         </div>
                     ) : (
-                        <div className="mt-4">
-                            <Button onClick={start} busy={busy}>
-                                <span className="inline-flex items-center gap-2">
-                                    <ToolIcon name="search" className="h-4 w-4" />
-                                    {t('gift.way_search_cta', { name: recipient.name })}
-                                </span>
-                            </Button>
+                        // Drawn like AddProduct's own search, so nothing changes when it takes over.
+                        <div className="mt-4 w-full rounded-card border border-line bg-card p-4">
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    if (term.trim() !== '') start({ term, manual: false })
+                                }}
+                                className="flex items-center gap-2"
+                            >
+                                <input
+                                    type="search"
+                                    value={term}
+                                    onChange={(e) => setTerm(e.target.value)}
+                                    placeholder={t('lists.add_search_placeholder')}
+                                    aria-label={t('lists.add_search_placeholder')}
+                                    className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={busy}
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
+                                >
+                                    <ToolIcon name="search" className="h-5 w-5" />
+                                    <span className="sr-only">{t('search.submit')}</span>
+                                </button>
+                            </form>
+                            {busy && <p className="mt-3 text-sm text-ink-soft">{t('search.searching')}</p>}
                             {failed && (
-                                <p className="mt-2 text-sm text-danger" role="alert">
+                                <p className="mt-3 text-sm text-danger" role="alert">
                                     {t('gift.way_search_failed')}
                                 </p>
                             )}
+                            <p className="mt-4 border-t border-line pt-3 text-sm">
+                                <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => start({ term: '', manual: true })}
+                                    className="font-medium text-accent underline hover:text-accent-dark"
+                                >
+                                    {t('lists.add_own_cta')}
+                                </button>
+                            </p>
                         </div>
                     )}
                 </>

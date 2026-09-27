@@ -1636,7 +1636,6 @@ return [
         'ways_ask_title' => 'Or ask somebody',
         'way_search' => 'Already know what you are looking for?',
         'way_search_hint' => 'Search for a product and put it straight on the list for :name. Not in the shops we follow? Then add it yourself.',
-        'way_search_cta' => 'Search and add to the list',
         'way_search_failed' => 'The list could not be opened. Please try again.',
         'way_search_hint_none' => 'Search for a product. Save puts it on a list.',
         'way_search_placeholder' => 'For example: moka pot',
