@@ -393,8 +393,11 @@ brand pages paid that once per brand. Now the request takes the same marker and 
 `App\Jobs\PullLiveSearch`; the page renders from the stored catalogue at once and the shop's offers
 show from the next view. The marker still means one fetch per (market, term) per 15 minutes.
 
-What a visitor notices: only a term the catalogue does not hold and bol does. Its first view is
-thin; a view a few seconds later has bol's products. Curation in the admin and the editorial API's
+Except when the stored results are thinner than a page (owner's decision): then the request asks
+the shops itself, all at once through `Http::pool`, 3 s each, no retry, and renders with their
+products, so a term only bol knows shows bol's products on its first view. A shop that times out
+leaves the stored results and gets the queued fetch for the next view. A page that is already full
+never waits. Brand pages follow the same rule. Curation in the admin and the editorial API's
 product lookup still wait for the shops (`waitForLive: true`): a person is waiting on that answer
 and no crawler reaches them. Amazon, which must be fetched at render, would still be asked in the
 request; it has no connector.

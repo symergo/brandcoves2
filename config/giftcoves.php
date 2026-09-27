@@ -167,6 +167,24 @@ return [
         // page is not embarrassingly stale.
         'live_cache_ttl' => 900,
 
+        /*
+         * When a search is due a live fetch and its stored results are fewer
+         * than this, the request asks the shops itself instead of queueing it
+         * (SearchService::askNow()). One page: below it the shops are most of
+         * the answer, and the owner's rule (2026-09-27) is that a term only
+         * bol knows shows bol's products on the first view. At or above it
+         * the page is already full and the fetch stays in the background.
+         */
+        'inline_live_below' => 24,
+
+        /*
+         * Seconds each shop gets on that inline path, all asked at once, no
+         * retry. The ordinary connector path is 8 s with two retries, up to
+         * ~25 s a shop; a visitor waiting on a page gets 3. A shop that does
+         * not answer in time still gets the queued fetch for the next view.
+         */
+        'inline_live_timeout' => 3,
+
         // Facet counts are cached this long.
         //
         // Facets are computed from market, term and in-stock only — deliberately

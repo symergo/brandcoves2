@@ -92,11 +92,21 @@ class SearchLiveQueueTest extends TestCase
         app(ConnectorRegistry::class)->registerLive($this->shop);
     }
 
+    /**
+     * Pin the background path: these tests are about the queued fetch, and a
+     * term with nothing stored would otherwise be asked inline (thin rule).
+     */
+    private function backgroundOnly(): void
+    {
+        config(['giftcoves.search.inline_live_below' => 0]);
+    }
+
     #[Test]
     public function a_search_renders_without_asking_the_live_shop_and_queues_the_fetch_once(): void
     {
         Queue::fake();
         $this->registerShop();
+        $this->backgroundOnly();
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
@@ -117,6 +127,7 @@ class SearchLiveQueueTest extends TestCase
     {
         Queue::fake();
         $this->registerShop();
+        $this->backgroundOnly();
 
         $this->get('/be-nl/search?q=tuinkabouter')->assertOk();
 
@@ -205,6 +216,7 @@ class SearchLiveQueueTest extends TestCase
         Queue::fake();
         $this->koptelefoons(2);
         $this->registerShop();
+        $this->backgroundOnly();
 
         $search = app(SearchService::class);
         $plain = new SearchQuery(market: Market::BeNl, term: 'tuinkabouter', logged: false);

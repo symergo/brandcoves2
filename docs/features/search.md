@@ -775,10 +775,30 @@ worst one, and brand pages pass the brand's name as the live term, so a crawler 
 pages paid it once per brand. The work did not need to happen before the page: the offers stay in
 the catalogue for every later view anyway.
 
-**What a visitor sees differently.** Only one case changes: a term the catalogue does not hold and a
-live shop does. Its first view shows what we store (possibly nothing); a view a few seconds later has
-the shop's products. Everything else was already served from stored offers, because the marker made
-all but one request per fifteen minutes skip the live call.
+**Except when the stored results are thin (owner's decision, the same day).** A term only bol knew
+showed no bol products on its first view, and the owner ruled that out. So when a request claims the
+marker and the stored catalogue has fewer results than one page (`inline_live_below`, 24), the
+request asks the shops itself and renders with their products:
+
+- **All shops at once.** Each connector describes its search (`PooledSearch::searchRequest()`,
+  returning a `LiveRequest`) instead of sending it, and `SearchService::askNow()` sends them together
+  through `Http::pool`. The wait is the slowest shop's, not the sum. The connector's own cache, rate
+  limiter and status handling (a 429 backs off, a 401 drops the token) still apply; only the sending
+  moved. A connector without `PooledSearch` (a test stand-in, Amazon later) is asked the ordinary way.
+- **Bounded.** `inline_live_timeout` (3 s) per shop, connect and total, and no retry. A token fetch
+  on the way uses the same 3 s. The ordinary path stays at 8 s with two retries, for the job.
+- **A shop that times out or fails** leaves the stored results on the page, and the request still
+  queues `PullLiveSearch`, so the next view has what that shop would have said.
+- **The count costs nothing extra.** It is the cached id list `page()` reads next anyway. After the
+  fold the term's generation is bumped, so the page reads the list afresh once, with the new offers.
+- **Brand pages follow the same rule**: a brand with fewer than a page of stored products asks bol
+  inline for the brand's name.
+- **A search that already fills a page** renders at once and leaves the shops to the job, since they
+  can only add to a full page.
+
+**What a visitor sees differently.** A thin search waits up to about 3 s on its first view, once per
+fifteen minutes per term, and shows the shops' products straight away. A full one never waits;
+anything the shops add shows from the next view.
 
 The details that matter:
 

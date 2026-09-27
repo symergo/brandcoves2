@@ -10,7 +10,9 @@ use App\Enums\Source;
 use App\Services\Connectors\ChartCategory;
 use App\Services\Connectors\ChartEntry;
 use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\LiveRequest;
 use App\Services\Connectors\Offer;
+use App\Services\Connectors\PooledSearch;
 use App\Services\Connectors\PopularChart;
 use App\Services\Connectors\PopularityConnector;
 use App\Services\Connectors\RateLimiter;
@@ -29,7 +31,7 @@ use Throwable;
  * must mean a smaller result set, never a broken search page — the stored Awin
  * index still has plenty to show.
  */
-class BolConnector implements LiveConnector, PopularityConnector
+class BolConnector implements LiveConnector, PooledSearch, PopularityConnector
 {
     private const TOKEN_URL = 'https://login.bol.com/token';
 
@@ -66,7 +68,7 @@ class BolConnector implements LiveConnector, PopularityConnector
             return [];
         }
 
-        $cacheKey = sprintf('bc:bol:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
 
         /*
          * The cache holds bol's RAW PAYLOAD, never our Offer objects.
@@ -107,6 +109,62 @@ class BolConnector implements LiveConnector, PopularityConnector
         }
 
         return $this->offersFrom($products, $market);
+    }
+
+    /**
+     * The same search as search(), described for a parallel send
+     * (PooledSearch). The cache, the rate limiter and the status handling are
+     * the same; only the sending moves to the caller, which sends it with a
+     * short timeout and no retry.
+     */
+    public function searchRequest(string $query, Market $market, int $limit = 24, int $timeout = 3): array|LiveRequest
+    {
+        $query = trim($query);
+        if ($query === '' || ! $this->supports($market)) {
+            return [];
+        }
+
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $this->offersFrom($cached, $market);
+        }
+
+        if (! $this->limiter('search')->attempt()) {
+            Log::info('bol search skipped: rate limited', ['market' => $market->value]);
+
+            return [];
+        }
+
+        $token = $this->accessToken($timeout);
+
+        if ($token === null) {
+            return [];
+        }
+
+        return new LiveRequest(
+            url: self::API_BASE.'/products/search',
+            query: $this->searchParams($query, $market, $limit),
+            headers: $this->headers($market),
+            token: $token,
+            finish: function (?Response $response) use ($cacheKey, $market): array {
+                $response = $response === null ? null : $this->checked($response, '/products/search', 'search');
+                $products = $response === null ? [] : $this->searchRows($response);
+
+                // Not an empty one, for the reason search() gives.
+                if ($products !== []) {
+                    Cache::put($cacheKey, $products, (int) config('giftcoves.search.live_cache_ttl'));
+                }
+
+                return $this->offersFrom($products, $market);
+            },
+        );
+    }
+
+    private function searchCacheKey(string $query, Market $market, int $limit): string
+    {
+        return sprintf('bc:bol:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
     }
 
     /**
@@ -473,7 +531,15 @@ class BolConnector implements LiveConnector, PopularityConnector
             return [];
         }
 
-        $response = $this->request('/products/search', $market, 'search', [
+        $response = $this->request('/products/search', $market, 'search', $this->searchParams($query, $market, $limit));
+
+        return $response === null ? [] : $this->searchRows($response);
+    }
+
+    /** @return array<string, mixed> */
+    private function searchParams(string $query, Market $market, int $limit): array
+    {
+        return [
             // `search-term`, not `q`. The parameter names below are the ones v1
             // has been running against this API in production for months —
             // taken from its connector rather than guessed.
@@ -485,12 +551,12 @@ class BolConnector implements LiveConnector, PopularityConnector
             // price and nothing to render.
             'include-offer' => 'true',
             'include-image' => 'true',
-        ]);
+        ];
+    }
 
-        if ($response === null) {
-            return [];
-        }
-
+    /** @return list<array<string, mixed>> */
+    private function searchRows(Response $response): array
+    {
         // The envelope is `results`. A wrong key here fails silently — an empty
         // array is indistinguishable from "bol found nothing", which is how a
         // broken connector survives a green test suite.
@@ -499,6 +565,17 @@ class BolConnector implements LiveConnector, PopularityConnector
         // Raw payload, not Offers: the caller caches this, and only plain
         // arrays are safe to put in a shared cache.
         return is_array($products) ? array_values(array_filter($products, 'is_array')) : [];
+    }
+
+    /** @return array<string, string> */
+    private function headers(Market $market): array
+    {
+        return [
+            'Accept' => 'application/json',
+            // bol has no English catalogue, so the English market gets
+            // Dutch product names rather than no results at all.
+            'Accept-Language' => $market->bolAcceptLanguage(),
+        ];
     }
 
     /** @param array<string, mixed> $params */
@@ -513,12 +590,7 @@ class BolConnector implements LiveConnector, PopularityConnector
             $response = Http::timeout(8)
                 ->retry(2, 200, throw: false)
                 ->withToken($token)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    // bol has no English catalogue, so the English market gets
-                    // Dutch product names rather than no results at all.
-                    'Accept-Language' => $market->bolAcceptLanguage(),
-                ])
+                ->withHeaders($this->headers($market))
                 ->get(self::API_BASE.$path, $params);
         } catch (Throwable $e) {
             Log::warning('bol request failed', ['path' => $path, 'error' => $e->getMessage()]);
@@ -526,6 +598,12 @@ class BolConnector implements LiveConnector, PopularityConnector
             return null;
         }
 
+        return $this->checked($response, $path, $bucket);
+    }
+
+    /** The response when it is one to read, after acting on what it says about us. */
+    private function checked(Response $response, string $path, string $bucket): ?Response
+    {
         if ($response->status() === 429) {
             // The upstream has told us our own accounting is wrong. Back off
             // wholesale rather than retrying into the wall.
@@ -557,12 +635,12 @@ class BolConnector implements LiveConnector, PopularityConnector
      * OAuth2 client-credentials token, cached slightly short of its real
      * lifetime so a request never races the expiry.
      */
-    private function accessToken(): ?string
+    private function accessToken(int $timeout = 8): ?string
     {
-        return Cache::remember($this->tokenCacheKey(), 240, function (): ?string {
+        return Cache::remember($this->tokenCacheKey(), 240, function () use ($timeout): ?string {
             try {
                 $response = Http::asForm()
-                    ->timeout(8)
+                    ->timeout($timeout)
                     ->withBasicAuth(
                         (string) config('giftcoves.connectors.bol.client_id'),
                         (string) config('giftcoves.connectors.bol.client_secret'),
