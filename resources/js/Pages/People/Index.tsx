@@ -2,14 +2,20 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import Button from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
+import type { ListKind } from '../../Components/ListKindBadge'
+import ListName from '../../Components/ListName'
+import Menu, { MenuItem } from '../../Components/Menu'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
-import type { SharedProps } from '../../types'
+import type { Cents, SharedProps } from '../../types'
+import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface ListLink {
     title: string
     url: string
+    /** Set on their lists, for the list-name style; yours carry none. */
+    kind?: ListKind
 }
 
 /** What a friend on GiftCoves shares with you. Absent on a saved person nobody linked. */
@@ -39,8 +45,15 @@ interface Person {
         title: string | null
     } | null
     friend: FriendPart | null
+    /** What you saved about them; null for a friend nobody saved. */
+    known: { interests: string[]; budgetMin: Cents | null; budgetMax: Cents | null } | null
+    /** Lists you are making for them. */
+    listsForThem: number
     urls: { person: string | null; finder: string | null; taste: string | null; ask: string | null; together: string | null }
 }
+
+/** How many interests the line under a name names before it says "+N". */
+const INTERESTS_SHOWN = 3
 
 interface Props {
     isSignedIn: boolean
@@ -355,13 +368,69 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
 }
 
 /**
- * One person: who, when, and where to go for them.
+ * The one line of what you know about somebody: "Koken, Tuinieren, Lezen +2 ·
+ * tot €50 · 2 lijsten voor hen". A part that is empty is left out rather than
+ * shown as "geen budget": the owner's rule is no empty blocks, and a line of
+ * blanks is one.
+ */
+function summaryOf(
+    person: Person,
+    t: (key: string, replacements?: Record<string, string | number>) => string,
+    money: (cents: Cents) => string,
+): string {
+    const parts: string[] = []
+    const known = person.known
+
+    if (known !== null && known.interests.length > 0) {
+        const shown = known.interests.slice(0, INTERESTS_SHOWN).join(', ')
+        const rest = known.interests.length - INTERESTS_SHOWN
+        parts.push(rest > 0 ? `${shown} +${rest}` : shown)
+    }
+
+    if (known !== null && (known.budgetMin !== null || known.budgetMax !== null)) {
+        parts.push(budgetLabel(known.budgetMin, known.budgetMax, t, money))
+    }
+
+    if (person.listsForThem > 0) {
+        parts.push(
+            person.listsForThem === 1 ? t('people.lists_for_them_one') : t('people.lists_for_them', { count: person.listsForThem }),
+        )
+    }
+
+    return parts.join(' · ')
+}
+
+/** "tot €50", "vanaf €20" or "€20 tot €50". */
+function budgetLabel(
+    min: Cents | null,
+    max: Cents | null,
+    t: (key: string, replacements?: Record<string, string | number>) => string,
+    money: (cents: Cents) => string,
+): string {
+    if (min !== null && max !== null && min > 0) {
+        return t('people.budget_between', { min: money(min), max: money(max) })
+    }
+
+    return max !== null ? t('people.budget_to', { amount: money(max) }) : t('people.budget_from', { amount: money(min as Cents) })
+}
+
+/**
+ * One person: who, when, what you know, and the way to a gift.
  *
- * The line answers the three things people come for: who, how soon, and the
- * way to a gift. Everything about a friend's connection (their lists, what they
- * see of yours, your birthday note, removing them) opens under "Details", the
- * way the friends page had it: read after finding the person, not while
- * scanning names.
+ * One button, Cadeau vinden, because it is what people come to this page for;
+ * the other tools for the person (This or that, Ask others, This or that
+ * together) sit in a Meer menu, the same menu the list page uses. Four equal
+ * buttons on every row made a page of buttons where the names should lead
+ * (owner, 2026-09-27).
+ *
+ * The name, and the whole left part of the row, is the way to the person's
+ * page: there was a "Hun pagina" button for that, and a button that repeats
+ * what pressing the name does is one more thing to read on every row.
+ *
+ * A friend's lists show without a click. They are the reason a friend is on
+ * this page at all, and "Hun lijsten (2)" behind a toggle hid them. What stays
+ * behind "Details" is about the connection: what they see of yours, your note
+ * of their birthday, removing them.
  */
 function PersonRow({
     person,
@@ -376,6 +445,7 @@ function PersonRow({
     dateLabel: (iso: string) => string
     birthdayLabel: (md: string) => string
 }) {
+    const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const friend = person.friend
     const [open, setOpen] = useState(false)
@@ -388,57 +458,63 @@ function PersonRow({
 
     const link = 'inline-flex min-h-11 items-center rounded-lg border border-line px-2.5 py-1.5 sm:px-3 text-sm hover:border-ink sm:min-h-0'
 
+    const summary = summaryOf(person, t, (cents) => formatPrice(cents, market))
+    const more = [person.urls.taste, person.urls.ask, person.urls.together].some((url) => url !== null)
+
+    const main = (
+        <>
+            {/* The initial, so a long list is scannable by shape as well as by name. */}
+            <span
+                aria-hidden
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 font-semibold text-accent"
+            >
+                {person.name.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="block min-w-0">
+                <span className="flex flex-wrap items-center gap-x-2">
+                    <span className={`font-medium ${person.urls.person !== null ? 'group-hover:underline' : ''}`}>{person.name}</span>
+                    {person.relationship !== null && person.relationship.toLowerCase() !== person.name.toLowerCase() && (
+                        <span className="text-sm text-ink-soft">{person.relationship}</span>
+                    )}
+                    {friend !== null && (
+                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                            {t('people.on_giftcoves')}
+                        </span>
+                    )}
+                </span>
+                {person.next !== null && (
+                    <span className="mt-0.5 flex flex-wrap items-center text-sm text-ink-soft">
+                        {person.next.kind === 'birthday' ? (
+                            <>
+                                <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                                {t('people.birthday')}
+                            </>
+                        ) : (
+                            person.next.title
+                        )}
+                        {' · '}
+                        {dateLabel(person.next.date)}
+                        {' · '}
+                        <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>
+                            {when(person.next.days)}
+                        </span>
+                    </span>
+                )}
+                {summary !== '' && <span className="mt-0.5 block text-sm text-ink-soft">{summary}</span>}
+            </span>
+        </>
+    )
+
     return (
         <li className="p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                    {/* The initial, so a long list is scannable by shape as well as by name. */}
-                    <span
-                        aria-hidden
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 font-semibold text-accent"
-                    >
-                        {person.name.slice(0, 1).toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                        <p className="flex flex-wrap items-center gap-x-2">
-                            {person.urls.person !== null ? (
-                                <Link href={person.urls.person} className="font-medium underline decoration-line underline-offset-4 hover:decoration-ink sm:no-underline sm:hover:underline">
-                                    {person.name}
-                                </Link>
-                            ) : (
-                                <span className="font-medium">{person.name}</span>
-                            )}
-                            {person.relationship !== null && person.relationship.toLowerCase() !== person.name.toLowerCase() && (
-                                <span className="text-sm text-ink-soft">{person.relationship}</span>
-                            )}
-                            {friend !== null && (
-                                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                                    {t('people.on_giftcoves')}
-                                </span>
-                            )}
-                        </p>
-                        {person.next !== null && (
-                            <p className="mt-0.5 text-sm text-ink-soft">
-                                {person.next.kind === 'birthday' ? (
-                                    <>
-                                        <span aria-hidden className="mr-1">
-                                            🎂
-                                        </span>
-                                        {t('people.birthday')}
-                                    </>
-                                ) : (
-                                    person.next.title
-                                )}
-                                {' · '}
-                                {dateLabel(person.next.date)}
-                                {' · '}
-                                <span className={person.next.days <= 14 ? 'font-medium text-ink' : ''}>
-                                    {when(person.next.days)}
-                                </span>
-                            </p>
-                        )}
-                    </div>
-                </div>
+                {person.urls.person !== null ? (
+                    <Link href={person.urls.person} className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg">
+                        {main}
+                    </Link>
+                ) : (
+                    <div className="flex min-w-0 flex-1 items-center gap-3">{main}</div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-1.5 sm:justify-end sm:gap-2">
                     {person.urls.finder !== null && (
@@ -446,27 +522,38 @@ function PersonRow({
                             {t('people.find_gift')}
                         </Link>
                     )}
-                    {person.urls.person !== null && (
-                        <Link href={person.urls.person} className={link.replace('inline-flex', 'hidden sm:inline-flex')}>
-                            {t('people.open')}
-                        </Link>
-                    )}
-                    {person.urls.taste !== null && (
-                        <Link href={person.urls.taste} className={link}>
-                            <ToolIcon name="taste" className="mr-1 h-4 w-4" />
-                            {t('people.taste')}
-                        </Link>
-                    )}
-                    {person.urls.ask !== null && (
-                        <Link href={person.urls.ask} className={link}>
-                            <ToolIcon name="board" className="mr-1 h-4 w-4" />
-                            {t('people.ask')}
-                        </Link>
-                    )}
-                    {person.urls.together !== null && (
-                        <Link href={person.urls.together} className={link}>
-                            {t('people.together')}
-                        </Link>
+                    {more && (
+                        <Menu
+                            label={t('people.more_label', { name: person.name })}
+                            button={
+                                <>
+                                    <ToolIcon name="more" className="h-4 w-4 shrink-0" />
+                                    <span>{t('people.more')}</span>
+                                    <ToolIcon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-soft" />
+                                </>
+                            }
+                            buttonClassName={`${link} gap-1.5`}
+                        >
+                            {() => (
+                                <>
+                                    {person.urls.taste !== null && (
+                                        <MenuItem href={person.urls.taste} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
+                                            {t('people.taste')}
+                                        </MenuItem>
+                                    )}
+                                    {person.urls.ask !== null && (
+                                        <MenuItem href={person.urls.ask} icon={<ToolIcon name="board" className="h-4 w-4" />}>
+                                            {t('people.ask')}
+                                        </MenuItem>
+                                    )}
+                                    {person.urls.together !== null && (
+                                        <MenuItem href={person.urls.together} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
+                                            {t('people.together')}
+                                        </MenuItem>
+                                    )}
+                                </>
+                            )}
+                        </Menu>
                     )}
                     {/*
                       A friend nobody saved yet: the way to the rest. Saving
@@ -500,36 +587,31 @@ function PersonRow({
                             onClick={() => setOpen((v) => !v)}
                             className={`${link} text-ink-soft`}
                         >
-                            {friend.lists.length > 0 ? t('people.their_lists', { count: friend.lists.length }) : t('people.details')}
+                            {t('people.details')}
                             <ToolIcon name="chevron" className={`ml-1 h-4 w-4 transition ${open ? 'rotate-180' : ''}`} />
                         </button>
                     )}
                 </div>
             </div>
 
+            {friend !== null && friend.lists.length > 0 && (
+                <div className="mt-3 sm:ml-13">
+                    <p className="text-xs font-medium text-ink-soft">{t('friends.they_share', { name: person.name })}</p>
+                    <ul className="mt-1.5 flex flex-wrap gap-2">
+                        {friend.lists.map((list) => (
+                            <li key={list.url}>
+                                {/* A real anchor: a shared list is the sort of thing people open in a tab. */}
+                                <a href={list.url} className={link}>
+                                    <ListName name={list.title} kind={list.kind ?? null} />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             {friend !== null && open && (
                 <div className="mt-4 space-y-4 border-t border-line pt-4 sm:ml-13">
-                    {friend.lists.length > 0 && (
-                        <div>
-                            <p className="text-xs font-medium">
-                                <span aria-hidden className="mr-1">
-                                    ←
-                                </span>
-                                {t('friends.they_share', { name: person.name })}
-                            </p>
-                            <ul className="mt-1.5 flex flex-wrap gap-2">
-                                {friend.lists.map((list) => (
-                                    <li key={list.url}>
-                                        {/* A real anchor: a shared list is the sort of thing people open in a tab. */}
-                                        <a href={list.url} className={link}>
-                                            {list.title}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
                     {friend.theySee.length > 0 && (
                         <div>
                             <p className="text-xs font-medium text-ink-soft">
@@ -554,10 +636,8 @@ function PersonRow({
                     )}
 
                     {friend.birthday !== null && (
-                        <p className="text-sm text-ink-soft">
-                            <span aria-hidden className="mr-1">
-                                🎂
-                            </span>
+                        <p className="flex flex-wrap items-center text-sm text-ink-soft">
+                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
                             {birthdayLabel(friend.birthday)}
                             {friend.birthdayIsMine && <span className="ml-1 text-xs">({t('friends.your_note')})</span>}
                         </p>

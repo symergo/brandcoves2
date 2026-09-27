@@ -64,6 +64,31 @@ class MyPeopleTest extends TestCase
     }
 
     #[Test]
+    public function a_row_says_what_you_know_and_how_many_lists_you_are_making(): void
+    {
+        $mum = $this->saved('Mum', [
+            'interests' => ['cooking', 'gardening', 'wielrennen'],
+            'budget_max' => 5000,
+        ]);
+        foreach (['Kerst', 'Verjaardag'] as $title) {
+            Wishlist::create([
+                'owner_user_id' => $this->me->id, 'title' => $title, 'market' => Market::BeNl,
+                'kind' => ListKind::ForSomeone, 'recipient_id' => $mum->id,
+            ]);
+        }
+        // A list of yours that is not about her does not count.
+        Wishlist::create(['owner_user_id' => $this->me->id, 'title' => 'Mine', 'market' => Market::BeNl, 'kind' => ListKind::Mine]);
+
+        $this->actingAs($this->me)->get('/be-nl/people')
+            ->assertInertia(fn ($page) => $page
+                // The closed vocabulary in the reader's language; typed words as typed.
+                ->where('people.0.known.interests', ['Koken', 'Tuinieren', 'wielrennen'])
+                ->where('people.0.known.budgetMax', 5000)
+                ->where('people.0.known.budgetMin', null)
+                ->where('people.0.listsForThem', 2));
+    }
+
+    #[Test]
     public function a_friend_nobody_saved_is_listed_on_their_own(): void
     {
         $sam = User::factory()->create(['name' => 'Sam', 'birthday' => '1990-07-04', 'friends_see_birthday' => true]);

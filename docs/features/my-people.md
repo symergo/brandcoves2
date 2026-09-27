@@ -32,15 +32,28 @@ shows one list and marks the people who are on GiftCoves themselves with a small
   language when it is one of the closed vocabulary (`mother` shows as "Mama"); a relationship typed
   by hand shows as typed, and one that equals the name is not repeated;
 - the next date: the nearest of their birthday and the occasion date on a list about them, with
-  "vandaag", "morgen" or "over N dagen";
-- for a saved person: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on their ideas),
-  **Hun pagina** (`/people/{id}`; on a phone the name is the link, to keep the buttons on one line),
-  **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`: Ask others, the
-  form opened and filled in with their relationship, interests, style and budget, never a name or
-  a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only while a This-or-that-
-  together link is open for them (it goes to the list about them, where that panel lives);
-- for a friend: **Hun lijsten (N)** or **Details**, which opens the old friends-page detail: their
-  lists, which of yours they see, your birthday note about them, and removing the connection.
+  "vandaag", "morgen" or "over N dagen". A birthday carries the `cake` line icon (`ToolIcon`), not
+  the 🎂 emoji it had until 2026-09-27: an emoji is the reader's operating system's picture, in its
+  colours, beside line icons in ours;
+- one line of what you know, for a saved person: up to three interests in the reader's language
+  and "+N" for the rest, your budget ("tot €50", "vanaf €20", "€20 tot €50"), and how many lists
+  you are making for them (kind `for_someone` or `group`, owned by you, about this person). A part
+  with nothing in it is left out, and so is the whole line when all three are empty: the owner's
+  rule is no empty blocks;
+- the name, and the whole left part of the row, links to the person's page (`/people/{id}`). The
+  "Hun pagina" button that did the same went on 2026-09-27;
+- for a saved person, **one** button: **Cadeau vinden** (`/gift?for=<id>`, Find a gift straight on
+  their ideas). The rest sit in a **Meer** menu, the same `Menu`/`MenuItem` component the list
+  page's Meer menu uses: **Dit of dat** (`/gift/taste?person=<id>`), **Vraag** (`/ask?person=<id>`:
+  Ask others, the form opened and filled in with their relationship, interests, style and budget,
+  never a name or a note; added 2026-09-27 at the owner's request), and **Dit of dat samen** only
+  while a This-or-that-together link is open for them (it goes to the list about them, where that
+  panel lives). Four equal buttons on every row made the page a wall of buttons where the names
+  should lead (owner, 2026-09-27);
+- for a friend: their lists, **visible without a click**, drawn with `ListName` (the list-name
+  style, with the kind's icon). They were behind a "Hun lijsten (N)" toggle, which hid the one thing
+  a friend is on this page for. **Details** still opens what is about the connection: which of
+  yours they see, your birthday note about them, and removing the connection.
   Since 2026-09-26 "their lists" includes every wish list they made "visible to my people", and
   "which of yours they see" every one of yours
   ([wish-list-for-my-people.md](wish-list-for-my-people.md));
@@ -123,6 +136,7 @@ requests, that is a change to how friendships are made, not to this page.
 | Merge | `app/Services/Social/MyPeople.php`, `App\Support\DayAndMonth::nextFrom()` |
 | Page | `resources/js/Pages/People/Index.tsx` |
 | Copy | `site.people.*` (four languages); the friend details reuse `site.friends.*`; `/help` has `people.help` |
+| Icons | `ToolIcon` (`cake` for a birthday, `more` for the Meer menu); the menu is `Components/Menu.tsx` |
 | Tests | `tests/Feature/MyPeopleTest.php`; `FriendsTest` reads the friend rows from `/people` now |
 
 ## Not done

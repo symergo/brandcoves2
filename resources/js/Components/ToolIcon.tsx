@@ -37,6 +37,7 @@ export type ToolKey =
     | 'picture'
     | 'people'
     | 'taste'
+    | 'cake'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -395,6 +396,22 @@ const paths: Record<ToolKey, ReactNode> = {
             <rect x="2.8" y="6" width="8" height="12" rx="1.5" transform="rotate(-8 6.8 12)" />
             <rect x="13.2" y="6" width="8" height="12" rx="1.5" transform="rotate(8 17.2 12)" />
             <path d="M12 3.5v2M12 18.5v2" />
+        </>
+    ),
+
+    /*
+     * A cake with one candle: a birthday, on My people and a person's page.
+     * It replaced the 🎂 emoji (2026-09-27) for the reason at the top of this
+     * file: the emoji is the reader's operating system's picture, in its
+     * colours, beside line icons in ours.
+     */
+    cake: (
+        <>
+            <path d="M4 20h16" />
+            <path d="M5.5 20v-6A1.5 1.5 0 0 1 7 12.5h10a1.5 1.5 0 0 1 1.5 1.5v6" />
+            <path d="M5.5 16c1.1.9 2.2.9 3.25 0s2.15-.9 3.25 0 2.15.9 3.25 0 2.15-.9 3.25 0" />
+            <path d="M12 12.5V9" />
+            <path d="M12 4c.8.9 1.2 1.6 1.2 2.2a1.2 1.2 0 0 1-2.4 0c0-.6.4-1.3 1.2-2.2z" />
         </>
     ),
 

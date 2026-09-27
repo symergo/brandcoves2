@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\Interest;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\RecipientStatus;
@@ -122,6 +123,10 @@ class MyPeople
                     $friend['nextOccasion'] ?? null,
                 ], $today),
                 'friend' => $friend === null ? null : array_diff_key($friend, ['nextOccasion' => true]),
+                'known' => $this->known($person),
+                // Lists you are making for them (a gift list or a group gift
+                // about them), counted for the line under the name.
+                'listsForThem' => count($theirLists[$person->id] ?? []),
                 'urls' => [
                     'person' => $current->url("people/{$person->id}"),
                     'finder' => $current->url('gift').'?for='.$person->id,
@@ -133,7 +138,7 @@ class MyPeople
                     // "This or that together" runs on the list about them; the
                     // link is offered only while one is open.
                     'together' => isset($together[$person->id]) && isset($theirLists[$person->id])
-                        ? $current->url('lists/'.$theirLists[$person->id])
+                        ? $current->url('lists/'.end($theirLists[$person->id]))
                         : null,
                 ],
             ];
@@ -158,6 +163,9 @@ class MyPeople
                     $friend['nextOccasion'],
                 ], $today),
                 'friend' => array_diff_key($friend, ['nextOccasion' => true]),
+                // Nothing of yours about somebody you have not saved.
+                'known' => null,
+                'listsForThem' => 0,
                 'urls' => ['person' => null, 'finder' => null, 'taste' => null, 'ask' => null, 'together' => null],
             ];
         }
@@ -230,6 +238,8 @@ class MyPeople
             // theirs a visitor may open.
             'lists' => $lists->map(fn (Wishlist $list) => [
                 'title' => $list->displayTitle(),
+                // For the list-name style in text (ListName): its kind's icon.
+                'kind' => $list->kind->value,
                 'url' => $current->url("l/{$list->share_token}"),
             ])->values()->all(),
             // What you share with them.
@@ -349,10 +359,13 @@ class MyPeople
     }
 
     /**
-     * The newest list you made for each saved person, by id.
+     * The lists you made for each saved person, oldest first, by person id.
+     *
+     * The last one is the newest, which is where "This or that together"
+     * points; the count is the "2 lijsten voor hen" under the name.
      *
      * @param  Collection<int, Recipient>  $saved
-     * @return array<string, string>
+     * @return array<string, list<string>>
      */
     private function listsAbout(User $user, Collection $saved): array
     {
@@ -361,10 +374,31 @@ class MyPeople
             ->whereIn('recipient_id', $saved->modelKeys())
             ->whereIn('kind', [ListKind::ForSomeone->value, ListKind::Group->value])
             ->oldest()
-            ->get(['id', 'recipient_id'])
-            // Oldest first, so the newest overwrites.
-            ->mapWithKeys(fn (Wishlist $list) => [$list->recipient_id => $list->id])
+            ->get(['id', 'recipient_id', 'created_at'])
+            ->groupBy('recipient_id')
+            ->map(fn (Collection $lists) => $lists->pluck('id')->all())
             ->all();
+    }
+
+    /**
+     * What you know about a saved person, for the one line under their name:
+     * their interests in the reader's language, and your budget.
+     *
+     * Interests outside the closed vocabulary (typed by hand, "wielrennen")
+     * show as typed. Budget stays in cents (invariant 7); the page formats it.
+     *
+     * @return array{interests: list<string>, budgetMin: int|null, budgetMax: int|null}
+     */
+    private function known(Recipient $person): array
+    {
+        return [
+            'interests' => array_values(array_map(
+                fn (string $interest) => Interest::tryFrom($interest)?->label() ?? $interest,
+                array_filter((array) $person->interests, fn ($v) => is_string($v) && trim($v) !== ''),
+            )),
+            'budgetMin' => $person->budget_min === null ? null : (int) $person->budget_min,
+            'budgetMax' => $person->budget_max === null ? null : (int) $person->budget_max,
+        ];
     }
 
     /** @return array{date: string, kind: string, title: null}|null */
