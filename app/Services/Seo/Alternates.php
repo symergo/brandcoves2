@@ -116,6 +116,16 @@ class Alternates
         $byIdentity = [];
 
         ProductGroup::query()
+            /*
+             * Every market, named, although that filters nothing out.
+             *
+             * The only index on identity_key is the unique one on
+             * `(market, identity_key)`, and a btree cannot be entered on its
+             * second column alone. Without a condition on `market` Postgres
+             * read the whole table: 804 ms on production (2026-09-27). Naming
+             * the five markets lets it probe the index once per pair instead.
+             */
+            ->whereIn('market', Market::values())
             ->whereIn('identity_key', array_values(array_unique($identityByGroupId)))
             ->presentable()
             ->get(['id', 'market', 'slug', 'identity_key'])
@@ -297,6 +307,8 @@ class Alternates
         $alternates = [];
 
         $siblings = ProductGroup::query()
+            // So the (market, identity_key) index can answer it: forProducts().
+            ->whereIn('market', Market::values())
             ->where('identity_key', $group->identity_key)
             ->presentable()
             ->get(['id', 'market', 'slug']);
