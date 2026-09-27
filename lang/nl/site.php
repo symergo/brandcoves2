@@ -40,7 +40,7 @@ return [
          * Het bijvoeglijk naamwoord vertaalt, de naam niet — zie
          * localisation.md.
          */
-        'gift_ideas' => 'Cadeau-ideeën per type',
+        'gift_ideas' => 'Cadeaus per type',
         'brand_coves' => 'Merk Coves',
 
         /*
@@ -141,7 +141,7 @@ return [
         'coves_all' => 'Alle Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Dagelijkse Cove',
-        'cove_kind_persona' => 'Cadeau-idee',
+        'cove_kind_persona' => 'Cadeau',
         'cove_kind_guide' => 'Koopgids',
         'cove_kind_seasonal' => 'Seizoensgids',
         'cove_kind_advice' => 'Advies',
@@ -352,12 +352,12 @@ return [
      * gebeurd is, anders kun je ermee achterhalen wie deze site leest.
      */
     'discover_cove' => [
-        'seo_title' => 'Cadeau-ideeën en vondsten, elke dag nieuw',
+        'seo_title' => 'Cadeaus en vondsten, elke dag nieuw',
         'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
         'title' => 'Ontdek',
         'intro' => 'Vind iets waar je niet naar zocht: de Cove van vandaag, een verrassing, of kies tussen twee dingen tot je weet wat iemand leuk vindt.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
-        'persona_all' => 'Alle cadeau-ideeën',
+        'persona_all' => 'Alle cadeaus',
         'guides_all' => 'Alle gidsen',
         // The list of editions before today's, under today's band.
         'dailies_heading' => 'Eerdere edities',
@@ -385,8 +385,8 @@ return [
     ],
 
     'coves' => [
-        'seo_title' => 'Cadeau-ideeën, gidsen en verhalen',
-        'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeau-ideeën rond één persoon, en lange verhalen rond één onderwerp met live prijzen erin.',
+        'seo_title' => 'Cadeaus, gidsen en verhalen',
+        'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeaus rond één persoon, en lange verhalen rond één onderwerp met live prijzen erin.',
         'title' => 'Alle Coves',
         'intro' => 'Alles wat we hier geschreven hebben, op vorm gesorteerd. De ene komt elke ochtend, de andere is rond een persoon gebouwd, de derde rond een onderwerp.',
         'empty' => 'Nog niets gepubliceerd in deze regio. De eerste Coves komen eraan.',
@@ -664,8 +664,8 @@ return [
         'report_hint' => 'Staat hier iets wat er niet hoort?',
         'report' => 'Laat het ons weten',
         'meta_description' => 'Een lijst die iemand op GiftCoves maakte: :about, :count ideeën met prijzen van verschillende winkels.',
-        'default_title' => 'Cadeau-ideeën',
-        'default_title_for' => 'Cadeau-ideeën :for',
+        'default_title' => 'Cadeaus',
+        'default_title_for' => 'Cadeaus :for',
         'finder_heading' => 'Coves die anderen maakten voor zo iemand',
         'publish_heading' => 'Openbaar maken als Community Cove',
         'publish_on' => 'Openbaar als Community Cove',
@@ -1043,7 +1043,7 @@ return [
 
     'gift_cove' => [
         'seo_title' => 'Verlanglijsten, cadeaulijsten en Geheime Vriend',
-        'seo_description' => 'Verlanglijsten, een lijst voor iemand anders, samen geven, Geheime Vriend, prijsalarmen en cadeau-ideeen op een plek. Niemand ziet wie wat kocht.',
+        'seo_description' => 'Verlanglijsten, een lijst voor iemand anders, samen geven, Geheime Vriend, prijsalarmen en cadeaus op een plek. Niemand ziet wie wat kocht.',
         'title' => 'De Geschenk Cove',
         'rail_hint' => 'Alles wat je nodig hebt om voor iemand anders te kopen, op één plek.',
         'rail_cta' => 'Open de Geschenk Cove',
@@ -1063,7 +1063,7 @@ return [
         'daily_body' => 'Een kleine, met de hand gekozen selectie, elke ochtend nieuw. Voor als je niets in het bijzonder zoekt.',
         'guides_title' => 'Koopgidsen',
         'guides_body' => 'Waar je op let als je kiest, per onderwerp, met de producten die erbij passen. Lezen voor je koopt, niet erna.',
-        'ideas_title' => 'Cadeau-ideeen',
+        'ideas_title' => 'Cadeaus',
         'ideas_body' => 'Ideeen per persoon, gelegenheid en budget, elk meteen op een lijst te zetten.',
         'surprise_title' => 'Verrassingscove',
         'surprise_body' => 'Iets zeldzaams in plaats van iets populairs, voor wie al alles heeft.',
@@ -1213,7 +1213,7 @@ return [
         'ideas_finder' => 'Meer ideeën in Cadeau vinden',
         'ideas_why' => 'Gekozen op wat je over die persoon bewaarde en het budget, zonder wat je al gaf.',
         'email_toggle' => 'Stuur me herinneringen per e-mail',
-        'email_toggle_hint' => 'Verjaardagen en gelegenheden die je bewaarde, een paar weken en een paar dagen vooraf. Zo’n twee weken vooraf met drie cadeau-ideeën. Uit: je ziet ze alleen bij je meldingen.',
+        'email_toggle_hint' => 'Verjaardagen en gelegenheden die je bewaarde, een paar weken en een paar dagen vooraf. Zo’n twee weken vooraf met drie cadeaus. Uit: je ziet ze alleen bij je meldingen.',
     ],
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
@@ -1302,7 +1302,7 @@ return [
     'gift' => [
         'title' => 'Cadeau vinden',
         'subtitle' => 'Zeg voor wie het is, en kies hoe je zoekt. Wij vinden cadeaus die kloppen.',
-        'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeau-ideeën, elk met wat het gemeen heeft met je beschrijving.',
+        'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeaus, elk met wat het gemeen heeft met je beschrijving.',
 
         'step_interests' => 'Waar houdt die persoon van?',
         'step_vibe' => 'Hoe moet het voelen?',
@@ -1571,7 +1571,7 @@ return [
     'ask' => [
         'seo_title' => 'Vraag het aan anderen',
         'seo_description' => 'Geen idee wat je moet kopen? Beschrijf voor wie het is en laat anderen iets voorstellen. Elk antwoord komt met echte producten en een prijs.',
-        'seo_question' => 'Cadeau-ideeën voor: :title. Echte tips van andere mensen, met de producten en prijzen erbij.',
+        'seo_question' => 'Cadeaus voor: :title. Echte tips van andere mensen, met de producten en prijzen erbij.',
 
         'title' => 'Vraag het aan anderen',
         'intro' => 'Geen inspiratie? Beschrijf voor wie je iets zoekt en laat de GiftCoves-community iets voorstellen. Antwoorden komen met echte producten, niet alleen met advies.',
@@ -1579,7 +1579,7 @@ return [
         // Filled in from Find a gift or a list page (AskPrefill), and sent to
         // your people once published (QuestionToPeople).
         'invite' => 'Kom je er niet uit? Beschrijf voor wie het is en laat anderen iets voorstellen.',
-        'prefill_title' => 'Cadeau-ideeën voor :who?',
+        'prefill_title' => 'Cadeaus voor :who?',
         'prefill_who' => [
             'partner' => 'mijn partner',
             'mother' => 'mijn mama',
@@ -1599,7 +1599,7 @@ return [
         'people' => [
             'notice' => ':name vraagt: “:question”',
             'notice_body' => 'Weet jij iets? Je antwoord helpt.',
-            'mail_heading' => ':name zoekt een cadeau-idee',
+            'mail_heading' => ':name zoekt een cadeau',
             'mail_body' => ':name stelde deze vraag op GiftCoves. Jij kent :name, dus misschien heb jij het beste idee.',
             'mail_button' => 'Bekijk de vraag',
             'mail_why' => 'Je krijgt dit omdat :name bij je mensen op GiftCoves hoort.',
@@ -1628,7 +1628,7 @@ return [
             'badge' => 'Alleen voor je mensen',
             'badge_hint' => 'Deze vraag staat niet op het openbare bord en niet in zoekmachines. De vrienden van wie hem stelde en iedereen met de link kunnen hem lezen en beantwoorden.',
             'asked' => 'Je vraag staat klaar. Je vrienden op GiftCoves krijgen een melding; stuur de link naar wie je nog meer wilt vragen.',
-            'description' => 'Een vraag om cadeau-ideeën, alleen voor de mensen van wie hem stelde.',
+            'description' => 'Een vraag om cadeaus, alleen voor de mensen van wie hem stelde.',
             'share_hint' => 'Iedereen met deze link kan je vraag lezen, en na inloggen beantwoorden.',
             'from_friends' => 'Van je mensen',
             'from_friends_hint' => 'Vragen die je vrienden alleen aan hun mensen stelden. Ze staan niet op het bord.',
@@ -1829,14 +1829,14 @@ return [
 
     // Cadeaupagina's: /gift-ideas/for/{ontvanger}/{interesse}. Zie de uitleg in lang/en/site.php.
     'gift_landing' => [
-        'heading' => 'Cadeau-ideeën voor :recipient :who :interest houdt',
+        'heading' => 'Cadeaus voor :recipient :who :interest houdt',
         'title_short' => 'Cadeau voor :recipient :who :interest houdt',
         'title_bare' => ':Recipient :who :interest houdt',
-        'heading_recipient' => 'Cadeau-ideeën voor :recipient',
+        'heading_recipient' => 'Cadeaus voor :recipient',
         'intro' => 'Ideeën voor :recipient :who :interest houdt, gekozen uit de winkels die we vergelijken. Wat onze redactie en de lijsten van mensen zelf passend vinden, staat bovenaan, en elke prijs wordt dagelijks gecontroleerd.',
         'intro_recipient' => 'Ideeën voor :recipient, per ding waar die van houdt en gekozen uit de winkels die we vergelijken. Elke prijs wordt dagelijks gecontroleerd.',
-        'seo_description' => 'Cadeau-ideeën voor :recipient :who :interest houdt: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
-        'seo_description_recipient' => 'Cadeau-ideeën voor :recipient, per interesse: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
+        'seo_description' => 'Cadeaus voor :recipient :who :interest houdt: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
+        'seo_description_recipient' => 'Cadeaus voor :recipient, per interesse: :count producten uit de winkels die we vergelijken, met elke prijs dagelijks gecontroleerd.',
         'search_all' => 'Zoek alles wat voor hen bedoeld is',
         'more_for' => 'Meer voor :recipient',
         'same_interest' => 'Ook voor iemand die van :interest houdt',
@@ -1927,9 +1927,9 @@ return [
          * capitalisation, and no adjective has to agree with a noun in four
          * languages. A person renames it before approving.
          */
-        'draft_title' => ':interest — cadeau-ideeën',
+        'draft_title' => ':interest — cadeaus',
 
-        'title' => 'Cadeau-ideeën, per type',
+        'title' => 'Cadeaus, per type',
         'description' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de kruidenliefhebber, de vader die alles al heeft, de vriend die leest.',
         'empty' => 'Nog niets. Ze worden een voor een geschreven; de eerste komt eraan.',
         'finds_title' => 'Wat je voor ze koopt',
@@ -2248,7 +2248,7 @@ return [
         'list' => 'Verlanglijst',
         'list_for' => 'Cadeaulijst',
         'list_footnote' => '{1} 1 idee|[2,*] :count ideeën',
-        'list_description' => '{0} Een lijst die met je gedeeld is op GiftCoves.|{1} Een lijst die met je gedeeld is: één cadeau-idee, met een link naar de winkel.|[2,*] Een lijst die met je gedeeld is: :count cadeau-ideeën, elk met een link naar de winkel.',
+        'list_description' => '{0} Een lijst die met je gedeeld is op GiftCoves.|{1} Een lijst die met je gedeeld is: één cadeau, met een link naar de winkel.|[2,*] Een lijst die met je gedeeld is: :count cadeaus, elk met een link naar de winkel.',
     ],
 
     /*
@@ -2331,7 +2331,7 @@ return [
         'intro' => 'Alles wat je hier kunt doen, in een paar minuten lezen. Werkt er iets niet? Het formulier staat onderaan.',
         'coves_title' => 'Wat is een Cove?',
         'coves_body1' => 'Een Cove is een verzameling dingen rond één idee: dingen die je wilt, cadeaus voor Emma\'s verjaardag, je nieuwe huis, Kerstmis dit jaar.',
-        'coves_body2' => 'Je maakt je eigen Coves. Sommige hou je voor jezelf, sommige maak je voor iemand anders, en sommige vul je samen met anderen. GiftCoves maakt ook Coves: elke dag iets nieuws, cadeau-ideeën per soort persoon, en koopgidsen.',
+        'coves_body2' => 'Je maakt je eigen Coves. Sommige hou je voor jezelf, sommige maak je voor iemand anders, en sommige vul je samen met anderen. GiftCoves maakt ook Coves: elke dag iets nieuws, cadeaus per soort persoon, en koopgidsen.',
         'coves_body3' => 'Alles kan in een Cove, uit elke winkel, en elke Cove kun je delen.',
         'coves_make' => 'Zelf een maken: klik op Maak een Cove en zeg voor wie hij is: jezelf, iemand anders, of met een paar mensen samen. Hij staat er meteen, met een naam die je kunt veranderen, en opent klaar voor het eerste ding: plak een link of zoek. Gelegenheid, delen en om ideeën vragen regel je op de Cove zelf.',
         'coves_body4' => 'Klik op Bewaar bij een Cove en kies. Bewaar in Mijn Coves en je vindt hem terug onder Mijn Coves, bij Bewaard; hij verandert mee als wij de Cove bijwerken. Maak er mijn lijst van zet de producten in een eigen lijst, die je zelf kunt aanpassen. Het is dezelfde Bewaar-knop als bij een product.',
@@ -2348,10 +2348,10 @@ return [
         'find_taste_together' => 'Weet je niet goed wat iemand leuk vindt, en de anderen ook niet? Maak op de lijst voor die persoon een Dit of dat-link en stuur hem rond. Iedereen speelt over die persoon zonder account, en jij ziet hoeveel mensen speelden en wat ze samen vonden, nooit wie wat koos. Met één druk voeg je het toe aan die persoon.',
         'find_taste_card' => 'Dit of dat voor jezelf gespeeld? Maak een cadeauprofielkaart, zoals "koffie, wandelen, ongeveer €30 tot €60", en stuur de link naar wie een cadeau voor je koopt. Die opent Cadeau vinden met jouw smaak al ingevuld. Geen naam tenzij je er een typt, en je kunt hem altijd verwijderen.',
         'find_offline_ideas' => 'Onder de ideeën van Cadeau vinden en Dit of dat zie je soms Ideeën zonder winkel: dingen die veel verschillende mensen zelf op hun lijst schreven, zoals een workshop of een dagje uit. We tonen er pas een nadat we het zelf nalazen, nooit wie het schreef, en Bewaren zet het als offline artikel op je lijst.',
-        'find_personas' => 'Een cadeau-idee over een type persoon (de thuiskok, wie alles al heeft) heeft onder de gekozen producten ook tabbladen rond 15, 40 en 100 euro. Voor wie alles al heeft zoeken we dingen die opgaan of die je doet, zoals een proeverij, een workshop of een navulling; typ "die alles al heeft" in het zoekvak en we zoeken ook zo. Onderaan staat een top 10 van de week: wat binnen dat thema het meest gekocht en gewenst wordt, elke maandag opnieuw berekend.',
-        'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeau-ideeën per persoon, en koopgidsen.',
-        'find_filters' => 'Zoek vanaf een pagina met cadeau-ideeën alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',
-        'find_pages' => 'Cadeau-ideeën per persoon en wat die graag doet, zoals "cadeau-ideeën voor papa die van koken houdt", elk op een eigen pagina. Cadeau vinden linkt naar de pagina die het dichtst bij je antwoorden ligt, met "Open als pagina".',
+        'find_personas' => 'Een pagina met cadeaus voor een type persoon (de thuiskok, wie alles al heeft) heeft onder de gekozen producten ook tabbladen rond 15, 40 en 100 euro. Voor wie alles al heeft zoeken we dingen die opgaan of die je doet, zoals een proeverij, een workshop of een navulling; typ "die alles al heeft" in het zoekvak en we zoeken ook zo. Onderaan staat een top 10 van de week: wat binnen dat thema het meest gekocht en gewenst wordt, elke maandag opnieuw berekend.',
+        'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeaus per persoon, en koopgidsen.',
+        'find_filters' => 'Zoek vanaf een pagina met cadeaus alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',
+        'find_pages' => 'Cadeaus per persoon en wat die graag doet, zoals "cadeaus voor papa die van koken houdt", elk op een eigen pagina. Cadeau vinden linkt naar de pagina die het dichtst bij je antwoorden ligt, met "Open als pagina".',
         'find_product' => 'De pagina van een product toont de prijs bij elke winkel, hoeveel mensen het op een lijst hebben, en in welke Coves het staat.',
         'find_crowd' => 'Een idee met "Gekozen door anderen voor iemand zoals die persoon" staat op de lijsten van minstens vijf verschillende mensen die voor zo iemand zoeken, zoals een papa die graag kookt. We tellen mensen, tonen nooit wiens lijst het is, en onder de vijf tonen we niets.',
         'find_thumbs' => 'Met een duim omhoog of omlaag bij een idee leer je de suggesties bij. Omhoog houdt het idee en brengt meer zoals dit; omlaag ruilt het voor een ander. Voor iemand uit Mijn mensen onthouden we het alleen voor die persoon, en wat je afwees komt voor hen niet meer terug. De duimen van iedereen samen tellen pas mee voor een idee als minstens vijf verschillende mensen erover stemden, en we tonen nooit wie.',
@@ -2464,7 +2464,7 @@ return [
         'their_wishlists' => 'Verlanglijsten van :name',
         'their_wishlists_tip' => 'De verlanglijsten die :name met je deelt of aan al hun mensen toont.',
         'lists_for' => 'Lijsten voor :name',
-        'lists_for_tip' => 'Lijsten die jij maakt met cadeau-ideeën voor :name, ook een groepscadeau. :name ziet ze niet.',
+        'lists_for_tip' => 'Lijsten die jij maakt met cadeaus voor :name, ook een groepscadeau. :name ziet ze niet.',
         'lists_for_none' => 'Nog geen lijst voor :name. Begin er een om ideeën te verzamelen of samen te geven.',
         'new_list' => 'Maak een Cove',
         'list_actions' => 'Acties voor :name',
@@ -2492,7 +2492,7 @@ return [
         'together' => 'Dit of dat samen',
         'details' => 'Details',
         'save_known' => 'Bewaar wat je over :name weet',
-        'save_known_tip' => 'Hun interesses, budget en wat je ze gaf, en cadeau-ideeën voor ze. Alleen jij ziet het.',
+        'save_known_tip' => 'Hun interesses, budget en wat je ze gaf, en cadeaus voor ze. Alleen jij ziet het.',
         'add_person' => 'Iemand toevoegen',
         'add_person_tip' => 'Alleen jij ziet deze persoon. Geen account of e-mailadres nodig.',
         'name' => 'Naam',
@@ -2518,7 +2518,7 @@ return [
      */
     'invite_mail' => [
         'subject' => ':name nodigt je uit op GiftCoves',
-        'what' => 'GiftCoves is een plek voor verlanglijsten en cadeau-ideeën. Neem je de uitnodiging aan, dan zijn jij en :name verbonden: jij ziet de lijsten die :name met je deelt, en :name ziet de lijsten die jij deelt.',
+        'what' => 'GiftCoves is een plek voor verlanglijsten en cadeaus. Neem je de uitnodiging aan, dan zijn jij en :name verbonden: jij ziet de lijsten die :name met je deelt, en :name ziet de lijsten die jij deelt.',
         'button' => 'Uitnodiging aannemen',
         'nothing_to_do' => 'Geen interesse? Dan hoef je niets te doen.',
         'why' => 'Je krijgt deze e-mail omdat :name je e-mailadres op GiftCoves invulde.',

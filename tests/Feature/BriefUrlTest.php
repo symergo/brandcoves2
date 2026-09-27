@@ -127,6 +127,6 @@ class BriefUrlTest extends TestCase
         }
 
         $this->assertSame('Gift ideas for dad who loves cooking', (new GiftLandingCopy(Market::En, RecipientType::Father, Interest::Cooking))->title());
-        $this->assertSame('Cadeau-ideeën voor je kind dat van gamen houdt', (new GiftLandingCopy(Market::BeNl, RecipientType::Child, Interest::Gaming))->heading());
+        $this->assertSame('Cadeaus voor je kind dat van gamen houdt', (new GiftLandingCopy(Market::BeNl, RecipientType::Child, Interest::Gaming))->heading());
     }
 }

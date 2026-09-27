@@ -59,7 +59,7 @@ class AskOthersReachTest extends TestCase
             $this->actingAs(User::factory()->create())->get('/be-nl/ask?from=gift&relationship=mother'),
         )['prefill'];
 
-        $this->assertSame('Cadeau-ideeën voor mijn mama?', $prefill['title']);
+        $this->assertSame('Cadeaus voor mijn mama?', $prefill['title']);
         $this->assertSame([], $prefill['interests']);
         $this->assertSame('', $prefill['budget_max']);
         $this->assertNull($prefill['list']);
@@ -85,7 +85,7 @@ class AskOthersReachTest extends TestCase
         $response = $this->actingAs($me)->get("/be-nl/ask?from=gift&person={$mum->id}");
         $prefill = $this->props($response)['prefill'];
 
-        $this->assertSame('Cadeau-ideeën voor mijn mama?', $prefill['title']);
+        $this->assertSame('Cadeaus voor mijn mama?', $prefill['title']);
         // Only the fixed vocabulary: a typed word has no place on the form.
         $this->assertSame(['cooking', 'coffee'], $prefill['interests']);
         $this->assertSame('40', $prefill['budget_max']);
@@ -137,7 +137,7 @@ class AskOthersReachTest extends TestCase
 
         $prefill = $this->props($this->actingAs($me)->get("/be-nl/ask?list={$list->id}"))['prefill'];
 
-        $this->assertSame('Cadeau-ideeën voor mijn papa?', $prefill['title']);
+        $this->assertSame('Cadeaus voor mijn papa?', $prefill['title']);
         $this->assertSame('25', $prefill['budget_max']);
         $this->assertSame('Verjaardag, 12 oktober', $prefill['occasion']);
         $this->assertSame($list->id, $prefill['list']['id']);
@@ -166,7 +166,7 @@ class AskOthersReachTest extends TestCase
         $list = Wishlist::factory()->forSomeone()->create(['owner_user_id' => $me->id]);
 
         $this->actingAs($me)->post('/be-nl/ask', [
-            'title' => 'Cadeau-ideeën voor mijn mama?',
+            'title' => 'Cadeaus voor mijn mama?',
             'list_id' => $list->id,
         ])->assertRedirect();
 

@@ -201,7 +201,7 @@ class CommunityCoveTest extends TestCase
         $this->actingAs($this->owner)->get("/be-nl/lists/{$list->id}")->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('publication.published', false)
-                ->where('publication.title', 'Cadeau-ideeën voor een papa')
+                ->where('publication.title', 'Cadeaus voor een papa')
                 ->where('publication.firstName', 'Ann'));
 
         // Nobody else is offered the switch.

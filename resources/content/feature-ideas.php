@@ -186,7 +186,7 @@ return [
         'status' => 'done',
         'sort' => 40,
         'nl' => [
-            'title' => 'Duim omhoog of omlaag bij cadeau-ideeën',
+            'title' => 'Duim omhoog of omlaag bij cadeaus',
             'body' => 'Geef een idee in Cadeau vinden een duim omhoog en het blijft staan, met meer zoals dit. Een duim omlaag ruilt het voor een ander. Voor iemand uit Mijn mensen onthouden we het alleen voor die persoon: wat je afwees komt voor hen niet meer terug. De duimen van iedereen samen tellen pas mee als genoeg verschillende mensen erover stemden, en nooit zichtbaar wie.',
         ],
         'en' => [
@@ -246,8 +246,8 @@ return [
         'status' => 'done',
         'sort' => 70,
         'nl' => [
-            'title' => 'Een top 10 van de week bij elk cadeau-idee',
-            'body' => 'Onderaan een cadeau-idee over een type persoon, zoals de thuiskok, staat een top 10: wat binnen dat thema nu het meest gekocht en gewenst wordt, uit de bestsellerlijsten van de winkels en hoeveel verlanglijsten het bevatten. Elke maandag opnieuw berekend, nooit met de hand.',
+            'title' => 'Een top 10 van de week bij cadeaus per type',
+            'body' => 'Onderaan een pagina met cadeaus voor een type persoon, zoals de thuiskok, staat een top 10: wat binnen dat thema nu het meest gekocht en gewenst wordt, uit de bestsellerlijsten van de winkels en hoeveel verlanglijsten het bevatten. Elke maandag opnieuw berekend, nooit met de hand.',
         ],
         'en' => [
             'title' => 'A top 10 of the week on every gift idea',

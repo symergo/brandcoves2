@@ -295,7 +295,7 @@ class PersonaDemandPlanner
 
     /**
      * A placeholder from a template, never from a model: "Papa die van koken
-     * houdt", "Yoga — cadeau-ideeën", "Wie alles al heeft". The note asks
+     * houdt", "Yoga — cadeaus", "Wie alles al heeft". The note asks
      * for a better one before approval.
      *
      * @param  array{relationship: string|null, interest: string|null, hasEverything: bool}  $r
