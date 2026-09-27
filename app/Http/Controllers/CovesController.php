@@ -8,12 +8,14 @@ use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Services\Cove\CommunityCoves;
+use App\Services\Cove\CoveCaches;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -60,6 +62,14 @@ class CovesController extends Controller
 
     private const EDITIONS = 8;
 
+    /**
+     * Ten minutes for the overview. Community Coves are the one band here
+     * that changes without a build (somebody publishes a list), and ten
+     * minutes is a short wait for a list to reach an overview page; its own
+     * index (`/coves/community`) is not cached.
+     */
+    private const TTL = 600;
+
     public function __invoke(CurrentMarket $current, ShopDirectory $directory): Response
     {
         app(PageMeta::class)->set(
@@ -77,31 +87,50 @@ class CovesController extends Controller
              * section instead of printing a heading over an empty grid, and
              * adding a fourth kind is a change here rather than in the layout.
              */
-            'sections' => array_values(array_filter([
-                $this->section(
-                    'daily',
-                    DailyPickSet::query()->daily()->orderByDesc('drop_date'),
-                    self::EDITIONS,
-                    $current,
-                ),
-                $this->section(
-                    'gift',
-                    DailyPickSet::query()->personas()->orderByDesc('published_at'),
-                    self::PER_SECTION,
-                    $current,
-                ),
-                $this->section(
-                    'smart',
-                    DailyPickSet::query()->articles()->orderByDesc('published_at'),
-                    self::PER_SECTION,
-                    $current,
-                ),
-                $this->brands($current),
-                // The writing if there is any, the directory of shops if not.
-                $this->shopCoves($current) ?? $this->shops($current, $directory),
-                $this->community($current),
-            ])),
+            /*
+             * Cached per market for ten minutes. Eight queries on every view
+             * (five lists of Coves, the brands, the shops, the community band)
+             * for a page that changes when something is published, which
+             * forgets it (CoveCaches::forgetMarket), and the TTL ends at the
+             * Daily's release at the latest. Nothing in it is per visitor:
+             * saved state and sign-in come from the shared props, per request.
+             * Plain arrays only, which the cache can hold.
+             */
+            'sections' => Cache::remember(
+                CoveCaches::covesKey($current->get()),
+                CoveCaches::ttl(self::TTL),
+                fn (): array => $this->sections($current, $directory),
+            ),
         ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function sections(CurrentMarket $current, ShopDirectory $directory): array
+    {
+        return array_values(array_filter([
+            $this->section(
+                'daily',
+                DailyPickSet::query()->daily()->orderByDesc('drop_date'),
+                self::EDITIONS,
+                $current,
+            ),
+            $this->section(
+                'gift',
+                DailyPickSet::query()->personas()->orderByDesc('published_at'),
+                self::PER_SECTION,
+                $current,
+            ),
+            $this->section(
+                'smart',
+                DailyPickSet::query()->articles()->orderByDesc('published_at'),
+                self::PER_SECTION,
+                $current,
+            ),
+            $this->brands($current),
+            // The writing if there is any, the directory of shops if not.
+            $this->shopCoves($current) ?? $this->shops($current, $directory),
+            $this->community($current),
+        ]));
     }
 
     /**

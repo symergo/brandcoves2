@@ -9,10 +9,12 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\GiftLanding;
 use App\Models\ProductGroup;
+use App\Services\Cove\CoveCaches;
 use App\Services\Gift\GiftLandingCopy;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -106,6 +108,9 @@ class DiscoverCoveController extends Controller
     /** How deep the sample reaches. Matches `SerendipityController::POOL`. */
     private const SURPRISE_POOL = 200;
 
+    /** Ten minutes for what the page caches; see each use for why. */
+    private const TTL = 600;
+
     public function __invoke(CurrentMarket $current): Response
     {
         app(PageMeta::class)->set(
@@ -124,6 +129,26 @@ class DiscoverCoveController extends Controller
             $pair = collect();
         }
         $surprises = $drawn->reject(fn (array $find) => $pair->contains('id', $find['id']))->take(self::SURPRISES)->values();
+
+        /*
+         * The Cove bands (today's edition, the days before it, the personas
+         * and the guides), cached per market for ten minutes. Four queries and
+         * a loaded edition per view, for lists that change when a Cove is
+         * published, which forgets them (CoveCaches::forgetMarket); the TTL
+         * also ends at the Daily's release. Today's finds are filtered on
+         * stock inside the cache, so a find that sold out can stay up to ten
+         * minutes: a hub card, not a buy button. Plain arrays only.
+         */
+        $bands = Cache::remember(
+            CoveCaches::discoverKey($current->get()),
+            CoveCaches::ttl(self::TTL),
+            fn (): array => [
+                'today' => $this->today($current),
+                'dailies' => $this->dailies($current),
+                'personas' => $this->personas($current),
+                'coves' => $this->coves($current),
+            ],
+        );
 
         $questions = CommunityQuestion::query()
             ->forMarket($current->get())
@@ -182,7 +207,7 @@ class DiscoverCoveController extends Controller
              * Null before the first edition in a market, and the band simply
              * does not render — an empty shelf is worse than no shelf.
              */
-            'today' => $this->today($current),
+            'today' => $bands['today'],
 
             /*
              * The editions before today's, as a list (owner's call,
@@ -192,7 +217,7 @@ class DiscoverCoveController extends Controller
              * yesterday; a row per edition says so without another band of
              * product tiles.
              */
-            'dailies' => $this->dailies($current),
+            'dailies' => $bands['dailies'],
 
             /*
              * A handful of surprises, resampled on every visit.
@@ -248,49 +273,69 @@ class DiscoverCoveController extends Controller
              * count per persona because that is the shelf itself; a hub that
              * totals things is the catalogue-counter mistake in a new place.
              */
-            'personas' => DailyPickSet::query()
-                ->forMarket($current->get())
-                ->personas()
-                ->published()
-                // Matches the shelf at /gift-ideas. `published_at` is stamped
-                // once at first build and never refreshed by a rebuild, so this
-                // is stable rather than reshuffling when products refresh.
-                ->orderByDesc('published_at')
-                ->limit(self::PERSONAS)
-                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene'])
-                ->map(fn (DailyPickSet $persona): array => [
-                    'title' => $persona->theme_title,
-                    'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
-                    'url' => $current->url($persona->kind->path((string) $persona->slug, $current->get())),
-                    // The drawing, not a product photo. This band said "no
-                    // images" when the only image available was a photograph of
-                    // a thing, which made a shelf of people look like a
-                    // category of products; a scene is about the person and is
-                    // the whole reason a reader recognises one.
-                    'scene' => $persona->scene?->value,
-                ])
-                ->all(),
+            'personas' => $bands['personas'],
 
-            'coves' => DailyPickSet::query()
-                ->forMarket($current->get())
-                ->articles()
-                ->published()
-                ->orderByDesc('published_at')
-                ->limit(self::COVES)
-                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'])
-                ->map(fn (DailyPickSet $guide): array => [
-                    'title' => $guide->theme_title,
-                    // A card blurb, not an article: tokens flattened to their
-                    // labels, exactly as the archive index does it. A link
-                    // inside a card whose whole surface is already a link is a
-                    // target fighting its parent.
-                    'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
-                    'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
-                    // Why the Cove exists, and a fact no competitor has.
-                    'searches' => $guide->source_volume,
-                ])
-                ->all(),
+            'coves' => $bands['coves'],
         ]);
+    }
+
+    /**
+     * The persona shelf, by name; see the prop in __invoke() for why.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function personas(CurrentMarket $current): array
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->personas()
+            ->published()
+            // Matches the shelf at /gift-ideas. `published_at` is stamped
+            // once at first build and never refreshed by a rebuild, so this
+            // is stable rather than reshuffling when products refresh.
+            ->orderByDesc('published_at')
+            ->limit(self::PERSONAS)
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene'])
+            ->map(fn (DailyPickSet $persona): array => [
+                'title' => $persona->theme_title,
+                'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
+                'url' => $current->url($persona->kind->path((string) $persona->slug, $current->get())),
+                // The drawing, not a product photo. This band said "no
+                // images" when the only image available was a photograph of
+                // a thing, which made a shelf of people look like a
+                // category of products; a scene is about the person and is
+                // the whole reason a reader recognises one.
+                'scene' => $persona->scene?->value,
+            ])
+            ->all();
+    }
+
+    /**
+     * The newest guides, as cards.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function coves(CurrentMarket $current): array
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->articles()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(self::COVES)
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'])
+            ->map(fn (DailyPickSet $guide): array => [
+                'title' => $guide->theme_title,
+                // A card blurb, not an article: tokens flattened to their
+                // labels, exactly as the archive index does it. A link
+                // inside a card whose whole surface is already a link is a
+                // target fighting its parent.
+                'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
+                'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
+                // Why the Cove exists, and a fact no competitor has.
+                'searches' => $guide->source_volume,
+            ])
+            ->all();
     }
 
     /**
@@ -395,13 +440,26 @@ class DiscoverCoveController extends Controller
      */
     private function surprises(CurrentMarket $current): array
     {
-        $pool = ProductGroup::query()
-            ->forMarket($current->get())
-            ->presentable()
-            ->where('surprise_score', '>', 0)
-            ->orderByDesc('surprise_score')
-            ->limit(self::SURPRISE_POOL)
-            ->pluck('id');
+        /*
+         * The pool's ids cached per market for ten minutes, the draw from it
+         * per request: the band still differs on every visit, which is the
+         * point of it, without sorting the market's products by score each
+         * time. Scores change when `ScoreSerendipity` runs, twice a day at
+         * most. Ints only, which the cache can hold.
+         */
+        $pool = collect(Cache::remember(
+            'bc:discover:'.$current->value().':surprise-pool',
+            self::TTL,
+            fn (): array => ProductGroup::query()
+                ->forMarket($current->get())
+                ->presentable()
+                ->where('surprise_score', '>', 0)
+                ->orderByDesc('surprise_score')
+                ->limit(self::SURPRISE_POOL)
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all(),
+        ));
 
         if ($pool->isEmpty()) {
             return [];

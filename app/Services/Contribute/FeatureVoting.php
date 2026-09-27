@@ -9,6 +9,7 @@ use App\Models\FeatureIdea;
 use App\Models\FeatureVote;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * One vote per signed-in person per idea, and taking it back.
@@ -44,6 +45,9 @@ final class FeatureVoting
             'feature_idea_id' => $idea->id,
             'user_id' => $user->id,
         ]);
+
+        // The board's shared counts, so the voter sees their vote counted.
+        Cache::forget(FeatureBoard::CACHE_KEY);
     }
 
     public function withdraw(User $user, FeatureIdea $idea): void
@@ -52,5 +56,7 @@ final class FeatureVoting
             ->where('feature_idea_id', $idea->id)
             ->where('user_id', $user->id)
             ->delete();
+
+        Cache::forget(FeatureBoard::CACHE_KEY);
     }
 }

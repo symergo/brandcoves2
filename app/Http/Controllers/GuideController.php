@@ -10,12 +10,11 @@ use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
+use App\Services\Cove\CoveProse;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EntityLinks;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
-use App\Services\Editorial\Allowlist;
-use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\PageCopy;
@@ -55,7 +54,12 @@ class GuideController extends Controller
             ->where('status', PublishStatus::Published->value)
             ->orderByDesc('published_at')
             ->limit(60)
-            ->get()
+            /*
+             * Only what a card shows. Every column came back before, the
+             * article's body, FAQ and stored prose included, for sixty cards
+             * that print a title and a line.
+             */
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
             ->map(fn (DailyPickSet $guide) => [
                 'title' => $guide->theme_title,
                 // A card blurb, not an article: tokens flattened to their
@@ -151,54 +155,24 @@ class GuideController extends Controller
         $shopLinks = $isShop ? app(EntityLinks::class)->forShopCove($guide, $shop) : [];
 
         /*
-         * What this article's prose may link to.
+         * The prose, rendered when the Cove was built: the intro and the
+         * article as blocks, each product's copy, the FAQ, and their plain
+         * versions for the meta description and the structured data.
          *
-         * Its own items, plus every other published guide in this market. That
-         * second half is what makes an advice piece worth writing at all: "how
-         * to spot a paid review" earns its place by pointing at the guide for
-         * the thing the reader was about to buy, and an article that links
-         * nowhere is a leaf in the crawl graph too.
+         * What the prose may link to is this article's own items, every other
+         * published guide in this market, the queries that justified it and,
+         * for a Shop Cove, the categories that shop sells in. That second half
+         * is what makes an advice piece worth writing at all: "how to spot a
+         * paid review" earns its place by pointing at the guide for the thing
+         * the reader was about to buy. Working it out is two queries and a
+         * regex pass over every paragraph, so it happens at build, not per
+         * view: see App\Services\Cove\CoveProse.
          *
-         * Resolved once, before the items are mapped, because every sentence on
-         * the page shares it — and one of its halves is a query.
+         * The intro and the body are one document, so reading order decides
+         * which paragraph owns a card: a product introduced in the intro is
+         * not shown a second time halfway down the article.
          */
-        $allowed = app(Allowlist::class)->full(
-            $guide->picks->map(fn (DailyPick $pick) => $pick->group)->filter(),
-            $current->get(),
-            excludeGuideId: $guide->id,
-            // The queries that justified this guide are also the searches it may
-            // link to — which is the only thing an advice article has, having no
-            // products to derive categories from.
-            /*
-             * The queries that justified this guide are also the searches it may
-             * link to — which is the only thing an advice article has, having no
-             * products to derive categories from.
-             *
-             * A **Shop Cove** adds the categories that shop actually sells in.
-             * Its prose is about ranges rather than products, so without them
-             * its allowlist would be almost empty and every `[[search:…]]` would
-             * render as plain words — and passing authority to the queries the
-             * shop is about is what the piece is *for*.
-             */
-            extraSearches: [
-                ...(array) $guide->source_queries,
-                ...$shopLinks,
-            ],
-        );
-
-        /*
-         * The article, paragraph by paragraph, each carrying the products it
-         * names — the same pairing the Daily Cove has had since it stopped
-         * being prose-then-grid.
-         *
-         * Built before the items, and from one document, so that reading order
-         * decides which paragraph owns a card: a product introduced in the
-         * intro is not shown a second time halfway down the article.
-         */
-        $prose = new ProseCards(app(CoveMarkup::class), $current->get(), $allowed);
-
-        $intro = $prose->blocks($guide->theme_blurb);
-        $body = $prose->blocks($guide->body);
+        $prose = app(CoveProse::class)->for($guide);
 
         $items = $guide->picks
             /*
@@ -225,7 +199,10 @@ class GuideController extends Controller
                 'price' => $pick->group->min_price,
                 'merchantCount' => $pick->group->merchant_count,
                 'inStock' => $pick->group->in_stock,
-                'copy' => $this->prose($pick->blurb, $current, $allowed),
+                // The copy as rendered with the prose; resolved there rather
+                // than at write time, so a guide that later unpublishes
+                // degrades its links to plain text at the next build.
+                'copy' => $prose['copy'][$pick->id] ?? [],
                 'verdict' => $pick->verdict,
                 'unavailable' => $pick->unavailable || ! $pick->group->in_stock,
                 'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
@@ -235,7 +212,7 @@ class GuideController extends Controller
         // A draft read through a preview link is the real page at the real
         // URL, and must say `noindex` there. The flag was computed above and
         // never handed on, so `seo()`'s own default of `false` always won.
-        $this->seo($guide, $items->all(), $current, $preview && ! $guide->isPublished());
+        $this->seo($guide, $items->all(), $current, $prose['plain'], $preview && ! $guide->isPublished());
 
         /*
          * A Shop Cove's product rails.
@@ -266,7 +243,7 @@ class GuideController extends Controller
          * linked and SEO'd the way every other Cove is. Only the layout forks.
          */
         if ($isShop) {
-            return $this->entityPage($guide, $current, $allowed, $rails, $shop, $shopLinks);
+            return $this->entityPage($guide, $current, $prose, $rails, $shop, $shopLinks);
         }
 
         return Inertia::render('Guides/Show', [
@@ -293,9 +270,12 @@ class GuideController extends Controller
                 // article confirms you opened the one you clicked. See the
                 // index method for why it is never null.
                 'scene' => ($guide->scene ?? CoveScene::defaultFor($guide->kind))->value,
-                'intro' => $intro,
-                'body' => $body,
-                'faq' => $this->faq($guide, $current, $allowed),
+                'intro' => $prose['intro'],
+                'body' => $prose['body'],
+                // Questions plain, answers with their links resolved: a link
+                // in a heading is one a reader hits while scanning for the
+                // question they have.
+                'faq' => $prose['faq'],
                 'updatedAt' => $guide->last_checked_at?->toDateString(),
                 // Stated plainly. "We wrote this because 240 people searched for
                 // it here" is both the honest reason and a fact no competitor
@@ -332,51 +312,16 @@ class GuideController extends Controller
     }
 
     /**
-     * A block of copy, as paragraphs of safe HTML with its links resolved.
-     *
-     * Guides used to render as plain text and reject link tokens outright,
-     * which made them dead ends: the one article type whose whole job is to
-     * send a reader somewhere could not.
-     *
-     * Resolved here rather than at write time for the reason the Cove does the
-     * same — the destinations follow the market the page is read in, and a
-     * guide that later unpublishes degrades the links pointing at it to plain
-     * text instead of leaving 404s baked into rows nobody revisits.
-     *
-     * @param  array<string, mixed>  $allowed
-     * @return list<string>
-     */
-    private function prose(?string $text, CurrentMarket $current, array $allowed): array
-    {
-        if (blank($text)) {
-            return [];
-        }
-
-        return app(CoveMarkup::class)->paragraphs((string) $text, $current->get(), $allowed)['html'];
-    }
-
-    /**
-     * The FAQ, with links resolved in the answers.
-     *
-     * Questions stay plain: a link in a heading is a link a reader hits while
-     * scanning for the question they have, and the answer underneath is where
-     * it belongs. The JSON-LD is built from the unrendered pair, because
-     * FAQPage answers are read literally by a crawler and an anchor tag in one
-     * is markup in a place that expects text.
-     *
-     * @param  array<string, mixed>  $allowed
-     * @return list<array{q: string, a: list<string>}>|null
-     */
-    /**
      * The written shop page: the piece, with the shop's products beside it.
      *
+     * @param  array<string, mixed>  $prose  from CoveProse
      * @param  array<string, mixed>|null  $rails
      * @param  list<string>  $categories  the shop's link list, as resolved in render()
      */
     private function entityPage(
         DailyPickSet $guide,
         CurrentMarket $current,
-        array $allowed,
+        array $prose,
         ?array $rails,
         ?Merchant $shop,
         array $categories,
@@ -384,7 +329,7 @@ class GuideController extends Controller
         $market = $current->get();
 
         /*
-         * Rendered as one string, not as prose blocks.
+         * Rendered as one string, not as prose blocks (by CoveProse, at build).
          *
          * `ProseCards` splits a buying guide into blocks so a product card can
          * be dropped in beside the paragraph that argues for it. An entity Cove
@@ -393,8 +338,6 @@ class GuideController extends Controller
          * would be structure with nothing to hold. Same call the brand side
          * makes, so both halves of one page component get one shape.
          */
-        $markup = app(CoveMarkup::class);
-
         /*
          * Null where no count can be trusted: a live connector answers per
          * request, so the rows stored for it are not its range. The page then
@@ -439,7 +382,7 @@ class GuideController extends Controller
             ],
             'cove' => [
                 'title' => $guide->theme_title,
-                'intro' => $markup->render((string) $guide->theme_blurb, $market, $allowed)['html'],
+                'intro' => $prose['entity']['intro'],
                 /*
                  * Paragraph by paragraph, not one string.
                  *
@@ -451,9 +394,9 @@ class GuideController extends Controller
                  *
                  * Found 2026-09-06 reading the first published Shop Cove.
                  */
-                'body' => $markup->paragraphs((string) $guide->body, $market, $allowed)['html'],
+                'body' => $prose['entity']['body'],
                 'metaDescription' => $guide->meta_description
-                    ?: $markup->plain((string) $guide->theme_blurb),
+                    ?: $prose['plain']['blurb'],
             ],
             'rails' => $rails,
             'searchUrl' => $searchUrl,
@@ -461,20 +404,11 @@ class GuideController extends Controller
         ]);
     }
 
-    private function faq(DailyPickSet $guide, CurrentMarket $current, array $allowed): ?array
-    {
-        if (! is_array($guide->faq) || $guide->faq === []) {
-            return null;
-        }
-
-        return array_values(array_map(fn (array $pair) => [
-            'q' => (string) ($pair['q'] ?? ''),
-            'a' => $this->prose((string) ($pair['a'] ?? ''), $current, $allowed),
-        ], $guide->faq));
-    }
-
-    /** @param list<array<string, mixed>> $items */
-    private function seo(DailyPickSet $guide, array $items, CurrentMarket $current, bool $preview = false): void
+    /**
+     * @param  list<array<string, mixed>>  $items
+     * @param  array{blurb: string, faq: list<array{q: string, a: string}>}  $plain  the prose without links, from CoveProse
+     */
+    private function seo(DailyPickSet $guide, array $items, CurrentMarket $current, array $plain, bool $preview = false): void
     {
         /*
          * The kind's own path, not `guides/` for everything.
@@ -488,14 +422,12 @@ class GuideController extends Controller
         $url = url($current->url($guide->kind->path((string) $guide->slug, $current->get())));
         $meta = app(PageMeta::class);
 
-        $markup = app(CoveMarkup::class);
-
         $meta->set(
             title: $guide->theme_title,
             // Through plain(): the intro carries link tokens now, and a meta
             // description reading "see [[page:search]]" is what a searcher sees
             // in the result.
-            description: $guide->meta_description ?? $markup->plain($guide->theme_blurb),
+            description: $guide->meta_description ?? $plain['blurb'],
             // The card, not the first product's photograph: a guide is about all
             // seven, and leading with one of them misrepresents it.
             image: SocialCard::versioned(url($current->url("og/guide/{$guide->slug}.png"))),
@@ -542,10 +474,7 @@ class GuideController extends Controller
         if (is_array($guide->faq) && $guide->faq !== []) {
             // Plain text: a crawler reads an acceptedAnswer literally, so an
             // anchor tag there is markup in a field that expects prose.
-            $meta->addJsonLd(StructuredData::faq(array_map(fn (array $pair) => [
-                'q' => $markup->plain($pair['q'] ?? ''),
-                'a' => $markup->plain($pair['a'] ?? ''),
-            ], $guide->faq)));
+            $meta->addJsonLd(StructuredData::faq($plain['faq']));
         }
 
         // The parent is the directory the kind is read under — a Shop Cove sits

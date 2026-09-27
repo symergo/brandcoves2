@@ -6,11 +6,13 @@ namespace App\Models;
 
 use App\Enums\FeatureStatus;
 use App\Enums\ModerationStatus;
+use App\Services\Contribute\FeatureBoard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * An idea on the contribute page's voting board.
@@ -46,6 +48,18 @@ class FeatureIdea extends Model
 
     /** The languages an idea can be written in: the site's four. */
     public const LANGUAGES = ['nl', 'en', 'fr', 'es'];
+
+    /**
+     * An idea published, edited or removed in the admin reaches the board at
+     * once rather than after its five-minute cache (FeatureBoard). The board
+     * is one small key and ideas change a few times a week, so forgetting it
+     * on every save costs nothing.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget(FeatureBoard::CACHE_KEY));
+        static::deleted(fn () => Cache::forget(FeatureBoard::CACHE_KEY));
+    }
 
     protected $fillable = [
         'seed_key',

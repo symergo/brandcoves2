@@ -40,6 +40,17 @@ final class ProseCards
     private array $used = [];
 
     /**
+     * Every token this document could not link, as `kind:value`.
+     *
+     * Collected for `CoveProse`, which stores a Cove's rendered prose only
+     * when nothing that could start resolving later was turned into plain
+     * text (a guide published after this one, a brand that gains a page).
+     *
+     * @var list<string>
+     */
+    private array $rejected = [];
+
+    /**
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      */
     public function __construct(
@@ -92,6 +103,7 @@ final class ProseCards
              */
             $table = $this->markup->table($paragraph, $this->market, $this->allowed);
             if ($table !== null) {
+                $this->rejected = [...$this->rejected, ...$table['rejected']];
                 $out[] = [
                     'html' => '',
                     'groupIds' => [],
@@ -102,8 +114,11 @@ final class ProseCards
                 continue;
             }
 
+            $rendered = $this->markup->render($paragraph, $this->market, $this->allowed);
+            $this->rejected = [...$this->rejected, ...$rendered['rejected']];
+
             $out[] = [
-                'html' => $this->markup->render($paragraph, $this->market, $this->allowed)['html'],
+                'html' => $rendered['html'],
                 // Claimed before the next paragraph is walked, so "first
                 // mention wins" is decided in reading order.
                 'groupIds' => $this->claim($paragraph),
@@ -113,6 +128,17 @@ final class ProseCards
         }
 
         return $out;
+    }
+
+    /**
+     * The tokens rendered as plain text so far, across every block of this
+     * document.
+     *
+     * @return list<string>
+     */
+    public function rejected(): array
+    {
+        return $this->rejected;
     }
 
     /**

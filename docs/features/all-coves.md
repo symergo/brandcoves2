@@ -105,3 +105,9 @@ each other.
   leads here, and why it now names kinds rather than surfaces
 - [cove-curation.md](cove-curation.md) — where a Cove comes from
 - [daily-cove.md](daily-cove.md) — the edition archive this page samples
+
+## Cached (2026-09-27)
+
+Every section of `/coves` is cached per market for ten minutes (`bc:coves:{market}`), forgotten when
+a Cove is published and never kept past the Daily's drop time. A newly published Community Cove can
+take up to ten minutes to reach this band. See [speed.md](speed.md), "Cove pages".

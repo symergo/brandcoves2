@@ -36,3 +36,9 @@ Five explainer tiles then repeated the sections below them word for word. The re
 Result on local data: 2,245 px on a desktop (was 3,603), about 4,200 px on a phone (was 7,800).
 
 Still no counts or totals, as [homepage.md](homepage.md) decided for the front page.
+
+## Cached (2026-09-27)
+
+Today's edition, the days before, the personas and the guides are cached per market for ten
+minutes and forgotten when a Cove is published; the surprise pool's ids are cached ten minutes and
+still drawn from per request, so the band differs per visit. See [speed.md](speed.md), "Cove pages".

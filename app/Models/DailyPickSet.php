@@ -57,6 +57,10 @@ class DailyPickSet extends Model
             // to, worked out at build. Null on every other kind, and on an
             // entity Cove built before the column existed. See EntityLinks.
             'link_categories' => 'array',
+            // The prose as the page shows it, rendered at build. Read only
+            // through App\Services\Cove\CoveProse, which checks it still
+            // matches the text before trusting it.
+            'rendered_prose' => 'array',
         ];
     }
 

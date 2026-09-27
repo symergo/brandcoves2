@@ -378,3 +378,141 @@ schedule entry is replaced by a comment with the code to restore it; see
 - `curl -sI --max-time 5 https://staging.giftcoves.com/robots.txt` carries no `Set-Cookie`.
 - A client-side interaction still works. The `VITE_*` build variables are untouched by this, but
   it is the failure that looks like nothing.
+
+## Cove pages
+
+The pages that show a Cove (a Daily, a gift persona, a guide, a brand page with a written Cove, a
+shop page) and the pages that list them (`/coves`, Discover, `/guides`, `/gift-ideas`, `/brands`),
+plus the contribute board and the legal pages. Two kinds of change, following the owner's decision
+of 2026-09-27: work out at build what only changes at build, and keep shared lists in the cache for
+a few minutes. No "cache until something changes" scheme; the one exact forget is at publish.
+
+### A Cove's prose is rendered at build and stored
+
+Every view of a Cove page turned its text into HTML again: it built the link allowlist (the 300
+largest brands with a page and the 200 newest articles of the market, two queries), looked up brand
+page addresses (a third), and ran the token and paragraph passes over the article, its FAQ and each
+product's copy. None of it depends on the visitor or on stock.
+
+`App\Services\Cove\CoveProse` now does it when `EditionBuilder` builds, rebuilds, refreshes
+(`refreshCopy`) or redoes a Cove, and stores the result in `daily_pick_sets.rendered_prose`
+(migration `2026_09_28_001300_a_cove_keeps_its_rendered_prose`, one nullable column, expand-only).
+The pages read it through `CoveProse::for()`. What is stored, per page:
+
+| Page | Stored |
+|---|---|
+| Daily, persona | the editorial as blocks (paragraph html + the products it names) |
+| Guide, seasonal, advice | intro and body blocks, each product's copy by pick id, the FAQ, and the plain text for the meta description and the FAQPage JSON-LD |
+| Shop Cove, Brand Cove | the intro html, the body paragraphs, the plain blurb |
+
+Everything that depends on stock or price (the finds, the in-stock filter, prices, the rails) and
+everything with the host in it (canonical URLs, the JSON-LD's absolute URLs) stays live.
+
+Things worth knowing:
+
+- **`json`, not `jsonb`.** `jsonb` stores an object with its keys re-sorted, so a paragraph would
+  come back with its keys in another order and the page props would differ from a live render.
+  `json` keeps the text as written; nothing queries inside the column.
+- **A fingerprint decides whether the stored value is used.** It hashes everything the render
+  reads from the Cove itself: kind, market, slug, blurb, editorial, body, FAQ, source queries, the
+  stored link list and each pick's id, product and copy. Several writers change those with plain
+  queries (`bc:tidy-prose`, a product merge re-pointing picks, the content import), so a model
+  event would miss them; a fingerprint cannot. When it does not match, or nothing is stored, the
+  page renders live and caches that for a day under a key with the Cove's id, `updated_at` and
+  the fingerprint, so an edit is never served stale.
+- **What freezes.** A stored link reflects the site at build: a brand page that later disappears
+  still gets its link, a guide unpublished since still gets its link, a retitled product keeps
+  its old words in an unlabelled token. Accepted, because every such link goes to our own brand,
+  guide, product or search page, never to a shop.
+- **What does not freeze.** A `[[guide:...]]` to an article not published yet, or a
+  `[[brand:...]]` for a brand without a page yet, renders as plain text today; stored, it would
+  stay plain text for good. So a render with such a token is not stored, and the page renders it
+  live with the one-day cache: the link appears within a day of its target. (`ProseCards` now
+  collects the tokens it could not link for this.)
+- **Bump `CoveProse::VERSION`** when `CoveMarkup` or `ProseCards` change what they output, or stored
+  Coves keep the old markup until they are rebuilt.
+- **Storing never fails a build.** It runs after the build's transaction commits and logs a
+  warning on error; the page can always render the prose itself.
+- **Storing does not touch `updated_at`.** The sitemap reads it as the page's last change.
+- **Not exported.** `bc:export-content` drops `rendered_prose`: it holds this environment's
+  product ids in its links, and the far side renders its own.
+- **Older Coves**: `php artisan bc:store-cove-prose --write` renders and stores every published
+  Cove whose prose is missing or out of date (dry run without `--write`). Run it once after the
+  deploy that adds the column; until then those Coves use the one-day fallback.
+
+Tested in `CoveProseTest`: for each of the five pages, the page rendered from the stored prose is
+byte for byte the page rendered live (props and JSON-LD); the page reads the column; a plain-query
+edit shows at once; a link to an unpublished article is not frozen; the backfill leaves
+`updated_at` alone.
+
+Query counts on a warm page, locally (every other cache warm; "live" is the prose rendered again,
+as every view did before):
+
+| Page | live | stored |
+|---|---|---|
+| Daily | 11 | 9 |
+| Persona | 11 | 9 |
+| Guide | 12 | 8 |
+| Brand page with a Cove | 11 | 6 |
+| Shop Cove | 7 | 5 |
+
+The two queries saved on every page are the allowlist's; the rest is brand page lookups and
+merged-product lookups in the prose. On production the allowlist queries sort `brand_stats` and the
+published articles of a market, so the saving per view is larger than the count suggests.
+
+Also: `EditionPresenter::guide()` loaded the Daily's footer guide and counted its picks lazily, two
+queries per view; `DailyCoveController` and `GiftIdeasController` now eager-load it with the count.
+
+### Short caches for shared lists
+
+Per market, plain arrays only: `config/cache.php` refuses to unserialise objects in Redis
+(`serializable_classes`), so a cached model comes back as `__PHP_Incomplete_Class`. Nothing
+per visitor is in any of them (saved state and sign-in come from the shared props, per request).
+
+| What | Key | TTL | Why that long |
+|---|---|---|---|
+| `CoveRail`: a category's most-compared products | `bc:cove-rail:category:{market}:{md5}` | 30 min | moves when the catalogue is regrouped, twice a day. 23 rows are kept so the Cove's own picks (up to 20) can be dropped in PHP and the band still fills: one list serves every Cove sharing the category |
+| `CoveRail`: newest Coves of a band | `bc:cove-rail:coves:{market}:{band}` | 30 min | one more than shown, the Cove being read dropped in PHP |
+| `CoveRail`: a season's parts | `bc:cove-rail:series:{cove id}` | 30 min | a new part is published a few times a year; wrapped in an array because `remember()` treats a cached null as a miss, and null is the answer for most Coves |
+| `/coves`, every section | `bc:coves:{market}` | 10 min | the community band changes without a build; ten minutes is a short wait on an overview |
+| Discover: today, earlier days, personas, guides | `bc:discover:{market}` | 10 min | today's finds are filtered on stock inside it; a sold-out find can stay ten minutes on a hub card |
+| Discover: the surprise pool (ids) | `bc:discover:{market}:surprise-pool` | 10 min | the draw from it stays per request, so the band still differs per visit |
+| Brand page: Coves mentioning the brand | `bc:brand:coves:{market}:{slug}` | 1 h | a regex over every published article per view; changes when an article is published |
+| Brand page: related brands; `/brands` | `bc:brand:related:{market}:{slug}`, `bc:brands:{market}` | 30 min | `brand_stats` is rebuilt nightly |
+| Contribute: the ideas and vote counts | `bc:feature-board` | 5 min | forgotten on a vote and on any idea save; which ideas *you* voted for is read per request |
+| Legal pages, rendered | `bc:legal:{page}:{lang}:{mtime}:{company hash}` | 1 day | a changed file or imprint is a new key, so it shows at once |
+
+Without a cache, two pages lost work outright: `/guides` selects only the seven columns its cards
+use (it loaded every column, body and stored prose included, for sixty cards), and the
+`/gift-ideas` shelf counts each persona's in-stock finds in SQL (`withCount`) instead of loading
+every pick and its product for one number per card.
+
+### A new Cove shows at release
+
+`App\Services\Cove\CoveCaches` names the Cove-list keys (`/coves`, Discover, the rail bands) and
+forgets them for a market in `forgetMarket()`, which `BuildDailyEdition`, `BuildCove` (what
+`PublishDueCoves` dispatches) and `RedoCove` call after a build.
+
+That alone would not cover the Daily: it is built at 06:00 and only counts as published from its
+drop time (`giftcoves.picks.drop_time`, 09:00). A list cached at 08:55 would carry yesterday's
+edition until 09:25. So every Cove-list TTL goes through `CoveCaches::ttl()`, which never runs past
+the next drop time. No job has to run at 09:00.
+
+Not forgotten on purpose: the home page's shelf of other Coves (`home.coves:{market}`). It leaves
+the Dailies out and is a random draw held for an hour so that a reload shows the same shelf; the
+home page's Today band is read uncached.
+
+Tested in `CoveCachesTest` (a Cove built through `BuildCove` is on `/coves` and Discover at once;
+another market's keys are left alone; a TTL at 08:55 ends at 09:00).
+
+Measured locally on the first view (caches empty) and the second, same data as `CoveProseTest`:
+
+| Page | first view | second view |
+|---|---|---|
+| `/coves` | 8 queries, 279 ms | 1 query, 27 ms |
+| Discover | 11 queries, 100 ms | 3 queries, 39 ms |
+| Brand page with a Cove | 12 queries, 107 ms | 6 queries, 29 ms |
+| Guide | 9 queries, 54 ms | 5 queries, 37 ms |
+| Persona | 21 queries, 114 ms | 6 queries, 33 ms |
+| Contribute | 2 queries | 1 query |
+| Privacy | 138 ms | 18 ms |

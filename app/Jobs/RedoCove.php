@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\CovePlan;
+use App\Services\Cove\CoveCaches;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\RedoOptions;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -50,6 +51,12 @@ class RedoCove implements ShouldQueue
             $plan,
             $this->reselect ? RedoOptions::reselect() : RedoOptions::rewrite(),
         );
+
+        // New products and words at the same address: the lists showing its
+        // title and blurb should not wait out their short caches.
+        if ($edition !== null) {
+            CoveCaches::forgetMarket($plan->market);
+        }
 
         Log::info('Cove redone', [
             'plan' => $plan->id,

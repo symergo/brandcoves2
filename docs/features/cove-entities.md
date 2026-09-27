@@ -318,3 +318,11 @@ count and "Alle Sony aanbiedingen" when it did not. It is one line now, "Bekijk 
 aanbiedingen", for brands and shops alike, in four languages. A number made itself the headline
 of a link whose job is to say where it goes; the owner asked for the plain line. The
 `entity.total` prop still arrives and is unused on the page; `see_all_uncounted` is gone.
+
+## The prose is stored too (2026-09-27)
+
+Beside the link list, a shop or brand Cove now stores its prose as rendered
+(`daily_pick_sets.rendered_prose`), so the page neither works out the link list nor rebuilds the
+allowlist. The stored value includes the link list in its fingerprint: `bc:store-entity-links`
+changing a list makes the page render live until the prose is stored again
+(`bc:store-cove-prose --write`). See [speed.md](speed.md), "Cove pages".

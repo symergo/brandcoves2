@@ -598,3 +598,10 @@ for the top category, per slug — ten thousand aggregates a night on a market w
 brands. It now takes one pass over `products` grouped by spelling and merchant, one over
 `product_groups` grouped by spelling and category, and folds per slug in memory. Same facts;
 the tie-breaks (lowest merchant id, then category name) are stable between runs.
+
+## Cached (2026-09-27)
+
+"Coves mentioning this brand" (a regex over every published article) is cached an hour per market
+and brand; related brands and the `/brands` index half an hour, since `brand_stats` is rebuilt
+nightly. A written Brand Cove's prose is rendered at build and stored. See [speed.md](speed.md),
+"Cove pages".

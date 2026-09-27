@@ -242,7 +242,12 @@ class DailyCoveController extends Controller
             // A preview is for the edition that has *not* dropped yet, so the
             // published filter is exactly what has to come off.
             ->unless($preview, fn ($q) => $q->published())
-            ->with(['picks.group']);
+            /*
+             * The guide in the footer, with its item count, in the same
+             * round: `EditionPresenter::guide()` otherwise loaded it lazily
+             * and then counted its picks, two more queries per view.
+             */
+            ->with(['picks.group', 'featured' => fn ($q) => $q->withCount('picks')]);
 
         if ($slug === null) {
             return $query->orderByDesc('drop_date')->first();
