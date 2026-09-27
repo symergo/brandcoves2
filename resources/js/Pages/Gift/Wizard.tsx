@@ -10,6 +10,9 @@ import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Compon
 import InfoTip from '../../Components/InfoTip'
 import type { SceneKey } from '../../Components/SceneIllustration'
 import ShareRow from '../../Components/ShareRow'
+import AddProduct from '../../Components/AddProduct'
+import Button from '../../Components/Button'
+import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 
@@ -115,6 +118,91 @@ function WayHead({ icon, title }: { icon: ReactNode; title: string }) {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">{icon}</span>
             <span className="font-medium text-ink">{title}</span>
         </span>
+    )
+}
+
+/**
+ * "Weet je al wat je zoekt?" (owner, 2026-09-27): a search that puts things
+ * straight on the list for this person, above the ways, full width.
+ *
+ * The list for a saved person is fetched (and made, the first time) when the
+ * button is pressed, not when the page opens: choosing a person must not make
+ * a list by itself. Then it is the list page's own add panel (AddProduct), so
+ * catalogue results, shops we do not mirror and something typed by hand all
+ * work here as they do there; the server's toast names the list. Without a
+ * saved person there is no list to put it on, so the card is the site search,
+ * where Bewaar asks which list.
+ */
+function SearchToListCard({ recipient, market }: { recipient: Recipient | null; market: SharedProps['market'] }) {
+    const { t } = useTranslations()
+    const base = `/${market.key}`
+    const [listId, setListId] = useState<string | null>(null)
+    const [open, setOpen] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const [failed, setFailed] = useState(false)
+
+    const start = () => {
+        if (recipient === null) {
+            return
+        }
+        if (listId !== null) {
+            setOpen(true)
+            return
+        }
+        setBusy(true)
+        setFailed(false)
+        send<{ id: string }>(`${base}/people/${recipient.id}/list`, 'POST')
+            .then((list) => {
+                setListId(list.id)
+                setOpen(true)
+            })
+            .catch(() => setFailed(true))
+            .finally(() => setBusy(false))
+    }
+
+    return (
+        <div className={`${wayCard} mt-4 hover:border-line`}>
+            <WayHead icon={<ToolIcon name="search" className="h-5 w-5" />} title={t('gift.way_search')} />
+            {recipient !== null ? (
+                <>
+                    <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint', { name: recipient.name })}</span>
+                    {open && listId !== null ? (
+                        <div className="mt-4">
+                            <AddProduct base={base} listId={listId} market={market} defaultOpen onListPage={false} onClose={() => setOpen(false)} />
+                        </div>
+                    ) : (
+                        <div className="mt-4">
+                            <Button onClick={start} busy={busy}>
+                                <span className="inline-flex items-center gap-2">
+                                    <ToolIcon name="search" className="h-4 w-4" />
+                                    {t('gift.way_search_cta', { name: recipient.name })}
+                                </span>
+                            </Button>
+                            {failed && (
+                                <p className="mt-2 text-sm text-danger" role="alert">
+                                    {t('gift.way_search_failed')}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </>
+            ) : (
+                <>
+                    <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint_none')}</span>
+                    <form action={`${base}/search`} method="get" className="mt-4 flex gap-2">
+                        <input
+                            type="search"
+                            name="q"
+                            required
+                            aria-label={t('gift.way_search')}
+                            placeholder={t('gift.way_search_placeholder')}
+                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                        />
+                        <Button type="submit">{t('gift.way_search_go')}</Button>
+                    </form>
+                </>
+            )}
+        </div>
     )
 }
 
@@ -617,6 +705,8 @@ export default function GiftWizard(props: Props) {
                     <h2 id="gift-ways" className="mt-5 text-lg font-medium">
                         {t('gift.ways_title')}
                     </h2>
+
+                    <SearchToListCard recipient={recipient} market={market} />
 
                     {/*
                       Two rows since the owner's review of 2026-09-27: the ways

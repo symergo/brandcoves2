@@ -50,6 +50,13 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    card; then *Of vraag het iemand*: ask others, and ask the person themselves. Three and two cards
    (two and two without personas), so no card is ever alone on a row. Each card has its icon beside
    the title, which makes them shorter.
+   - **"Weet je al wat je zoekt?"**, a full-width card above both rows (owner: "a search card that
+     puts items straight on the list"). For a saved person its button POSTs to
+     `/people/{id}/list` (`PersonController::listFor`, JSON), which returns the list for them and
+     makes it the first time, then opens the list page's own add panel (`AddProduct`) for that list:
+     catalogue results, shops we do not mirror and something typed by hand, as on the list itself.
+     Pressed, not on page load, so choosing a person never makes a list. Without a saved person it
+     is the site search, where Bewaar asks which list.
    - **The type card is a dropdown** ("Kies een type…", up to 30 persona Coves, this kind of person's
      first). It was four cards inside a card, the tallest thing on the page, and every other card was
      stretched to its height.

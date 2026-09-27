@@ -22,6 +22,7 @@ use App\Services\Social\PersonProfile;
 use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -262,6 +263,25 @@ class PersonController extends Controller
         }
 
         return redirect()->to($current->url("lists/{$list['id']}").'?panel=share');
+    }
+
+    /**
+     * The list for this person, as JSON: the search card on Find a gift
+     * (owner, 2026-09-27: "a search card that puts items straight on the
+     * list"). Asked for when the card is pressed, not when the page opens, so
+     * choosing a person never makes a list by itself; the first press does,
+     * the same way the results page's saves do.
+     */
+    public function listFor(Request $request, CurrentMarket $current, GiftResults $results, string $market, string $recipient): JsonResponse
+    {
+        $person = $this->findOwned($request, $recipient);
+        $list = $results->recipientList(Owner::fromRequest($request), $person, $current);
+
+        if ($list === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return response()->json(['id' => $list['id'], 'title' => $list['title'], 'kind' => $list['kind']]);
     }
 
     private function findOwned(Request $request, string $id): Recipient

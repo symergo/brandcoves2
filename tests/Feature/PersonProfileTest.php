@@ -236,6 +236,23 @@ class PersonProfileTest extends TestCase
     }
 
     #[Test]
+    public function the_search_card_gets_the_list_for_a_person_and_makes_it_on_first_use(): void
+    {
+        // Find a gift's "Weet je al wat je zoekt?" (2026-09-27).
+        $mum = Recipient::create(['owner_user_id' => $this->me->id, 'name' => 'Mum']);
+
+        $first = $this->actingAs($this->me)->postJson("/be-nl/people/{$mum->id}/list")->assertOk();
+        $list = Wishlist::query()->where('recipient_id', $mum->id)->sole();
+        $first->assertJson(['id' => $list->id]);
+
+        $this->actingAs($this->me)->postJson("/be-nl/people/{$mum->id}/list")->assertJson(['id' => $list->id]);
+        $this->assertSame(1, Wishlist::query()->where('recipient_id', $mum->id)->count());
+
+        $theirs = Recipient::create(['owner_user_id' => User::factory()->create()->id, 'name' => 'Theirs']);
+        $this->actingAs($this->me)->postJson("/be-nl/people/{$theirs->id}/list")->assertNotFound();
+    }
+
+    #[Test]
     public function sharing_the_list_for_a_person_opens_it_on_share_and_makes_one_only_when_needed(): void
     {
         // "Deel de lijst voor … en laat anderen iets voorstellen" (2026-09-27).

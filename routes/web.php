@@ -591,6 +591,12 @@ Route::prefix('{market}')->group(function () {
             ->whereUuid('recipient')
             ->middleware('throttle:30,1')
             ->name('people.share-list');
+        // The search card on Find a gift: the list for this person as JSON,
+        // made on the first press, so the add panel can put things on it.
+        Route::post('/people/{recipient}/list', [PersonController::class, 'listFor'])
+            ->whereUuid('recipient')
+            ->middleware('throttle:30,1')
+            ->name('people.list');
 
         // Hand a list to the person it was built for. It stops being research
         // and becomes theirs — which is what makes it claimable.
