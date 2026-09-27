@@ -169,3 +169,11 @@ having already made once with `assertDontSee`.
 - [all-coves.md](all-coves.md) — `/coves`, where the whole shelf is on show
 - [seasonal-series.md](seasonal-series.md) — the seasons the series strip is for
 - [giftability.md](giftability.md) — `giftable` against `worth_showing`
+
+## Cached (2026-09-27)
+
+The rail's three queries are cached per market for half an hour: a category's most-compared
+products (23 kept, so the Cove's own picks can be dropped in PHP and one list serves every Cove of
+the category), the newest Coves of a band (one more than shown, the current one dropped), and a
+season's parts per Cove. Publishing a Cove forgets the bands, and no band outlives the Daily's drop
+time. Details: [speed.md](speed.md), "Cove pages".

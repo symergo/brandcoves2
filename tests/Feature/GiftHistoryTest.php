@@ -360,6 +360,39 @@ class GiftHistoryTest extends TestCase
         $this->assertNotContains($dear->id, $ids);
     }
 
+    #[Test]
+    public function the_next_steps_are_worked_out_once_and_again_when_what_goes_in_changes(): void
+    {
+        // Kept an hour (speed wave 2): a second view does not fetch the
+        // candidates again, and a new past gift, a new budget or an item now on
+        // her list is a different key, so the row follows at once.
+        $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
+        $this->mum->gifts()->create(['title' => 'Moka pot', 'group_id' => $moka->id, 'given_year' => (int) now()->year]);
+        $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
+        $dear = ProductGroup::factory()->priced(9000)->create(['title' => 'Elektrische grinder', 'brand' => 'Sage']);
+
+        $ids = fn (): array => array_column($this->actingAs($this->giver)->get("/be-nl/people/{$this->mum->id}")
+            ->viewData('page')['props']['nextSteps'], 'id');
+        $fetches = function (callable $view): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $view();
+            $n = collect(DB::getQueryLog())->filter(fn ($q) => str_contains($q['query'], 'product_links'))->count();
+            DB::disableQueryLog();
+
+            return $n;
+        };
+
+        $first = $ids();
+        $this->assertContains($dear->id, $first);
+        $this->assertSame(0, $fetches($ids), 'the second view fetched the candidates again');
+        $this->assertSame($first, $ids());
+
+        $this->mum->update(['budget_max' => 2000]);
+        $this->assertNotContains($dear->id, $ids());
+        $this->assertContains($cheap->id, $ids());
+    }
+
     /**
      * @param  array<string, mixed>  $brief
      * @return list<int>

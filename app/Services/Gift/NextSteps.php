@@ -10,6 +10,8 @@ use App\Models\Recipient;
 use App\Models\WishlistItem;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -64,6 +66,76 @@ final class NextSteps
         ];
 
         $budget = $recipient->budget_max;
+        $year = CarbonImmutable::now()->year;
+
+        /*
+         * The ranked ids, kept an hour (speed wave 2, 2026-09-27).
+         *
+         * Three candidate queries, one of them a 24-word ILIKE, and the
+         * scoring ran on every view of the person's page and every Find a gift
+         * board for them. The answer only moves when what goes into it moves,
+         * so all of that is in the key: the past gifts looked at, the budget,
+         * everything excluded (their history, their lists, the board on
+         * screen), the limit and the year the scorer weighs recency by. A
+         * product that went out of stock inside the hour drops at the load
+         * below, which re-applies `shown()`.
+         *
+         * Plain arrays only: the cache store refuses to rebuild objects.
+         */
+        $key = 'next-steps:'.$recipient->id.':'.$market->value.':'.$limit.':'.sha1((string) json_encode([
+            // Everything of a past gift the fetch and the scorer read.
+            array_map(fn (PastGift $g) => [$g->source, $g->title, $g->groupId, $g->year, $g->brand, $g->category], $anchors),
+            $budget,
+            $year,
+            collect($exclude)->map(fn ($id) => (int) $id)->unique()->sort()->values()->all(),
+        ]));
+
+        $groups = null;
+
+        /** @var list<array{groupId: int, score: float, reason: string, after: string}> $ranked */
+        $ranked = Cache::remember($key, 3600, function () use ($anchors, $exclude, $budget, $market, $limit, $year, &$groups): array {
+            [$steps, $groups] = $this->rank($anchors, $exclude, $budget, $market, $limit, $year);
+
+            return array_map(fn (NextStep $step) => [
+                'groupId' => $step->groupId,
+                'score' => $step->score,
+                'reason' => $step->reason,
+                'after' => $step->after,
+            ], $steps);
+        });
+
+        if ($ranked === []) {
+            return [];
+        }
+
+        $groups ??= $this->shown($market)
+            ->whereIn('id', array_column($ranked, 'groupId'))
+            ->get()
+            ->keyBy('id');
+
+        $out = [];
+
+        foreach ($ranked as $row) {
+            if (isset($groups[$row['groupId']])) {
+                $out[] = [
+                    'step' => new NextStep($row['groupId'], (float) $row['score'], $row['reason'], $row['after']),
+                    'group' => $groups[$row['groupId']],
+                ];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Fetch, score and rank: the work {@see forRecipient()} keeps an hour.
+     *
+     * @param  list<PastGift>  $anchors
+     * @param  list<int>  $exclude
+     * @return array{0: list<NextStep>, 1: Collection<int, ProductGroup>}
+     */
+    private function rank(array $anchors, array $exclude, ?int $budget, Market $market, int $limit, int $year): array
+    {
         $families = self::families();
         $pastIds = array_values(array_filter(array_map(fn (PastGift $g) => $g->groupId, $anchors)));
 
@@ -78,7 +150,7 @@ final class NextSteps
         $ids = array_values(array_diff(array_unique($ids), $exclude));
 
         if ($ids === []) {
-            return [];
+            return [[], collect()];
         }
 
         $groups = $this->shown($market)->whereIn('id', $ids)->get()->keyBy('id');
@@ -98,11 +170,11 @@ final class NextSteps
             families: $families,
             exclude: $exclude,
             budgetMax: $budget,
-            thisYear: CarbonImmutable::now()->year,
+            thisYear: $year,
             limit: $limit,
         );
 
-        return array_map(fn (NextStep $step) => ['step' => $step, 'group' => $groups[$step->groupId]], $steps);
+        return [$steps, $groups];
     }
 
     /**

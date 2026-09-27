@@ -117,3 +117,9 @@ bounded by the catalogue; that is the practice since the editorial API and the a
 The footer link to the page said "Over ons" / "About" and now says "Over GiftCoves" / "About
 GiftCoves" in all four languages, the page's own title. The owner asked for the name; the page
 is about the site, not about a team.
+
+## Cached (2026-09-27)
+
+The rendered page is cached for a day under a key with the file's modification time and the
+company details, so an edited file or a changed imprint shows at once. See [speed.md](speed.md),
+"Cove pages".

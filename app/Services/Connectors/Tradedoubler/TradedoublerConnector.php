@@ -8,7 +8,9 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\LiveRequest;
 use App\Services\Connectors\Offer;
+use App\Services\Connectors\PooledSearch;
 use App\Services\Connectors\RateLimiter;
 use App\Services\Connectors\SourceSwitch;
 use Illuminate\Http\Client\RequestException;
@@ -58,7 +60,7 @@ use Throwable;
  * field read below has an explicit fallback chain for that reason, and the ones
  * that carry money or identity are the ones to check first.
  */
-class TradedoublerConnector implements LiveConnector
+class TradedoublerConnector implements LiveConnector, PooledSearch
 {
     private const API_BASE = 'https://api.tradedoubler.com/1.0';
 
@@ -92,7 +94,7 @@ class TradedoublerConnector implements LiveConnector
             return [];
         }
 
-        $cacheKey = sprintf('bc:td:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
 
         // Raw payload in the cache, never Offer objects — a serialised domain
         // object in a shared cache breaks on the redeploy that changes its
@@ -112,6 +114,92 @@ class TradedoublerConnector implements LiveConnector
         }
 
         return $this->offersFrom($products, $market, $limit);
+    }
+
+    /**
+     * The same search as search(), described for a parallel send
+     * (PooledSearch): same cache, same limiter, same status handling. The
+     * token rides in the query string here as it does in request().
+     */
+    public function searchRequest(string $query, Market $market, int $limit = 24, int $timeout = 3): array|LiveRequest
+    {
+        $query = trim($query);
+        if ($query === '' || ! $this->supports($market)) {
+            return [];
+        }
+
+        $cacheKey = $this->searchCacheKey($query, $market, $limit);
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $this->offersFrom($cached, $market, $limit);
+        }
+
+        $token = (string) config('giftcoves.connectors.tradedoubler.token');
+
+        if ($token === '' || ! $this->limiter('search')->attempt()) {
+            return [];
+        }
+
+        return new LiveRequest(
+            url: self::API_BASE.'/products.json',
+            query: $this->queryFor($token, $market, $this->searchParams($query, $limit)),
+            headers: ['Accept' => 'application/json'],
+            token: null,
+            finish: function (?Response $response) use ($cacheKey, $market, $limit): array {
+                $response = $response === null ? null : $this->checked($response, 'search');
+                $products = $response === null ? [] : $this->products($response, $market);
+
+                if ($products !== []) {
+                    Cache::put($cacheKey, $products, (int) config('giftcoves.search.live_cache_ttl'));
+                }
+
+                return $this->offersFrom($products, $market, $limit);
+            },
+        );
+    }
+
+    private function searchCacheKey(string $query, Market $market, int $limit): string
+    {
+        return sprintf('bc:td:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
+    }
+
+    /** @return array<string, mixed> */
+    private function searchParams(string $query, int $limit): array
+    {
+        return [
+            'q' => $query,
+            // Products, not offers. One product can fan out into several
+            // offers, so asking for `limit` products and capping the offers
+            // afterwards is what keeps a single popular product from filling
+            // the whole page with one shop's neighbours.
+            'limit' => $limit,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $params
+     * @return array<string, mixed>
+     */
+    private function queryFor(string $token, Market $market, array $params): array
+    {
+        return [
+            /*
+             * The token rides in the QUERY STRING, not a header.
+             *
+             * Tradedoubler's Open Product API has no token exchange and
+             * no Authorization header — which means the credential is
+             * in the URL, and therefore in any log line that records
+             * one. Nothing here logs `$r->url()`, and nothing should:
+             * the check command prints the token's length, never the
+             * URL, for this reason.
+             */
+            'token' => $token,
+            ...$params,
+            // Market scoping last so it cannot be overwritten by a
+            // caller's parameter of the same name.
+            ...($market->tradedoublerQuery() ?? []),
+        ];
     }
 
     /**
@@ -256,14 +344,7 @@ class TradedoublerConnector implements LiveConnector
             return [];
         }
 
-        $response = $this->request($market, 'search', [
-            'q' => $query,
-            // Products, not offers. One product can fan out into several
-            // offers, so asking for `limit` products and capping the offers
-            // afterwards is what keeps a single popular product from filling
-            // the whole page with one shop's neighbours.
-            'limit' => $limit,
-        ]);
+        $response = $this->request($market, 'search', $this->searchParams($query, $limit));
 
         return $response === null ? [] : $this->products($response, $market);
     }
@@ -330,29 +411,19 @@ class TradedoublerConnector implements LiveConnector
                 ->retry(2, 200, fn (Throwable $e): bool => ! $e instanceof RequestException
                     || $e->response->serverError(), throw: false)
                 ->withHeaders(['Accept' => 'application/json'])
-                ->get(self::API_BASE.'/products.json', [
-                    /*
-                     * The token rides in the QUERY STRING, not a header.
-                     *
-                     * Tradedoubler's Open Product API has no token exchange and
-                     * no Authorization header — which means the credential is
-                     * in the URL, and therefore in any log line that records
-                     * one. Nothing here logs `$r->url()`, and nothing should:
-                     * the check command prints the token's length, never the
-                     * URL, for this reason.
-                     */
-                    'token' => $token,
-                    ...$params,
-                    // Market scoping last so it cannot be overwritten by a
-                    // caller's parameter of the same name.
-                    ...($market->tradedoublerQuery() ?? []),
-                ]);
+                ->get(self::API_BASE.'/products.json', $this->queryFor($token, $market, $params));
         } catch (Throwable $e) {
             Log::warning('tradedoubler request failed', ['error' => $e->getMessage()]);
 
             return null;
         }
 
+        return $this->checked($response, $bucket);
+    }
+
+    /** The response when it is one to read, after acting on what it says about us. */
+    private function checked(Response $response, string $bucket): ?Response
+    {
         if ($response->status() === 429) {
             $this->limiter($bucket)->penalise(
                 (int) config('giftcoves.connectors.tradedoubler.cooldown_seconds')

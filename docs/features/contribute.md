@@ -235,3 +235,10 @@ A vote and a suggestion are tied to an account, so both are personal data.
 - Telling a suggester by email that their idea was published or declined.
 - The ideas in the `bc:export-content` envelope: they are managed in production's admin, not
   authored here.
+
+## Cached (2026-09-27)
+
+The board's ideas and vote counts are cached for five minutes, shared by every reader, and forgotten
+when somebody votes or an idea is saved (so a voter sees their vote counted, and an idea published in
+the admin is on the board at once). Which ideas the reader voted for is read per request. See
+[speed.md](speed.md), "Cove pages".

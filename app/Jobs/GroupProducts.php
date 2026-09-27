@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Market;
 use App\Services\Ingestion\ProductGrouper;
+use App\Services\Search\SearchGenerations;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -41,6 +42,11 @@ class GroupProducts implements ShouldBeUnique, ShouldQueue
     public function handle(ProductGrouper $grouper): void
     {
         $result = $grouper->run($this->market);
+
+        // The catalogue under every cached search of this market just
+        // changed: retire them all (search results and facets are kept 12
+        // hours between these moments). See SearchGenerations.
+        SearchGenerations::bumpMarket($this->market);
 
         Log::info('Products grouped', [
             'market' => $this->market->value,

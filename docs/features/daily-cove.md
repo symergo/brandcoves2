@@ -622,3 +622,12 @@ failure was not.
 is getting slow as the catalogue grows; raising `retry_after` stops the retry storm but does not make
 that job finish. And `es` genuinely has no catalogue — `Edition skipped: not enough finds
 {"market":"es","found":0}` — so `/es/daily` is a correct 404 until that market has products.
+
+## Stored prose and cached lists (2026-09-27)
+
+The edition's prose is rendered with its links when the edition is built and stored in
+`daily_pick_sets.rendered_prose`; the page reads it instead of rebuilding the link allowlist per
+view. An edit made outside the builder shows at once (the stored value carries a fingerprint of the
+text and falls back to a live render). The lists that name today's edition (`/coves`, Discover,
+the rail) cache for minutes, are forgotten when an edition is built, and never outlive the drop
+time. Why each piece is shaped that way: [speed.md](speed.md), "Cove pages".

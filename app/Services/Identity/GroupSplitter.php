@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ingestion\ProductGrouper;
+use App\Services\Search\SearchGenerations;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -56,7 +57,7 @@ final class GroupSplitter
             throw new InvalidArgumentException('Splitting off every offer would leave an empty product. Leave at least one behind.');
         }
 
-        return DB::transaction(function () use ($group, $offers, $by, $reason): ProductGroup {
+        $new = DB::transaction(function () use ($group, $offers, $by, $reason): ProductGroup {
             $key = 'split:'.$offers->first()->id;
 
             foreach ($offers as $offer) {
@@ -104,6 +105,11 @@ final class GroupSplitter
 
             return $new->refresh();
         });
+
+        // A new card that no cached search of the market knows about yet.
+        SearchGenerations::bumpMarket($group->market);
+
+        return $new;
     }
 
     /** The same slug the grouper writes, so a split product's URL looks like any other. */

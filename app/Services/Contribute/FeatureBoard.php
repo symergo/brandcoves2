@@ -8,6 +8,7 @@ use App\Enums\FeatureStatus;
 use App\Enums\ModerationStatus;
 use App\Models\FeatureIdea;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * The voting board on the contribute page: which ideas, in which order, in
@@ -30,14 +31,35 @@ use App\Models\User;
 final class FeatureBoard
 {
     /**
+     * The published ideas and their vote counts, shared by every reader.
+     *
+     * Five minutes: the board is read on every view of the contribute page
+     * and changes when somebody votes or an idea is edited. A vote forgets it
+     * (FeatureVoting), so a voter never sees their own vote missing from the
+     * count; an edit in the admin shows within five minutes. Which ideas this
+     * reader voted for is never cached: that is per person, asked per request.
+     */
+    public const CACHE_KEY = 'bc:feature-board';
+
+    private const TTL = 300;
+
+    /**
      * @return list<array{id: int, title: string, body: string, status: string, votes: int, votedByMe: bool, canVote: bool}>
      */
     public function ideas(?User $reader, string $language): array
     {
-        $ideas = FeatureIdea::query()
-            ->published()
-            ->withCount('votes')
-            ->get();
+        // Raw rows in the cache and models rebuilt from them here: the cache
+        // refuses to unserialise objects (`serializable_classes` is off).
+        $ideas = FeatureIdea::hydrate(Cache::remember(
+            self::CACHE_KEY,
+            self::TTL,
+            fn (): array => FeatureIdea::query()
+                ->published()
+                ->withCount('votes')
+                ->get()
+                ->map(fn (FeatureIdea $idea): array => $idea->getAttributes())
+                ->all(),
+        ));
 
         $mine = $reader === null
             ? []

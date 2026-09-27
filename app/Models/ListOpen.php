@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Support\Owner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -41,6 +42,33 @@ class ListOpen extends Model
     public function wishlist(): BelongsTo
     {
         return $this->belongsTo(Wishlist::class);
+    }
+
+    /**
+     * {@see record()} from the shared page, at most once an hour per reader
+     * and list.
+     *
+     * The shared page is read far more often than it changes hands: the same
+     * few people open one list many times in a week, and each open rewrote
+     * this row only to move `last_opened_at` by minutes. Nothing reads that
+     * column to within an hour (it orders "recently opened"), so a repeat
+     * inside the hour is skipped on a cache marker. The first open always
+     * writes, which is the one that grants the bookmark.
+     */
+    public static function recordFromRead(Wishlist $list, Owner $reader): void
+    {
+        $attributes = $reader->attributes('user_id', 'anon_id');
+        $who = $attributes['user_id'] !== null ? 'u'.$attributes['user_id'] : 'a'.$attributes['anon_id'];
+
+        if ($attributes['user_id'] === null && $attributes['anon_id'] === null) {
+            return;
+        }
+
+        if (! Cache::add("list-open:{$list->id}:{$who}", true, 3600)) {
+            return;
+        }
+
+        self::record($list, $reader);
     }
 
     /**

@@ -101,6 +101,11 @@ The offers stay folded in the database long after the marker expires, so a throt
 exactly the page a folded one would. This also covers the search page, where the connector was
 already serving a cached payload while the write ran every time.
 
+Since 2026-09-27 the request that wins the marker queues the fetch and the fold
+(`App\Jobs\PullLiveSearch`) instead of doing them, and renders from what is stored. A crawler
+walking the brand pages no longer waits on bol per brand; a brand's bol-only products show from the
+next view. See [search.md](search.md), "The live shops are asked in the background".
+
 ### `BrandAttribution`: the part that makes it work at all
 
 bol's catalogue API returns **no brand field**. `BolConnector::normalise()` sets it null on purpose —
@@ -598,3 +603,10 @@ for the top category, per slug — ten thousand aggregates a night on a market w
 brands. It now takes one pass over `products` grouped by spelling and merchant, one over
 `product_groups` grouped by spelling and category, and folds per slug in memory. Same facts;
 the tie-breaks (lowest merchant id, then category name) are stable between runs.
+
+## Cached (2026-09-27)
+
+"Coves mentioning this brand" (a regex over every published article) is cached an hour per market
+and brand; related brands and the `/brands` index half an hour, since `brand_stats` is rebuilt
+nightly. A written Brand Cove's prose is rendered at build and stored. See [speed.md](speed.md),
+"Cove pages".

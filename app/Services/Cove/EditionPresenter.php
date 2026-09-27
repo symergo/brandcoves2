@@ -6,9 +6,6 @@ namespace App\Services\Cove;
 
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Services\Editorial\Allowlist;
-use App\Services\Editorial\ProseCards;
-use App\Services\Guides\CoveMarkup;
 use App\Support\CurrentMarket;
 
 /**
@@ -29,8 +26,7 @@ use App\Support\CurrentMarket;
 class EditionPresenter
 {
     public function __construct(
-        private readonly Allowlist $allowlist,
-        private readonly CoveMarkup $markup,
+        private readonly CoveProse $prose,
     ) {}
 
     /**
@@ -46,6 +42,10 @@ class EditionPresenter
      * writer saying "this paragraph is about that thing"; reading the ids back
      * out per paragraph is what lets the product appear where it is discussed.
      *
+     * Rendered when the Cove was built and stored with it; see CoveProse for
+     * when the page renders it itself instead. `$current` is the market the
+     * page is read in, which is always the Cove's own.
+     *
      * @return list<array{html: string, groupIds: list<int>}>
      */
     public function editorial(DailyPickSet $edition, CurrentMarket $current): array
@@ -54,21 +54,7 @@ class EditionPresenter
             return [];
         }
 
-        $groups = $edition->picks
-            ->map(fn (DailyPick $pick) => $pick->group)
-            ->filter()
-            ->values();
-
-        // This Cove's finds, plus the guides this market has published — a Cove
-        // that can point at the guide for the thing it just showed you is the
-        // whole reason the two live on one page.
-        $allowed = $this->allowlist->full($groups, $current->get());
-
-        // One document, so a product introduced in the first paragraph does
-        // not get a second card further down. See ProseCards for why this is
-        // constructed rather than injected.
-        return (new ProseCards($this->markup, $current->get(), $allowed))
-            ->blocks($edition->editorial);
+        return $this->prose->for($edition)['editorial'] ?? [];
     }
 
     /**
@@ -126,7 +112,10 @@ class EditionPresenter
             'title' => $guide->theme_title,
             'intro' => $guide->theme_blurb,
             'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
-            'itemCount' => $guide->picks()->count(),
+            // Counted by the query that loaded the Cove when it could be
+            // (DailyCoveController eager-loads it), rather than one more
+            // query per view here.
+            'itemCount' => $guide->picks_count ?? $guide->picks()->count(),
             // The demand that justified writing it. Shown because it is the
             // honest answer to "why this guide" and because it is a fact only
             // this site has.

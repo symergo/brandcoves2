@@ -10,11 +10,9 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
-use App\Services\Cove\EntityLinks;
+use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
-use App\Services\Editorial\Allowlist;
-use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\EntityCoveContext;
@@ -31,6 +29,7 @@ use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -100,6 +99,15 @@ class BrandController extends Controller
 {
     /** Built once per request; three regions ask for the same facts. */
     private ?BrandContext $pageContext = null;
+
+    /**
+     * An hour for "Coves mentioning this brand": the slowest part of the page
+     * (a regex over every published article) with the slowest-moving answer.
+     */
+    private const COVES_TTL = 3600;
+
+    /** Half an hour for the lists built from `brand_stats`, rebuilt nightly. */
+    private const LISTS_TTL = 1800;
 
     /**
      * `string $marketSegment` is declared and unused on purpose.
@@ -185,10 +193,12 @@ class BrandController extends Controller
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
+            // One page and whether another follows: no total (see
+            // SearchController::present()).
             'results' => [
-                'total' => $result->groups->total(),
+                'empty' => $result->isEmpty(),
                 'currentPage' => $result->groups->currentPage(),
-                'lastPage' => $result->groups->lastPage(),
+                'hasMore' => $result->groups->hasMorePages(),
                 'items' => array_map($this->card(...), $result->groups->items()),
             ],
             /*
@@ -295,7 +305,7 @@ class BrandController extends Controller
             // The sidebar, not a page of results: these are the products the
             // reader can actually see next to the writing.
             items: [],
-            total: $result->groups->total(),
+            total: (int) $stat->product_count,
             page: EntityCoveRegions::BRAND,
             entity: $stat->brand,
             slug: $stat->slug,
@@ -325,7 +335,7 @@ class BrandController extends Controller
             'entity' => [
                 'name' => $stat->brand,
                 'kind' => 'brand',
-                'total' => $result->groups->total(),
+                'total' => (int) $stat->product_count,
                 'logo' => null,
             ],
             'cove' => $cove,
@@ -369,49 +379,30 @@ class BrandController extends Controller
             return null;
         }
 
-        $markup = app(CoveMarkup::class);
-        $market = $current->get();
-
         /*
-         * No products in the allowlist, on purpose.
+         * The prose as rendered when the Cove was built (App\Services\Cove\CoveProse).
          *
-         * An entity Cove's prose is about ranges and categories rather than
-         * about individual products, because the products under it are live
-         * rails that change with stock. What it links to is searches, brands and
-         * other guides — and a `[[search:…]]` resolving to a real crawlable
+         * No products in its allowlist, on purpose. An entity Cove's prose is
+         * about ranges and categories rather than about individual products,
+         * because the products under it are live rails that change with stock.
+         * What it links to is searches (the categories this brand sells in,
+         * stored with the Cove: see App\Services\Cove\EntityLinks), brands
+         * and other guides, and a `[[search:…]]` resolving to a real crawlable
          * market URL is the point of the piece rather than a decoration on it.
          */
-        $allowed = app(Allowlist::class)->full(
-            collect(),
-            $market,
-            excludeGuideId: $cove->id,
-            // The categories this brand actually sells in. Without them the
-            // allowlist is empty and every `[[search:…]]` renders as plain
-            // words — which is the one thing an entity Cove must not do.
-            // Stored with the Cove when it was built rather than worked out
-            // per view: see App\Services\Cove\EntityLinks.
-            extraSearches: app(EntityLinks::class)->forBrandCove($cove, $stat),
-        );
+        $prose = app(CoveProse::class)->for($cove);
 
         return [
             'id' => $cove->id,
             'title' => $cove->theme_title,
-            // `render()` returns html plus a link report; the page wants the
-            // html. The report is for the author, and they read it from the
-            // editorial API rather than from a visitor's page.
-            'intro' => $markup->render((string) $cove->theme_blurb, $market, $allowed)['html'],
+            'intro' => $prose['entity']['intro'],
             /*
-                 * Paragraph by paragraph, not one string.
-                 *
-                 * `render()` resolves tokens and leaves the text as it found
-                 * it, so a piece written in three paragraphs arrived as one
-                 * wall of prose - and nothing reported it, because the tokens
-                 * all resolved. `paragraphs()` splits on blank lines first,
-                 * which is what every other written page here already does.
-                 *
-                 * Found 2026-09-06 reading the first published Shop Cove.
-                 */
-            'body' => $markup->paragraphs((string) $cove->body, $market, $allowed)['html'],
+             * Paragraph by paragraph, not one string: a piece written in three
+             * paragraphs once arrived as one wall of prose, and nothing
+             * reported it because the tokens all resolved. Found 2026-09-06
+             * reading the first published Shop Cove.
+             */
+            'body' => $prose['entity']['body'],
             /*
              * For the page's <meta description>, and stripped of link tokens.
              *
@@ -420,7 +411,7 @@ class BrandController extends Controller
              * Falls back to the brand's generic line when the Cove has none.
              */
             'metaDescription' => $cove->meta_description
-                ?: $markup->plain((string) $cove->theme_blurb),
+                ?: $prose['plain']['blurb'],
         ];
     }
 
@@ -559,12 +550,26 @@ class BrandController extends Controller
     {
         $market = $current->get();
 
-        $brands = BrandStat::query()
-            ->forMarket($market)
-            ->pageworthy()
-            ->orderByDesc('product_count')
-            ->limit(500)
-            ->get(['brand', 'slug', 'product_count']);
+        /*
+         * Cached for half an hour per market, as the rows the page prints:
+         * 500 brands sorted out of `brand_stats` on every view, for a list
+         * that is rebuilt nightly.
+         */
+        $brands = Cache::remember(
+            'bc:brands:'.$market->value,
+            self::LISTS_TTL,
+            fn (): array => BrandStat::query()
+                ->forMarket($market)
+                ->pageworthy()
+                ->orderByDesc('product_count')
+                ->limit(500)
+                ->get(['brand', 'slug', 'product_count'])
+                ->map(fn (BrandStat $stat) => [
+                    'name' => $stat->brand,
+                    'url' => $current->url("brand/{$stat->slug}"),
+                ])
+                ->all(),
+        );
 
         /*
                  * `product_count` orders these and is not sent.
@@ -583,10 +588,7 @@ class BrandController extends Controller
         );
 
         return Inertia::render('Brands', [
-            'brands' => $brands->map(fn (BrandStat $stat) => [
-                'name' => $stat->brand,
-                'url' => $current->url("brand/{$stat->slug}"),
-            ])->all(),
+            'brands' => $brands,
         ]);
     }
 
@@ -704,7 +706,7 @@ class BrandController extends Controller
         return $this->pageContext ??= new BrandContext(
             market: $market,
             items: $result->groups->items(),
-            total: $result->groups->total(),
+            total: (int) $stat->product_count,
             brand: $stat->brand,
             slug: $stat->slug,
             // displayName(), so the sentence naming the leading shop says
@@ -771,6 +773,24 @@ class BrandController extends Controller
      * @return list<array<string, mixed>>
      */
     private function coves(BrandStat $stat, CurrentMarket $current): array
+    {
+        /*
+         * Cached for an hour per market and brand. The regex match below reads
+         * every published article of the market on each view of each brand
+         * page, and its answer only changes when an article is published or
+         * rewritten. An article about a brand reaching that brand's page up to
+         * an hour after it goes out is late in a way nobody can see. Plain
+         * arrays, which the cache can hold.
+         */
+        return Cache::remember(
+            'bc:brand:coves:'.$current->value().':'.$stat->slug,
+            self::COVES_TTL,
+            fn (): array => $this->findCoves($stat, $current),
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function findCoves(BrandStat $stat, CurrentMarket $current): array
     {
         $spellings = $stat->brandSpellings();
 
@@ -862,6 +882,18 @@ class BrandController extends Controller
             return [];
         }
 
+        // Half an hour per market and brand: `brand_stats` is rebuilt nightly,
+        // so within a day this answer does not move at all.
+        return Cache::remember(
+            'bc:brand:related:'.$current->value().':'.$stat->slug,
+            self::LISTS_TTL,
+            fn (): array => $this->findRelated($stat, $current),
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function findRelated(BrandStat $stat, CurrentMarket $current): array
+    {
         return BrandStat::query()
             ->forMarket($current->get())
             ->pageworthy()

@@ -67,7 +67,7 @@ class SearchLandingTest extends TestCase
         $this->actingAs($user)->get('/be-nl/search')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 0)
+                ->has('results.items', 0)
                 ->where('results.items', [])
                 ->has('landing.recentSearches')
                 // Most saved first, folded to the brand page's slug.
@@ -103,7 +103,7 @@ class SearchLandingTest extends TestCase
         $this->actingAs($user)->get('/be-nl/brand/airme')->assertNotFound();
         $this->actingAs($user)->get('/be-nl/search?brand[]=AIR%26ME')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
     }
 
     /** Two spellings of one brand are one chip, and the fallback search carries both. */
@@ -149,7 +149,7 @@ class SearchLandingTest extends TestCase
                 ->where('landing.brands.0.url', '/en/search?'.http_build_query(['brand' => ['jbl']])));
 
         $this->actingAs($user)->get('/en/search?brand[]=jbl')
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
 
         // Where it was saved, Melitta leads as before.
         $this->actingAs($user)->get('/be-nl/search')
@@ -164,7 +164,7 @@ class SearchLandingTest extends TestCase
         $this->get('/be-nl/search')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('results.total', 0)
+                ->has('results.items', 0)
                 ->where('landing.brands', []));
     }
 

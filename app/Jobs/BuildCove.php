@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\CovePlan;
+use App\Services\Cove\CoveCaches;
 use App\Services\Cove\EditionBuilder;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -68,6 +69,12 @@ class BuildCove implements ShouldQueue
                 ? null
                 : $builder->build($plan->market, $plan->drop_date->toImmutable()),
         };
+
+        // A published Cove belongs in this market's lists now, not when their
+        // short caches run out. See CoveCaches.
+        if ($edition !== null) {
+            CoveCaches::forgetMarket($plan->market);
+        }
 
         Log::info('Cove built', [
             'plan' => $plan->id,

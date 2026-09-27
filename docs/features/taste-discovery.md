@@ -55,6 +55,16 @@ Nobody gives a quiz more than about a dozen rounds, so each round has to teach s
   too few tagged products is topped up with untagged ones: they teach only the price, but a page
   that shows nothing is worse. (Local development data has no tags, so there it is a price-only
   quiz.)
+- **Drawn from a cached pool (2026-09-27).** Each request used to sort every giftable product of
+  the market at random twice, once through a `gift_tags::text like '%"interest:%'` that no index
+  can serve, and load whole rows for all ~240 of them. Now `TasteDeck::pool()` keeps, per market
+  and for ten minutes, up to 1,500 tagged products (all of them, at production's ~700) and a random
+  2,500 of the rest, as plain rows of id, price, tags and the interests read from the title, already
+  filtered to what can teach something. A request samples its 160 from that in PHP with the same
+  shares (proven gifts, tagged up to half, then the rest), builds each card once, and loads only the
+  products it shows, with the columns a card prints. The tagged read uses the `?|` operator, which
+  the tag GIN indexes serve. A product that went out of stock since the pool was drawn is dropped
+  with its round. Plain arrays, not models, because the cache refuses to rebuild objects.
 - **The page asks for the next four rounds while two are still left**, sending the choices so far
   and every id on screen or queued, so the next pair is ready and nothing repeats. The rules above
   are relaxed one at a time when the pool is thin (rival, then price, then shared interest), so a

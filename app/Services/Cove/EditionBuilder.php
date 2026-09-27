@@ -66,6 +66,7 @@ class EditionBuilder
         private readonly CovePrompt $prompt,
         private readonly SuggestionEngine $engine,
         private readonly EntityLinks $links,
+        private readonly CoveProse $prose,
     ) {}
 
     /**
@@ -194,7 +195,7 @@ class EditionBuilder
             return null;
         }
 
-        return DB::transaction(function () use ($market, $date, $finds, $liveFinds, $theme, $editorial): DailyPickSet {
+        $edition = DB::transaction(function () use ($market, $date, $finds, $liveFinds, $theme, $editorial): DailyPickSet {
             /*
              * No slug here, deliberately.
              *
@@ -256,6 +257,13 @@ class EditionBuilder
 
             return $edition;
         });
+
+        // The prose as the page shows it, rendered once here rather than on
+        // every view. After the commit, so a failure in it cannot roll back
+        // the build; see CoveProse.
+        $this->prose->store($edition);
+
+        return $edition;
     }
 
     /**
@@ -306,7 +314,7 @@ class EditionBuilder
 
         $editorial = $this->editorial($market, $finds, null, $plan->title, $plan);
 
-        return DB::transaction(function () use ($market, $plan, $finds, $liveFinds, $editorial): DailyPickSet {
+        $edition = DB::transaction(function () use ($market, $plan, $finds, $liveFinds, $editorial): DailyPickSet {
             $existing = DailyPickSet::query()
                 ->where('market', $market->value)
                 ->where('kind', CoveKind::Persona->value)
@@ -347,6 +355,11 @@ class EditionBuilder
 
             return $edition;
         });
+
+        // Rendered once, stored with it; see build().
+        $this->prose->store($edition);
+
+        return $edition;
     }
 
     /**
@@ -446,7 +459,7 @@ class EditionBuilder
             ? $this->links->compute($plan->kind, $market, (string) $plan->slug)
             : null;
 
-        return DB::transaction(function () use ($market, $plan, $finds, $written, $linkCategories): DailyPickSet {
+        $edition = DB::transaction(function () use ($market, $plan, $finds, $written, $linkCategories): DailyPickSet {
             $existing = DailyPickSet::query()
                 ->where('market', $market->value)
                 ->where('kind', $plan->kind->value)
@@ -519,6 +532,12 @@ class EditionBuilder
 
             return $edition;
         });
+
+        // Rendered once, stored with it; see build(). After the link list
+        // above, which a Shop or Brand Cove's search links are checked against.
+        $this->prose->store($edition);
+
+        return $edition;
     }
 
     /**
@@ -586,7 +605,7 @@ class EditionBuilder
             return false;
         }
 
-        return DB::transaction(function () use ($edition, $finds, $written): bool {
+        $rewritten = DB::transaction(function () use ($edition, $finds, $written): bool {
             $edition->forceFill([
                 'theme_title' => $written->title ?? $edition->theme_title,
                 'theme_blurb' => $written->intro ?? $edition->theme_blurb,
@@ -611,6 +630,11 @@ class EditionBuilder
 
             return true;
         });
+
+        // New words, so the stored rendering of the old ones goes; see build().
+        $this->prose->store($edition);
+
+        return $rewritten;
     }
 
     /**

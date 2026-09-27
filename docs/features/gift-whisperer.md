@@ -263,8 +263,10 @@ plus the next one down") held for the first swap only, and no test asserted the 
 opinion it was given.
 
 **"Four more"** (`POST /gift/more`; the button reads "Acht andere" since the board became eight) is
-the explicit way past a board: recompute what is on screen, remember those ids, suggest again. Two
-engine runs per press, each well under 100 ms.
+the explicit way past a board: recompute what is on screen, remember those ids, suggest again. One
+engine run per press since 2026-09-27: `SuggestionEngine::suggestTwo()` picks the board on screen
+and the next one from the same scored pool (it was two full runs). The only difference is at the
+pool's far tail; see [speed.md](speed.md), "Lists, people and gifts".
 `more_after_a_swap_does_not_skip_a_board` is the oracle: after a swap, the next board must equal
 the engine run directly with the rejected id and the current board excluded, which is only true if
 the swap did not poison the memory. The memory's cap of 60 ids per brief holds seven boards of eight;

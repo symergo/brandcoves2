@@ -167,6 +167,24 @@ return [
         // page is not embarrassingly stale.
         'live_cache_ttl' => 900,
 
+        /*
+         * When a search is due a live fetch and its stored results are fewer
+         * than this, the request asks the shops itself instead of queueing it
+         * (SearchService::askNow()). One page: below it the shops are most of
+         * the answer, and the owner's rule (2026-09-27) is that a term only
+         * bol knows shows bol's products on the first view. At or above it
+         * the page is already full and the fetch stays in the background.
+         */
+        'inline_live_below' => 24,
+
+        /*
+         * Seconds each shop gets on that inline path, all asked at once, no
+         * retry. The ordinary connector path is 8 s with two retries, up to
+         * ~25 s a shop; a visitor waiting on a page gets 3. A shop that does
+         * not answer in time still gets the queued fetch for the next view.
+         */
+        'inline_live_timeout' => 3,
+
         // Facet counts are cached this long.
         //
         // Facets are computed from market, term and in-stock only — deliberately
@@ -175,10 +193,45 @@ return [
         // page variant of one term, and re-running three aggregates per click was
         // the largest remaining cost on a search page.
         //
-        // The cost is a sidebar that can trail the grid by this long: a search
-        // folds live offers in and moves merchant_count, so a count may be one
-        // behind. Five minutes keeps that invisible in practice.
-        'facet_cache_ttl' => 300,
+        // Twelve hours, the same as `results_cache_ttl` and for the same reason:
+        // the key carries the same generations, so the sidebar and the grid are
+        // retired together, the moment the catalogue under them changes.
+        'facet_cache_ttl' => 43200,
+
+        /*
+         * The ordered result ids of one search, cached this long
+         * (SearchService::page(), SearchQuery::resultsCacheKey()).
+         *
+         * Twelve hours (owner's decision, 2026-09-27; it was ten minutes for a
+         * day). Long is safe because the TTL is no longer what keeps results
+         * current: the key carries generation numbers (SearchGenerations) that
+         * are bumped at the only moments the stored catalogue changes under a
+         * search — grouping finished for the market (the twice-daily update),
+         * a source withdrawn, an editor's merge or split, and a queued live
+         * fetch finished for the term. A bump retires every affected entry at
+         * once, so the list is stale by seconds, not by the TTL. Ids only:
+         * prices, stock and offer counts are read fresh on every view.
+         *
+         * The TTL is only a bound on memory, and twelve hours matches the gap
+         * between the two catalogue updates, after which a market's entries
+         * are retired anyway.
+         */
+        'results_cache_ttl' => 43200,
+
+        /*
+         * At most this many products per shop in one search's list (owner's
+         * decision, 2026-09-27), counted by the shop behind each product's
+         * best offer. Keeps one shop with a huge feed from filling every page,
+         * the same problem `store_lane_cap` solves for the by-store view.
+         */
+        'results_per_shop' => 25,
+
+        /*
+         * How many ranked matches the list is capped from. Far above what 25
+         * per shop lets through for any realistic number of shops; its only
+         * job is to stop a one-letter search reading the whole catalogue.
+         */
+        'results_scan_limit' => 3000,
 
         /*
          * The public "what people search for" page.

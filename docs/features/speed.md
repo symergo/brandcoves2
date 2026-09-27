@@ -378,3 +378,322 @@ schedule entry is replaced by a comment with the code to restore it; see
 - `curl -sI --max-time 5 https://staging.giftcoves.com/robots.txt` carries no `Set-Cookie`.
 - A client-side interaction still works. The `VITE_*` build variables are untouched by this, but
   it is the failure that looks like nothing.
+
+## Cove pages
+
+The pages that show a Cove (a Daily, a gift persona, a guide, a brand page with a written Cove, a
+shop page) and the pages that list them (`/coves`, Discover, `/guides`, `/gift-ideas`, `/brands`),
+plus the contribute board and the legal pages. Two kinds of change, following the owner's decision
+of 2026-09-27: work out at build what only changes at build, and keep shared lists in the cache for
+a few minutes. No "cache until something changes" scheme; the one exact forget is at publish.
+
+### A Cove's prose is rendered at build and stored
+
+Every view of a Cove page turned its text into HTML again: it built the link allowlist (the 300
+largest brands with a page and the 200 newest articles of the market, two queries), looked up brand
+page addresses (a third), and ran the token and paragraph passes over the article, its FAQ and each
+product's copy. None of it depends on the visitor or on stock.
+
+`App\Services\Cove\CoveProse` now does it when `EditionBuilder` builds, rebuilds, refreshes
+(`refreshCopy`) or redoes a Cove, and stores the result in `daily_pick_sets.rendered_prose`
+(migration `2026_09_28_001300_a_cove_keeps_its_rendered_prose`, one nullable column, expand-only).
+The pages read it through `CoveProse::for()`. What is stored, per page:
+
+| Page | Stored |
+|---|---|
+| Daily, persona | the editorial as blocks (paragraph html + the products it names) |
+| Guide, seasonal, advice | intro and body blocks, each product's copy by pick id, the FAQ, and the plain text for the meta description and the FAQPage JSON-LD |
+| Shop Cove, Brand Cove | the intro html, the body paragraphs, the plain blurb |
+
+Everything that depends on stock or price (the finds, the in-stock filter, prices, the rails) and
+everything with the host in it (canonical URLs, the JSON-LD's absolute URLs) stays live.
+
+Things worth knowing:
+
+- **`json`, not `jsonb`.** `jsonb` stores an object with its keys re-sorted, so a paragraph would
+  come back with its keys in another order and the page props would differ from a live render.
+  `json` keeps the text as written; nothing queries inside the column.
+- **A fingerprint decides whether the stored value is used.** It hashes everything the render
+  reads from the Cove itself: kind, market, slug, blurb, editorial, body, FAQ, source queries, the
+  stored link list and each pick's id, product and copy. Several writers change those with plain
+  queries (`bc:tidy-prose`, a product merge re-pointing picks, the content import), so a model
+  event would miss them; a fingerprint cannot. When it does not match, or nothing is stored, the
+  page renders live and caches that for a day under a key with the Cove's id, `updated_at` and
+  the fingerprint, so an edit is never served stale.
+- **What freezes.** A stored link reflects the site at build: a brand page that later disappears
+  still gets its link, a guide unpublished since still gets its link, a retitled product keeps
+  its old words in an unlabelled token. Accepted, because every such link goes to our own brand,
+  guide, product or search page, never to a shop.
+- **What does not freeze.** A `[[guide:...]]` to an article not published yet, or a
+  `[[brand:...]]` for a brand without a page yet, renders as plain text today; stored, it would
+  stay plain text for good. So a render with such a token is not stored, and the page renders it
+  live with the one-day cache: the link appears within a day of its target. (`ProseCards` now
+  collects the tokens it could not link for this.)
+- **Bump `CoveProse::VERSION`** when `CoveMarkup` or `ProseCards` change what they output, or stored
+  Coves keep the old markup until they are rebuilt.
+- **Storing never fails a build.** It runs after the build's transaction commits and logs a
+  warning on error; the page can always render the prose itself.
+- **Storing does not touch `updated_at`.** The sitemap reads it as the page's last change.
+- **Not exported.** `bc:export-content` drops `rendered_prose`: it holds this environment's
+  product ids in its links, and the far side renders its own.
+- **Older Coves**: `php artisan bc:store-cove-prose --write` renders and stores every published
+  Cove whose prose is missing or out of date (dry run without `--write`). Run it once after the
+  deploy that adds the column; until then those Coves use the one-day fallback.
+
+Tested in `CoveProseTest`: for each of the five pages, the page rendered from the stored prose is
+byte for byte the page rendered live (props and JSON-LD); the page reads the column; a plain-query
+edit shows at once; a link to an unpublished article is not frozen; the backfill leaves
+`updated_at` alone.
+
+Query counts on a warm page, locally (every other cache warm; "live" is the prose rendered again,
+as every view did before):
+
+| Page | live | stored |
+|---|---|---|
+| Daily | 11 | 9 |
+| Persona | 11 | 9 |
+| Guide | 12 | 8 |
+| Brand page with a Cove | 11 | 6 |
+| Shop Cove | 7 | 5 |
+
+The two queries saved on every page are the allowlist's; the rest is brand page lookups and
+merged-product lookups in the prose. On production the allowlist queries sort `brand_stats` and the
+published articles of a market, so the saving per view is larger than the count suggests.
+
+Also: `EditionPresenter::guide()` loaded the Daily's footer guide and counted its picks lazily, two
+queries per view; `DailyCoveController` and `GiftIdeasController` now eager-load it with the count.
+
+### Short caches for shared lists
+
+Per market, plain arrays only: `config/cache.php` refuses to unserialise objects in Redis
+(`serializable_classes`), so a cached model comes back as `__PHP_Incomplete_Class`. Nothing
+per visitor is in any of them (saved state and sign-in come from the shared props, per request).
+
+| What | Key | TTL | Why that long |
+|---|---|---|---|
+| `CoveRail`: a category's most-compared products | `bc:cove-rail:category:{market}:{md5}` | 30 min | moves when the catalogue is regrouped, twice a day. 23 rows are kept so the Cove's own picks (up to 20) can be dropped in PHP and the band still fills: one list serves every Cove sharing the category |
+| `CoveRail`: newest Coves of a band | `bc:cove-rail:coves:{market}:{band}` | 30 min | one more than shown, the Cove being read dropped in PHP |
+| `CoveRail`: a season's parts | `bc:cove-rail:series:{cove id}` | 30 min | a new part is published a few times a year; wrapped in an array because `remember()` treats a cached null as a miss, and null is the answer for most Coves |
+| `/coves`, every section | `bc:coves:{market}` | 10 min | the community band changes without a build; ten minutes is a short wait on an overview |
+| Discover: today, earlier days, personas, guides | `bc:discover:{market}` | 10 min | today's finds are filtered on stock inside it; a sold-out find can stay ten minutes on a hub card |
+| Discover: the surprise pool (ids) | `bc:discover:{market}:surprise-pool` | 10 min | the draw from it stays per request, so the band still differs per visit |
+| Brand page: Coves mentioning the brand | `bc:brand:coves:{market}:{slug}` | 1 h | a regex over every published article per view; changes when an article is published |
+| Brand page: related brands; `/brands` | `bc:brand:related:{market}:{slug}`, `bc:brands:{market}` | 30 min | `brand_stats` is rebuilt nightly |
+| Contribute: the ideas and vote counts | `bc:feature-board` | 5 min | forgotten on a vote and on any idea save; which ideas *you* voted for is read per request |
+| Legal pages, rendered | `bc:legal:{page}:{lang}:{mtime}:{company hash}` | 1 day | a changed file or imprint is a new key, so it shows at once |
+
+Without a cache, two pages lost work outright: `/guides` selects only the seven columns its cards
+use (it loaded every column, body and stored prose included, for sixty cards), and the
+`/gift-ideas` shelf counts each persona's in-stock finds in SQL (`withCount`) instead of loading
+every pick and its product for one number per card.
+
+### A new Cove shows at release
+
+`App\Services\Cove\CoveCaches` names the Cove-list keys (`/coves`, Discover, the rail bands) and
+forgets them for a market in `forgetMarket()`, which `BuildDailyEdition`, `BuildCove` (what
+`PublishDueCoves` dispatches) and `RedoCove` call after a build.
+
+That alone would not cover the Daily: it is built at 06:00 and only counts as published from its
+drop time (`giftcoves.picks.drop_time`, 09:00). A list cached at 08:55 would carry yesterday's
+edition until 09:25. So every Cove-list TTL goes through `CoveCaches::ttl()`, which never runs past
+the next drop time. No job has to run at 09:00.
+
+Not forgotten on purpose: the home page's shelf of other Coves (`home.coves:{market}`). It leaves
+the Dailies out and is a random draw held for an hour so that a reload shows the same shelf; the
+home page's Today band is read uncached.
+
+Tested in `CoveCachesTest` (a Cove built through `BuildCove` is on `/coves` and Discover at once;
+another market's keys are left alone; a TTL at 08:55 ends at 09:00).
+
+Measured locally on the first view (caches empty) and the second, same data as `CoveProseTest`:
+
+| Page | first view | second view |
+|---|---|---|
+| `/coves` | 8 queries, 279 ms | 1 query, 27 ms |
+| Discover | 11 queries, 100 ms | 3 queries, 39 ms |
+| Brand page with a Cove | 12 queries, 107 ms | 6 queries, 29 ms |
+| Guide | 9 queries, 54 ms | 5 queries, 37 ms |
+| Persona | 21 queries, 114 ms | 6 queries, 33 ms |
+| Contribute | 2 queries | 1 query |
+| Privacy | 138 ms | 18 ms |
+
+## Lists, people and gifts
+
+Repeated queries on the pages a signed-in person uses most: My Coves (the overview of their lists),
+a list, a shared list, a person's page and Find a gift. Nothing here changes what anybody sees or may
+do; the pages ask the database fewer times for the same answer. Measured with
+`ListQueryCountTest`, on a fixture with lists of every kind and every way a list reaches somebody:
+
+| Page | Before | After |
+|---|---|---|
+| My Coves, 6 lists | 32 queries | 15 |
+| My Coves, 18 lists | 52 | 15 |
+| A list, 3 items, few lists to copy to | 22 | 19 |
+| A list, 12 items, more lists to copy to | 31 | 19 |
+| A shared list, a reader opening it again | 15 | 10 |
+
+The test holds the "after" numbers equal between the small and the large fixture: a query per row is
+what these pages had, and the equality is what catches it coming back.
+
+### Which lists may I open (`ListAccess::scope()`)
+
+The one question every list page asks, and a security boundary. It was one statement:
+`owner = ? OR EXISTS (a collaborator row) OR (not private AND (EXISTS (an open) OR EXISTS (a
+share)))`. Postgres cannot use an index for an OR of correlated EXISTS subqueries, so it read every
+row of `wishlists` and probed three tables for each.
+
+Now it is two steps. `ListAccess::reachableIds()` gets the lists a person was let into with one
+`UNION ALL` of three `user_id` index lookups (`wishlist_collaborators`, `list_opens`,
+`wishlist_shares`), split into *direct* (a collaborator row, which holds whatever the visibility) and
+*bookmarked* (a followed link or a share, which hold only while the list is not private). The outer
+query is `owner = ? OR id IN (direct) OR (not private AND id IN (bookmarked))`: an owner index and
+the primary key. Not memoised, because a request that records an open and then asks again must see
+it.
+
+`ListAccess::allows()` answers the same question for one list already loaded. The list page and the
+adding mode (on every page, through the shared props) load their one list by key and ask it, rather
+than resolving everything the person was let into to find one row.
+
+`ListAccessScopeTest` keeps the old one-statement query as a reference and holds the new scope,
+`allows()` and the list page's 200/404 to it for every route: owner, collaborator (viewer and editor,
+private list included), a followed link, a share, a list set back to private after it was opened or
+shared, strangers, other people's opens and collaborations, and an anonymous visitor (plain
+ownership; an open recorded against a cookie is never access).
+
+### My Coves
+
+- **Two queries, not six.** Each section (mine and theirs, per kind) was its own query, repeating the
+  eager loads. It is one query for my lists and one for the lists others let me into, cut into the
+  sections in PHP in the same order. Still two and never one: the suggestion count may only be
+  attached to rows I own (see `rows()`).
+- **`hasCoGivers()`** asked `collaborators()->exists()` per card (twice, through
+  `allowsClaiming()`). The query now carries `withExists('collaborators')` and the model reads it.
+  Deliberately not the loaded `collaborators` relation: on somebody else's list My Coves loads only
+  my own row of it, which answers a different question.
+- **`canEdit()`** asked for my collaborator row per card. It reads it from the rows already loaded
+  when there are any (My Coves: my own row; the list page: all of them), picking mine by user id.
+  Only those two places load the relation, and both hold my row if I have one.
+- **Saved Coves** loaded each saved Cove's whole shortlist and each saved Community Cove's every
+  item with its product, to show one picture. Now one pick with a picture per Cove and one item per
+  list, chosen by the rule `CommunityCoves::card()` uses: the newest item with a product picture
+  that does not render live (Amazon).
+
+### A list and a shared list
+
+- The list page loads the owner and the recipient's person with the list, counts its loaded items
+  instead of asking again, and counts quiz plays with `withCount`. The copy menu
+  (`ListOptions::copyTargets()`) loads my own collaborator row on each list, so its per-row
+  `canEdit()` asks nothing.
+- The shared page counts claims ("3 of 11 spoken for") and "have I claimed something" from the
+  items it has already loaded. The counting stays in `ClaimView::progress()`, now given the items,
+  so ClaimView remains the one place claim state is applied (invariant 4). Votes are loaded only
+  where voting is on.
+- **Opening a shared list writes at most once an hour.** Every open upserted `list_opens` and the two
+  `friendships` rows, and after the first time the upserts only moved a timestamp that nothing reads
+  to within an hour. `ListOpen::recordFromRead()` and `Friends::linkFromSharedList()` skip a repeat
+  inside the hour on a cache marker (a plain `true`, never an object). The first open always writes,
+  and that is the one that grants the bookmark. `Friends::unlink()` clears the marker, so somebody
+  who removed a friend and opens their link again is reconnected at once, as before.
+- **The save picker** in the shared props (`ListOptions::forPicker()`, on every signed-in page)
+  selects the six columns it draws plus the recipient's name, not whole rows with descriptions and
+  encrypted addresses. It is a closure there, so an Inertia partial reload that does not ask for
+  `lists` never runs it at all.
+
+### A person's page and Find a gift
+
+- **The next steps are kept an hour.** `NextSteps::forRecipient()` (three candidate queries, one a
+  24-word ILIKE, and the scoring) ran on every view of a person's page and every board for them. The
+  ranked ids are cached per person, market and limit, under a hash of everything that goes in: the
+  past gifts looked at (title, brand, category, product, year), the budget, the year and every
+  excluded product (their history, their lists, the board on screen). Change any of those and it is
+  a different key. The products themselves are loaded fresh, through the same "can be shown" filter,
+  so one that went out of stock inside the hour drops out. Plain arrays only: the Redis store
+  refuses to rebuild objects (see `config/cache.php`).
+- **The gift history is read once per request** in `GiftController` and handed to the exclusions and
+  the next steps; it was read two or three times.
+- **"Four more" is one engine run.** It needs the board on screen (to remember it) and the next one,
+  and ran the whole engine twice for them. `SuggestionEngine::suggestTwo()` picks both from one
+  scored pool. The one difference from two runs: a second retrieval, with four more products
+  excluded, could reach up to four candidates past the 300th (newest first). Those rarely place, and
+  the price was a full second run.
+- **The engine's candidates skip `display_vector`**, a search column no PHP reads. Everything else is
+  still read: `EditionBuilder` keeps `surprise_breakdown` with a persona's picks. A column added to
+  `product_groups` later is absent from suggestions until it is named in
+  `SuggestionEngine::POOL_COLUMNS`.
+- The person page fetched every friendship to pick out one; it fetches the one.
+
+### `/for/{token}` makes nothing on a GET
+
+A person's own link (`/for/{token}`, where they say what they like and keep their own list) made
+"my list for them" for whoever opened it, on the GET. A link preview, a prefetch or a crawler holding
+a cookie left a list behind, and a GET that writes is one no page cache can ever keep. The GET only
+reads now. A signed-in visitor with no list yet gets `startsList`, and the page POSTs
+`/for/{token}/list` as it opens, which makes it and comes back with the add panel. A visitor with
+only a cookie cannot add, so they get their list after signing in. See
+[gifting-lenses.md](gifting-lenses.md).
+
+`/for/{token}/suggest` runs the suggestion engine for anybody holding the link, so it has its own
+limit of 30 a minute on top of the group's 60. It has its own counter (`throttle:30,1,for-suggest`):
+a bare `throttle` shares one counter per visitor with every throttled route, and two on one route
+would count each request twice.
+
+## Search
+
+Three things a visitor waited on that did not need to happen in the request, or did not need to
+happen twice.
+
+### The live shops are asked in a queued job
+
+A search or brand page whose live marker was free called bol, eBay and Tradedoubler in the request,
+one after the other, each with an 8 s timeout and two retries, then stored and grouped their offers
+before rendering. Brand pages pass the brand's name as the live term, so a crawler walking the
+brand pages paid that once per brand. Now the request takes the same marker and dispatches
+`App\Jobs\PullLiveSearch`; the page renders from the stored catalogue at once and the shop's offers
+show from the next view. The marker still means one fetch per (market, term) per 15 minutes.
+
+Except when the stored results are thinner than a page (owner's decision): then the request asks
+the shops itself, all at once through `Http::pool`, 3 s each, no retry, and renders with their
+products, so a term only bol knows shows bol's products on its first view. A shop that times out
+leaves the stored results and gets the queued fetch for the next view. A page that is already full
+never waits. Brand pages follow the same rule. Curation in the admin and the editorial API's
+product lookup still wait for the shops (`waitForLive: true`): a person is waiting on that answer
+and no crawler reaches them. Amazon, which must be fetched at render, would still be asked in the
+request; it has no connector.
+
+A bol or eBay link pasted into the list picker (`/list-search`) no longer imports the product in the
+request. It is answered from the catalogue, or offered as a link to add; adding it queues
+`ReadItemLink`, which asks the connector while the list page polls, as it already did for every
+other shop.
+
+### One search's ordered ids are cached for twelve hours
+
+Every page, sort and filter change ran the four-branch text union twice (count and page), and the
+audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
+cached per (market, term, filters, in-stock, sort), at most 25 per shop (by the shop behind each
+product's best offer). A page is a slice plus one lookup by primary key, and the by-store view reads
+the same list. No total is counted at all: the page shows "Page N" with previous and next, and no
+number of results (owner's decision). Prices, stock and offer counts are still read on every view.
+
+Kept twelve hours, facets too (owner's decision). They are retired the moment what they were
+computed from changes, by generation numbers in the key: a market's number goes up when grouping
+finishes (the twice-daily catalogue update), a source is withdrawn or an editor merges or splits
+products; a term's goes up when its queued live fetch finishes. So results are stale by seconds,
+not by the expiry. What still waits for the next grouping, and the reasoning:
+[search.md](search.md), "Twelve hours, retired by generation numbers".
+
+### This or that draws from a cached pool
+
+Each request of the deck sorted every giftable product of the market at random twice, one of the
+two behind a `gift_tags::text like` that no index serves, and loaded whole rows for ~240 products to
+show eight. Now a per-market pool of a few thousand plain rows (id, price, tags, guessed interests)
+is cached for 10 minutes, a request samples from it in PHP with the same shares, and only the shown
+products are loaded. See [taste-discovery.md](taste-discovery.md).
+
+### Check on staging after the push
+
+- Search for a word the catalogue lacks and bol has: the page answers without the old wait, and a
+  reload a few seconds later shows bol's products. Horizon shows one `PullLiveSearch` for the term.
+- Page 2 of a broad search, and a filter click, answer faster than the first view.
+- After the next grouping run, the cache key `bc:search:gen:be-nl` (with the store's prefix) holds a
+  higher number, and a repeated search is slow once, then fast again.
+- `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.

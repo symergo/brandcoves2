@@ -116,6 +116,11 @@ so if a visitor searched the same term minutes ago the curator gets the stored r
 live call. That is the same catalogue, so it is correct — but it explains why a curation search
 occasionally does not hit the network.
 
+Since 2026-09-27 the visitor pages queue that live call instead of waiting for it. Curation still
+waits (`search(..., waitForLive: true)`): an editor is looking at exactly this answer, and bol's
+products should be on the screen the first time. See search.md, "The live shops are asked in the
+background".
+
 ## The screen
 
 `/admin/cove-plans/{id}/curate`, and the planner's rows link straight to it — curating is what an

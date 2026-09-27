@@ -143,7 +143,7 @@ class BrandPageTest extends TestCase
                 ->where('brand.name', 'Aurex')
                 ->where('brand.productCount', 4)
                 // The whole point: it is a search with the brand preselected.
-                ->where('results.total', 4)
+                ->has('results.items', 4)
             );
     }
 
@@ -460,7 +460,7 @@ class BrandPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('brand.name', 'Aurex')
-                ->where('results.total', 4)
+                ->has('results.items', 4)
             );
     }
 
@@ -743,7 +743,7 @@ class BrandPageTest extends TestCase
         // And the page shows all eight, not five.
         $this->get('/be-nl/brand/audio-technica')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 8));
+            ->assertInertia(fn ($page) => $page->has('results.items', 8));
     }
 
     #[Test]
@@ -928,7 +928,7 @@ class BrandPageTest extends TestCase
             // Left null it would be stored, grouped, and then hidden by the
             // page's own `whereIn('brand', ...)` — a request paid for and
             // thrown away.
-            ->assertInertia(fn ($page) => $page->where('results.total', 5));
+            ->assertInertia(fn ($page) => $page->has('results.items', 5));
 
         $this->assertSame('Aurex', Product::query()
             ->where('source', Source::Bol->value)
@@ -950,7 +950,7 @@ class BrandPageTest extends TestCase
 
         $this->get('/be-nl/brand/aurex')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 4));
+            ->assertInertia(fn ($page) => $page->has('results.items', 4));
 
         $this->assertNull(Product::query()
             ->where('source', Source::Bol->value)
@@ -1005,7 +1005,7 @@ class BrandPageTest extends TestCase
 
         $this->get('/be-nl/brand/aurex')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 5));
+            ->assertInertia(fn ($page) => $page->has('results.items', 5));
     }
 
     #[Test]
@@ -1071,7 +1071,7 @@ class BrandPageTest extends TestCase
                 ->where('liveOffers.0.needsPriceTimestamp', true)
                 ->where('liveOffers.0.directLink', true)
                 // And absent from the grid, because nothing wrote it down.
-                ->where('results.total', 4)
+                ->has('results.items', 4)
             );
 
         $this->assertSame(0, Product::query()->where('source', Source::Amazon->value)->count());

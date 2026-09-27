@@ -7,6 +7,7 @@ namespace App\Services\Social;
 use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -74,6 +75,35 @@ class Friends
     }
 
     /**
+     * {@see link()} for a reader who followed somebody's shared list, at most
+     * once an hour per pair.
+     *
+     * The shared page runs on every open, and a family reading one list all
+     * week rewrote the same two rows on every visit. The upsert only moves
+     * `updated_at`, which nothing reads to within an hour, so the repeat is
+     * skipped on a cache marker. {@see unlink()} clears the marker, so a
+     * connection ended and then re-made by opening the link again comes back
+     * at once, as before.
+     */
+    public function linkFromSharedList(User $reader, User $owner): void
+    {
+        if ($reader->id === $owner->id) {
+            return;
+        }
+
+        if (! Cache::add(self::recentKey($reader->id, $owner->id), true, 3600)) {
+            return;
+        }
+
+        $this->link($reader, $owner);
+    }
+
+    private static function recentKey(int $a, int $b): string
+    {
+        return 'friends:linked-recently:'.min($a, $b).':'.max($a, $b);
+    }
+
+    /**
      * Disconnect, in both directions.
      *
      * Symmetric on purpose, and it is the part most likely to be argued with
@@ -88,6 +118,8 @@ class Friends
             ->where(fn ($q) => $q->where('user_id', $user->id)->where('friend_id', $friendId))
             ->orWhere(fn ($q) => $q->where('user_id', $friendId)->where('friend_id', $user->id))
             ->delete();
+
+        Cache::forget(self::recentKey($user->id, $friendId));
     }
 
     /**

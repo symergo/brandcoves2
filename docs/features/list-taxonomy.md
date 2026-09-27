@@ -376,7 +376,9 @@ The `withCount('suggestions')` rule below still holds in `rows()`. The test is n
 `WishlistController::index()` runs **two queries** for the `mine` view — `Owner::scope()` for rows I
 own, and `ListAccess::scope()->whereNot(owned)` for rows somebody let me into — and concatenates
 them. Two queries rather than one widened scope, and the reason is a privacy rule rather than a
-preference:
+preference. (Since 2026-09-27 it is again exactly these two for the whole page, every section cut
+from them in PHP; for a while it was one pair per section, six in all. See speed.md, "Lists, people
+and gifts".)
 
 > **`withCount('suggestions')` may only be attached to rows I own.** A pending suggestion is a
 > message addressed to the list's owner, and a collaborator learning that one arrived is a leak of

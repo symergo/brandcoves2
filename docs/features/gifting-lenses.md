@@ -89,6 +89,15 @@ anonymous cookie identity — so the single-owner CHECK constraint stands and
 `IdentityMerger` folds it into an account later exactly as with any other
 anonymous list.
 
+**Opening the link makes nothing (2026-09-27).** The list used to be made by a
+`firstOrCreate` on the GET, so a link preview, a prefetch or a crawler holding a
+cookie left one behind. The GET only reads now. A signed-in visitor with no list
+yet gets `startsList`, and the page POSTs `/for/{token}/list` as it opens
+(`RecipientProfileController::startList()`), which makes it and returns with the
+add panel. A cookie visitor, who cannot add, gets theirs after signing in.
+`/for/{token}/suggest` has its own limit of 30 a minute. See
+[speed.md](speed.md), "Lists, people and gifts".
+
 **The rule for that page:** *it shows the recipient's own list and never anything
 the giver did.* No claim state on their own items, no view of the giver's
 `for_someone` list, no count of what has been picked.

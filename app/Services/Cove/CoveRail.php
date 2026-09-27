@@ -15,6 +15,7 @@ use App\Support\CurrentMarket;
 use App\Support\SearchUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use LogicException;
 
 /**
@@ -78,6 +79,22 @@ class CoveRail
     private const PER_CATEGORY = 3;
 
     /**
+     * How many of a category's top products a Cove can itself carry and still
+     * get a full band: the cached list is shared, so the Cove's own picks are
+     * dropped after it is read. A Cove carries eight to twelve products across
+     * two or three categories; twenty is room to spare.
+     */
+    private const MAX_EXCLUDED = 20;
+
+    /**
+     * Half an hour for everything the rail caches. Nothing in it is per
+     * visitor, and none of it is news: other Coves of a kind (forgotten
+     * anyway when one is published), the parts of a series, and the
+     * catalogue's most-compared products, regrouped twice a day.
+     */
+    private const TTL = 1800;
+
+    /**
      * The rail for one Cove.
      *
      * `$cove` is excluded from both lists — the page you are on is not
@@ -123,6 +140,23 @@ class CoveRail
      * @return list<array<string, mixed>>|null
      */
     private function series(DailyPickSet $cove, CurrentMarket $current): ?array
+    {
+        /*
+         * Cached per Cove for half an hour: two queries per view for an answer
+         * that changes when a part of the series is published, a few times a
+         * year. A new part shows up in the other parts' lists within the half
+         * hour. Wrapped in an array because `remember()` treats a cached null
+         * as a miss, and null is the answer for almost every Cove.
+         */
+        return Cache::remember(
+            'bc:cove-rail:series:'.$cove->id,
+            self::TTL,
+            fn (): array => ['series' => $this->computeSeries($cove, $current)],
+        )['series'];
+    }
+
+    /** @return list<array<string, mixed>>|null */
+    private function computeSeries(DailyPickSet $cove, CurrentMarket $current): ?array
     {
         $plan = CovePlan::query()->where('edition_id', $cove->id)->first();
 
@@ -192,24 +226,26 @@ class CoveRail
     {
         $key = self::sectionOf($cove->kind);
 
-        $query = DailyPickSet::query()
-            ->forMarket($current->get())
-            ->published()
-            ->where('id', '!=', $cove->id);
+        /*
+         * The newest of this kind in this market, one more than the rail shows,
+         * cached for the market rather than per Cove: every Cove of a kind asks
+         * the same question, and dropping the one being read happens here, in
+         * PHP. Half an hour, and forgotten when a Cove is published
+         * (CoveCaches::forgetMarket), so today's Daily joins the rail at release.
+         */
+        $siblings = Cache::remember(
+            CoveCaches::railKey($current->get(), $key),
+            CoveCaches::ttl(self::TTL),
+            fn (): array => $this->siblings($key, $current),
+        );
 
-        match ($key) {
-            'daily' => $query->daily(),
-            'gift' => $query->personas(),
-            'shop' => $query->shops(),
-            default => $query->articles(),
-        };
+        $siblings = array_slice(
+            array_values(array_filter($siblings, fn (array $set): bool => $set['id'] !== $cove->id)),
+            0,
+            self::COVES,
+        );
 
-        /** @var Collection<int, DailyPickSet> $siblings */
-        $siblings = $this->order($query, $key)
-            ->limit(self::COVES)
-            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title', 'theme_blurb']);
-
-        if ($siblings->isEmpty()) {
+        if ($siblings === []) {
             return null;
         }
 
@@ -227,28 +263,63 @@ class CoveRail
                 'shop' => 'shops',
                 default => 'guides',
             }),
-            'coves' => $siblings->map(fn (DailyPickSet $set): array => [
-                'title' => $set->theme_title,
-                /*
-                 * Tokens flattened to their labels, exactly as `/coves` and
-                 * `/guides` do it: a link inside a card whose whole surface is
-                 * already a link is a target fighting its parent.
-                 */
-                'intro' => $this->markup->plain($set->theme_blurb),
-                /*
-                 * By slug, editions included. `/daily/{date}` still resolves
-                 * but 301s onto `/daily/{slug}`, so linking by date would send
-                 * every click in this column through a redirect.
-                 */
-                'url' => $current->url($set->kind->path((string) $set->slug, $current->get())),
-                /*
-                 * Only an edition carries one. A persona has no date on purpose
-                 * — it never stops being current — so dating it here would
-                 * invite the reader to treat an old one as stale.
-                 */
-                'date' => $set->drop_date?->format('j M Y'),
-            ])->values()->all(),
+            'coves' => array_map(function (array $set): array {
+                unset($set['id']);
+
+                return $set;
+            }, $siblings),
         ];
+    }
+
+    /**
+     * The newest published Coves of a band, as the cards show them.
+     *
+     * Plain arrays, so the cache can hold them (it refuses to rebuild objects).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function siblings(string $key, CurrentMarket $current): array
+    {
+        $query = DailyPickSet::query()
+            ->forMarket($current->get())
+            ->published();
+
+        match ($key) {
+            'daily' => $query->daily(),
+            'gift' => $query->personas(),
+            'shop' => $query->shops(),
+            default => $query->articles(),
+        };
+
+        /** @var Collection<int, DailyPickSet> $sets */
+        $sets = $this->order($query, $key)
+            // One more than the rail shows, so it is still full once the Cove
+            // being read is taken out.
+            ->limit(self::COVES + 1)
+            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title', 'theme_blurb']);
+
+        return $sets->map(fn (DailyPickSet $set): array => [
+            'id' => $set->id,
+            'title' => $set->theme_title,
+            /*
+             * Tokens flattened to their labels, exactly as `/coves` and
+             * `/guides` do it: a link inside a card whose whole surface is
+             * already a link is a target fighting its parent.
+             */
+            'intro' => $this->markup->plain($set->theme_blurb),
+            /*
+             * By slug, editions included. `/daily/{date}` still resolves
+             * but 301s onto `/daily/{slug}`, so linking by date would send
+             * every click in this column through a redirect.
+             */
+            'url' => $current->url($set->kind->path((string) $set->slug, $current->get())),
+            /*
+             * Only an edition carries one. A persona has no date on purpose
+             * — it never stops being current — so dating it here would
+             * invite the reader to treat an old one as stale.
+             */
+            'date' => $set->drop_date?->format('j M Y'),
+        ])->values()->all();
     }
 
     /**
@@ -287,38 +358,16 @@ class CoveRail
         $bands = [];
 
         foreach ($categories as $category) {
-            $products = ProductGroup::query()
-                ->forMarket($current->get())
-                ->presentable()
-                /*
-                 * `worthShowing()`, not `giftable()`. This sits beside editorial
-                 * rather than under "gift ideas for", and the two columns answer
-                 * different questions: a €700 espresso machine is a bad gift
-                 * suggestion and a perfectly good thing to show somebody reading
-                 * about coffee. See docs/features/giftability.md.
-                 */
-                ->worthShowing()
-                ->where('category', $category)
-                // Never something already printed on this page. "More like
-                // this" that opens with what you just read is a bug the reader
-                // can see.
-                ->whereNotIn('id', $exclude)
-                /*
-                 * Most-compared first.
-                 *
-                 * The one thing this site knows that a shop does not is what a
-                 * product costs everywhere, so a rail that leads with the rows
-                 * carrying several offers is leading with the reason to click.
-                 * `first_seen_at` breaks the ties, which keeps the column
-                 * turning over as the catalogue grows instead of freezing on
-                 * whatever was ingested first.
-                 */
-                ->orderByDesc('merchant_count')
-                ->orderByDesc('first_seen_at')
-                ->limit(self::PER_CATEGORY)
-                ->get(['id', 'title', 'slug', 'image_url', 'min_price', 'merchant_count']);
+            // Never something already printed on this page. "More like this"
+            // that opens with what you just read is a bug the reader can see.
+            // Filtered here rather than in SQL, so the cached list serves
+            // every Cove of the market that shares the category.
+            $products = array_slice(array_values(array_filter(
+                $this->topOf($category, $current),
+                fn (array $product): bool => ! in_array($product['id'], $exclude, true),
+            )), 0, self::PER_CATEGORY);
 
-            if ($products->isEmpty()) {
+            if ($products === []) {
                 continue;
             }
 
@@ -332,18 +381,67 @@ class CoveRail
                  * destination a `[[search:...]]` token in the prose resolves to.
                  */
                 'url' => SearchUrl::for($current->get(), $category),
-                'products' => $products->map(fn (ProductGroup $group): array => [
+                'products' => $products,
+            ];
+        }
+
+        return $bands;
+    }
+
+    /**
+     * The most-compared products of one category in this market, as cards.
+     *
+     * Cached for half an hour per market and category. The rail ran this for
+     * two categories on every Cove view, and the answer moves when the
+     * catalogue is regrouped, twice a day; half an hour late on a "more like
+     * this" rail is invisible. Fetches `MAX_EXCLUDED` more than the rail shows
+     * so the caller can drop the Cove's own products and still fill it.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function topOf(string $category, CurrentMarket $current): array
+    {
+        return Cache::remember(
+            'bc:cove-rail:category:'.$current->value().':'.md5($category),
+            self::TTL,
+            fn (): array => ProductGroup::query()
+                ->forMarket($current->get())
+                ->presentable()
+                /*
+                 * `worthShowing()`, not `giftable()`. This sits beside editorial
+                 * rather than under "gift ideas for", and the two columns answer
+                 * different questions: a €700 espresso machine is a bad gift
+                 * suggestion and a perfectly good thing to show somebody reading
+                 * about coffee. See docs/features/giftability.md.
+                 */
+                ->worthShowing()
+                ->where('category', $category)
+                /*
+                 * Most-compared first.
+                 *
+                 * The one thing this site knows that a shop does not is what a
+                 * product costs everywhere, so a rail that leads with the rows
+                 * carrying several offers is leading with the reason to click.
+                 * `first_seen_at` breaks the ties, which keeps the column
+                 * turning over as the catalogue grows instead of freezing on
+                 * whatever was ingested first. The partial index built for this
+                 * query (docs/features/speed.md) matches this sort exactly.
+                 */
+                ->orderByDesc('merchant_count')
+                ->orderByDesc('first_seen_at')
+                ->limit(self::PER_CATEGORY + self::MAX_EXCLUDED)
+                ->get(['id', 'title', 'slug', 'image_url', 'min_price', 'merchant_count'])
+                ->map(fn (ProductGroup $group): array => [
                     'id' => $group->id,
                     'title' => $group->displayTitle(),
                     'image' => $group->image_url,
                     'price' => $group->min_price,
                     'merchantCount' => $group->merchant_count,
                     'url' => $current->url("p/{$group->id}/{$group->slug}"),
-                ])->values()->all(),
-            ];
-        }
-
-        return $bands;
+                ])
+                ->values()
+                ->all(),
+        );
     }
 
     /**
