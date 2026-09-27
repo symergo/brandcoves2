@@ -345,6 +345,22 @@ services:
       - work_mem=16MB
       - -c
       - maintenance_work_mem=256MB
+      # Seeing which queries cost the time (owner, 2026-09-27: "database restart
+      # is ok"). The speed audit had to guess from table counters because
+      # nothing recorded query times: pg_stat_statements keeps per-query totals
+      # (read with `SELECT ... FROM pg_stat_statements ORDER BY total_exec_time
+      # DESC`), a statement over 300ms is written to the log, and so is every
+      # sort or hash that spills to a temporary file (25GB had spilled with no
+      # trace of which query did it). The extension itself is created by the
+      # migration `..._postgres_records_query_times`.
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=top
+      - -c
+      - log_min_duration_statement=300ms
+      - -c
+      - log_temp_files=0
     # Docker's default /dev/shm is 64MB, and parallel queries allocate their
     # shared hash tables there: with work_mem raised, a parallel hash join can
     # outgrow it and fail with "could not resize shared memory segment".
