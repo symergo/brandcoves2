@@ -156,7 +156,13 @@ class ProductLookup
                 // exists, not only what is on offer this week — the shopper
                 // default would hide every full-price product.
                 discountedOnly: false,
-            ));
+            ),
+                // The point of this call is that the offers exist before the
+                // query below runs, so it waits rather than queueing the fetch
+                // as the visitor pages do. An author on a rate-limited key,
+                // not a crawler.
+                waitForLive: true,
+            );
         } catch (Throwable $e) {
             report($e);
         }

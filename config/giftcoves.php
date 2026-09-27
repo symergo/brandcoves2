@@ -177,8 +177,30 @@ return [
         //
         // The cost is a sidebar that can trail the grid by this long: a search
         // folds live offers in and moves merchant_count, so a count may be one
-        // behind. Five minutes keeps that invisible in practice.
-        'facet_cache_ttl' => 300,
+        // behind. Raised from five minutes to ten on 2026-09-27 to match
+        // `results_cache_ttl`, so the grid and the sidebar go stale together
+        // rather than one trailing the other.
+        'facet_cache_ttl' => 600,
+
+        /*
+         * The ordered result ids of one search, cached this long
+         * (SearchService::page(), SearchQuery::resultsCacheKey()).
+         *
+         * Ids only: prices, stock and offer counts are read fresh on every
+         * view. What can trail by this long is which products are in the list
+         * and in what order. Ten minutes because that is the settled design
+         * (2026-09-01) and a catalogue that changes by feed run, twice a day,
+         * does not move faster than that for a reader paging through.
+         */
+        'results_cache_ttl' => 600,
+
+        /*
+         * How many ids of one search are cached: twenty pages of 24. Past that
+         * a page asks the database for its own slice. Kept at or above 300,
+         * the number the by-store view draws its lanes from, so that view
+         * reads the same list.
+         */
+        'results_cache_ids' => 480,
 
         /*
          * The public "what people search for" page.

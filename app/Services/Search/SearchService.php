@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Jobs\PullLiveSearch;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Identity\Gtin;
 use App\Services\Ingestion\IncomingGrouper;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -33,23 +37,26 @@ class SearchService
         private readonly IncomingGrouper $grouper,
     ) {}
 
-    public function search(SearchQuery $query): SearchResult
+    /**
+     * @param  bool  $waitForLive  ask the live shops inside this call and fold
+     *                             their offers before the query runs, instead of queueing
+     *                             it. For the two callers where a person waits on exactly
+     *                             this answer and the volume is tiny: an editor curating
+     *                             in the admin and an author on the editorial API. Every
+     *                             visitor-facing page leaves it false. See pullLiveResults().
+     */
+    public function search(SearchQuery $query, bool $waitForLive = false): SearchResult
     {
-        // Live sources first: an offer that arrives now can join an existing
-        // group and appear as an extra shop on a card in the same request.
-        // Doing it after the SQL query would show a stale offer count.
-        //
         // The live half is driven by `liveTerm()`, not by the term. A brand page
-        // has no search term and still has something to ask bol and Amazon: the
-        // brand's name, because neither takes a brand filter.
+        // has no search term and still has something to ask bol: the brand's
+        // name, because it takes no brand filter.
         $live = $query->hasLiveTerm()
-            ? $this->pullLiveResults($query)
+            ? $this->pullLiveResults($query, $waitForLive)
             : ['written' => 0, 'unstored' => []];
 
-        $groups = $this->storedQuery($query)->paginate(
-            perPage: (int) config('giftcoves.search.per_page'),
-            page: $query->page,
-        );
+        // Fresh after a fold in this call: the ids cached a minute ago do not
+        // hold what was just written.
+        $groups = $this->page($query, fresh: $live['written'] > 0 || $waitForLive);
 
         if ($query->logged && $query->hasTerm() && $query->page === 1) {
             // Logged after the count is known, because zero-result queries are
@@ -66,6 +73,127 @@ class SearchService
             facets: fn (): array => $this->facets($query),
             liveOffers: $live['unstored'],
         );
+    }
+
+    /**
+     * One page of results, served from the cached id list.
+     *
+     * ## Why ids are cached and not pages (designed 2026-09-01, built 2026-09-27)
+     *
+     * Every variant of a search re-ran the four-branch text union twice, once
+     * for the count and once for the page, and the next page ran both again.
+     * The ordered ids for one (market, term, filters, sort) are the same across
+     * pages, the grid and the store view, and an Inertia visit and a full page
+     * load, so they are cached once (`resultsCacheKey()`, `results_cache_ttl`)
+     * and each page is a slice of them plus one primary-key lookup.
+     *
+     * Only ids, never the rendered groups: price, stock and the offer count on
+     * each card are read fresh at every view, so the cheapest-offer and discount
+     * badges (invariant 7) are exactly as right as they were. What can trail for
+     * up to the TTL is membership and order: a product that just went out of
+     * stock may still hold its slot, a new one may not have one yet.
+     *
+     * Past the cached head (`results_cache_ids`, twenty pages) a deep page asks
+     * the database for its slice, with the cached total.
+     *
+     * @return LengthAwarePaginator<int, ProductGroup>
+     */
+    private function page(SearchQuery $query, bool $fresh): LengthAwarePaginator
+    {
+        $perPage = (int) config('giftcoves.search.per_page');
+        $found = $this->resultIds($query, $fresh);
+        $offset = ($query->page - 1) * $perPage;
+
+        $ids = $found['complete'] || $offset + $perPage <= count($found['ids'])
+            ? array_slice($found['ids'], $offset, $perPage)
+            : $this->storedQuery($query)->offset($offset)->limit($perPage)
+                ->pluck('product_groups.id')->map(fn ($id) => (int) $id)->all();
+
+        return new LengthAwarePaginator(
+            $this->hydrate($ids),
+            $found['total'],
+            $perPage,
+            $query->page,
+            ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page'],
+        );
+    }
+
+    /**
+     * The ordered ids this search matches, the first `results_cache_ids` of
+     * them, and how many there are in all.
+     *
+     * One query when the whole match set fits in the head, which is most
+     * searches: the count is then the length of the list and the separate
+     * count query is not run at all.
+     *
+     * Not written while this term's live fetch is still queued
+     * (`pendingKey()`): the offers it is about to store would otherwise be
+     * missing from every view of the term for the whole TTL, which is exactly
+     * the "they appear on the next view" the queued fetch promises.
+     *
+     * @return array{ids: list<int>, total: int, complete: bool}
+     */
+    private function resultIds(SearchQuery $query, bool $fresh = false): array
+    {
+        $key = $query->resultsCacheKey();
+
+        if (! $fresh) {
+            $hit = Cache::get($key);
+
+            if (is_array($hit) && isset($hit['ids'], $hit['total'], $hit['complete'])) {
+                return $hit;
+            }
+        }
+
+        $limit = max(1, (int) config('giftcoves.search.results_cache_ids'));
+
+        $ids = $this->storedQuery($query)->limit($limit + 1)
+            ->pluck('product_groups.id')->map(fn ($id) => (int) $id)->all();
+
+        $complete = count($ids) <= $limit;
+        $ids = array_slice($ids, 0, $limit);
+
+        $found = [
+            'ids' => $ids,
+            // getCountForPagination drops the ORDER BY, which Postgres would
+            // refuse beside a bare count(*).
+            'total' => $complete ? count($ids) : $this->storedQuery($query)->toBase()->getCountForPagination(),
+            'complete' => $complete,
+        ];
+
+        if (! ($query->hasLiveTerm() && Cache::has(self::pendingKey($query)))) {
+            Cache::put($key, $found, (int) config('giftcoves.search.results_cache_ttl'));
+        }
+
+        return $found;
+    }
+
+    /**
+     * The groups for these ids, in this order. A group merged away or deleted
+     * since the ids were cached is simply absent.
+     *
+     * @param  list<int>  $ids
+     * @return list<ProductGroup>
+     */
+    private function hydrate(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = ProductGroup::query()->whereIn('id', $ids)->get()->keyBy('id');
+
+        return array_values(array_filter(array_map(fn (int $id) => $rows->get($id), $ids)));
+    }
+
+    /**
+     * Marks a queued live fetch for this query's live term. Short-lived by
+     * design: if the queue never gets to it, the search pages go back to
+     * caching after two minutes rather than never.
+     */
+    public static function pendingKey(SearchQuery $query): string
+    {
+        return $query->liveCacheKey().':pending';
     }
 
     /**
@@ -378,58 +506,101 @@ class SearchService
      * is nothing durable to show — freshness at render is the condition of being
      * allowed to display it at all.
      *
+     * ## Why the storable half is queued (2026-09-27)
+     *
+     * The fetch and the fold ran inside the page request: bol, eBay and
+     * Tradedoubler one after the other, each `timeout(8)->retry(2)`, then the
+     * upsert and the regroup, before a single card rendered. On a fresh term
+     * that was seconds of waiting, and on a brand page it was paid by crawlers
+     * across thousands of brands. Now the page renders from the stored
+     * catalogue at once and {@see PullLiveSearch} does the fetch and fold in
+     * the background; what it stores shows on the next view. The marker is
+     * still taken here, with the same `Cache::add`, so one window still means
+     * one fetch — the job is only dispatched by the request that won it.
+     *
+     * The cost is visible on exactly one kind of search: a term the catalogue
+     * does not hold and only bol does. Its first view is empty or thin; the
+     * second, a few seconds later, has bol's products.
+     *
+     * A source that may not be stored (Amazon, when it has a connector) is
+     * still asked here, in the request, because rendering it fresh is the
+     * condition of showing it at all and a job would leave nothing behind.
+     *
      * @return array{written: int, unstored: list<Offer>}
      */
-    private function pullLiveResults(SearchQuery $query): array
+    private function pullLiveResults(SearchQuery $query, bool $waitForLive): array
     {
         $connectors = $this->registry->liveFor($query->market);
         if ($connectors === []) {
             return ['written' => 0, 'unstored' => []];
         }
 
-        $term = $query->liveTerm();
-        $foldable = Cache::add(
+        $mirrorable = array_filter($connectors, fn (LiveConnector $c) => $c->source()->allowsCatalogueStorage());
+        $renderOnly = array_filter($connectors, fn (LiveConnector $c) => ! $c->source()->allowsCatalogueStorage());
+
+        $written = 0;
+
+        if ($mirrorable !== [] && Cache::add(
             $query->liveCacheKey(),
             true,
             (int) config('giftcoves.search.live_cache_ttl'),
-        );
-
-        /** @var list<Offer> $storable */
-        $storable = [];
-        /** @var list<Offer> $unstored */
-        $unstored = [];
-
-        foreach ($connectors as $connector) {
-            $mirrorable = $connector->source()->allowsCatalogueStorage();
-
-            // Already folded recently. Skipping the call as well as the write is
-            // the point: the connector would answer from cache, and this saves
-            // the request outright on the ones where it would not.
-            if ($mirrorable && ! $foldable) {
-                continue;
-            }
-
-            try {
-                // Connectors degrade rather than throw, but a bug in one must
-                // not take down search for the others either.
-                $offers = $connector->search($term, $query->market);
-            } catch (Throwable $e) {
-                report($e);
-
-                continue;
-            }
-
-            if ($mirrorable) {
-                $storable = [...$storable, ...$offers];
+        )) {
+            if ($waitForLive) {
+                $written = $this->foldFrom($query, array_values($mirrorable));
             } else {
-                $unstored = [...$unstored, ...$offers];
+                // Before the dispatch, so this request's own id cache sees it.
+                Cache::put(self::pendingKey($query), true, 120);
+                PullLiveSearch::dispatch($query->market, $query->liveTerm(), $query->brands);
             }
         }
 
         return [
-            'written' => $this->fold($query, $storable),
-            'unstored' => $this->liveOnly($query, $unstored),
+            'written' => $written,
+            'unstored' => $this->liveOnly($query, $this->ask($query, array_values($renderOnly))),
         ];
+    }
+
+    /**
+     * Ask the live shops whose offers may be stored, and store them.
+     *
+     * {@see PullLiveSearch}'s work, and the `waitForLive` path's. Takes no
+     * marker: whoever calls it already won the one in pullLiveResults().
+     */
+    public function foldLive(SearchQuery $query): int
+    {
+        $mirrorable = array_filter(
+            $this->registry->liveFor($query->market),
+            fn (LiveConnector $c) => $c->source()->allowsCatalogueStorage(),
+        );
+
+        return $this->foldFrom($query, array_values($mirrorable));
+    }
+
+    /** @param  list<LiveConnector>  $connectors */
+    private function foldFrom(SearchQuery $query, array $connectors): int
+    {
+        return $connectors === [] ? 0 : $this->fold($query, $this->ask($query, $connectors));
+    }
+
+    /**
+     * @param  list<LiveConnector>  $connectors
+     * @return list<Offer>
+     */
+    private function ask(SearchQuery $query, array $connectors): array
+    {
+        $offers = [];
+
+        foreach ($connectors as $connector) {
+            try {
+                // Connectors degrade rather than throw, but a bug in one must
+                // not take down search for the others either.
+                $offers = [...$offers, ...$connector->search($query->liveTerm(), $query->market)];
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $offers;
     }
 
     /**
@@ -648,7 +819,13 @@ class SearchService
     {
         $cap = (int) config('giftcoves.search.store_lane_cap');
 
-        $ids = $this->storedQuery($query)->limit(300)->pluck('id');
+        // The same cached id list the grid reads (see page()), when its head
+        // reaches the 300 the lanes are drawn from.
+        $found = $this->resultIds($query);
+        $ids = collect($found['complete'] || count($found['ids']) >= 300
+            ? array_slice($found['ids'], 0, 300)
+            : $this->storedQuery($query)->limit(300)->pluck('id')->all());
+
         if ($ids->isEmpty()) {
             return [];
         }

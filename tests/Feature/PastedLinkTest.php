@@ -386,6 +386,34 @@ class PastedLinkTest extends TestCase
     }
 
     #[Test]
+    public function a_bol_link_we_do_not_hold_is_answered_without_asking_bol_in_the_request(): void
+    {
+        // bol configured and answering, so only the rule keeps it quiet.
+        config([
+            'giftcoves.connectors.bol.enabled' => true,
+            'giftcoves.connectors.bol.client_id' => 'test-id',
+            'giftcoves.connectors.bol.client_secret' => 'test-secret',
+        ]);
+        Http::fake([
+            'login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 300]),
+            'api.bol.com/*' => Http::response(['results' => []]),
+        ]);
+
+        [$owner] = $this->list();
+
+        // The panel offers it as a link to add; adding it queues the lookup
+        // (ReadItemLink), where bol is asked while the list page polls.
+        $this->actingAs($owner)
+            ->getJson('/be-nl/list-search?q='.urlencode('https://www.bol.com/be/nl/p/lego-kasteel/9300000055555555/'))
+            ->assertOk()
+            ->assertJsonPath('groups', [])
+            ->assertJsonPath('live', [])
+            ->assertJsonPath('link.host', 'bol.com');
+
+        Http::assertNothingSent();
+    }
+
+    #[Test]
     public function changing_the_link_looks_the_new_one_up(): void
     {
         Queue::fake();

@@ -378,3 +378,53 @@ schedule entry is replaced by a comment with the code to restore it; see
 - `curl -sI --max-time 5 https://staging.giftcoves.com/robots.txt` carries no `Set-Cookie`.
 - A client-side interaction still works. The `VITE_*` build variables are untouched by this, but
   it is the failure that looks like nothing.
+
+## Search
+
+Three things a visitor waited on that did not need to happen in the request, or did not need to
+happen twice.
+
+### The live shops are asked in a queued job
+
+A search or brand page whose live marker was free called bol, eBay and Tradedoubler in the request,
+one after the other, each with an 8 s timeout and two retries, then stored and grouped their offers
+before rendering. Brand pages pass the brand's name as the live term, so a crawler walking the
+brand pages paid that once per brand. Now the request takes the same marker and dispatches
+`App\Jobs\PullLiveSearch`; the page renders from the stored catalogue at once and the shop's offers
+show from the next view. The marker still means one fetch per (market, term) per 15 minutes.
+
+What a visitor notices: only a term the catalogue does not hold and bol does. Its first view is
+thin; a view a few seconds later has bol's products. Curation in the admin and the editorial API's
+product lookup still wait for the shops (`waitForLive: true`): a person is waiting on that answer
+and no crawler reaches them. Amazon, which must be fetched at render, would still be asked in the
+request; it has no connector.
+
+A bol or eBay link pasted into the list picker (`/list-search`) no longer imports the product in the
+request. It is answered from the catalogue, or offered as a link to add; adding it queues
+`ReadItemLink`, which asks the connector while the list page polls, as it already did for every
+other shop.
+
+### One search's ordered ids are cached for ten minutes
+
+Every page, sort and filter change ran the four-branch text union twice (count and page), and the
+audit saw a 3 s Inertia visit right after the full page had loaded. The ordered group ids are now
+cached per (market, term, filters, in-stock, sort) for 10 minutes, the first 480 of them. A page is
+a slice plus one lookup by primary key, the total needs no `count(*)` when the list is complete, and
+the by-store view reads the same list. Prices, stock and offer counts are still read on every view.
+The facet cache went from 5 to 10 minutes to match. No invalidation: short expiry only, the owner's
+rule. Details and reasoning: [search.md](search.md), "Search results are cached as ids".
+
+### This or that draws from a cached pool
+
+Each request of the deck sorted every giftable product of the market at random twice, one of the
+two behind a `gift_tags::text like` that no index serves, and loaded whole rows for ~240 products to
+show eight. Now a per-market pool of a few thousand plain rows (id, price, tags, guessed interests)
+is cached for 10 minutes, a request samples from it in PHP with the same shares, and only the shown
+products are loaded. See [taste-discovery.md](taste-discovery.md).
+
+### Check on staging after the push
+
+- Search for a word the catalogue lacks and bol has: the page answers without the old wait, and a
+  reload a few seconds later shows bol's products. Horizon shows one `PullLiveSearch` for the term.
+- Page 2 of a broad search, and a filter click, answer faster than the first view.
+- `/be-nl/gift/taste` deals its cards, and the second batch arrives without a pause.

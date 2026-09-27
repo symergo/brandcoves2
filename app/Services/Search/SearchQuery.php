@@ -418,6 +418,49 @@ final readonly class SearchQuery
             .':'.sha1(mb_strtolower($this->term));
     }
 
+    /**
+     * Stable key for this search's ordered result ids (SearchService::page()).
+     *
+     * Every field that reaches the stored query is in it, and nothing else:
+     * not the page (every page is a slice of the same list), not the view
+     * (the store lanes read the same ids), not `logged` (a person and a crawler
+     * get the same products), not the live term (it only decides what the
+     * shops are asked). Leaving one of those in would split one list across
+     * keys; leaving a filter out would serve one search's results to another.
+     *
+     * An Inertia visit and a full page load parse the same query string into
+     * the same value object, so they share this key by construction.
+     *
+     * The term is lowercased like the facet key: every branch of the text
+     * match and the relevance order ignore case. The brands are not: the brand
+     * filter is an exact `IN`.
+     */
+    public function resultsCacheKey(): string
+    {
+        $brands = $this->brands;
+        sort($brands);
+        $merchants = $this->merchantIds;
+        sort($merchants);
+        $tags = array_map(function (array $values): array {
+            sort($values);
+
+            return $values;
+        }, $this->tagGroups());
+
+        return 'bc:search:ids:'.$this->market->value.':'.sha1(json_encode([
+            mb_strtolower($this->term),
+            $this->minPrice,
+            $this->maxPrice,
+            $merchants,
+            $brands,
+            $this->inStockOnly,
+            $this->discountedOnly,
+            $this->comparableOnly,
+            $this->sort,
+            $tags,
+        ], JSON_THROW_ON_ERROR));
+    }
+
     /** @return array<string, mixed> Query string for building filter links. */
     public function toArray(): array
     {
