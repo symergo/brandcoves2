@@ -103,10 +103,12 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
      already connects people.
 3. **One results page** (below).
 
-**What you say about a saved person is kept on them by default** (owner, 2026-09-27: "the info about
-the person when searching gifts is not saved to the profile"). "Onthoud deze antwoorden voor Mama"
-starts ticked; it was unticked, so answers were forgotten unless somebody found the box. Untick for a
-one-off. The server still writes only when the page asks (`remember`, `remembering_is_opt_in`). This
+**What you say about a saved person is always kept on them** (owner, 2026-09-27: "the info about
+the person when searching gifts is not saved to the profile"). There was a tick, "Onthoud deze
+antwoorden voor Mama": first off, which forgot the answers unless somebody found it, then on by
+default. The owner removed it on 2026-09-28, so there is no one-off search for a saved person any
+more; a search for a kind of person ("een mama") writes nothing on anyone. What the person described
+about themselves through their own link still wins over a guess (`describeTaste`, as before). This
 or that played for a saved person keeps its result on them on arrival, without the "Bewaar bij Mama"
 press that was the only way before; played for nobody in particular, the buttons stay.
 

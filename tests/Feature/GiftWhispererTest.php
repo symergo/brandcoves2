@@ -489,7 +489,25 @@ class GiftWhispererTest extends TestCase
     }
 
     #[Test]
-    public function remembering_is_opt_in(): void
+    public function the_answers_are_kept_on_a_saved_person_without_asking(): void
+    {
+        /*
+         * There used to be a "remember these answers" tick (on unless
+         * unticked); the owner removed it on 2026-09-28. What somebody tells
+         * Find a gift about a saved person is now always kept on them.
+         */
+        $this->catalogue();
+        [$user, $mum] = $this->mother();
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
+            ->assertOk();
+
+        $this->assertNotSame([], $mum->fresh()->interests);
+    }
+
+    #[Test]
+    public function a_search_for_a_kind_of_person_writes_nothing_on_anyone(): void
     {
         $this->catalogue();
         [$user, $mum] = $this->mother();
@@ -497,13 +515,13 @@ class GiftWhispererTest extends TestCase
 
         $this->travel(1)->minutes();
 
+        // "A mother", not Mum: there is nobody to keep the answers for.
         $this->actingAs($user)
-            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
+            ->post('/be-nl/gift', [...$this->brief(), 'relationship' => 'mother'])
             ->assertOk();
 
         $mum->refresh();
 
-        // Not a field written, not even a touch: the row is as it was.
         $this->assertSame([], $mum->interests);
         $this->assertNull($mum->budget_max);
         $this->assertTrue($before->equalTo($mum->updated_at));

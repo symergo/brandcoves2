@@ -1603,10 +1603,6 @@ return [
         'summary_budget' => 'Up to :amount',
         'summary_avoid' => 'Not :word',
 
-        // Keeping the answers on a saved person is opt-in; the hint says what
-        // it cannot do (overwrite what they said about themselves).
-        'remember' => 'Remember these answers for :name',
-        'remember_hint' => 'Next time you pick :name these answers are filled in for you. If :name has described their own taste through their link, their answers stay.',
         'saving_to' => 'Saving a pick puts it on :list.',
         // "Find a gift": one flow. Who first, then three ways, then one page
         // of ideas (docs/features/find-a-gift.md).

@@ -1403,10 +1403,6 @@ return [
         'summary_budget' => 'Tot :amount',
         'summary_avoid' => 'Geen :word',
 
-        // Keeping the answers on a saved person is opt-in; the hint says what
-        // it cannot do (overwrite what they said about themselves).
-        'remember' => 'Onthoud deze antwoorden voor :name',
-        'remember_hint' => 'De volgende keer dat je :name kiest, staan deze antwoorden al ingevuld. Heeft :name via de eigen link zelf beschreven wat diegene leuk vindt, dan blijft dat staan.',
         'saving_to' => 'Wat je bewaart, komt op :list.',
         // "Cadeau vinden": één weg. Eerst voor wie, dan drie manieren, dan
         // één pagina met ideeën (docs/features/find-a-gift.md).

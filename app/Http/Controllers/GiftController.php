@@ -162,8 +162,8 @@ class GiftController extends Controller
      * so the board a visitor is looking at can always be recomputed here — and
      * nothing in this controller ever trusts a client-supplied list of what is
      * on screen. A plain re-post of the same brief therefore returns the same
-     * four cards, which is what lets the summary's "remember" tick re-post
-     * without the board changing under the visitor.
+     * four cards, so the board a visitor is looking at never moves under
+     * them when the same brief is posted again.
      */
     public function suggest(Request $request, CurrentMarket $current, SuggestionEngine $engine, RejectionMemory $memory): Response
     {
@@ -403,14 +403,16 @@ class GiftController extends Controller
      * Without the budget here, "use what we know about Mum" restored everything
      * except what you spend on her.
      *
-     * Called from every action, not only the first: a visitor who ticks the box
-     * on the results summary and then presses "Four more" has still asked.
+     * Always, for a saved person (owner, 2026-09-28): the "remember these
+     * answers" tick is gone. It was already on unless unticked, because what
+     * somebody told Find a gift about Mama was otherwise forgotten, and the
+     * owner removed it. Called from every action, not only the first.
      *
      * @param  array<string, mixed>  $validated
      */
     private function rememberFor(Request $request, ?Recipient $recipient, array $validated): void
     {
-        if ($recipient === null || ! $request->boolean('remember')) {
+        if ($recipient === null) {
             return;
         }
 
@@ -459,7 +461,6 @@ class GiftController extends Controller
             'recipient_id' => ['nullable', 'uuid'],
             // Validated so it echoes back in `brief`, and the tick survives the
             // round trip. TasteBrief never sees it.
-            'remember' => ['boolean'],
         ]);
     }
 

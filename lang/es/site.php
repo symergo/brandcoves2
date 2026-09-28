@@ -1399,10 +1399,6 @@ return [
         'summary_budget' => 'Hasta :amount',
         'summary_avoid' => 'Sin :word',
 
-        // Keeping the answers on a saved person is opt-in; the hint says what
-        // it cannot do (overwrite what they said about themselves).
-        'remember' => 'Recordar estas respuestas para :name',
-        'remember_hint' => 'La próxima vez que elijas a :name, estas respuestas ya estarán rellenadas. Si :name ha descrito sus propios gustos a través de su enlace, sus respuestas se mantienen.',
         'saving_to' => 'Lo que guardes irá a :list.',
         // «Encontrar un regalo»: un solo recorrido. Primero para quién, luego
         // tres caminos, luego una sola página de ideas (docs/features/find-a-gift.md).

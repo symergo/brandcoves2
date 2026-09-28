@@ -64,7 +64,6 @@ interface Brief {
     occasion?: string | null
     age_band?: string | null
     recipient_id?: string | null
-    remember?: boolean
 }
 
 /** A persona Cove: the third way in, "Start from a type". */
@@ -460,15 +459,6 @@ export default function GiftWizard(props: Props) {
     // a product with the same strings, so the two meet as one value.
     const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
-    /*
-     * Keep the answers on the person: on unless unticked (owner, 2026-09-27:
-     * "the info about the person when searching gifts is not saved to the
-     * profile"). It was off, so what somebody told Find a gift about Mama was
-     * forgotten unless they found the tick. It only acts when a saved person
-     * is chosen; the server still saves only when asked (`remember`), so an
-     * unticked box, or an old page, writes nothing. Untick for a one-off.
-     */
-    const [remember, setRemember] = useState<boolean>(brief?.remember ?? true)
 
     /*
      * "Adjust" shows the questions again with the answers kept, and no request:
@@ -504,7 +494,7 @@ export default function GiftWizard(props: Props) {
     // Every key is posted every time, including the empty ones. The server
     // fills an *absent* key from the saved person's profile, so a cleared
     // answer has to travel as "cleared", not as "not mentioned".
-    const payload = (overrides: Partial<{ remember: boolean }> = {}) => ({
+    const payload = () => ({
         interests,
         vibe,
         preferences,
@@ -517,8 +507,6 @@ export default function GiftWizard(props: Props) {
         relationship,
         age_band: ageBand,
         recipient_id: recipientId,
-        remember,
-        ...overrides,
     })
 
     const submit = () => {
@@ -543,16 +531,6 @@ export default function GiftWizard(props: Props) {
      */
     const more = () => {
         router.post(`/${market.key}/gift/more`, payload(), { preserveScroll: true })
-    }
-
-    /*
-     * Ticking "remember" on the results is saved at once, by re-posting the
-     * brief. A plain post with the same brief returns the same cards, so the
-     * board does not move under the visitor; the tick is the only change.
-     */
-    const rememberNow = (on: boolean) => {
-        setRemember(on)
-        router.post(`/${market.key}/gift`, payload({ remember: on }), { preserveScroll: true })
     }
 
     const toggle = (list: string[], setter: (v: string[]) => void, value: string) => {
@@ -634,7 +612,6 @@ export default function GiftWizard(props: Props) {
     const useKind = (value: string | null) => {
         if (recipientId !== null) {
             setRecipientId(null)
-            setRemember(false)
             setInterests([])
             setVibe(null)
             setPreferences([])
@@ -663,20 +640,6 @@ export default function GiftWizard(props: Props) {
         `rounded-full border px-3 py-1.5 text-sm ${
             selected ? 'border-accent bg-accent text-white' : 'border-line hover:bg-card'
         } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`
-
-    /**
-     * The tick that keeps these answers on the person. Shown on the last
-     * question and on the results; only when somebody saved was chosen,
-     * because there is nobody to remember them for otherwise.
-     */
-    const rememberBox = (onChange: (on: boolean) => void) =>
-        recipient && (
-            <label className="flex flex-wrap items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4" checked={remember} onChange={(e) => onChange(e.target.checked)} />
-                <span>{t('gift.remember', { name: recipient.name })}</span>
-                <InfoTip>{t('gift.remember_hint', { name: recipient.name })}</InfoTip>
-            </label>
-        )
 
     /*
       This or that, carrying who it is for: a saved person by id (the server
@@ -844,7 +807,6 @@ export default function GiftWizard(props: Props) {
                                 </button>
                             </div>
 
-                            {recipient && <div className="mt-3">{rememberBox(rememberNow)}</div>}
 
                             {/*
                               The same search card as on the ways step, on the
@@ -1254,8 +1216,6 @@ export default function GiftWizard(props: Props) {
                                     </div>
                                 )}
                                 <p className="mt-2 text-xs text-ink-soft">{t('gift.avoid_hint')}</p>
-                                {/* The last step, so this is where keeping the answers is offered. */}
-                                {recipient && <div className="mt-5">{rememberBox(setRemember)}</div>}
                             </div>
                         )}
                     </div>
