@@ -62,7 +62,7 @@ class BuildCove implements ShouldQueue
              * approved and then silently did nothing.
              */
             $plan->kind->writesBody() => $builder->buildArticle($plan),
-            $plan->isPersona() => $builder->buildPersona($plan),
+            $plan->isGiftColumn() => $builder->buildPersona($plan),
             // A Daily is addressed by its date, and it is the plan's own date
             // that matters: dispatching without one built today's edition from a
             // plan written for next Tuesday, so the button appeared to do

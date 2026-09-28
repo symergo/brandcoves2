@@ -285,8 +285,9 @@ class EditionBuilder
      */
     public function buildPersona(CovePlan $plan, array $exclude = []): ?DailyPickSet
     {
-        if (! $plan->isPersona() || blank($plan->slug)) {
-            Log::warning('Persona build skipped: not a persona, or no slug', ['plan' => $plan->id]);
+        // A persona or an occasion: the same page, built the same way.
+        if (! $plan->isGiftColumn() || blank($plan->slug)) {
+            Log::warning('Persona build skipped: not a persona or occasion, or no slug', ['plan' => $plan->id]);
 
             return null;
         }
@@ -317,12 +318,12 @@ class EditionBuilder
         $edition = DB::transaction(function () use ($market, $plan, $finds, $liveFinds, $editorial): DailyPickSet {
             $existing = DailyPickSet::query()
                 ->where('market', $market->value)
-                ->where('kind', CoveKind::Persona->value)
+                ->where('kind', $plan->kind->value)
                 ->where('slug', $plan->slug)
                 ->first();
 
             $edition = DailyPickSet::updateOrCreate(
-                ['market' => $market->value, 'kind' => CoveKind::Persona->value, 'slug' => $plan->slug],
+                ['market' => $market->value, 'kind' => $plan->kind->value, 'slug' => $plan->slug],
                 [
                     'theme_title' => $plan->title,
                     'theme_blurb' => $plan->blurb,
@@ -723,7 +724,7 @@ class EditionBuilder
             // `writesBody()`, so a Shop Cove can be redone like every other
             // prose kind — `isArticle()` excludes it by design.
             $plan->kind->writesBody() => $this->buildArticle($plan, $exclude),
-            $plan->isPersona() => $this->buildPersona($plan, $exclude),
+            $plan->isGiftColumn() => $this->buildPersona($plan, $exclude),
             default => $plan->drop_date === null
                 ? null
                 : $this->build($plan->market, CarbonImmutable::instance($plan->drop_date), $exclude),

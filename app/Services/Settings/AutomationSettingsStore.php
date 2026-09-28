@@ -89,7 +89,7 @@ class AutomationSettingsStore
     public static function applies(string $stage, CoveKind $kind): bool
     {
         return match ($stage) {
-            'plan' => ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand], true),
+            'plan' => ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand, CoveKind::Occasion], true),
             'curate' => $kind->targetItems() > 0,
             default => true,
         };

@@ -457,9 +457,22 @@ class Alternates
                 : app(GiftLandingLinks::class)->alternates($recipient, $interest);
         }
 
+        // Gifts for an occasion (/gift-ideas/occasion/moederdag): the slug is
+        // one segment further, and twins pair on it as personas do.
+        $kind = CoveKind::Persona;
+
+        if ($slug === 'occasion') {
+            $kind = CoveKind::Occasion;
+            $slug = $segments[3] ?? null;
+
+            if ($slug === null) {
+                return [];
+            }
+        }
+
         $rows = DB::table('daily_pick_sets')
             ->where('slug', $slug)
-            ->where('kind', CoveKind::Persona->value)
+            ->where('kind', $kind->value)
             ->where('status', PublishStatus::Published->value)
             // Deterministic order — see 'Why these are ordered' above.
             ->orderBy('market')
@@ -474,7 +487,7 @@ class Alternates
             // same way an edition can — see `daily()`. Declaring it invites a
             // crawler to a market deliberately not being indexed.
             if ($market !== null && $market->isPublished()) {
-                $alternates[$market->hrefLang()] = url("/{$market->value}/gift-ideas/{$row->slug}");
+                $alternates[$market->hrefLang()] = url("/{$market->value}/".$kind->path((string) $row->slug, $market));
             }
         }
 

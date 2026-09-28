@@ -108,9 +108,13 @@ class GiftFeedbackTest extends TestCase
         // rejections) and a different brief: still never for her.
         $this->actingAs($user)->get('/be-nl/gift');
         $this->assertNotContains($rejected, $this->boardIds($this->actingAs($user)->get("/be-nl/gift?for={$mama->id}")));
+        // Her own interests: since 2026-09-28 what Find a gift is told about a
+        // saved person is always kept on them, so a narrower brief here would
+        // rewrite them and test that instead of the thumb.
         $this->assertNotContains($rejected, $this->boardIds($this->actingAs($user)->post('/be-nl/gift', [
             'recipient_id' => $mama->id,
-            'interests' => ['cooking'],
+            'interests' => ['cooking', 'gaming'],
+            'budget_max' => 60,
         ])));
 
         // It was not written into what the owner said about her.

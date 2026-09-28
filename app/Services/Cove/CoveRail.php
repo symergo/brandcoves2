@@ -286,7 +286,8 @@ class CoveRail
 
         match ($key) {
             'daily' => $query->daily(),
-            'gift' => $query->personas(),
+            // Personas and occasions: the pages under /gift-ideas.
+            'gift' => $query->giftColumns(),
             'shop' => $query->shops(),
             default => $query->articles(),
         };
@@ -474,7 +475,7 @@ class CoveRail
     {
         return match ($kind) {
             CoveKind::Daily => 'daily',
-            CoveKind::Persona => 'gift',
+            CoveKind::Persona, CoveKind::Occasion => 'gift',
             CoveKind::Shop => 'shop',
             CoveKind::Guide, CoveKind::Seasonal, CoveKind::Advice => 'smart',
 

@@ -48,6 +48,21 @@ enum CoveKind: string
     case Persona = 'persona';
 
     /**
+     * Gifts for an **occasion**: Moederdag, a housewarming, a retirement
+     * (owner, 2026-09-28).
+     *
+     * The same page as a persona in every respect, prose with products inside
+     * it, the budget tabs and the weekly top 10, but not a persona: an occasion
+     * is not a kind of person, and the owner wanted it on a shelf of its own.
+     * So it has its own address, `/gift-ideas/occasion/{slug}`, and its own row
+     * on the gift-ideas page. Undated, like a persona: Moederdag and Vaderdag
+     * fall on different days in different regions of one market, so any date
+     * here would be wrong for part of the readers (OccasionDate says the
+     * same). See docs/features/occasion-coves.md.
+     */
+    case Occasion = 'occasion';
+
+    /**
      * A buying guide: a ranked shortlist, "the five best X and the one actually
      * worth it". Its substance is the products and the prose is presentation,
      * which is why it refuses to publish without enough of them.
@@ -172,11 +187,28 @@ enum CoveKind: string
         return match ($this) {
             self::Daily => $market->coveSegment().'/'.$address,
             self::Persona => 'gift-ideas/'.$address,
+            // Its own segment beside the recipient pages (`for/`), so an
+            // occasion slug can never collide with a persona's.
+            self::Occasion => 'gift-ideas/occasion/'.$address,
             self::Guide, self::Seasonal, self::Advice => 'guides/'.$address,
             self::Shop => 'shops/'.$address,
             // The page that already exists, not a second one beside it.
             self::Brand => 'brand/'.$address,
         };
+    }
+
+    /**
+     * Is this a gift column: prose with products inside it, under /gift-ideas?
+     *
+     * A persona and an occasion. Asked wherever the two behave alike (the
+     * builder, the page, the budget tabs, the top 10, the sitemap), so that
+     * "persona" keeps meaning a kind of person where only a persona will do:
+     * the shelf of personas, Find a gift's "start from a type", the demand
+     * drafts.
+     */
+    public function isGiftColumn(): bool
+    {
+        return in_array($this, [self::Persona, self::Occasion], true);
     }
 
     /**
@@ -245,7 +277,7 @@ enum CoveKind: string
     public function minimumItems(): int
     {
         return match ($this) {
-            self::Daily, self::Persona => (int) config('giftcoves.picks.minimum'),
+            self::Daily, self::Persona, self::Occasion => (int) config('giftcoves.picks.minimum'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.min_products'),
             self::Advice, self::Shop, self::Brand => 0,
         };
@@ -255,7 +287,7 @@ enum CoveKind: string
     public function targetItems(): int
     {
         return match ($this) {
-            self::Daily, self::Persona => (int) config('giftcoves.picks.per_day'),
+            self::Daily, self::Persona, self::Occasion => (int) config('giftcoves.picks.per_day'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.items_per_guide'),
             self::Advice, self::Shop, self::Brand => 0,
         };
@@ -278,7 +310,7 @@ enum CoveKind: string
          * the column's daily cap on something that is not the column.
          */
         return match ($this) {
-            self::Daily, self::Persona => 'daily_picks',
+            self::Daily, self::Persona, self::Occasion => 'daily_picks',
             default => 'guide_copy',
         };
     }
@@ -288,6 +320,7 @@ enum CoveKind: string
         return match ($this) {
             self::Daily => 'Daily Cove',
             self::Persona => 'Gift persona',
+            self::Occasion => 'Occasion Cove',
             self::Guide => 'Buying guide',
             self::Seasonal => 'Seasonal guide',
             self::Advice => 'Advice article',

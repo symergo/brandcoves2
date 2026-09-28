@@ -117,6 +117,11 @@ class PromptBank
                 'allowed' => ['language', 'title', 'direction', 'curated', 'finds'],
                 'required' => ['language', 'finds'],
             ],
+            // Briefed exactly like a persona: the same page shape.
+            'cove.occasion' => [
+                'allowed' => ['language', 'title', 'direction', 'curated', 'finds'],
+                'required' => ['language', 'finds'],
+            ],
             'cove.guide' => [
                 'allowed' => ['language', 'topic', 'title', 'direction', 'curated', 'finds'],
                 'required' => ['language', 'finds'],

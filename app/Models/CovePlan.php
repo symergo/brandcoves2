@@ -285,6 +285,12 @@ class CovePlan extends Model
         return $this->kind === CoveKind::Persona;
     }
 
+    /** A persona or an occasion; see CoveKind::isGiftColumn(). */
+    public function isGiftColumn(): bool
+    {
+        return $this->kind->isGiftColumn();
+    }
+
     /**
      * Is this plan buildable at all?
      *

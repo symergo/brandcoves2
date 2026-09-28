@@ -1184,6 +1184,14 @@ Route::prefix('{market}')->group(function () {
         ->middleware(CacheAnonymousPage::ALIAS)
         ->where(['recipient' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'interest' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
         ->name('gift-ideas.landing');
+
+    // Gifts for an occasion (Moederdag, a housewarming): the persona page at
+    // its own address, clear of the persona slugs. See CoveKind::Occasion.
+    Route::get('/gift-ideas/occasion/{slug}', [GiftIdeasController::class, 'occasion'])
+        ->middleware(CacheAnonymousPage::ALIAS)
+        ->where('slug', '[a-z0-9-]+')
+        ->name('gift-ideas.occasion');
+
     Route::get('/gift-ideas/{slug}', [GiftIdeasController::class, 'show'])
         ->middleware(CacheAnonymousPage::ALIAS)
         ->where('slug', '[a-z0-9-]+')

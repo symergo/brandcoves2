@@ -262,4 +262,24 @@ return [
             'body' => 'Al final de una idea de regalo sobre un tipo de persona, como quien cocina en casa, hay un top 10: lo que más se compra y se desea en ese tema ahora mismo, según las listas de más vendidos de las tiendas y cuántas listas de deseos lo incluyen. Se recalcula cada lunes, nunca a mano.',
         ],
     ],
+    'occasion-coves' => [
+        'status' => 'done',
+        'sort' => 80,
+        'nl' => [
+            'title' => 'Cadeaus per gelegenheid',
+            'body' => 'Bij de cadeaus per type staat nu ook een rij per gelegenheid: Moederdag, een verjaardag, een housewarming, een pensioen. Elke pagina heeft gekozen producten met uitleg, tabbladen per budget en een top 10 van de week.',
+        ],
+        'en' => [
+            'title' => 'Gifts per occasion',
+            'body' => 'Beside the gifts per type there is now a row per occasion: Mother\'s Day, a birthday, a housewarming, a retirement. Each page has chosen products with a word on each, tabs per budget and a top 10 of the week.',
+        ],
+        'fr' => [
+            'title' => 'Des cadeaux par occasion',
+            'body' => "À côté des cadeaux par type, il y a maintenant une rangée par occasion : la fête des mères, un anniversaire, une pendaison de crémaillère, un départ à la retraite. Chaque page propose des produits choisis et commentés, des onglets par budget et un top 10 de la semaine.",
+        ],
+        'es' => [
+            'title' => 'Regalos por ocasión',
+            'body' => 'Junto a los regalos por tipo hay ahora una fila por ocasión: el Día de la Madre, un cumpleaños, una inauguración de casa, una jubilación. Cada página tiene productos elegidos y comentados, pestañas por presupuesto y un top 10 de la semana.',
+        ],
+    ],
 ];

@@ -307,7 +307,12 @@ enum CoveScene: string
      */
     public static function defaultFor(CoveKind $kind): self
     {
-        return $kind === CoveKind::Persona ? self::Someone : self::Article;
+        return match ($kind) {
+            CoveKind::Persona => self::Someone,
+            // An occasion is a day, not a person.
+            CoveKind::Occasion => self::CalendarDay,
+            default => self::Article,
+        };
     }
 
     /**
@@ -334,6 +339,12 @@ enum CoveScene: string
                 self::Gardening, self::Plants, self::Music, self::Reading,
                 self::Gaming, self::Fitness, self::Travel, self::Baking,
                 self::Someone,
+            ],
+            // The drawings that suit a day or a gesture, rather than a person.
+            CoveKind::Occasion => [
+                self::CalendarDay, self::Letter, self::Someone, self::MoneyGift,
+                self::Handmade, self::PlantCutting, self::Gardening, self::Cooking,
+                self::Baking, self::Travel,
             ],
             CoveKind::Guide, CoveKind::Seasonal, CoveKind::Advice => [
                 self::Rights, self::PriceHistory, self::Seller, self::Reviews,

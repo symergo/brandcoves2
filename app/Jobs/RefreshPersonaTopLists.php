@@ -39,7 +39,8 @@ class RefreshPersonaTopLists implements ShouldQueue
     {
         $personas = DailyPickSet::query()
             ->forMarket($this->market)
-            ->personas()
+            // Occasions too (2026-09-28): the same page, the same top 10.
+            ->giftColumns()
             ->published()
             ->with('plan', 'picks.group')
             ->get();

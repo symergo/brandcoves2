@@ -80,7 +80,10 @@ class ScheduleConflicts
             ->select('i.group_id', 'p.drop_date', 'p.title', 'p.kind')
             ->get()
             ->keyBy('group_id')
-            ->map(fn ($row) => $row->kind === CoveKind::Persona->value
+            // By title when the plan has no date: a persona, an occasion, an
+            // article. Parsing a missing date gives today, which named every
+            // undated plan after the day the screen was opened.
+            ->map(fn ($row) => $row->drop_date === null
                 ? 'already on “'.$row->title.'”'
                 : 'already on '.CarbonImmutable::parse($row->drop_date)->format('j M'))
             ->all();

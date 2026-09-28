@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Models\DailyPickSet;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
@@ -14,6 +15,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -49,29 +51,25 @@ class GiftIdeasController extends Controller
     /** The shelf. */
     public function index(CurrentMarket $current, string $market): Response
     {
-        $personas = DailyPickSet::query()
-            ->forMarket($current->get())
-            ->personas()
-            ->published()
-            // Only what a card shows. Before `withCount()`, which adds to the
-            // column list rather than replacing it; a `get([...])` after it
-            // would be ignored.
-            ->select(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
-            /*
-             * The in-stock finds counted by the database. Every pick and its
-             * product used to be loaded, for one number per card: sixty
-             * personas of a dozen picks each is seven hundred rows and two
-             * queries, where this is one query and a number per persona.
-             * A pick without a catalogue product (an Amazon decision) has no
-             * group row, so `whereHas` leaves it out, as the old filter did.
-             */
-            ->withCount(['picks as find_count' => fn ($q) => $q->whereHas('group', fn ($g) => $g->where('in_stock', true))])
+        $personas = $this->shelf(CoveKind::Persona, $current)
             // Newest first. A persona has no date to sort on, and `published_at`
             // is stamped once at first build and never refreshed by a rebuild,
             // so this is a stable shelf rather than one that reshuffles itself
             // every time the products are refreshed.
             ->orderByDesc('published_at')
             ->limit(60)
+            ->get();
+
+        /*
+         * Gifts per occasion, a row of their own (owner, 2026-09-28): an
+         * occasion is not a kind of person. In the order they were published,
+         * which is the editorial order: there is no date to sort them on (see
+         * CoveKind::Occasion).
+         */
+        $occasions = $this->shelf(CoveKind::Occasion, $current)
+            ->orderBy('published_at')
+            ->orderBy('id')
+            ->limit(30)
             ->get();
 
         app(PageMeta::class)->set(
@@ -86,12 +84,46 @@ class GiftIdeasController extends Controller
              * 2026-09-28): the shelf is for personas. The recipient pages stay
              * reachable from Discover ("Of per persoon") and the sitemap.
              */
-            'personas' => $personas->map(fn (DailyPickSet $set) => [
-                'slug' => $set->slug,
-                'title' => $set->theme_title,
-                'blurb' => $set->theme_blurb,
-                'url' => $current->url('gift-ideas/'.$set->slug),
-                /*
+            'personas' => $personas->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
+            'occasions' => $occasions->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
+        ]);
+    }
+
+    /**
+     * One kind's published Coves, with what a card shows.
+     *
+     * @return Builder<DailyPickSet>
+     */
+    private function shelf(CoveKind $kind, CurrentMarket $current)
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->where('kind', $kind->value)
+            ->published()
+            // Only what a card shows. Before `withCount()`, which adds to the
+            // column list rather than replacing it; a `get([...])` after it
+            // would be ignored.
+            ->select(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
+            /*
+             * The in-stock finds counted by the database. Every pick and its
+             * product used to be loaded, for one number per card: sixty
+             * personas of a dozen picks each is seven hundred rows and two
+             * queries, where this is one query and a number per persona.
+             * A pick without a catalogue product (an Amazon decision) has no
+             * group row, so `whereHas` leaves it out, as the old filter did.
+             */
+            ->withCount(['picks as find_count' => fn ($q) => $q->whereHas('group', fn ($g) => $g->where('in_stock', true))]);
+    }
+
+    /** @return array<string, mixed> */
+    private function card(DailyPickSet $set, CurrentMarket $current): array
+    {
+        return [
+            'slug' => $set->slug,
+            'title' => $set->theme_title,
+            'blurb' => $set->theme_blurb,
+            'url' => $current->url($set->kind->path((string) $set->slug, $current->get())),
+            /*
                  * The drawing, not a product photograph.
                  *
                  * The cover used to be the first buyable find, which made a
@@ -102,20 +134,30 @@ class GiftIdeasController extends Controller
                  * Null until a curator picks one; the component reads that as
                  * `someone` and draws a figure. See App\Enums\CoveScene.
                  */
-                'scene' => $set->scene?->value,
-                'findCount' => (int) $set->find_count,
-            ])->values()->all(),
-        ]);
+            'scene' => $set->scene?->value,
+            'findCount' => (int) $set->find_count,
+        ];
     }
 
     /** One persona. */
     public function show(Request $request, CurrentMarket $current, string $market, string $slug): Response
     {
+        return $this->page($request, $current, CoveKind::Persona, $slug);
+    }
+
+    /** Gifts for one occasion: the same page, its own address (CoveKind::Occasion). */
+    public function occasion(Request $request, CurrentMarket $current, string $market, string $slug): Response
+    {
+        return $this->page($request, $current, CoveKind::Occasion, $slug);
+    }
+
+    private function page(Request $request, CurrentMarket $current, CoveKind $kind, string $slug): Response
+    {
         $preview = PreviewAccess::allowed($request);
 
         $persona = DailyPickSet::query()
             ->forMarket($current->get())
-            ->personas()
+            ->where('kind', $kind->value)
             ->where('slug', $slug)
             ->unless($preview, fn ($q) => $q->published())
             // The footer guide and its count in the same round; see
@@ -181,6 +223,12 @@ class GiftIdeasController extends Controller
      */
     private function listingTitle(DailyPickSet $persona): string
     {
+        // An occasion's title ("Cadeaus voor Moederdag") is already what
+        // people search for; the persona template would say it twice.
+        if ($persona->kind === CoveKind::Occasion) {
+            return $persona->theme_title;
+        }
+
         $titled = __('site.gift_ideas.persona_seo_title', [
             // Lowercased so the article reads as part of the sentence the
             // template makes: "Cadeau voor de wandelaar", not "voor De".
@@ -192,7 +240,7 @@ class GiftIdeasController extends Controller
 
     private function seo(DailyPickSet $persona, CurrentMarket $current): void
     {
-        $url = url($current->url('gift-ideas/'.$persona->slug));
+        $url = url($current->url($persona->kind->path((string) $persona->slug, $current->get())));
 
         app(PageMeta::class)->set(
             title: $this->listingTitle($persona),

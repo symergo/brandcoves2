@@ -119,13 +119,18 @@ final readonly class PlanDrafter
                 .'a list of names rather than a list of brands worth a piece. Write it from the brand page, or send '
                 .'one to the editorial API.'
             ),
+
+            CoveKind::Occasion => DraftedPlans::none(
+                'Occasion Coves are not drafted automatically. There are a dozen occasions and each is written by hand, '
+                .'in the planner or over the editorial API.'
+            ),
         };
     }
 
     /** Which kinds this can actually draft, for a screen that has to offer a choice. */
     public function canDraft(CoveKind $kind): bool
     {
-        return ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand], true);
+        return ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand, CoveKind::Occasion], true);
     }
 
     /**

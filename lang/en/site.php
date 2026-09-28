@@ -2109,6 +2109,9 @@ return [
         // (docs/features/persona-budgets.md, has-everything.md). The two
         // has_everything titles are placeholders a drafted persona wears
         // until a person renames it.
+        // The two rows of the gift-ideas shelf (2026-09-28).
+        'personas_heading' => 'By kind of person',
+        'occasions_heading' => 'By occasion',
         'budgets_title' => 'By budget',
         'budgets_hint' => 'More ideas for this person, chosen by the site around each amount. The products above were picked by hand; these are not, and they change as the shops do.',
         'top_title' => 'This week\'s top 10',
@@ -2606,7 +2609,7 @@ return [
         'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
         'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens Find a gift with your taste filled in. No name unless you type one, and you can remove it any time.',
         'find_offline_ideas' => 'Under Find a gift\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Save puts it on your list as an offline item.',
-        'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too. At the bottom is a top 10 of the week: what is most bought and wanted in that theme, worked out again every Monday.',
+        'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too. At the bottom is a top 10 of the week: what is most bought and wanted in that theme, worked out again every Monday. Beside the types are pages per occasion, such as Mother\'s Day, a housewarming or a retirement, built the same way.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. Find a gift links to the one closest to your answers with "Open as a page".',

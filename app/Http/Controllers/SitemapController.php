@@ -323,15 +323,17 @@ class SitemapController extends Controller
                  */
                 DB::table('daily_pick_sets')
                     ->where('market', $resolved->value)
-                    ->where('kind', CoveKind::Persona->value)
+                    // Occasions too (2026-09-28), at their own address.
+                    ->whereIn('kind', [CoveKind::Persona->value, CoveKind::Occasion->value])
                     ->where('status', PublishStatus::Published->value)
                     ->whereNotNull('slug')
+                    ->orderBy('kind')
                     ->orderBy('slug')
                     ->limit(400)
-                    ->pluck('slug')
-                    ->each(function ($slug) use (&$urls, $resolved): void {
+                    ->get(['kind', 'slug'])
+                    ->each(function ($row) use (&$urls, $resolved): void {
                         $urls[] = [
-                            'loc' => url("/{$resolved->value}/gift-ideas/{$slug}"),
+                            'loc' => url("/{$resolved->value}/".CoveKind::from($row->kind)->path($row->slug, $resolved)),
                             'priority' => '0.7',
                             'changefreq' => 'weekly',
                         ];

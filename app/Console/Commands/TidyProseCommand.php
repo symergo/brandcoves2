@@ -196,7 +196,7 @@ class TidyProseCommand extends Command
     private function blurb(?string $kind, ?string $value): ?string
     {
         $rendered = $kind !== null
-            && ! in_array(CoveKind::tryFrom($kind), [CoveKind::Daily, CoveKind::Persona], true);
+            && ! in_array(CoveKind::tryFrom($kind), [CoveKind::Daily, CoveKind::Persona, CoveKind::Occasion], true);
 
         return $rendered ? HouseStyle::prose($value) : HouseStyle::plain($value);
     }

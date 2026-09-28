@@ -83,6 +83,7 @@ class Defaults
             'cove.brand' => self::BRAND_SYSTEM,
             'cove.daily' => self::DAILY_SYSTEM,
             'cove.persona' => self::PERSONA_SYSTEM,
+            'cove.occasion' => self::OCCASION_SYSTEM,
             'cove.guide' => self::GUIDE_SYSTEM,
             'cove.seasonal' => self::SEASONAL_SYSTEM,
             'cove.advice' => self::ADVICE_SYSTEM,
@@ -99,6 +100,7 @@ class Defaults
             'cove.brand' => self::BRAND_PROMPT,
             'cove.daily' => self::DAILY_PROMPT,
             'cove.persona' => self::PERSONA_PROMPT,
+            'cove.occasion' => self::OCCASION_PROMPT,
             'cove.guide' => self::GUIDE_PROMPT,
             'cove.seasonal' => self::SEASONAL_PROMPT,
             'cove.advice' => self::ADVICE_PROMPT,
@@ -125,7 +127,8 @@ class Defaults
 
         $kind = CoveKind::tryFrom(substr($slot, 5));
 
-        return $kind !== null && $kind !== CoveKind::Daily && $kind !== CoveKind::Persona;
+        // A persona and an occasion are columns, not articles.
+        return $kind !== null && $kind !== CoveKind::Daily && ! $kind->isGiftColumn();
     }
 
     // ── A Daily Cove ──────────────────────────────────────────────────────
@@ -248,6 +251,55 @@ class Defaults
         TXT;
 
     private const PERSONA_PROMPT = <<<'TXT'
+        Language: {language}
+        This page is for: {title}
+
+        {direction}
+
+        {curated}
+
+        {finds}
+        TXT;
+
+    // ── An occasion ───────────────────────────────────────────────────────
+
+    /**
+     * Gifts for an occasion: Moederdag, a housewarming, a retirement
+     * (2026-09-28). A persona's page shape, written about the day rather than
+     * about a person, and still undated: Moederdag falls on different days in
+     * different regions, so the prose never says when.
+     */
+    private const OCCASION_SYSTEM = <<<'TXT'
+        You write a permanent gift-ideas page about one occasion - Mother's Day,
+        a housewarming, a retirement: a short opening about the occasion and
+        what a present for it has to do, then a passage about each gift.
+
+        The passage is the point. Each gift's card is rendered directly under
+        the paragraph that names it, so a paragraph is not an introduction to a
+        grid further down - it is the writing that gift gets, and the only
+        writing it gets.
+
+        The reader is buying a present for this occasion and lacks an idea.
+        Write about what the occasion asks of a present (something to keep,
+        something to use, something that says a thing out loud) and let the
+        products follow from that.
+
+        Voice: dry, specific, warm without being twee.
+
+        Rules:
+        - Only discuss the products listed below. Never invent one, and never
+          invent a price, a rating or a claim about quality.
+        - No prices at all: they change, and the page renders live ones.
+        - No "amazing", no exclamation marks, no rhetorical questions.
+        - No em dashes. Where a sentence needs a break, use a comma, a colon,
+          or a spaced hyphen - like this one.
+        - Never give the occasion's date. It differs by region, and the page
+          is read for years.
+        - Never write "today", "this week", "right now" or "this year".
+        - Do not address the recipient. The reader is the person buying.
+        TXT;
+
+    private const OCCASION_PROMPT = <<<'TXT'
         Language: {language}
         This page is for: {title}
 

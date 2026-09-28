@@ -116,7 +116,8 @@ class CovesController extends Controller
             ),
             $this->section(
                 'gift',
-                DailyPickSet::query()->personas()->orderByDesc('published_at'),
+                // Personas and occasions: the pages under /gift-ideas.
+                DailyPickSet::query()->giftColumns()->orderByDesc('published_at'),
                 self::PER_SECTION,
                 $current,
             ),

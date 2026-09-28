@@ -223,6 +223,18 @@ class DailyPickSet extends Model
         $query->where('kind', CoveKind::Persona->value);
     }
 
+    /** Gifts for an occasion (Moederdag, a housewarming). @param Builder<$this> $query */
+    public function scopeOccasions(Builder $query): void
+    {
+        $query->where('kind', CoveKind::Occasion->value);
+    }
+
+    /** Personas and occasions: the pages under /gift-ideas. @param Builder<$this> $query */
+    public function scopeGiftColumns(Builder $query): void
+    {
+        $query->whereIn('kind', [CoveKind::Persona->value, CoveKind::Occasion->value]);
+    }
+
     /**
      * The `/guides` URL space: buying guides, seasonal ones, advice articles.
      *
@@ -261,5 +273,11 @@ class DailyPickSet extends Model
     public function isPersona(): bool
     {
         return $this->kind === CoveKind::Persona;
+    }
+
+    /** A persona or an occasion; see CoveKind::isGiftColumn(). */
+    public function isGiftColumn(): bool
+    {
+        return $this->kind->isGiftColumn();
     }
 }
