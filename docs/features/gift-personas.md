@@ -301,3 +301,27 @@ is what moves it up for that kind of person.
 A persona's prose is rendered at build and stored with it, like a Daily's; see
 [speed.md](speed.md), "Cove pages". The `/gift-ideas` shelf counts each persona's in-stock finds in
 SQL rather than loading every pick for one number per card.
+
+## Personas per relation (2026-09-28)
+
+The owner asked for personas per kind of relation, next to the ones per interest ("De thuiskok").
+Ten of them in be-nl and nl-nl, one Dutch text each: `voor-mama`, `voor-papa`, `voor-je-partner`,
+`voor-oma-en-opa`, `voor-een-kind`, `voor-een-vriend`, `voor-een-collega`, `voor-je-broer-of-zus`,
+`voor-de-leerkracht`, `voor-de-gastheer`. Written here and published over the editorial API, eight
+hand-picked products each, one paragraph per product ending in a search link on its own category.
+
+- **Separate pages, on purpose.** The owner chose them over writing on
+  `/gift-ideas/for/{recipient}` (see [gift-landing-pages.md](gift-landing-pages.md)), knowing that
+  "Voor mama" and "Cadeaus voor mama" answer related searches.
+- **The gift brief is the relation plus three interests**, the first three of
+  `gift_landings.hub_interests_by_recipient` (mama: gardening, wellness, home). With the relation
+  alone the brief has no interests, `PersonaBudgets::fits()` accepts anything, and the budget tabs
+  and the top 10 under the persona would be a random browse.
+- **The two markets share the text, not always the products.** Where a product type is missing in
+  one market (a glass teapot, a fondue set or a cocktail set in nl-nl), that market has another
+  product with its own paragraph.
+- **Sizes are avoided.** A group in the catalogue is one size, so a bathrobe card is "maat S" and a
+  paragraph cannot honestly say "choose the size". Nothing sized is on these pages.
+
+Occasions (Moederdag, housewarming, pensioen) are **not** personas, by the owner's decision: they
+get a Cove kind of their own, still to be built.
