@@ -31,9 +31,11 @@ use Illuminate\Support\Facades\Cache;
  *    what was picked also says something about the price band; focusing
  *    pairs sit within 1.6 times of each other for the reason above.
  *
- * Every fourth round is a single card, like or dislike. While focusing, that
- * card carries an interest that has been passed over, to confirm or clear it
- * before it lands on the avoid list, which needs two bad rounds.
+ * Every round is a pair. Until 2026-09-28 every fourth round was a single
+ * card to like or dislike, or to swipe. The owner gave swiping a way of its
+ * own in Find a gift and asked for it out of This or that. A card
+ * left with no partner is not shown on its own. The reader still accepts a
+ * single-card answer, so a session open during the deploy finishes.
  *
  * ## Random, within the market
  *
@@ -59,9 +61,6 @@ final class TasteDeck
 
     /** Rounds before the deck starts focusing on favourites. */
     public const EXPLORE = 4;
-
-    /** Every fourth round is one card, like or dislike. */
-    public const SINGLE_EVERY = 4;
 
     /** Random draw per request. Plenty for four rounds with room to be choosy. */
     private const POOL = 160;
@@ -182,28 +181,11 @@ final class TasteDeck
 
         $leaders = array_slice(array_map('strval', array_keys(array_filter($scores, fn (float $s) => $s > 0))), 0, 3);
 
-        // Passed over but not yet avoided: worth one more look on a single card.
-        $doubts = array_values(array_diff(
-            array_map('strval', array_keys(array_filter($scores, fn (float $s) => $s < 0))),
-            $profile->avoid,
-        ));
-
         $rounds = [];
 
         for ($i = 0; $i < $count && $pool !== []; $i++) {
             $index = $from + $i;
             $focus = $index >= self::EXPLORE && $leaders !== [];
-
-            if (($index + 1) % self::SINGLE_EVERY === 0) {
-                $card = ($focus ? $this->carrying($pool, $doubts, $exposure) : null)
-                    ?? $this->freshest($pool, $exposure);
-
-                $rounds[] = [$card];
-                $pool = $this->without($pool, $card);
-                $this->expose($exposure, $card);
-
-                continue;
-            }
 
             $leader = $focus ? $leaders[$i % count($leaders)] : null;
 
@@ -219,10 +201,10 @@ final class TasteDeck
 
             $second = $this->opponent($pool, $first, $focus, $rivals, $exposure);
 
+            // No partner left: a lone card would be a like-or-dislike round,
+            // which This or that no longer has.
             if ($second === null) {
-                $rounds[] = [$first];
-
-                continue;
+                break;
             }
 
             $rounds[] = [$first, $second];
@@ -370,10 +352,12 @@ final class TasteDeck
      * The shares are the same as they were: the proven gifts, then tagged
      * products up to half the draw, then the rest.
      *
+     * Public since Swipe gifts draws from the same pool (SwipeDeck).
+     *
      * @param  list<int>  $exclude
      * @return list<TasteCard>
      */
-    private function draw(Market $market, array $exclude): array
+    public function draw(Market $market, array $exclude): array
     {
         $proven = $this->proven($market, $exclude);
         $skip = array_flip([...$exclude, ...array_map(fn (TasteCard $c) => $c->id, $proven)]);

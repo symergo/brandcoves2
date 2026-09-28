@@ -282,6 +282,29 @@ return [
             'body' => 'Junto a los regalos por tipo hay ahora una fila por ocasión: el Día de la Madre, un cumpleaños, una inauguración de casa, una jubilación. Cada página tiene productos elegidos y comentados, pestañas por presupuesto y un top 10 de la semana.',
         ],
     ],
+    // The swiping half of 'swipe-for-yourself' above. Its other half (people
+    // looking for a gift for you get ideas like what you swiped) is not built,
+    // so that idea stays open.
+    'swipe-gifts' => [
+        'status' => 'done',
+        'sort' => 95,
+        'nl' => [
+            'title' => 'Swipe door cadeaus',
+            'body' => 'In Cadeau vinden, onder het zoekvak: één product tegelijk. Naar rechts zet het op de lijst, naar links sla je over, zo lang je wilt. Wat je kiest, stuurt wat daarna komt. Met Stop ga je naar de lijst.',
+        ],
+        'en' => [
+            'title' => 'Swipe through gifts',
+            'body' => 'In Find a gift, under the search box: one product at a time. Right puts it on the list, left passes, for as long as you like. What you choose steers what comes next. Stop takes you to the list.',
+        ],
+        'fr' => [
+            'title' => 'Balayez des cadeaux',
+            'body' => 'Dans Trouver un cadeau, sous la recherche : un produit à la fois. À droite, il va sur la liste ; à gauche, vous passez, aussi longtemps que vous voulez. Vos choix orientent la suite. Arrêter vous mène à la liste.',
+        ],
+        'es' => [
+            'title' => 'Desliza entre regalos',
+            'body' => 'En Buscar un regalo, bajo el buscador: un producto cada vez. A la derecha va a la lista, a la izquierda lo pasas, todo el tiempo que quieras. Lo que eliges guía lo que viene. Parar te lleva a la lista.',
+        ],
+    ],
     'find-a-gift-for-myself' => [
         'status' => 'done',
         'sort' => 90,

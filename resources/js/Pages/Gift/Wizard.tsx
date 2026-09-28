@@ -669,9 +669,7 @@ export default function GiftWizard(props: Props) {
       person by its value. Neither describes the person, so both may sit in a
       URL, where the answers may not.
     */
-    const tasteHref = (() => {
-        const base = tasteUrl ?? `/${market.key}/gift/taste`
-
+    const withWho = (base: string) => {
         if (forMe) {
             return `${base}?for=me`
         }
@@ -681,7 +679,10 @@ export default function GiftWizard(props: Props) {
         }
 
         return kind ? `${base}?relationship=${encodeURIComponent(kind)}` : base
-    })()
+    }
+    const tasteHref = withWho(tasteUrl ?? `/${market.key}/gift/taste`)
+    // Swipe gifts carries who it is for the same way (CarriedWho).
+    const swipeHref = withWho(`/${market.key}/gift/swipe`)
 
     /*
       The persona Coves for this kind of person first, then the ones for
@@ -941,6 +942,17 @@ export default function GiftWizard(props: Props) {
                         kindLabel={whoLabel}
                         market={market}
                     />
+
+                    {/*
+                      Swipe gifts, full width and second, under the search
+                      (owner, 2026-09-28): the other way that puts things
+                      straight on the list.
+                    */}
+                    <Link href={swipeHref} className={`${wayCard} mt-4`}>
+                        <WayHead icon={<ToolIcon name="swipe" className="h-5 w-5" />} title={t('gift.way_swipe')} />
+                        <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_swipe_hint'))}</span>
+                        <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_swipe_cta')} →</span>
+                    </Link>
 
                     {/*
                       Two rows since the owner's review of 2026-09-27: the ways

@@ -45,6 +45,9 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    own "for someone or for yourself?" question. The "search and save" card searches in place with
    the save picker, as for *Skip*: your own lists are the ones to choose from.
 2. **Three ways, side by side**, under a "For Mum · change" line:
+   - **Swipe through gifts** (2026-09-28), full width under the search card: one product at a
+     time, right onto the list, left to pass, with no end but Stop. See
+     [swipe-gifts.md](swipe-gifts.md).
    - **Answer a few questions**: the old wizard's questions (interests, age, taste, budget, avoid),
      minus its own "who" step, which step 1 replaced.
    - **Choose between two things**: This or that, with who it is for in the link

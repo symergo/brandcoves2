@@ -11,8 +11,9 @@ The owner's request (2026-09-26): "a taste discovery tool by swiping or selectin
 building a profile of a person based on the selections made (e.g. choose between two, or
 like/dislike)".
 
-A dozen rounds of real products, mostly two at a time ("which would they rather get?"), every fourth
-one a single card ("would they like this?"). From the choices, with no AI, we work out the person's
+A dozen rounds of real products, two at a time ("which would they rather get?"). Until 2026-09-28
+every fourth round was a single card to like, dislike or swipe; swiping became a way of its own,
+[swipe-gifts.md](swipe-gifts.md), and the owner asked for it out of here. From the choices, with no AI, we work out the person's
 interests, a price band, interests to leave out, and where the tags allow it a vibe, taste poles and
 values. Then eight ideas from the suggestion engine, and the result can be kept on a person so the
 Find a gift starts from it next time.
@@ -47,8 +48,9 @@ Nobody gives a quiz more than about a dozen rounds, so each round has to teach s
 - **Exploring pairs differ in price** (one 1.5 to 4 times the other), so what was picked also tells
   us about the price band. **Focusing pairs sit within 1.6 times** of each other, so the choice is
   about the interest and not the price.
-- **Every fourth round is one card, like or dislike.** While focusing, that card carries an interest
-  that was passed over, to confirm it or clear it before it can reach the avoid list.
+- **Every round is a pair.** A card left with no partner is not shown. The single card that used to
+  come every fourth round (it re-tested an interest passed over) went with the swiping, above; the
+  reader still accepts a single-card answer so a session open during that deploy could finish.
 - **Random, within the market.** Each request draws 160 presentable, giftable products of this
   market carrying an interest tag (an editor's `gift_tags` or the crowd's `crowd_tags`) in random
   order, and the pool's order breaks every tie. Two sessions never see the same deck. A market with
@@ -163,11 +165,8 @@ interests found, no person, like `gift.suggest`.
 
 ## Interaction
 
-Tap or click a card, use the arrow keys (left and right choose, or no and yes on a single card; down
-skips), or swipe a single card right for yes and left for no. The buttons are always there, a swipe
-is only a shortcut. The card follows the finger (that is the finger, not an animation), and the
-fly-away and progress bar transitions are off for reduced motion. `touch-action: pan-y` keeps the
-page scrolling under a finger. "Show the result" is offered after three answered rounds.
+Tap or click a card, or use the arrow keys (left and right choose, down skips). The progress bar
+transition is off for reduced motion. "Show the result" is offered after three answered rounds.
 
 ## No AI
 

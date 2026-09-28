@@ -37,6 +37,7 @@ export type ToolKey =
     | 'picture'
     | 'people'
     | 'taste'
+    | 'swipe'
     | 'cake'
     | 'plus'
     | 'vote'
@@ -454,6 +455,14 @@ const paths: Record<ToolKey, ReactNode> = {
             <rect x="2.8" y="6" width="8" height="12" rx="1.5" transform="rotate(-8 6.8 12)" />
             <rect x="13.2" y="6" width="8" height="12" rx="1.5" transform="rotate(8 17.2 12)" />
             <path d="M12 3.5v2M12 18.5v2" />
+        </>
+    ),
+
+    /* Swipe gifts: one card, tilted as it leaves, and the way it goes. */
+    swipe: (
+        <>
+            <rect x="5" y="4.5" width="9" height="14" rx="1.5" transform="rotate(10 9.5 11.5)" />
+            <path d="M16.5 12h5M19.5 10l2 2-2 2" />
         </>
     ),
 

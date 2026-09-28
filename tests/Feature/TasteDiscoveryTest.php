@@ -89,7 +89,8 @@ class TasteDiscoveryTest extends TestCase
                 ->where('mode', 'giver')
                 ->has('rounds', 4)
                 ->has('rounds.0', 2)
-                ->has('rounds.3', 1)
+                // Every round a pair: the single card went to Swipe gifts (2026-09-28).
+                ->has('rounds.3', 2)
                 ->where('result', null));
 
         $ids = collect($this->get('/be-nl/gift/taste')->viewData('page')['props']['rounds'])->flatten(1)->pluck('id');
@@ -110,8 +111,8 @@ class TasteDiscoveryTest extends TestCase
 
         $rounds = $response->json('rounds');
         $this->assertCount(4, $rounds);
-        // Index 7 is the eighth round, a single card.
-        $this->assertCount(1, $rounds[3]);
+        // Every round a pair, the eighth too (no single card since 2026-09-28).
+        $this->assertCount(2, $rounds[3]);
 
         $shown = collect($rounds)->flatten(1)->pluck('id')->all();
         $this->assertEmpty(array_intersect($shown, [...$queued, ...collect($choices)->pluck('shown')->flatten()->all()]));

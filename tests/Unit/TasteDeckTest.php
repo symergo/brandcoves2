@@ -60,12 +60,16 @@ class TasteDeckTest extends TestCase
     }
 
     #[Test]
-    public function every_fourth_round_is_a_single_card(): void
+    public function every_round_is_a_pair(): void
     {
+        // No like-or-dislike card any more: swiping is a way of its own
+        // (owner, 2026-09-28).
         $rounds = $this->deck()->compose($this->pool(), [], 0, TasteDeck::ROUNDS);
 
+        $this->assertCount(TasteDeck::ROUNDS, $rounds);
+
         foreach ($rounds as $index => $round) {
-            $this->assertCount(($index + 1) % 4 === 0 ? 1 : 2, $round, "round {$index}");
+            $this->assertCount(2, $round, "round {$index}");
         }
     }
 
@@ -118,22 +122,6 @@ class TasteDeckTest extends TestCase
     }
 
     #[Test]
-    public function a_single_card_while_focusing_takes_another_look_at_a_passed_over_interest(): void
-    {
-        $choices = [];
-        $id = 1000;
-
-        $cooking = new TasteCard(++$id, ['interest:cooking'], [], 3000);
-        $choices[] = TasteChoice::pair($cooking, new TasteCard(++$id, ['interest:gaming'], [], 3000), $cooking->id);
-
-        // Index 7 is the eighth round: a single card.
-        [$round] = $this->deck()->compose($this->pool(), $choices, 7, 1);
-
-        $this->assertCount(1, $round);
-        $this->assertSame(['gaming'], $round[0]->interests());
-    }
-
-    #[Test]
     public function a_thin_pool_still_makes_pairs(): void
     {
         $pool = [
@@ -144,11 +132,10 @@ class TasteDeckTest extends TestCase
 
         $rounds = $this->deck()->compose($pool, [], 0, 2);
 
-        $this->assertCount(2, $rounds);
-        $this->assertCount(2, $rounds[0]);
-        // Untagged cards come last and are still used.
+        // Untagged cards come last and are still used; the card left over
+        // has no partner and is not shown on its own.
+        $this->assertCount(1, $rounds);
         $this->assertSame([1, 3], array_map(fn (TasteCard $c) => $c->id, $rounds[0]));
-        $this->assertSame([2], array_map(fn (TasteCard $c) => $c->id, $rounds[1]));
     }
 
     #[Test]

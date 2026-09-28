@@ -1,0 +1,101 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Models\ProductGroup;
+use App\Services\Gift\CarriedWho;
+use App\Services\Gift\GiftHistory;
+use App\Services\Gift\SwipeDeck;
+use App\Services\Seo\PageMeta;
+use App\Support\CurrentMarket;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * Swipe gifts: one product at a time, right to put it on the list, left to
+ * pass, for as long as the visitor likes (owner, 2026-09-28: "don't limit
+ * it, but add a way to navigate away to stop").
+ *
+ * Like This or that, the page holds the swipes and nothing is stored until a
+ * right swipe saves a product, which goes through the ordinary save
+ * (`POST /list-items`), so the list, the toast and Undo are the ones the rest
+ * of the site has. See docs/features/swipe-gifts.md.
+ */
+class SwipeController extends Controller
+{
+    public function show(Request $request, CurrentMarket $current, SwipeDeck $deck, CarriedWho $who): Response
+    {
+        app(PageMeta::class)->set(
+            title: __('site.gift.swipe.title'),
+            description: __('site.gift.swipe.seo_description'),
+            canonical: url($current->url('gift/swipe')),
+        );
+
+        $carried = $who->read($request, $current);
+        $person = $carried['person'] === null ? null : $who->recipient($request, $carried['person']['id']);
+
+        return Inertia::render('Gift/Swipe', [
+            'carried' => $carried,
+            'cards' => $this->present($deck->next(
+                $current->get(),
+                [],
+                [],
+                $person === null ? [] : app(GiftHistory::class)->excludedGroupIds($person),
+            )),
+            'urls' => [
+                'next' => $current->url('gift/swipe/next'),
+                'finder' => $current->url('gift'),
+            ],
+        ]);
+    }
+
+    /** The next batch. JSON: the page keeps its own swipes. */
+    public function next(Request $request, CurrentMarket $current, SwipeDeck $deck, CarriedWho $who): JsonResponse
+    {
+        // Endless by design, so the lists grow; the caps keep one request
+        // bounded, and the page sends only the most recent swipes past them.
+        $validated = $request->validate([
+            'yes' => ['array', 'max:200'],
+            'yes.*' => ['integer'],
+            'no' => ['array', 'max:200'],
+            'no.*' => ['integer'],
+            'exclude' => ['array', 'max:400'],
+            'exclude.*' => ['integer'],
+            'recipient_id' => ['nullable', 'uuid'],
+        ]);
+
+        // What a saved person was already given is never offered again.
+        $person = $who->recipient($request, $validated['recipient_id'] ?? null);
+
+        return response()->json([
+            'cards' => $this->present($deck->next(
+                $current->get(),
+                array_map('intval', $validated['yes'] ?? []),
+                array_map('intval', $validated['no'] ?? []),
+                [
+                    ...array_map('intval', $validated['exclude'] ?? []),
+                    ...($person === null ? [] : app(GiftHistory::class)->excludedGroupIds($person)),
+                ],
+            )),
+        ]);
+    }
+
+    /**
+     * @param  list<ProductGroup>  $groups
+     * @return list<array<string, mixed>>
+     */
+    private function present(array $groups): array
+    {
+        return array_map(fn (ProductGroup $group) => [
+            'id' => $group->id,
+            'title' => $group->displayTitle(),
+            'brand' => $group->brand,
+            'image' => $group->image_url,
+            'price' => $group->min_price,
+        ], $groups);
+    }
+}

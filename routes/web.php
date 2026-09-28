@@ -72,6 +72,7 @@ use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\ShopsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SuggestionController;
+use App\Http\Controllers\SwipeController;
 use App\Http\Controllers\TasteController;
 use App\Http\Controllers\TasteTogetherController;
 use App\Http\Controllers\WishlistCollaboratorController;
@@ -1000,6 +1001,8 @@ Route::prefix('{market}')->group(function () {
 
     Route::get('/gift', [GiftController::class, 'show'])->name('gift');
     Route::get('/gift/taste', [TasteController::class, 'show'])->name('gift.taste');
+    // Swipe gifts: one card at a time, right onto the list (docs/features/swipe-gifts.md).
+    Route::get('/gift/swipe', [SwipeController::class, 'show'])->name('gift.swipe');
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
@@ -1015,6 +1018,7 @@ Route::prefix('{market}')->group(function () {
         Route::post('/gift/taste', [TasteController::class, 'result'])->name('gift.taste.result');
         Route::post('/gift/taste/next', [TasteController::class, 'next'])->name('gift.taste.next');
         Route::post('/gift/taste/save', [TasteController::class, 'save'])->name('gift.taste.save');
+        Route::post('/gift/swipe/next', [SwipeController::class, 'next'])->name('gift.swipe.next');
     });
 
     /*

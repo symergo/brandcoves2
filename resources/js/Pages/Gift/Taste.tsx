@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Button, { buttonClasses } from '../../Components/Button'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import ShareRow from '../../Components/ShareRow'
@@ -91,9 +91,6 @@ interface Props {
 /** Rounds answered (not skipped) before "Show the result" is offered. */
 const MIN_ANSWERED = 3
 
-/** How far a single card has to travel before a swipe counts, in pixels. */
-const SWIPE_DISTANCE = 90
-
 /**
  * This or that: taste discovery by choosing.
  *
@@ -103,10 +100,10 @@ const SWIPE_DISTANCE = 90
  * rounds while two are still left, so the next pair is ready before it is
  * needed. See docs/features/taste-discovery.md.
  *
- * Every choice can be made three ways, and the buttons are always there:
- * tapping or clicking a card (or its buttons), the arrow keys, and on a
- * single card a swipe. A swipe is a shortcut for the buttons, never the only
- * way, and the fly-away animation is skipped for reduced motion.
+ * Every round is a pair, chosen by tapping or clicking a card, or with the
+ * arrow keys. Until 2026-09-28 every fourth round was one card to like,
+ * dislike or swipe; swiping is now a way of its own in Find a gift
+ * (SwipeCard), and the owner asked for it out of here.
  */
 export default function Taste(props: Props) {
     const { t } = useTranslations()
@@ -280,19 +277,13 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
         }
     }
 
-    const verdict = (value: 'like' | 'dislike') => {
-        if (current) {
-            answer({ shown: shownIds(), verdict: value })
-        }
-    }
-
     const skip = () => {
         if (current) {
             answer({ shown: shownIds() })
         }
     }
 
-    // Arrow keys: left and right choose (or no and yes on one card), down skips.
+    // Arrow keys: left and right choose, down skips.
     useEffect(() => {
         if (forWhom === null || !current || finishing) {
             return
@@ -307,18 +298,10 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
 
             if (event.key === 'ArrowLeft') {
                 event.preventDefault()
-                if (current.length === 2) {
-                    pick(current[0])
-                } else {
-                    verdict('dislike')
-                }
+                pick(current[0])
             } else if (event.key === 'ArrowRight') {
                 event.preventDefault()
-                if (current.length === 2) {
-                    pick(current[1])
-                } else {
-                    verdict('like')
-                }
+                pick(current[1])
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault()
                 skip()
@@ -394,51 +377,31 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
             ) : (
                 <>
                     <h2 className="mt-5 text-lg font-medium">
-                        {t(`gift.taste.ask_${current.length === 2 ? 'pair' : 'single'}_${forWhom}`)}
+                        {t(`gift.taste.ask_pair_${forWhom}`)}
                     </h2>
 
-                    {current.length === 2 ? (
-                        <div key={current.map((c) => c.id).join('-')} className="mt-4 grid grid-cols-2 gap-3 sm:gap-5">
-                            {current.map((card) => (
-                                <button
-                                    key={card.id}
-                                    type="button"
-                                    onClick={() => pick(card)}
-                                    aria-label={t('gift.taste.pick_label', { title: card.title })}
-                                    className="group flex flex-col rounded-card border border-line bg-card p-3 text-left transition hover:border-accent focus-visible:border-accent sm:p-4 motion-safe:hover:-translate-y-0.5"
-                                >
-                                    <CardFace card={card} market={market} />
-                                </button>
-                            ))}
-                        </div>
-                    ) : (
-                        <Single
-                            key={current[0].id}
-                            card={current[0]}
-                            onVerdict={verdict}
-                            likeLabel={t('gift.taste.like')}
-                            dislikeLabel={t('gift.taste.dislike')}
-                        />
-                    )}
+                    <div key={current.map((c) => c.id).join('-')} className="mt-4 grid grid-cols-2 gap-3 sm:gap-5">
+                        {current.map((card) => (
+                            <button
+                                key={card.id}
+                                type="button"
+                                onClick={() => pick(card)}
+                                aria-label={t('gift.taste.pick_label', { title: card.title })}
+                                className="group flex flex-col rounded-card border border-line bg-card p-3 text-left transition hover:border-accent focus-visible:border-accent sm:p-4 motion-safe:hover:-translate-y-0.5"
+                            >
+                                <CardFace card={card} market={market} />
+                            </button>
+                        ))}
+                    </div>
 
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                        {current.length === 1 && (
-                            <Button variant="secondary" onClick={() => verdict('dislike')} className="min-w-24">
-                                <span aria-hidden>←</span> {t('gift.taste.dislike')}
-                            </Button>
-                        )}
                         <Button variant="ghost" onClick={skip}>
                             {t('gift.taste.skip')}
                         </Button>
-                        {current.length === 1 && (
-                            <Button onClick={() => verdict('like')} className="min-w-24">
-                                {t('gift.taste.like')} <span aria-hidden>→</span>
-                            </Button>
-                        )}
                     </div>
 
                     <p className="mt-6 text-center text-xs text-ink-soft">
-                        <span className="sm:hidden">{t('gift.taste.swipe_hint')}</span>
+                        <span className="sm:hidden">{t('gift.taste.tap_hint')}</span>
                         <span className="hidden sm:inline">{t('gift.taste.keys_hint')}</span>
                     </p>
                 </>
@@ -460,97 +423,6 @@ function CardFace({ card, market }: { card: Card; market: SharedProps['market'] 
                 <span className="mt-auto pt-2 text-sm text-ink-soft">{formatPrice(card.price, market)}</span>
             )}
         </>
-    )
-}
-
-/**
- * One card, like or dislike, that can also be swiped.
- *
- * `touch-action: pan-y` keeps the page scrolling vertically under a finger;
- * only a sideways drag moves the card. The card follows the finger either
- * way (that is the finger, not an animation), and only the fly-away at the
- * end is skipped when the visitor asked for reduced motion.
- */
-function Single({
-    card,
-    onVerdict,
-    likeLabel,
-    dislikeLabel,
-}: {
-    card: Card
-    onVerdict: (v: 'like' | 'dislike') => void
-    likeLabel: string
-    dislikeLabel: string
-}) {
-    const { market } = usePage<SharedProps>().props
-    const [dx, setDx] = useState(0)
-    const [leaving, setLeaving] = useState<'like' | 'dislike' | null>(null)
-    const start = useRef<number | null>(null)
-
-    const reduced =
-        typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
-    const release = () => {
-        const moved = dx
-        start.current = null
-
-        if (Math.abs(moved) < SWIPE_DISTANCE) {
-            setDx(0)
-            return
-        }
-
-        const value = moved > 0 ? 'like' : 'dislike'
-
-        if (reduced) {
-            onVerdict(value)
-            return
-        }
-
-        setLeaving(value)
-        window.setTimeout(() => onVerdict(value), 180)
-    }
-
-    const offset = leaving === null ? dx : leaving === 'like' ? 600 : -600
-
-    return (
-        <div className="mt-4 flex justify-center">
-            <div
-                role="group"
-                aria-label={card.title}
-                onPointerDown={(e: ReactPointerEvent<HTMLDivElement>) => {
-                    start.current = e.clientX
-                    e.currentTarget.setPointerCapture(e.pointerId)
-                }}
-                onPointerMove={(e) => start.current !== null && setDx(e.clientX - start.current)}
-                onPointerUp={release}
-                onPointerCancel={() => {
-                    start.current = null
-                    setDx(0)
-                }}
-                style={{
-                    transform: `translateX(${offset}px) rotate(${offset / 25}deg)`,
-                    transition: start.current !== null || reduced ? 'none' : 'transform 180ms ease-out',
-                    touchAction: 'pan-y',
-                }}
-                className="relative flex w-full max-w-xs cursor-grab flex-col rounded-card border border-line bg-card p-4 select-none active:cursor-grabbing"
-            >
-                <CardFace card={card} market={market} />
-                <span
-                    aria-hidden
-                    style={{ opacity: Math.min(Math.max(dx, 0) / SWIPE_DISTANCE, 1) }}
-                    className="absolute top-3 left-3 rounded-full bg-sage px-3 py-1 text-sm font-medium text-white"
-                >
-                    {likeLabel}
-                </span>
-                <span
-                    aria-hidden
-                    style={{ opacity: Math.min(Math.max(-dx, 0) / SWIPE_DISTANCE, 1) }}
-                    className="absolute top-3 right-3 rounded-full bg-ink px-3 py-1 text-sm font-medium text-cream"
-                >
-                    {dislikeLabel}
-                </span>
-            </div>
-        </div>
     )
 }
 

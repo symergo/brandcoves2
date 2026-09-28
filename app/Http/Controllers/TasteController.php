@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Friendship;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
+use App\Services\Gift\CarriedWho;
 use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
@@ -29,7 +30,6 @@ use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -75,45 +75,10 @@ class TasteController extends Controller
 
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
-            'carried' => $this->carried($request, $current),
+            'carried' => app(CarriedWho::class)->read($request, $current),
             'rounds' => $this->firstRounds($deck, $current),
             'result' => null,
         ]);
-    }
-
-    /**
-     * Who "Find a gift" already said this is for, so the page does not ask.
-     *
-     * `?person=<id>` is one of the visitor's own people (owner-scoped: any
-     * other id is ignored, as if it were not there); `?relationship=mother`
-     * is one of the closed vocabulary. Either one means "someone else", so
-     * the page's own "for someone or for yourself?" is skipped. Neither is
-     * a description of the person, only who they are, so both may sit in a
-     * URL where the answers may not. See docs/features/find-a-gift.md.
-     *
-     * @return array{person: array{id: string, name: string}|null, relationship: string|null, forMe: bool}
-     */
-    private function carried(Request $request, CurrentMarket $current): array
-    {
-        $id = (string) $request->query('person', '');
-        $recipient = Str::isUuid($id)
-            ? Owner::fromRequest($request)->scope(Recipient::query())->find($id)
-            : null;
-
-        $relationship = $recipient !== null
-            ? app(GiftResults::class)->relationshipType($recipient->relationship, $current->get())
-            : RecipientType::tryFrom((string) $request->query('relationship', ''));
-
-        // "Voor mezelf" chosen in Find a gift: skip the question the same way.
-        if ($request->query('for') === 'me') {
-            return ['person' => null, 'relationship' => null, 'forMe' => true];
-        }
-
-        return [
-            'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
-            'relationship' => $relationship?->value,
-            'forMe' => false,
-        ];
     }
 
     /** The next few rounds, for both doors. JSON: the page keeps its own state. */

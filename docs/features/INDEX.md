@@ -66,6 +66,7 @@ is true now.
 | [find-a-gift.md](find-a-gift.md) | Gifting | Active — `/gift` as one flow: who first, then four ways (questions, This or that, a type, Ask others), the first three ending on one results page (`GiftResults`) that the landing pages draw too; thumbs up/down on each idea teach the engine per saved person and, from five voters, for everybody |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — the engine behind Find a gift; its questions are the first way in since 2026-09-26 |
 | [taste-discovery.md](taste-discovery.md) | Gifting | Active — This or that: a dozen choices between products become a taste, a budget and ideas; can be kept on a person |
+| [swipe-gifts.md](swipe-gifts.md) | Gifting / Lists | Active — Swipe through gifts: one product at a time, right onto the list, left to pass, no end but Stop; learns from what is liked |
 | [taste-together.md](taste-together.md) | Gifting / Lists | Active — This or that played by several people about one person through a link; the giver sees a count and the combined result and can add it to the person |
 | [gift-profile-card.md](gift-profile-card.md) | Gifting | Active — after This or that about yourself, a card with a link that opens Find a gift filled in; opt-in, removable, noindex |
 | [discover-cove.md](discover-cove.md) | Core / Discovery | Active, rebuilt 2026-09-26: today's Cove, This or that, then six of each |
