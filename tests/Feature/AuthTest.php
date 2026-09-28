@@ -49,14 +49,14 @@ class AuthTest extends TestCase
          * broken transport lands in the request. It landed as a 500 on the one
          * form whose whole job is to be the way in.
          */
-        $this->post('/be-nl/login', ['email' => 'someone@example.test'])
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'someone@example.test'])
             ->assertSessionHasErrors('email');
     }
 
     #[Test]
     public function requesting_a_link_sends_one(): void
     {
-        $this->post('/be-nl/login', ['email' => 'someone@example.test'])
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'someone@example.test'])
             ->assertRedirect();
 
         Mail::assertSent(MagicLinkMail::class);
@@ -68,8 +68,8 @@ class AuthTest extends TestCase
     {
         User::create(['email' => 'known@example.test']);
 
-        $known = $this->post('/be-nl/login', ['email' => 'known@example.test']);
-        $unknown = $this->post('/be-nl/login', ['email' => 'nobody@example.test']);
+        $known = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'known@example.test']);
+        $unknown = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'nobody@example.test']);
 
         // Anything else turns this form into an account-existence oracle:
         // "does this person have an account here" is not ours to disclose.
@@ -83,7 +83,7 @@ class AuthTest extends TestCase
     #[Test]
     public function a_link_signs_you_in_and_creates_the_account(): void
     {
-        $this->post('/be-nl/login', ['email' => 'new@example.test']);
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test']);
 
         $token = null;
         Mail::assertSent(MagicLinkMail::class, function (MagicLinkMail $mail) use (&$token) {
@@ -92,7 +92,7 @@ class AuthTest extends TestCase
             return true;
         });
 
-        $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
 
         $this->assertAuthenticated();
         $user = User::query()->where('email', 'new@example.test')->firstOrFail();
@@ -101,9 +101,70 @@ class AuthTest extends TestCase
     }
 
     #[Test]
+    public function opening_the_link_signs_nobody_in_and_leaves_it_for_the_button(): void
+    {
+        /*
+         * Company mail scanners open every link in a message. Until 2026-09-28
+         * opening the link signed in, so a scanner created accounts for people
+         * who never asked and spent the link before they clicked it.
+         */
+        $token = $this->requestLink('scanned@example.test');
+
+        $this->get("/be-nl/auth/magic/{$token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/ConfirmLink')
+                ->where('confirmUrl', "/be-nl/auth/magic/{$token}"));
+
+        // A second open, as a scanner and then the person would.
+        $this->get("/be-nl/auth/magic/{$token}")->assertOk();
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'scanned@example.test']);
+
+        // The button is what signs in.
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+        $this->assertAuthenticated();
+    }
+
+    #[Test]
+    public function a_used_up_link_opens_a_page_that_offers_a_new_one(): void
+    {
+        $this->get('/be-nl/auth/magic/'.str_repeat('x', 64))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/ConfirmLink')
+                ->where('confirmUrl', null)
+                ->where('loginUrl', '/be-nl/login'));
+    }
+
+    #[Test]
+    public function an_automated_request_gets_the_same_answer_and_nobody_is_mailed(): void
+    {
+        /*
+         * Found 2026-09-28: accounts named "GyfQDROfpEjLMJCPpjuwRjE" on real
+         * company addresses. A bot posting straight to the form sends no form
+         * time, one filling every field fills the hidden one, and a script
+         * submits faster than anybody types.
+         */
+        foreach ([
+            ['email' => 'a@example.test', 'name' => 'GyfQDROfpEjLMJCPpjuwRjE'],
+            ['email' => 'b@example.test', 'elapsed_ms' => 5000, 'website' => 'http://spam.test'],
+            ['email' => 'c@example.test', 'elapsed_ms' => 150],
+        ] as $request) {
+            $this->post('/be-nl/login', $request)
+                ->assertRedirect()
+                ->assertSessionHas('success', __('site.auth.link_sent'));
+        }
+
+        Mail::assertNothingSent();
+        $this->assertDatabaseCount('login_tokens', 0);
+    }
+
+    #[Test]
     public function a_link_works_exactly_once(): void
     {
-        $this->post('/be-nl/login', ['email' => 'once@example.test']);
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'once@example.test']);
         $token = null;
         Mail::assertSent(MagicLinkMail::class, function ($mail) use (&$token) {
             $token = $mail->token;
@@ -111,13 +172,13 @@ class AuthTest extends TestCase
             return true;
         });
 
-        $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
 
         $this->post('/be-nl/logout');
 
         // A login link lands in an inbox, in forwarded mail, and in the logs of
         // every proxy it passes through. It has to die on first use.
-        $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/login');
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/login');
         $this->assertGuest();
     }
 
@@ -127,7 +188,7 @@ class AuthTest extends TestCase
         ['token' => $token, 'model' => $model] = LoginToken::issue('old@example.test');
         $model->update(['expires_at' => now()->subMinute()]);
 
-        $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/login');
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/login');
         $this->assertGuest();
     }
 
@@ -139,7 +200,7 @@ class AuthTest extends TestCase
 
         // "It didn't arrive, send another" is the normal flow, and leaving the
         // old link live widens the window for no benefit.
-        $this->get("/be-nl/auth/magic/{$first}")->assertRedirect('/be-nl/login');
+        $this->post("/be-nl/auth/magic/{$first}")->assertRedirect('/be-nl/login');
         $this->assertGuest();
     }
 
@@ -159,7 +220,7 @@ class AuthTest extends TestCase
         User::create(['email' => 'mixed@example.test']);
 
         ['token' => $token] = LoginToken::issue('MIXED@Example.Test');
-        $this->get("/be-nl/auth/magic/{$token}");
+        $this->post("/be-nl/auth/magic/{$token}");
 
         // Otherwise one human gets two accounts with half a gift list each.
         $this->assertSame(1, User::query()->count());
@@ -223,7 +284,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create(['email' => 'merge@example.test']);
         ListItemVote::create(['item_id' => $other->id, 'user_id' => $user->id]);
 
-        $this->withCookie('bc_visitor', $anon->id)->get("/be-nl/auth/magic/{$token}");
+        $this->withCookie('bc_visitor', $anon->id)->post("/be-nl/auth/magic/{$token}");
 
         // Losing a list someone built themselves is the worst moment this
         // product can produce.
@@ -248,7 +309,7 @@ class AuthTest extends TestCase
         $other = User::create(['email' => 'other@example.test']);
 
         ['token' => $first] = LoginToken::issue('first@example.test');
-        $this->withCookie('bc_visitor', $anon->id)->get("/be-nl/auth/magic/{$first}");
+        $this->withCookie('bc_visitor', $anon->id)->post("/be-nl/auth/magic/{$first}");
         $this->post('/be-nl/logout');
 
         Wishlist::create([
@@ -258,7 +319,7 @@ class AuthTest extends TestCase
         ]);
 
         ['token' => $second] = LoginToken::issue('second@example.test');
-        $this->withCookie('bc_visitor', $anon->id)->get("/be-nl/auth/magic/{$second}");
+        $this->withCookie('bc_visitor', $anon->id)->post("/be-nl/auth/magic/{$second}");
 
         // A second sign-in from the same browser must not move a third party's
         // data onto the new account.
@@ -272,11 +333,11 @@ class AuthTest extends TestCase
     public function too_many_requests_are_refused(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->post('/be-nl/login', ['email' => 'flood@example.test']);
+            $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'flood@example.test']);
         }
 
         // Protects the mailbox of whoever's address is being entered.
-        $this->post('/be-nl/login', ['email' => 'flood@example.test'])
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'flood@example.test'])
             ->assertSessionHasErrors('email');
     }
 
@@ -399,7 +460,7 @@ class AuthTest extends TestCase
 
         // And the server still says it, so removing the duplicate did not
         // remove the message.
-        $this->post('/be-nl/login', ['email' => 'someone@example.test'])
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'someone@example.test'])
             ->assertRedirect()
             ->assertSessionHas('success', __('site.auth.link_sent'));
     }
@@ -417,7 +478,7 @@ class AuthTest extends TestCase
          */
         config(['giftcoves.registrations.notify' => 'owner@example.test']);
 
-        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+        $this->post('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'email');
 
@@ -436,7 +497,7 @@ class AuthTest extends TestCase
 
         $this->post('/be-nl/logout');
 
-        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+        $this->post('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
             ->assertRedirect('/be-nl/lists')
             ->assertSessionMissing('signed_up');
         Mail::assertNotQueued(NewRegistrationMail::class);
@@ -484,7 +545,7 @@ class AuthTest extends TestCase
     private function requestLink(string $email): string
     {
         Mail::fake();
-        $this->post('/be-nl/login', ['email' => $email]);
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => $email]);
 
         $token = null;
         Mail::assertSent(MagicLinkMail::class, function (MagicLinkMail $mail) use (&$token) {
@@ -503,7 +564,7 @@ class AuthTest extends TestCase
     {
         config(['giftcoves.registrations.notify' => null]);
 
-        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+        $this->post('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'email');
 

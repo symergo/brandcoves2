@@ -587,6 +587,12 @@ return [
         'send' => 'Stuur me een link',
         'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten. Nog geen account? Dat maken we aan zodra je de link opent.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
+        // The page the link in the email opens: a button, because mail
+        // scanners open links (MagicLinkController::confirm).
+        'confirm_title' => 'Inloggen bij GiftCoves',
+        'confirm_body' => 'Druk op de knop om in te loggen. Sommige mailprogramma\'s openen links al om ze te controleren; daarom vragen we nog één druk.',
+        'confirm_button' => 'Inloggen',
+        'confirm_new_link' => 'Nieuwe link aanvragen',
         'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',
         'or' => 'of',
         'google' => 'Doorgaan met Google',

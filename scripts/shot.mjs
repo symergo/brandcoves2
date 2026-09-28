@@ -27,6 +27,8 @@ const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: Number(width), height: 900 }, deviceScaleFactor: 1 })
 
 await page.goto(link, { waitUntil: 'networkidle' })
+// The link opens a page with a button since 2026-09-28; pressing it signs in.
+await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), page.click('form[method="post"] button[type="submit"]')])
 await page.goto(`http://localhost:8000${path}`, { waitUntil: 'networkidle' })
 await page.screenshot({ path: out, fullPage: true, animations: 'disabled' })
 

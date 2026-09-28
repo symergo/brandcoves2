@@ -55,6 +55,22 @@ class LoginToken extends Model
     }
 
     /**
+     * Whether a token would still sign in, without spending it.
+     *
+     * For the page the link opens (2026-09-28): it shows a button rather than
+     * signing in, because company mail scanners open every link in a message.
+     * The page only needs to know whether to offer the button.
+     */
+    public static function peek(string $plaintext): ?self
+    {
+        return static::query()
+            ->where('token_hash', hash('sha256', $plaintext))
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->first();
+    }
+
+    /**
      * Consume a token, or null if it is unknown, expired or already used.
      *
      * The single-use check and the write are one conditional UPDATE: two

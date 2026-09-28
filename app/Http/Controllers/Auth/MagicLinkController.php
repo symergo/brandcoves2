@@ -13,6 +13,7 @@ use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +30,9 @@ use Inertia\Response;
  */
 class MagicLinkController extends Controller
 {
+    /** Shortest time a person has the form open before sending; see automated(). */
+    private const MIN_FORM_MS = 1200;
+
     public function show(Request $request): Response
     {
         /*
@@ -89,10 +93,35 @@ class MagicLinkController extends Controller
              * is.
              */
             'name' => ['nullable', 'string', 'max:80'],
+
+            // The bot trap, see automated().
+            'website' => ['nullable', 'string', 'max:200'],
+            'elapsed_ms' => ['nullable', 'integer'],
         ]);
 
         $email = mb_strtolower(trim($validated['email']));
         $name = filled($validated['name'] ?? null) ? trim((string) $validated['name']) : null;
+
+        /*
+         * A bot gets the same answer as a person, and nothing is sent.
+         *
+         * Found 2026-09-28: accounts named "GyfQDROfpEjLMJCPpjuwRjE" on real
+         * company addresses. A bot typed the name and the address, we mailed
+         * that stranger a link, and their mail scanner opened it. The same
+         * answer as a real request, so the bot learns nothing to adapt to;
+         * logged, so the trap can be seen working.
+         */
+        $reason = $this->automated($request);
+
+        if ($reason !== null) {
+            Log::info('Sign-in form: automated request dropped', [
+                'reason' => $reason,
+                'ip' => $request->ip(),
+                'domain' => str($email)->after('@')->value(),
+            ]);
+
+            return back()->with('success', __('site.auth.link_sent'));
+        }
 
         // Two limits, because they stop different things: per-address stops
         // mailbox flooding of one victim, per-IP stops an attacker walking a
@@ -159,7 +188,38 @@ class MagicLinkController extends Controller
         return back()->with('success', __('site.auth.link_sent'));
     }
 
-    /** `{market}` is consumed by middleware but still passed positionally. */
+    /**
+     * What the link in the email opens: a page with one button.
+     *
+     * Opening the link used to sign in (2026-09-28). Company mail scanners open
+     * every link in a message to check it, so the scanner signed in, which
+     * created accounts for people who never asked (together with the bot that
+     * typed their address) and spent the link before the real person clicked
+     * it. The button POSTs; scanners do not press buttons. The invitation
+     * email's button has worked this way since 2026-09-27 (InviteAcceptController).
+     *
+     * `{market}` is consumed by middleware but still passed positionally.
+     */
+    public function confirm(string $market, string $token): Response
+    {
+        app(PageMeta::class)->set(
+            title: __('site.auth.confirm_title'),
+            robots: 'noindex, nofollow',
+        );
+
+        $current = app(CurrentMarket::class);
+
+        return Inertia::render('Auth/ConfirmLink', [
+            // Null when the link is used up or expired: the page then says so
+            // and offers a new one, rather than a button that fails.
+            'confirmUrl' => LoginToken::peek($token) === null ? null : $current->url("auth/magic/{$token}"),
+            'loginUrl' => $current->url('login'),
+            // For the plain form: it must work before the page's script loads.
+            'csrfToken' => csrf_token(),
+        ]);
+    }
+
+    /** The page's button. `{market}` is consumed by middleware but still passed positionally. */
     public function consume(Request $request, string $market, string $token, EmailSignIn $signIn): RedirectResponse
     {
         $loginToken = LoginToken::consume($token);
@@ -175,6 +235,35 @@ class MagicLinkController extends Controller
         $signIn->signIn($request, $loginToken->email, $loginToken->name, $market);
 
         return redirect()->intended(app(CurrentMarket::class)->url('lists'));
+    }
+
+    /**
+     * Why a sign-in request looks automated, or null when it looks like a person.
+     *
+     * No captcha: this form is the way in, and a puzzle in front of it costs
+     * real people more than it costs bots. Two checks instead, both invisible:
+     *
+     * - `website` is a field no person sees (it is off-screen and skipped by
+     *   the keyboard). A bot filling in every field fills it in.
+     * - `elapsed_ms` is how long the form was open, sent by the page. A bot
+     *   posting straight to this address sends none, and a script that loads
+     *   the page submits faster than anybody types. `MIN_FORM_MS` is short
+     *   enough for someone whose address is filled in already (the invitation
+     *   email's link does that) and presses the button at once.
+     */
+    private function automated(Request $request): ?string
+    {
+        if (filled($request->input('website'))) {
+            return 'hidden field filled';
+        }
+
+        $elapsed = $request->input('elapsed_ms');
+
+        if (! is_numeric($elapsed)) {
+            return 'no form time';
+        }
+
+        return (int) $elapsed < self::MIN_FORM_MS ? 'too fast' : null;
     }
 
     public function logout(Request $request): RedirectResponse

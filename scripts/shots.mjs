@@ -129,6 +129,8 @@ let bad = 0
 if (MAGIC) {
     // One use, and it expires in fifteen minutes — mint a fresh one per run.
     await page.goto(`${BASE}/${MARKET}/auth/magic/${MAGIC}`, { waitUntil: 'networkidle' })
+    // The link opens a page with a button since 2026-09-28; pressing it signs in.
+    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), page.click('form[method="post"] button[type="submit"]')])
     console.log(`signed in via magic link → ${new URL(page.url()).pathname}`)
 }
 

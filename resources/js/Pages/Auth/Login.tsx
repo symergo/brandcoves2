@@ -2,6 +2,7 @@ import { Head, useForm, usePage } from '@inertiajs/react'
 import type { FormEvent } from 'react'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import { Honeypot, useFormClock } from '../../Components/BotTrap'
 
 interface Props {
     googleEnabled: boolean
@@ -14,10 +15,13 @@ export default function Login({ googleEnabled, email }: Props) {
     const { t } = useTranslations()
     const base = `/${market.key}`
 
-    const form = useForm({ email: email ?? '', name: '' })
+    const form = useForm({ email: email ?? '', name: '', website: '' })
+    const elapsed = useFormClock()
 
     function submit(e: FormEvent) {
         e.preventDefault()
+        // How long the form was open: the bot trap, see Components/BotTrap.
+        form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
         form.post(`${base}/login`, { preserveScroll: true })
     }
 
@@ -74,7 +78,8 @@ export default function Login({ googleEnabled, email }: Props) {
                     </>
                 )}
 
-                <form onSubmit={submit} className="space-y-3">
+                <form onSubmit={submit} className="relative space-y-3">
+                    <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
                     {/*
                       Optional, and only used when the account is created.
                       A magic link is the whole of registration here, so this is

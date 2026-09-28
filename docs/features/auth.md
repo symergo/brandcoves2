@@ -243,3 +243,31 @@ hedge was meant to keep the form from revealing which addresses have accounts, b
 is the same for every address reveals nothing either. Now: "We stuurden een inloglink naar dat
 adres. Open hem binnen 15 minuten. Nog geen account? Dat maken we aan zodra je de link opent." (15
 minutes is `LoginToken`'s lifetime.)
+
+## Bots, and mail scanners opening the link (2026-09-28)
+
+Found by the owner: an account named "GyfQDROfpEjLMJCPpjuwRjE" on a real company address. A bot had
+filled in the sign-in form with a random name and a stranger's address, we mailed that stranger a
+login link, and their company's mail scanner (Microsoft Safe Links, Mimecast and the like open every
+link in incoming mail to check it) opened it. Opening the link signed in, so the scanner created
+the account. The same scanners also spent real people's links before they clicked them, who then
+got "this link has expired".
+
+Two changes:
+
+- **Opening the link shows a page with one button; only the button signs in.**
+  `GET /auth/magic/{token}` is `MagicLinkController::confirm()`, which checks the link without
+  spending it (`LoginToken::peek()`); the button POSTs to the same address (`consume()`). A plain
+  form with the CSRF token, so it works before the script loads, exactly as the invitation email's
+  button has since 2026-09-27 (`InviteAcceptController`). One extra press for a person; scanners do
+  not press buttons.
+- **A bot trap on both sign-in forms, no captcha** (`Components/BotTrap.tsx`,
+  `MagicLinkController::automated()`). A hidden field (`website`) no person sees, and the time the
+  form was open (`elapsed_ms`, at least 1.2 s). A bot posting straight to the server sends no time
+  at all. A request that trips it gets the same "check your inbox" as a real one, so the bot learns
+  nothing, and is logged ("Sign-in form: automated request dropped") so the trap can be seen
+  working. 1.2 s leaves room for someone whose address the invitation link filled in already.
+
+Accounts the bots already created are not removed by this; that is a separate, reviewed clean-up.
+The local screenshot scripts (`scripts/shot.mjs`, `shots.mjs`, `help-screenshots.mjs`) press the
+button after opening the link.

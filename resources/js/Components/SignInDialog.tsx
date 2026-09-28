@@ -2,6 +2,7 @@ import { useForm, usePage } from '@inertiajs/react'
 import { useEffect, useRef, type FormEvent } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import { Honeypot, useFormClock } from './BotTrap'
 
 /**
  * Signing in without leaving the page you were on.
@@ -44,7 +45,8 @@ export default function SignInDialog({
     const base = `/${market.key}`
     const ref = useRef<HTMLDialogElement>(null)
 
-    const form = useForm({ email: '', name: '' })
+    const form = useForm({ email: '', name: '', website: '' })
+    const elapsed = useFormClock(open)
 
     useEffect(() => {
         const el = ref.current
@@ -72,6 +74,8 @@ export default function SignInDialog({
          * next action is "it did not arrive, send another", which is exactly
          * the reasoning the login page records for keeping its form on screen.
          */
+        // How long the dialog was open: the bot trap, see Components/BotTrap.
+        form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
         form.post(`${base}/login`, { preserveScroll: true })
     }
 
@@ -133,7 +137,8 @@ export default function SignInDialog({
                 </>
             )}
 
-            <form onSubmit={submit} className="space-y-3">
+            <form onSubmit={submit} className="relative space-y-3">
+                <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
                 {/* Optional, and only used when the account is created. A magic
                     link is the whole of registration here, so this is the one
                     moment there is to ask — and without a name a shared wishlist

@@ -1173,7 +1173,7 @@ class GiftingMechanismsTest extends TestCase
     #[Test]
     public function a_name_given_at_sign_in_reaches_the_account(): void
     {
-        $this->post('/be-nl/login', ['email' => 'new@example.test', 'name' => 'Ann Smith'])
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test', 'name' => 'Ann Smith'])
             ->assertRedirect();
 
         $token = LoginToken::query()->firstOrFail();

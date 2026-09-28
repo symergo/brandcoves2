@@ -176,6 +176,8 @@ for (const { language, market, term } of MARKETS) {
      */
     const links = seed(market, term)
     await page.goto(links.signIn, { waitUntil: 'networkidle' })
+    // The link opens a page with a button since 2026-09-28; pressing it signs in.
+    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), page.click('form[method="post"] button[type="submit"]')])
     const out = (name) => resolve(ROOT, 'public', 'help', 'lists', language, `${name}.png`)
 
     await page.goto(`${SITE}/${market}/search?q=${encodeURIComponent(term)}`, {

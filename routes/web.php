@@ -390,9 +390,16 @@ Route::prefix('{market}')->group(function () {
             ->middleware('throttle:10,1')
             ->name('login.send');
 
-        Route::get('/auth/magic/{token}', [MagicLinkController::class, 'consume'])
+        // Opening the link shows a page with a button; only the button signs
+        // in (2026-09-28). Mail scanners open links, they do not press buttons.
+        // See MagicLinkController::confirm().
+        Route::get('/auth/magic/{token}', [MagicLinkController::class, 'confirm'])
             ->middleware('throttle:20,1')
             ->name('login.magic');
+
+        Route::post('/auth/magic/{token}', [MagicLinkController::class, 'consume'])
+            ->middleware('throttle:20,1')
+            ->name('login.magic.consume');
 
         // Outbound only. The callback is registered unprefixed, above.
         Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('login.google');
