@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask' | 'dial' | 'compass'
+export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'occasion' | 'brand' | 'shop' | 'all' | 'ask' | 'dial' | 'compass'
 
 /**
  * The discovery surfaces, drawn.
@@ -63,6 +63,17 @@ const paths: Record<CoveKey, ReactNode> = {
             <path d="M2.5 7.5h19v3.5h-19z" />
             <path d="M12 7.5C10.5 4 9 3 7.5 3a2.25 2.25 0 0 0 0 4.5" />
             <path d="M12 7.5C13.5 4 15 3 16.5 3a2.25 2.25 0 0 1 0 4.5" />
+        </>
+    ),
+
+    /*
+     * A party popper with confetti (2026-09-28): gifts for an occasion. Not
+     * the gift box, which is Surprise's, nor the calendar, which is the Daily's.
+     */
+    occasion: (
+        <>
+            <path d="M4 20l5-13 8 8-13 5Z" />
+            <path d="M14 3v2M19 8h2M17.5 4.5 16 6M20 12.5l1 1M11 5.5l.5 1.5" />
         </>
     ),
 

@@ -10,7 +10,7 @@ interface Cove {
 }
 
 interface Section {
-    key: 'daily' | 'gift' | 'smart' | 'brand' | 'shop' | 'community'
+    key: 'daily' | 'gift' | 'occasion' | 'smart' | 'brand' | 'shop' | 'community'
     url: string
     coves: Cove[]
 }
@@ -30,6 +30,7 @@ interface Props {
 const icons: Record<Section['key'], CoveKey> = {
     daily: 'daily',
     gift: 'persona',
+    occasion: 'occasion',
     smart: 'idea',
     brand: 'brand',
     shop: 'shop',

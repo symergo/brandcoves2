@@ -82,6 +82,24 @@ class OccasionCoveTest extends TestCase
     }
 
     #[Test]
+    public function all_coves_shows_occasions_in_a_section_of_their_own(): void
+    {
+        /*
+         * The persona section is described as "built around a person"; an
+         * occasion in it read as a person called Moederdag (owner,
+         * 2026-09-28).
+         */
+        $this->forbidAi();
+        $this->build(CoveKind::Persona, 'de-thuiskok', 'De thuiskok');
+        $this->build(CoveKind::Occasion, 'moederdag', 'Cadeaus voor Moederdag');
+
+        $sections = collect($this->get('/be-nl/coves')->assertOk()->viewData('page')['props']['sections'])->keyBy('key');
+
+        $this->assertSame(['De thuiskok'], array_column($sections['gift']['coves'], 'title'));
+        $this->assertSame(['Cadeaus voor Moederdag'], array_column($sections['occasion']['coves'], 'title'));
+    }
+
+    #[Test]
     public function the_sitemap_lists_an_occasion_at_its_address(): void
     {
         $this->forbidAi();

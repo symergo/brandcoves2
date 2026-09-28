@@ -259,7 +259,7 @@ class CoveRail
              */
             'url' => $current->url(match ($key) {
                 'daily' => $current->get()->coveSegment(),
-                'gift' => 'gift-ideas',
+                'gift', 'occasion' => 'gift-ideas',
                 'shop' => 'shops',
                 default => 'guides',
             }),
@@ -286,8 +286,9 @@ class CoveRail
 
         match ($key) {
             'daily' => $query->daily(),
-            // Personas and occasions: the pages under /gift-ideas.
-            'gift' => $query->giftColumns(),
+            'gift' => $query->personas(),
+            // Occasions have a band of their own, as on /coves (2026-09-28).
+            'occasion' => $query->occasions(),
             'shop' => $query->shops(),
             default => $query->articles(),
         };
@@ -475,7 +476,8 @@ class CoveRail
     {
         return match ($kind) {
             CoveKind::Daily => 'daily',
-            CoveKind::Persona, CoveKind::Occasion => 'gift',
+            CoveKind::Persona => 'gift',
+            CoveKind::Occasion => 'occasion',
             CoveKind::Shop => 'shop',
             CoveKind::Guide, CoveKind::Seasonal, CoveKind::Advice => 'smart',
 

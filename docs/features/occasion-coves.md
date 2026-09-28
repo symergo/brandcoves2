@@ -32,8 +32,13 @@ gift's "start from a type", the Discover persona row, and the drafts from search
 - **A row of its own on /gift-ideas**, "Per gelegenheid", under "Per type persoon". The headings
   appear only once there is an occasion, so until then the shelf is the one row it always was.
   Occasions are listed in the order they were published, which is the editorial order.
-- In the sitemap, in the hreflang pairing (twins pair on the slug, as personas do), in the "gift"
-  band of the Cove rail, in the gift section of /coves, and in the weekly top-10 job.
+- In the sitemap, in the hreflang pairing (twins pair on the slug, as personas do), and in the
+  weekly top-10 job.
+- **A section of its own on /coves and a band of its own in the Cove rail**, "Cadeaus per
+  gelegenheid", with its own icon (a party popper). They first shared the persona section, whose
+  description says "built around a person", which made Moederdag read as a person; the owner asked
+  for them to be split (2026-09-28). The persona description now names real personas, relations
+  included.
 
 ## No date, on purpose
 

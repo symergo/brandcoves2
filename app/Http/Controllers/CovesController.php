@@ -116,8 +116,18 @@ class CovesController extends Controller
             ),
             $this->section(
                 'gift',
-                // Personas and occasions: the pages under /gift-ideas.
-                DailyPickSet::query()->giftColumns()->orderByDesc('published_at'),
+                DailyPickSet::query()->personas()->orderByDesc('published_at'),
+                self::PER_SECTION,
+                $current,
+            ),
+            /*
+             * Gifts per occasion, a section of their own (owner, 2026-09-28):
+             * an occasion is not a kind of person, and sharing the persona
+             * section put Moederdag under "built around a person".
+             */
+            $this->section(
+                'occasion',
+                DailyPickSet::query()->occasions()->orderBy('published_at')->orderBy('id'),
                 self::PER_SECTION,
                 $current,
             ),
@@ -316,7 +326,7 @@ class CovesController extends Controller
              */
             'url' => $current->url(match ($key) {
                 'daily' => $current->get()->coveSegment(),
-                'gift' => 'gift-ideas',
+                'gift', 'occasion' => 'gift-ideas',
                 default => 'guides',
             }),
             'coves' => $coves->map(fn (DailyPickSet $cove): array => [

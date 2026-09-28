@@ -4,7 +4,7 @@ import { useTranslations } from '../useTranslations'
 
 /** Other Coves of the kind being read. Null on a market's first of a kind. */
 export interface CoveBand {
-    key: 'daily' | 'gift' | 'smart' | 'shop'
+    key: 'daily' | 'gift' | 'occasion' | 'smart' | 'shop'
     /** The index that owns this kind — `/daily`, `/gift-ideas`, `/guides`, `/shops`. */
     url: string
     coves: { title: string; intro: string; url: string; date: string | null }[]
@@ -21,6 +21,7 @@ export interface CoveBand {
 const icons: Record<CoveBand['key'], CoveKey> = {
     daily: 'daily',
     gift: 'persona',
+    occasion: 'occasion',
     smart: 'idea',
     shop: 'shop',
 }
