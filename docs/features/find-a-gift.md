@@ -36,6 +36,14 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    reads and whose list it fills. The cards are `PersonPicker` since the consistency review's round
    3 (2026-09-27), shared with the list wizard and This or that; a visitor who is not signed in gets
    the same cards for their saved people (name, relationship, interests) instead of the name chips.
+   **For myself** since 2026-09-28 (owner: "add also for myself"): a "Voor mezelf" button under the
+   kinds. It clears a saved person and a relationship picked before, and posts `for_me`, which the
+   server reads as the flag to set both aside even when the form still carries them, and to score
+   with `SuggestionProfile::forMyself()`. The questions that speak about the person (interests, age,
+   taste, the two way hints) switch to a `_me` key in the second person; vibe, budget and avoid read
+   the same either way, so they have no second form. This or that gets it as `?for=me` and skips its
+   own "for someone or for yourself?" question. The "search and save" card searches in place with
+   the save picker, as for *Skip*: your own lists are the ones to choose from.
 2. **Three ways, side by side**, under a "For Mum · change" line:
    - **Answer a few questions**: the old wizard's questions (interests, age, taste, budget, avoid),
      minus its own "who" step, which step 1 replaced.

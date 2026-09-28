@@ -275,11 +275,31 @@ return [
         ],
         'fr' => [
             'title' => 'Des cadeaux par occasion',
-            'body' => "À côté des cadeaux par type, il y a maintenant une rangée par occasion : la fête des mères, un anniversaire, une pendaison de crémaillère, un départ à la retraite. Chaque page propose des produits choisis et commentés, des onglets par budget et un top 10 de la semaine.",
+            'body' => 'À côté des cadeaux par type, il y a maintenant une rangée par occasion : la fête des mères, un anniversaire, une pendaison de crémaillère, un départ à la retraite. Chaque page propose des produits choisis et commentés, des onglets par budget et un top 10 de la semaine.',
         ],
         'es' => [
             'title' => 'Regalos por ocasión',
             'body' => 'Junto a los regalos por tipo hay ahora una fila por ocasión: el Día de la Madre, un cumpleaños, una inauguración de casa, una jubilación. Cada página tiene productos elegidos y comentados, pestañas por presupuesto y un top 10 de la semana.',
+        ],
+    ],
+    'find-a-gift-for-myself' => [
+        'status' => 'done',
+        'sort' => 90,
+        'nl' => [
+            'title' => 'Cadeau vinden voor jezelf',
+            'body' => 'In Cadeau vinden kun je nu ook Voor mezelf kiezen. De vragen gaan dan over jou, Dit of dat vraagt niet meer voor wie het is, en je bewaart wat je vindt op je eigen lijst.',
+        ],
+        'en' => [
+            'title' => 'Find a gift for yourself',
+            'body' => 'In Find a gift you can now choose For myself. The questions are then about you, This or that no longer asks who it is for, and you save what you find to your own list.',
+        ],
+        'fr' => [
+            'title' => 'Trouver un cadeau pour soi',
+            'body' => "Dans Trouver un cadeau, vous pouvez maintenant choisir Pour moi. Les questions portent alors sur vous, Ceci ou cela ne demande plus pour qui c'est, et vous gardez ce que vous trouvez sur votre propre liste.",
+        ],
+        'es' => [
+            'title' => 'Buscar un regalo para ti',
+            'body' => 'En Buscar un regalo ahora puedes elegir Para mí. Las preguntas tratan entonces de ti, Esto o aquello ya no pregunta para quién es, y guardas lo que encuentras en tu propia lista.',
         ],
     ],
 ];

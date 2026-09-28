@@ -64,6 +64,8 @@ interface Brief {
     occasion?: string | null
     age_band?: string | null
     recipient_id?: string | null
+    /** "Voor mezelf": the answers describe the visitor, not somebody else. */
+    for_me?: boolean
 }
 
 /** A persona Cove: the third way in, "Start from a type". */
@@ -459,6 +461,12 @@ export default function GiftWizard(props: Props) {
     // a product with the same strings, so the two meet as one value.
     const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
+    /*
+     * "Voor mezelf" (owner, 2026-09-28): the same questions about yourself.
+     * No saved person and no relationship; the questions say "you", and the
+     * server scores for the person using the list (SuggestionProfile::forMyself).
+     */
+    const [forMe, setForMe] = useState<boolean>(brief?.for_me ?? false)
 
     /*
      * "Adjust" shows the questions again with the answers kept, and no request:
@@ -475,9 +483,11 @@ export default function GiftWizard(props: Props) {
         recipient?.relationshipType ??
         (relationship && relationshipOptions.some((o) => o.value === relationship) ? relationship : null)
 
-    const whoLabel = recipient
-        ? recipient.name
-        : kind
+    const whoLabel = forMe
+        ? t('gift.who_me_label')
+        : recipient
+          ? recipient.name
+          : kind
           ? (relationshipOptions.find((o) => o.value === kind)?.label ?? kind)
           : null
 
@@ -507,6 +517,7 @@ export default function GiftWizard(props: Props) {
         relationship,
         age_band: ageBand,
         recipient_id: recipientId,
+        for_me: forMe,
     })
 
     const submit = () => {
@@ -540,6 +551,7 @@ export default function GiftWizard(props: Props) {
     const useRecipient = (chosen: Recipient) => {
         // The second time you buy for your mother you should not have to
         // describe her again.
+        setForMe(false)
         setRecipientId(chosen.id)
         setInterests(chosen.interests)
         setVibe(chosen.vibe)
@@ -621,9 +633,19 @@ export default function GiftWizard(props: Props) {
             setBudgetMax('')
         }
 
+        setForMe(false)
         setRelationship(value)
         setStage('ways')
     }
+
+    /** "Voor mezelf": nobody else, so a saved person and a relationship picked before both go. */
+    const useMe = () => {
+        useKind(null)
+        setForMe(true)
+    }
+
+    /** A question's key, in its "you" form when the gift is for yourself. */
+    const own = (key: string) => (forMe ? `${key}_me` : key)
 
     /*
       An avoided *interest*, as This or that learns it ("not gaming"), is kept
@@ -649,6 +671,10 @@ export default function GiftWizard(props: Props) {
     */
     const tasteHref = (() => {
         const base = tasteUrl ?? `/${market.key}/gift/taste`
+
+        if (forMe) {
+            return `${base}?for=me`
+        }
 
         if (recipient) {
             return `${base}?person=${encodeURIComponent(recipient.id)}`
@@ -745,7 +771,8 @@ export default function GiftWizard(props: Props) {
                     personName={recipient?.name ?? null}
                     onSwap={swap}
                     // Thumbs: about the saved person, or the kind of person picked.
-                    thumbs={{ recipientId, relationship: kind ?? relationship }}
+                    thumbs={{ recipientId, relationship: forMe ? null : (kind ?? relationship) }}
+                    forMe={forMe}
                     interestLabel={interestLabel}
                     top={
                         <>
@@ -888,6 +915,12 @@ export default function GiftWizard(props: Props) {
                         </div>
                     )}
 
+                    <div className="mt-5">
+                        <button type="button" aria-pressed={forMe} className={chip(forMe)} onClick={useMe}>
+                            {t('gift.who_me')}
+                        </button>
+                    </div>
+
                     <button type="button" className="mt-6 text-sm text-ink-soft underline hover:text-ink" onClick={() => useKind(null)}>
                         {t('gift.who_skip')}
                     </button>
@@ -929,13 +962,13 @@ export default function GiftWizard(props: Props) {
                             className={wayCard}
                         >
                             <WayHead icon={<ToolIcon name="suggestions" className="h-5 w-5" />} title={t('gift.way_questions')} />
-                            <span className="mt-1 text-sm text-ink-soft">{t('gift.way_questions_hint')}</span>
+                            <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_questions_hint'))}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_questions_cta')} →</span>
                         </button>
 
                         <Link href={tasteHref} className={wayCard}>
                             <WayHead icon={<ToolIcon name="taste" className="h-5 w-5" />} title={t('gift.way_taste')} />
-                            <span className="mt-1 text-sm text-ink-soft">{t('gift.way_taste_hint')}</span>
+                            <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_taste_hint'))}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_taste_cta')} →</span>
                         </Link>
 
@@ -1021,7 +1054,7 @@ export default function GiftWizard(props: Props) {
                         )}
                     </div>
 
-                    <h2 className="mt-1 text-lg font-medium">{t(`gift.step_${STEPS[step]}`)}</h2>
+                    <h2 className="mt-1 text-lg font-medium">{t(STEPS[step] === 'interests' || STEPS[step] === 'age' ? own(`gift.step_${STEPS[step]}`) : `gift.step_${STEPS[step]}`)}</h2>
 
                     <div className="mt-4">
                         {STEPS[step] === 'interests' && (
@@ -1130,7 +1163,7 @@ export default function GiftWizard(props: Props) {
                                   other; the cap of three counts the whole answer.
                                 */}
                                 <div>
-                                    <p className="mb-3 text-sm text-ink-soft">{t('gift.preference_label')}</p>
+                                    <p className="mb-3 text-sm text-ink-soft">{t(own('gift.preference_label'))}</p>
                                     <div className="space-y-2">
                                         {options.preferences.map(({ axis, poles }) => (
                                             <div key={axis} className="flex flex-wrap items-center gap-2">

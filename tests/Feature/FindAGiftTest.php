@@ -136,12 +136,12 @@ class FindAGiftTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Gift/Taste')
-                ->where('carried', ['person' => null, 'relationship' => 'mother']));
+                ->where('carried', ['person' => null, 'relationship' => 'mother', 'forMe' => false]));
 
         // Anything outside the vocabulary is not carried.
         $this->get('/be-nl/gift/taste?relationship=grote-baas')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null]));
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false]));
     }
 
     #[Test]
@@ -153,10 +153,10 @@ class FindAGiftTest extends TestCase
 
         $this->actingAs($user)->get("/be-nl/gift/taste?person={$mum->id}")
             ->assertInertia(fn ($page) => $page
-                ->where('carried', ['person' => ['id' => $mum->id, 'name' => 'Mum'], 'relationship' => 'mother']));
+                ->where('carried', ['person' => ['id' => $mum->id, 'name' => 'Mum'], 'relationship' => 'mother', 'forMe' => false]));
 
         $this->actingAs($user)->get("/be-nl/gift/taste?person={$theirs->id}")
-            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null]));
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false]));
     }
 
     #[Test]
@@ -249,6 +249,39 @@ class FindAGiftTest extends TestCase
                 ->missing('result.askUrl')
                 ->missing('result.refine')
                 ->where('result.offlineIdeas', []));
+    }
+
+    #[Test]
+    public function for_myself_sets_aside_a_person_and_a_relationship(): void
+    {
+        /*
+         * "Voor mezelf" (owner, 2026-09-28). A saved person or a relationship
+         * left in the form from before must not steer ideas meant for you.
+         */
+        $user = User::factory()->create();
+        $mum = Recipient::factory()->create(['owner_user_id' => $user->id, 'name' => 'Mum', 'relationship' => 'mother']);
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', [
+                'interests' => ['cooking'],
+                'relationship' => 'mother',
+                'recipient_id' => $mum->id,
+                'for_me' => true,
+            ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Gift/Wizard')
+                ->where('brief.for_me', true)
+                ->where('personUrl', null)
+                ->has('picks'));
+    }
+
+    #[Test]
+    public function this_or_that_carries_for_myself_and_skips_its_own_who_question(): void
+    {
+        $this->get('/be-nl/gift/taste?for=me')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => true]));
     }
 
     #[Test]

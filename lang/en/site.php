@@ -211,6 +211,7 @@ return [
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Daily Cove',
         'cove_kind_persona' => 'Gift idea',
+        'cove_kind_occasion' => 'Occasion',
         'cove_kind_guide' => 'Buying guide',
         'cove_kind_seasonal' => 'Seasonal guide',
         'cove_kind_advice' => 'Advice',
@@ -1512,6 +1513,9 @@ return [
         'seo_description' => 'Describe the person you are buying for and get eight gift ideas, each showing what it has in common with your description.',
 
         'step_interests' => 'What are they into?',
+        'step_interests_me' => 'What are you into?',
+        'step_age' => 'How old are they?',
+        'step_age_me' => 'How old are you?',
         'step_vibe' => 'How should it feel?',
         'step_budget' => 'What are you spending?',
         'step_avoid' => 'Anything to avoid?',
@@ -1617,6 +1621,11 @@ return [
         'who_people' => 'Your people',
         'who_type' => 'Or say who they are',
         'who_skip' => 'Skip',
+        'who_me' => 'For myself',
+        'who_me_label' => 'yourself',
+        'preference_label_me' => 'And which way does your taste go? (up to 3)',
+        'way_questions_hint_me' => 'What you like doing, your age, your style and your budget. You can skip any of them.',
+        'way_taste_hint_me' => 'Not sure what you want? Choose between two products a dozen times, and we work out your taste.',
         'relationships' => [
             'partner' => 'Partner',
             'mother' => 'Mum',
@@ -2604,7 +2613,7 @@ return [
         'find_search_results' => 'On the results page, Coves about what you searched come first. Filters and sorting sit behind the Filters button, and every filter that is on shows as a chip you can remove. Under a product you can see how many people keep it on a list and how many Coves hold it: a count only, never who.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The country and language button at the top (in the menu on a phone) changes it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
-        'find_gift' => 'In Find a gift you first say who it is for: one of your people, or who they are, like your partner or a colleague. Then choose how to look: answer a few questions, choose between two things in This or that, or start from a type of person. Or ask somebody: other people, or the person themselves, on their own link where they play This or that, suggest gifts or share a wish list. Every way but those last two ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask others.',
+        'find_gift' => 'In Find a gift you first say who it is for: one of your people, who they are, like your partner or a colleague, or yourself. Then choose how to look: answer a few questions, choose between two things in This or that, or start from a type of person. Or ask somebody: other people, or the person themselves, on their own link where they play This or that, suggest gifts or share a wish list. Every way but those last two ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask others.',
         'find_ask' => 'Ask others: describe who you are buying for and other people suggest something. Choose who you ask: the GiftCoves community, on the public board (we read your question first), or only your people: your friends on GiftCoves get a notification straight away, and you get a link to send to anyone you like. That question is not on the board. Under Your questions you find the link to each of your questions again.From Find a gift or from a list about somebody, the question is filled in with what we know (never their name), and ideas from the answers save straight onto that list. Once your question is on the board, your friends on GiftCoves hear about it; switch that off, or stop hearing about theirs, on your notifications page.',
         'find_history' => 'Keep track of what you gave someone on their page (open it from a list for them or from Find a gift). Write it down, or press "I gave this" beside something on their list. What you marked "I\'ll get this" on lists for them counts too, never what anybody else marked. We then leave those things out of new ideas for them and suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in Find a gift or add them to their list. Stop the emails from the link in any reminder.',

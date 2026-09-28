@@ -91,7 +91,7 @@ class TasteController extends Controller
      * a description of the person, only who they are, so both may sit in a
      * URL where the answers may not. See docs/features/find-a-gift.md.
      *
-     * @return array{person: array{id: string, name: string}|null, relationship: string|null}
+     * @return array{person: array{id: string, name: string}|null, relationship: string|null, forMe: bool}
      */
     private function carried(Request $request, CurrentMarket $current): array
     {
@@ -104,9 +104,15 @@ class TasteController extends Controller
             ? app(GiftResults::class)->relationshipType($recipient->relationship, $current->get())
             : RecipientType::tryFrom((string) $request->query('relationship', ''));
 
+        // "Voor mezelf" chosen in Find a gift: skip the question the same way.
+        if ($request->query('for') === 'me') {
+            return ['person' => null, 'relationship' => null, 'forMe' => true];
+        }
+
         return [
             'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
             'relationship' => $relationship?->value,
+            'forMe' => false,
         ];
     }
 

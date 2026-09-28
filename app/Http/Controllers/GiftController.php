@@ -22,6 +22,7 @@ use App\Services\Gift\PastGift;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\SuggestionProfile;
 use App\Services\Gift\TasteBrief;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Search\GiftIntentParser;
@@ -459,8 +460,9 @@ class GiftController extends Controller
             // One of the fixed groups, the same strings a product is tagged with.
             'age_band' => ['nullable', 'string', Rule::in(GiftTags::AGE_BANDS)],
             'recipient_id' => ['nullable', 'uuid'],
-            // Validated so it echoes back in `brief`, and the tick survives the
-            // round trip. TasteBrief never sees it.
+            // "Voor mezelf" (owner, 2026-09-28): ranked for your own list, and
+            // echoed back in `brief` so the choice survives every post.
+            'for_me' => ['boolean'],
         ]);
     }
 
@@ -474,7 +476,8 @@ class GiftController extends Controller
      */
     private function recipient(Request $request, array $validated): ?Recipient
     {
-        if (empty($validated['recipient_id'])) {
+        // Looking for yourself is looking for nobody else.
+        if (empty($validated['recipient_id']) || ! empty($validated['for_me'])) {
             return null;
         }
 
@@ -537,10 +540,19 @@ class GiftController extends Controller
             budgetMax: isset($validated['budget_max']) ? (int) round((float) $validated['budget_max'] * 100) : null,
             avoid: array_values((array) ($validated['avoid'] ?? [])),
             values: array_values((array) ($validated['values'] ?? [])),
-            relationship: $validated['relationship'] ?? null,
+            // No relationship for yourself: a `recipient:` tag is about
+            // somebody else, and the for-myself profile weighs it at zero.
+            relationship: empty($validated['for_me']) ? ($validated['relationship'] ?? null) : null,
             occasion: $validated['occasion'] ?? null,
             ageBand: $validated['age_band'] ?? null,
             limit: (int) config('giftcoves.gift.results'),
+            /*
+             * For yourself, ranked as for your own list, the same profile This
+             * or that uses for "for yourself": price counts less, and "lots of
+             * people bought it" counts a little, because nobody wants a
+             * surprising kettle on their own list (SuggestionProfile).
+             */
+            profile: empty($validated['for_me']) ? null : SuggestionProfile::forMyself(),
             // The saved person, already scoped to the owner by recipient():
             // the engine reads the thumbs given for them.
             recipientId: $recipient?->id,

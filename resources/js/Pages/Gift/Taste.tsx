@@ -85,7 +85,7 @@ interface Props {
      * kind of person. Either one skips "for someone or for yourself?".
      * A giver's page only.
      */
-    carried?: { person: { id: string; name: string } | null; relationship: string | null }
+    carried?: { person: { id: string; name: string } | null; relationship: string | null; forMe?: boolean }
 }
 
 /** Rounds answered (not skipped) before "Show the result" is offered. */
@@ -157,7 +157,9 @@ export default function Taste(props: Props) {
 function CarriedLine({ carried, finder }: { carried?: Props['carried']; finder: string }) {
     const { t } = useTranslations()
 
-    const who = carried?.person?.name ?? (carried?.relationship ? t(`gift.relationships.${carried.relationship}`) : null)
+    const who = carried?.forMe
+        ? t('gift.who_me_label')
+        : (carried?.person?.name ?? (carried?.relationship ? t(`gift.relationships.${carried.relationship}`) : null))
 
     if (!who) {
         return null
@@ -189,7 +191,8 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
     // The person themselves is always "you", a player on a shared link always
     // "they"; a giver says who first, unless "Find a gift" already asked.
     const [forWhom, setForWhom] = useState<'someone' | 'me' | null>(
-        mode === 'self' ? 'me' : mode === 'together' || person || relationship ? 'someone' : null,
+        // "Voor mezelf" on Find a gift arrives as ?for=me and skips the question.
+        mode === 'self' || carried?.forMe ? 'me' : mode === 'together' || person || relationship ? 'someone' : null,
     )
     const [queue, setQueue] = useState<Round[]>(rounds)
     const [index, setIndex] = useState(0)
@@ -632,6 +635,10 @@ function Outcome({ mode, person, urls, result, recipients, people = [], canCreat
     const restart = (() => {
         if (mode !== 'giver') {
             return urls.restart
+        }
+
+        if (carried?.forMe) {
+            return `${urls.restart}?for=me`
         }
 
         if (carried?.person) {

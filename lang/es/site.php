@@ -142,6 +142,7 @@ return [
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Cove del día',
         'cove_kind_persona' => 'Idea de regalo',
+        'cove_kind_occasion' => 'Ocasión',
         'cove_kind_guide' => 'Guía de compra',
         'cove_kind_seasonal' => 'Guía de temporada',
         'cove_kind_advice' => 'Consejo',
@@ -1308,6 +1309,9 @@ return [
         'seo_description' => 'Describe a la persona a quien regalas y recibe ocho ideas, cada una con lo que tiene en común con tu descripción.',
 
         'step_interests' => '¿Qué le gusta?',
+        'step_interests_me' => '¿Qué te gusta?',
+        'step_age' => '¿Qué edad tiene?',
+        'step_age_me' => '¿Qué edad tienes?',
         'step_vibe' => '¿Cómo debe sentirse?',
         'step_budget' => '¿Cuánto quieres gastar?',
         'step_avoid' => '¿Algo que evitar?',
@@ -1413,6 +1417,11 @@ return [
         'who_people' => 'Tus personas',
         'who_type' => 'O di quién es',
         'who_skip' => 'Saltar',
+        'who_me' => 'Para mí',
+        'who_me_label' => 'ti',
+        'preference_label_me' => '¿Y hacia dónde va tu gusto? (máximo 3)',
+        'way_questions_hint_me' => 'Qué te gusta hacer, tu edad, tu estilo y tu presupuesto. Puedes saltarte cualquiera.',
+        'way_taste_hint_me' => '¿No sabes bien qué quieres? Elige una docena de veces entre dos productos y sacamos tus gustos.',
         'relationships' => [
             'partner' => 'Pareja',
             'mother' => 'Mamá',
@@ -2333,7 +2342,7 @@ return [
         'find_search_results' => 'En la página de resultados, primero aparecen las Coves sobre lo que buscaste. Los filtros y el orden están detrás del botón Filtros, y cada filtro activo se muestra como una etiqueta que puedes quitar. Debajo de un producto ves cuántas personas lo tienen en una lista y en cuántas Coves está: solo un número, nunca quién.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
         'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. El botón de país e idioma de arriba (en el menú, en un móvil) lo cambia cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
-        'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, o quién es, como tu pareja o un compañero de trabajo. Luego eliges cómo buscar: responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. O pregunta a alguien: a los demás, o a la propia persona, con su propio enlace donde juega a Esto o aquello, propone regalos o comparte una lista de deseos. Cada camino menos esos dos últimos termina en la misma página de ideas, con ideas sin tienda, Coves que hicieron otros y, al final, Pregunta a otras personas.',
+        'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, quién es, como tu pareja o un compañero de trabajo, o tú mismo. Luego eliges cómo buscar: responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. O pregunta a alguien: a los demás, o a la propia persona, con su propio enlace donde juega a Esto o aquello, propone regalos o comparte una lista de deseos. Cada camino menos esos dos últimos termina en la misma página de ideas, con ideas sin tienda, Coves que hicieron otros y, al final, Pregunta a otras personas.',
         'find_ask' => 'Pregunta a los demás: describe para quién buscas y otras personas sugieren algo. Elige a quién preguntas: la comunidad de GiftCoves, en el tablón público (primero leemos tu pregunta), o solo tu gente: tus amigos en GiftCoves reciben un aviso enseguida, y tú recibes un enlace para enviarlo a quien quieras. Esa pregunta no está en el tablón. En Tus preguntas encuentras de nuevo el enlace de cada una de tus preguntas.Desde «Encontrar un regalo» o desde una lista sobre alguien, la pregunta ya viene rellenada con lo que sabemos (nunca el nombre), y las ideas de las respuestas se añaden directamente a esa lista. Cuando tu pregunta está publicada, tus amigos en GiftCoves se enteran; puedes desactivarlo, o dejar de recibir sus preguntas, en tus notificaciones.',
         'find_history' => 'Lleva la cuenta de lo que le regalaste a alguien en su página (ábrela desde una lista para esa persona o desde «Encontrar un regalo»). Apúntalo, o pulsa «Lo regalé» junto a algo de su lista. Lo que marcaste con «Yo lo regalo» en sus listas también cuenta, nunca lo que marcaron otros. Después lo dejamos fuera de las nuevas ideas para esa persona y proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en «Encontrar un regalo» o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',
