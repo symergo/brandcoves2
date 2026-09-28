@@ -96,7 +96,7 @@ return [
         'hero_title' => 'Vind dingen die het geven, krijgen en delen waard zijn.',
         'hero_intro' => 'GiftCoves is een open plek om producten te ontdekken van winkels, merken en zelfstandige makers, en ze te bewaren in Coves die je kunt houden, delen of geven.',
         'cta_create' => 'Maak een Cove',
-        'cta_explore' => 'Ontdek Coves',
+        'cta_find_gift' => 'Zoek cadeaus',
         'entries_label' => 'Drie manieren om te beginnen',
         'entry_gift_title' => 'Op zoek naar een cadeau?',
         'entry_gift_body' => 'Vertel ons voor wie je koopt, wat die persoon leuk vindt en wat je wilt uitgeven.',

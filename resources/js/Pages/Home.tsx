@@ -87,8 +87,9 @@ export default function Home({ today, coves, collected = [] }: Props) {
                             <Link href={createCove} className={buttonClasses('primary', 'lg')}>
                                 {t('home.cta_create')}
                             </Link>
-                            <Link href={`${base}/coves`} className={buttonClasses('secondary', 'lg')}>
-                                {t('home.cta_explore')}
+                            {/* "Zoek cadeaus" to Find a gift, where "Ontdek Coves" to /coves stood (owner, 2026-09-28). */}
+                            <Link href={`${base}/gift`} className={buttonClasses('secondary', 'lg')}>
+                                {t('home.cta_find_gift')}
                             </Link>
                         </div>
                     </div>

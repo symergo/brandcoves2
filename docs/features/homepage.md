@@ -18,7 +18,8 @@ What is this, why should I care, what can I do now. Nothing else. The owner's st
 bottom (`Pages/Home.tsx`):
 
 1. **Hero.** "Find things worth giving, getting and sharing." across the full width; under it the
-   pitch with **Create a Cove** and **Explore Coves** beside the drawing; across the full width
+   pitch with **Create a Cove** and **Find gifts** (to `/gift`; "Explore Coves" to `/coves` until the
+   owner swapped it on 2026-09-28) beside the drawing; across the full width
    underneath, until 2026-09-27, a row of three verbs ("Zoek alles · Voeg alles toe · Deel alles",
    briefly "Zoek · Verzamel · Deel" with links). The owner removed it the same day: the search card
    right under the hero and "Van overal" below say the same with something to press.

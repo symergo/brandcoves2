@@ -96,7 +96,7 @@ return [
         'hero_title' => 'Encuentra cosas que merece la pena regalar, recibir y compartir.',
         'hero_intro' => 'GiftCoves es un lugar abierto para descubrir productos de tiendas, marcas y creadores independientes, y guardarlos en Coves para conservar, compartir o regalar.',
         'cta_create' => 'Crear una Cove',
-        'cta_explore' => 'Explorar Coves',
+        'cta_find_gift' => 'Buscar regalos',
         'entries_label' => 'Tres maneras de empezar',
         'entry_gift_title' => '¿Buscas un regalo?',
         'entry_gift_body' => 'Dinos para quién es, qué le gusta y tu presupuesto.',
