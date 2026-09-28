@@ -885,6 +885,28 @@ export default function GiftWizard(props: Props) {
                         {t('gift.who_title')}
                     </h2>
 
+                    {/*
+                      "Voor mezelf" first and larger than a chip (owner,
+                      2026-09-28): the one answer that is about the visitor.
+                    */}
+                    <button
+                        type="button"
+                        aria-pressed={forMe}
+                        onClick={useMe}
+                        className={`mt-4 flex w-full items-center gap-3 rounded-card border px-5 py-4 text-left text-base font-medium transition sm:w-auto sm:min-w-72 ${
+                            forMe ? 'border-accent bg-accent text-white' : 'border-line bg-card hover:border-ink'
+                        }`}
+                    >
+                        <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                forMe ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'
+                            }`}
+                        >
+                            <ToolIcon name="wishlist" className="h-5 w-5" />
+                        </span>
+                        {t('gift.who_me')}
+                    </button>
+
                     {pickable.length > 0 && (
                         <div className="mt-4">
                             <PersonPicker
@@ -915,12 +937,6 @@ export default function GiftWizard(props: Props) {
                             </div>
                         </div>
                     )}
-
-                    <div className="mt-5">
-                        <button type="button" aria-pressed={forMe} className={chip(forMe)} onClick={useMe}>
-                            {t('gift.who_me')}
-                        </button>
-                    </div>
 
                     <button type="button" className="mt-6 text-sm text-ink-soft underline hover:text-ink" onClick={() => useKind(null)}>
                         {t('gift.who_skip')}

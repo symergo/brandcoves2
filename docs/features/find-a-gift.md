@@ -36,8 +36,9 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    reads and whose list it fills. The cards are `PersonPicker` since the consistency review's round
    3 (2026-09-27), shared with the list wizard and This or that; a visitor who is not signed in gets
    the same cards for their saved people (name, relationship, interests) instead of the name chips.
-   **For myself** since 2026-09-28 (owner: "add also for myself"): a "Voor mezelf" button under the
-   kinds. It clears a saved person and a relationship picked before, and posts `for_me`, which the
+   **For myself** since 2026-09-28 (owner: "add also for myself"): a "Voor mezelf" button, first
+   and larger than the chips, above your people and the kinds (owner, the same day: "make it bigger
+   and put it first"). It clears a saved person and a relationship picked before, and posts `for_me`, which the
    server reads as the flag to set both aside even when the form still carries them, and to score
    with `SuggestionProfile::forMyself()`. The questions that speak about the person (interests, age,
    taste, the two way hints) switch to a `_me` key in the second person; vibe, budget and avoid read
