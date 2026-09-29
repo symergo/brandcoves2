@@ -93,7 +93,9 @@ insert — at 06:00, with a constraint violation and no other symptom.
 - `GET /{market}/gift-ideas` — the shelf. A plain grid, ordered by first publication. Deliberately
   not a feed: these do not arrive in an order that matters and none is more current than another. A
   persona written in March is exactly as useful in November, which is the whole reason it has no date
-  on it.
+  on it. The cards are compact rows since 2026-09-29 (owner): a 64px drawing beside the title, two
+  lines of blurb, the count, the whole card one link. The earlier card put a full-width drawing above
+  the words and showed six to a screen.
 - `GET /{market}/gift-ideas/{slug}` — one persona.
 - `GET /{market}/gift-ideas/for/{recipient}/{interest?}` — not a persona: a gift landing page built
   from a brief ("gift ideas for dad who loves cooking"), since 2026-09-26. The `for` segment is what
