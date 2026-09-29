@@ -12,7 +12,7 @@ use App\Enums\Preference;
  *
  * ## The scoring, and why these numbers
  *
- * Every interest, vibe, taste pole and value on a card gets a running score:
+ * Every interest and taste pole on a card gets a running score:
  *
  * | What happened to the card | Score per tag |
  * |---|---|
@@ -70,7 +70,7 @@ final class TasteProfiler
 
     public const MAX_AVOID = 3;
 
-    /** Net score a vibe, taste pole or value needs. The same bar as an interest. */
+    /** Net score a taste pole needs. The same bar as an interest. */
     public const TASTE_THRESHOLD = 1.5;
 
     public const MIN_PRICES = 3;
@@ -107,9 +107,7 @@ final class TasteProfiler
             avoid: $this->avoided($interests),
             budgetMin: $this->band($choices)[0],
             budgetMax: $this->band($choices)[1],
-            vibe: $this->vibe($choices),
             preferences: $this->preferences($choices),
-            values: $this->strongest($this->tally($choices, GiftTags::VALUES), TasteProfile::MAX_VALUES),
             answered: count(array_filter($choices, fn (TasteChoice $c) => ! $c->isSkipped())),
         );
     }
@@ -249,27 +247,6 @@ final class TasteProfiler
             $this->ranked($rows),
             fn (string $value) => $rows[$value]['score'] >= self::TASTE_THRESHOLD,
         )), 0, $limit);
-    }
-
-    /**
-     * One vibe, and only when it clearly leads: two vibes level is no answer.
-     *
-     * @param  list<TasteChoice>  $choices
-     */
-    private function vibe(array $choices): ?string
-    {
-        $rows = $this->tally($choices, GiftTags::VIBE);
-        $ranked = $this->strongest($rows, 2);
-
-        if ($ranked === []) {
-            return null;
-        }
-
-        if (isset($ranked[1]) && $rows[$ranked[1]]['score'] >= $rows[$ranked[0]]['score']) {
-            return null;
-        }
-
-        return $ranked[0];
     }
 
     /**

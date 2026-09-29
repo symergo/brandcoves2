@@ -6,7 +6,6 @@ namespace App\Services\Gift;
 
 use App\Enums\Market;
 use App\Enums\Preference;
-use App\Enums\Vibe;
 
 /**
  * What a round of taste discovery learned about a person.
@@ -25,14 +24,11 @@ final readonly class TasteProfile
 
     public const MAX_PREFERENCES = 3;
 
-    public const MAX_VALUES = 3;
-
     /**
      * @param  list<string>  $interests  strongest first
      * @param  array<string, float>  $scores  every interest seen, net score
      * @param  list<string>  $avoid  interest values to leave out
      * @param  list<string>  $preferences  Preference poles, one per axis at most
-     * @param  list<string>  $values  'sustainable', 'local', 'handmade'
      * @param  int  $answered  rounds answered, skips not counted
      */
     public function __construct(
@@ -41,9 +37,7 @@ final readonly class TasteProfile
         public array $avoid = [],
         public ?int $budgetMin = null,
         public ?int $budgetMax = null,
-        public ?string $vibe = null,
         public array $preferences = [],
-        public array $values = [],
         public int $answered = 0,
     ) {}
 
@@ -68,12 +62,10 @@ final readonly class TasteProfile
         return new TasteBrief(
             market: $market,
             interests: $this->interests,
-            vibe: $this->vibe === null ? null : Vibe::tryFrom($this->vibe),
             preferences: $this->preferences,
             budgetMin: $this->budgetMin,
             budgetMax: $this->budgetMax,
             avoid: $this->avoidEntries(),
-            values: $this->values,
             relationship: $relationship,
             excludeGroupIds: $exclude,
             limit: $limit,
@@ -96,8 +88,8 @@ final readonly class TasteProfile
      * comes off the avoid list, and an interest avoided today comes off the
      * interests. Pass an empty array to write this profile on its own.
      *
-     * @param  array{interests?: array<mixed>|null, avoid?: array<mixed>|null, vibe?: string|null, preferences?: array<mixed>|null, values?: array<mixed>|null}  $stored
-     * @return array{interests: list<string>, avoid: list<string>, vibe: string|null, preferences: list<string>, values: list<string>}
+     * @param  array{interests?: array<mixed>|null, avoid?: array<mixed>|null, preferences?: array<mixed>|null}  $stored
+     * @return array{interests: list<string>, avoid: list<string>, preferences: list<string>}
      */
     public function mergedWith(array $stored): array
     {
@@ -130,12 +122,7 @@ final readonly class TasteProfile
         return [
             'interests' => array_slice($interests, 0, self::MAX_INTERESTS),
             'avoid' => array_slice($avoid, 0, self::MAX_AVOID),
-            'vibe' => $this->vibe ?? (isset($stored['vibe']) && $stored['vibe'] !== '' ? (string) $stored['vibe'] : null),
             'preferences' => array_slice($preferences, 0, self::MAX_PREFERENCES),
-            'values' => array_slice(array_values(array_unique([
-                ...$this->values,
-                ...array_map('strval', (array) ($stored['values'] ?? [])),
-            ])), 0, self::MAX_VALUES),
         ];
     }
 
@@ -147,9 +134,7 @@ final readonly class TasteProfile
             'avoid' => $this->avoid,
             'budgetMin' => $this->budgetMin,
             'budgetMax' => $this->budgetMax,
-            'vibe' => $this->vibe,
             'preferences' => $this->preferences,
-            'values' => $this->values,
             'answered' => $this->answered,
         ];
     }

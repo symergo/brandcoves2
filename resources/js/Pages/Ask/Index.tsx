@@ -45,7 +45,7 @@ interface Props {
     /** How many friends a question for your people reaches. */
     friendCount?: number
     canAsk: boolean
-    options: { interests: Option[]; vibes: Option[]; values: string[] }
+    options: { interests: Option[] }
     /**
      * The form filled in from what is known about who it is for (Find a gift,
      * or a list page). Null when nothing is. Never a name; see AskPrefill.
@@ -60,8 +60,6 @@ interface Props {
 interface Prefill {
     title: string
     interests: string[]
-    vibe: string | null
-    values: string[]
     age_band: string
     budget_max: string
     occasion: string
@@ -137,8 +135,6 @@ export default function AskIndex({
     const [detailed, setDetailed] = useState(
         prefill !== null &&
             (prefill.interests.length > 0 ||
-                prefill.vibe !== null ||
-                prefill.values.length > 0 ||
                 prefill.age_band !== '' ||
                 prefill.budget_max !== '' ||
                 prefill.occasion !== ''),
@@ -149,8 +145,6 @@ export default function AskIndex({
         body: string
         budget_max: string
         interests: string[]
-        vibe: string | null
-        values: string[]
         age_band: string
         occasion: string
         list_id: string | null
@@ -161,8 +155,6 @@ export default function AskIndex({
         body: '',
         budget_max: prefill?.budget_max ?? '',
         interests: prefill?.interests ?? [],
-        vibe: prefill?.vibe ?? null,
-        values: prefill?.values ?? [],
         age_band: prefill?.age_band ?? '',
         occasion: prefill?.occasion ?? '',
         list_id: prefill?.list?.id ?? null,
@@ -183,25 +175,22 @@ export default function AskIndex({
 
         const known = new Set(options.interests.map((o) => o.value))
         const interests = (brief.interests ?? []).filter((v) => known.has(v))
-        const values = (brief.values ?? []).filter((v) => options.values.includes(v))
 
         form.setData((data) => ({
             ...data,
             interests: interests.length > 0 ? interests : data.interests,
-            vibe: brief.vibe ?? data.vibe,
-            values: values.length > 0 ? values : data.values,
             budget_max: brief.budget_max || data.budget_max,
             age_band: brief.age_band || data.age_band,
         }))
 
-        if (interests.length > 0 || brief.vibe || values.length > 0 || brief.budget_max || brief.age_band) {
+        if (interests.length > 0 || brief.budget_max || brief.age_band) {
             setDetailed(true)
         }
         // Once, on arrival.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    function toggle(field: 'interests' | 'values', value: string) {
+    function toggle(field: 'interests', value: string) {
         const list = form.data[field]
 
         form.setData(field, list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
@@ -491,48 +480,6 @@ export default function AskIndex({
                                     ))}
                                 </div>
                             </fieldset>
-
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                <fieldset>
-                                    <legend className="text-sm font-medium">{t('gift.step_vibe')}</legend>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {options.vibes.map((vibe) => (
-                                            <button
-                                                key={vibe.value}
-                                                type="button"
-                                                aria-pressed={form.data.vibe === vibe.value}
-                                                // Pressing the chosen one again
-                                                // clears it: there is no "none"
-                                                // chip, and a choice you cannot
-                                                // take back is a trap.
-                                                onClick={() =>
-                                                    form.setData('vibe', form.data.vibe === vibe.value ? null : vibe.value)
-                                                }
-                                                className={chip(form.data.vibe === vibe.value)}
-                                            >
-                                                {vibe.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </fieldset>
-
-                                <fieldset>
-                                    <legend className="text-sm font-medium">{t('gift.step_values')}</legend>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {options.values.map((value) => (
-                                            <button
-                                                key={value}
-                                                type="button"
-                                                aria-pressed={form.data.values.includes(value)}
-                                                onClick={() => toggle('values', value)}
-                                                className={chip(form.data.values.includes(value))}
-                                            >
-                                                {t(`gift.values.${value}`)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </fieldset>
-                            </div>
 
                             <div className="grid gap-5 sm:grid-cols-3">
                                 <label className="block text-sm font-medium">

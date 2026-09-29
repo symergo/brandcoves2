@@ -48,7 +48,7 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
                                        Surprise pool with no display title yet
     GET /products/untagged             same, with no gift tags yet; carries the
                                        vocabulary (interest, occasion, recipient,
-                                       age, vibe, values)
+                                       age, preference)
     GET /interests/candidates          market (req), days (def 90), limit (def 50):
                                        interests people typed that the vocabulary
                                        lacks, ranked; adding one is a code change
@@ -123,7 +123,8 @@ time rather than as a silently skipped pick at build time.
     "ageBand": "50-64",               // 0-2|3-5|6-9|10-12|13-17|18-29|30-49|50-64|65+
     "budgetMin": 2000,                // cents
     "budgetMax": 6000,                // cents
-    "vibe": "…", "preferences": ["…"], "values": ["handmade"],
+    "preferences": ["…"],             // "vibe" and "values" were removed on 2026-09-29
+                                      // and are ignored if sent (docs/features/taste-pairs.md)
     "avoid": ["alcohol"],             // matched against titles, hard filter
     "hasEverything": true             // someone who has everything: tasting boxes,
                                       // workshops, refills before more things to keep

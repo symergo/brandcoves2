@@ -96,7 +96,7 @@ class GiftProfileCardTest extends TestCase
         $this->assertNotNull($card->profile['budgetMin']);
         // jsonb keeps its own key order, so compared as a set.
         $this->assertEqualsCanonicalizing(
-            ['interests', 'avoid', 'budgetMin', 'budgetMax', 'vibe', 'preferences', 'values'],
+            ['interests', 'avoid', 'budgetMin', 'budgetMax', 'preferences'],
             array_keys($card->profile),
         );
         $this->assertStringNotContainsString((string) $this->byInterest['cooking'][0]->id, json_encode($card->profile));

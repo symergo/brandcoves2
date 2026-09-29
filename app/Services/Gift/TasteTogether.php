@@ -178,9 +178,7 @@ final class TasteTogether
         $written = $recipient->describeTaste($profile->mergedWith([
             'interests' => $recipient->interests,
             'avoid' => $recipient->avoid,
-            'vibe' => $recipient->vibe,
             'preferences' => $recipient->preferences,
-            'values' => $recipient->values,
         ]), TasteSource::Suggested);
 
         if ($profile->budgetMin !== null) {

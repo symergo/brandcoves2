@@ -14,7 +14,6 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
-use App\Services\Gift\GiftTags;
 use App\Services\Gift\NextSteps;
 use App\Services\Gift\PastGift;
 use App\Services\Seo\PageMeta;
@@ -86,8 +85,8 @@ class PersonController extends Controller
             // the "Over" form crashed on opening (found 2026-09-27).
             'options' => array_intersect_key(
                 app(GiftController::class)->options(),
-                array_flip(['interests', 'vibes', 'ages', 'relationships']),
-            ) + ['values' => GiftTags::VALUE_OPTIONS],
+                array_flip(['interests', 'ages', 'relationships']),
+            ),
             /*
              * Deleting fails at the database while a group gift is about
              * them: `wishlists.recipient_id` is set to null on delete, and a

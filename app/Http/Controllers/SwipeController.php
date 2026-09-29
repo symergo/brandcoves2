@@ -55,6 +55,8 @@ class SwipeController extends Controller
             'urls' => [
                 'next' => $current->url('gift/swipe/next'),
                 'finder' => $current->url('gift'),
+                // Opened from My taste: Stop goes back there, to see it filled in.
+                'back' => $request->query('from') === 'my-taste' ? $current->url('my-taste') : null,
                 // Swiping for yourself, signed in, feeds "Mijn smaak" (my-taste.md).
                 'mine' => $request->user() !== null && $carried['forMe'] ? $current->url('my-taste/learn') : null,
             ],

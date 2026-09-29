@@ -68,8 +68,9 @@ class RejectionMemory
         $shape = [
             'market' => $brief->market->value,
             'interests' => $this->sorted($brief->interests),
-            'vibe' => $brief->vibe?->value,
-            'values' => $this->sorted($brief->values),
+            // The only taste question since 2026-09-29 (taste-pairs.md), so a
+            // different taste is a different set of answers.
+            'preferences' => $this->sorted($brief->preferences),
             'avoid' => $this->sorted($brief->avoid),
             'budgetMin' => $brief->budgetMin,
             'budgetMax' => $brief->budgetMax,

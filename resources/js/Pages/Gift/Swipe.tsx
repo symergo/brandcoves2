@@ -27,7 +27,7 @@ interface Props {
     /** Who "Find a gift" said this is for; see App\Services\Gift\CarriedWho. */
     carried: { person: { id: string; name: string } | null; relationship: string | null; forMe: boolean }
     cards: Card[]
-    urls: { next: string; finder: string; mine?: string | null }
+    urls: { next: string; finder: string; mine?: string | null; back?: string | null }
 }
 
 interface SaveResult {
@@ -179,8 +179,8 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
 
     /*
      * Swiping for yourself, signed in: the swipes also go to "Mijn smaak"
-     * (owner, 2026-09-29), as one-card choices, so the interests, the vibe and
-     * the taste poles they show are kept (MyTasteController::learn). Every
+     * (owner, 2026-09-29), as one-card choices, so the interests and the taste
+     * poles they show are kept (MyTasteController::learn). Every
      * KEEP_EVERY swipes and on Stop, the latest hundred each time: the server
      * merges, so sending one again adds nothing twice, and a closed tab loses
      * at most the last few.
@@ -222,6 +222,14 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
      * something stays, to save what they chose.
      */
     const stop = () => {
+        // Back to My taste when opened from there, once the swipes are kept,
+        // so the page shows what they added.
+        if (urls.back) {
+            const back = urls.back
+            void keepInMine().then(() => router.visit(back))
+            return
+        }
+
         void keepInMine()
 
         if (stopped) {

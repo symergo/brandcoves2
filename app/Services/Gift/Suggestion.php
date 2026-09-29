@@ -20,7 +20,7 @@ final readonly class Suggestion
      * @param  array<string, float>  $breakdown  signal name => points contributed
      * @param  list<string>  $matchedQueries  angle queries this product answered
      * @param  list<string>  $matchedInterests  interests it answered, strongest slot first
-     * @param  list<array{kind: string, value: string}>  $matchedTastes  vibe, preference and values poles it sits at
+     * @param  list<array{kind: string, value: string}>  $matchedTastes  preference poles it sits at
      * @param  bool  $consumable  used up or done rather than kept (a tasting box, a workshop); only
      *                            set for a has-everything brief, see HasEverything
      */

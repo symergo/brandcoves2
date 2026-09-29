@@ -7,6 +7,10 @@ date_added: 2026-08-16
 
 # Ask others
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 A board where somebody describes who they are buying for and other people suggest something.
 
 ## The gap it fills

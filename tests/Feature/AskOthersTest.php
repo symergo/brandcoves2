@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
-use App\Enums\Vibe;
 use App\Jobs\TriageCommunityPost;
 use App\Models\CommunityAnswer;
 use App\Models\CommunityQuestion;
@@ -123,8 +122,6 @@ class AskOthersTest extends TestCase
         $question = CommunityQuestion::query()->firstOrFail();
 
         $this->assertNull($question->interests);
-        $this->assertNull($question->vibe);
-        $this->assertNull($question->values);
         $this->assertSame([], $question->tags());
     }
 
@@ -136,6 +133,8 @@ class AskOthersTest extends TestCase
         $this->actingAs(User::factory()->create())->post('/be-nl/ask', [
             'title' => 'Something for my sister who is into climbing',
             'interests' => ['coffee', 'outdoors'],
+            // No longer questions (removed site-wide 2026-09-29): an old form
+            // that still sends them is ignored, not refused.
             'vibe' => 'practical',
             'values' => ['sustainable'],
             'occasion' => 'Birthday',
@@ -145,12 +144,12 @@ class AskOthersTest extends TestCase
         $question = CommunityQuestion::query()->firstOrFail();
 
         $this->assertSame(['coffee', 'outdoors'], $question->interests);
-        $this->assertSame(Vibe::Practical, $question->vibe);
+        $this->assertNull($question->vibe);
         $this->assertSame('Birthday', $question->occasion);
 
         // Rendered as labels in the reader's language, never as raw enum values.
         $this->assertContains(__('site.gift.interests.coffee'), $question->tags());
-        $this->assertContains(__('site.gift.vibes.practical'), $question->tags());
+        $this->assertNotContains(__('site.gift.vibes.practical'), $question->tags());
     }
 
     #[Test]

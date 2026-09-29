@@ -7,6 +7,10 @@ date_added: 2026-09-26
 
 # Gift profile card: "My gift profile: coffee, walking, around €30 to €60"
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 The owner's request (2026-09-26): after somebody plays [This or that](taste-discovery.md) about
 themselves, offer a card with a public link. Opening the link lands in Find a gift filled in
 with that profile, no account needed, and invites the visitor to make their own card. Opt-in,

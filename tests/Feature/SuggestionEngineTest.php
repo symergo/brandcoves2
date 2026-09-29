@@ -8,7 +8,6 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
-use App\Enums\Vibe;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -260,7 +259,7 @@ class SuggestionEngineTest extends TestCase
         $pick = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['photography'],
-            vibe: Vibe::Practical,
+            preferences: ['practical'],
         ))[0];
 
         // "Why did it pick this" is the first question everyone asks — the
@@ -268,6 +267,10 @@ class SuggestionEngineTest extends TestCase
         $this->assertArrayHasKey('interest_fit', $pick->breakdown);
         $this->assertArrayHasKey('budget_fit', $pick->breakdown);
         $this->assertGreaterThan(0, $pick->breakdown['interest_fit']);
+        $this->assertArrayHasKey('preference', $pick->breakdown);
+        // Vibe and values were removed site-wide (2026-09-29); the pairs carry the feel.
+        $this->assertArrayNotHasKey('vibe', $pick->breakdown);
+        $this->assertArrayNotHasKey('values', $pick->breakdown);
         $this->assertNotSame('', $pick->topSignal());
     }
 

@@ -110,7 +110,7 @@ class GiftTagsApiTest extends TestCase
     {
         $vocabulary = GiftTags::vocabulary();
 
-        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'vibe', 'preference', 'values'], array_keys($vocabulary));
+        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'preference'], array_keys($vocabulary));
         $this->assertContains('coffee', $vocabulary['interest']);
         $this->assertContains('christmas', $vocabulary['occasion']);
         $this->assertContains('sinterklaas', $vocabulary['occasion']);
@@ -121,9 +121,9 @@ class GiftTagsApiTest extends TestCase
         $this->assertContains('13-17', $vocabulary['age']);
         $this->assertNotContains('teen', $vocabulary['recipient']);
         $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'], $vocabulary['age']);
-        $this->assertContains('playful', $vocabulary['vibe']);
-        // Which way their taste goes, which the vibe cannot say. Pairs of
-        // opposites, so every pole has its other end in the list.
+        // Which way their taste goes. Pairs of opposites, so every pole has
+        // its other end in the list. Vibe and values were removed site-wide
+        // (2026-09-29); the pairs carry the feel.
         $this->assertContains('vintage', $vocabulary['preference']);
         $this->assertContains('preference:vintage', GiftTags::all());
 
@@ -132,7 +132,8 @@ class GiftTagsApiTest extends TestCase
             $this->assertSame($pole, $pole->opposite()->opposite());
             $this->assertSame($pole->axis(), $pole->opposite()->axis());
         }
-        $this->assertContains('handmade', $vocabulary['values']);
+        $this->assertNotContains('vibe:playful', GiftTags::all());
+        $this->assertNotContains('values:handmade', GiftTags::all());
         $this->assertContains('interest:coffee', GiftTags::all());
     }
 
@@ -163,14 +164,14 @@ class GiftTagsApiTest extends TestCase
         $this->withToken($key)
             ->postJson('/api/editorial/products/tags', [
                 'market' => 'be-nl',
-                'tags' => [['id' => $group->id, 'tags' => ['Recipient:Mother', 'interest:coffee', 'interest:coffee ', 'vibe:practical']]],
+                'tags' => [['id' => $group->id, 'tags' => ['Recipient:Mother', 'interest:coffee', 'interest:coffee ', 'Preference:Practical']]],
             ])
             ->assertOk()
             ->assertJsonPath('count', 1)
             // Vocabulary order, lower case, no duplicates.
-            ->assertJsonPath('data.0.tags', ['interest:coffee', 'recipient:mother', 'vibe:practical']);
+            ->assertJsonPath('data.0.tags', ['interest:coffee', 'recipient:mother', 'preference:practical']);
 
-        $this->assertSame(['interest:coffee', 'recipient:mother', 'vibe:practical'], $group->fresh()->giftTags());
+        $this->assertSame(['interest:coffee', 'recipient:mother', 'preference:practical'], $group->fresh()->giftTags());
 
         // A second write replaces: the wrong tag is taken off by leaving it out.
         $this->withToken($key)
@@ -240,15 +241,19 @@ class GiftTagsApiTest extends TestCase
     {
         $group = $this->group('Koffiemolen');
 
-        $this->withToken($this->key(ApiToken::abilities()))
-            ->postJson('/api/editorial/products/tags', [
-                'market' => 'be-nl',
-                'tags' => [
-                    ['id' => $group->id, 'tags' => ['interest:coffee', 'interest:espresso', 'mood:cosy']],
-                ],
-            ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('tags');
+        $key = $this->key(ApiToken::abilities());
+
+        // vibe: and values: were prefixes until 2026-09-29 and are refused
+        // like any other word outside the vocabulary.
+        foreach ([['interest:coffee', 'interest:espresso', 'mood:cosy'], ['interest:coffee', 'vibe:playful'], ['values:handmade']] as $tags) {
+            $this->withToken($key)
+                ->postJson('/api/editorial/products/tags', [
+                    'market' => 'be-nl',
+                    'tags' => [['id' => $group->id, 'tags' => $tags]],
+                ])
+                ->assertStatus(422)
+                ->assertJsonValidationErrors('tags');
+        }
 
         $this->assertSame([], $group->fresh()->giftTags());
     }

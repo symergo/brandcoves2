@@ -40,8 +40,6 @@ export interface Profile {
     friendId: number | null
     about: {
         interests: Option[]
-        vibe: string | null
-        values: string[]
         ageBand: string | null
         avoid: string[]
         budgetMin: Cents | null
@@ -65,8 +63,6 @@ export interface Profile {
 
 export interface ProfileOptions {
     interests: Option[]
-    vibes: Option[]
-    values: string[]
     ages: Option[]
     relationships: Option[]
 }
@@ -151,8 +147,6 @@ export default function PersonProfile({
 
     const facts: { label: string; items: string[] }[] = [
         { label: t('people.field_interests'), items: about.interests.map((i) => i.label) },
-        { label: t('people.field_vibe'), items: about.vibe ? [options.vibes.find((v) => v.value === about.vibe)?.label ?? about.vibe] : [] },
-        { label: t('people.field_values'), items: about.values.map((v) => t(`gift.values.${v}`)) },
         { label: t('people.field_age'), items: about.ageBand ? [options.ages.find((a) => a.value === about.ageBand)?.label ?? about.ageBand] : [] },
         { label: t('people.field_budget'), items: budget === null ? [] : [budget] },
         { label: t('people.field_avoid'), items: about.avoid.map(avoidLabel) },
@@ -704,8 +698,6 @@ function AboutForm({
     const about = profile.about
     const theirs = about.tasteSource === 'self'
     const [interests, setInterests] = useState<string[]>(about.interests.map((i) => i.value))
-    const [vibe, setVibe] = useState<string | null>(about.vibe)
-    const [values, setValues] = useState<string[]>(about.values)
     const [ageBand, setAgeBand] = useState<string | null>(about.ageBand)
     const [avoid, setAvoid] = useState<string[]>(about.avoid)
     const [min, setMin] = useState(about.budgetMin === null ? '' : String(about.budgetMin / 100))
@@ -750,7 +742,7 @@ function AboutForm({
                         // Euros here, cents in the column: RecipientTasteRequest converts.
                         budget_min: euros(min),
                         budget_max: euros(max),
-                        ...(theirs ? {} : { interests, vibe, values, avoid }),
+                        ...(theirs ? {} : { interests, avoid }),
                     },
                     { preserveScroll: true, onSuccess: onDone, onFinish: () => setBusy(false) },
                 )
@@ -817,44 +809,6 @@ function AboutForm({
                         <Button type="button" variant="secondary" size="sm" onClick={addOwn} disabled={full}>
                             {t('people.add_word')}
                         </Button>
-                    </div>
-                </fieldset>
-            )}
-
-            {!theirs && (
-                <fieldset>
-                    <legend className="text-xs font-medium">{t('people.field_vibe')}</legend>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                        {options.vibes.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                aria-pressed={vibe === option.value}
-                                onClick={() => setVibe(vibe === option.value ? null : option.value)}
-                                className={chip(vibe === option.value)}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
-                </fieldset>
-            )}
-
-            {!theirs && (
-                <fieldset>
-                    <legend className="text-xs font-medium">{t('people.field_values')}</legend>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                        {options.values.map((value) => (
-                            <button
-                                key={value}
-                                type="button"
-                                aria-pressed={values.includes(value)}
-                                onClick={() => toggleIn(values, setValues, value)}
-                                className={chip(values.includes(value))}
-                            >
-                                {t(`gift.values.${value}`)}
-                            </button>
-                        ))}
                     </div>
                 </fieldset>
             )}

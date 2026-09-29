@@ -13,13 +13,14 @@ use App\Enums\Vibe;
 /**
  * What a product can be tagged with, and nothing else.
  *
- * Seven vocabularies, each one the site already speaks: the interests the
+ * Five vocabularies, each one the site already speaks: the interests the
  * gift wizard offers, the occasions a list can carry, the kinds of person a
- * gift is for, how old they are, and the wizard's three other questions, how
- * it should feel, what it should look like and what should matter about it. A
- * tag is `<vocabulary>:<value>`, so `interest:coffee`, `occasion:christmas`,
- * `recipient:mother`, `age:13-17`, `vibe:playful`, `preference:vintage`,
- * `values:handmade`. Closed rather than free text
+ * gift is for, how old they are, and which way somebody's taste goes (the
+ * pairs of opposites). `vibe:` and `values:` were two more until 2026-09-29,
+ * when the owner removed both questions site-wide; tags already on products
+ * stay in the data, unread. A tag is `<vocabulary>:<value>`, so
+ * `interest:coffee`, `occasion:christmas`, `recipient:mother`, `age:13-17`,
+ * `preference:vintage`. Closed rather than free text
  * because a tag is only worth having when the wizard can ask for exactly it:
  * a brief says "coffee" and a product says `interest:coffee`, and the two meet
  * without a text match in between.
@@ -39,14 +40,7 @@ class GiftTags
 
     public const AGE = 'age';
 
-    public const VIBE = 'vibe';
-
     public const PREFERENCE = 'preference';
-
-    public const VALUES = 'values';
-
-    /** What the wizard offers under "anything that matters?", and `SuggestionEngine::VALUE_MARKERS` guesses from titles. */
-    public const VALUE_OPTIONS = ['sustainable', 'local', 'handmade'];
 
     /**
      * Occasions a product can be for that a list cannot carry as its event.
@@ -97,13 +91,10 @@ class GiftTags
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,
-            // The wizard's "how should it feel", "which way does their taste
-            // go" and "anything that matters" questions. The engine guesses
-            // all three from title words ("luxe", "eiken", "duurzaam"); a tag
-            // is an editor saying so, and it wins.
-            self::VIBE => Vibe::values(),
+            // The wizard's "which way does their taste go". The engine guesses
+            // it from title words ("eiken", "retro"); a tag is an editor
+            // saying so, and it wins.
             self::PREFERENCE => Preference::values(),
-            self::VALUES => self::VALUE_OPTIONS,
         ];
     }
 
@@ -177,18 +168,8 @@ class GiftTags
         return self::AGE.':'.mb_strtolower(trim($value));
     }
 
-    public static function vibe(string $value): string
-    {
-        return self::VIBE.':'.mb_strtolower(trim($value));
-    }
-
     public static function preference(string $value): string
     {
         return self::PREFERENCE.':'.mb_strtolower(trim($value));
-    }
-
-    public static function value(string $value): string
-    {
-        return self::VALUES.':'.mb_strtolower(trim($value));
     }
 }

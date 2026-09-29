@@ -13,7 +13,7 @@ namespace App\Enums;
  * - **Giver context** — relationship, occasion, birthday, notes, budget. This
  *   is *my* situation, not theirs. Only the owner writes it, and the recipient
  *   must never even see it (`notes` is `$hidden` for that reason).
- * - **Taste** — interests, vibe, values, avoid. This belongs to the person
+ * - **Taste** — interests, preferences, avoid. This belongs to the person
  *   being described. I may guess at it, but the moment they tell me, their
  *   answer is simply better evidence than mine.
  *

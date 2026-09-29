@@ -43,6 +43,8 @@ class PersonProfileTest extends TestCase
             'relationship' => 'mother',
             'birthday' => '2000-06-10',
             'interests' => ['cooking', 'wielrennen'],
+            // Old data: vibe and values were removed site-wide (2026-09-29),
+            // and what a row still holds of them is not shown.
             'vibe' => 'practical',
             'values' => ['local'],
             'age_band' => '50-64',
@@ -64,8 +66,8 @@ class PersonProfileTest extends TestCase
                     ['value' => 'cooking', 'label' => 'Koken'],
                     ['value' => 'wielrennen', 'label' => 'wielrennen'],
                 ])
-                ->where('profile.about.vibe', 'practical')
-                ->where('profile.about.values', ['local'])
+                ->missing('profile.about.vibe')
+                ->missing('profile.about.values')
                 ->where('profile.about.ageBand', '50-64')
                 ->where('profile.about.avoid', ['parfum'])
                 ->where('profile.about.budgetMax', 5000)
@@ -78,13 +80,13 @@ class PersonProfileTest extends TestCase
                 ->where('urls.selfDescribe', fn ($url) => str_ends_with($url, "/be-nl/for/{$mum->share_token}"))
                 ->where('groupLists', 0)
                 // Find a gift's own vocabularies, to edit in place with.
-                ->has('options.interests')
-                ->has('options.vibes')
-                ->has('options.ages')
                 // Every list the "Over" form draws: a missing one crashed the
                 // page on "Aanpassen" (found 2026-09-27).
-                ->where('options.values', ['sustainable', 'local', 'handmade'])
-                ->has('options.relationships'));
+                ->has('options.interests')
+                ->has('options.ages')
+                ->has('options.relationships')
+                ->missing('options.vibes')
+                ->missing('options.values'));
     }
 
     #[Test]
@@ -180,8 +182,8 @@ class PersonProfileTest extends TestCase
             ->from("/be-nl/people/{$mum->id}")
             ->patch("/be-nl/recipients/{$mum->id}", [
                 'interests' => ['cooking', 'wielrennen'],
+                // No longer a question: sent by an old page, it is ignored.
                 'vibe' => 'practical',
-                'values' => ['local'],
                 'avoid' => ['parfum'],
                 'age_band' => '50-64',
                 'budget_min' => 20,
@@ -191,7 +193,7 @@ class PersonProfileTest extends TestCase
 
         $mum->refresh();
         $this->assertSame(['cooking', 'wielrennen'], $mum->interests);
-        $this->assertSame('practical', $mum->vibe);
+        $this->assertNull($mum->vibe);
         $this->assertSame(2000, (int) $mum->budget_min);
         $this->assertSame(5000, (int) $mum->budget_max);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);

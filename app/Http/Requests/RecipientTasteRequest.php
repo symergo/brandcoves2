@@ -25,10 +25,13 @@ class RecipientTasteRequest extends FormRequest
     /** Owned by the giver. The recipient must never see or write these. */
     private const CONTEXT = ['name', 'relationship', 'occasion', 'age_band', 'birthday', 'notes'];
 
-    /** Owned by the person being described. */
-    private const TASTE = ['vibe'];
+    /**
+     * Owned by the person being described. The vibe and the values went on
+     * 2026-09-29 (removed site-wide); nothing single-valued is left.
+     */
+    private const TASTE = [];
 
-    private const TASTE_LISTS = ['interests', 'values', 'avoid'];
+    private const TASTE_LISTS = ['interests', 'avoid'];
 
     public function authorize(): bool
     {
@@ -56,11 +59,6 @@ class RecipientTasteRequest extends FormRequest
              */
             'interests' => ['sometimes', 'array', 'max:8'],
             'interests.*' => ['string', 'max:40'],
-
-            'vibe' => ['nullable', 'string', 'in:'.implode(',', Vibe::values())],
-
-            'values' => ['sometimes', 'array', 'max:3'],
-            'values.*' => ['string', 'in:sustainable,local,handmade'],
 
             'avoid' => ['sometimes', 'array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],
@@ -147,7 +145,7 @@ class RecipientTasteRequest extends FormRequest
     /**
      * The closed vocabulary a form should offer.
      *
-     * @return array{interests: list<array{value: string, label: string}>, vibes: list<array{value: string, label: string}>, values: list<string>}
+     * @return array{interests: list<array{value: string, label: string}>}
      */
     public static function options(): array
     {
@@ -156,11 +154,6 @@ class RecipientTasteRequest extends FormRequest
                 'value' => $i->value,
                 'label' => $i->label(),
             ], Interest::cases()),
-            'vibes' => array_map(fn (Vibe $v) => [
-                'value' => $v->value,
-                'label' => $v->label(),
-            ], Vibe::cases()),
-            'values' => ['sustainable', 'local', 'handmade'],
         ];
     }
 }

@@ -99,14 +99,14 @@ class TasteProfilerTest extends TestCase
         $choices = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $winner = $this->card(['interest:coffee', 'vibe:beautiful']);
-            $choices[] = TasteChoice::pair($winner, $this->card(['interest:tech', 'vibe:beautiful']), $winner->id);
+            $winner = $this->card(['interest:coffee', 'preference:design']);
+            $choices[] = TasteChoice::pair($winner, $this->card(['interest:tech', 'preference:design']), $winner->id);
         }
 
         $profile = $this->profiler()->profile($choices);
 
-        $this->assertNull($profile->vibe);
-        $this->assertArrayNotHasKey('beautiful', $profile->scores);
+        $this->assertSame([], $profile->preferences);
+        $this->assertArrayNotHasKey('design', $profile->scores);
     }
 
     #[Test]
@@ -227,22 +227,6 @@ class TasteProfilerTest extends TestCase
     }
 
     #[Test]
-    public function a_vibe_counts_only_when_it_clearly_leads(): void
-    {
-        $choices = [];
-
-        foreach (['playful', 'playful', 'beautiful'] as $vibe) {
-            $choices[] = TasteChoice::single($this->card(["vibe:{$vibe}"]), TasteChoice::LIKE);
-        }
-
-        $this->assertSame('playful', $this->profiler()->profile($choices)->vibe);
-
-        $choices[] = TasteChoice::single($this->card(['vibe:beautiful']), TasteChoice::LIKE);
-
-        $this->assertNull($this->profiler()->profile($choices)->vibe);
-    }
-
-    #[Test]
     public function never_both_ends_of_one_taste_axis(): void
     {
         $choices = [];
@@ -271,24 +255,22 @@ class TasteProfilerTest extends TestCase
     #[Test]
     public function merging_adds_to_what_is_stored_and_drops_contradictions(): void
     {
-        $profile = new TasteProfile(interests: ['coffee', 'gaming'], avoid: ['cooking'], preferences: ['vintage'], vibe: null);
+        $profile = new TasteProfile(interests: ['coffee', 'gaming'], avoid: ['cooking'], preferences: ['vintage']);
 
         $merged = $profile->mergedWith([
             'interests' => ['cooking', 'reading'],
             'avoid' => ['wol', 'interest:gaming'],
-            'vibe' => 'playful',
             'preferences' => ['modern', 'quirky'],
-            'values' => ['handmade'],
         ]);
 
         // Today's first; cooking is avoided today so it comes off.
         $this->assertSame(['coffee', 'gaming', 'reading'], $merged['interests']);
         // gaming is loved today so it comes off the avoid list; a typed word stays.
         $this->assertSame(['wol', 'interest:cooking'], $merged['avoid']);
-        $this->assertSame('playful', $merged['vibe']);
         // vintage replaces modern on the era axis; quirky's axis was not asked today.
         $this->assertSame(['vintage', 'quirky'], $merged['preferences']);
-        $this->assertSame(['handmade'], $merged['values']);
+        // Vibe and values were removed site-wide (2026-09-29); the pairs carry the feel.
+        $this->assertSame(['interests', 'avoid', 'preferences'], array_keys($merged));
     }
 
     /**

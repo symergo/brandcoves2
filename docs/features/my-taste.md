@@ -16,9 +16,12 @@ It is at `/{market}/my-taste`, in the account menu after My people (`myCovesLink
 
 ## What it holds, and what it does not
 
-Interests (the chips and your own words, up to 8), how it should feel (one vibe), which way your
-taste goes (up to 3 poles, one per axis), what matters to you (values), what to avoid, and an age
-group. The same vocabularies and bounds as Find a gift's own answers, so a value here is the value
+Interests (the chips and your own words, up to 8), which way your taste goes (up to 3 pairs of
+opposites, as `TastePairs` switches), what to avoid, and an age group. The vibe and the values it
+held on its first day went on 2026-09-29, removed site-wide ([taste-pairs.md](taste-pairs.md)).
+Two columns since that day, because both have something: the form, and the two quicker ways to
+fill it, Swipe gifts and This or that (above the form on a phone). Swiping opened from here comes
+back here on Stop. The same vocabularies and bounds as Find a gift's own answers, so a value here is the value
 the engine reads.
 
 **No budget, on the owner's word** ("remove budget, this is a filter that depends on the giver").
@@ -37,9 +40,9 @@ how you withdraw the consent the privacy policy names. Deleting the account dele
 - **Swipe for yourself, signed in** (owner, the same day: "include results from swiping and
   vibe"). Swipe gifts sends its swipes to the same endpoint as one-card choices, right a like and
   left a dislike, every ten swipes and on Stop, the latest hundred each time (hence the endpoint's
-  cap of 100). The profiler reads interests, **the vibe** and taste poles from them as from This or
-  that's single cards: a vibe counts only when it clearly leads, and an interest passed on twice
-  lands under "rather not". Merging makes a resend harmless. The popup says so in its top bar
+  cap of 100). The profiler reads interests and taste poles from them as from This or that's
+  single cards (the "vibe" the owner asked for here turned out to mean the pairs), and an
+  interest passed on twice lands under "rather not". Merging makes a resend harmless. The popup says so in its top bar
   ("also to My taste"), and only then: for somebody else, or signed out, nothing is kept.
 
 ## Who reads it (`OwnTaste`)

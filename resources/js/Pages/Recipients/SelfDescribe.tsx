@@ -40,8 +40,6 @@ interface Props {
     person: {
         name: string
         interests: string[]
-        vibe: string | null
-        values: string[]
         hasSpoken: boolean
         isLinked: boolean
         /**
@@ -51,7 +49,7 @@ interface Props {
         birthdayDay: number | null
         birthdayMonth: number | null
     }
-    options: { interests: Option[]; vibes: Option[]; values: string[] }
+    options: { interests: Option[] }
     canClaim: boolean
     /** You are the giver, looking at the link you are about to send. */
     isGiver: boolean
@@ -153,8 +151,6 @@ export default function SelfDescribe({
 
     const form = useForm({
         interests: person.interests,
-        vibe: person.vibe ?? '',
-        values: person.values,
         /*
          * Seeded from what is stored, unlike the taste answers above.
          *
@@ -167,7 +163,7 @@ export default function SelfDescribe({
         birthday_month: person.birthdayMonth?.toString() ?? '',
     })
 
-    const toggle = (list: string[], key: 'interests' | 'values', value: string) =>
+    const toggle = (list: string[], key: 'interests', value: string) =>
         form.setData(
             key,
             list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
@@ -291,53 +287,6 @@ export default function SelfDescribe({
                                     }`}
                                 >
                                     {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend className="text-sm font-medium">{t('recipients.step_vibe')}</legend>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                            {options.vibes.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={form.data.vibe === option.value}
-                                    onClick={() =>
-                                        form.setData(
-                                            'vibe',
-                                            form.data.vibe === option.value ? '' : option.value,
-                                        )
-                                    }
-                                    className={`rounded-full border px-3 py-1.5 text-sm ${
-                                        form.data.vibe === option.value
-                                            ? 'border-accent bg-accent text-white'
-                                            : 'border-line hover:bg-card'
-                                    }`}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend className="text-sm font-medium">{t('recipients.step_values')}</legend>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                            {options.values.map((value) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    aria-pressed={form.data.values.includes(value)}
-                                    onClick={() => toggle(form.data.values, 'values', value)}
-                                    className={`rounded-full border px-3 py-1.5 text-sm ${
-                                        form.data.values.includes(value)
-                                            ? 'border-accent bg-accent text-white'
-                                            : 'border-line hover:bg-card'
-                                    }`}
-                                >
-                                    {t(`gift.values.${value}`)}
                                 </button>
                             ))}
                         </div>

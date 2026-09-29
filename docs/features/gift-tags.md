@@ -7,6 +7,10 @@ date_added: 2026-09-14
 
 # Gift tags
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 An editor's tags on a product, from a closed vocabulary, saying who it is for, what they are into,
 which occasion, how old they are, how it feels and what matters about it. Read by the Gift
 Whisperer ahead of any text match.

@@ -64,8 +64,8 @@ final class OwnTaste
     /**
      * The giver's picture of somebody with their own word laid over it.
      *
-     * @param  array{interests?: list<string>, vibe?: string|null, preferences?: list<string>, values?: list<string>, avoid?: list<string>, age_band?: string|null}  $fields
-     * @return array{interests: list<string>, vibe: string|null, preferences: list<string>, values: list<string>, avoid: list<string>, age_band: string|null}
+     * @param  array{interests?: list<string>, preferences?: list<string>, avoid?: list<string>, age_band?: string|null}  $fields
+     * @return array{interests: list<string>, preferences: list<string>, avoid: list<string>, age_band: string|null}
      */
     public static function overlay(array $fields, UserTaste $own): array
     {
@@ -73,9 +73,7 @@ final class OwnTaste
 
         return [
             'interests' => $pick((array) $own->interests, (array) ($fields['interests'] ?? [])),
-            'vibe' => $own->vibe ?? ($fields['vibe'] ?? null),
             'preferences' => $pick((array) $own->preferences, (array) ($fields['preferences'] ?? [])),
-            'values' => $pick((array) $own->values, (array) ($fields['values'] ?? [])),
             'avoid' => array_values(array_unique([...(array) ($fields['avoid'] ?? []), ...(array) $own->avoid])),
             'age_band' => $own->age_band ?? ($fields['age_band'] ?? null),
         ];

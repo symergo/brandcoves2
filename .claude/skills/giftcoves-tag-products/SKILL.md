@@ -1,6 +1,6 @@
 ---
 name: giftcoves-tag-products
-description: Tag GiftCoves products with gift tags (interest, recipient, occasion, vibe, preference) and a not-a-gift verdict, judged in this session and posted over the production editorial API. Use when given a prompt from the admin's Product tagging page, or asked to tag products saved to wish lists, new catalogue products, or untagged products for GiftCoves or brandcoves.
+description: Tag GiftCoves products with gift tags (interest, recipient, occasion, preference) and a not-a-gift verdict, judged in this session and posted over the production editorial API. Use when given a prompt from the admin's Product tagging page, or asked to tag products saved to wish lists, new catalogue products, or untagged products for GiftCoves or brandcoves.
 ---
 
 # Tagging GiftCoves products
@@ -30,7 +30,7 @@ and post the verdicts. No model runs on the server; this session is the judgment
 
    ```json
    {"market": "be-nl", "tags": [
-     {"id": 123, "tags": ["interest:coffee", "vibe:practical", "preference:powered"]},
+     {"id": 123, "tags": ["interest:coffee", "preference:powered"]},
      {"id": 124, "tags": [], "giftable": false},
      {"id": 125, "tags": []}
    ]}
@@ -40,7 +40,7 @@ and post the verdicts. No model runs on the server; this session is the judgment
    |---|---|
    | not a gift (`x`) | `{"id", "tags": [], "giftable": false}` |
    | a gift, no tag fits (`-`) | `{"id", "tags": []}` |
-   | a gift with tags | `{"id", "tags": ["interest:…", "recipient:…", "occasion:…", "vibe:…", "preference:…"]}` |
+   | a gift with tags | `{"id", "tags": ["interest:…", "recipient:…", "occasion:…", "preference:…"]}` |
 
    Never send `"giftable": true`: the rules already let these through, and `true` would lift the
    price ceiling too. Every write stamps `gift_tags_at`, which takes the product out of the queue,

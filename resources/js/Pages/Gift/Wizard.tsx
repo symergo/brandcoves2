@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { Fragment, type ReactNode, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatBudget, formatCountdown, formatDay, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -27,6 +27,7 @@ import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
+import TastePairs from '../../Components/TastePairs'
 
 interface Option {
     value: string
@@ -40,12 +41,10 @@ interface Recipient {
     /** The relationship read as the closed vocabulary ("mama" as `mother`), or null. */
     relationshipType?: string | null
     interests: string[]
-    vibe: string | null
     preferences: string[]
     budgetMin: Cents | null
     budgetMax: Cents | null
     avoid: string[]
-    values: string[]
     ageBand: string | null
     /** Their own link (`/for/{token}`); null once an account is behind them. */
     selfUrl?: string | null
@@ -54,12 +53,10 @@ interface Recipient {
 
 interface Brief {
     interests?: string[]
-    vibe?: string | null
     preferences?: string[]
     budget_min?: number | null
     budget_max?: number | null
     avoid?: string[]
-    values?: string[]
     relationship?: string | null
     occasion?: string | null
     age_band?: string | null
@@ -83,7 +80,6 @@ interface Props extends GiftResultsExtras {
     personas?: PersonaCard[]
     options: {
         interests: Option[]
-        vibes: Option[]
         /** Taste as axes: each one drawn as its two ends, so picking a side is one click. */
         preferences: { axis: string; poles: [Option, Option] }[]
         ages: Option[]
@@ -102,9 +98,7 @@ interface Props extends GiftResultsExtras {
     /** Your own "Mijn smaak", for "Voor mezelf"; null when you keep none or are not signed in. */
     myTaste?: {
         interests: string[]
-        vibe: string | null
         preferences: string[]
-        values: string[]
         avoid: string[]
         ageBand: string | null
     } | null
@@ -118,9 +112,9 @@ interface Props extends GiftResultsExtras {
 /*
   The questions, after "Who is it for?" and the choice of way.
 
-  No values step (owner's call, 2026-09-14): a saved person still carries
-  values from their own page and the brief picks them up server-side. No
-  "who" step either since "Find a gift" became one flow (2026-09-26): who it
+  No "how should it feel" and no values (owner, 2026-09-29): the pairs of
+  opposites on the 'vibe' step carry the feel, and values are gone site-wide.
+  The step keeps its key; only its question changed. No "who" step either since "Find a gift" became one flow (2026-09-26): who it
   is for is the flow's first question, asked once for all three ways.
 */
 const STEPS = ['interests', 'age', 'vibe', 'budget', 'avoid'] as const
@@ -450,7 +444,6 @@ export default function GiftWizard(props: Props) {
     const [stage, setStage] = useState<'who' | 'ways' | 'questions'>(card || brief ? 'questions' : 'who')
     const [step, setStep] = useState(0)
     const [interests, setInterests] = useState<string[]>(brief?.interests ?? [])
-    const [vibe, setVibe] = useState<string | null>(brief?.vibe ?? null)
     const [preferences, setPreferences] = useState<string[]>(brief?.preferences ?? [])
     const [budgetMax, setBudgetMax] = useState<string>(
         brief?.budget_max != null ? String(brief.budget_max) : '',
@@ -459,12 +452,6 @@ export default function GiftWizard(props: Props) {
     // the questions" posts it here, so it has to travel back with each post.
     const [budgetMin, setBudgetMin] = useState<number | null>(brief?.budget_min ?? null)
     const [avoid, setAvoid] = useState<string[]>(brief?.avoid ?? [])
-    /*
-      No step asks for these any more, but a saved person carries them from
-      their own page and the brief echoes them back, so they stay in the
-      payload and on the summary row.
-    */
-    const [values, setValues] = useState<string[]>(brief?.values ?? [])
     const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? null)
     // One of the fixed groups the server offers, never typed: an editor tags
     // a product with the same strings, so the two meet as one value.
@@ -515,14 +502,12 @@ export default function GiftWizard(props: Props) {
     // answer has to travel as "cleared", not as "not mentioned".
     const payload = () => ({
         interests,
-        vibe,
         preferences,
         // Only when there is one: an absent floor is filled from the saved
         // person, and a posted null would wipe theirs.
         ...(budgetMin !== null && budgetMax !== '' ? { budget_min: budgetMin } : {}),
         budget_max: budgetMax === '' ? null : Number(budgetMax),
         avoid,
-        values,
         relationship,
         age_band: ageBand,
         recipient_id: recipientId,
@@ -563,10 +548,8 @@ export default function GiftWizard(props: Props) {
         setForMe(false)
         setRecipientId(chosen.id)
         setInterests(chosen.interests)
-        setVibe(chosen.vibe)
         setPreferences(chosen.preferences ?? [])
         setAvoid(chosen.avoid)
-        setValues(chosen.values)
         setRelationship(chosen.relationship)
         setAgeBand(chosen.ageBand)
         setBudgetMax(chosen.budgetMax != null ? String(chosen.budgetMax / 100) : '')
@@ -634,10 +617,8 @@ export default function GiftWizard(props: Props) {
         if (recipientId !== null) {
             setRecipientId(null)
             setInterests([])
-            setVibe(null)
             setPreferences([])
             setAvoid([])
-            setValues([])
             setAgeBand(null)
             setBudgetMax('')
         }
@@ -658,9 +639,7 @@ export default function GiftWizard(props: Props) {
 
         if (myTaste) {
             setInterests(myTaste.interests)
-            setVibe(myTaste.vibe)
             setPreferences(myTaste.preferences)
-            setValues(myTaste.values)
             setAvoid(myTaste.avoid)
             setAgeBand(myTaste.ageBand)
         }
@@ -742,8 +721,6 @@ export default function GiftWizard(props: Props) {
     const stashForAsk = () =>
         stashAskBrief({
             interests: chosenChips,
-            vibe,
-            values,
             budget_max: budgetMax,
             age_band: ageBand ? (options.ages.find((o) => o.value === ageBand)?.label ?? '') : '',
         })
@@ -822,11 +799,6 @@ export default function GiftWizard(props: Props) {
                                         {t(`gift.preferences.${preference}`)}
                                     </span>
                                 ))}
-                                {vibe && (
-                                    <span className="rounded-full border border-line px-3 py-1 text-sm">
-                                        {options.vibes.find((o) => o.value === vibe)?.label ?? vibe}
-                                    </span>
-                                )}
                                 <span className="rounded-full border border-line px-3 py-1 text-sm">
                                     {budgetMax === ''
                                         ? t('gift.budget_any')
@@ -837,11 +809,6 @@ export default function GiftWizard(props: Props) {
                                 {avoid.map((word) => (
                                     <span key={word} className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft">
                                         {t('gift.summary_avoid', { word: avoidLabel(word) })}
-                                    </span>
-                                ))}
-                                {values.map((value) => (
-                                    <span key={value} className="rounded-full border border-line px-3 py-1 text-sm">
-                                        {t(`gift.values.${value}`)}
                                     </span>
                                 ))}
                                 <button
@@ -1104,7 +1071,7 @@ export default function GiftWizard(props: Props) {
                         )}
                     </div>
 
-                    <h2 className="mt-1 text-lg font-medium">{t(STEPS[step] === 'interests' || STEPS[step] === 'age' ? own(`gift.step_${STEPS[step]}`) : `gift.step_${STEPS[step]}`)}</h2>
+                    <h2 className="mt-1 text-lg font-medium">{t(STEPS[step] === 'interests' || STEPS[step] === 'age' || STEPS[step] === 'vibe' ? own(`gift.step_${STEPS[step]}`) : `gift.step_${STEPS[step]}`)}</h2>
 
                     <div className="mt-4">
                         {STEPS[step] === 'interests' && (
@@ -1185,71 +1152,13 @@ export default function GiftWizard(props: Props) {
 
                         {STEPS[step] === 'vibe' && (
                             /*
-                              Two rows, one question: what a present is for and
-                              what it looks like are independent, but nobody
-                              experiences them as two questions about the same
-                              person, and a step of its own is a step people skip.
+                              Taste as pairs of opposites, one pill a pair.
+                              Shown both ends, a person recognises their own
+                              taste; shown a bag of words, they read all of
+                              them and pick none. The pairs also carry the feel
+                              since "Hoe mag het voelen?" went (owner, 2026-09-29).
                             */
-                            <div className="space-y-5">
-                                <div className="flex flex-wrap gap-2">
-                                    {options.vibes.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            aria-pressed={vibe === option.value}
-                                            className={chip(vibe === option.value)}
-                                            onClick={() => setVibe(vibe === option.value ? null : option.value)}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/*
-                                  Taste as pairs of opposites, one row an axis.
-                                  Shown both ends, a person recognises their own
-                                  taste; shown a bag of words, they read all of
-                                  them and pick none. Picking one end clears the
-                                  other; the cap of three counts the whole answer.
-                                */}
-                                <div>
-                                    <p className="mb-3 text-sm text-ink-soft">{t(own('gift.preference_label'))}</p>
-                                    <div className="space-y-2">
-                                        {options.preferences.map(({ axis, poles }) => (
-                                            <div key={axis} className="flex flex-wrap items-center gap-2">
-                                                {poles.map((pole, index) => (
-                                                    <Fragment key={pole.value}>
-                                                        {index === 1 && (
-                                                            <span aria-hidden className="text-xs text-ink-soft">
-                                                                {t('gift.preference_or')}
-                                                            </span>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            aria-pressed={preferences.includes(pole.value)}
-                                                            className={chip(preferences.includes(pole.value))}
-                                                            onClick={() =>
-                                                                setPreferences((current) => {
-                                                                    const other = poles[index === 0 ? 1 : 0].value
-                                                                    const without = current.filter(
-                                                                        (value) => value !== pole.value && value !== other,
-                                                                    )
-
-                                                                    return current.includes(pole.value) || without.length >= 3
-                                                                        ? without
-                                                                        : [...without, pole.value]
-                                                                })
-                                                            }
-                                                        >
-                                                            {pole.label}
-                                                        </button>
-                                                    </Fragment>
-                                                ))}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                            <TastePairs axes={options.preferences} selected={preferences} onChange={setPreferences} />
                         )}
 
                         {STEPS[step] === 'budget' && (

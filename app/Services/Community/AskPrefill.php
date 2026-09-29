@@ -8,7 +8,6 @@ use App\Enums\EventType;
 use App\Enums\Interest;
 use App\Enums\ListKind;
 use App\Enums\RecipientType;
-use App\Enums\Vibe;
 use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Services\Gift\GiftResults;
@@ -71,13 +70,6 @@ class AskPrefill
             'interests' => $person === null ? [] : array_values(array_filter(
                 (array) $person->interests,
                 fn ($value) => is_string($value) && Interest::tryFrom($value) !== null,
-            )),
-            'vibe' => $person?->vibe !== null && Vibe::tryFrom((string) $person->vibe) !== null
-                ? (string) $person->vibe
-                : null,
-            'values' => $person === null ? [] : array_values(array_intersect(
-                (array) $person->values,
-                ['sustainable', 'local', 'handmade'],
             )),
             'age_band' => $person?->age_band !== null && in_array($person->age_band, GiftTags::AGE_BANDS, true)
                 ? (string) __('site.gift.age_band', ['band' => $person->age_band])

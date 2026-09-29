@@ -1,8 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react'
 import { useState } from 'react'
-import Button, { buttonClasses } from '../Components/Button'
+import Button from '../Components/Button'
 import InfoTip from '../Components/InfoTip'
 import PageHeader from '../Components/PageHeader'
+import TastePairs from '../Components/TastePairs'
 import ToolIcon from '../Components/ToolIcon'
 import { useTranslations } from '../useTranslations'
 
@@ -14,26 +15,20 @@ interface Option {
 interface Props {
     taste: {
         interests: string[]
-        vibe: string | null
         preferences: string[]
-        values: string[]
         avoid: string[]
         ageBand: string | null
     }
     options: {
         interests: Option[]
-        vibes: Option[]
         preferences: { axis: string; poles: Option[] }[]
         ages: Option[]
-        values: string[]
     }
-    urls: { update: string; learn: string }
+    urls: { update: string; learn: string; swipe: string }
 }
 
 /** The same bounds as the server's (MyTasteController::update). */
 const MAX_INTERESTS = 8
-const MAX_PREFERENCES = 3
-const MAX_VALUES = 3
 
 /** An interest learned as "not this" in This or that, kept in the tag's spelling. */
 const LEARNED = 'interest:'
@@ -49,14 +44,19 @@ const chip = (on: boolean) =>
  * Filled in here or learned from This or that; friends who look for a gift
  * for you start from it (OwnTaste), and so does "Voor mezelf" in Find a gift.
  * No budget: what somebody spends is theirs to choose, in their own search.
+ * No "how should it feel" and no values either (owner, 2026-09-29): the
+ * pairs of opposites cover the feel, and values are gone site-wide.
+ *
+ * Two columns, since both have something (the site's rule): the form, and
+ * the two quicker ways to fill it, swiping and This or that. On a phone the
+ * two ways come first.
+ *
  * See docs/features/my-taste.md.
  */
 export default function MyTaste({ taste, options, urls }: Props) {
     const { t } = useTranslations()
     const [interests, setInterests] = useState<string[]>(taste.interests)
-    const [vibe, setVibe] = useState<string | null>(taste.vibe)
     const [preferences, setPreferences] = useState<string[]>(taste.preferences)
-    const [values, setValues] = useState<string[]>(taste.values)
     const [avoid, setAvoid] = useState<string[]>(taste.avoid)
     const [ageBand, setAgeBand] = useState<string | null>(taste.ageBand)
     const [ownWord, setOwnWord] = useState('')
@@ -77,13 +77,6 @@ export default function MyTaste({ taste, options, urls }: Props) {
         }
     }
 
-    // One pole per axis: picking one end clears the other, as in Find a gift.
-    const togglePole = (axis: { poles: Option[] }, value: string) => {
-        const others = axis.poles.map((p) => p.value).filter((v) => v !== value)
-        const without = preferences.filter((p) => !others.includes(p))
-        toggle(without, setPreferences, value, MAX_PREFERENCES)
-    }
-
     const addOwn = () => {
         const word = ownWord.trim()
         if (word !== '' && !interests.includes(word) && !interestsFull) setInterests([...interests, word])
@@ -100,7 +93,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
         setBusy(true)
         router.put(
             urls.update,
-            { interests, vibe, preferences, values, avoid, age_band: ageBand },
+            { interests, preferences, avoid, age_band: ageBand },
             { preserveScroll: true, onFinish: () => setBusy(false) },
         )
     }
@@ -112,24 +105,20 @@ export default function MyTaste({ taste, options, urls }: Props) {
      */
     const clear = () => {
         setInterests([])
-        setVibe(null)
         setPreferences([])
-        setValues([])
         setAvoid([])
         setAgeBand(null)
         setBusy(true)
         router.put(
             urls.update,
-            { interests: [], vibe: null, preferences: [], values: [], avoid: [], age_band: null },
+            { interests: [], preferences: [], avoid: [], age_band: null },
             { preserveScroll: true, onFinish: () => setBusy(false) },
         )
     }
 
     const hasAnything =
         taste.interests.length > 0 ||
-        taste.vibe !== null ||
         taste.preferences.length > 0 ||
-        taste.values.length > 0 ||
         taste.avoid.length > 0 ||
         taste.ageBand !== null
 
@@ -138,7 +127,6 @@ export default function MyTaste({ taste, options, urls }: Props) {
             <Head title={t('my_taste.title')} />
 
             <PageHeader
-                className="max-w-2xl"
                 icon={
                     <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                         <ToolIcon name="taste" className="h-6 w-6" />
@@ -152,17 +140,13 @@ export default function MyTaste({ taste, options, urls }: Props) {
                 </p>
             </PageHeader>
 
-            <div className="mt-6 max-w-2xl space-y-6">
-                {/* Choosing is quicker than describing: This or that, kept here from its result. */}
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-card p-4">
-                    <div>
-                        <p className="font-medium">{t('my_taste.learn_title')}</p>
-                        <p className="text-sm text-ink-soft">{t('my_taste.learn_hint')}</p>
-                    </div>
-                    <Link href={urls.learn} className={buttonClasses('secondary')}>
-                        {t('my_taste.learn_cta')}
-                    </Link>
-                </div>
+            <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                {/* The quicker ways to fill it: first on a phone, beside the form from `lg`. */}
+                <aside className="space-y-3 lg:sticky lg:top-6 lg:order-last">
+                    <h2 className="font-medium">{t('my_taste.learn_title')}</h2>
+                    <Way href={urls.swipe} icon="swipe" title={t('gift.way_swipe')} hint={t('my_taste.swipe_hint')} cta={t('gift.way_swipe_cta')} />
+                    <Way href={urls.learn} icon="taste" title={t('gift.way_taste')} hint={t('my_taste.taste_hint')} cta={t('gift.way_taste_cta')} />
+                </aside>
 
                 <form
                     onSubmit={(e) => {
@@ -227,59 +211,9 @@ export default function MyTaste({ taste, options, urls }: Props) {
                     </fieldset>
 
                     <fieldset>
-                        <legend className="font-medium">{t('my_taste.vibe')}</legend>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                            {options.vibes.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={vibe === option.value}
-                                    onClick={() => setVibe(vibe === option.value ? null : option.value)}
-                                    className={chip(vibe === option.value)}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
                         <legend className="font-medium">{t('my_taste.preferences')}</legend>
-                        <div className="mt-2 space-y-2">
-                            {options.preferences.map((axis) => (
-                                <div key={axis.axis} className="flex flex-wrap items-center gap-1.5">
-                                    {axis.poles.map((pole, i) => (
-                                        <span key={pole.value} className="contents">
-                                            {i > 0 && <span className="text-xs text-ink-soft">/</span>}
-                                            <button
-                                                type="button"
-                                                aria-pressed={preferences.includes(pole.value)}
-                                                onClick={() => togglePole(axis, pole.value)}
-                                                className={chip(preferences.includes(pole.value))}
-                                            >
-                                                {pole.label}
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend className="font-medium">{t('my_taste.values')}</legend>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                            {options.values.map((value) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    aria-pressed={values.includes(value)}
-                                    onClick={() => toggle(values, setValues, value, MAX_VALUES)}
-                                    className={chip(values.includes(value))}
-                                >
-                                    {t(`gift.values.${value}`)}
-                                </button>
-                            ))}
+                        <div className="mt-2">
+                            <TastePairs axes={options.preferences} selected={preferences} onChange={setPreferences} />
                         </div>
                     </fieldset>
 
@@ -353,5 +287,21 @@ export default function MyTaste({ taste, options, urls }: Props) {
                 </form>
             </div>
         </>
+    )
+}
+
+/** One quicker way to fill your taste: a card like Find a gift's ways. */
+function Way({ href, icon, title, hint, cta }: { href: string; icon: 'swipe' | 'taste'; title: string; hint: string; cta: string }) {
+    return (
+        <Link href={href} className="group flex flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink">
+            <span className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <ToolIcon name={icon} className="h-5 w-5" />
+                </span>
+                <span className="font-medium">{title}</span>
+            </span>
+            <span className="mt-2 text-sm text-ink-soft">{hint}</span>
+            <span className="mt-3 text-sm font-medium text-accent-dark">{cta} →</span>
+        </Link>
     )
 }

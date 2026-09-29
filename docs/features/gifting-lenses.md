@@ -7,6 +7,10 @@ date_added: 2026-08-09
 
 # One list, many lenses
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 **The wishlist is the noun. Secret Santa, the quiz, the two-lane gift page, the
 co-giver roster and the occasion reminder are verbs applied to it.**
 

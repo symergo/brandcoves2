@@ -7,6 +7,10 @@ date_added: 2026-09-26
 
 # Chosen by others for someone like them
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 The owner's request (2026-09-26): "Use the gifts created by others as suggestions for others." This
 part: products that sit on other people's lists become suggestions for somebody shopping for a
 similar person. "People shopping for a dad who likes cooking also picked this."

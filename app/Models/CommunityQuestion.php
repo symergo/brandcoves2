@@ -85,17 +85,8 @@ class CommunityQuestion extends Model
             }
         }
 
-        if ($this->vibe !== null) {
-            $tags[] = $this->vibe->label();
-        }
-
-        foreach ((array) $this->values as $value) {
-            $key = 'site.gift.values.'.$value;
-
-            if (__($key) !== $key) {
-                $tags[] = __($key);
-            }
-        }
+        // Not the vibe or the values a question asked before 2026-09-29:
+        // both were removed site-wide, and old ones are not shown either.
 
         return $tags;
     }

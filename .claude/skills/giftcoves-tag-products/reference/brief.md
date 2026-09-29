@@ -2,12 +2,11 @@
 
 The judging rules. Also used, word for word, by the whole-catalogue pass of 2026-09-28, so a
 product tagged from the admin queue is judged the same way as the 343,000 before it. The line
-format below (`x`, `-`, `i:… r:… o:… v:… p:…`) is shorthand for a verdict; SKILL.md says how
+format below (`x`, `-`, `i:… r:… o:… p:…`) is shorthand for a verdict; SKILL.md says how
 each one becomes an entry for `POST /products/tags`.
 
 You are judging products from a gift-finding website's catalogue. For each product decide (1) is it a
-present someone could give, and if so (2) which interests, recipients and occasions it suits, how it feels (vibe) and which way it leans in
-taste (preference).
+present someone could give, and if so (2) which interests, recipients and occasions it suits, and which way it leans in taste (preference).
 Markets: be-nl and nl-nl titles are Dutch, be-fr French, en English. Brand and category may be empty.
 
 ## Input line (tab-separated)
@@ -18,10 +17,10 @@ Markets: be-nl and nl-nl titles are Dutch, be-fr French, en English. Brand and c
 
     id<TAB>x                                   not a gift
     id<TAB>-                                   a gift, but no tag fits
-    id<TAB>i:coffee,home r:partner o:christmas v:practical p:design,luxurious   a gift, with tags
+    id<TAB>i:coffee,home r:partner o:christmas p:design,luxurious   a gift, with tags
 
 Groups are space-separated and each is optional: `i:` interests, `r:` recipients, `o:` occasions,
-`v:` vibe, `p:` preference,
+`p:` preference,
 values comma-separated with no spaces. Use ONLY the values below, spelled exactly. Nothing else on
 the line, no header, no commentary.
 
@@ -100,12 +99,8 @@ tagged for the wrong person scores lower for everyone else. Good uses:
   "happy birthday" products).
 - At most three.
 
-## v: vibe (exactly one on almost every gift)
-
-How the present feels to receive. Pick the one that dominates:
-- `practical`: useful, solves a job (a drill, an air fryer, a power bank, a laptop).
-- `playful`: fun, games, toys, novelty, surprise (LEGO, a board game, a karaoke mic).
-- `beautiful`: lovely to look at or wear (jewellery, a vase, a print, a scented candle, fashion).
+<!-- No v: vibe since 2026-09-29: the owner removed the vibe site-wide and the tag API now refuses
+`vibe:` tags. The pairs below carry the feel (docs/features/taste-pairs.md). -->
 
 ## p: preference (0 to 3 poles; only the ones the product clearly sits at)
 

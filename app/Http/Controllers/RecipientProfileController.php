@@ -100,10 +100,6 @@ class RecipientProfileController extends Controller
                 'interests' => $recipient->taste_source === TasteSource::Self
                     ? (array) $recipient->interests
                     : [],
-                'vibe' => $recipient->taste_source === TasteSource::Self ? $recipient->vibe : null,
-                'values' => $recipient->taste_source === TasteSource::Self
-                    ? (array) $recipient->values
-                    : [],
                 'hasSpoken' => $recipient->taste_source === TasteSource::Self,
                 'isLinked' => $recipient->isLinked(),
 

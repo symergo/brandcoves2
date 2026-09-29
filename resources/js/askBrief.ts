@@ -8,8 +8,8 @@
  * `sessionStorage`, for the ask form to pick up once and forget.
  *
  * Only the fields the ask form has, and only the ones it can take: interests
- * from the fixed list (a typed word has no chip on the form), the taste, what
- * matters, the age group and a budget in euros. Never a name.
+ * from the fixed list (a typed word has no chip on the form), the age group and
+ * a budget in euros. Never a name.
  *
  * Every access is guarded: Safari in private mode throws on storage access,
  * and a convenience that could not be read must never break the form. Without
@@ -17,8 +17,6 @@
  */
 export interface AskBrief {
     interests?: string[]
-    vibe?: string | null
-    values?: string[]
     budget_max?: string
     age_band?: string
 }

@@ -9,7 +9,6 @@ use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\Preference;
 use App\Enums\RecipientType;
-use App\Enums\Vibe;
 use App\Models\Recipient;
 use App\Models\Wishlist;
 
@@ -31,7 +30,6 @@ final readonly class TasteBrief
      * @param  list<string>  $interests  Interest enum values and/or free text
      * @param  list<string>  $avoid  hard exclusions, matched against the title
      * @param  list<string>  $preferences  Preference poles; several axes, never both ends of one
-     * @param  list<string>  $values  'sustainable', 'local', 'handmade'
      * @param  list<int>  $excludeGroupIds  already shown, swapped away, or on the list
      * @param  string|null  $query  a typed search, when the person also knows what they want
      * @param  bool  $hasEverything  "someone who has everything": prefer things that get used up or
@@ -44,12 +42,10 @@ final readonly class TasteBrief
     public function __construct(
         public Market $market,
         public array $interests = [],
-        public ?Vibe $vibe = null,
         public array $preferences = [],
         public ?int $budgetMin = null,
         public ?int $budgetMax = null,
         public array $avoid = [],
-        public array $values = [],
         public ?string $relationship = null,
         public ?string $occasion = null,
         public ?string $ageBand = null,
@@ -65,9 +61,7 @@ final readonly class TasteBrief
     {
         $taste = [
             'interests' => (array) $recipient->interests,
-            'vibe' => $recipient->vibe,
             'preferences' => (array) $recipient->preferences,
-            'values' => (array) $recipient->values,
             'avoid' => (array) $recipient->avoid,
             'age_band' => $recipient->age_band,
         ];
@@ -88,12 +82,10 @@ final readonly class TasteBrief
         return new self(
             market: $market,
             interests: array_values(array_filter($taste['interests'])),
-            vibe: $taste['vibe'] === null ? null : Vibe::tryFrom($taste['vibe']),
             preferences: array_values(array_filter($taste['preferences'])),
             budgetMin: $recipient->budget_min,
             budgetMax: $recipient->budget_max,
             avoid: array_values(array_filter($taste['avoid'])),
-            values: array_values(array_filter($taste['values'])),
             relationship: $recipient->relationship,
             occasion: $recipient->occasion,
             ageBand: $taste['age_band'],
@@ -222,9 +214,7 @@ final readonly class TasteBrief
             'ageBand' => $this->ageBand,
             'budgetMin' => $this->budgetMin,
             'budgetMax' => $this->budgetMax,
-            'vibe' => $this->vibe?->value,
             'preferences' => $this->preferences,
-            'values' => $this->values,
             'avoid' => $this->avoid,
             'query' => $this->query,
             // Only when set: a stored brief says only what somebody decided.
@@ -262,7 +252,6 @@ final readonly class TasteBrief
         return new self(
             market: $market,
             interests: self::known($data['interests'] ?? [], Interest::values(), 8),
-            vibe: is_string($data['vibe'] ?? null) ? Vibe::tryFrom($data['vibe']) : null,
             preferences: self::known($data['preferences'] ?? [], Preference::values(), 3),
             budgetMin: $min,
             budgetMax: $max,
@@ -270,7 +259,6 @@ final readonly class TasteBrief
                 fn ($word) => is_string($word) ? trim(mb_substr($word, 0, 40)) : '',
                 (array) ($data['avoid'] ?? []),
             )))), 0, 10),
-            values: self::known($data['values'] ?? [], GiftTags::VALUE_OPTIONS, 3),
             relationship: self::one($data['relationship'] ?? null, RecipientType::values()),
             occasion: self::one($data['occasion'] ?? null, GiftTags::vocabulary()[GiftTags::OCCASION]),
             ageBand: self::one($data['ageBand'] ?? null, GiftTags::AGE_BANDS),
@@ -292,13 +280,11 @@ final readonly class TasteBrief
             'relationship' => RecipientType::values(),
             'occasion' => GiftTags::vocabulary()[GiftTags::OCCASION],
             'ageBand' => GiftTags::AGE_BANDS,
-            'vibe' => Vibe::values(),
         ];
 
         $lists = [
             'interests' => Interest::values(),
             'preferences' => Preference::values(),
-            'values' => GiftTags::VALUE_OPTIONS,
         ];
 
         $problems = [];
@@ -439,12 +425,10 @@ final readonly class TasteBrief
         return new self(
             market: $this->market,
             interests: $this->interests,
-            vibe: $this->vibe,
             preferences: $this->preferences,
             budgetMin: $min,
             budgetMax: $max,
             avoid: $this->avoid,
-            values: $this->values,
             relationship: $this->relationship,
             occasion: $this->occasion,
             ageBand: $this->ageBand,
@@ -484,15 +468,12 @@ final readonly class TasteBrief
      * @param  list<string>|null  $interests
      * @param  list<string>|null  $avoid
      * @param  list<string>|null  $preferences
-     * @param  list<string>|null  $values
      * @param  list<int>|null  $excludeGroupIds
      */
     private function with(
         ?array $interests = null,
-        ?Vibe $vibe = null,
         ?array $preferences = null,
         ?array $avoid = null,
-        ?array $values = null,
         ?array $excludeGroupIds = null,
         ?int $limit = null,
         ?SuggestionProfile $profile = null,
@@ -501,12 +482,10 @@ final readonly class TasteBrief
         return new self(
             market: $this->market,
             interests: $interests ?? $this->interests,
-            vibe: $vibe ?? $this->vibe,
             preferences: $preferences ?? $this->preferences,
             budgetMin: $this->budgetMin,
             budgetMax: $this->budgetMax,
             avoid: $avoid ?? $this->avoid,
-            values: $values ?? $this->values,
             relationship: $this->relationship,
             occasion: $this->occasion,
             ageBand: $this->ageBand,

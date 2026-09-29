@@ -233,9 +233,7 @@ class TasteController extends Controller
              */
             'refine' => array_filter([
                 'interests' => $brief->interests,
-                'vibe' => $brief->vibe?->value,
                 'preferences' => $brief->preferences,
-                'values' => $brief->values,
                 'avoid' => $brief->avoid,
                 'budget_min' => $brief->budgetMin === null ? null : $brief->budgetMin / 100,
                 'budget_max' => $brief->budgetMax === null ? null : $brief->budgetMax / 100,
@@ -293,9 +291,7 @@ class TasteController extends Controller
         $taste = $profile->mergedWith([
             'interests' => $recipient->interests,
             'avoid' => $recipient->avoid,
-            'vibe' => $recipient->vibe,
             'preferences' => $recipient->preferences,
-            'values' => $recipient->values,
         ]);
 
         $written = $recipient->describeTaste($taste, TasteSource::Suggested);
@@ -398,9 +394,7 @@ class TasteController extends Controller
         $stored = $recipient->taste_source === TasteSource::Self ? [
             'interests' => $recipient->interests,
             'avoid' => $recipient->avoid,
-            'vibe' => $recipient->vibe,
             'preferences' => $recipient->preferences,
-            'values' => $recipient->values,
         ] : [];
 
         $recipient->describeTaste($profile->mergedWith($stored), TasteSource::Self);

@@ -35,9 +35,7 @@ class GiftProfileTest extends TestCase
             'avoid' => ['gaming'],
             'budgetMin' => 3000,
             'budgetMax' => 6000,
-            'vibe' => null,
             'preferences' => [],
-            'values' => [],
         ], $stored);
     }
 
@@ -49,9 +47,11 @@ class GiftProfileTest extends TestCase
             'avoid' => ['coffee', 'gaming', 'nonsense'],
             'budgetMin' => 6000,
             'budgetMax' => 3000,
-            'vibe' => 'shouty',
+            // Vibe and values were removed site-wide (2026-09-29): an old card
+            // that still carries them loses them on the way out.
+            'vibe' => 'playful',
             'preferences' => ['vintage', 'modern', 'bogus'],
-            'values' => ['handmade', 'cheap'],
+            'values' => ['handmade'],
         ]);
 
         $this->assertSame(['coffee'], $clean['interests']);
@@ -60,10 +60,9 @@ class GiftProfileTest extends TestCase
         // A band upside down is no band.
         $this->assertNull($clean['budgetMin']);
         $this->assertNull($clean['budgetMax']);
-        $this->assertNull($clean['vibe']);
         // One pole per axis: vintage and modern are the two ends of one.
         $this->assertSame(['vintage'], $clean['preferences']);
-        $this->assertSame(['handmade'], $clean['values']);
+        $this->assertSame(['interests', 'avoid', 'budgetMin', 'budgetMax', 'preferences'], array_keys($clean));
     }
 
     #[Test]

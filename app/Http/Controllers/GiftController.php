@@ -9,7 +9,6 @@ use App\Enums\Preference;
 use App\Enums\RecipientType;
 use App\Enums\TasteSource;
 use App\Enums\Thumb;
-use App\Enums\Vibe;
 use App\Models\DailyPickSet;
 use App\Models\Event;
 use App\Models\ProductGroup;
@@ -114,16 +113,14 @@ class GiftController extends Controller
         ]);
     }
 
-    /** @return array{interests: list<string>, vibe: string|null, preferences: list<string>, values: list<string>, avoid: list<string>, ageBand: string|null}|null */
+    /** @return array{interests: list<string>, preferences: list<string>, avoid: list<string>, ageBand: string|null}|null */
     private function myTaste(Request $request): ?array
     {
         $taste = $request->user() === null ? null : app(OwnTaste::class)->of($request->user());
 
         return $taste === null ? null : [
             'interests' => array_values((array) $taste->interests),
-            'vibe' => $taste->vibe,
             'preferences' => array_values((array) $taste->preferences),
-            'values' => array_values((array) $taste->values),
             'avoid' => array_values((array) $taste->avoid),
             'ageBand' => $taste->age_band,
         ];
@@ -206,7 +203,6 @@ class GiftController extends Controller
         Event::record('gift.suggest', [
             'market' => $current->value(),
             'interests' => $brief->interests,
-            'vibe' => $brief->vibe?->value,
             'preferences' => $brief->preferences,
             'results' => count($picks),
         ]);
@@ -417,7 +413,7 @@ class GiftController extends Controller
      * always-on, because a brief for "something silly for the office" is not
      * what you want restored next Christmas.
      *
-     * Two writes, because two gates. The taste (interests, vibe, values, avoid)
+     * Two writes, because two gates. The taste (interests, preferences, avoid)
      * goes through `describeTaste()`, which refuses when the person has
      * described themselves through their own link — a guess must not overwrite
      * what they said. The budget and the occasion are the *giver's* facts, not
@@ -448,9 +444,7 @@ class GiftController extends Controller
 
         $recipient->describeTaste(array_filter([
             'interests' => $validated['interests'] ?? null,
-            'vibe' => $validated['vibe'] ?? null,
             'preferences' => $validated['preferences'] ?? null,
-            'values' => $validated['values'] ?? null,
             'avoid' => $validated['avoid'] ?? null,
         ], fn ($v) => $v !== null), TasteSource::Suggested);
     }
@@ -461,7 +455,6 @@ class GiftController extends Controller
         return $request->validate([
             'interests' => ['array', 'max:8'],
             'interests.*' => ['string', 'max:40'],
-            'vibe' => ['nullable', 'string', 'in:'.implode(',', Vibe::values())],
             // A taste is several of the axes, so a list; capped at three
             // because a person who picks six has described nothing. Both
             // poles of one axis cannot both be true, and the wizard clears
@@ -474,8 +467,6 @@ class GiftController extends Controller
             'budget_max' => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'avoid' => ['array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],
-            'values' => ['array', 'max:3'],
-            'values.*' => ['string', 'in:sustainable,local,handmade'],
             'relationship' => ['nullable', 'string', 'max:40'],
             'occasion' => ['nullable', 'string', 'max:40'],
             // One of the fixed groups, the same strings a product is tagged with.
@@ -555,12 +546,10 @@ class GiftController extends Controller
             market: $current->get(),
             interests: $interests,
             hasEverything: $hasEverything,
-            vibe: isset($validated['vibe']) ? Vibe::tryFrom((string) $validated['vibe']) : null,
             preferences: array_values((array) ($validated['preferences'] ?? [])),
             budgetMin: isset($validated['budget_min']) ? (int) round((float) $validated['budget_min'] * 100) : null,
             budgetMax: isset($validated['budget_max']) ? (int) round((float) $validated['budget_max'] * 100) : null,
             avoid: array_values((array) ($validated['avoid'] ?? [])),
-            values: array_values((array) ($validated['values'] ?? [])),
             // No relationship for yourself: a `recipient:` tag is about
             // somebody else, and the for-myself profile weighs it at zero.
             relationship: empty($validated['for_me']) ? ($validated['relationship'] ?? null) : null,
@@ -594,12 +583,10 @@ class GiftController extends Controller
 
         return $validated + array_filter([
             'interests' => $stored->interests ?: null,
-            'vibe' => $stored->vibe?->value,
             'preferences' => $stored->preferences ?: null,
             'budget_min' => $stored->budgetMin === null ? null : $stored->budgetMin / 100,
             'budget_max' => $stored->budgetMax === null ? null : $stored->budgetMax / 100,
             'avoid' => $stored->avoid ?: null,
-            'values' => $stored->values ?: null,
             'relationship' => $stored->relationship,
             'occasion' => $stored->occasion,
             'age_band' => $stored->ageBand,
@@ -614,16 +601,12 @@ class GiftController extends Controller
                 'value' => $i->value,
                 'label' => $i->label(),
             ], Interest::cases()),
-            'vibes' => array_map(fn (Vibe $v) => [
-                'value' => $v->value,
-                'label' => $v->label(),
-            ], Vibe::cases()),
             /*
              * Which way their taste goes, as the axes themselves rather than
              * a flat list of words: the wizard draws each one as its two
              * ends, because a person recognises their own taste by being
-             * shown both. Asked in the vibe step, since a step of its own is
-             * a step people skip.
+             * shown both. The one taste question since 2026-09-29, when the
+             * owner removed "how should it feel" and the values site-wide.
              */
             'preferences' => array_map(fn (array $axis) => [
                 'axis' => $axis['axis'],
@@ -692,15 +675,13 @@ class GiftController extends Controller
     /**
      * A saved person's taste as the wizard's card carries it.
      *
-     * @return array{interests: list<string>, vibe: string|null, preferences: list<string>, avoid: list<string>, values: list<string>, ageBand: string|null, ownTaste: bool}
+     * @return array{interests: list<string>, preferences: list<string>, avoid: list<string>, ageBand: string|null, ownTaste: bool}
      */
     private function tasteOf(Recipient $r): array
     {
         $taste = [
             'interests' => (array) $r->interests,
-            'vibe' => $r->vibe,
             'preferences' => (array) $r->preferences,
-            'values' => (array) $r->values,
             'avoid' => (array) $r->avoid,
             'age_band' => $r->age_band,
         ];
@@ -713,10 +694,8 @@ class GiftController extends Controller
 
         return [
             'interests' => array_values($taste['interests']),
-            'vibe' => $taste['vibe'],
             'preferences' => array_values($taste['preferences']),
             'avoid' => array_values($taste['avoid']),
-            'values' => array_values($taste['values']),
             'ageBand' => $taste['age_band'],
             // So the page can say the taste is their own word.
             'ownTaste' => $own !== null,

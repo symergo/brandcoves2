@@ -248,8 +248,8 @@ class GiftWhispererTest extends TestCase
          */
         $this->catalogue();
 
-        $mother = ['interests' => ['coffee'], 'budget_max' => 100];
-        $colleague = ['interests' => ['coffee'], 'budget_max' => 100, 'vibe' => 'playful'];
+        $mother = ['interests' => ['coffee'], 'budget_max' => 100, 'relationship' => 'mother'];
+        $colleague = ['interests' => ['coffee'], 'budget_max' => 100, 'relationship' => 'colleague'];
 
         $before = $this->pickIds($this->post('/be-nl/gift', $colleague)->assertOk());
 
@@ -529,9 +529,9 @@ class GiftWhispererTest extends TestCase
 
     /**
      * The taste question, added 2026-09-14: which way a person's taste goes,
-     * which the vibe cannot say. Asked as pairs of opposites; several may be
-     * chosen, only the twelve poles are accepted, and the answer rides the
-     * brief back to the page.
+     * and since 2026-09-29 (vibe removed) its feel too. Asked as pairs of
+     * opposites; several may be chosen, only the twelve poles are accepted,
+     * and the answer rides the brief back to the page.
      */
     #[Test]
     public function the_taste_is_several_of_the_offered_poles_or_nothing(): void
@@ -562,7 +562,6 @@ class GiftWhispererTest extends TestCase
         $this->actingAs($user)
             ->post('/be-nl/gift', [
                 'interests' => ['coffee', 'wielrennen'],
-                'vibe' => 'playful',
                 'preferences' => ['vintage'],
                 'budget_max' => 60,
                 'recipient_id' => $mum->id,
@@ -573,7 +572,6 @@ class GiftWhispererTest extends TestCase
         $mum->refresh();
 
         $this->assertSame(['coffee', 'wielrennen'], $mum->interests);
-        $this->assertSame('playful', $mum->vibe);
         $this->assertSame(['vintage'], $mum->preferences);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
         // Euros in, cents stored — invariant 7.

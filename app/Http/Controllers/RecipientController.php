@@ -25,7 +25,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * the rest, which is where asking about someone's interests actually makes
  * sense. But the fields must all be *writable* from here, because for a long
  * time they were not: only name, relationship, occasion and birthday could be
- * set, while the engine reads interests, vibe, values, avoid and budget. The
+ * set, while the engine reads interests, preferences, avoid and budget. The
  * "use what we know about Mum" shortcut therefore restored an empty brief every
  * time, and looked for all the world like a working feature.
  */

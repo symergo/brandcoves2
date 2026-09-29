@@ -7,6 +7,10 @@ date_added: 2026-09-26
 
 # My people ("Mijn mensen")
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 One page, `/{market}/people`, listing everybody the user buys for. Named "Mijn mensen" (en "My
 people", fr "Mes proches", es "Mi gente"); the owner's first name for it was "Mijn kring" and was
 changed the same day.

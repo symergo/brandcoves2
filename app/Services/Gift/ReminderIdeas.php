@@ -56,12 +56,10 @@ final class ReminderIdeas
         $brief = new TasteBrief(
             market: $market,
             interests: $stored->interests,
-            vibe: $stored->vibe,
             preferences: $stored->preferences,
             budgetMin: $stored->budgetMin,
             budgetMax: $stored->budgetMax,
             avoid: $stored->avoid,
-            values: $stored->values,
             relationship: $stored->relationship,
             occasion: self::occasion($occasion) ?? $stored->occasion,
             ageBand: $stored->ageBand,

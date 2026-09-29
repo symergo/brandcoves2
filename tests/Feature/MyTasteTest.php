@@ -51,7 +51,9 @@ class MyTasteTest extends TestCase
                 ->where('taste.interests', [])
                 ->has('options.interests')
                 ->has('options.preferences')
-                ->where('options.values', ['sustainable', 'local', 'handmade']));
+                // Vibe and values were removed site-wide (2026-09-29); the pairs carry the feel.
+                ->missing('options.values')
+                ->missing('options.vibes'));
     }
 
     #[Test]
@@ -61,8 +63,9 @@ class MyTasteTest extends TestCase
 
         $this->actingAs($user)->put('/be-nl/my-taste', [
             'interests' => ['cooking', 'zuurdesem'],
+            'preferences' => ['vintage'],
+            // No longer questions: sent by an old page, they are ignored.
             'vibe' => 'beautiful',
-            'preferences' => [],
             'values' => ['local'],
             'avoid' => ['wol'],
             'age_band' => '30-49',
@@ -72,7 +75,8 @@ class MyTasteTest extends TestCase
 
         $taste = UserTaste::query()->findOrFail($user->id);
         $this->assertSame(['cooking', 'zuurdesem'], $taste->interests);
-        $this->assertSame('beautiful', $taste->vibe);
+        $this->assertSame(['vintage'], $taste->preferences);
+        $this->assertNull($taste->vibe);
         $this->assertSame(['wol'], $taste->avoid);
         $this->assertFalse(Schema::hasColumn('user_tastes', 'budget_max'));
     }
@@ -92,21 +96,21 @@ class MyTasteTest extends TestCase
     public function a_value_outside_the_vocabulary_is_refused(): void
     {
         $this->actingAs(User::factory()->create())
-            ->put('/be-nl/my-taste', ['vibe' => 'loud'])
-            ->assertSessionHasErrors('vibe');
+            ->put('/be-nl/my-taste', ['preferences' => ['loud']])
+            ->assertSessionHasErrors('preferences.0');
     }
 
     #[Test]
     public function a_friends_search_starts_from_their_own_taste(): void
     {
         [$giver, $friend, $saved] = $this->friendSavedBy(friends: true);
-        UserTaste::query()->create(['user_id' => $friend->id, 'interests' => ['music'], 'avoid' => ['wol'], 'vibe' => 'playful']);
+        UserTaste::query()->create(['user_id' => $friend->id, 'interests' => ['music'], 'avoid' => ['wol'], 'preferences' => ['vintage']]);
 
         $brief = TasteBrief::fromRecipient($saved->fresh(), Market::BeNl);
 
         // Their word over the giver's; both avoid lists; the budget stays the giver's.
         $this->assertSame(['music'], $brief->interests);
-        $this->assertSame('playful', $brief->vibe?->value);
+        $this->assertSame(['vintage'], $brief->preferences);
         $this->assertEqualsCanonicalizing(['parfum', 'wol'], $brief->avoid);
         $this->assertSame(5000, $brief->budgetMax);
     }
@@ -115,7 +119,7 @@ class MyTasteTest extends TestCase
     public function a_part_they_left_empty_keeps_the_givers(): void
     {
         [, $friend, $saved] = $this->friendSavedBy(friends: true);
-        UserTaste::query()->create(['user_id' => $friend->id, 'vibe' => 'playful']);
+        UserTaste::query()->create(['user_id' => $friend->id, 'preferences' => ['vintage']]);
 
         $this->assertSame(['cooking'], TasteBrief::fromRecipient($saved->fresh(), Market::BeNl)->interests);
     }
@@ -191,17 +195,18 @@ class MyTasteTest extends TestCase
     }
 
     #[Test]
-    public function swipes_for_yourself_teach_interests_and_a_vibe(): void
+    public function swipes_for_yourself_teach_interests_and_a_taste_pole(): void
     {
         /*
          * "Include results from swiping and vibe" (owner, 2026-09-29): Swipe
-         * gifts sends each swipe as a one-card choice.
+         * gifts sends each swipe as a one-card choice. The vibe itself was
+         * removed the same day; the feel is now learned as a preference pole.
          */
         $user = User::factory()->create();
         $swipes = [];
 
         foreach (range(1, 3) as $i) {
-            $swipes[] = ['shown' => [$this->product('cooking', ['vibe:playful'])->id], 'verdict' => 'like'];
+            $swipes[] = ['shown' => [$this->product('cooking', ['preference:vintage'])->id], 'verdict' => 'like'];
         }
 
         foreach (range(1, 2) as $i) {
@@ -212,7 +217,7 @@ class MyTasteTest extends TestCase
 
         $taste = UserTaste::query()->findOrFail($user->id);
         $this->assertContains('cooking', $taste->interests);
-        $this->assertSame('playful', $taste->vibe);
+        $this->assertSame(['vintage'], $taste->preferences);
         $this->assertContains('interest:gaming', $taste->avoid);
     }
 

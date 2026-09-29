@@ -9,7 +9,6 @@ use App\Enums\Interest;
 use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
-use App\Enums\Vibe;
 use App\Jobs\SendQuestionToPeople;
 use App\Jobs\TriageCommunityPost;
 use App\Mail\PeopleQuestionMail;
@@ -71,7 +70,7 @@ class AskOthersReachTest extends TestCase
         $me = User::factory()->create();
 
         $mum = Recipient::factory()
-            ->into([Interest::Cooking, Interest::Coffee, 'her own words'], Vibe::Practical)
+            ->into([Interest::Cooking, Interest::Coffee, 'her own words'])
             ->budget(null, 4000)
             ->create([
                 'owner_user_id' => $me->id,
@@ -79,7 +78,6 @@ class AskOthersReachTest extends TestCase
                 'relationship' => 'mama',
                 'notes' => 'Allergic to lavender, lives in Gent',
                 'age_band' => '50-64',
-                'values' => ['local'],
             ]);
 
         $response = $this->actingAs($me)->get("/be-nl/ask?from=gift&person={$mum->id}");
@@ -90,7 +88,9 @@ class AskOthersReachTest extends TestCase
         $this->assertSame(['cooking', 'coffee'], $prefill['interests']);
         $this->assertSame('40', $prefill['budget_max']);
         $this->assertSame('50-64 jaar', $prefill['age_band']);
-        $this->assertSame(['local'], $prefill['values']);
+        // Vibe and values were removed site-wide (2026-09-29).
+        $this->assertArrayNotHasKey('vibe', $prefill);
+        $this->assertArrayNotHasKey('values', $prefill);
 
         // Nothing that could identify her reaches the page.
         $page = json_encode($this->props($response));

@@ -185,7 +185,7 @@ class SuggestionEngine
         $candidates = $this->retrieve($brief, $slots);
 
         if ($candidates->isEmpty() && $queries !== []) {
-            // Nothing matched the interests. Falling back to a budget-and-vibe
+            // Nothing matched the interests. Falling back to a budget-and-taste
             // browse is better than an empty page: the person told us who they
             // are shopping for, and "we found nothing" wastes that.
             $candidates = $this->retrieve($brief, []);
@@ -266,7 +266,7 @@ class SuggestionEngine
      */
     private function slots(TasteBrief $brief): array
     {
-        $slots = $this->angles->queriesByInterest($brief->market, $brief->interests, $brief->vibe);
+        $slots = $this->angles->queriesByInterest($brief->market, $brief->interests);
 
         if ($brief->query !== null) {
             $typed = $brief->query;
@@ -636,7 +636,7 @@ class SuggestionEngine
      * them.
      *
      * Scoring is untouched by this. A chart product that reaches the pool still
-     * has to earn its place on interest, budget and vibe like everything else.
+     * has to earn its place on interest, budget and taste like everything else.
      *
      * @param  Collection<int, ProductGroup>  $pool
      * @param  list<string>  $queries
@@ -764,16 +764,14 @@ class SuggestionEngine
             'interest_fit' => $this->interestFit($strengths, count($slots)) * $profile->weight('interest_fit', 40),
             'budget_fit' => $profile->budgetFit($group->min_price, $brief->ceiling()) * $profile->weight('budget_fit', 20),
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
-            'vibe' => $this->vibeFit($haystack, $brief, $tags) * $profile->weight('vibe', 10),
             /*
-             * Which way their taste goes, which the vibe cannot say.
-             *
-             * Five, half of vibe: a person who asks for "vintage" means it,
-             * but they would still rather have the right kind of present in
-             * the wrong finish than the wrong present in the right one.
+             * Which way their taste goes: the pairs of opposites. Since
+             * 2026-09-29 the only taste question, carrying the feel as well:
+             * the owner removed "how should it feel" (practical, playful,
+             * beautiful) and "what matters" (sustainable, local, handmade)
+             * everywhere, and the feel's weight moved here (config).
              */
-            'preference' => $this->preferenceFit($haystack, $brief, $tags) * $profile->weight('preference', 5),
-            'values' => $this->valuesFit($haystack, $brief, $tags) * $profile->weight('values', 10),
+            'preference' => $this->preferenceFit($haystack, $brief, $tags) * $profile->weight('preference', 15),
             /*
              * Five since 2026-09-14, from zero. It was zero because the
              * catalogue was too thin in seasonal goods for title words to
@@ -918,42 +916,12 @@ class SuggestionEngine
     }
 
     /**
-     * A nudge, never a filter.
-     *
-     * Someone who said "playful" still wants the good headphones if headphones
-     * are the right answer; the vibe decides between two equally good ones.
-     */
-    private function vibeFit(string $haystack, TasteBrief $brief, array $tags = []): float
-    {
-        if ($brief->vibe === null) {
-            // No stated vibe is not a zero — it is "this signal does not
-            // apply". Scoring it zero would silently shrink the total for
-            // everyone who skipped the question.
-            return 0.5;
-        }
-
-        // An editor said how it feels; no need to find "luxe" in the title.
-        if (in_array(GiftTags::vibe($brief->vibe->value), $tags, true)) {
-            return 1.0;
-        }
-
-        foreach ($brief->vibe->keywords() as $keyword) {
-            if (str_contains($haystack, $keyword)) {
-                return 1.0;
-            }
-        }
-
-        return 0.3;
-    }
-
-    /**
      * The taste the brief named that this product actually sits at.
      *
-     * The same three questions {@see vibeFit()}, {@see preferenceFit()} and
-     * {@see valuesFit()} score, asked one pole at a time so the card can name
-     * which one landed rather than report that something did. An editor's tag
-     * counts first and a title word second, the order of trust those three
-     * use. A pole the brief did not ask for is never reported: the card is
+     * The question {@see preferenceFit()} scores, asked one pole at a time so
+     * the card can name which one landed rather than report that something
+     * did. An editor's tag counts first and a title word second, the order of
+     * trust it uses. A pole the brief did not ask for is never reported: the card is
      * about the overlap, not about the product.
      *
      * @param  list<string>  $tags
@@ -963,22 +931,11 @@ class SuggestionEngine
     {
         $fits = [];
 
-        if ($brief->vibe !== null && $this->vibeFit($haystack, $brief, $tags) >= 1.0) {
-            $fits[] = ['kind' => 'vibe', 'value' => $brief->vibe->value];
-        }
-
         foreach ($brief->preferences as $pole) {
             $keywords = Preference::tryFrom($pole)?->keywords() ?? [];
 
             if (in_array(GiftTags::preference($pole), $tags, true) || $this->mentions($haystack, $keywords)) {
                 $fits[] = ['kind' => 'preference', 'value' => $pole];
-            }
-        }
-
-        foreach ($brief->values as $value) {
-            if (in_array(GiftTags::value($value), $tags, true)
-                || $this->mentions($haystack, self::VALUE_MARKERS[$value] ?? [])) {
-                $fits[] = ['kind' => 'values', 'value' => $value];
             }
         }
 
@@ -1002,8 +959,8 @@ class SuggestionEngine
      *
      * Several poles may be asked for and any one of them matching is a
      * match: they are one taste, not a list of requirements. An editor's
-     * `preference:` tag beats a title word, the same order of trust
-     * {@see valuesFit()} uses and for the same reason — a feed says "eiken"
+     * `preference:` tag beats a title word, for the reason every tag does:
+     * a feed says "eiken"
      * by accident and an editor says `preference:natural` on purpose.
      *
      * The opposite pole is not scored against the product. A person who
@@ -1034,7 +991,7 @@ class SuggestionEngine
             }
         }
 
-        // Weak evidence, like values: most feeds never describe a look at
+        // Weak evidence: most feeds never describe a look at
         // all, so silence is not a "no".
         return 0.4;
     }
@@ -1185,38 +1142,6 @@ class SuggestionEngine
         }
 
         return 0.5;
-    }
-
-    /** @var array<string, list<string>> */
-    private const VALUE_MARKERS = [
-        'sustainable' => ['duurzaam', 'gerecycled', 'recycled', 'bio', 'eco', 'fairtrade', 'fsc'],
-        'local' => ['belgisch', 'nederlands', 'lokaal', 'made in belgium', 'local'],
-        'handmade' => ['handgemaakt', 'handmade', 'artisanaal', 'ambachtelijk', 'fait main'],
-    ];
-
-    private function valuesFit(string $haystack, TasteBrief $brief, array $tags = []): float
-    {
-        if ($brief->values === []) {
-            return 0.5;
-        }
-
-        foreach ($brief->values as $value) {
-            // An editor's tag beats a title word: feeds rarely say
-            // "handgemaakt" even when it is true.
-            if (in_array(GiftTags::value($value), $tags, true)) {
-                return 1.0;
-            }
-
-            foreach (self::VALUE_MARKERS[$value] ?? [] as $marker) {
-                if (str_contains($haystack, $marker)) {
-                    return 1.0;
-                }
-            }
-        }
-
-        // Not a penalty worth much: feeds rarely label these even when true, so
-        // absence is weak evidence of anything.
-        return 0.4;
     }
 
     /**

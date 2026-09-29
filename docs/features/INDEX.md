@@ -66,6 +66,7 @@ is true now.
 | [find-a-gift.md](find-a-gift.md) | Gifting | Active — `/gift` as one flow: who first, then four ways (questions, This or that, a type, Ask others), the first three ending on one results page (`GiftResults`) that the landing pages draw too; thumbs up/down on each idea teach the engine per saved person and, from five voters, for everybody |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — the engine behind Find a gift; its questions are the first way in since 2026-09-26 |
 | [taste-discovery.md](taste-discovery.md) | Gifting | Active — This or that: a dozen choices between products become a taste, a budget and ideas; can be kept on a person |
+| [taste-pairs.md](taste-pairs.md) | Gifting | Active — taste is the pairs of opposites only; the vibe (Handig/Leuk/Mooi) and the values (sustainable/local/handmade) removed site-wide on 2026-09-29 |
 | [my-taste.md](my-taste.md) | Gifting / People | Active — Mijn smaak: your own gift taste on your account, no budget; friends' searches for you start from it, as does Voor mezelf |
 | [swipe-gifts.md](swipe-gifts.md) | Gifting / Lists | Active — Swipe through gifts: one product at a time, right onto the list, left to pass, no end but Stop; learns from what is liked |
 | [taste-together.md](taste-together.md) | Gifting / Lists | Active — This or that played by several people about one person through a link; the giver sees a count and the combined result and can add it to the person |

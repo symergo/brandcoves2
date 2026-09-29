@@ -8,7 +8,6 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
-use App\Enums\Vibe;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -23,7 +22,7 @@ use Tests\TestCase;
  *
  * A tag is a decision where a text match is a guess: the engine retrieves a
  * tagged product whether or not its title agrees, scores the tag at full
- * strength on its slot, and answers the occasion, recipient, vibe and values
+ * strength on its slot, and answers the occasion, recipient and taste
  * questions from tags before it looks for words.
  */
 class SuggestionEngineTagsTest extends TestCase
@@ -217,32 +216,6 @@ class SuggestionEngineTagsTest extends TestCase
         $this->assertEqualsWithDelta(2.25, $picks[1]->breakdown['recipient_fit'], 0.01);
     }
 
-    #[Test]
-    public function vibe_and_values_tags_answer_before_the_title_does(): void
-    {
-        $tagged = $this->giftable('Mok', 2500, ['interest:coffee', 'vibe:playful', 'values:handmade']);
-        $plain = $this->giftable('Mok blauw', 2500, ['interest:coffee']);
-
-        $picks = $this->engine()->suggest(new TasteBrief(
-            market: Market::BeNl,
-            interests: ['coffee'],
-            vibe: Vibe::Playful,
-            values: ['handmade'],
-            limit: 2,
-        ));
-
-        $by = [];
-
-        foreach ($picks as $pick) {
-            $by[$pick->group->id] = $pick->breakdown;
-        }
-
-        $this->assertEqualsWithDelta(10.0, $by[$tagged->id]['vibe'], 0.01);
-        $this->assertEqualsWithDelta(10.0, $by[$tagged->id]['values'], 0.01);
-        $this->assertLessThan(10.0, $by[$plain->id]['vibe']);
-        $this->assertLessThan(10.0, $by[$plain->id]['values']);
-    }
-
     /**
      * A word somebody typed searches, and never pretends to be a tag.
      *
@@ -338,7 +311,7 @@ class SuggestionEngineTagsTest extends TestCase
     #[Test]
     public function a_suggestion_carries_what_it_fits_with(): void
     {
-        $this->giftable('Fluitketel', 4000, ['interest:cooking', 'preference:vintage', 'values:handmade'], 'Keuken');
+        $this->giftable('Fluitketel', 4000, ['interest:cooking', 'preference:vintage'], 'Keuken');
 
         $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
@@ -354,11 +327,11 @@ class SuggestionEngineTagsTest extends TestCase
     }
 
     /**
-     * Taste is the question the vibe cannot ask (owner's call, 2026-09-14):
-     * "modern or vintage" is not a stronger "useful or beautiful". It is
-     * asked as pairs of opposites. Any one of the poles named matching is a
-     * match, a tag beats a title word, and a brief that skipped the question
-     * scores the same neutral half every skipped question does.
+     * Taste is asked as pairs of opposites (owner's call, 2026-09-14), and
+     * since the vibe was removed (2026-09-29) the pairs carry the feel too.
+     * Any one of the poles named matching is a match, a tag beats a title
+     * word, and a brief that skipped the question scores the same neutral
+     * half every skipped question does.
      */
     #[Test]
     public function a_preference_tag_beats_a_title_word_and_any_one_of_them_counts(): void
@@ -380,10 +353,12 @@ class SuggestionEngineTagsTest extends TestCase
             $by[$pick->group->id] = $pick->breakdown['preference'];
         }
 
-        $this->assertEqualsWithDelta(5.0, $by[$tagged->id], 0.01);
+        // The for-someone profile weighs preference at 15 (config/giftcoves.php,
+        // profiles.for_someone): a match scores all of it, silence 0.4 of it.
+        $this->assertEqualsWithDelta(15.0, $by[$tagged->id], 0.01);
         // "retro" is one of Preference::Vintage's keywords, so the title carries it.
-        $this->assertEqualsWithDelta(5.0, $by[$byTitle->id], 0.01);
-        $this->assertEqualsWithDelta(2.0, $by[$plain->id], 0.01);
+        $this->assertEqualsWithDelta(15.0, $by[$byTitle->id], 0.01);
+        $this->assertEqualsWithDelta(6.0, $by[$plain->id], 0.01);
 
         // Not asked is not unmet: everything scores the neutral half.
         $unasked = $this->engine()->suggest(new TasteBrief(
@@ -393,7 +368,7 @@ class SuggestionEngineTagsTest extends TestCase
         ));
 
         foreach ($unasked as $pick) {
-            $this->assertEqualsWithDelta(2.5, $pick->breakdown['preference'], 0.01);
+            $this->assertEqualsWithDelta(7.5, $pick->breakdown['preference'], 0.01);
         }
     }
 }

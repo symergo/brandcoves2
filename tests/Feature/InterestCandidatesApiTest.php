@@ -20,7 +20,7 @@ class InterestCandidatesApiTest extends TestCase
     /** @param list<string> $interests */
     private function brief(string $market, array $interests): void
     {
-        Event::record('gift.suggest', ['market' => $market, 'interests' => $interests, 'vibe' => null, 'results' => 4]);
+        Event::record('gift.suggest', ['market' => $market, 'interests' => $interests, 'preferences' => [], 'results' => 4]);
     }
 
     #[Test]

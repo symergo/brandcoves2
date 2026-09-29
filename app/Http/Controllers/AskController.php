@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Enums\AskAudience;
 use App\Enums\Interest;
 use App\Enums\ModerationStatus;
-use App\Enums\Vibe;
 use App\Jobs\TriageCommunityPost;
 use App\Models\CommunityAnswer;
 use App\Models\CommunityQuestion;
@@ -164,11 +163,6 @@ class AskController extends Controller
                 'value' => $i->value,
                 'label' => $i->label(),
             ], Interest::cases()),
-            'vibes' => array_map(fn (Vibe $v) => [
-                'value' => $v->value,
-                'label' => $v->label(),
-            ], Vibe::cases()),
-            'values' => ['sustainable', 'local', 'handmade'],
         ];
     }
 
@@ -203,9 +197,6 @@ class AskController extends Controller
              */
             'interests' => ['array', 'max:8'],
             'interests.*' => ['string', 'in:'.implode(',', Interest::values())],
-            'vibe' => ['nullable', 'string', 'in:'.implode(',', Vibe::values())],
-            'values' => ['array', 'max:3'],
-            'values.*' => ['string', 'in:sustainable,local,handmade'],
             'age_band' => ['nullable', 'string', 'max:20'],
             'occasion' => ['nullable', 'string', 'max:40'],
             // The list it was asked from; checked against the owner below.
@@ -236,8 +227,6 @@ class AskController extends Controller
             // ticked nothing yet" are the same thing here, and a `[]` renders
             // as an empty chip row on every card.
             'interests' => filled($validated['interests'] ?? null) ? array_values($validated['interests']) : null,
-            'vibe' => $validated['vibe'] ?? null,
-            'values' => filled($validated['values'] ?? null) ? array_values($validated['values']) : null,
             'age_band' => $validated['age_band'] ?? null,
             'occasion' => $validated['occasion'] ?? null,
             'wishlist_id' => $list?->id,

@@ -6,7 +6,6 @@ namespace Tests\Unit;
 
 use App\Enums\Market;
 use App\Enums\Preference;
-use App\Enums\Vibe;
 use App\Services\Gift\TasteBrief;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,12 +24,10 @@ class TasteBriefTest extends TestCase
         $brief = new TasteBrief(
             market: Market::BeNl,
             interests: ['cooking', 'coffee'],
-            vibe: Vibe::cases()[0],
             preferences: [Preference::cases()[0]->value],
             budgetMin: 2000,
             budgetMax: 6000,
             avoid: ['alcohol'],
-            values: ['handmade'],
             relationship: 'father',
             occasion: 'birthday',
             ageBand: '50-64',
@@ -64,7 +61,7 @@ class TasteBriefTest extends TestCase
             'interests' => ['cooking', 'underwater basket weaving', 'COFFEE'],
             'occasion' => 'christmas',
             'ageBand' => '40-45',
-            'vibe' => 'glittery',
+            'preferences' => ['vintage', 'glittery'],
             'budgetMin' => -5,
             'budgetMax' => 4000,
         ];
@@ -75,13 +72,13 @@ class TasteBriefTest extends TestCase
         $this->assertSame(['cooking', 'coffee'], $brief->interests);
         $this->assertSame('christmas', $brief->occasion);
         $this->assertNull($brief->ageBand);
-        $this->assertNull($brief->vibe);
+        $this->assertSame(['vintage'], $brief->preferences);
         $this->assertNull($brief->budgetMin);
         $this->assertSame(4000, $brief->budgetMax);
 
         $problems = TasteBrief::problems($data);
 
-        $this->assertSame(['relationship', 'ageBand', 'vibe', 'interests', 'budgetMin'], array_keys($problems));
+        $this->assertSame(['relationship', 'ageBand', 'interests', 'preferences', 'budgetMin'], array_keys($problems));
         $this->assertStringContainsString('underwater basket weaving', $problems['interests']);
     }
 

@@ -38,7 +38,7 @@ use Illuminate\Support\Str;
  * The result, -1..1, is multiplied by the profile's `feedback` weight (12 for
  * somebody else: see config/giftcoves.php). A full match on a liked product's
  * interest, category and brand is therefore worth 12 points, somewhat above
- * vibe (10) and well under interest fit (40): it reorders good answers, it
+ * the taste pairs and well under interest fit: it reorders good answers, it
  * does not replace the brief.
  */
 final readonly class PersonFeedback

@@ -895,11 +895,13 @@ return [
         // `demand` is absent here so an unweighted profile leaves the bestseller
         // signal switched off rather than silently on.
         'weights' => [
-            'interest_fit' => 40,
+            // 50 and a preference weight since 2026-09-29: the vibe (10) went
+            // to the pairs of opposites, which now carry the feel, and the
+            // values' 10 to interest fit (both questions removed site-wide).
+            'interest_fit' => 50,
             'budget_fit' => 20,
             'surprise' => 20,
-            'vibe' => 10,
-            'values' => 10,
+            'preference' => 10,
         ],
 
         // Budget fit peaks below the stated maximum rather than at the cheapest
@@ -959,13 +961,12 @@ return [
                     // stocked product winning every tie; it never needed
                     // twenty points to do that.
                     'surprise' => 10,
-                    'vibe' => 10,
                     // Which way their taste goes: modern or vintage, natural
-                    // or technical, and the rest of the seven axes. Half of
-                    // vibe, because the right present in the wrong finish
-                    // still beats the wrong present in the right one.
-                    'preference' => 5,
-                    'values' => 10,
+                    // or technical, and the rest of the seven axes. 15 since
+                    // 2026-09-29: 5 of its own and the 10 the vibe had, now
+                    // that the pairs carry the feel (vibe and values removed
+                    // site-wide; the values' 10 is not handed on).
+                    'preference' => 15,
                     // An editor's `recipient:mother` tag meeting "mother" in
                     // the brief. Small: it decides between two good answers.
                     'recipient_fit' => 5,
@@ -1030,12 +1031,12 @@ return [
                     // novelty for its own sake — but at zero the list collapses
                     // into whatever is best stocked.
                     'surprise' => 15,
-                    'vibe' => 15,
                     // Your own taste, worth more here than when buying for
                     // someone else: on your own list the finish is half the
-                    // point of wanting the thing.
-                    'preference' => 10,
-                    'values' => 15,
+                    // point of wanting the thing. 25 since 2026-09-29: 10 of
+                    // its own and the vibe's 15 (vibe and values removed
+                    // site-wide; the values' 15 is not handed on).
+                    'preference' => 25,
                     // Small, and the opposite sign to the gift case. Nobody
                     // wants a surprising kettle on their own list; they want the
                     // one that turns out to be good, and "lots of people bought

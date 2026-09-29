@@ -6,7 +6,6 @@ namespace App\Services\Gift;
 
 use App\Enums\Interest;
 use App\Enums\Preference;
-use App\Enums\Vibe;
 
 /**
  * The profile a gift profile card carries, and the two things made from it:
@@ -25,12 +24,10 @@ final class GiftProfile
     /** How many interests a card names. The profiler finds four at most. */
     public const MAX_INTERESTS = 4;
 
-    private const VALUES = ['sustainable', 'local', 'handmade'];
-
     /**
      * What to store from a profile: its conclusion, no scores, no round count.
      *
-     * @return array{interests: list<string>, avoid: list<string>, budgetMin: int|null, budgetMax: int|null, vibe: string|null, preferences: list<string>, values: list<string>}
+     * @return array{interests: list<string>, avoid: list<string>, budgetMin: int|null, budgetMax: int|null, preferences: list<string>}
      */
     public static function fromProfile(TasteProfile $profile): array
     {
@@ -39,9 +36,7 @@ final class GiftProfile
             'avoid' => $profile->avoid,
             'budgetMin' => $profile->budgetMin,
             'budgetMax' => $profile->budgetMax,
-            'vibe' => $profile->vibe,
             'preferences' => $profile->preferences,
-            'values' => $profile->values,
         ]);
     }
 
@@ -49,7 +44,7 @@ final class GiftProfile
      * Only values Find a gift accepts, within its caps.
      *
      * @param  array<string, mixed>  $stored
-     * @return array{interests: list<string>, avoid: list<string>, budgetMin: int|null, budgetMax: int|null, vibe: string|null, preferences: list<string>, values: list<string>}
+     * @return array{interests: list<string>, avoid: list<string>, budgetMin: int|null, budgetMax: int|null, preferences: list<string>}
      */
     public static function clean(array $stored): array
     {
@@ -71,8 +66,6 @@ final class GiftProfile
             [$min, $max] = [null, null];
         }
 
-        $vibe = isset($stored['vibe']) && Vibe::tryFrom((string) $stored['vibe']) !== null ? (string) $stored['vibe'] : null;
-
         $preferences = [];
         $axes = [];
 
@@ -85,19 +78,12 @@ final class GiftProfile
             }
         }
 
-        $values = array_values(array_unique(array_filter(
-            array_map('strval', (array) ($stored['values'] ?? [])),
-            fn (string $v) => in_array($v, self::VALUES, true),
-        )));
-
         return [
             'interests' => array_slice($interests, 0, self::MAX_INTERESTS),
             'avoid' => array_slice($avoid, 0, TasteProfiler::MAX_AVOID),
             'budgetMin' => $min,
             'budgetMax' => $max,
-            'vibe' => $vibe,
             'preferences' => array_slice($preferences, 0, TasteProfile::MAX_PREFERENCES),
-            'values' => array_slice($values, 0, TasteProfile::MAX_VALUES),
         ];
     }
 
@@ -126,12 +112,10 @@ final class GiftProfile
 
         return [
             'interests' => $clean['interests'],
-            'vibe' => $clean['vibe'],
             'preferences' => $clean['preferences'],
             'budget_min' => $clean['budgetMin'] === null ? null : intdiv($clean['budgetMin'], 100),
             'budget_max' => $clean['budgetMax'] === null ? null : intdiv($clean['budgetMax'], 100),
             'avoid' => array_map(fn (string $i) => GiftTags::interest($i), $clean['avoid']),
-            'values' => $clean['values'],
             'relationship' => null,
             'occasion' => null,
             'age_band' => null,

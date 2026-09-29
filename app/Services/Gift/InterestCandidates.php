@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  *
  * The wizard's "anything else?" box accepts any word, and every brief is
  * recorded as an event (`gift.suggest`, append-only, no personal data: the
- * interests and the vibe, never the person). Words that are not one of the
+ * interests and the taste, never the person). Words that are not one of the
  * enum interests are the demand the closed vocabulary has not met yet, and
  * this ranks them so an interest is added when people keep asking for it
  * rather than when somebody guesses they might (owner's call, 2026-09-14).

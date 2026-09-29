@@ -22,7 +22,7 @@ export interface GiftPick {
     merchantCount?: number
     url: string
     /** What this present has in common with the brief. Interests first, then the taste. */
-    fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
+    fits: { kind: 'interest' | 'preference'; value: string }[]
     /** On the lists of at least five people shopping for someone like this (crowd-picks.md). */
     chosenByOthers?: boolean
     /** The thumb already given: the saved person's, or this visitor's own (find-a-gift.md). */
@@ -140,10 +140,10 @@ export default function GiftResults({
     /*
       What a card fits, in the reader's words. An interest may be one the
       person typed themselves, so it falls back to the raw word; the taste
-      poles and the vibe are always ours, so they always translate.
+      poles are always ours, so they always translate.
     */
     const fitLabel = (fit: GiftPick['fits'][number]) =>
-        fit.kind === 'interest' ? interest(fit.value) : t(`gift.${fit.kind === 'vibe' ? 'vibes' : fit.kind}.${fit.value}`)
+        fit.kind === 'interest' ? interest(fit.value) : t(`gift.preferences.${fit.value}`)
 
     const hasActions = actions != null || pageUrl !== null
 

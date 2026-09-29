@@ -140,7 +140,6 @@ class RecipientBirthdayTest extends TestCase
 
         $this->post("/be-nl/for/{$recipient->share_token}", [
             'interests' => [],
-            'values' => [],
             'birthday_day' => 2,
             'birthday_month' => 11,
         ])->assertRedirect();
@@ -164,7 +163,6 @@ class RecipientBirthdayTest extends TestCase
 
         $this->post("/be-nl/for/{$recipient->share_token}", [
             'interests' => [],
-            'values' => [],
         ])->assertRedirect();
 
         $this->assertSame('2000-06-14', $recipient->fresh()->birthday->toDateString());

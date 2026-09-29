@@ -27,7 +27,10 @@ use Inertia\Response;
  * "Voor mezelf" in Find a gift (OwnTaste, TasteBrief::fromRecipient).
  *
  * No budget, on the owner's word: what somebody spends is the giver's
- * decision, a filter in their own search. See docs/features/my-taste.md.
+ * decision, a filter in their own search. No vibe and no values either
+ * (owner, 2026-09-29: both removed site-wide; the pairs of opposites cover the
+ * feel). Their columns stay until a later release drops them (expand /
+ * contract), and are written empty. See docs/features/my-taste.md.
  */
 class MyTasteController extends Controller
 {
@@ -40,20 +43,20 @@ class MyTasteController extends Controller
         return Inertia::render('MyTaste', [
             'taste' => [
                 'interests' => array_values((array) ($taste?->interests ?? [])),
-                'vibe' => $taste?->vibe,
                 'preferences' => array_values((array) ($taste?->preferences ?? [])),
-                'values' => array_values((array) ($taste?->values ?? [])),
                 'avoid' => array_values((array) ($taste?->avoid ?? [])),
                 'ageBand' => $taste?->age_band,
             ],
             'options' => array_intersect_key(
                 app(GiftController::class)->options(),
-                array_flip(['interests', 'vibes', 'preferences', 'ages']),
-            ) + ['values' => GiftTags::VALUE_OPTIONS],
+                array_flip(['interests', 'preferences', 'ages']),
+            ),
             'urls' => [
                 'update' => $current->url('my-taste'),
                 // This or that, for yourself: its result offers "Keep as my taste".
                 'learn' => $current->url('gift/taste').'?for=me',
+                // Swiping for yourself fills it as you go, and Stop comes back here.
+                'swipe' => $current->url('gift/swipe').'?for=me&from=my-taste',
             ],
         ]);
     }
@@ -64,11 +67,8 @@ class MyTasteController extends Controller
             // The same bounds as Find a gift's own answers (GiftController::validateBrief).
             'interests' => ['array', 'max:8'],
             'interests.*' => ['string', 'max:40'],
-            'vibe' => ['nullable', 'string', Rule::in(Vibe::values())],
             'preferences' => ['array', 'max:3'],
             'preferences.*' => ['string', Rule::in(Preference::values())],
-            'values' => ['array', 'max:3'],
-            'values.*' => ['string', Rule::in(GiftTags::VALUE_OPTIONS)],
             'avoid' => ['array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],
             'age_band' => ['nullable', 'string', Rule::in(GiftTags::AGE_BANDS)],
@@ -76,9 +76,7 @@ class MyTasteController extends Controller
 
         $this->keep($request->user()->id, [
             'interests' => $validated['interests'] ?? [],
-            'vibe' => $validated['vibe'] ?? null,
             'preferences' => $validated['preferences'] ?? [],
-            'values' => $validated['values'] ?? [],
             'avoid' => $validated['avoid'] ?? [],
             'age_band' => $validated['age_band'] ?? null,
         ]);
@@ -97,9 +95,10 @@ class MyTasteController extends Controller
      * what you already said (TasteProfile::mergedWith); the age is left alone.
      *
      * Swipe gifts, played for yourself, sends its swipes here too (owner,
-     * 2026-09-29: "include results from swiping and vibe"): each swipe is a
+     * 2026-09-29: "include results from swiping and vibe"; the vibe meant the
+     * pairs of opposites, "Hoe mag het voelen" being removed): each swipe is a
      * one-card choice, right a like and left a dislike, so the profiler reads
-     * interests, the vibe and taste poles from them as it does from This or
+     * interests and taste poles from them as it does from This or
      * that's single cards. Hence the higher cap: a swipe session has no end,
      * and the page sends its latest hundred.
      */
@@ -122,16 +121,12 @@ class MyTasteController extends Controller
         $merged = $profile->mergedWith([
             'interests' => $taste?->interests ?? [],
             'avoid' => $taste?->avoid ?? [],
-            'vibe' => $taste?->vibe,
             'preferences' => $taste?->preferences ?? [],
-            'values' => $taste?->values ?? [],
         ]);
 
         $this->keep($request->user()->id, [
             'interests' => array_slice(array_values($merged['interests'] ?? []), 0, 8),
-            'vibe' => $merged['vibe'] ?? null,
             'preferences' => array_slice(array_values($merged['preferences'] ?? []), 0, 3),
-            'values' => array_slice(array_values($merged['values'] ?? []), 0, 3),
             'avoid' => array_slice(array_values($merged['avoid'] ?? []), 0, 10),
             'age_band' => $taste?->age_band,
         ]);
@@ -143,10 +138,13 @@ class MyTasteController extends Controller
      * One row per person, and none for a taste that says nothing: an empty
      * row would read as "has a taste" to nobody's benefit.
      *
-     * @param  array{interests: list<string>, vibe: string|null, preferences: list<string>, values: list<string>, avoid: list<string>, age_band: string|null}  $fields
+     * @param  array{interests: list<string>, preferences: list<string>, avoid: list<string>, age_band: string|null}  $fields
      */
     private function keep(int $userId, array $fields): void
     {
+        // Removed site-wide (2026-09-29): written empty until the columns go.
+        $fields += ['vibe' => null, 'values' => []];
+
         $fields['interests'] = array_values(array_unique(array_filter(array_map('trim', $fields['interests']))));
         $fields['avoid'] = array_values(array_unique(array_filter(array_map('trim', $fields['avoid']))));
 

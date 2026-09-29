@@ -7,6 +7,10 @@ date_added: 2026-09-26
 
 # This or that: taste discovery by choosing
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 The owner's request (2026-09-26): "a taste discovery tool by swiping or selecting random products and
 building a profile of a person based on the selections made (e.g. choose between two, or
 like/dislike)".

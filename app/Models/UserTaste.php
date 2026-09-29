@@ -48,9 +48,7 @@ class UserTaste extends Model
     public function isEmpty(): bool
     {
         return (array) $this->interests === []
-            && $this->vibe === null
             && (array) $this->preferences === []
-            && (array) $this->values === []
             && (array) $this->avoid === []
             && $this->age_band === null;
     }

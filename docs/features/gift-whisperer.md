@@ -7,6 +7,10 @@ date_added: 2026-08-08
 
 # Gift Whisperer
 
+> **Since 2026-09-29** there is no vibe (Handig / Leuk / Mooi) and no values (sustainable / local /
+> handmade) anywhere; taste is the pairs of opposites only. See [taste-pairs.md](taste-pairs.md).
+> Mentions of either below are history.
+
 Describe someone, get eight suggestions, each showing what it has in common with the brief.
 
 > **Since 2026-09-26 this is not a page of its own.** The engine below (`SuggestionEngine`) serves

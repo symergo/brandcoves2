@@ -41,9 +41,7 @@ interface Profile {
     avoid: string[]
     budgetMin: Cents | null
     budgetMax: Cents | null
-    vibe: string | null
     preferences: string[]
-    values: string[]
     answered: number
 }
 
@@ -491,9 +489,7 @@ function Outcome({ mode, person, urls, result, recipients, people = [], canCreat
             : null
 
     const style = [
-        ...(profile.vibe ? [t(`gift.vibes.${profile.vibe}`)] : []),
         ...profile.preferences.map((p) => t(`gift.preferences.${p}`)),
-        ...profile.values.map((v) => t(`gift.values.${v}`)),
     ]
 
     /*

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Enums\Market;
-use App\Enums\Vibe;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\TasteBrief;
 use Illuminate\Session\ArraySessionHandler;
@@ -32,7 +31,8 @@ class RejectionMemoryTest extends TestCase
         return new TasteBrief(
             market: $overrides['market'] ?? Market::BeNl,
             interests: $overrides['interests'] ?? ['coffee'],
-            vibe: $overrides['vibe'] ?? null,
+            preferences: $overrides['preferences'] ?? [],
+            avoid: $overrides['avoid'] ?? [],
             budgetMax: $overrides['budgetMax'] ?? 10000,
         );
     }
@@ -89,13 +89,35 @@ class RejectionMemoryTest extends TestCase
     }
 
     #[Test]
-    public function the_vibe_and_the_budget_are_part_of_the_brief(): void
+    public function the_taste_pairs_are_part_of_the_brief(): void
     {
+        // The only taste question since 2026-09-29: rejecting ideas for a
+        // vintage taste must not hide them from a modern one.
+        $memory = $this->memory();
+
+        $this->assertNotSame(
+            $memory->key($this->brief(['preferences' => ['vintage']])),
+            $memory->key($this->brief(['preferences' => ['modern']])),
+        );
+
+        // The order they were picked in is not a different answer.
+        $this->assertSame(
+            $memory->key($this->brief(['preferences' => ['vintage', 'design']])),
+            $memory->key($this->brief(['preferences' => ['design', 'vintage']])),
+        );
+    }
+
+    #[Test]
+    public function what_to_avoid_and_the_budget_are_part_of_the_brief(): void
+    {
+        // Was the vibe until it was removed site-wide (2026-09-29); what to
+        // leave out is another answer that changes the picks without
+        // changing the interests.
         $memory = $this->memory();
 
         $this->assertNotSame(
             $memory->key($this->brief()),
-            $memory->key($this->brief(['vibe' => Vibe::Playful])),
+            $memory->key($this->brief(['avoid' => ['interest:gaming']])),
         );
 
         $this->assertNotSame(
