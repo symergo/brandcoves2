@@ -41,6 +41,8 @@ export interface Profile {
     about: {
         interests: Option[]
         ageBand: string | null
+        /** 'male' | 'female', a profile fact like the age (2026-09-29). */
+        gender?: string | null
         avoid: string[]
         budgetMin: Cents | null
         budgetMax: Cents | null
@@ -148,6 +150,7 @@ export default function PersonProfile({
     const facts: { label: string; items: string[] }[] = [
         { label: t('people.field_interests'), items: about.interests.map((i) => i.label) },
         { label: t('people.field_age'), items: about.ageBand ? [options.ages.find((a) => a.value === about.ageBand)?.label ?? about.ageBand] : [] },
+        { label: t('people.field_gender'), items: about.gender ? [t(`gift.genders.${about.gender}`)] : [] },
         { label: t('people.field_budget'), items: budget === null ? [] : [budget] },
         { label: t('people.field_avoid'), items: about.avoid.map(avoidLabel) },
     ].filter((fact) => fact.items.length > 0)
@@ -699,6 +702,7 @@ function AboutForm({
     const theirs = about.tasteSource === 'self'
     const [interests, setInterests] = useState<string[]>(about.interests.map((i) => i.value))
     const [ageBand, setAgeBand] = useState<string | null>(about.ageBand)
+    const [gender, setGender] = useState<string | null>(about.gender ?? null)
     const [avoid, setAvoid] = useState<string[]>(about.avoid)
     const [min, setMin] = useState(about.budgetMin === null ? '' : String(about.budgetMin / 100))
     const [max, setMax] = useState(about.budgetMax === null ? '' : String(about.budgetMax / 100))
@@ -739,6 +743,7 @@ function AboutForm({
                     url,
                     {
                         age_band: ageBand,
+                        gender,
                         // Euros here, cents in the column: RecipientTasteRequest converts.
                         budget_min: euros(min),
                         budget_max: euros(max),
@@ -825,6 +830,23 @@ function AboutForm({
                             className={chip(ageBand === option.value)}
                         >
                             {option.label}
+                        </button>
+                    ))}
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend className="text-xs font-medium">{t('people.field_gender')}</legend>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(['male', 'female'] as const).map((value) => (
+                        <button
+                            key={value}
+                            type="button"
+                            aria-pressed={gender === value}
+                            onClick={() => setGender(gender === value ? null : value)}
+                            className={chip(gender === value)}
+                        >
+                            {t(`gift.genders.${value}`)}
                         </button>
                     ))}
                 </div>

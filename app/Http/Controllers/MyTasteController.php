@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Gender;
 use App\Enums\Preference;
 use App\Enums\Vibe;
 use App\Models\UserTaste;
@@ -46,6 +47,7 @@ class MyTasteController extends Controller
                 'preferences' => array_values((array) ($taste?->preferences ?? [])),
                 'avoid' => array_values((array) ($taste?->avoid ?? [])),
                 'ageBand' => $taste?->age_band,
+                'gender' => $taste?->gender,
             ],
             'options' => array_intersect_key(
                 app(GiftController::class)->options(),
@@ -72,6 +74,7 @@ class MyTasteController extends Controller
             'avoid' => ['array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],
             'age_band' => ['nullable', 'string', Rule::in(GiftTags::AGE_BANDS)],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
         ]);
 
         $this->keep($request->user()->id, [
@@ -79,6 +82,7 @@ class MyTasteController extends Controller
             'preferences' => $validated['preferences'] ?? [],
             'avoid' => $validated['avoid'] ?? [],
             'age_band' => $validated['age_band'] ?? null,
+            'gender' => $validated['gender'] ?? null,
         ]);
 
         $cleared = UserTaste::query()->find($request->user()->id) === null;
@@ -129,6 +133,7 @@ class MyTasteController extends Controller
             'preferences' => array_slice(array_values($merged['preferences'] ?? []), 0, 3),
             'avoid' => array_slice(array_values($merged['avoid'] ?? []), 0, 10),
             'age_band' => $taste?->age_band,
+            'gender' => $taste?->gender,
         ]);
 
         return response()->json(['url' => $current->url('my-taste')]);
@@ -138,7 +143,7 @@ class MyTasteController extends Controller
      * One row per person, and none for a taste that says nothing: an empty
      * row would read as "has a taste" to nobody's benefit.
      *
-     * @param  array{interests: list<string>, preferences: list<string>, avoid: list<string>, age_band: string|null}  $fields
+     * @param  array{interests: list<string>, preferences: list<string>, avoid: list<string>, age_band: string|null, gender: string|null}  $fields
      */
     private function keep(int $userId, array $fields): void
     {

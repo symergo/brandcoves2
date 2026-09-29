@@ -1,13 +1,14 @@
 ---
-name: For him or for her
+name: Man or woman
 area: Gifting
 status: Active
 date_added: 2026-09-29
 ---
 
-# For him or for her
+# Man or woman
 
-**Whether a gift is for him or for her is its own, optional question: "Voor hem / Voor haar".**
+**Whether the person is a man or a woman is its own, optional profile question: "Man / Vrouw", beside the
+age.**
 The relations stay as they were (partner, mama, papa, oma of opa, zoon of dochter, vriend of
 vriendin, collega, broer of zus, leerkracht, gastheer of gastvrouw).
 
@@ -21,13 +22,17 @@ alike, so they needed both. A separate gender needs a tag only where it matters.
 
 ## How it works
 
-- **The question**: two small switches next to "Voor …" above the ways in Find a gift. Optional;
-  not shown for yourself, nor for mama or papa, whose relation already says it
-  (`RecipientType::impliedGender()`).
-- **Remembered** on a saved person (`recipients.gender`, nullable, CHECK male/female), like the age,
-  and filled in from them next time.
-- **Carried** to Swipe gifts and This or that (`?gender=`, `CarriedWho`), so their cards leave out
-  the same products (`DeckSeed::allows`).
+- **Where it is asked** (owner: "a separate optional profile question: male / female", with the
+  age): in Find a gift's age step ("Man of vrouw?", for yourself "Ben je een man of een vrouw?"),
+  on a person's page next to the age, and in My taste. Optional everywhere; not asked for mama or
+  papa, whose relation already says it (`RecipientType::impliedGender()`). A first version had two
+  "Voor hem / Voor haar" switches at the top of Find a gift; the owner moved it to the profile.
+- **Kept** on a saved person (`recipients.gender`, a giver's fact like the age, so not on the
+  self-describe link) and on My taste (`user_tastes.gender`, which a friend's search reads like the
+  rest of your taste), nullable, CHECK male/female.
+- **Carried** to Swipe gifts and This or that from the saved person or your own taste (and
+  `?gender=` when a link carries it), so their cards leave out the same products
+  (`DeckSeed::allows`).
 - **The rule**: a product tagged `gender:` for the other one is left out
   (`SuggestionEngine`, next to the avoided interests). A product with no gender tag suits both and
   is never left out; that is nearly every product. Not a score, a filter: a razor is not a slightly
@@ -37,8 +42,9 @@ alike, so they needed both. A separate gender needs a tag only where it matters.
 
 ## Tagging
 
-`gender:male` / `gender:female` is a tag vocabulary (`GiftTags::GENDER`) the tag API accepts. The
-tagging brief says: only when the product is genuinely for one (a men's razor, a dress, a "best
+Part of product tagging (owner: "this should be part of product tagging"). `gender:male` /
+`gender:female` is a tag vocabulary (`GiftTags::GENDER`) the tag API accepts, and the admin's
+Product tagging instruction and the tagging skill ask for it. The tagging brief says: only when the product is genuinely for one (a men's razor, a dress, a "best
 grandma" mug), never both, and most products get none.
 
 ## Undoing the split (migration `2026_09_29_000300_relations_merged_gender_asked`)

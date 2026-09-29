@@ -85,6 +85,8 @@ class RelationsMergedMigrationTest extends TestCase
     {
         DB::statement('ALTER TABLE recipients DROP CONSTRAINT IF EXISTS recipients_gender_check');
         DB::statement('ALTER TABLE recipients DROP COLUMN IF EXISTS gender');
+        DB::statement('ALTER TABLE user_tastes DROP CONSTRAINT IF EXISTS user_tastes_gender_check');
+        DB::statement('ALTER TABLE user_tastes DROP COLUMN IF EXISTS gender');
 
         (require database_path('migrations/2026_09_29_000300_relations_merged_gender_asked.php'))->up();
 

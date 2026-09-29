@@ -18,6 +18,7 @@ interface Props {
         preferences: string[]
         avoid: string[]
         ageBand: string | null
+        gender?: string | null
     }
     options: {
         interests: Option[]
@@ -59,6 +60,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
     const [preferences, setPreferences] = useState<string[]>(taste.preferences)
     const [avoid, setAvoid] = useState<string[]>(taste.avoid)
     const [ageBand, setAgeBand] = useState<string | null>(taste.ageBand)
+    const [gender, setGender] = useState<string | null>(taste.gender ?? null)
     const [ownWord, setOwnWord] = useState('')
     const [avoidWord, setAvoidWord] = useState('')
     const [busy, setBusy] = useState(false)
@@ -93,7 +95,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
         setBusy(true)
         router.put(
             urls.update,
-            { interests, preferences, avoid, age_band: ageBand },
+            { interests, preferences, avoid, age_band: ageBand, gender },
             { preserveScroll: true, onFinish: () => setBusy(false) },
         )
     }
@@ -108,10 +110,11 @@ export default function MyTaste({ taste, options, urls }: Props) {
         setPreferences([])
         setAvoid([])
         setAgeBand(null)
+        setGender(null)
         setBusy(true)
         router.put(
             urls.update,
-            { interests: [], preferences: [], avoid: [], age_band: null },
+            { interests: [], preferences: [], avoid: [], age_band: null, gender: null },
             { preserveScroll: true, onFinish: () => setBusy(false) },
         )
     }
@@ -120,7 +123,8 @@ export default function MyTaste({ taste, options, urls }: Props) {
         taste.interests.length > 0 ||
         taste.preferences.length > 0 ||
         taste.avoid.length > 0 ||
-        taste.ageBand !== null
+        taste.ageBand !== null ||
+        (taste.gender ?? null) !== null
 
     return (
         <>
@@ -229,6 +233,24 @@ export default function MyTaste({ taste, options, urls }: Props) {
                                     className={chip(ageBand === option.value)}
                                 >
                                     {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    {/* Man or woman, beside the age (2026-09-29): optional, and only ever leaves out what is for the other. */}
+                    <fieldset>
+                        <legend className="font-medium">{t('gift.gender_label_me')}</legend>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {(['male', 'female'] as const).map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    aria-pressed={gender === value}
+                                    onClick={() => setGender(gender === value ? null : value)}
+                                    className={chip(gender === value)}
+                                >
+                                    {t(`gift.genders.${value}`)}
                                 </button>
                             ))}
                         </div>

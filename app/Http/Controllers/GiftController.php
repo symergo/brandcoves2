@@ -124,6 +124,7 @@ class GiftController extends Controller
             'preferences' => array_values((array) $taste->preferences),
             'avoid' => array_values((array) $taste->avoid),
             'ageBand' => $taste->age_band,
+            'gender' => $taste->gender,
         ];
     }
 
@@ -560,7 +561,8 @@ class GiftController extends Controller
             relationship: empty($validated['for_me']) ? ($validated['relationship'] ?? null) : null,
             occasion: $validated['occasion'] ?? null,
             ageBand: $validated['age_band'] ?? null,
-            gender: empty($validated['for_me']) ? ($validated['gender'] ?? null) : null,
+            // Also for yourself: your own "man or woman" leaves out what is for the other.
+            gender: $validated['gender'] ?? null,
             limit: (int) config('giftcoves.gift.results'),
             /*
              * For yourself, ranked as for your own list, the same profile This

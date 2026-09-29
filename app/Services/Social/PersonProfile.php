@@ -103,6 +103,7 @@ class PersonProfile
                 'label' => Interest::tryFrom($value)?->label() ?? $value,
             ], $interests),
             'ageBand' => $person->age_band,
+            'gender' => $person->gender,
             'avoid' => array_values((array) $person->avoid),
             'budgetMin' => $person->budget_min === null ? null : (int) $person->budget_min,
             'budgetMax' => $person->budget_max === null ? null : (int) $person->budget_max,

@@ -75,6 +75,7 @@ final class DeckSeeds
                 known: self::interests((array) $own->interests),
                 avoid: self::avoided((array) $own->avoid),
                 ageBand: $own->age_band,
+                gender: $own->gender,
             );
         }
 

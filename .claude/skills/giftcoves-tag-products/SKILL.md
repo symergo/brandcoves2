@@ -1,6 +1,6 @@
 ---
 name: giftcoves-tag-products
-description: Tag GiftCoves products with gift tags (interest, recipient, occasion, preference) and a not-a-gift verdict, judged in this session and posted over the production editorial API. Use when given a prompt from the admin's Product tagging page, or asked to tag products saved to wish lists, new catalogue products, or untagged products for GiftCoves or brandcoves.
+description: Tag GiftCoves products with gift tags (interest, recipient, occasion, gender, preference) and a not-a-gift verdict, judged in this session and posted over the production editorial API. Use when given a prompt from the admin's Product tagging page, or asked to tag products saved to wish lists, new catalogue products, or untagged products for GiftCoves or brandcoves.
 ---
 
 # Tagging GiftCoves products

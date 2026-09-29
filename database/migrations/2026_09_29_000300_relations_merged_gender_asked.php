@@ -25,8 +25,9 @@ use Illuminate\Support\Facades\Schema;
  *   their brief, by slug.
  * - Crowd counts under a gendered relation go; the nightly count remakes them.
  * - The "done" idea announcing the split leaves the Denk mee board.
- * - `recipients.gender`: "Voor hem / Voor haar" remembered on a saved person,
- *   like the age. Nullable, and a CHECK rather than a native enum (CLAUDE.md).
+ * - `recipients.gender` and `user_tastes.gender`: man or woman, a profile
+ *   question beside the age, on a saved person and on My taste. Nullable, and
+ *   a CHECK rather than a native enum (CLAUDE.md).
  *
  * The mapping is written out here, so the migration means the same thing
  * whatever the enum says later. Forward-only: down() does nothing.
@@ -116,6 +117,13 @@ return new class extends Migration
         });
 
         DB::statement("ALTER TABLE recipients ADD CONSTRAINT recipients_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female'))");
+
+        // Your own, on My taste.
+        Schema::table('user_tastes', function (Blueprint $table): void {
+            $table->string('gender', 6)->nullable();
+        });
+
+        DB::statement("ALTER TABLE user_tastes ADD CONSTRAINT user_tastes_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female'))");
     }
 
     public function down(): void

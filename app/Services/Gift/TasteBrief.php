@@ -77,6 +77,7 @@ final readonly class TasteBrief
             'preferences' => (array) $recipient->preferences,
             'avoid' => (array) $recipient->avoid,
             'age_band' => $recipient->age_band,
+            'gender' => $recipient->gender,
         ];
 
         /*
@@ -100,7 +101,7 @@ final readonly class TasteBrief
             budgetMax: $recipient->budget_max,
             avoid: array_values(array_filter($taste['avoid'])),
             relationship: $recipient->relationship,
-            gender: $recipient->gender,
+            gender: $taste['gender'] ?? null,
             occasion: $recipient->occasion,
             ageBand: $taste['age_band'],
             limit: $limit,

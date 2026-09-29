@@ -26,7 +26,7 @@ class UserTaste extends Model
 
     public $incrementing = false;
 
-    protected $fillable = ['user_id', 'interests', 'vibe', 'preferences', 'values', 'avoid', 'age_band'];
+    protected $fillable = ['user_id', 'interests', 'vibe', 'preferences', 'values', 'avoid', 'age_band', 'gender'];
 
     protected function casts(): array
     {
@@ -50,6 +50,7 @@ class UserTaste extends Model
         return (array) $this->interests === []
             && (array) $this->preferences === []
             && (array) $this->avoid === []
-            && $this->age_band === null;
+            && $this->age_band === null
+            && $this->gender === null;
     }
 }

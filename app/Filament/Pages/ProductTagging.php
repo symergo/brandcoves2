@@ -108,7 +108,7 @@ class ProductTagging extends Page
             '',
             ...$lines,
             '',
-            'Judge every product by the skill\'s brief (interests, recipients, occasions, preference, or not a gift),',
+            'Judge every product by the skill\'s brief (interests, recipients, occasions, gender only where a product is genuinely for one, preference, or not a gift),',
             'post each batch with POST /products/tags, and finish by reporting per market how many were tagged,',
             'how many judged not a gift, and any value you wished the vocabulary had.',
         ]);

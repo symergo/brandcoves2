@@ -325,24 +325,24 @@ return [
             'body' => 'Guarda en el menú de tu cuenta lo que te gusta recibir, o juega a Esto o aquello para ti y guarda el resultado. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí. Sin presupuesto: lo que gastan lo eligen ellos.',
         ],
     ],
-    'gift-for-him-or-her' => [
+    'man-or-woman' => [
         'status' => 'done',
         'sort' => 97,
         'nl' => [
-            'title' => 'Voor hem of voor haar',
-            'body' => 'In Cadeau vinden zeg je, als je wilt, of het voor hem of voor haar is. Cadeaus die duidelijk voor de ander bedoeld zijn, vallen dan weg; al de rest blijft.',
+            'title' => 'Man of vrouw',
+            'body' => 'Naast de leeftijd zeg je, als je wilt, of het een man of een vrouw is: in Cadeau vinden, bij iemand uit Mijn mensen en in Mijn smaak. Cadeaus die duidelijk voor de ander bedoeld zijn, vallen dan weg; al de rest blijft.',
         ],
         'en' => [
-            'title' => 'For him or for her',
-            'body' => 'In Find a gift you can say, if you like, whether it is for him or for her. Gifts clearly meant for the other then drop out; everything else stays.',
+            'title' => 'Man or woman',
+            'body' => 'Beside the age you can say, if you like, whether they are a man or a woman: in Find a gift, for one of your people and in My taste. Gifts clearly meant for the other then drop out; everything else stays.',
         ],
         'fr' => [
-            'title' => 'Pour lui ou pour elle',
-            'body' => "Dans Trouver un cadeau, vous pouvez dire, si vous le souhaitez, si c'est pour lui ou pour elle. Les cadeaux clairement destinés à l'autre disparaissent alors ; tout le reste reste.",
+            'title' => 'Homme ou femme',
+            'body' => "À côté de l'âge, vous pouvez dire, si vous le souhaitez, s'il s'agit d'un homme ou d'une femme : dans Trouver un cadeau, pour l'un de vos proches et dans Mes goûts. Les cadeaux clairement destinés à l'autre disparaissent alors ; tout le reste reste.",
         ],
         'es' => [
-            'title' => 'Para él o para ella',
-            'body' => 'En Buscar un regalo puedes decir, si quieres, si es para él o para ella. Los regalos claramente pensados para el otro desaparecen; todo lo demás se queda.',
+            'title' => 'Hombre o mujer',
+            'body' => 'Junto a la edad puedes decir, si quieres, si es hombre o mujer: en Buscar un regalo, para una de tus personas y en Mis gustos. Los regalos claramente pensados para el otro desaparecen; todo lo demás se queda.',
         ],
     ],
     'find-a-gift-for-myself' => [

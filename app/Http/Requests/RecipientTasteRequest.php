@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Gender;
 use App\Enums\Interest;
 use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * The fields that describe a person, validated in one place.
@@ -23,7 +25,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class RecipientTasteRequest extends FormRequest
 {
     /** Owned by the giver. The recipient must never see or write these. */
-    private const CONTEXT = ['name', 'relationship', 'occasion', 'age_band', 'birthday', 'notes'];
+    private const CONTEXT = ['name', 'relationship', 'occasion', 'age_band', 'gender', 'birthday', 'notes'];
 
     /**
      * Owned by the person being described. The vibe and the values went on
@@ -48,6 +50,8 @@ class RecipientTasteRequest extends FormRequest
             'relationship' => ['nullable', 'string', 'max:40'],
             'occasion' => ['nullable', 'string', 'max:40'],
             'age_band' => ['nullable', 'string', 'max:20'],
+            // Man or woman, a fact the giver knows, like the age (Gender, 2026-09-29).
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'birthday' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
 

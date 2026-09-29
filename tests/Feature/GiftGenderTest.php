@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
+use App\Models\UserTaste;
 use App\Services\Ai\AiClient;
 use App\Services\Gift\DeckSeed;
 use App\Services\Gift\SuggestionEngine;
@@ -83,6 +84,41 @@ class GiftGenderTest extends TestCase
         $this->actingAs($user)
             ->get('/be-nl/gift')
             ->assertInertia(fn ($page) => $page->where('recipients.0.gender', 'male'));
+    }
+
+    #[Test]
+    public function the_person_page_keeps_it_like_the_age(): void
+    {
+        $user = User::factory()->create();
+        $sam = Recipient::factory()->create(['owner_user_id' => $user->id, 'name' => 'Sam', 'relationship' => 'friend']);
+
+        $this->actingAs($user)
+            ->patch("/be-nl/recipients/{$sam->id}", ['age_band' => '30-49', 'gender' => 'female'])
+            ->assertRedirect();
+
+        $this->assertSame('female', $sam->fresh()->gender);
+
+        $this->actingAs($user)
+            ->get("/be-nl/people/{$sam->id}")
+            ->assertInertia(fn ($page) => $page->where('profile.about.gender', 'female'));
+
+        $this->actingAs($user)
+            ->patch("/be-nl/recipients/{$sam->id}", ['gender' => 'other'])
+            ->assertSessionHasErrors('gender');
+    }
+
+    #[Test]
+    public function my_taste_keeps_your_own_and_voor_mezelf_uses_it(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->put('/be-nl/my-taste', ['interests' => ['beauty'], 'gender' => 'male'])->assertRedirect();
+
+        $this->assertSame('male', UserTaste::query()->findOrFail($user->id)->gender);
+
+        $this->actingAs($user)
+            ->get('/be-nl/gift')
+            ->assertInertia(fn ($page) => $page->where('myTaste.gender', 'male'));
     }
 
     #[Test]

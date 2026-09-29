@@ -104,6 +104,7 @@ interface Props extends GiftResultsExtras {
         preferences: string[]
         avoid: string[]
         ageBand: string | null
+        gender?: string | null
     } | null
     /**
      * Everybody you buy for, as My people lists them: saved people and
@@ -460,9 +461,9 @@ export default function GiftWizard(props: Props) {
     // a product with the same strings, so the two meet as one value.
     const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
     /*
-     * "Voor hem / Voor haar" (owner, 2026-09-29): asked on its own rather than
-     * folded into the relation, and optional. It only ever leaves out a product
-     * tagged for the other one; most carry no gender and stay in.
+     * Man or woman (owner, 2026-09-29): a profile question beside the age,
+     * optional, never folded into the relation. It only ever leaves out a
+     * product tagged for the other one; most carry no gender and stay in.
      */
     const [gender, setGender] = useState<string | null>(brief?.gender ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
@@ -519,7 +520,7 @@ export default function GiftWizard(props: Props) {
         avoid,
         relationship,
         age_band: ageBand,
-        gender: forMe ? null : gender,
+        gender,
         recipient_id: recipientId,
         for_me: forMe,
     })
@@ -654,6 +655,7 @@ export default function GiftWizard(props: Props) {
             setPreferences(myTaste.preferences)
             setAvoid(myTaste.avoid)
             setAgeBand(myTaste.ageBand)
+            setGender(myTaste.gender ?? null)
         }
     }
 
@@ -742,35 +744,12 @@ export default function GiftWizard(props: Props) {
 
     const showResults = picks !== null && !editing
 
-    /*
-      Him or her, when the relation does not already say so: not for yourself,
-      and not for mama or papa (RecipientType::impliedGender).
-    */
-    const asksGender = !forMe && kind !== 'mother' && kind !== 'father'
-
     /** "For Mum · change", above the ways and the questions. */
     const forLine = !card && (
         <p className="flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">
                 {whoLabel ? t('gift.for_label', { who: whoLabel }) : t('gift.for_someone')}
             </span>
-            {asksGender && (
-                <span role="group" aria-label={t('gift.gender_label')} className="inline-flex gap-1">
-                    {(['male', 'female'] as const).map((value) => (
-                        <button
-                            key={value}
-                            type="button"
-                            aria-pressed={gender === value}
-                            onClick={() => setGender(gender === value ? null : value)}
-                            className={`rounded-full border px-3 py-1 ${
-                                gender === value ? 'border-accent bg-accent text-white' : 'border-line hover:border-ink'
-                            }`}
-                        >
-                            {t(`gift.genders.${value}`)}
-                        </button>
-                    ))}
-                </span>
-            )}
             <button
                 type="button"
                 className="text-accent underline"
@@ -1173,18 +1152,43 @@ export default function GiftWizard(props: Props) {
                         )}
 
                         {STEPS[step] === 'age' && (
-                            <div className="flex flex-wrap gap-2">
-                                {options.ages.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        aria-pressed={ageBand === option.value}
-                                        className={chip(ageBand === option.value)}
-                                        onClick={() => setAgeBand(ageBand === option.value ? null : option.value)}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
+                            <div className="space-y-5">
+                                <div className="flex flex-wrap gap-2">
+                                    {options.ages.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            aria-pressed={ageBand === option.value}
+                                            className={chip(ageBand === option.value)}
+                                            onClick={() => setAgeBand(ageBand === option.value ? null : option.value)}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/*
+                                  Man or woman, a profile question like the age
+                                  (owner, 2026-09-29), optional. Not asked for
+                                  mama or papa: the relation says it.
+                                */}
+                                {kind !== 'mother' && kind !== 'father' && (
+                                    <div>
+                                        <p className="mb-3 text-sm text-ink-soft">{t(own('gift.gender_label'))}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(['male', 'female'] as const).map((value) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    aria-pressed={gender === value}
+                                                    className={chip(gender === value)}
+                                                    onClick={() => setGender(gender === value ? null : value)}
+                                                >
+                                                    {t(`gift.genders.${value}`)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
