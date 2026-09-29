@@ -163,6 +163,9 @@ interests found, no person, like `gift.suggest`.
   answer. The budget is never written from there; it is the giver's. Nothing of the giver's is sent
   to that page (no people, no notes).
 
+A result for yourself, signed in, offers **Keep in My taste** first (2026-09-29, [my-taste.md](my-taste.md)),
+above the gift profile card.
+
 ## Interaction
 
 **The rounds play in a popup** since 2026-09-29 (owner: "same layout for Dit of dat" as Swipe

@@ -18,6 +18,7 @@ use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
+use App\Services\Gift\OwnTaste;
 use App\Services\Gift\PastGift;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
@@ -105,7 +106,27 @@ class GiftController extends Controller
             'recipientList' => null,
             'personas' => $this->personaShelf($current),
             'tasteUrl' => $current->url('gift/taste'),
+            /*
+             * "Voor mezelf" starts from your own "Mijn smaak" when you keep
+             * one (2026-09-29), as choosing a saved person starts from theirs.
+             */
+            'myTaste' => $this->myTaste($request),
         ]);
+    }
+
+    /** @return array{interests: list<string>, vibe: string|null, preferences: list<string>, values: list<string>, avoid: list<string>, ageBand: string|null}|null */
+    private function myTaste(Request $request): ?array
+    {
+        $taste = $request->user() === null ? null : app(OwnTaste::class)->of($request->user());
+
+        return $taste === null ? null : [
+            'interests' => array_values((array) $taste->interests),
+            'vibe' => $taste->vibe,
+            'preferences' => array_values((array) $taste->preferences),
+            'values' => array_values((array) $taste->values),
+            'avoid' => array_values((array) $taste->avoid),
+            'ageBand' => $taste->age_band,
+        ];
     }
 
     /**
@@ -651,14 +672,11 @@ class GiftController extends Controller
                 // "mama" as `mother`, so the persona Coves for her can come
                 // first without asking who she is again.
                 'relationshipType' => $results->relationshipType($r->relationship, $current->get())?->value,
-                'interests' => (array) $r->interests,
-                'vibe' => $r->vibe,
-                'preferences' => (array) $r->preferences,
+                // Their own "Mijn smaak" over what you noted, when they are a
+                // friend who keeps one (OwnTaste); the budget stays yours.
+                ...$this->tasteOf($r),
                 'budgetMin' => $r->budget_min,
                 'budgetMax' => $r->budget_max,
-                'avoid' => (array) $r->avoid,
-                'values' => (array) $r->values,
-                'ageBand' => $r->age_band,
                 /*
                  * "Vraag het {naam} zelf" (owner, 2026-09-27): their own link,
                  * where they play This or that, suggest products and say
@@ -669,6 +687,40 @@ class GiftController extends Controller
                 'personUrl' => $current->url("people/{$r->id}"),
             ])
             ->all();
+    }
+
+    /**
+     * A saved person's taste as the wizard's card carries it.
+     *
+     * @return array{interests: list<string>, vibe: string|null, preferences: list<string>, avoid: list<string>, values: list<string>, ageBand: string|null, ownTaste: bool}
+     */
+    private function tasteOf(Recipient $r): array
+    {
+        $taste = [
+            'interests' => (array) $r->interests,
+            'vibe' => $r->vibe,
+            'preferences' => (array) $r->preferences,
+            'values' => (array) $r->values,
+            'avoid' => (array) $r->avoid,
+            'age_band' => $r->age_band,
+        ];
+
+        $own = app(OwnTaste::class)->sharedWith($r);
+
+        if ($own !== null) {
+            $taste = OwnTaste::overlay($taste, $own);
+        }
+
+        return [
+            'interests' => array_values($taste['interests']),
+            'vibe' => $taste['vibe'],
+            'preferences' => array_values($taste['preferences']),
+            'avoid' => array_values($taste['avoid']),
+            'values' => array_values($taste['values']),
+            'ageBand' => $taste['age_band'],
+            // So the page can say the taste is their own word.
+            'ownTaste' => $own !== null,
+        ];
     }
 
     private function seo(CurrentMarket $current): void

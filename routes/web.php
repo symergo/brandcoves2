@@ -49,6 +49,7 @@ use App\Http\Controllers\ListPublishController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MyTasteController;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
@@ -550,6 +551,13 @@ Route::prefix('{market}')->group(function () {
 
         // What your friends see of you. Not a permission — see the controller.
         Route::patch('/friends/settings', [FriendController::class, 'settings'])->name('friends.settings');
+
+        // "Mijn smaak": your own gift taste, which friends' searches start from (docs/features/my-taste.md).
+        Route::get('/my-taste', [MyTasteController::class, 'show'])->name('my-taste');
+        Route::put('/my-taste', [MyTasteController::class, 'update'])->name('my-taste.update');
+        Route::post('/my-taste/learn', [MyTasteController::class, 'learn'])
+            ->middleware('throttle:20,1')
+            ->name('my-taste.learn');
 
         // The birthday you wrote down about somebody, on your side only.
         Route::patch('/friends/{friend}', [FriendController::class, 'note'])

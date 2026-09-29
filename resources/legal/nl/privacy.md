@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
-updated: 2026-09-27
+updated: 2026-09-29
 ---
 
 ## Kort samengevat
@@ -49,6 +49,7 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
 | Duim omhoog en omlaag bij cadeau-ideeën. Voor een van je personen: het product en de duim, bewaard bij die persoon. Voor iedereen: het product, de duim, voor wie het was ("een moeder"), en een eenrichtingscode in plaats van wie je bent | Betere ideeën voor die persoon, en voor wie zoekt voor iemand zoals die persoon | Overeenkomst (art. 6(1)(b)) voor je personen; gerechtvaardigd belang (art. 6(1)(f)) voor de aantallen: het onze en dat van andere zoekers in betere ideeën |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
+| Mijn smaak, als je die invult: je interesses, hoe het mag voelen, waar je waarde aan hecht, wat je liever niet hebt, en een leeftijdsgroep. Nooit een budget | Je vrienden die een cadeau voor je zoeken, en je eigen zoektocht voor jezelf, beginnen ermee | Toestemming (art. 6(1)(a)), ingetrokken door ze te wissen |
 | Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Wil je geen uitnodigingen meer ontvangen?" is het bezwaar |
 | Verzoeken om geen uitnodigingen meer en meldingen "Meld als spam", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
 
@@ -97,6 +98,12 @@ dit" en het op een lijst zetten die ze voor jou maken. Jij ziet nooit wat ze
 aanduidden. Verlanglijsten die je vanaf 26 september 2026 maakt staan aan, lijsten van
 daarvoor staan uit; je zet het per lijst om, onder Delen. Verwijder je iemand als
 vriend, of zet je het uit, dan ziet die de lijst meteen niet meer.
+
+Sinds 29 september 2026 kun je je eigen smaak bewaren onder Mijn smaak. Zoekt een
+vriend op GiftCoves een cadeau voor je, dan begint die zoektocht ermee: de
+interesses en de rest staan al ingevuld, en de ideeën volgen. Alleen vrienden, en
+alleen zolang jullie vrienden zijn; wat ze uitgeven kiezen ze zelf, want Mijn smaak
+bevat geen budget. Wis je het, dan verdwijnt het meteen uit hun zoektochten.
 
 Sinds 26 september 2026 gaat een vraag die je stelt bij Vraag het aan anderen ook
 naar je vrienden op GiftCoves zodra ze op het openbare bord staat, nooit eerder:
@@ -244,7 +251,8 @@ Staten verwerkt, onder de waarborgen hierboven.
   Googles meting of een van onze advertenties tot een bezoek leidde, die dat
   bezoek telt en er geen publiek uit opbouwt.
 - **Geen profielopbouw.** We bouwen geen interesseprofiel uit je surfgedrag en
-  verkopen er ook geen.
+  verkopen er ook geen. Mijn smaak schrijf je zelf, of bewaar je zelf uit een
+  Dit of dat die je speelde; wij vullen het nooit in.
 - **Geen gegevens verkopen.** Niet aan winkels, niet aan netwerken, aan niemand.
 
 ## Hoe lang we het bewaren
@@ -266,6 +274,7 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Een functie die je voorstelde en die we niet op de pagina zetten | 365 dagen na die beslissing |
 | Keuzes via een Dit of dat samen-link | 180 dagen, daarna ook de link zodra er geen keuzes meer op staan |
 | Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
+| Mijn smaak | Tot je ze wist of je account verwijdert |
 | Een uitnodiging die nog niemand aannam (het uitgenodigde adres) | Tot die persoon inlogt, of 365 dagen nadat het lid hen voor het laatst uitnodigde |
 | De knop "Uitnodiging aannemen" (het uitgenodigde adres en een eenrichtingscode) | Tot hij gebruikt is, hoogstens 14 dagen |
 | Overzicht van de uitnodigingen die een lid stuurde (een eenrichtingscode, niet het adres) | 90 dagen |

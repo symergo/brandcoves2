@@ -99,6 +99,15 @@ interface Props extends GiftResultsExtras {
     card?: GiftProfileCardProps | null
     /** This or that, the second way in. */
     tasteUrl?: string
+    /** Your own "Mijn smaak", for "Voor mezelf"; null when you keep none or are not signed in. */
+    myTaste?: {
+        interests: string[]
+        vibe: string | null
+        preferences: string[]
+        values: string[]
+        avoid: string[]
+        ageBand: string | null
+    } | null
     /**
      * Everybody you buy for, as My people lists them: saved people and
      * friends, one row each, drawn by `PersonPicker`. Signed-in only.
@@ -427,7 +436,7 @@ function AskThemCard({ recipient, peopleUrl }: { recipient: Recipient | null; pe
  * straight on the results. See docs/features/find-a-gift.md.
  */
 export default function GiftWizard(props: Props) {
-    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl, people = [] } = props
+    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl, people = [], myTaste = null } = props
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -638,10 +647,23 @@ export default function GiftWizard(props: Props) {
         setStage('ways')
     }
 
-    /** "Voor mezelf": nobody else, so a saved person and a relationship picked before both go. */
+    /**
+     * "Voor mezelf": nobody else, so a saved person and a relationship picked
+     * before both go. Your own "Mijn smaak", when you keep one, fills the
+     * answers, as choosing a saved person fills theirs; never a budget.
+     */
     const useMe = () => {
         useKind(null)
         setForMe(true)
+
+        if (myTaste) {
+            setInterests(myTaste.interests)
+            setVibe(myTaste.vibe)
+            setPreferences(myTaste.preferences)
+            setValues(myTaste.values)
+            setAvoid(myTaste.avoid)
+            setAgeBand(myTaste.ageBand)
+        }
     }
 
     /** A question's key, in its "you" form when the gift is for yourself. */
@@ -1139,7 +1161,7 @@ export default function GiftWizard(props: Props) {
                                 {!card && (
                                     <Link href={tasteHref} className="mt-5 inline-flex items-center gap-2 text-sm text-accent underline">
                                         <ToolIcon name="taste" className="h-4 w-4" />
-                                        {t('gift.taste.from_finder')}
+                                        {t(own('gift.taste.from_finder'))}
                                     </Link>
                                 )}
                             </div>

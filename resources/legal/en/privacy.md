@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
-updated: 2026-09-27
+updated: 2026-09-29
 ---
 
 ## The short version
@@ -48,6 +48,7 @@ you have the right to object, and section *Your rights* explains how.
 | This or that together: the choices people make through a link you sent about one of your people (which products, which was picked), with no name and a one-way code instead of an identity | Showing you what they found together | Contract (Art. 6(1)(b)) |
 | Thumbs up and down on gift ideas. For one of your people: the product and the thumb, kept with that person. For everybody: the product, the thumb, the kind of person it was for ("a mother"), and a one-way code instead of who you are | Better ideas for that person, and for people shopping for someone like them | Contract (Art. 6(1)(b)) for your people; legitimate interests (Art. 6(1)(f)) for the counts: ours and other shoppers' in better ideas |
 | A gift profile card you make: the interests and budget it shows, and a name only if you typed one | Showing the card to whoever opens its link | Consent (Art. 6(1)(a)), withdrawn by removing the card |
+| My taste, if you fill it in: your interests, the feel you like, what matters to you, what to avoid, and an age group. Never a budget | Your friends' gift searches for you, and your own searches for yourself, starting from it | Consent (Art. 6(1)(a)), withdrawn by clearing it |
 | An email address a member gives us to invite somebody, and one email to it | Delivering the invitation, and connecting the two of you when that person signs in | Legitimate interests (Art. 6(1)(f)): yours in reaching people you know, and theirs in hearing about it; the "Don't want to receive invitations any more?" link is the objection |
 | "No more invitations" requests and "Report as spam" reports, as a one-way code made from the address, never the address | Never emailing that address an invitation again, and stopping members whose invitations people call spam | Legitimate interests (Art. 6(1)(f)) |
 
@@ -91,6 +92,12 @@ item. They can mark something "I'll get this" and put it on a list they make for
 you. You never see what they marked. Wish lists you make from 26 September 2026 have it on, and lists
 from before that have it off; you change it per list, under Share. Removing
 somebody as a friend, or switching it off, takes the list away from them at once.
+
+Since 29 September 2026 you can keep your own taste under My taste. When a friend
+on GiftCoves looks for a gift for you, their search starts from it: they see the
+interests and the rest filled in, and the ideas follow them. Only friends, and only
+while you are friends; what they spend stays their choice, because My taste holds no
+budget. Clearing it takes it away from their searches at once.
 
 Since 26 September 2026, a question you ask in Ask others is also sent to your
 friends on GiftCoves once it is on the public board, never before: a notification
@@ -235,7 +242,8 @@ safeguards above.
   measurement of whether one of our advertisements led to a visit, which counts
   the visit and builds no audience from it.
 - **No profile building.** We do not construct an interest profile from your
-  browsing and we do not sell one.
+  browsing and we do not sell one. My taste is written by you, or kept by you
+  from a This or that you played, never filled in by us.
 - **No selling data.** Not to shops, not to networks, not to anyone.
 
 ## How long we keep it
@@ -257,6 +265,7 @@ safeguards above.
 | A feature you suggested that we did not put on the page | 365 days after that decision |
 | Choices made through a This or that together link | 180 days, then the link too once nobody's choices are left on it |
 | Gift profile card | Until you remove it, or 365 days after anyone last opened it |
+| My taste | Until you clear it or delete your account |
 | An invitation nobody has accepted yet (the invited address) | Until that person signs in, or 365 days after the member last invited them |
 | The "Accept the invitation" button (the invited address and a one-way code) | Until it is used, at most 14 days |
 | Record of the invitations a member sent (a one-way code, not the address) | 90 days |

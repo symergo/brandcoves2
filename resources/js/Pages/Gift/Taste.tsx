@@ -74,7 +74,7 @@ interface Props {
     mode: 'giver' | 'self' | 'together'
     person: { name: string } | null
     /** `card` makes a gift profile card; empty where there is none to make. */
-    urls: { next: string; result: string; save: string; restart: string; finder: string; card?: string }
+    urls: { next: string; result: string; save: string; restart: string; finder: string; card?: string; mine?: string | null }
     total: number
     rounds: Round[]
     result: Result | null
@@ -597,6 +597,11 @@ function Outcome({ mode, person, urls, result, recipients, people = [], canCreat
                       about yourself, only on request, and only when there is
                       something to put on it.
                     */}
+                    {/* "Mijn smaak": first, because it is the one friends' searches read. */}
+                    {me && mode === 'giver' && !learnedNothing && urls.mine && (
+                        <KeepAsMine url={urls.mine} choices={result.choices} />
+                    )}
+
                     {me && mode !== 'together' && !learnedNothing && urls.card && (
                         <MakeCard url={urls.card} choices={result.choices} />
                     )}
@@ -817,6 +822,53 @@ function SelfSave({ urls, choices, name }: { urls: Props['urls']; choices: Choic
  * card itself. The choices go to the server, never the profile: the card is
  * worked out there, as a saved result is.
  */
+/**
+ * Keep a result for yourself as "Mijn smaak" (docs/features/my-taste.md): the
+ * choices go up and the taste is worked out on the server, merged into what
+ * you already said there.
+ */
+function KeepAsMine({ url, choices }: { url: string; choices: Choice[] }) {
+    const { t } = useTranslations()
+    const [busy, setBusy] = useState(false)
+    const [failed, setFailed] = useState(false)
+    const [kept, setKept] = useState<string | null>(null)
+
+    const keep = () => {
+        setBusy(true)
+        setFailed(false)
+        send<{ url: string }>(url, 'POST', { choices })
+            .then((r) => setKept(r.url))
+            .catch(() => setFailed(true))
+            .finally(() => setBusy(false))
+    }
+
+    return (
+        <div className="mt-5 rounded-card border border-line bg-card p-5">
+            <h3 className="font-medium">{t('my_taste.keep_title')}</h3>
+            {kept ? (
+                <p className="mt-1 text-sm text-ink-soft">
+                    {t('my_taste.kept')}{' '}
+                    <Link href={kept} className="text-accent underline">
+                        {t('my_taste.view')}
+                    </Link>
+                </p>
+            ) : (
+                <>
+                    <p className="mt-1 text-sm text-ink-soft">{t('my_taste.keep_hint')}</p>
+                    <Button className="mt-4" busy={busy} onClick={keep}>
+                        {t('my_taste.keep')}
+                    </Button>
+                </>
+            )}
+            {failed && (
+                <p role="alert" className="mt-3 text-sm text-danger">
+                    {t('my_taste.keep_failed')}
+                </p>
+            )}
+        </div>
+    )
+}
+
 function MakeCard({ url, choices }: { url: string; choices: Choice[] }) {
     const { t } = useTranslations()
     const [name, setName] = useState('')

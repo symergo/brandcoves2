@@ -8,7 +8,8 @@ export interface AccountLink {
 
 /**
  * Your own things, in the order both account menus show them (owner,
- * 2026-09-26): My Coves, My people, Saved Coves, Secret Friend.
+ * 2026-09-26): My Coves, My people, My taste (2026-09-29), Saved Coves,
+ * Secret Friend.
  *
  * My people (`/people`) is the people you give to and give with: friends and
  * the people you keep lists for, on one page. It took Friends' place in the
@@ -34,6 +35,8 @@ export function myCovesLinks(base: string, t: (key: string) => string, signedIn:
         ...(signedIn
             ? ([
                   { href: `${base}/people`, icon: 'people', label: t('nav.people') },
+                  // Your own gift taste, which friends' searches start from (MyTasteController).
+                  { href: `${base}/my-taste`, icon: 'taste', label: t('my_taste.title') },
                   { href: `${base}/lists?view=saved`, icon: 'wishlist', label: t('nav.saved_coves') },
                   { href: `${base}/santa`, icon: 'santa', label: t('nav.santa') },
               ] as AccountLink[])

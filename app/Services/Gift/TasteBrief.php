@@ -63,18 +63,40 @@ final readonly class TasteBrief
 
     public static function fromRecipient(Recipient $recipient, Market $market, int $limit = 4): self
     {
+        $taste = [
+            'interests' => (array) $recipient->interests,
+            'vibe' => $recipient->vibe,
+            'preferences' => (array) $recipient->preferences,
+            'values' => (array) $recipient->values,
+            'avoid' => (array) $recipient->avoid,
+            'age_band' => $recipient->age_band,
+        ];
+
+        /*
+         * "Mijn smaak" (2026-09-29): when the person behind this saved person
+         * is a friend with a taste of their own, their word goes over the
+         * giver's (OwnTaste). Here, so every search for a saved person, the
+         * reminder email and the person's page included, reads it the same.
+         * The budget stays the giver's.
+         */
+        $own = app(OwnTaste::class)->sharedWith($recipient);
+
+        if ($own !== null) {
+            $taste = OwnTaste::overlay($taste, $own);
+        }
+
         return new self(
             market: $market,
-            interests: array_values(array_filter((array) $recipient->interests)),
-            vibe: $recipient->vibe === null ? null : Vibe::tryFrom($recipient->vibe),
-            preferences: array_values(array_filter((array) $recipient->preferences)),
+            interests: array_values(array_filter($taste['interests'])),
+            vibe: $taste['vibe'] === null ? null : Vibe::tryFrom($taste['vibe']),
+            preferences: array_values(array_filter($taste['preferences'])),
             budgetMin: $recipient->budget_min,
             budgetMax: $recipient->budget_max,
-            avoid: array_values(array_filter((array) $recipient->avoid)),
-            values: array_values(array_filter((array) $recipient->values)),
+            avoid: array_values(array_filter($taste['avoid'])),
+            values: array_values(array_filter($taste['values'])),
             relationship: $recipient->relationship,
             occasion: $recipient->occasion,
-            ageBand: $recipient->age_band,
+            ageBand: $taste['age_band'],
             limit: $limit,
         );
     }

@@ -305,6 +305,26 @@ return [
             'body' => 'En Buscar un regalo, bajo el buscador: un producto cada vez. A la derecha va a la lista, a la izquierda lo pasas, todo el tiempo que quieras. Lo que eliges guía lo que viene. Parar te lleva a la lista.',
         ],
     ],
+    'my-taste' => [
+        'status' => 'done',
+        'sort' => 96,
+        'nl' => [
+            'title' => 'Mijn smaak',
+            'body' => 'Bewaar in je accountmenu wat je graag krijgt, of speel Dit of dat voor jezelf en bewaar het resultaat. Vrienden op GiftCoves die een cadeau voor je zoeken, beginnen ermee. Geen budget: wat zij uitgeven, kiezen ze zelf.',
+        ],
+        'en' => [
+            'title' => 'My taste',
+            'body' => 'Keep what you like to get in your account menu, or play This or that for yourself and keep the result. Friends on GiftCoves who look for a gift for you start from it. No budget: what they spend is their choice.',
+        ],
+        'fr' => [
+            'title' => 'Mes goûts',
+            'body' => "Gardez dans le menu de votre compte ce que vous aimez recevoir, ou jouez à Ceci ou cela pour vous et gardez le résultat. Vos amis sur GiftCoves qui cherchent un cadeau pour vous partent de là. Pas de budget : ce qu'ils dépensent, ils le choisissent.",
+        ],
+        'es' => [
+            'title' => 'Mis gustos',
+            'body' => 'Guarda en el menú de tu cuenta lo que te gusta recibir, o juega a Esto o aquello para ti y guarda el resultado. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí. Sin presupuesto: lo que gastan lo eligen ellos.',
+        ],
+    ],
     'find-a-gift-for-myself' => [
         'status' => 'done',
         'sort' => 90,

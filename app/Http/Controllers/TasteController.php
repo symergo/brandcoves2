@@ -475,6 +475,9 @@ class TasteController extends Controller
                 'finder' => $current->url('gift'),
                 // "My gift profile", offered after choosing for yourself.
                 'card' => $current->url('gift/card'),
+                // "Mijn smaak" (2026-09-29): a result for yourself kept on your
+                // account. Signed in only; the route sits behind `auth`.
+                'mine' => $owner->isSignedIn() ? $current->url('my-taste/learn') : null,
             ],
             'total' => TasteDeck::ROUNDS,
             'recipients' => $owner->scope(Recipient::query())

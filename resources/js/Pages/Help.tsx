@@ -81,6 +81,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'taste', text: t('help.find_taste') },
                         { icon: 'taste', text: t('help.find_taste_together') },
                         { icon: 'taste', text: t('help.find_taste_card') },
+                        { icon: 'taste', text: t('help.find_my_taste') },
                         { icon: 'build', text: t('help.find_offline_ideas') },
                         { icon: 'giftlist', text: t('help.find_pages') },
                         { icon: 'giftlist', text: t('help.find_personas') },
