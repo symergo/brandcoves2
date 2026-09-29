@@ -8,7 +8,6 @@ use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
-use App\Models\RecipientGift;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -16,17 +15,20 @@ use App\Services\Ai\AiClient;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\PastGift;
 use App\Services\Identity\GroupMerger;
+use DateTimeInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Gift history per person (docs/features/gift-history.md): what a giver noted
- * and their own claims, never anybody else's; never suggested again in the
- * Find a gift or This or that; and the next step after it.
+ * Gift history per person (docs/features/gift-history.md): the giver's own
+ * claims, never anybody else's; never suggested again in Find a gift or This
+ * or that; and the next step after it. "Wat je gaf" (gifts noted by hand or
+ * with "I gave this") was removed on 2026-09-29.
  */
 class GiftHistoryTest extends TestCase
 {
@@ -81,8 +83,22 @@ class GiftHistoryTest extends TestCase
 
     // ── What the history holds ─────────────────────────────────────────────
 
+    /**
+     * Mum was given this product: the giver's own claim ("Ik koop dit") on
+     * the giver's list about her. Since "Wat je gaf" went (2026-09-29) a
+     * claim is the only way a past gift is recorded.
+     */
+    private function gave(ProductGroup $group, ?DateTimeInterface $when = null): WishlistItem
+    {
+        return WishlistItem::factory()->of($group)->create([
+            'wishlist_id' => $this->listFor($this->mum)->id,
+            'claimed_by_hash' => $this->claimedBy($this->giver),
+            'claimed_at' => $when ?? now(),
+        ]);
+    }
+
     #[Test]
-    public function it_holds_what_was_noted_and_the_givers_own_claims_and_nobody_elses(): void
+    public function it_holds_the_givers_own_claims_and_nobody_elses(): void
     {
         $sister = User::factory()->create();
 
@@ -105,8 +121,6 @@ class GiftHistoryTest extends TestCase
         ]);
         $herWish = WishlistItem::factory()->create(['wishlist_id' => $wishList->id, 'claimed_by_hash' => $this->claimedBy($sister), 'claimed_at' => now()]);
 
-        $this->mum->gifts()->create(['title' => 'A cookbook', 'given_year' => 2024]);
-
         $history = app(GiftHistory::class)->for($this->mum->fresh());
         $groups = array_map(fn (PastGift $g) => $g->groupId, $history);
 
@@ -114,7 +128,7 @@ class GiftHistoryTest extends TestCase
         $this->assertContains($fromWish->group_id, $groups, 'Buying off her own wish list is a gift to her.');
         $this->assertNotContains($hers->group_id, $groups, 'Somebody else\'s claim is never read (invariant 4).');
         $this->assertNotContains($herWish->group_id, $groups);
-        $this->assertContains('A cookbook', array_map(fn (PastGift $g) => $g->title, $history));
+        $this->assertCount(2, $history);
 
         $sources = collect($history)->keyBy('groupId');
         $this->assertSame(PastGift::CLAIMED, $sources[$mine->group_id]->source);
@@ -122,13 +136,12 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
-    public function the_page_shows_only_the_givers_own_claims_and_says_nothing_about_other_items(): void
+    public function the_page_no_longer_lists_what_was_given_nor_offers_to_note_it(): void
     {
-        $sister = User::factory()->create();
-        $list = $this->listFor($this->mum);
-        $mine = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'claimed_by_hash' => $this->claimedBy($this->giver), 'claimed_at' => now()]);
-        $hers = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'claimed_by_hash' => $this->claimedBy($sister), 'claimed_at' => now()]);
-        $open = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        // "Wat je gaf" and "Op je lijsten voor ..." were removed on
+        // 2026-09-29. The claims behind them still count (the tests below);
+        // the page just stops listing them, and "I gave this" is gone.
+        $this->gave($this->cooking());
 
         $response = $this->actingAs($this->giver)->get("/be-nl/people/{$this->mum->id}")
             ->assertOk()
@@ -136,13 +149,12 @@ class GiftHistoryTest extends TestCase
 
         $props = $response->viewData('page')['props'];
 
-        $this->assertSame([$mine->group_id], array_column($props['history'], 'groupId'));
+        $this->assertArrayNotHasKey('history', $props);
+        $this->assertArrayNotHasKey('unmarked', $props);
+        $this->assertArrayNotHasKey('gifts', $props['urls']);
 
-        // The sister's claim and the open item look exactly alike.
-        $unmarked = collect($props['unmarked']);
-        $this->assertEqualsCanonicalizing([$hers->id, $open->id], $unmarked->pluck('id')->all());
-        $this->assertSame(['id', 'title', 'image'], array_keys($unmarked->first()));
-        $this->assertStringNotContainsString('claim', json_encode($props['unmarked']));
+        $this->assertFalse(Route::has('people.gifts.store'));
+        $this->assertFalse(Route::has('people.gifts.destroy'));
     }
 
     #[Test]
@@ -153,55 +165,24 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
-    public function i_gave_this_from_their_list_and_by_hand_and_it_can_be_removed(): void
+    public function a_noted_line_left_from_before_goes_once_its_year_is_ten_years_back(): void
     {
-        $list = $this->listFor($this->mum);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
-        $this->actingAs($this->giver)->post("/be-nl/people/{$this->mum->id}/gifts", ['item_id' => $item->id])->assertRedirect();
-        $this->actingAs($this->giver)->post("/be-nl/people/{$this->mum->id}/gifts", ['item_id' => $item->id])->assertRedirect();
-
-        $this->assertSame(1, RecipientGift::query()->where('wishlist_item_id', $item->id)->count(), 'Twice is one line.');
-        $this->assertSame($item->group_id, RecipientGift::query()->where('wishlist_item_id', $item->id)->value('group_id'));
-
-        $this->actingAs($this->giver)->post("/be-nl/people/{$this->mum->id}/gifts", ['title' => 'Moka pot', 'year' => 2025])->assertRedirect();
-        $noted = RecipientGift::query()->where('title', 'Moka pot')->firstOrFail();
-        $this->assertSame(2025, $noted->given_year);
-
-        $this->actingAs($this->giver)->delete("/be-nl/people/{$this->mum->id}/gifts/{$noted->id}")->assertRedirect();
-        $this->assertModelMissing($noted);
-    }
-
-    #[Test]
-    public function an_item_from_somebody_elses_list_cannot_be_marked(): void
-    {
-        $stranger = User::factory()->create();
-        $theirs = Wishlist::factory()->create(['owner_user_id' => $stranger->id]);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $theirs->id]);
-
-        $this->actingAs($this->giver)
-            ->post("/be-nl/people/{$this->mum->id}/gifts", ['item_id' => $item->id])
-            ->assertNotFound();
-
-        // Nor can somebody else write to Mum's history.
-        $this->actingAs($stranger)
-            ->post("/be-nl/people/{$this->mum->id}/gifts", ['title' => 'Socks'])
-            ->assertNotFound();
-
-        $this->assertSame(0, RecipientGift::query()->count());
-    }
-
-    #[Test]
-    public function a_line_goes_once_its_year_is_ten_years_back(): void
-    {
+        // Nothing writes `recipient_gifts` since 2026-09-29, but the rows
+        // noted before then are personal data until the table is dropped, so
+        // the privacy cleanup keeps pruning them.
         $year = (int) now()->year;
-        $old = $this->mum->gifts()->create(['title' => 'Old', 'given_year' => $year - 11]);
-        $kept = $this->mum->gifts()->create(['title' => 'Kept', 'given_year' => $year - 10]);
+        $line = fn (string $title, int $given) => DB::table('recipient_gifts')->insertGetId([
+            'recipient_id' => $this->mum->id,
+            'title' => $title,
+            'given_year' => $given,
+        ]);
+        $old = $line('Old', $year - 11);
+        $kept = $line('Kept', $year - 10);
 
         $this->artisan('bc:prune-personal-data')->assertSuccessful();
 
-        $this->assertModelMissing($old);
-        $this->assertModelExists($kept);
+        $this->assertDatabaseMissing('recipient_gifts', ['id' => $old]);
+        $this->assertDatabaseHas('recipient_gifts', ['id' => $kept]);
     }
 
     // ── Never the same thing again ─────────────────────────────────────────
@@ -218,7 +199,7 @@ class GiftHistoryTest extends TestCase
         $this->assertContains($given->id, $before);
         $this->assertContains($twin->id, $before);
 
-        $this->mum->gifts()->create(['title' => 'Braadpan', 'group_id' => $given->id, 'given_year' => 2025]);
+        $this->gave($given);
 
         // Later found to be the same product as the twin, which is kept. Set by
         // hand: a real merge also zeroes both products' offers here, since the
@@ -235,15 +216,15 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
-    public function a_merge_moves_the_history_to_the_product_that_is_kept(): void
+    public function after_a_merge_the_product_that_is_kept_stays_left_out(): void
     {
         $given = $this->cooking();
         $kept = $this->cooking();
-        $line = $this->mum->gifts()->create(['title' => 'Pan', 'group_id' => $given->id, 'given_year' => 2025]);
+        $this->gave($given);
 
         app(GroupMerger::class)->merge($given, $kept);
 
-        $this->assertSame($kept->id, $line->fresh()->group_id);
+        $this->assertContains($kept->id, app(GiftHistory::class)->excludedGroupIds($this->mum->fresh()));
     }
 
     #[Test]
@@ -251,7 +232,7 @@ class GiftHistoryTest extends TestCase
     {
         $given = $this->cooking();
         $fresh = $this->cooking();
-        $this->mum->gifts()->create(['title' => 'Given', 'group_id' => $given->id, 'given_year' => 2025]);
+        $this->gave($given);
 
         $response = $this->actingAs($this->giver)->get("/be-nl/gift?for={$this->mum->id}")
             ->assertOk()
@@ -284,7 +265,7 @@ class GiftHistoryTest extends TestCase
 
         $given = $this->cooking();
         $fresh = $this->cooking();
-        $this->mum->gifts()->create(['title' => 'Given', 'group_id' => $given->id, 'given_year' => 2025]);
+        $this->gave($given);
 
         $ideas = fn (array $extra) => array_column(
             $this->actingAs($this->giver)->post('/be-nl/gift/taste', ['choices' => $choices, 'for' => 'someone', ...$extra])
@@ -309,7 +290,7 @@ class GiftHistoryTest extends TestCase
             'brand' => 'Bialetti',
             'category' => 'Koffiezetters',
         ]);
-        $this->mum->gifts()->create(['title' => 'Moka pot', 'group_id' => $moka->id, 'given_year' => (int) now()->year - 1]);
+        $this->gave($moka, now()->subYear());
 
         $beans = ProductGroup::factory()->priced(1500)->create(['title' => 'Lavazza Koffiebonen 1 kg', 'brand' => 'Lavazza', 'category' => 'Koffie']);
         // Coffee beans are often not classed a gift on their own; after a moka pot they are one.
@@ -348,7 +329,7 @@ class GiftHistoryTest extends TestCase
     {
         $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
         $this->mum->update(['budget_max' => 2000]);
-        $this->mum->gifts()->create(['title' => 'Moka pot', 'group_id' => $moka->id, 'given_year' => (int) now()->year]);
+        $this->gave($moka);
 
         $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
         $dear = ProductGroup::factory()->priced(9000)->create(['title' => 'Elektrische grinder', 'brand' => 'Sage']);
@@ -367,7 +348,7 @@ class GiftHistoryTest extends TestCase
         // candidates again, and a new past gift, a new budget or an item now on
         // her list is a different key, so the row follows at once.
         $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
-        $this->mum->gifts()->create(['title' => 'Moka pot', 'group_id' => $moka->id, 'given_year' => (int) now()->year]);
+        $this->gave($moka);
         $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
         $dear = ProductGroup::factory()->priced(9000)->create(['title' => 'Elektrische grinder', 'brand' => 'Sage']);
 

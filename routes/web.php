@@ -654,21 +654,13 @@ Route::prefix('{market}')->group(function () {
             Route::post('/recipients/{recipient}/taste-together/apply', [TasteTogetherController::class, 'apply'])->name('recipients.together.apply');
         });
         /*
-         * A saved person's page: gift history, "I gave this", and the next
-         * step after what they were given. The owner's only; see
+         * A saved person's page: their profile, their lists, and the next
+         * step after what the owner claimed for them. The owner's only; see
          * PersonController and docs/features/gift-history.md.
          */
         Route::get('/people/{recipient}', [PersonController::class, 'show'])
             ->whereUuid('recipient')
             ->name('people.show');
-        Route::post('/people/{recipient}/gifts', [PersonController::class, 'store'])
-            ->whereUuid('recipient')
-            ->middleware('throttle:30,1')
-            ->name('people.gifts.store');
-        Route::delete('/people/{recipient}/gifts/{gift}', [PersonController::class, 'destroy'])
-            ->whereUuid('recipient')
-            ->whereNumber('gift')
-            ->name('people.gifts.destroy');
         // "Deel een lijst en laat anderen iets voorstellen", from Find a gift:
         // the list for this person, made if there is none, opened on Share.
         // A POST because it may create a list; a link must never do that.

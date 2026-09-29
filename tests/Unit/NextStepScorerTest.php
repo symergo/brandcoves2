@@ -35,7 +35,7 @@ class NextStepScorerTest extends TestCase
     private function moka(?int $year = 2025, ?int $groupId = 10): PastGift
     {
         return new PastGift(
-            source: PastGift::NOTED,
+            source: PastGift::SENT,
             title: 'Bialetti Moka Express 3 kops',
             groupId: $groupId,
             year: $year,
@@ -156,7 +156,7 @@ class NextStepScorerTest extends TestCase
     #[Test]
     public function recent_gifts_count_more_than_old_ones(): void
     {
-        $old = new PastGift(PastGift::NOTED, 'Cafetière 8 tassen', 11, 2018);
+        $old = new PastGift(PastGift::SENT, 'Cafetière 8 tassen', 11, 2018);
         $recent = $this->moka(2025);
 
         $steps = $this->rank([$recent, $old], [
@@ -187,7 +187,7 @@ class NextStepScorerTest extends TestCase
     #[Test]
     public function a_second_past_gift_gets_a_place_before_a_third_idea_for_the_first(): void
     {
-        $razor = new PastGift(PastGift::NOTED, 'Safety razor', null, 2020);
+        $razor = new PastGift(PastGift::SENT, 'Safety razor', null, 2020);
 
         $steps = $this->rank([$this->moka(), $razor], [
             new NextStepCandidate(1, 'Lavazza Koffiebonen 1 kg', null, 'Koffie', 1500),

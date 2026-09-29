@@ -7,7 +7,6 @@ namespace App\Services\Gift;
 use App\Enums\ListKind;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
-use App\Models\RecipientGift;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,12 +16,16 @@ use Illuminate\Support\Collection;
  * What one giver gave one of their saved people.
  *
  * Asked about a {@see Recipient}, which belongs to exactly one owner, so "the
- * giver" is always that owner and nobody else. Two sources:
+ * giver" is always that owner and nobody else. One source: **the owner's own
+ * claims** ("Ik koop dit", and the same marked as sent), read live from
+ * `wishlist_items` by the owner's own claim hash, on the lists that are about
+ * this person. They keep those products out of new ideas for the person
+ * ({@see excludedGroupIds()}) and are what "De volgende stap" follows on from.
  *
- * 1. **Written down** (`recipient_gifts`): typed on the person's page, or an
- *    item from a list about them marked "I gave this".
- * 2. **The owner's own claims**, read live from `wishlist_items` by the
- *    owner's own claim hash, on the lists that are about this person.
+ * Until 2026-09-29 there was a second source, gifts the owner wrote down on
+ * the person's page or marked "I gave this" (`recipient_gifts`, "Wat je gaf").
+ * The owner removed it; the table is no longer read and goes in a later
+ * release. See docs/features/gift-history.md.
  *
  * ## Only the giver's own claims, and only to the giver
  *
@@ -36,8 +39,7 @@ use Illuminate\Support\Collection;
  * Claims are read live rather than copied in. A claim that is handed back
  * leaves the history at once, which is right (they are not getting it after
  * all), and no second copy of claim state exists to go stale. The cost: a
- * claim on a list that is later deleted leaves the history with it. "I gave
- * this" on the person's page is how to keep it.
+ * claim on a list that is later deleted leaves the history with it.
  *
  * ## Which lists are about this person
  *
@@ -50,34 +52,15 @@ use Illuminate\Support\Collection;
 final class GiftHistory
 {
     /**
-     * Newest first. Noted gifts win over the live claim on the same list item,
-     * so an item claimed and then marked "I gave this" is one line.
+     * Newest first.
      *
      * @return list<PastGift>
      */
     public function for(Recipient $recipient): array
     {
-        $noted = $recipient->gifts()->with('group')->get();
-        $notedItems = $noted->pluck('wishlist_item_id')->filter()->map(fn ($id) => (int) $id)->all();
-
-        $gifts = $noted->map(fn (RecipientGift $gift) => new PastGift(
-            source: PastGift::NOTED,
-            title: $gift->group?->displayTitle() ?? $gift->title,
-            groupId: $gift->group_id,
-            year: $gift->given_year,
-            brand: $gift->group?->brand,
-            category: $gift->group?->category,
-            image: $gift->group?->image_url,
-            url: $gift->group?->path(),
-            recordId: $gift->id,
-            itemId: $gift->wishlist_item_id,
-        ))->all();
+        $gifts = [];
 
         foreach ($this->ownClaims($recipient) as $item) {
-            if (in_array((int) $item->id, $notedItems, true)) {
-                continue;
-            }
-
             $sent = $item->marked_sent_at !== null;
 
             $gifts[] = new PastGift(
@@ -93,8 +76,8 @@ final class GiftHistory
             );
         }
 
-        usort($gifts, fn (PastGift $a, PastGift $b) => [$b->year ?? 0, $b->recordId ?? 0, $b->itemId ?? 0]
-            <=> [$a->year ?? 0, $a->recordId ?? 0, $a->itemId ?? 0]);
+        usort($gifts, fn (PastGift $a, PastGift $b) => [$b->year ?? 0, $b->itemId ?? 0]
+            <=> [$a->year ?? 0, $a->itemId ?? 0]);
 
         return $gifts;
     }
@@ -127,65 +110,6 @@ final class GiftHistory
             ->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         return array_values(array_unique([...$ids, ...$winners, ...$losers]));
-    }
-
-    /**
-     * Items on the owner's own lists about this person that are not in the
-     * history yet: what "I gave this" is offered beside on the person's page.
-     *
-     * Only lists the owner owns, and only accepted items. Nothing about claims
-     * is read or shown: an item somebody else claimed looks exactly like one
-     * nobody has.
-     *
-     * @return Collection<int, WishlistItem>
-     */
-    public function unmarkedItems(Recipient $recipient, int $limit = 30): Collection
-    {
-        $owned = Wishlist::query()
-            ->where('recipient_id', $recipient->id)
-            ->when(
-                $recipient->owner_user_id !== null,
-                fn ($q) => $q->where('owner_user_id', $recipient->owner_user_id),
-                fn ($q) => $q->where('owner_anon_id', $recipient->owner_anon_id),
-            )
-            ->pluck('id');
-
-        if ($owned->isEmpty()) {
-            return collect();
-        }
-
-        $hash = $this->claimHash($recipient);
-
-        return WishlistItem::query()
-            ->whereIn('wishlist_id', $owned)
-            ->whereNotNull('accepted_at')
-            ->whereNotIn('id', $recipient->gifts()->whereNotNull('wishlist_item_id')->select('wishlist_item_id'))
-            // The owner's own claims are in the history already.
-            ->when($hash !== null, fn ($q) => $q->where(fn ($q) => $q
-                ->whereNull('claimed_by_hash')
-                ->orWhere('claimed_by_hash', '!=', $hash)))
-            ->with('group')
-            ->latest('id')
-            ->limit($limit)
-            ->get();
-    }
-
-    /**
-     * May the owner mark this item as given? Only an item from a list about
-     * this person that they own, or one they claimed themselves. One already
-     * marked answers yes, so pressing twice is harmless.
-     */
-    public function canMark(Recipient $recipient, WishlistItem $item): bool
-    {
-        if ($recipient->gifts()->where('wishlist_item_id', $item->id)->exists()) {
-            return true;
-        }
-
-        if ($this->unmarkedItems($recipient, 500)->contains('id', $item->id)) {
-            return true;
-        }
-
-        return $this->ownClaims($recipient)->contains('id', $item->id);
     }
 
     /**

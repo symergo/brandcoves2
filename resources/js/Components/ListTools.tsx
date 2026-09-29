@@ -1225,7 +1225,7 @@ export function ListToolsBar({
 
     const visible = tools.filter((tool) => tool.show)
 
-    // The person's own page: what you gave them and the next step
+    // The person's own page: their profile and the next step
     // (gift-history.md). The owner's only, on a list about somebody else.
     const personPage =
         access.isOwner && list.kind !== 'mine' && list.recipient !== null

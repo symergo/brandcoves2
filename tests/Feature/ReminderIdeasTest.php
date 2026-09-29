@@ -105,7 +105,23 @@ class ReminderIdeasTest extends TestCase
         $onHerList = $this->cooking();
         $fresh = collect(range(1, 5))->map(fn () => $this->cooking());
 
-        $this->mum->gifts()->create(['title' => 'Pan', 'group_id' => $given->id, 'given_year' => 2025]);
+        // Bought off her own wish list: the giver's own claim, on a list that
+        // is about her without naming her as its recipient, so only the gift
+        // history (GiftHistory) can leave it out.
+        $mumAccount = User::factory()->create();
+        $this->mum->update(['user_id' => $mumAccount->id, 'status' => 'linked']);
+        $wishList = Wishlist::factory()->create([
+            'owner_user_id' => $mumAccount->id,
+            'recipient_id' => null,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+        WishlistItem::factory()->create([
+            'wishlist_id' => $wishList->id,
+            'group_id' => $given->id,
+            'claimed_by_hash' => WishlistItem::identityHash('user:'.$this->giver->id),
+            'claimed_at' => now(),
+        ]);
         WishlistItem::factory()->create(['wishlist_id' => $this->list->id, 'group_id' => $onHerList->id]);
 
         (new SendOccasionReminders)->handle();

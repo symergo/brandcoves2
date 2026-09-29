@@ -217,7 +217,9 @@ class PrunePersonalDataCommand extends Command
         /*
          * What somebody noted they gave a person (gift-history.md). Deleted
          * with the person or the account anyway; this is the ceiling for a
-         * person kept for years.
+         * person kept for years. Nothing reads this table since "Wat je gaf"
+         * was removed (2026-09-29), but it still holds personal data until a
+         * later release drops it, so the cleanup keeps pruning it.
          */
         $report['gift history'] = $this->prune(
             'recipient_gifts',

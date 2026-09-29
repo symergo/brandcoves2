@@ -74,13 +74,13 @@ iemand die jij niet bent en die nergens mee ingestemd heeft. Voor die gegevens
 handel je voor eigen rekening, dus houd het bij wat je nodig hebt. Ze verdwijnen
 samen met je account.
 
-Noteer je wat je iemand gaf (hun cadeaugeschiedenis), dan bewaren we het product
-of de woorden die je typte en het jaar, zodat we dat weglaten uit ideeën voor die
-persoon en kunnen voorstellen wat erop kan volgen. Wat jij zelf met "Ik koop
-dit" aanduidde op lijstjes voor die persoon telt ook mee; wat anderen aanduidden
-wordt daarvoor nooit gelezen. Alleen jij ziet het. Je kunt een regel altijd verwijderen, alles
-verdwijnt als je de persoon of je account verwijdert, en een regel wordt gewist
-zodra het jaar ervan 10 jaar terug ligt.
+Wat jij zelf met "Ik koop dit" aanduidde op lijsten voor een van je mensen,
+gebruiken we om die producten weg te laten uit ideeën voor die persoon en om voor
+te stellen wat erop kan volgen. Wat anderen aanduidden wordt daarvoor nooit
+gelezen, en we bewaren er niets extra voor: het is de lijst zelf, en het verdwijnt
+met de aanduiding, de lijst, de persoon of je account. Tot 29 september 2026 kon je
+ook met de hand noteren wat je iemand gaf; dat kan niet meer, en niemand had het
+gebruikt.
 
 Geef je een idee voor een van je personen een duim omhoog of omlaag, dan bewaren
 we dat bij die persoon, zodat latere ideeën voor hen ermee rekening houden: wat
@@ -264,7 +264,6 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Interactielog | 90 dagen |
 | Zoektermen | 12 maanden, van meet af aan samengevoegd en losgekoppeld |
 | Account, lijstjes, ontvangers | Tot je ze verwijdert |
-| Cadeaugeschiedenis (wat je noteerde dat je iemand gaf) | Tot je ze verwijdert, of 10 jaar na het jaar waarin je het gaf |
 | Duimen bij ideeën voor een van je personen | Tot je de persoon of je account verwijdert |
 | Duimen bij cadeau-ideeën, geteld voor iedereen (een eenrichtingscode, niet wie je bent) | 365 dagen nadat je hem voor het laatst veranderde, of met je account |
 | Prijsgeschiedenis | 90 dagen |

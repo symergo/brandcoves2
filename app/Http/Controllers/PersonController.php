@@ -8,14 +8,11 @@ use App\Enums\ListKind;
 use App\Enums\RecipientType;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
-use App\Models\RecipientGift;
 use App\Models\User;
 use App\Models\Wishlist;
-use App\Models\WishlistItem;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\NextSteps;
-use App\Services\Gift\PastGift;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\FriendInvites;
 use App\Services\Social\PersonProfile;
@@ -31,15 +28,14 @@ use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * A saved person's page: who they are, their lists, what you gave them, and
- * what could come next.
+ * A saved person's page: who they are, their lists, and what could come next.
  *
  * `/people/{id}`, the owner's only. Since 2026-09-27 a profile first: what you
  * know about them, editable in place, their own wish lists when they are a
- * friend, and the lists you are making for them ({@see PersonProfile}). Then
- * the gift history (what they noted, and their own claims on lists for this
- * person), the items on their lists for this person with an "I gave this"
- * button, and a short "next step" row.
+ * friend, and the lists you are making for them ({@see PersonProfile}). Then a
+ * short "next step" row, which follows on from the owner's own claims on lists
+ * for this person ({@see GiftHistory}). "Wat je gaf", the gifts the owner wrote
+ * down or marked "I gave this", was removed on 2026-09-29.
  *
  * The reminder email lands here too: an idea's "add to the list" link opens
  * this page with `?add=<product>`, and the page shows that product at the top
@@ -98,12 +94,6 @@ class PersonController extends Controller
                 ->where('recipient_id', $person->id)
                 ->where('kind', ListKind::Group->value)
                 ->count(),
-            'history' => array_map(fn (PastGift $gift) => $gift->toArray(), $past),
-            'unmarked' => $history->unmarkedItems($person)->map(fn (WishlistItem $item) => [
-                'id' => $item->id,
-                'title' => $item->displayTitle(),
-                'image' => $item->group?->image_url ?? $item->snapshot_image_url,
-            ])->values()->all(),
             'nextSteps' => $steps,
             'highlight' => $highlight,
             'recipientList' => $this->theirList($request, $current, $person, $steps !== [] || $highlight !== null),
@@ -111,7 +101,6 @@ class PersonController extends Controller
                 'finder' => $current->url('gift').'?for='.$person->id,
                 'taste' => $current->url('gift/taste').'?person='.$person->id,
                 'ask' => $current->url('ask').'?person='.$person->id,
-                'gifts' => $current->url("people/{$person->id}/gifts"),
                 'recipient' => $current->url("recipients/{$person->id}"),
                 'people' => $current->url('people'),
                 /*
@@ -129,63 +118,7 @@ class PersonController extends Controller
                  */
                 'invite' => $invites->mayLink($viewer, $person) ? $current->url('friends') : null,
             ],
-            'thisYear' => (int) now()->year,
         ]);
-    }
-
-    /**
-     * "I gave this": typed, or an item from their list.
-     *
-     * An item is accepted only from a list about this person that the owner
-     * owns, or when it is the owner's own claim; anything else is a 404, the
-     * same answer as an item that does not exist, so the endpoint cannot be
-     * used to test ids.
-     */
-    public function store(Request $request, CurrentMarket $current, GiftHistory $history, string $market, string $recipient): RedirectResponse
-    {
-        $person = $this->findOwned($request, $recipient);
-        $thisYear = (int) now()->year;
-
-        $validated = $request->validate([
-            'item_id' => ['nullable', 'integer'],
-            'title' => ['required_without:item_id', 'nullable', 'string', 'max:200'],
-            // A year, not a date: "last Christmas" is what people remember.
-            'year' => ['nullable', 'integer', 'min:1950', 'max:'.$thisYear],
-        ]);
-
-        $year = (int) ($validated['year'] ?? $thisYear);
-
-        if (! empty($validated['item_id'])) {
-            $item = WishlistItem::query()->with('group')->find($validated['item_id']);
-
-            if ($item === null || ! $history->canMark($person, $item)) {
-                throw new NotFoundHttpException;
-            }
-
-            RecipientGift::query()->firstOrCreate(
-                ['recipient_id' => $person->id, 'wishlist_item_id' => $item->id],
-                ['group_id' => $item->group_id, 'title' => mb_substr($item->displayTitle(), 0, 200), 'given_year' => $year],
-            );
-        } else {
-            $title = trim((string) $validated['title']);
-
-            if ($title === '') {
-                return back()->withErrors(['title' => __('site.gift_history.title_required')]);
-            }
-
-            $person->gifts()->create(['title' => $title, 'given_year' => $year]);
-        }
-
-        return back()->with('success', __('site.gift_history.added'));
-    }
-
-    public function destroy(Request $request, CurrentMarket $current, string $market, string $recipient, string $gift): RedirectResponse
-    {
-        $person = $this->findOwned($request, $recipient);
-
-        $person->gifts()->whereKey((int) $gift)->delete();
-
-        return back();
     }
 
     /**

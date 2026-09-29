@@ -82,10 +82,6 @@ final class GroupMerger
             $this->mergeListItems($l, $w);
             $this->mergePlanItems($l, $w);
 
-            // A gift somebody noted they gave (gift-history.md). No unique
-            // constraint on the product, so it just moves.
-            DB::update('UPDATE recipient_gifts SET group_id = ? WHERE group_id = ?', [$w, $l]);
-
             foreach (['price_alerts', 'restock_alerts'] as $table) {
                 // Unique on (group_id, user_id) for signed-in alerts only; a
                 // guest's alert (by email) has no constraint and just moves.

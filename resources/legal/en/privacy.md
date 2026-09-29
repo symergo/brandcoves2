@@ -70,12 +70,12 @@ name, a note, sometimes a birthday. That is personal data about a person who is
 not you and who has not agreed to anything. For that data you are acting on your
 own account, so please keep it to what you need. It is deleted with your account.
 
-If you note what you gave somebody (their gift history), we keep the product or
-the words you typed and the year, so we can leave those out of ideas for them and
-suggest what could come next. What you yourself marked "I'll get this" on lists
-for that person counts too; what anybody else marked is never read for it. Only you see it. You can remove a line
-at any time, it goes when you delete the person or your account, and a line is
-deleted once its year is 10 years back.
+What you yourself marked "I'll get this" on lists for one of your people is used to
+leave those products out of ideas for them and to suggest what could come next. What
+anybody else marked is never read for it, and nothing is stored for it beyond the
+list itself: it goes when the mark, the list, the person or your account goes. Until
+29 September 2026 you could also note by hand what you gave somebody; that is no
+longer possible, and nobody had used it.
 
 If you give an idea for one of your people a thumb up or down, we keep that with
 the person, so later ideas for them follow it: what you turned down is left out,
@@ -255,7 +255,6 @@ safeguards above.
 | Interaction log | 90 days |
 | Search terms | 12 months, aggregated and unlinked from the start |
 | Account, lists, recipients | Until you delete them |
-| Gift history (what you noted you gave someone) | Until you delete it, or 10 years after the year you gave it |
 | Thumbs on ideas for one of your people | Until you delete the person or your account |
 | Thumbs on gift ideas, counted for everybody (a one-way code, not who you are) | 365 days after you last changed it, or with your account |
 | Price history | 90 days |

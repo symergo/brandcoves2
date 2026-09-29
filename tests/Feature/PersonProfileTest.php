@@ -9,12 +9,12 @@ use App\Enums\Market;
 use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Models\Recipient;
-use App\Models\RecipientGift;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -235,7 +235,9 @@ class PersonProfileTest extends TestCase
     {
         $mum = $this->saved('Mum');
         $list = $this->listFor($mum, 'Kerst', ListKind::ForSomeone);
-        RecipientGift::query()->create(['recipient_id' => $mum->id, 'title' => 'Moka pot', 'given_year' => 2025]);
+        // A line noted before "Wat je gaf" was removed (2026-09-29): still
+        // personal data, so it still goes with the person.
+        DB::table('recipient_gifts')->insert(['recipient_id' => $mum->id, 'title' => 'Moka pot', 'given_year' => 2025]);
 
         $this->actingAs($this->me)
             ->from("/be-nl/people/{$mum->id}")
@@ -245,7 +247,7 @@ class PersonProfileTest extends TestCase
         $this->assertModelMissing($mum);
         // The list survives and no longer says who it is for; the history goes.
         $this->assertNull($list->fresh()->recipient_id);
-        $this->assertSame(0, RecipientGift::query()->count());
+        $this->assertSame(0, DB::table('recipient_gifts')->count());
     }
 
     #[Test]

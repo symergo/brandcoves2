@@ -357,8 +357,6 @@ export default function AskIndex({
 
             {asking && (
                 <form onSubmit={submit} className="mt-6 space-y-5 rounded-card border border-line bg-card p-6 lg:p-8">
-                    <h2 className="font-medium">{t('ask.ask_heading')}</h2>
-
                     {/*
                       Who it is for, first: it decides what happens to
                       everything below. Two cards rather than a select, so both

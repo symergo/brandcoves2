@@ -7,6 +7,33 @@ date_added: 2026-09-26
 
 # "Last year the moka pot, this year the grinder"
 
+## 2026-09-29: "Wat je gaf" removed
+
+The owner removed the **"Wat je gaf"** section of a saved person's page, and the code behind it:
+the gifts a giver *noted*, typed by hand or with **"Dit gaf ik"** ("I gave this") beside an item
+on their own list about the person. Gone with it: the "Op je lijsten voor :name" section and its
+buttons, the two routes (`people.gifts.store`, `people.gifts.destroy`), `PersonController::store()`
+and `destroy()`, the `RecipientGift` model and `Recipient::gifts()`, `GiftHistory::unmarkedItems()`
+and `canMark()`, the `noted` source on `PastGift`, the `history` / `unmarked` / `thisYear` page
+props, and the copy that described them.
+
+**What remains** is the other half of the history: the giver's **own claims** ("Ik koop dit", and
+the same marked as bought) on lists about the person, read live by the giver's own claim hash.
+They still keep those products (and their merged twins) out of Find a gift, This or that, the
+swipe deck and the reminder ideas for that person (`GiftHistory::excludedGroupIds()`), and they
+are what **"De volgende stap"** follows on from. The page just no longer lists them.
+
+**The `recipient_gifts` table stays, unread**, until a later release drops it (expand/contract:
+a rollback must not meet a schema it cannot read). Nothing writes it and nothing reads it;
+`GroupMerger` no longer moves its rows. It still holds personal data about people who are not the
+user, so `bc:prune-personal-data` keeps deleting a line once its year is ten years back, and a
+person deleted still takes their lines with them (cascade).
+
+The sections below are the original design. Where they describe noted gifts, "I gave this" or
+the list of past gifts on the page, that part is history, not current behaviour.
+
+## The original design (2026-09-26)
+
 Two requests from the owner, 2026-09-26, built together because the second needs the first:
 
 1. **Gift history per person.** Remember what a user gave each of their saved people, never
@@ -24,49 +51,46 @@ A "saved person" is a `recipients` row: somebody a user buys for (see
 `/{market}/people/{id}`, the owner's only (behind sign-in, owner-scoped, 404 for anybody else,
 `noindex`). Since 2026-09-27 it is titled with the person's name and opens with a profile (what
 you know about them, their wish lists, your lists for them; see
-[my-people.md](my-people.md#the-persons-page)). Below that, unchanged, it shows:
+[my-people.md](my-people.md#the-persons-page)). Below that it shows **the next step**: up to
+four products that follow on from what they were given (your own claims on lists for them).
 
-- **What you gave**, newest first, with a remove button on the lines you wrote;
-- **"I gave this"**: a line typed by hand (words and a year), or a button beside each item on your
-  own lists about this person;
-- **The next step**: up to four products that follow on from what they were given.
+Until 2026-09-29 it also showed **What you gave** (newest first, with a remove button on the lines
+you wrote) and **"I gave this"** (a line typed by hand, or a button beside each item on your own
+lists about this person). Both were removed; see the top of this page.
 
 The buttons to Find a gift and This or that moved into the profile's header.
-
-**While it is empty, the section says what it is for** (owner, 2026-09-27: "explain what the use
-of this is"): "Noteer wat je Mama gaf. Dan stellen we nooit twee keer hetzelfde voor, en wel wat
-erop kan volgen…" (`gift_history.history_empty`). Until then it said only "Nog niets", with the
-purpose behind the (i), so the one moment somebody decides whether to fill it in was the moment it
-did not explain itself. The (i) keeps the details (which claims count, whose do not).
 
 Linked from a list about somebody (under the description, owner only), from Find a gift's
 results when a saved person is chosen, from the reminder email, and since 2026-09-26 from **My
 people** (`/{market}/people`, [my-people.md](my-people.md)), the page that lists every saved person
 together with your friends on GiftCoves. Before that there was no list of saved people anywhere.
+The link's label is "Naar :name" (`gift_history.link`) since 2026-09-29; it said "Wat je :name
+gaf" while the page listed what you gave.
 
 ## What the history holds
 
-`App\Services\Gift\GiftHistory`, from two sources:
+`App\Services\Gift\GiftHistory`, from one source since 2026-09-29:
 
 | source | where | stored |
 |---|---|---|
-| written down | typed on the page, or an item marked "I gave this" | `recipient_gifts` |
 | your own claims | "I'll get this" on a list about this person, still held; "I have bought it" marks it as bought | read live from `wishlist_items` |
+
+The second source, "written down" (typed on the page, or an item marked "I gave this", in
+`recipient_gifts`), was removed; see the top of this page.
 
 ### Only your own claims, and only to you (invariant 4)
 
 A claim is a one-way hash of the claimer. The history finds claims by computing the **owner's own
 hash** and matching it exactly; it never asks "is anything claimed". So another giver's claim is
-invisible here, to everybody, and the page lists items another giver claimed exactly as it lists
-items nobody claimed: no field, no order, no label differs. The history is shown only on pages the
-owner alone opens, so the person the list is about learns nothing either.
+invisible here, to everybody. The history is used only on pages the owner alone opens, so the
+person the list is about learns nothing either.
 
 ### Claims are read, not copied
 
 A claim handed back leaves the history at once, which is right (they are not getting it after all),
 and there is no second copy of claim state to go stale. The price: a claim on a list that is later
-deleted leaves the history with it. "I gave this" is how to keep it for good. Decided without the
-owner; copying claims into a table would have been a second store of claim state, which is the
+deleted leaves the history with it (until 2026-09-29 "I gave this" was how to keep it for good;
+now nothing does). Decided without the owner; copying claims into a table would have been a second store of claim state, which is the
 thing [gifting-lenses.md](gifting-lenses.md) warns grows into a leak.
 
 ### Which lists are "about this person"
@@ -81,7 +105,8 @@ people are linked to Mum's account; nothing else says two saved people are the s
 ### A year, not a date
 
 "Last Christmas" and "her 60th" are what people remember. A day would be a question nobody can
-answer and nothing reads. `given_year`, CHECKed to a sane range.
+answer and nothing reads. `given_year`, CHECKed to a sane range. (That was the noted gifts'
+column; a claim's year is the year it was claimed, or marked as bought.)
 
 ## Never the same thing again
 
@@ -89,7 +114,8 @@ Find a gift (every action: suggest, swap, more, and `/gift?for=<person>`) and Th
 (when played with `?person=<id>`) add the person's past gifts to the brief's exclusions. **Merged
 products count as the same gift**: a merge keeps the old product row pointing at the new one
 (`GroupMerger`), so the exclusion adds both the product a past gift was merged into and anything
-merged into it. `GroupMerger` also moves `recipient_gifts.group_id` to the product that is kept.
+merged into it. (`GroupMerger` also moved `recipient_gifts.group_id` to the product that is kept,
+until 2026-09-29; a claim's list item is moved by the merge like any other.)
 
 `SuggestionEngine` and `TasteBrief` are unchanged: the exclusion goes in through
 `TasteBrief::excluding()`, which already existed for rejected and already-shown products.
@@ -204,19 +230,21 @@ The existing test read `content()->with`, not the rendered mail. `$body` is prot
 
 ## Personal data
 
-`recipient_gifts` is new personal data about a person who is not the user. It goes with the person
-(cascade) and with the account, a line can be removed at any time, and
-`bc:prune-personal-data` deletes a line once its year is ten years back
-(`PrunePersonalDataCommand::GIFT_HISTORY_YEARS`): long enough for "what did I give her for her
-60th", and past it a line no longer says what to avoid. Stated on the privacy page (en, nl), under
-Recipients and in the retention table. Claims add no new storage.
+`recipient_gifts` is personal data about a person who is not the user. It goes with the person
+(cascade) and with the account, and `bc:prune-personal-data` deletes a line once its year is ten
+years back (`PrunePersonalDataCommand::GIFT_HISTORY_YEARS`): long enough for "what did I give her
+for her 60th", and past it a line no longer says what to avoid. Since 2026-09-29 nothing writes or
+reads the table, and a line can no longer be removed on its own from the page; the pruning stays
+until the table is dropped. Stated on the privacy page (en, nl), under Recipients and in the
+retention table, which still describes noting what you gave (not yet updated). Claims add no new
+storage.
 
 ## Where it is
 
 | | |
 |---|---|
 | Schema | `2026_09_28_000100_remember_what_was_given`: `recipient_gifts`, `users.reminder_emails_off_at` |
-| History | `app/Services/Gift/GiftHistory.php`, `PastGift.php`, `app/Models/RecipientGift.php` |
+| History | `app/Services/Gift/GiftHistory.php`, `PastGift.php` (`app/Models/RecipientGift.php` removed 2026-09-29) |
 | Next step | `app/Services/Gift/NextSteps.php`, `NextStepScorer.php`, `NextStep.php`, `NextStepCandidate.php`, `resources/content/gift-complements.php` |
 | Reminder ideas | `app/Services/Gift/ReminderIdeas.php`, `app/Jobs/SendOccasionReminders.php`, `app/Mail/OccasionReminderMail.php`, `resources/views/mail/partials/reminder-ideas.blade.php` |
 | Pages | `PersonController` → `Recipients/Show.tsx`; `Components/NextSteps.tsx`; Find a gift (`GiftController`, `Gift/Wizard.tsx`); This or that (`TasteController::result`, `?person=` in `Gift/Taste.tsx`) |
@@ -227,7 +255,7 @@ Recipients and in the retention table. Claims add no new storage.
 
 ## Not done
 
-- No "I gave this" button on the list page itself; it is on the person's page, beside each item.
+- Drop the unread `recipient_gifts` table in a later release (and its pruning with it).
 - The complement word lists have had no editor's pass.
 - Lists about the same human under two unlinked saved people (yours and your sister's) are not
   joined up; nothing in the data says they are one person.
