@@ -89,13 +89,7 @@ return [
          * dropdown, not the hub page, and the hub is one click away for the
          * argument.
          */
-        'hint_daily' => 'New every morning',
-        'hint_surprise' => 'Something rare, not something popular',
-        'hint_smart' => 'Buying advice and guides by subject',
-        'hint_gift_coves' => 'Ideas built around a person',
         'hint_ask' => 'Let other people suggest something',
-        'hint_community' => 'Lists other people shared',
-        'hint_brands_shops' => 'By maker or by shop',
 
         /*
          * The header since 2026-09-26 (docs/features/navigation.md): Find a

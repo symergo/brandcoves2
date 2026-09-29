@@ -65,6 +65,9 @@ See [market-routing.md](market-routing.md).
   shops (`/shops`) under its intro, and All Coves shows both bands.
 - **Two new hints**, because every other entry in the menu has one: "Lists other people shared"
   (`nav.hint_community`) and "By maker or by shop" (`nav.hint_brands_shops`).
+- **No hints since 2026-09-29.** The owner removed the grey line under every Discover entry, on the
+  desktop menu and the phone menu both, with all six `nav.hint_*` keys and `NavMenuItem.hint`. An
+  entry is its icon and its name.
 - **Keys deleted:** `nav.search_offers`, `nav.hint_search` (Search left the menu). `nav.friends`
   and `nav.choose_language` were kept for a few hours in case My people wanted them; it did not,
   and the clean-up of 2026-09-26 deleted them with `nav.feedback`, `nav.hint_gift` and

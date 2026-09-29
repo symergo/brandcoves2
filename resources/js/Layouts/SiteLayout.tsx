@@ -241,13 +241,11 @@ function Chrome({ children }: PropsWithChildren) {
                     {
                         href: `${base}/${market.coveSegment}`,
                         label: t('nav.daily'),
-                        hint: t('nav.hint_daily'),
                         icon: <CoveIcon name="daily" className="h-5 w-5" />,
                     },
                     {
                         href: `${base}/surprise`,
                         label: t('nav.surprise'),
-                        hint: t('nav.hint_surprise'),
                         icon: <CoveIcon name="surprise" className="h-5 w-5" />,
                     },
                 ],
@@ -259,13 +257,11 @@ function Chrome({ children }: PropsWithChildren) {
                     {
                         href: `${base}/gift-ideas`,
                         label: t('nav.gift_ideas'),
-                        hint: t('nav.hint_gift_coves'),
                         icon: <CoveIcon name="persona" className="h-5 w-5" />,
                     },
                     {
                         href: `${base}/guides`,
                         label: t('nav.smart'),
-                        hint: t('nav.hint_smart'),
                         icon: <CoveIcon name="idea" className="h-5 w-5" />,
                     },
                     // The same mark All Coves gives this band: what you read
@@ -273,7 +269,6 @@ function Chrome({ children }: PropsWithChildren) {
                     {
                         href: `${base}/coves/community`,
                         label: t('community.index_heading'),
-                        hint: t('nav.hint_community'),
                         icon: <CoveIcon name="ask" className="h-5 w-5" />,
                     },
                     /*
@@ -284,7 +279,6 @@ function Chrome({ children }: PropsWithChildren) {
                     {
                         href: `${base}/brands`,
                         label: t('nav.brands_shops'),
-                        hint: t('nav.hint_brands_shops'),
                         icon: <CoveIcon name="brand" className="h-5 w-5" />,
                     },
                 ],
@@ -664,16 +658,7 @@ function Chrome({ children }: PropsWithChildren) {
                                                         }`}
                                                     >
                                                         <span className="shrink-0 text-accent">{item.icon}</span>
-                                                        <span>
-                                                            <span className="block">{item.label}</span>
-                                                            {/* Kept on a phone for the reason they
-                                                                exist at all: entries differing by one
-                                                                word cannot be told apart the first
-                                                                time. */}
-                                                            {item.hint ? (
-                                                                <span className="block text-xs text-ink-soft">{item.hint}</span>
-                                                            ) : null}
-                                                        </span>
+                                                        <span>{item.label}</span>
                                                     </Link>
                                                 </li>
                                             ))}

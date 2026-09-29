@@ -58,13 +58,7 @@ return [
          */
         'smart' => 'Slim kopen',
 
-        'hint_daily' => 'Elke ochtend nieuw',
-        'hint_surprise' => 'Iets zeldzaams, niet iets populairs',
-        'hint_smart' => 'Koopadvies en gidsen per onderwerp',
-        'hint_gift_coves' => 'Ideeën rond één persoon',
         'hint_ask' => 'Laat anderen iets voorstellen',
-        'hint_community' => 'Lijsten die anderen deelden',
-        'hint_brands_shops' => 'Per merk of per winkel',
         'every_day' => 'Elke dag',
         'brands_shops' => 'Merken & winkels',
         'all_coves' => 'Alle Coves',

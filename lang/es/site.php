@@ -58,13 +58,7 @@ return [
          */
         'smart' => 'Comprar mejor',
 
-        'hint_daily' => 'Nuevo cada mañana',
-        'hint_surprise' => 'Algo raro, no algo popular',
-        'hint_smart' => 'Consejos de compra y guías por tema',
-        'hint_gift_coves' => 'Ideas construidas en torno a una persona',
         'hint_ask' => 'Deja que otros sugieran algo',
-        'hint_community' => 'Listas que otros compartieron',
-        'hint_brands_shops' => 'Por marca o por tienda',
         'every_day' => 'Cada día',
         'brands_shops' => 'Marcas y tiendas',
         'all_coves' => 'Todas las Coves',

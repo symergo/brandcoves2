@@ -4,7 +4,6 @@ import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, us
 export type NavMenuItem = {
     href: string
     label: string
-    hint?: string
     icon?: ReactNode
 }
 
@@ -213,17 +212,13 @@ export default function NavMenu({
                                             href={item.href}
                                             aria-current={isCurrent(item.href) ? 'page' : undefined}
                                             onClick={() => setOpen(false)}
-                                            className="flex gap-3 rounded-md px-3 py-2 outline-none hover:bg-sand focus-visible:bg-sand focus-visible:ring-2 focus-visible:ring-accent/40"
+                                            className="flex items-center gap-3 rounded-md px-3 py-2 outline-none hover:bg-sand focus-visible:bg-sand focus-visible:ring-2 focus-visible:ring-accent/40"
                                         >
                                             {item.icon ? (
-                                                <span className="mt-0.5 shrink-0 text-accent">{item.icon}</span>
+                                                <span className="shrink-0 text-accent">{item.icon}</span>
                                             ) : null}
-                                            <span>
-                                                <span className="block font-medium text-ink">{item.label}</span>
-                                                {item.hint ? (
-                                                    <span className="block text-xs text-ink-soft">{item.hint}</span>
-                                                ) : null}
-                                            </span>
+                                            {/* No line under the label (owner, 2026-09-29). */}
+                                            <span className="font-medium text-ink">{item.label}</span>
                                         </Link>
                                     </li>
                                 ))}
