@@ -769,7 +769,6 @@ export default function GiftWizard(props: Props) {
 
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift.title')}</h1>
-                <p className="mt-2 text-ink-soft">{t('gift.subtitle')}</p>
             </header>
 
             {card && !showResults && <GiftProfileCardBanner card={card} onSeeIdeas={submit} />}

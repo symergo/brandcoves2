@@ -1336,7 +1336,6 @@ return [
 
     'gift' => [
         'title' => 'Cadeau vinden',
-        'subtitle' => 'Zeg voor wie het is, en kies hoe je zoekt. Wij vinden cadeaus die kloppen.',
         'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeaus, elk met wat het gemeen heeft met je beschrijving.',
 
         'step_interests' => 'Waar houdt die persoon van?',

@@ -1534,7 +1534,6 @@ return [
 
     'gift' => [
         'title' => 'Find a gift',
-        'subtitle' => 'Say who it is for, and choose how to look. We find presents that fit.',
         'seo_description' => 'Describe the person you are buying for and get eight gift ideas, each showing what it has in common with your description.',
 
         'step_interests' => 'What are they into?',

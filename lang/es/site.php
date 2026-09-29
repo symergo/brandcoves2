@@ -1330,7 +1330,6 @@ return [
 
     'gift' => [
         'title' => 'Encontrar un regalo',
-        'subtitle' => 'Di para quién es y elige cómo buscar. Encontramos regalos que encajen.',
         'seo_description' => 'Describe a la persona a quien regalas y recibe ocho ideas, cada una con lo que tiene en común con tu descripción.',
 
         'step_interests' => '¿Qué le gusta?',

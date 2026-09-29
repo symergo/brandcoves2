@@ -1331,7 +1331,6 @@ return [
 
     'gift' => [
         'title' => 'Trouver un cadeau',
-        'subtitle' => 'Dites pour qui c’est, et choisissez comment chercher. Nous trouvons des cadeaux qui tiennent la route.',
         'seo_description' => 'Décrivez la personne à qui vous offrez et recevez huit idées de cadeaux, chacune avec ce qu’elle a en commun avec votre description.',
 
         'step_interests' => 'Qu’est-ce qui lui plaît ?',
