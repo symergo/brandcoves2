@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Services\Gift\DeckSeed;
 use App\Services\Gift\TasteCard;
 use App\Services\Gift\TasteChoice;
 use App\Services\Gift\TasteDeck;
@@ -136,6 +137,23 @@ class TasteDeckTest extends TestCase
         // has no partner and is not shown on its own.
         $this->assertCount(1, $rounds);
         $this->assertSame([1, 3], array_map(fn (TasteCard $c) => $c->id, $rounds[0]));
+    }
+
+    #[Test]
+    public function the_opening_rounds_test_what_is_known_against_something_new(): void
+    {
+        // A seed (2026-09-29): each exploring round opens on a known interest, in turn.
+        $rounds = $this->deck()->compose($this->pool(), [], 0, 3, new DeckSeed(known: ['music', 'art']));
+
+        $interests = fn (array $round) => array_merge(...array_map(fn (TasteCard $c) => $c->interests(), $round));
+
+        $this->assertContains('music', $interests($rounds[0]));
+        $this->assertContains('art', $interests($rounds[1]));
+        $this->assertContains('music', $interests($rounds[2]));
+
+        foreach ($rounds as $round) {
+            $this->assertFalse($round[0]->sharesAnInterestWith($round[1]), 'still against something new');
+        }
     }
 
     #[Test]

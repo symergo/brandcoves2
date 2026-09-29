@@ -166,6 +166,38 @@ interests found, no person, like `gift.suggest`.
 A result for yourself, signed in, offers **Keep in My taste** first (2026-09-29, [my-taste.md](my-taste.md)),
 above the gift profile card.
 
+## Starting from what is known (2026-09-29)
+
+Both games used to start from the same random deck for anybody: "for Mum" changed where a save went,
+never which cards came. The owner agreed to start from what is known and keep exploring.
+`DeckSeeds` turns "who is it for" (`CarriedWho`: `?person=`, `?relationship=`, `?for=me`) into a
+`DeckSeed`, and both decks take it:
+
+| Who | Known interests (strong) | Typical interests (light) | Left out |
+|---|---|---|---|
+| A saved person | their stored taste, with their own My taste over it when a friend | their relationship's | their avoid list, their relationship's exclusions, other ages, `recipient:` tags for somebody else |
+| A relationship only ("mama") | none | `gift_landings.hub_interests_by_recipient` | `gift_landings.excluded_pairs` (no drinks, coffee or hunting for a child), `recipient:` tags for somebody else |
+| Yourself, signed in | your My taste | none | your avoid list, other ages |
+
+Why two strengths: what somebody said about a person is a fact about them; "mothers like
+gardening" is a stereotype. So:
+
+- **Swipe gifts** counts each known interest as one like before any swipe, so it is followed from the
+  first card (two cards in three); typical interests are only shown first while exploring, and only a
+  like makes one stick.
+- **This or that** opens each of its four exploring rounds on a seed interest, in turn, still against
+  a card that shares nothing with it, so the rounds test what is known against something new rather
+  than confirming it. From round five the choices decide, as before.
+- A card is left out only by a tag it has: most products carry no age or `recipient:` tag and are
+  never left out for lacking one. Words typed as interests ("zuurdesem") are not on cards, so only
+  the vocabulary counts here; they still reach the engine through the results brief.
+- Each seed interest gets a few extra products straight from the tag indexes
+  (`TasteDeck::drawCarrying`, which Swipe gifts also uses for its favourites), because a random 160
+  may hold one card of it.
+
+Choosing "for myself" on This or that's own question, rather than arriving from Find a gift with
+`?for=me`, seeds only the rounds after the first four: those were drawn before the answer.
+
 ## Interaction
 
 **The rounds play in a popup** since 2026-09-29 (owner: "same layout for Dit of dat" as Swipe

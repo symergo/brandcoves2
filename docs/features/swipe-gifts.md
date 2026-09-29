@@ -87,6 +87,11 @@ round is now a pair, and a card left without a partner is not shown. The server 
 single-card answer, so a session open during the deploy finishes. The swipeable card moved to
 `Components/SwipeCard.tsx`.
 
+## Starting from what is known (2026-09-29)
+
+See [taste-discovery.md](taste-discovery.md#starting-from-what-is-known-2026-09-29): the same
+`DeckSeed` starts both games. Here a known interest counts as one like before any swipe.
+
 ## Files
 
 - `app/Services/Gift/SwipeDeck.php` — what comes next; `compose()` is the pure half

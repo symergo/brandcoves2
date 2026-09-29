@@ -43,6 +43,21 @@ final class CarriedWho
         ];
     }
 
+    /**
+     * What the choosing games start from for whoever this is (DeckSeeds):
+     * one of your own people by id, a relationship by value, or yourself.
+     * Anybody else's person id counts as nobody.
+     */
+    public function seed(Request $request, CurrentMarket $current, ?string $personId, ?string $relationship, bool $forMe): DeckSeed
+    {
+        return app(DeckSeeds::class)->for(
+            $current->get(),
+            $forMe ? null : $this->recipient($request, $personId),
+            $forMe ? null : RecipientType::tryFrom((string) $relationship),
+            $forMe ? $request->user() : null,
+        );
+    }
+
     /** One of the visitor's own people, or null for anybody else's id. */
     public function recipient(Request $request, ?string $id): ?Recipient
     {

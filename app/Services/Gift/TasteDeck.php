@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Which products to show next in taste discovery.
@@ -62,6 +63,9 @@ final class TasteDeck
     /** Rounds before the deck starts focusing on favourites. */
     public const EXPLORE = 4;
 
+    /** Cards fetched per seed interest for the opening rounds. */
+    private const SEED_TOP_UP = 8;
+
     /** Random draw per request. Plenty for four rounds with room to be choosy. */
     private const POOL = 160;
 
@@ -111,9 +115,10 @@ final class TasteDeck
      * @param  list<TasteChoice>  $choices  answered so far
      * @param  list<int>  $exclude  every product already shown or queued
      * @param  int  $from  the index of the first round to compose
+     * @param  DeckSeed|null  $seed  what is known about who it is for (DeckSeeds)
      * @return list<list<ProductGroup>>
      */
-    public function next(Market $market, array $choices, array $exclude, int $from, int $count = self::BATCH): array
+    public function next(Market $market, array $choices, array $exclude, int $from, int $count = self::BATCH, ?DeckSeed $seed = null): array
     {
         $count = max(0, min($count, self::ROUNDS - $from));
 
@@ -121,7 +126,16 @@ final class TasteDeck
             return [];
         }
 
-        $rounds = $this->compose($this->draw($market, $exclude), $choices, $from, $count);
+        $seed ??= DeckSeed::none();
+        $pool = $this->draw($market, $exclude);
+
+        // The first rounds open on the known interests, and a random 160 may
+        // hold one card of each: a few more per interest, as Swipe gifts does.
+        if ($from < self::EXPLORE && $seed->hints() !== []) {
+            $pool = [...$this->drawCarrying($market, array_slice($seed->hints(), 0, self::EXPLORE), $exclude, self::SEED_TOP_UP), ...$pool];
+        }
+
+        $rounds = $this->compose($pool, $choices, $from, $count, $seed);
 
         /*
          * Only now are products loaded, and only the ones shown, with the
@@ -158,12 +172,22 @@ final class TasteDeck
      * the deck is random where the rules leave a choice and deterministic in a
      * test that passes a fixed pool.
      *
+     * With a seed (2026-09-29): cards it rules out never come (an interest to
+     * avoid, another age, somebody else's `recipient:` tag), and each exploring
+     * round opens on one of its interests, in turn, against a card that shares
+     * nothing with it, as every exploring pair does. So the first rounds test
+     * what is known against something new rather than confirming it; the
+     * choices decide from there.
+     *
      * @param  list<TasteCard>  $pool
      * @param  list<TasteChoice>  $choices
      * @return list<list<TasteCard>>
      */
-    public function compose(array $pool, array $choices, int $from, int $count): array
+    public function compose(array $pool, array $choices, int $from, int $count, ?DeckSeed $seed = null): array
     {
+        $seed ??= DeckSeed::none();
+        $hints = $seed->hints();
+        $pool = $this->unique($seed->filter($pool));
         $profile = $this->profiler->profile($choices);
 
         $exposure = [];
@@ -189,7 +213,10 @@ final class TasteDeck
 
             $leader = $focus ? $leaders[$i % count($leaders)] : null;
 
+            $hint = ! $focus && $index < self::EXPLORE && $hints !== [] ? $hints[$index % count($hints)] : null;
+
             $first = ($leader !== null ? $this->carrying($pool, [$leader], $exposure) : null)
+                ?? ($hint !== null ? $this->carrying($pool, [$hint], $exposure) : null)
                 ?? $this->freshest($pool, $exposure);
 
             $pool = $this->without($pool, $first);
@@ -383,6 +410,56 @@ final class TasteDeck
         shuffle($cards);
 
         return $cards;
+    }
+
+    /**
+     * A random few products per interest, read through the tag indexes: for a
+     * favourite in Swipe gifts, and for a seed's interests in the opening
+     * rounds of both games. `??|` is the `?|` operator (see SuggestionEngine).
+     *
+     * @param  list<string>  $interests
+     * @param  list<int>  $skip
+     * @return list<TasteCard>
+     */
+    public function drawCarrying(Market $market, array $interests, array $skip, int $per): array
+    {
+        $cards = [];
+
+        foreach ($interests as $interest) {
+            $tag = '{"'.GiftTags::interest($interest).'"}';
+
+            $ids = DB::table('product_groups')->select('id')->where('market', $market->value)->whereRaw('gift_tags ??| ?::text[]', [$tag])
+                ->union(DB::table('product_groups')->select('id')->where('market', $market->value)->whereRaw('crowd_tags ??| ?::text[]', [$tag]));
+
+            $query = $this->base($market, $skip)->whereIn('id', $ids);
+
+            foreach ($query->inRandomOrder()->limit($per)->get(self::POOL_COLUMNS) as $group) {
+                $cards[] = TasteCard::fromGroup($group);
+            }
+        }
+
+        shuffle($cards);
+
+        return $cards;
+    }
+
+    /**
+     * One card per product: a top-up may bring one the random draw holds too.
+     *
+     * @param  list<TasteCard>  $pool
+     * @return list<TasteCard>
+     */
+    private function unique(array $pool): array
+    {
+        $seen = [];
+
+        return array_values(array_filter($pool, function (TasteCard $c) use (&$seen): bool {
+            if (isset($seen[$c->id])) {
+                return false;
+            }
+
+            return $seen[$c->id] = true;
+        }));
     }
 
     /**

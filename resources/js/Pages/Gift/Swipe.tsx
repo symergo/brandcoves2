@@ -106,6 +106,9 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
             no: no.slice(-MAX_SWIPES),
             exclude: seen.current.slice(-MAX_EXCLUDE),
             recipient_id: carried.person?.id ?? null,
+            // Who it is for, so the server starts from the same seed (DeckSeeds).
+            relationship: carried.relationship,
+            for_me: carried.forMe,
         })
             .then(({ cards }) => {
                 const fresh = cards.filter((c) => !seen.current.includes(c.id))

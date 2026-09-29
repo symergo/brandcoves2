@@ -12,6 +12,7 @@ use App\Models\Friendship;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Services\Gift\CarriedWho;
+use App\Services\Gift\DeckSeed;
 use App\Services\Gift\GiftFeedback;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\GiftResults;
@@ -74,10 +75,20 @@ class TasteController extends Controller
             canonical: url($current->url('gift/taste')),
         );
 
+        $who = app(CarriedWho::class);
+        $carried = $who->read($request, $current);
+
         return Inertia::render('Gift/Taste', [
             ...$this->giverPage($request, $current),
-            'carried' => app(CarriedWho::class)->read($request, $current),
-            'rounds' => $this->firstRounds($deck, $current),
+            'carried' => $carried,
+            // The first rounds open on what is known about who it is for (DeckSeeds).
+            'rounds' => $this->firstRounds($deck, $current, $who->seed(
+                $request,
+                $current,
+                $carried['person']['id'] ?? null,
+                $carried['relationship'],
+                $carried['forMe'],
+            )),
             'result' => null,
         ]);
     }
@@ -90,9 +101,21 @@ class TasteController extends Controller
             'exclude' => ['array', 'max:60'],
             'exclude.*' => ['integer'],
             'from' => ['required', 'integer', 'min:0', 'max:'.TasteDeck::ROUNDS],
+            // Who it is for, as the page was opened with (CarriedWho), so the
+            // next batch starts from the same seed. Absent on the other doors.
+            'recipient_id' => ['nullable', 'uuid'],
+            'relationship' => ['nullable', 'string', Rule::in(RecipientType::values())],
+            'for' => ['nullable', 'string', 'in:someone,me'],
         ]);
 
         $choices = $reader->read($validated['choices'], $current->get());
+        $seed = app(CarriedWho::class)->seed(
+            $request,
+            $current,
+            $validated['recipient_id'] ?? null,
+            $validated['relationship'] ?? null,
+            ($validated['for'] ?? null) === 'me',
+        );
 
         $exclude = array_values(array_unique([
             ...array_map('intval', $validated['exclude'] ?? []),
@@ -100,7 +123,7 @@ class TasteController extends Controller
         ]));
 
         return response()->json([
-            'rounds' => $this->present($deck->next($current->get(), $choices, $exclude, (int) $validated['from'])),
+            'rounds' => $this->present($deck->next($current->get(), $choices, $exclude, (int) $validated['from'], TasteDeck::BATCH, $seed)),
         ]);
     }
 
@@ -522,9 +545,9 @@ class TasteController extends Controller
     }
 
     /** @return list<list<array<string, mixed>>> */
-    protected function firstRounds(TasteDeck $deck, CurrentMarket $current): array
+    protected function firstRounds(TasteDeck $deck, CurrentMarket $current, ?DeckSeed $seed = null): array
     {
-        return $this->present($deck->next($current->get(), [], [], 0));
+        return $this->present($deck->next($current->get(), [], [], 0, TasteDeck::BATCH, $seed));
     }
 
     /**

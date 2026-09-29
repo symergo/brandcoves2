@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Services\Gift\DeckSeed;
 use App\Services\Gift\SwipeDeck;
 use App\Services\Gift\TasteCard;
 use App\Services\Gift\TasteDeck;
@@ -103,6 +104,46 @@ class SwipeDeckTest extends TestCase
         $scores = SwipeDeck::scores([$this->card('coffee')], [$this->card('coffee')]);
 
         $this->assertSame(0.5, $scores['coffee']);
+    }
+
+    #[Test]
+    public function a_known_interest_is_followed_from_the_first_card(): void
+    {
+        // What is known about somebody counts as one like before any swipe (2026-09-29).
+        $cards = $this->deck()->compose($this->pool(), [], [], 3, new DeckSeed(known: ['coffee']));
+
+        $this->assertSame(['coffee', 'coffee'], [$cards[0]->interests()[0], $cards[1]->interests()[0]]);
+        $this->assertNotSame('coffee', $cards[2]->interests()[0]);
+    }
+
+    #[Test]
+    public function a_typical_interest_is_only_explored_first(): void
+    {
+        // "Mother: gardening" is a stereotype: shown first, not followed.
+        $cards = $this->deck()->compose($this->pool(), [], [], 2, new DeckSeed(explore: ['gardening']));
+
+        $this->assertSame('gardening', $cards[0]->interests()[0]);
+        $this->assertNotSame('gardening', $cards[1]->interests()[0]);
+    }
+
+    #[Test]
+    public function what_a_seed_rules_out_never_comes(): void
+    {
+        $pool = [
+            ...$this->pool(),
+            new TasteCard(9001, ['interest:reading', 'age:0-2'], [], 3000),
+            new TasteCard(9002, ['interest:reading', 'recipient:child'], [], 3000),
+        ];
+
+        $ids = array_map(
+            fn (TasteCard $c) => $c->id,
+            $this->deck()->compose($pool, [], [], 60, new DeckSeed(avoid: ['drinks', 'gaming'], ageBand: '30-49', recipient: 'mother')),
+        );
+        $interests = $this->interests($this->deck()->compose($pool, [], [], 60, new DeckSeed(avoid: ['gaming'])));
+
+        $this->assertNotContains(9001, $ids, 'a baby toy for somebody in their forties');
+        $this->assertNotContains(9002, $ids, 'a product tagged for a child, for a mother');
+        $this->assertNotContains('gaming', $interests);
     }
 
     #[Test]

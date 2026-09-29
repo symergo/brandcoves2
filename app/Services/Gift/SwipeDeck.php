@@ -6,7 +6,6 @@ namespace App\Services\Gift;
 
 use App\Enums\Market;
 use App\Models\ProductGroup;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Which products to show next in Swipe gifts: one card at a time, right for
@@ -77,24 +76,30 @@ final class SwipeDeck
      * @param  list<int>  $yes  swiped right
      * @param  list<int>  $no  swiped left
      * @param  list<int>  $exclude  anything else already shown or queued
+     * @param  DeckSeed|null  $seed  what is known about who it is for (DeckSeeds)
      * @return list<ProductGroup>
      */
-    public function next(Market $market, array $yes, array $no, array $exclude, int $count = self::BATCH): array
+    public function next(Market $market, array $yes, array $no, array $exclude, int $count = self::BATCH, ?DeckSeed $seed = null): array
     {
+        $seed ??= DeckSeed::none();
         $judged = $this->cards($market, [...$yes, ...$no]);
         $liked = array_values(array_filter(array_map(fn (int $id) => $judged[$id] ?? null, $yes)));
         $passed = array_values(array_filter(array_map(fn (int $id) => $judged[$id] ?? null, $no)));
 
         $skip = array_values(array_unique([...$exclude, ...$yes, ...$no]));
-        $leaders = self::leaders(self::scores($liked, $passed));
+        $leaders = self::leaders(self::scores($liked, $passed, $seed));
+
+        // The favourites, and before the first like the seed's interests: a
+        // random 160 may hold two cards of a given interest.
+        $topUp = $leaders !== [] ? $leaders : array_slice($seed->hints(), 0, self::LEADERS);
 
         $pool = [];
 
-        foreach ([...$this->favourites($market, $leaders, $skip), ...$this->deck->draw($market, $skip)] as $card) {
+        foreach ([...$this->deck->drawCarrying($market, $topUp, $skip, self::TOP_UP), ...$this->deck->draw($market, $skip)] as $card) {
             $pool[$card->id] ??= $card;
         }
 
-        $picked = $this->compose(array_values($pool), $liked, $passed, $count);
+        $picked = $this->compose(array_values($pool), $liked, $passed, $count, $seed);
 
         /*
          * Only the products shown are loaded, with the columns a card prints,
@@ -118,17 +123,27 @@ final class SwipeDeck
      * The pool's order is the tie-breaker, and it arrives shuffled, so the
      * deck is random where the rules leave a choice and fixed in a test.
      *
+     * With a seed (2026-09-29): its known interests count as liked from the
+     * first card, so they are followed at once; its typical interests are
+     * explored first; what it rules out never comes.
+     *
      * @param  list<TasteCard>  $pool
      * @param  list<TasteCard>  $liked
      * @param  list<TasteCard>  $passed
      * @return list<TasteCard>
      */
-    public function compose(array $pool, array $liked, array $passed, int $count): array
+    public function compose(array $pool, array $liked, array $passed, int $count, ?DeckSeed $seed = null): array
     {
-        $scores = self::scores($liked, $passed);
+        $seed ??= DeckSeed::none();
+        $pool = $seed->filter($pool);
+        $scores = self::scores($liked, $passed, $seed);
         $leaders = self::leaders($scores);
-        $avoid = array_keys(array_filter($scores, fn (float $s) => $s <= self::AVOID_AT));
+        $avoid = array_values(array_unique([
+            ...array_map('strval', array_keys(array_filter($scores, fn (float $s) => $s <= self::AVOID_AT))),
+            ...$seed->avoid,
+        ]));
         $price = self::pricePoint($liked);
+        $firstLook = $seed->explore;
 
         // How often each interest has been in front of the visitor, this batch included.
         $seen = [];
@@ -156,7 +171,7 @@ final class SwipeDeck
                 $followed++;
             }
 
-            $card ??= $this->exploring($pool, $seen);
+            $card ??= $this->exploring($pool, $seen, $firstLook);
 
             $out[] = $card;
             $pool = array_values(array_filter($pool, fn (TasteCard $c) => $c->id !== $card->id));
@@ -174,9 +189,14 @@ final class SwipeDeck
      * @param  list<TasteCard>  $passed
      * @return array<string, float>
      */
-    public static function scores(array $liked, array $passed): array
+    public static function scores(array $liked, array $passed, ?DeckSeed $seed = null): array
     {
         $scores = [];
+
+        // What is known counts as one like, before any swipe.
+        foreach ($seed?->known ?? [] as $interest) {
+            $scores[$interest] = ($scores[$interest] ?? 0.0) + 1.0;
+        }
 
         foreach ($liked as $card) {
             foreach ($card->values(GiftTags::INTEREST) as $interest => $weight) {
@@ -244,19 +264,24 @@ final class SwipeDeck
 
     /**
      * The card whose least-seen interest has been seen least. A card with no
-     * interest at all comes last: it teaches nothing.
+     * interest at all comes last: it teaches nothing. Among equally unseen
+     * interests, one typical of who it is for comes first (`$firstLook`).
      *
      * @param  list<TasteCard>  $pool
      * @param  array<string, int>  $seen
+     * @param  list<string>  $firstLook
      */
-    private function exploring(array $pool, array $seen): TasteCard
+    private function exploring(array $pool, array $seen, array $firstLook = []): TasteCard
     {
         $best = $pool[0];
         $bestKey = PHP_INT_MAX;
 
         foreach ($pool as $card) {
             $interests = $card->interests();
-            $key = $interests === [] ? PHP_INT_MAX - 1 : min(array_map(fn (string $i) => $seen[$i] ?? 0, $interests));
+            $key = $interests === [] ? PHP_INT_MAX - 1 : min(array_map(
+                fn (string $i) => ($seen[$i] ?? 0) * 2 + (in_array($i, $firstLook, true) ? 0 : 1),
+                $interests,
+            ));
 
             if ($key < $bestKey) {
                 $best = $card;
@@ -285,44 +310,5 @@ final class SwipeDeck
             ->get(['id', 'title', 'category', 'min_price', 'gift_tags', 'crowd_tags'])
             ->mapWithKeys(fn (ProductGroup $g) => [(int) $g->id => TasteCard::fromGroup($g)])
             ->all();
-    }
-
-    /**
-     * A random few products per favourite interest, read through the tag
-     * indexes (`??|` is the `?|` operator, see SuggestionEngine).
-     *
-     * @param  list<string>  $leaders
-     * @param  list<int>  $skip
-     * @return list<TasteCard>
-     */
-    private function favourites(Market $market, array $leaders, array $skip): array
-    {
-        $cards = [];
-
-        foreach ($leaders as $interest) {
-            $tag = '{"'.GiftTags::interest($interest).'"}';
-
-            $ids = DB::table('product_groups')->select('id')->where('market', $market->value)->whereRaw('gift_tags ??| ?::text[]', [$tag])
-                ->union(DB::table('product_groups')->select('id')->where('market', $market->value)->whereRaw('crowd_tags ??| ?::text[]', [$tag]));
-
-            $query = ProductGroup::query()
-                ->forMarket($market)
-                ->giftable()
-                ->presentable()
-                ->whereBetween('min_price', [(int) config('giftcoves.gift.min_price'), (int) config('giftcoves.gift.max_price')])
-                ->whereIn('id', $ids);
-
-            if ($skip !== []) {
-                $query->whereNotIn('id', $skip);
-            }
-
-            foreach ($query->inRandomOrder()->limit(self::TOP_UP)->get(['id', 'title', 'category', 'min_price', 'gift_tags', 'crowd_tags']) as $group) {
-                $cards[] = TasteCard::fromGroup($group);
-            }
-        }
-
-        shuffle($cards);
-
-        return $cards;
     }
 }

@@ -241,6 +241,10 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
             choices,
             exclude: queue.flat().map((card) => card.id),
             from: queue.length,
+            // Who it is for, so the server starts from the same seed (DeckSeeds).
+            recipient_id: person,
+            relationship,
+            for: forWhom ?? 'someone',
         })
             .then(({ rounds: more }) => {
                 if (more.length === 0) {
@@ -251,7 +255,7 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
             })
             .catch(() => setExhausted(true))
             .finally(() => setFetching(false))
-    }, [forWhom, fetching, exhausted, queue, index, total, choices, urls.next])
+    }, [forWhom, fetching, exhausted, queue, index, total, choices, urls.next, person, relationship])
 
     // Out of rounds: the result, from whatever was answered.
     useEffect(() => {
