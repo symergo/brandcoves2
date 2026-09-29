@@ -2531,7 +2531,6 @@ return [
     // at the top of Find a gift. The field's placeholder is home.search_placeholder.
     'search_card' => [
         'title' => 'Search for a gift',
-        'hint' => 'A product, a brand, or the barcode of something in your hand.',
     ],
 
     'og' => [

@@ -66,7 +66,7 @@ export default function SearchCard({ className = '' }: { className?: string }) {
             <h2 id="search-card-heading" className="text-lg font-medium">
                 {t('search_card.title')}
             </h2>
-            <p className="mt-1 text-sm text-ink-soft">{t('search_card.hint')}</p>
+            {/* No line under the title (owner, 2026-09-29); the placeholder says what to type. */}
 
             <form
                 action={`${base}/search`}

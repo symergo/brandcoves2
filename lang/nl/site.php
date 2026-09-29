@@ -2279,7 +2279,6 @@ return [
     // at the top of Find a gift. The field's placeholder is home.search_placeholder.
     'search_card' => [
         'title' => 'Zoek een cadeau',
-        'hint' => 'Een product, een merk, of de streepjescode van iets dat je vasthoudt.',
     ],
 
     'og' => [
