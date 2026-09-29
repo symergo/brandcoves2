@@ -76,29 +76,37 @@ function Shelf({ cards }: { cards: Persona[] }) {
     const { t, n } = useTranslations()
 
     return (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((persona) => (
-                <li key={persona.url} className="flex flex-col rounded-card border border-line bg-card p-4">
+                <li key={persona.url}>
                     {/*
-                      The drawing takes the card's text colour, so the
-                      whole card changes together on hover — that is what
-                      `currentColor` throughout the scene buys, and it is
-                      why these survive a palette change without being
-                      redrawn.
+                      Compact since 2026-09-29 (owner): a small drawing beside
+                      the words instead of a wide one above them, two lines of
+                      blurb, so a screen holds three times the cards.
+
+                      The whole card is the link. The drawing takes the card's
+                      text colour, so it changes with the title on hover; that
+                      is what `currentColor` throughout the scene buys.
                     */}
-                    <Link href={persona.url} className="group text-ink hover:text-accent">
+                    <Link
+                        href={persona.url}
+                        className="group flex h-full items-start gap-3 rounded-card border border-line bg-card p-3 text-ink hover:border-accent/40"
+                    >
                         <SceneIllustration
                             name={persona.scene}
-                            className="h-28 w-full text-ink-soft transition group-hover:text-accent"
+                            className="h-16 w-16 shrink-0 text-ink-soft transition group-hover:text-accent"
                         />
-                        <h3 className="mt-3 font-medium group-hover:underline">{persona.title}</h3>
+                        <span className="min-w-0">
+                            <h3 className="font-medium group-hover:text-accent group-hover:underline">{persona.title}</h3>
+                            {persona.blurb && (
+                                // No `block` here: it would override line-clamp's own display and show every line.
+                                <span className="mt-0.5 line-clamp-2 text-sm text-ink-soft">{persona.blurb}</span>
+                            )}
+                            <span className="mt-1 block text-xs text-ink-soft">
+                                {t('gift_ideas.find_count', { count: n(persona.findCount) })}
+                            </span>
+                        </span>
                     </Link>
-
-                    {persona.blurb && <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{persona.blurb}</p>}
-
-                    <p className="mt-auto pt-4 text-xs text-ink-soft">
-                        {t('gift_ideas.find_count', { count: n(persona.findCount) })}
-                    </p>
                 </li>
             ))}
         </ul>
