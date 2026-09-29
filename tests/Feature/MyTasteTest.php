@@ -190,6 +190,45 @@ class MyTasteTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('urls.mine', '/be-nl/my-taste/learn'));
     }
 
+    #[Test]
+    public function swipes_for_yourself_teach_interests_and_a_vibe(): void
+    {
+        /*
+         * "Include results from swiping and vibe" (owner, 2026-09-29): Swipe
+         * gifts sends each swipe as a one-card choice.
+         */
+        $user = User::factory()->create();
+        $swipes = [];
+
+        foreach (range(1, 3) as $i) {
+            $swipes[] = ['shown' => [$this->product('cooking', ['vibe:playful'])->id], 'verdict' => 'like'];
+        }
+
+        foreach (range(1, 2) as $i) {
+            $swipes[] = ['shown' => [$this->product('gaming')->id], 'verdict' => 'dislike'];
+        }
+
+        $this->actingAs($user)->postJson('/be-nl/my-taste/learn', ['choices' => $swipes])->assertOk();
+
+        $taste = UserTaste::query()->findOrFail($user->id);
+        $this->assertContains('cooking', $taste->interests);
+        $this->assertSame('playful', $taste->vibe);
+        $this->assertContains('interest:gaming', $taste->avoid);
+    }
+
+    #[Test]
+    public function the_swipe_page_feeds_my_taste_only_for_yourself_signed_in(): void
+    {
+        $this->get('/be-nl/gift/swipe?for=me')->assertInertia(fn ($page) => $page->where('urls.mine', null));
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/be-nl/gift/swipe')->assertInertia(fn ($page) => $page->where('urls.mine', null));
+        $this->actingAs($user)
+            ->get('/be-nl/gift/swipe?for=me')
+            ->assertInertia(fn ($page) => $page->where('urls.mine', '/be-nl/my-taste/learn'));
+    }
+
     /**
      * A giver with a saved person linked to another account (as "Dit ben ik"
      * leaves it), who noted cooking, parfum to avoid and a budget of 50.
@@ -218,10 +257,11 @@ class MyTasteTest extends TestCase
         return [$giver, $friend, $saved];
     }
 
-    private function product(string $interest): ProductGroup
+    /** @param  list<string>  $more */
+    private function product(string $interest, array $more = []): ProductGroup
     {
         return ProductGroup::factory()->forMarket(Market::BeNl)->priced(3000)->create([
-            'gift_tags' => ["interest:{$interest}"],
+            'gift_tags' => ["interest:{$interest}", ...$more],
             'title' => 'Product '.Str::random(6),
         ]);
     }

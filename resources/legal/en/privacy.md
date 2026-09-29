@@ -242,8 +242,9 @@ safeguards above.
   measurement of whether one of our advertisements led to a visit, which counts
   the visit and builds no audience from it.
 - **No profile building.** We do not construct an interest profile from your
-  browsing and we do not sell one. My taste is written by you, or kept by you
-  from a This or that you played, never filled in by us.
+  browsing and we do not sell one. My taste is written by you, or learned from
+  a This or that you kept or from swiping for yourself while signed in (the page says so), never
+  filled in by us from anything else.
 - **No selling data.** Not to shops, not to networks, not to anyone.
 
 ## How long we keep it

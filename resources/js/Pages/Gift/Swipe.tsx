@@ -27,7 +27,7 @@ interface Props {
     /** Who "Find a gift" said this is for; see App\Services\Gift\CarriedWho. */
     carried: { person: { id: string; name: string } | null; relationship: string | null; forMe: boolean }
     cards: Card[]
-    urls: { next: string; finder: string }
+    urls: { next: string; finder: string; mine?: string | null }
 }
 
 interface SaveResult {
@@ -38,6 +38,9 @@ interface SaveResult {
     messageTemplate?: string
     message: string
 }
+
+/** Swipes for yourself are kept in "Mijn smaak" every this many, and on Stop. */
+const KEEP_EVERY = 10
 
 /** Ask for more while this many cards are still waiting, so the next is ready. */
 const LOW_WATER = 3
@@ -171,9 +174,29 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
             })
     }
 
+    /*
+     * Swiping for yourself, signed in: the swipes also go to "Mijn smaak"
+     * (owner, 2026-09-29), as one-card choices, so the interests, the vibe and
+     * the taste poles they show are kept (MyTasteController::learn). Every
+     * KEEP_EVERY swipes and on Stop, the latest hundred each time: the server
+     * merges, so sending one again adds nothing twice, and a closed tab loses
+     * at most the last few.
+     */
+    const swipes = useRef<{ shown: number[]; verdict: 'like' | 'dislike' }[]>([])
+    const keepInMine = (): Promise<unknown> =>
+        urls.mine && swipes.current.length >= KEEP_EVERY
+            ? send(urls.mine, 'POST', { choices: swipes.current.slice(-100) }).catch(() => undefined)
+            : Promise.resolve()
+
     const verdict = (value: 'yes' | 'no') => {
         if (!current) {
             return
+        }
+
+        swipes.current = [...swipes.current, { shown: [current.id], verdict: value === 'yes' ? 'like' : 'dislike' }]
+
+        if (swipes.current.length % KEEP_EVERY === 0) {
+            void keepInMine()
         }
 
         if (value === 'yes') {
@@ -196,6 +219,8 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
      * something stays, to save what they chose.
      */
     const stop = () => {
+        void keepInMine()
+
         if (stopped) {
             router.visit(urls.finder)
         } else if (list) {
@@ -252,7 +277,11 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
                 icon="swipe"
                 title={t('gift.swipe.title')}
                 // For whom and how many; the labelled buttons below say what to do.
-                subtitle={[who ? t('gift.for_label', { who }) : null, count].filter(Boolean).join(' · ') || null}
+                subtitle={
+                    [who ? t('gift.for_label', { who }) : null, count, urls.mine ? t('gift.swipe.to_my_taste') : null]
+                        .filter(Boolean)
+                        .join(' · ') || null
+                }
                 onClose={stop}
                 closeLabel={t('gift.swipe.stop')}
                 aside={

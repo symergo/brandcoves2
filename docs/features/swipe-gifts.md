@@ -59,7 +59,8 @@ button, so the toast, its Undo and the saved state on other cards are the site's
   filled, else the server's default list).
 
 The swipes themselves are only in the page's state, as in This or that: a half-finished session is
-not worth a row.
+not worth a row. The one exception is swiping for yourself while signed in: then the swipes also go
+to "Mijn smaak", which keeps the taste they show, vibe included ([my-taste.md](my-taste.md)).
 
 ## What a swipe teaches (`SwipeDeck`)
 

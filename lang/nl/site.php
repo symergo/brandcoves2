@@ -1531,6 +1531,7 @@ return [
             'to_list' => 'Naar de lijst',
             'save_failed' => 'Dat kon niet op de lijst. Probeer het nog eens.',
             'card_label' => ':title. Naar rechts zet het op de lijst, naar links slaat over.',
+            'to_my_taste' => 'ook naar Mijn smaak',
         ],
         'taste' => [
             'title' => 'Dit of dat',
@@ -2417,7 +2418,7 @@ return [
         'find_taste' => 'Weet je niet goed wat iemand leuk vindt? In Dit of dat kies je een tiental keer tussen twee producten. Zo vinden we hun smaak en een budget, tonen we ideeën, en kun je het resultaat bij een persoon bewaren.',
         'find_taste_together' => 'Weet je niet goed wat iemand leuk vindt, en de anderen ook niet? Maak op de lijst voor die persoon een Dit of dat-link en stuur hem rond. Iedereen speelt over die persoon zonder account, en jij ziet hoeveel mensen speelden en wat ze samen vonden, nooit wie wat koos. Met één druk voeg je het toe aan die persoon.',
         'find_taste_card' => 'Dit of dat voor jezelf gespeeld? Maak een cadeauprofielkaart, zoals "koffie, wandelen, ongeveer €30 tot €60", en stuur de link naar wie een cadeau voor je koopt. Die opent Cadeau vinden met jouw smaak al ingevuld. Geen naam tenzij je er een typt, en je kunt hem altijd verwijderen.',
-        'find_my_taste' => 'Onder Mijn smaak in je accountmenu bewaar je wat je graag krijgt: interesses, hoe het mag voelen, waar je waarde aan hecht, wat je liever niet hebt en je leeftijd. Vul het in, of speel Dit of dat voor jezelf en bewaar het resultaat. Vrienden op GiftCoves die een cadeau voor je zoeken beginnen ermee, en Voor mezelf in Cadeau vinden ook. Er staat geen budget in: wat iemand uitgeeft, kiest die zelf.',
+        'find_my_taste' => 'Onder Mijn smaak in je accountmenu bewaar je wat je graag krijgt: interesses, hoe het mag voelen, waar je waarde aan hecht, wat je liever niet hebt en je leeftijd. Vul het in, speel Dit of dat voor jezelf en bewaar het resultaat, of swipe door cadeaus voor jezelf: wat je kiest, ook hoe het mag voelen, komt er vanzelf bij. Vrienden op GiftCoves die een cadeau voor je zoeken beginnen ermee, en Voor mezelf in Cadeau vinden ook. Er staat geen budget in: wat iemand uitgeeft, kiest die zelf.',
         'find_offline_ideas' => 'Onder de ideeën van Cadeau vinden en Dit of dat zie je soms Ideeën zonder winkel: dingen die veel verschillende mensen zelf op hun lijst schreven, zoals een workshop of een dagje uit. We tonen er pas een nadat we het zelf nalazen, nooit wie het schreef, en Bewaren zet het als offline artikel op je lijst.',
         'find_personas' => 'Een pagina met cadeaus voor een type persoon (de thuiskok, wie alles al heeft) heeft onder de gekozen producten ook tabbladen rond 15, 40 en 100 euro. Voor wie alles al heeft zoeken we dingen die opgaan of die je doet, zoals een proeverij, een workshop of een navulling; typ "die alles al heeft" in het zoekvak en we zoeken ook zo. Onderaan staat een top 10 van de week: wat binnen dat thema het meest gekocht en gewenst wordt, elke maandag opnieuw berekend. Naast de types staan pagina\'s per gelegenheid, zoals Moederdag, een housewarming of een pensioen, met dezelfde opbouw.',
         'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeaus per persoon, en koopgidsen.',

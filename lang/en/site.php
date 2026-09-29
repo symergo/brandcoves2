@@ -1729,6 +1729,7 @@ return [
             'to_list' => 'Go to the list',
             'save_failed' => 'That could not go on the list. Try again.',
             'card_label' => ':title. Right puts it on the list, left passes.',
+            'to_my_taste' => 'also to My taste',
         ],
         'taste' => [
             'title' => 'This or that',
@@ -2673,7 +2674,7 @@ return [
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
         'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens Find a gift with your taste filled in. No name unless you type one, and you can remove it any time.',
-        'find_my_taste' => 'Under My taste in your account menu you keep what you like to get: interests, the feel you like, what matters to you, what to avoid and your age. Fill it in, or play This or that for yourself and keep the result. Friends on GiftCoves who look for a gift for you start from it, and so does For myself in Find a gift. There is no budget in it: what somebody spends is their choice.',
+        'find_my_taste' => 'Under My taste in your account menu you keep what you like to get: interests, the feel you like, what matters to you, what to avoid and your age. Fill it in, play This or that for yourself and keep the result, or swipe through gifts for yourself: what you choose, the feel included, is added by itself. Friends on GiftCoves who look for a gift for you start from it, and so does For myself in Find a gift. There is no budget in it: what somebody spends is their choice.',
         'find_offline_ideas' => 'Under Find a gift\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Save puts it on your list as an offline item.',
         'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too. At the bottom is a top 10 of the week: what is most bought and wanted in that theme, worked out again every Monday. Beside the types are pages per occasion, such as Mother\'s Day, a housewarming or a retirement, built the same way.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',

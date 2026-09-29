@@ -1525,6 +1525,7 @@ return [
             'to_list' => 'Ir a la lista',
             'save_failed' => 'No se pudo añadir a la lista. Inténtalo de nuevo.',
             'card_label' => ':title. A la derecha a la lista, a la izquierda para pasar.',
+            'to_my_taste' => 'también a Mis gustos',
         ],
         'taste' => [
             'title' => 'Esto o aquello',
@@ -2402,7 +2403,7 @@ return [
         'find_taste' => '¿No sabes qué le gusta a alguien? En Esto o aquello eliges una docena de veces entre dos productos. Averiguamos sus gustos y un presupuesto, te mostramos ideas y puedes guardar el resultado en una persona.',
         'find_taste_together' => '¿No sabes qué le gusta a alguien, y los demás tampoco? En la lista para esa persona, crea un enlace de Esto o aquello y compártelo. Cada uno juega sobre esa persona sin cuenta, y tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué. Añádelo a la persona con un solo clic.',
         'find_taste_card' => '¿Has jugado a Esto o aquello para ti? Crea una tarjeta de perfil de regalo, como «café, senderismo, entre 30 € y 60 €», y envía su enlace a quien te hace regalos. Abre «Encontrar un regalo» con tus gustos ya rellenados. Sin nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',
-        'find_my_taste' => 'En Mis gustos, en el menú de tu cuenta, guardas lo que te gusta recibir: intereses, cómo debe sentirse, lo que es importante para ti, lo que evitar y tu edad. Rellénalo, o juega a Esto o aquello para ti y guarda el resultado. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí, igual que Para mí en Buscar un regalo. No lleva presupuesto: lo que alguien gasta lo elige esa persona.',
+        'find_my_taste' => 'En Mis gustos, en el menú de tu cuenta, guardas lo que te gusta recibir: intereses, cómo debe sentirse, lo que es importante para ti, lo que evitar y tu edad. Rellénalo, juega a Esto o aquello para ti y guarda el resultado, o desliza entre regalos para ti: lo que eliges, también cómo debe sentirse, se añade solo. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí, igual que Para mí en Buscar un regalo. No lleva presupuesto: lo que alguien gasta lo elige esa persona.',
         'find_offline_ideas' => 'Debajo de las ideas de «Encontrar un regalo» y de Esto o aquello verás a veces Ideas sin tienda: cosas que muchas personas distintas apuntaron a mano en sus listas, como un taller o una salida. Solo mostramos una después de revisarla, nunca quién la escribió, y Guardar la pone en tu lista como artículo offline.',
         'find_personas' => 'Una idea de regalo sobre un tipo de persona (quien cocina en casa, quien lo tiene todo) tiene también pestañas de unos 15, 40 y 100 euros bajo sus productos elegidos. Para quien lo tiene todo buscamos cosas que se gastan o se viven, como una cata, un taller o una recarga; escribe «que lo tiene todo» en el buscador y buscamos así también. Al final hay un top 10 de la semana: lo que más se compra y se desea en ese tema, recalculado cada lunes. Junto a los tipos hay páginas por ocasión, como el Día de la Madre, una inauguración de casa o una jubilación, con la misma estructura.',
         'find_browse' => 'Explora las Coves: una nueva cada día, ideas de regalo por persona y guías de compra.',

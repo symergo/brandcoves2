@@ -27,13 +27,20 @@ What somebody spends is decided in their own search; the budget step stays their
 One row per account in `user_tastes`; a taste that says nothing leaves no row, and clearing it is
 how you withdraw the consent the privacy policy names. Deleting the account deletes it (cascade).
 
-## Two ways to fill it
+## Three ways to fill it
 
 - **Fill it in** on the page.
 - **Play This or that for yourself** and press "Keep in My taste" on the result (`POST
   /my-taste/learn`). As with every saved This or that result, the page sends its choices and the
   taste is worked out on the server from the catalogue, then merged into what you already said
   (`TasteProfile::mergedWith`). The age is left alone.
+- **Swipe for yourself, signed in** (owner, the same day: "include results from swiping and
+  vibe"). Swipe gifts sends its swipes to the same endpoint as one-card choices, right a like and
+  left a dislike, every ten swipes and on Stop, the latest hundred each time (hence the endpoint's
+  cap of 100). The profiler reads interests, **the vibe** and taste poles from them as from This or
+  that's single cards: a vibe counts only when it clearly leads, and an interest passed on twice
+  lands under "rather not". Merging makes a resend harmless. The popup says so in its top bar
+  ("also to My taste"), and only then: for somebody else, or signed out, nothing is kept.
 
 ## Who reads it (`OwnTaste`)
 
@@ -63,7 +70,5 @@ how you withdraw the consent the privacy policy names. Deleting the account dele
 
 ## Not done
 
-- Swipe gifts does not feed it: its swipes teach only within the session. The open Denk mee idea
-  "Swipe wat je zelf leuk vindt" asks for exactly that.
 - The gift profile card still exists beside it; it is the thing you hand to somebody who is not
   your friend on GiftCoves.

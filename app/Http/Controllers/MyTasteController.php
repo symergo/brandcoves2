@@ -95,11 +95,18 @@ class MyTasteController extends Controller
      * catalogue, as every other save of a This or that result is: a posted
      * profile would be whatever the page said. What was learned is merged into
      * what you already said (TasteProfile::mergedWith); the age is left alone.
+     *
+     * Swipe gifts, played for yourself, sends its swipes here too (owner,
+     * 2026-09-29: "include results from swiping and vibe"): each swipe is a
+     * one-card choice, right a like and left a dislike, so the profiler reads
+     * interests, the vibe and taste poles from them as it does from This or
+     * that's single cards. Hence the higher cap: a swipe session has no end,
+     * and the page sends its latest hundred.
      */
     public function learn(Request $request, CurrentMarket $current, TasteChoiceReader $reader): JsonResponse
     {
         $validated = $request->validate([
-            'choices' => ['required', 'array', 'max:24'],
+            'choices' => ['required', 'array', 'max:100'],
             'choices.*.shown' => ['required', 'array', 'min:1', 'max:2'],
             'choices.*.shown.*' => ['integer'],
             'choices.*.picked' => ['nullable', 'integer'],

@@ -251,8 +251,9 @@ Staten verwerkt, onder de waarborgen hierboven.
   Googles meting of een van onze advertenties tot een bezoek leidde, die dat
   bezoek telt en er geen publiek uit opbouwt.
 - **Geen profielopbouw.** We bouwen geen interesseprofiel uit je surfgedrag en
-  verkopen er ook geen. Mijn smaak schrijf je zelf, of bewaar je zelf uit een
-  Dit of dat die je speelde; wij vullen het nooit in.
+  verkopen er ook geen. Mijn smaak schrijf je zelf, of leren we uit een
+  Dit of dat die je bewaarde of uit swipen voor jezelf terwijl je ingelogd bent (de pagina zegt
+  het); uit niets anders.
 - **Geen gegevens verkopen.** Niet aan winkels, niet aan netwerken, aan niemand.
 
 ## Hoe lang we het bewaren

@@ -101,8 +101,10 @@ return [
 
     // Owner, 2026-09-27: a "Tinder style" swipe for yourself, with no end, that
     // builds a long wish list and drives what others are suggested for you.
+    // Done 2026-09-29: Swipe gifts puts the yeses on your list, and swiping for
+    // yourself feeds My taste, which friends' searches for you start from.
     'swipe-for-yourself' => [
-        'status' => 'considering',
+        'status' => 'done',
         'sort' => 50,
         'nl' => [
             'title' => 'Swipe wat je zelf leuk vindt',
@@ -282,9 +284,7 @@ return [
             'body' => 'Junto a los regalos por tipo hay ahora una fila por ocasión: el Día de la Madre, un cumpleaños, una inauguración de casa, una jubilación. Cada página tiene productos elegidos y comentados, pestañas por presupuesto y un top 10 de la semana.',
         ],
     ],
-    // The swiping half of 'swipe-for-yourself' above. Its other half (people
-    // looking for a gift for you get ideas like what you swiped) is not built,
-    // so that idea stays open.
+    // The swiping half of 'swipe-for-yourself' above; My taste is the other.
     'swipe-gifts' => [
         'status' => 'done',
         'sort' => 95,
