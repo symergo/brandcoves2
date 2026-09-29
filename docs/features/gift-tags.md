@@ -30,7 +30,7 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 |---|---|---|
 | `interest` | the thirty-nine wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses; then hunting, the first value proposed by the tagging pass itself; then gadgets and IT, split off from `tech`, which was carrying a clever little thing, a computer and everything else with a plug all at once) | `App\Enums\Interest` |
 | `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
-| `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
+| `recipient` | partner, mother, father, colleague; grandmother, grandfather, son, daughter, brother, sister, male_friend, female_friend, female_teacher, male_teacher, male_host, female_host (no combined values since 2026-09-29) | `App\Enums\RecipientType` |
 | `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |
 | `preference` | seven axes, two poles each: practical/design, modern/vintage, minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky | `App\Enums\Preference` |
@@ -58,6 +58,10 @@ already covered it (`recipient:baby`, which `age:0-2` says better).
 than a fact, and where a product genuinely is gendered (a razor, a dress) its title says so and
 search finds it. If a market ever needs it, it would be a separate `audience` vocabulary, not a
 split of `recipient`.
+
+*Overturned 2026-09-29:* the owner split the relations by gender (oma/opa, zoon/dochter, vriend/vriendin,
+broer/zus, juf/meester, gastheer/gastvrouw) and removed the combined values. See
+[relations-by-gender.md](relations-by-gender.md). A product that suits both of a pair carries both tags.
 
 **Taste is pairs of opposites, and the pairing is the point.** Added 2026-09-14 on the owner's
 ask ("practical vs design, modern vs vintage, useful vs beautiful"). The first attempt was a flat

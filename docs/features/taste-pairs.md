@@ -1,11 +1,15 @@
 ---
-name: Taste as pairs of opposites (vibe and values removed)
+name: Taste as pairs of opposites (Handig/Leuk/Mooi and values removed)
 area: Gifting
 status: Active
 date_added: 2026-09-29
 ---
 
 # Taste as pairs of opposites
+
+> **Words, to avoid a mix-up:** to the owner "the vibe" means the pairs of opposites, and they
+> stay ("the vibe should not be removed", confirmed 2026-09-29). What was removed is the old
+> three-word question the code called `vibe` (practical / playful / beautiful).
 
 **Since 2026-09-29 a person's taste is one thing: which way it goes on the pairs of opposites**
 (Handig | Design, Modern | Vintage, Sober | Kleurrijk, Natuurlijk | Technisch, …; `App\Enums\Preference`).

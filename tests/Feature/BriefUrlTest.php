@@ -77,18 +77,18 @@ class BriefUrlTest extends TestCase
             interests: ['not-a-thing', 'gardening', 'cooking'],
             budgetMin: 3000,
             budgetMax: 5000,
-            relationship: 'sibling',
+            relationship: 'brother',
         );
 
         // The first interest the vocabulary knows goes in the path; the
         // budget is a parameter, in euros.
-        $this->assertSame('/be-nl/gift-ideas/for/broer-of-zus/tuinieren?budget=30-50', BriefUrl::forBrief($brief));
+        $this->assertSame('/be-nl/gift-ideas/for/broer/tuinieren?budget=30-50', BriefUrl::forBrief($brief));
 
         // Nobody to be for, no page.
         $this->assertNull(BriefUrl::forBrief(new TasteBrief(market: Market::BeNl, interests: ['gardening'])));
 
-        $back = BriefUrl::toBrief(Market::BeNl, RecipientType::Sibling, Interest::Gardening, '30-50');
-        $this->assertSame(['relationship' => 'sibling', 'interests' => ['gardening'], 'budgetMin' => 3000, 'budgetMax' => 5000], $back->toArray());
+        $back = BriefUrl::toBrief(Market::BeNl, RecipientType::Brother, Interest::Gardening, '30-50');
+        $this->assertSame(['relationship' => 'brother', 'interests' => ['gardening'], 'budgetMin' => 3000, 'budgetMax' => 5000], $back->toArray());
     }
 
     #[Test]
@@ -127,6 +127,6 @@ class BriefUrlTest extends TestCase
         }
 
         $this->assertSame('Gift ideas for dad who loves cooking', (new GiftLandingCopy(Market::En, RecipientType::Father, Interest::Cooking))->title());
-        $this->assertSame('Cadeaus voor je kind dat van gamen houdt', (new GiftLandingCopy(Market::BeNl, RecipientType::Child, Interest::Gaming))->heading());
+        $this->assertSame('Cadeaus voor je zoon die van gamen houdt', (new GiftLandingCopy(Market::BeNl, RecipientType::Son, Interest::Gaming))->heading());
     }
 }

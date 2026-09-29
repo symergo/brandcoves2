@@ -9,16 +9,22 @@ return [
     'triggers' => ['cadeau pour', 'cadeaux pour', 'idée cadeau pour', 'idées cadeaux pour', 'quelque chose pour', 'présent pour', 'cadeau'],
 
     'recipients' => [
-        'sibling' => ['sœur', 'soeur', 'frère', 'frere', 'petite sœur', 'petit frère'],
+        'brother' => ['frère', 'frere', 'petit frère'],
+        'sister' => ['sœur', 'soeur', 'petite sœur'],
         'mother' => ['maman', 'mère', 'mere', 'belle-mère'],
         'father' => ['papa', 'père', 'pere', 'beau-père'],
         'partner' => ['ma femme', 'mon mari', 'ma copine', 'mon copain', 'chérie', 'chéri', 'compagne', 'compagnon', 'épouse', 'époux', 'partenaire'],
-        'grandparent' => ['mamie', 'papi', 'papy', 'grand-mère', 'grand-père', 'grands-parents'],
-        'child' => ['fils', 'fille', 'enfant', 'enfants', 'bébé', 'ado', 'adolescent', 'neveu', 'nièce', 'filleul', 'filleule'],
-        'friend' => ['meilleure amie', 'meilleur ami', 'amie', 'ami', 'amis', 'voisin', 'voisine'],
+        'grandmother' => ['mamie', 'grand-mère', 'grand-mere'],
+        'grandfather' => ['papi', 'papy', 'grand-père', 'grand-pere'],
+        'son' => ['fils'],
+        'daughter' => ['fille'],
+        'male_friend' => ['meilleur ami', 'ami'],
+        'female_friend' => ['meilleure amie', 'amie'],
         'colleague' => ['collègue', 'collegue', 'patron', 'patronne', 'chef'],
-        'teacher' => ['maîtresse', 'maitresse', 'maître', 'maitre', 'professeur', 'prof', 'institutrice', 'instituteur'],
-        'host' => ['hôte', 'hôtesse', 'hotes'],
+        'female_teacher' => ['maîtresse', 'maitresse', 'institutrice'],
+        'male_teacher' => ['maître', 'maitre', 'instituteur'],
+        'male_host' => ['hôte', 'hote'],
+        'female_host' => ['hôtesse', 'hotesse'],
     ],
 
     'occasions' => [

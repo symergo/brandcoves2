@@ -44,11 +44,11 @@ class TasteBriefTest extends TestCase
     #[Test]
     public function the_array_holds_only_what_somebody_decided(): void
     {
-        $brief = new TasteBrief(market: Market::En, interests: ['gardening'], relationship: 'sibling');
+        $brief = new TasteBrief(market: Market::En, interests: ['gardening'], relationship: 'sister');
 
         // No market, limit, exclusions or empty fields: those belong to one
         // run of the engine, or to whatever holds the brief.
-        $this->assertSame(['relationship' => 'sibling', 'interests' => ['gardening']], $brief->toArray());
+        $this->assertSame(['relationship' => 'sister', 'interests' => ['gardening']], $brief->toArray());
         $this->assertFalse($brief->isEmpty());
         $this->assertTrue((new TasteBrief(market: Market::En))->isEmpty());
     }

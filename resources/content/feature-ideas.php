@@ -325,6 +325,26 @@ return [
             'body' => 'Guarda en el menú de tu cuenta lo que te gusta recibir, o juega a Esto o aquello para ti y guarda el resultado. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí. Sin presupuesto: lo que gastan lo eligen ellos.',
         ],
     ],
+    'relations-by-gender' => [
+        'status' => 'done',
+        'sort' => 97,
+        'nl' => [
+            'title' => 'Oma of opa, zoon of dochter: apart',
+            'body' => 'Kies voor wie het is zoals je het zelf zegt: oma of opa, zoon of dochter, broer of zus, vriend of vriendin, juf of meester, gastheer of gastvrouw. Elk krijgt zijn eigen ideeën en een eigen pagina met cadeaus.',
+        ],
+        'en' => [
+            'title' => 'Grandma or grandpa, son or daughter: separate',
+            'body' => 'Choose who it is for the way you would say it: grandma or grandpa, son or daughter, brother or sister, a male or female friend, teacher or host. Each gets its own ideas and its own page of gifts.',
+        ],
+        'fr' => [
+            'title' => 'Mamie ou papi, fils ou fille : séparés',
+            'body' => "Choisissez pour qui c'est comme vous le diriez : mamie ou papi, fils ou fille, frère ou sœur, ami ou amie, maîtresse ou maître, hôte ou hôtesse. Chacun a ses propres idées et sa propre page de cadeaux.",
+        ],
+        'es' => [
+            'title' => 'Abuela o abuelo, hijo o hija: por separado',
+            'body' => 'Elige para quién es como lo dirías tú: abuela o abuelo, hijo o hija, hermano o hermana, amigo o amiga, profesora o profesor, anfitrión o anfitriona. Cada uno tiene sus propias ideas y su propia página de regalos.',
+        ],
+    ],
     'find-a-gift-for-myself' => [
         'status' => 'done',
         'sort' => 90,

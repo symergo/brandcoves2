@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecipientType;
 use App\Models\CommunityQuestion;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
@@ -245,6 +246,9 @@ class DiscoverCoveController extends Controller
                 ->forMarket($current->get())
                 ->whereNull('interest')
                 ->orderByDesc('product_count')
+                // Ties in the chips' own order (partner, mama, papa, oma, ...),
+                // so the row does not reshuffle between two equal counts.
+                ->orderByRaw('array_position(?::text[], recipient::text)', ['{'.implode(',', RecipientType::values()).'}'])
                 ->limit(self::FOR_WHOM)
                 ->get(['recipient', 'path'])
                 ->map(fn (GiftLanding $page) => [

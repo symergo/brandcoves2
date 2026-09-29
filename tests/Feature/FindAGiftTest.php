@@ -106,7 +106,10 @@ class FindAGiftTest extends TestCase
                 ->where('tasteUrl', '/be-nl/gift/taste')
                 // The closed vocabulary, in the market's words.
                 ->where('options.relationships.1', ['value' => 'mother', 'label' => 'Mama'])
-                ->has('options.relationships', 10)
+                // The specific relations only (the gender split, 2026-09-29):
+                // "oma of opa" and the other "either" values are not chips.
+                ->has('options.relationships', 16)
+                ->where('options.relationships.3', ['value' => 'grandmother', 'label' => 'Oma'])
                 // "mama" typed on the person is read as the vocabulary, so
                 // the Coves for her can come first without asking again.
                 ->where('recipients.0.relationshipType', 'mother'));

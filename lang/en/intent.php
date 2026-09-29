@@ -9,16 +9,22 @@ return [
     'triggers' => ['gift for', 'gifts for', 'present for', 'presents for', 'something for', 'gift ideas for', 'gift', 'present'],
 
     'recipients' => [
-        'sibling' => ['sister', 'brother', 'sis', 'bro', 'siblings'],
+        'brother' => ['brother', 'bro'],
+        'sister' => ['sister', 'sis'],
         'mother' => ['mum', 'mom', 'mother', 'mommy', 'mummy', 'mother-in-law'],
         'father' => ['dad', 'father', 'daddy', 'father-in-law'],
         'partner' => ['girlfriend', 'boyfriend', 'wife', 'husband', 'partner', 'fiancé', 'fiancee', 'fiance'],
-        'grandparent' => ['grandma', 'grandpa', 'grandmother', 'grandfather', 'granny', 'grandparents'],
-        'child' => ['son', 'daughter', 'kid', 'kids', 'child', 'children', 'baby', 'toddler', 'teen', 'teenager', 'nephew', 'niece', 'godchild'],
-        'friend' => ['best friend', 'friend', 'friends', 'neighbour', 'neighbor', 'mate'],
+        'grandmother' => ['grandma', 'grandmother', 'granny', 'nana'],
+        'grandfather' => ['grandpa', 'grandfather', 'grandad', 'granddad'],
+        'son' => ['son'],
+        'daughter' => ['daughter'],
+        'male_friend' => ['male friend'],
+        'female_friend' => ['female friend'],
         'colleague' => ['colleague', 'coworker', 'co-worker', 'boss'],
-        'teacher' => ['teacher', 'tutor', 'coach'],
-        'host' => ['host', 'hostess', 'hosts'],
+        'female_teacher' => ['female teacher'],
+        'male_teacher' => ['male teacher'],
+        'male_host' => ['male host'],
+        'female_host' => ['hostess'],
     ],
 
     'occasions' => [

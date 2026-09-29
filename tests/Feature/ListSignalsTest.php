@@ -77,7 +77,9 @@ class ListSignalsTest extends TestCase
         $this->countSignals();
 
         $this->assertContains('occasion:christmas', $candle->fresh()->crowdTags());
-        $this->assertContains('recipient:grandparent', $candle->fresh()->crowdTags());
+        // "oma" is a grandmother since the gender split (2026-09-29); a search
+        // for either grandparent still finds it (RecipientType::family()).
+        $this->assertContains('recipient:grandmother', $candle->fresh()->crowdTags());
     }
 
     #[Test]

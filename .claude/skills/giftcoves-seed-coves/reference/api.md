@@ -116,8 +116,13 @@ time rather than as a silently skipped pick at build time.
   // the brief cannot fill. Values outside the gift vocabulary are a 422
   // naming the field (brief.relationship, brief.interests, …).
   "brief": {
-    "relationship": "father",         // partner|mother|father|grandparent|child|
-                                      // friend|colleague|sibling|teacher|host
+    "relationship": "father",         // partner|mother|father|colleague|
+                                      // grandmother|grandfather|son|daughter|
+                                      // brother|sister|male_friend|female_friend|
+                                      // female_teacher|male_teacher|
+                                      // male_host|female_host (split by gender
+                                      // 2026-09-29; no "either" value: for both,
+                                      // leave it out)
     "interests": ["cooking"],         // Interest values, max 8
     "occasion": "birthday",           // EventType values + sinterklaas, easter, …
     "ageBand": "50-64",               // 0-2|3-5|6-9|10-12|13-17|18-29|30-49|50-64|65+

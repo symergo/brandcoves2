@@ -15,28 +15,42 @@ use App\Services\Gift\GiftTags;
  * and "for a mother" is that kind of tag where "for a busy professional" is
  * not.
  *
- * Relationships, not genders and not ages. A friend or a colleague has no
- * gender here on purpose: a product an editor would tag "for women" is a
- * stereotype more often than a fact, and where a product genuinely is
- * gendered its title says so. Age is its own vocabulary (`age:13-17`), so
- * `recipient:child` means "their child", who may be forty.
+ * ## Split by gender (owner, 2026-09-29)
+ *
+ * Until 2026-09-29 a friend, a sibling or a grandparent had no gender here, on
+ * the grounds that a product tagged "for women" is more often a stereotype
+ * than a fact. The owner split them: nobody thinks of their oma as "oma of
+ * opa", and the two get different ideas. The combined relations went
+ * altogether, "to keep simpler code": one value per relation, compared as it
+ * is. A product that suits both carries both tags; the migration that made the
+ * split gave every product tagged for a combined relation both of its
+ * gendered tags (2026_09_29_000200_relations_split_by_gender).
+ *
+ * Age is its own vocabulary (`age:13-17`), so `recipient:son` means "their
+ * son", who may be forty.
  *
  * `recipients.relationship` is free text and stays so; the Whisperer folds
- * what the giver typed onto these values where it can (`SuggestionEngine::
- * recipientFit()`), and an unrecognised relationship simply scores neutral.
+ * what the giver typed onto these values where it can (`lang/*\/intent.php`),
+ * and an unrecognised relationship simply scores neutral.
  */
 enum RecipientType: string
 {
     case Partner = 'partner';
     case Mother = 'mother';
     case Father = 'father';
-    case Grandparent = 'grandparent';
-    case Child = 'child';
-    case Friend = 'friend';
+    case Grandmother = 'grandmother';
+    case Grandfather = 'grandfather';
+    case Son = 'son';
+    case Daughter = 'daughter';
+    case Brother = 'brother';
+    case Sister = 'sister';
+    case MaleFriend = 'male_friend';
+    case FemaleFriend = 'female_friend';
     case Colleague = 'colleague';
-    case Sibling = 'sibling';
-    case Teacher = 'teacher';
-    case Host = 'host';
+    case FemaleTeacher = 'female_teacher';
+    case MaleTeacher = 'male_teacher';
+    case MaleHost = 'male_host';
+    case FemaleHost = 'female_host';
 
     /** @return list<string> */
     public static function values(): array

@@ -16,6 +16,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Gift\CrowdPicks;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
+use App\Services\Gift\TasteCard;
 use App\Services\Gift\TasteDeck;
 use App\Services\Search\GiftIntentParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -224,7 +225,10 @@ class CrowdPicksTest extends TestCase
             ['market' => 'be-nl', 'context' => 'interest:music', 'group_id' => $tooDear->id, 'owners' => 50],
         ]);
 
-        $shown = collect(app(TasteDeck::class)->next(Market::BeNl, [], [], 0))->flatten()->pluck('id')->all();
+        // The draw, not the rounds: rounds are pairs only since 2026-09-28, and
+        // with three affordable products one is left without a partner and not
+        // shown, which made this test fail whenever that one was the proven gift.
+        $shown = array_map(fn (TasteCard $c) => $c->id, app(TasteDeck::class)->draw(Market::BeNl, []));
 
         $this->assertContains($proven->id, $shown);
         $this->assertNotContains($tooDear->id, $shown, 'Outside the price window: proven or not, it is not drawn.');

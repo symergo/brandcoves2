@@ -626,7 +626,8 @@ return [
         // coffee and hunting are not a child's hobby either. Every recipient had
         // all 38 interests until 2026-09-27.
         'excluded_pairs' => [
-            'child' => ['drinks', 'coffee', 'hunting'],
+            'son' => ['drinks', 'coffee', 'hunting'],
+            'daughter' => ['drinks', 'coffee', 'hunting'],
         ],
 
         /*
@@ -648,13 +649,25 @@ return [
             'partner' => ['wellness', 'travel', 'music', 'beauty', 'film', 'cooking'],
             'mother' => ['gardening', 'wellness', 'home', 'reading', 'beauty', 'baking'],
             'father' => ['diy', 'drinks', 'gadgets', 'cycling', 'outdoors', 'cars'],
-            'grandparent' => ['gardening', 'reading', 'boardgames', 'nature', 'home', 'wellness'],
-            'child' => ['science', 'boardgames', 'craft', 'art', 'football', 'gaming'],
-            'friend' => ['boardgames', 'drinks', 'music', 'film', 'travel', 'gadgets'],
+            /*
+             * Split by gender since 2026-09-29 (relations-by-gender.md), so an
+             * oma and an opa start from different interests. Typical, not true
+             * of every oma: a seed to explore first, and a landing page's
+             * first rows, never a filter.
+             */
+            'grandmother' => ['gardening', 'reading', 'baking', 'wellness', 'home', 'craft'],
+            'grandfather' => ['gardening', 'reading', 'boardgames', 'diy', 'nature', 'cooking'],
+            'son' => ['gaming', 'science', 'football', 'boardgames', 'gadgets', 'craft'],
+            'daughter' => ['craft', 'art', 'reading', 'boardgames', 'science', 'music'],
+            'brother' => ['gaming', 'music', 'fitness', 'film', 'gadgets', 'football'],
+            'sister' => ['beauty', 'fashion', 'music', 'wellness', 'travel', 'film'],
+            'male_friend' => ['boardgames', 'drinks', 'music', 'gadgets', 'film', 'cycling'],
+            'female_friend' => ['wellness', 'reading', 'beauty', 'travel', 'film', 'cooking'],
+            'female_teacher' => ['reading', 'gardening', 'coffee', 'home', 'craft', 'wellness'],
+            'male_teacher' => ['reading', 'coffee', 'gardening', 'drinks', 'boardgames', 'tech'],
+            'male_host' => ['drinks', 'cooking', 'home', 'coffee', 'gardening', 'boardgames'],
+            'female_host' => ['home', 'baking', 'cooking', 'gardening', 'drinks', 'wellness'],
             'colleague' => ['coffee', 'home', 'reading', 'tech', 'wellness', 'drinks'],
-            'sibling' => ['gaming', 'music', 'fashion', 'fitness', 'film', 'travel'],
-            'teacher' => ['reading', 'gardening', 'coffee', 'home', 'craft', 'wellness'],
-            'host' => ['drinks', 'home', 'cooking', 'baking', 'gardening', 'coffee'],
         ],
 
         // Seconds a rendered page's product list is cached. A day: the
