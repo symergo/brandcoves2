@@ -36,7 +36,6 @@ class HomePageTest extends TestCase
 
         $this->assertArrayNotHasKey('recipients', $props);
         $this->assertArrayNotHasKey('myLists', $props);
-        $this->assertArrayHasKey('coves', $props);
         $this->assertArrayHasKey('today', $props);
     }
 
@@ -73,6 +72,8 @@ class HomePageTest extends TestCase
             '/be-nl/guides',
             '/be-nl/gift-cove/how-it-works',
             '/be-nl/lists',
+            '/be-nl/coves/community',
+            '/be-nl/brands',
         ] as $url) {
             $status = $this->get($url)->status();
 
@@ -81,12 +82,13 @@ class HomePageTest extends TestCase
     }
 
     #[Test]
-    public function what_others_collect_is_sent_and_empty_until_somebody_publishes_a_list(): void
+    public function the_coves_band_is_cards_per_kind_and_sends_no_lists(): void
     {
-        // Owner, 2026-09-26: "add what others collect". The band is drawn only
-        // when there is at least one Community Cove.
-        $this->get('/be-nl')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('collected', 0));
+        // Owner, 2026-09-29: the two lists of Coves became one card per kind.
+        // Neither list's data is fetched any more.
+        $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
+
+        $this->assertArrayNotHasKey('coves', $props);
+        $this->assertArrayNotHasKey('collected', $props);
     }
 }

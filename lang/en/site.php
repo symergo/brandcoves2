@@ -197,9 +197,6 @@ return [
 
         'coves_heading' => 'Coves worth exploring',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
-        'collected_heading' => 'What others collect',
-        'collected_intro' => 'Lists people made public: for a kind of person, an occasion or a passion. Save one, or make it your own list.',
-        'collected_all' => 'All Community Coves',
         'coves_all' => 'All Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Daily Cove',

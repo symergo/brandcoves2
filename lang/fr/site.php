@@ -129,9 +129,6 @@ return [
 
         'coves_heading' => 'Des Coves à explorer',
         'coves_intro' => "Des dossiers autour d'un thème, où chaque marque et chaque produit renvoie vers une recherche en direct.",
-        'collected_heading' => 'Ce que les autres collectionnent',
-        'collected_intro' => 'Des listes que des gens ont rendues publiques : pour un type de personne, une occasion ou une passion. Enregistrez-en une, ou faites-en votre liste.',
-        'collected_all' => 'Toutes les Community Coves',
         'coves_all' => 'Toutes les Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Cove du jour',

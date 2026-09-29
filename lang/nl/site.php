@@ -128,9 +128,6 @@ return [
 
         'coves_heading' => 'Coves om te ontdekken',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
-        'collected_heading' => 'Wat anderen verzamelen',
-        'collected_intro' => 'Lijsten die mensen openbaar maakten: voor een soort persoon, een gelegenheid of een passie. Bewaar er een, of maak er je eigen lijst van.',
-        'collected_all' => 'Alle Community Coves',
         'coves_all' => 'Alle Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Dagelijkse Cove',

@@ -4,29 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Services\Cove\CommunityCoves;
-use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
-    /**
-     * Cards in the Coves band. Six fills two rows of three on a desktop and
-     * three of two on a phone; more is a page, and the archive is one link
-     * away. Was ten rows until the 2026-09-26 redesign turned them into cards.
-     */
-    private const COVES_SHOWN = 6;
-
-    /** How long one draw of the shelf is kept, per market. Seconds. */
-    private const COVES_TTL = 3600;
-
     public function __invoke(CurrentMarket $current): Response
     {
         /*
@@ -65,19 +51,12 @@ class HomeController extends Controller
              * the wizard is where that button leads, on My Coves.
              */
 
-            // The evergreen half. Coves earn their traffic over years, so the
-            // front page is where a first-time visitor discovers the archive
-            // exists at all.
-            'coves' => $this->coves($current),
-
             /*
-             * What others collect (owner, 2026-09-26): the newest Community
-             * Coves, lists people chose to publish. The home page left this
-             * out while public lists did not exist; they do now. Empty in a
-             * market where nobody published one, and then the band is not
-             * drawn. See docs/features/community-coves.md.
+             * No lists of Coves since 2026-09-29: the band is one card per kind
+             * of Cove, drawn by the page from its own links (owner). The random
+             * shelf ('coves') and the newest Community Coves ('collected') went
+             * with the lists they fed.
              */
-            'collected' => app(CommunityCoves::class)->newest($current->get(), 6),
         ]);
     }
 
@@ -123,56 +102,5 @@ class HomeController extends Controller
                 ->values()
                 ->all(),
         ];
-    }
-
-    /** @return list<array<string, mixed>> */
-    /**
-     * A handful of other Coves, for whoever has read today's.
-     *
-     * Ten published Coves of any kind but the dailies, drawn at random and
-     * held for an hour per market. It was "recent, newest first" for an
-     * afternoon on 2026-09-13; the owner asked for a random pick instead,
-     * and asked that the page not say so — a heading like "More Coves" is
-     * an invitation, "random" is an admission. Dailies stay out: one appears
-     * every day, so any list of ten would be a week of editions with the
-     * writing pushed off the end, and they have Today's Cove above and their
-     * own archive. No dates on the rows either, since a date on a row implies
-     * an order the list does not have.
-     *
-     * Cached rather than drawn per request so that a visitor who reloads or
-     * comes back the same morning sees the same shelf, and so the front page
-     * does not pay for `ORDER BY random()` on every hit. An hour is short
-     * enough that the shelf changes between visits on different days, which
-     * is the point of drawing at random at all. The cache carries the
-     * presented rows, URLs included, so the key is per market.
-     *
-     * Blurbs are flattened to their labels the way the archive does it: a
-     * link inside a row that is already a link is a target fighting its
-     * parent.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function coves(CurrentMarket $current): array
-    {
-        $market = $current->get();
-
-        return Cache::remember(
-            'home.coves:'.$market->value,
-            self::COVES_TTL,
-            fn (): array => DailyPickSet::query()
-                ->forMarket($market)
-                ->published()
-                ->whereNot('kind', CoveKind::Daily->value)
-                ->inRandomOrder()
-                ->limit(self::COVES_SHOWN)
-                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb'])
-                ->map(fn (DailyPickSet $cove): array => [
-                    'kind' => $cove->kind->value,
-                    'title' => $cove->theme_title,
-                    'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
-                    'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
-                ])
-                ->all(),
-        );
     }
 }

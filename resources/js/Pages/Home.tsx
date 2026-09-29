@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import SaveToList from '../Components/SaveToList'
-import CommunityCoveCards, { type CommunityCoveCard } from '../Components/CommunityCoveCards'
+import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import SearchCard from '../Components/SearchCard'
 import SharedCoveIllustration from '../Components/SharedCoveIllustration'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
@@ -9,17 +9,7 @@ import { buttonClasses } from '../Components/Button'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
-interface Cove {
-    /** The shape this Cove takes: persona, guide, seasonal, advice, brand or shop. Named on the card. */
-    kind: string
-    title: string
-    intro: string | null
-    url: string
-}
-
 interface Props {
-    /** The newest Community Coves; empty means no band. */
-    collected?: CommunityCoveCard[]
     today: {
         theme: string
         blurb: string | null
@@ -28,7 +18,6 @@ interface Props {
         url: string
         finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     } | null
-    coves: Cove[]
 }
 
 /**
@@ -42,7 +31,7 @@ interface Props {
  *  1. Hero: the idea, Create a Cove and Explore Coves.
  *  2. Three ways in, one per audience: a gift, a wish list, browsing.
  *  3. From anywhere: what makes this more than an affiliate catalogue.
- *  4. Coves: where the catalogue becomes discovery.
+ *  4. Coves: one card per kind of Cove.
  *  5. Daily: only now, the thing that makes somebody come back.
  *  6. Trust, short.
  *  7. Start your first Cove.
@@ -52,7 +41,7 @@ interface Props {
  * visitor's convenience, not an answer to the three questions). The search
  * card left too and came back under the hero later the same day; see below.
  */
-export default function Home({ today, coves, collected = [] }: Props) {
+export default function Home({ today }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -165,59 +154,33 @@ export default function Home({ today, coves, collected = [] }: Props) {
                 </div>
             </section>
 
-            {/* 4. Coves: where the catalogue becomes discovery. */}
-            {coves.length > 0 && (
-                <section className="mt-14 sm:mt-20" aria-labelledby="coves-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                            {t('home.coves_heading')}
-                        </h2>
-                        <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                            {t('home.coves_all')} →
-                        </Link>
-                    </div>
-
-                    <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {coves.map((cove) => (
-                            <li key={cove.url}>
-                                <Link
-                                    href={cove.url}
-                                    className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
-                                >
-                                    <span className="text-2xs font-medium tracking-wide text-ink-soft uppercase">
-                                        {t(`home.cove_kind_${cove.kind}`)}
-                                    </span>
-                                    <span className="mt-2 font-medium text-balance">{cove.title}</span>
-                                    {cove.intro && (
-                                        <span className="mt-1 line-clamp-3 text-sm text-ink-soft">{cove.intro}</span>
-                                    )}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-
             {/*
-              4b. What others collect: the newest Community Coves (owner,
-              2026-09-26). The same small cards the Gift Finder results use.
+              4. Coves: one card per kind, where two lists of Coves stood (six
+              drawn at random, then the newest Community Coves) until the owner
+              swapped them (2026-09-29). The same six entries, names and icons
+              as the Discover menu, so a visitor learns them once.
             */}
-            {collected.length > 0 && (
-                <section className="mt-14 sm:mt-20" aria-labelledby="collected-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="collected-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                            {t('home.collected_heading')}
-                        </h2>
-                        <Link href={`${base}/coves/community`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                            {t('home.collected_all')} →
-                        </Link>
-                    </div>
-                    <p className="mt-2 max-w-2xl text-ink-soft">{t('home.collected_intro')}</p>
-                    <div className="mt-6">
-                        <CommunityCoveCards coves={collected} />
-                    </div>
-                </section>
-            )}
+            <section className="mt-14 sm:mt-20" aria-labelledby="coves-heading">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {t('home.coves_heading')}
+                    </h2>
+                    <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                        {t('home.coves_all')} →
+                    </Link>
+                </div>
+
+                {/* One card per row on a phone: two side by side split "Verrassingscove"
+                    and "Community Coves" mid-word. Two rows of three on a desktop. */}
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
+                    <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
+                    <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
+                    <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />
+                    <CoveKindCard icon="ask" label={t('community.index_heading')} href={`${base}/coves/community`} />
+                    <CoveKindCard icon="brand" label={t('nav.brands_shops')} href={`${base}/brands`} />
+                </ul>
+            </section>
 
             {/* 5. Daily. Only now, as the owner ordered it. */}
             {today && (
@@ -358,6 +321,20 @@ function OpenWay({ icon, text, href }: { icon: ToolKey; text: string; href: stri
             <Link href={href} className="group flex items-start gap-3 hover:text-ink">
                 <ToolIcon name={icon} className="mt-0.5 h-6 w-6 shrink-0 text-ink" />
                 <span className="underline decoration-line underline-offset-4 group-hover:decoration-ink">{text}</span>
+            </Link>
+        </li>
+    )
+}
+
+function CoveKindCard({ icon, label, href }: { icon: CoveKey; label: string; href: string }) {
+    return (
+        <li>
+            <Link
+                href={href}
+                className="flex h-full min-h-14 items-center gap-3 rounded-card border border-line bg-card px-4 py-3 font-medium transition hover:border-ink"
+            >
+                <CoveIcon name={icon} className="h-6 w-6 shrink-0 text-accent" />
+                <span className="min-w-0">{label}</span>
             </Link>
         </li>
     )

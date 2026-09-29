@@ -28,8 +28,13 @@ bottom (`Pages/Home.tsx`):
 3. **From anywhere.** Each of the four lines links to where it is done (owner, 2026-09-27): pasting a link and adding a photo to My Coves, where the + on every list card opens the add panel; scanning to `/scan`; searching to `/search`. Paste a link, scan it, search it, or, when it is not sold online, take a photo and add it (the picture icon, added 2026-09-27 at the owner's request; four items, so the row is 2 or 4 columns, never 3); the sources named generically ("Big online
    shops · Independent makers · The shop round the corner"), never other companies' names
    (owner's decision: Amazon's terms restrict the use of its name and marks).
-4. **Coves**: six cards, drawn at random from published non-daily Coves and held for an hour per
-   market (the same shelf as before, as cards rather than ten rows).
+4. **Coves**: one card per kind of Cove since 2026-09-29 (owner: "remove the cove lists, put cards
+   to the different cove types instead"). The six entries of the Discover menu, with its names and
+   icons: Cove van de dag, Verrassingscove, Cadeaus per type, Slim kopen, Community Coves, Merken &
+   winkels; one per row on a phone, where two side by side split "Verrassingscove" mid-word. Until
+   then the band was six Coves drawn at random (held an hour per market), followed by a band of the
+   newest Community Coves ("Wat anderen verzamelen"). Both lists went, and the controller no longer
+   sends `coves` or `collected`.
 5. **Daily**: today's Cove and the signup, as before, moved down: the owner put it after the
    Coves on purpose.
 6. **Trust, short**: where products come from, and that a commission never changes the price.

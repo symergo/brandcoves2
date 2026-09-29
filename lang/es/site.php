@@ -128,9 +128,6 @@ return [
 
         'coves_heading' => 'Coves para explorar',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
-        'collected_heading' => 'Lo que otros coleccionan',
-        'collected_intro' => 'Listas que la gente hizo públicas: para un tipo de persona, una ocasión o una pasión. Guarda una, o hazla tu propia lista.',
-        'collected_all' => 'Todas las Community Coves',
         'coves_all' => 'Todas las Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Cove del día',
