@@ -1719,6 +1719,7 @@ return [
             'round' => 'Round :current of :total',
             'keys_hint' => 'Keys: left and right arrow to choose, down arrow to skip.',
             'tap_hint' => 'Tap the one you prefer.',
+            'stop' => 'Stop',
             'loading' => 'Finding the next ones',
             'empty' => 'There is not enough to choose from in this market yet. Try Find a gift instead.',
             'result_title' => 'What we found',

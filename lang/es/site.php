@@ -1515,6 +1515,7 @@ return [
             'round' => 'Ronda :current de :total',
             'keys_hint' => 'Teclas: flecha izquierda y derecha para elegir, flecha abajo para saltar.',
             'tap_hint' => 'Toca el que prefieras.',
+            'stop' => 'Parar',
             'loading' => 'Buscando los siguientes',
             'empty' => 'Todavía no hay suficiente para elegir en este mercado. Prueba «Encontrar un regalo».',
             'result_title' => 'Lo que encontramos',

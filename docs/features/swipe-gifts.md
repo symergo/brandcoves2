@@ -21,7 +21,8 @@ somebody else's brand name.
 
 The first version was an ordinary page, and on a phone the site's header and footer left a small
 card in a page that scrolled. The owner asked for "bigger pictures, no scrolling... maybe a popup?".
-So it opens as a dialog over the page: the full screen on a phone (clear of the notch and the home
+So it opens as a dialog over the page (`Components/PlayDialog.tsx`, shared with This or that since the
+next day): the full screen on a phone (clear of the notch and the home
 bar), a tall panel over a dimmed page from `sm` up.
 
 - One slim top bar: the title, who it is for and the count once there is one, and a close button,

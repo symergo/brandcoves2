@@ -1516,6 +1516,7 @@ return [
             'round' => 'Manche :current sur :total',
             'keys_hint' => 'Touches : flèches gauche et droite pour choisir, flèche bas pour passer.',
             'tap_hint' => 'Touchez celui que vous préférez.',
+            'stop' => 'Arrêter',
             'loading' => 'Nous cherchons les suivants',
             'empty' => 'Il n’y a pas encore assez de choix sur ce marché. Essayez plutôt « Trouver un cadeau ».',
             'result_title' => 'Ce que nous avons trouvé',

@@ -7,7 +7,9 @@ import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import PageHeader from '../../Components/PageHeader'
 import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
+import PlayDialog from '../../Components/PlayDialog'
 import { send } from '../../http'
+import { pictureAttributes } from '../../imageUrl'
 import { formatBudget, formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -16,6 +18,8 @@ interface Card {
     title: string
     brand: string | null
     image: string | null
+    /** Signed by the server for the image proxy's larger copies; null when it may not serve this one. */
+    imageToken?: string | null
     price: Cents | null
 }
 
@@ -345,83 +349,97 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
     }
 
     const shown = Math.min(index + 1, total)
+    const who = carried?.forMe
+        ? t('gift.who_me_label')
+        : (carried?.person?.name ?? (carried?.relationship ? t(`gift.relationships.${carried.relationship}`) : null))
 
+    /*
+     * The rounds play in a popup (owner, 2026-09-29: "same layout for Dit of
+     * dat" as Swipe gifts): no scrolling, and the two pictures as large as the
+     * screen allows. On a phone the pair sits one above the other, because
+     * side by side each picture was a third of the width; from `sm` up the
+     * panel is wide enough for two columns. The result is an ordinary page.
+     */
     return (
-        <section className="mx-auto mt-6 max-w-2xl" aria-busy={finishing || (current === undefined && fetching)}>
-            <div className="flex items-baseline justify-between gap-3">
-                <p className="text-xs text-ink-soft" aria-live="polite">
-                    {t('gift.taste.round', { current: shown, total })}
-                </p>
-                <button
-                    type="button"
-                    disabled={answered < MIN_ANSWERED || finishing}
-                    onClick={() => finish(choices)}
-                    className="text-sm text-accent underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
-                >
-                    {t('gift.taste.done')}
-                </button>
-            </div>
-
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+        <PlayDialog
+            icon="taste"
+            title={t('gift.taste.title')}
+            subtitle={[t('gift.taste.round', { current: shown, total }), who ? t('gift.for_label', { who }) : null]
+                .filter(Boolean)
+                .join(' · ')}
+            onClose={() => router.visit(urls.finder)}
+            closeLabel={t('gift.taste.stop')}
+            wide
+        >
+            <div className="h-1 shrink-0 overflow-hidden bg-line" aria-hidden>
                 <div
-                    className="h-full rounded-full bg-accent motion-safe:transition-[width] motion-safe:duration-300"
+                    className="h-full bg-accent motion-safe:transition-[width] motion-safe:duration-300"
                     style={{ width: `${(Math.min(index, total) / total) * 100}%` }}
                 />
             </div>
 
             {current === undefined || finishing ? (
-                <p className="mt-10 text-center text-ink-soft">
+                <p className="flex flex-1 items-center justify-center text-ink-soft" aria-busy="true">
                     {t('gift.taste.loading')}
                     <span className="motion-safe:animate-pulse">...</span>
                 </p>
             ) : (
                 <>
-                    <h2 className="mt-5 text-lg font-medium">
+                    <h2 className="shrink-0 px-4 pt-3 text-base font-medium" aria-live="polite">
                         {t(`gift.taste.ask_pair_${forWhom}`)}
                     </h2>
 
-                    <div key={current.map((c) => c.id).join('-')} className="mt-4 grid grid-cols-2 gap-3 sm:gap-5">
+                    {/* Every pixel between the question and the buttons, split between the two. */}
+                    <div
+                        key={current.map((c) => c.id).join('-')}
+                        className="grid min-h-0 flex-1 grid-rows-2 gap-3 px-3 pt-3 sm:grid-cols-2 sm:grid-rows-1 sm:gap-4 sm:px-4"
+                    >
                         {current.map((card) => (
                             <button
                                 key={card.id}
                                 type="button"
                                 onClick={() => pick(card)}
                                 aria-label={t('gift.taste.pick_label', { title: card.title })}
-                                className="group flex flex-col rounded-card border border-line bg-card p-3 text-left transition hover:border-accent focus-visible:border-accent sm:p-4 motion-safe:hover:-translate-y-0.5"
+                                className="flex min-h-0 flex-col rounded-card border border-line bg-card p-3 text-left transition hover:border-accent focus-visible:border-accent"
                             >
                                 <CardFace card={card} market={market} />
                             </button>
                         ))}
                     </div>
 
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                        <Button variant="ghost" onClick={skip}>
+                    <div className="flex shrink-0 items-center justify-center gap-3 px-4 pt-3 pb-4">
+                        <Button variant="secondary" onClick={skip}>
                             {t('gift.taste.skip')}
                         </Button>
+                        <Button disabled={answered < MIN_ANSWERED || finishing} onClick={() => finish(choices)}>
+                            {t('gift.taste.done')}
+                        </Button>
                     </div>
-
-                    <p className="mt-6 text-center text-xs text-ink-soft">
-                        <span className="sm:hidden">{t('gift.taste.tap_hint')}</span>
-                        <span className="hidden sm:inline">{t('gift.taste.keys_hint')}</span>
-                    </p>
+                    <p className="hidden shrink-0 pb-3 text-center text-xs text-ink-soft sm:block">{t('gift.taste.keys_hint')}</p>
                 </>
             )}
-        </section>
+        </PlayDialog>
     )
 }
 
 function CardFace({ card, market }: { card: Card; market: SharedProps['market'] }) {
+    const [proxyFailed, setProxyFailed] = useState(false)
+
     return (
         <>
-            <span className="flex h-32 items-center justify-center sm:h-48">
+            <span className="flex min-h-0 flex-1 items-center justify-center">
                 {card.image && (
-                    <img src={card.image} alt="" draggable={false} className="max-h-full max-w-full object-contain" />
+                    <img
+                        {...pictureAttributes(card.image, card.imageToken, proxyFailed, 480, '(min-width: 640px) 360px, 100vw', [320, 480, 640, 960])}
+                        onError={() => setProxyFailed(true)}
+                        alt=""
+                        draggable={false}
+                        className="h-full w-full object-contain"
+                    />
                 )}
             </span>
-            <span className="mt-3 line-clamp-3 text-sm font-medium">{card.title}</span>
-            {card.price !== null && (
-                <span className="mt-auto pt-2 text-sm text-ink-soft">{formatPrice(card.price, market)}</span>
-            )}
+            <span className="mt-2 line-clamp-2 shrink-0 text-sm font-medium">{card.title}</span>
+            {card.price !== null && <span className="shrink-0 pt-1 text-sm text-ink-soft">{formatPrice(card.price, market)}</span>}
         </>
     )
 }

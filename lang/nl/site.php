@@ -1521,6 +1521,7 @@ return [
             'round' => 'Ronde :current van :total',
             'keys_hint' => 'Toetsen: pijl links en rechts om te kiezen, pijl omlaag om over te slaan.',
             'tap_hint' => 'Tik op wat je liever hebt.',
+            'stop' => 'Stoppen',
             'loading' => 'De volgende worden gezocht',
             'empty' => 'Er is in deze markt nog te weinig om uit te kiezen. Probeer Cadeau vinden.',
             'result_title' => 'Dit vonden we',

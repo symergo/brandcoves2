@@ -165,6 +165,14 @@ interests found, no person, like `gift.suggest`.
 
 ## Interaction
 
+**The rounds play in a popup** since 2026-09-29 (owner: "same layout for Dit of dat" as Swipe
+gifts, `Components/PlayDialog.tsx`): the full screen on a phone, a wide panel over a dimmed page
+from `sm` up, with no scrolling. The round and who it is for sit in the top bar, the close button
+goes back to where it was opened from. On a phone the pair sits one above the other, since side by
+side each picture was a third of the screen's width; from `sm` up they are side by side. Each
+picture takes what the title and price leave, from the image proxy (`imageToken`). "Skip" and "Show
+the result" are two buttons under the pair. The result is an ordinary page again.
+
 Tap or click a card, or use the arrow keys (left and right choose, down skips). The progress bar
 transition is off for reduced motion. "Show the result" is offered after three answered rounds.
 

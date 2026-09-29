@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { buttonClasses } from '../../Components/Button'
+import PlayDialog from '../../Components/PlayDialog'
 import SaveToList from '../../Components/SaveToList'
 import SwipeCard from '../../Components/SwipeCard'
 import type { ListKind } from '../../Components/ListKindBadge'
@@ -206,17 +207,7 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
         }
     }
 
-    // The page behind the popup stays where it is while the popup is open.
-    useEffect(() => {
-        const before = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-
-        return () => {
-            document.body.style.overflow = before
-        }
-    }, [])
-
-    // Arrow keys: right onto the list, left to pass. Escape is Stop.
+    // Arrow keys: right onto the list, left to pass. Escape is Stop (PlayDialog).
     useEffect(() => {
         if (stopped || !current) {
             return
@@ -229,10 +220,7 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
                 return
             }
 
-            if (event.key === 'Escape') {
-                event.preventDefault()
-                stop()
-            } else if (event.key === 'ArrowRight') {
+            if (event.key === 'ArrowRight') {
                 event.preventDefault()
                 verdict('yes')
             } else if (event.key === 'ArrowLeft') {
@@ -260,49 +248,21 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
         <>
             <Head title={t('gift.swipe.title')} />
 
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="swipe-title"
-                className="fixed inset-0 z-40 flex items-stretch justify-center bg-ink/60 sm:items-center sm:p-6"
+            <PlayDialog
+                icon="swipe"
+                title={t('gift.swipe.title')}
+                // For whom and how many; the labelled buttons below say what to do.
+                subtitle={[who ? t('gift.for_label', { who }) : null, count].filter(Boolean).join(' · ') || null}
+                onClose={stop}
+                closeLabel={t('gift.swipe.stop')}
+                aside={
+                    list && (
+                        <Link href={`${base}/lists/${list.id}`} className="shrink-0 text-sm font-medium text-accent-dark underline">
+                            {t('gift.swipe.to_list')}
+                        </Link>
+                    )
+                }
             >
-                <div
-                    className="flex h-dvh w-full flex-col bg-cream sm:h-[min(52rem,92dvh)] sm:max-w-md sm:rounded-card sm:shadow-xl"
-                    // Clear of the notch and the home bar on a phone.
-                    style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-                >
-                    {/* One slim bar: what this is, for whom, how many, and the way out. */}
-                    <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                            <ToolIcon name="swipe" className="h-5 w-5" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                            <h1 id="swipe-title" className="truncate text-base font-semibold">
-                                {t('gift.swipe.title')}
-                            </h1>
-                            {/* For whom and how many; the labelled buttons below say what to do. */}
-                            {(who || count) && (
-                                <p className="truncate text-xs text-ink-soft">
-                                    {[who ? t('gift.for_label', { who }) : null, count].filter(Boolean).join(' · ')}
-                                </p>
-                            )}
-                        </div>
-                        {list && (
-                            <Link href={`${base}/lists/${list.id}`} className="shrink-0 text-sm font-medium text-accent-dark underline">
-                                {t('gift.swipe.to_list')}
-                            </Link>
-                        )}
-                        <button
-                            type="button"
-                            onClick={stop}
-                            aria-label={t('gift.swipe.stop')}
-                            title={t('gift.swipe.stop')}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-card hover:border-ink"
-                        >
-                            <ToolIcon name="close" className="h-5 w-5" />
-                        </button>
-                    </div>
-
                     {failed && (
                         <p role="alert" className="px-4 text-sm text-danger">
                             {t('gift.swipe.save_failed')}
@@ -381,8 +341,7 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
                             )}
                         </div>
                     )}
-                </div>
-            </div>
+            </PlayDialog>
         </>
     )
 }

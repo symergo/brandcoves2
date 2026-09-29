@@ -24,6 +24,7 @@ use App\Services\Gift\TasteDeck;
 use App\Services\Gift\TasteProfile;
 use App\Services\Gift\TasteProfiler;
 use App\Services\Ideas\OfflineIdeaPicker;
+use App\Services\Images\ImageProxy;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\MyPeople;
 use App\Support\CurrentMarket;
@@ -534,6 +535,8 @@ class TasteController extends Controller
             'title' => $group->displayTitle(),
             'brand' => $group->brand,
             'image' => $group->image_url,
+            // The pair fills a phone screen in the popup, so the proxy's larger copies.
+            'imageToken' => app(ImageProxy::class)->token($group->image_url),
             'price' => $group->min_price,
         ], $round), $rounds);
     }
