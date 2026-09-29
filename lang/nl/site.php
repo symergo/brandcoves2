@@ -12,7 +12,6 @@ return [
         'guides' => 'Koopgidsen',
         'surprise' => 'Verrassingscove',
         'lists' => 'Mijn Coves',
-        'saved_coves' => 'Bewaarde Coves',
         'notifications' => 'Meldingen',
         'sign_in' => 'Inloggen',
         'sign_out' => 'Uitloggen',

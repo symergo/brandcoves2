@@ -37,7 +37,9 @@ What left the top row, and where it went:
 
 **The account menu** (desktop `AccountMenu`, phone `AccountSheet`, both from `myCovesLinks.ts`): My
 Coves · **My people** (`/people`, `nav.people`: Mijn mensen / My people / Mes proches / Mi gente) ·
-Saved Coves · Secret Friend · Notifications with its count · Help · Admin · Sign out. **Friends left
+My taste · Secret Friend · Notifications with its count · Help · Admin · Sign out. **Saved Coves
+left the menu** on 2026-09-29 (owner: "duplicate"): it is a tab on My Coves, which the first entry
+already opens. **Friends left
 the menu**: My people is one page for friends and the people you keep lists for, built in a
 separate change; `/friends` keeps working. The desktop menu is built on `Menu` now, so it answers
 the arrow keys, Escape (focus back to the button) and Tab like the site's other menus. It also

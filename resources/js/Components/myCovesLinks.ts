@@ -8,8 +8,7 @@ export interface AccountLink {
 
 /**
  * Your own things, in the order both account menus show them (owner,
- * 2026-09-26): My Coves, My people, My taste (2026-09-29), Saved Coves,
- * Secret Friend.
+ * 2026-09-26): My Coves, My people, My taste (2026-09-29), Secret Friend.
  *
  * My people (`/people`) is the people you give to and give with: friends and
  * the people you keep lists for, on one page. It took Friends' place in the
@@ -18,10 +17,8 @@ export interface AccountLink {
  * One entry for all your lists (owner, 2026-09-26: "mijn coves zijn
  * verlanglijsten, cadeaulijsten en groepslijsten in 1"). My Coves is one page
  * with every kind on it, so the menu entries per kind ("Voor anderen", "Samen
- * geven") only repeated it. Saved Coves keeps its entry: those are somebody
- * else's Coves, not lists of yours. It stays `?view=saved` rather than an
- * anchor because the menus mark "you are here" by comparing URLs, and a
- * fragment is not part of `page.url`.
+ * geven") only repeated it. Saved Coves lost its entry for the same reason
+ * (owner, 2026-09-29: "duplicate"): it is a tab on My Coves.
  *
  * One list for `AccountMenu` (desktop) and `AccountSheet` (phone). Until
  * 2026-09-26 each had its own, and the desktop one lacked For others, Group
@@ -37,7 +34,6 @@ export function myCovesLinks(base: string, t: (key: string) => string, signedIn:
                   { href: `${base}/people`, icon: 'people', label: t('nav.people') },
                   // Your own gift taste, which friends' searches start from (MyTasteController).
                   { href: `${base}/my-taste`, icon: 'taste', label: t('my_taste.title') },
-                  { href: `${base}/lists?view=saved`, icon: 'wishlist', label: t('nav.saved_coves') },
                   { href: `${base}/santa`, icon: 'santa', label: t('nav.santa') },
               ] as AccountLink[])
             : []),

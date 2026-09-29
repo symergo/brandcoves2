@@ -81,6 +81,12 @@ export default function PageHeader({
                     {note && <InfoTip className="-ml-1">{note}</InfoTip>}
                     {beside}
                 </div>
+                {/*
+                  On a phone the pages pass icon-only buttons (the label behind
+                  `hidden sm:inline`), so they fit beside the title. Full labels
+                  squeezed "Mijn Coves" onto two lines with a button across it
+                  (owner's screenshot, 2026-09-29: "on mobile, buttons should be icons").
+                */}
                 {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
             </div>
             {children}

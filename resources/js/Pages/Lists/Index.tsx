@@ -153,9 +153,14 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 title={heading}
                 actions={
                     <>
-                        <Link href={`/${market.key}/people`} className={buttonClasses('secondary', 'md')}>
+                        <Link
+                            href={`/${market.key}/people`}
+                            className={buttonClasses('secondary', 'md')}
+                            aria-label={t('people.title')}
+                            title={t('people.title')}
+                        >
                             <ToolIcon name="people" className="h-4 w-4" />
-                            {t('people.title')}
+                            <span className="hidden sm:inline">{t('people.title')}</span>
                         </Link>
                         <NewListButton open={creating} onToggle={() => setCreating((v) => !v)} controls="new-list-wizard" />
                     </>

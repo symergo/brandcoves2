@@ -17,8 +17,8 @@ import { useTranslations } from '../useTranslations'
  * screen in place rather than going somewhere.
  *
  * Outlined rather than filled: on My Lists the page under the button is the
- * point. Full width only below `sm`, where an inline button beside nothing
- * looks like it fell off a toolbar; `py-2.5` keeps the tap target at 44px.
+ * point. Below `sm` it is the icon alone, beside the title; `py-2.5` keeps
+ * the tap target at 44px.
  */
 export default function NewListButton({
     open,
@@ -34,11 +34,21 @@ export default function NewListButton({
 
     // The same button as Mijn mensen's "Iemand toevoegen" (owner, 2026-09-27):
     // filled while closed, outlined while its form is open, with its icon.
+    // Only the icon on a phone (owner, 2026-09-29), so it fits beside the title.
+    const label = t('lists.make_new')
+
     return (
-        <Button variant={open ? 'secondary' : 'primary'} onClick={onToggle} aria-expanded={open} aria-controls={controls}>
+        <Button
+            variant={open ? 'secondary' : 'primary'}
+            onClick={onToggle}
+            aria-expanded={open}
+            aria-controls={controls}
+            aria-label={label}
+            title={label}
+        >
             <span className="inline-flex items-center gap-2">
                 <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
-                {t('lists.make_new')}
+                <span className="hidden sm:inline">{label}</span>
             </span>
         </Button>
     )

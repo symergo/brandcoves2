@@ -115,9 +115,15 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                 note={isSignedIn ? t('people.intro_tip') : undefined}
                 actions={
                     <>
-                        <Link href={`${base}/lists`} className={buttonClasses('secondary', 'md')}>
+                        {/* Icons alone on a phone, labels from `sm` (owner, 2026-09-29). */}
+                        <Link
+                            href={`${base}/lists`}
+                            className={buttonClasses('secondary', 'md')}
+                            aria-label={t('lists.title')}
+                            title={t('lists.title')}
+                        >
                             <ToolIcon name="wishlist" className="h-4 w-4" />
-                            {t('lists.title')}
+                            <span className="hidden sm:inline">{t('lists.title')}</span>
                         </Link>
                         {isSignedIn && (
                             <>
@@ -125,22 +131,26 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     variant={adding === 'person' ? 'secondary' : 'primary'}
                                     aria-expanded={adding === 'person'}
                                     aria-controls="people-add"
+                                    aria-label={t('people.add_person')}
+                                    title={t('people.add_person')}
                                     onClick={() => setAdding(adding === 'person' ? null : 'person')}
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
-                                        {t('people.add_person')}
+                                        <span className="hidden sm:inline">{t('people.add_person')}</span>
                                     </span>
                                 </Button>
                                 <Button
                                     variant="secondary"
                                     aria-expanded={adding === 'invite'}
                                     aria-controls="people-add"
+                                    aria-label={t('people.invite')}
+                                    title={t('people.invite')}
                                     onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
-                                        {t('people.invite')}
+                                        <span className="hidden sm:inline">{t('people.invite')}</span>
                                     </span>
                                 </Button>
                             </>

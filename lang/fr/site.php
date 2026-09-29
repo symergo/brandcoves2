@@ -12,7 +12,6 @@ return [
         'guides' => "Guides d'achat",
         'surprise' => 'Cove Surprise',
         'lists' => 'Mes Coves',
-        'saved_coves' => 'Coves enregistrées',
         'notifications' => 'Notifications',
         'sign_in' => 'Se connecter',
         'sign_out' => 'Se déconnecter',

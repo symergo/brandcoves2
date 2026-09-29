@@ -18,7 +18,6 @@ return [
         'guides' => 'Guides',
         'surprise' => 'Surprise Cove',
         'lists' => 'My Coves',
-        'saved_coves' => 'Saved Coves',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',
         'sign_out' => 'Sign out',

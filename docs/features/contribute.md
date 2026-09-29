@@ -92,7 +92,7 @@ necessary"). A year, then the bar may come back once, by which time the board ha
 
 The bar, the footer (next to "How it works"), and a line at the end of `/help` under the report form
 ("Een idee voor GiftCoves, of wil je stemmen op wat we bouwen? Denk mee →"). **Not the account
-menu:** it holds My Coves, My people, Saved Coves and Secret Friend, then Notifications, Help, Admin
+menu:** it holds My Coves, My people, My taste and Secret Friend, then Notifications, Help, Admin
 and signing out, and the owner has already trimmed it twice (docs/features/navigation.md). Everything
 in it is about your own things; this page is about the site. Once the bar is closed the footer and
 /help still reach it. It is in the sitemap, like /help.

@@ -324,7 +324,7 @@ function Chrome({ children }: PropsWithChildren) {
      * nothing else is. Otherwise fall back to the prefix match.
      */
     const exact = (href: string) => (page.url ?? '') === href
-    const anyExact = [gift.href, ...discoverHrefs, myCoves.href, help.href, `${base}/lists?view=saved`].some(exact)
+    const anyExact = [gift.href, ...discoverHrefs, myCoves.href, help.href].some(exact)
 
     // A plain entry in the wide header: Find a gift, My Coves.
     const flatLink = (item: { href: string; label: string; icon: ReactNode }) => (
