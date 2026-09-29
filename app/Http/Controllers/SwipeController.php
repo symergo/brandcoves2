@@ -8,6 +8,7 @@ use App\Models\ProductGroup;
 use App\Services\Gift\CarriedWho;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\SwipeDeck;
+use App\Services\Images\ImageProxy;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\JsonResponse;
@@ -95,6 +96,8 @@ class SwipeController extends Controller
             'title' => $group->displayTitle(),
             'brand' => $group->brand,
             'image' => $group->image_url,
+            // The picture fills a phone screen here, so the proxy's larger copies (image-proxy.md).
+            'imageToken' => app(ImageProxy::class)->token($group->image_url),
             'price' => $group->min_price,
         ], $groups);
     }

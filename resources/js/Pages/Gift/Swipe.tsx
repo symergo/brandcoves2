@@ -1,12 +1,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Button, { buttonClasses } from '../../Components/Button'
-import PageHeader from '../../Components/PageHeader'
+import { buttonClasses } from '../../Components/Button'
 import SaveToList from '../../Components/SaveToList'
 import SwipeCard from '../../Components/SwipeCard'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
+import { pictureAttributes } from '../../imageUrl'
 import { listFrom, show as showToast } from '../../saveToast'
 import { markSaved } from '../../savedItems'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
@@ -17,6 +17,8 @@ interface Card {
     title: string
     brand: string | null
     image: string | null
+    /** Signed by the server for the image proxy's larger copies; null when it may not serve this one. */
+    imageToken?: string | null
     price: Cents | null
 }
 
@@ -58,6 +60,15 @@ const MAX_EXCLUDE = 400
  *
  * The swipes are only in this page's state, as in This or that: a half
  * finished session is not worth a row. See docs/features/swipe-gifts.md.
+ *
+ * ## A popup, not a page (owner, 2026-09-29)
+ *
+ * "Bigger pictures, no scrolling... maybe a popup?" On a phone the site's
+ * header above and footer below left a small card in a page that scrolled.
+ * So the whole thing is a dialog over the page: the full screen on a phone,
+ * a tall panel over a dimmed page from `sm` up. The card takes every pixel
+ * the top bar and the two round buttons leave, the picture most of it, and
+ * the page behind does not scroll while it is open. Its close button is Stop.
  */
 export default function Swipe({ carried, cards: first, urls }: Props) {
     const { t } = useTranslations()
@@ -184,7 +195,9 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
      * something stays, to save what they chose.
      */
     const stop = () => {
-        if (list) {
+        if (stopped) {
+            router.visit(urls.finder)
+        } else if (list) {
             router.visit(`${base}/lists/${list.id}`)
         } else if (chosen.length > 0 && !auth.user) {
             setStopped(true)
@@ -193,7 +206,17 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
         }
     }
 
-    // Arrow keys: right onto the list, left to pass.
+    // The page behind the popup stays where it is while the popup is open.
+    useEffect(() => {
+        const before = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        return () => {
+            document.body.style.overflow = before
+        }
+    }, [])
+
+    // Arrow keys: right onto the list, left to pass. Escape is Stop.
     useEffect(() => {
         if (stopped || !current) {
             return
@@ -206,7 +229,10 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
                 return
             }
 
-            if (event.key === 'ArrowRight') {
+            if (event.key === 'Escape') {
+                event.preventDefault()
+                stop()
+            } else if (event.key === 'ArrowRight') {
                 event.preventDefault()
                 verdict('yes')
             } else if (event.key === 'ArrowLeft') {
@@ -224,123 +250,166 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
         ? t('gift.who_me_label')
         : (carried.person?.name ?? (carried.relationship ? t(`gift.relationships.${carried.relationship}`) : null))
 
+    const count = list
+        ? t('gift.swipe.saved_count', { count: String(saved), list: list.title })
+        : chosen.length > 0
+          ? t('gift.swipe.liked_count', { count: String(chosen.length) })
+          : null
+
     return (
         <>
             <Head title={t('gift.swipe.title')} />
 
-            <PageHeader
-                className="max-w-2xl"
-                icon={
-                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                        <ToolIcon name="swipe" className="h-6 w-6" />
-                    </span>
-                }
-                title={t('gift.swipe.title')}
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="swipe-title"
+                className="fixed inset-0 z-40 flex items-stretch justify-center bg-ink/60 sm:items-center sm:p-6"
             >
-                <p className="mt-2 text-ink-soft">{t('gift.swipe.subtitle')}</p>
-                {who && (
-                    <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                        <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">
-                            {t('gift.for_label', { who })}
+                <div
+                    className="flex h-dvh w-full flex-col bg-cream sm:h-[min(52rem,92dvh)] sm:max-w-md sm:rounded-card sm:shadow-xl"
+                    // Clear of the notch and the home bar on a phone.
+                    style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+                >
+                    {/* One slim bar: what this is, for whom, how many, and the way out. */}
+                    <div className="flex items-center gap-3 px-4 pt-3 pb-2">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                            <ToolIcon name="swipe" className="h-5 w-5" />
                         </span>
-                        <Link href={urls.finder} className="text-accent underline">
-                            {t('gift.change')}
-                        </Link>
-                    </p>
-                )}
-            </PageHeader>
-
-            <section className="mx-auto mt-6 max-w-md">
-                {/* The way out is always on screen: the owner's "a way to stop". */}
-                <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-ink-soft">
-                        {list ? (
-                            <Link href={`${base}/lists/${list.id}`} className="hover:underline">
-                                {t('gift.swipe.saved_count', { count: String(saved), list: list.title })}
-                            </Link>
-                        ) : chosen.length > 0 ? (
-                            t('gift.swipe.liked_count', { count: String(chosen.length) })
-                        ) : null}
-                    </span>
-                    {!stopped && (
-                        <Button variant="secondary" onClick={stop}>
-                            {t('gift.swipe.stop')}
-                        </Button>
-                    )}
-                </div>
-
-                {failed && (
-                    <p role="alert" className="mt-3 text-sm text-danger">
-                        {t('gift.swipe.save_failed')}
-                    </p>
-                )}
-
-                {stopped ? (
-                    <Chosen cards={chosen} finder={urls.finder} />
-                ) : current ? (
-                    <>
-                        <div className="mt-4 flex justify-center">
-                            <SwipeCard
-                                key={current.id}
-                                label={t('gift.swipe.card_label', { title: current.title })}
-                                onVerdict={verdict}
-                                yesLabel={t('gift.swipe.yes')}
-                                noLabel={t('gift.swipe.no')}
-                            >
-                                <span className="flex h-56 items-center justify-center sm:h-64">
-                                    {current.image && (
-                                        <img
-                                            src={current.image}
-                                            alt=""
-                                            draggable={false}
-                                            className="max-h-full max-w-full object-contain"
-                                        />
-                                    )}
-                                </span>
-                                {current.brand && <span className="mt-3 text-xs text-ink-soft">{current.brand}</span>}
-                                <span className="mt-1 line-clamp-3 font-medium">{current.title}</span>
-                                {current.price !== null && (
-                                    <span className="mt-2 text-sm text-ink-soft">{formatPrice(current.price, market)}</span>
-                                )}
-                            </SwipeCard>
+                        <div className="min-w-0 flex-1">
+                            <h1 id="swipe-title" className="truncate text-base font-semibold">
+                                {t('gift.swipe.title')}
+                            </h1>
+                            {/* For whom and how many; the labelled buttons below say what to do. */}
+                            {(who || count) && (
+                                <p className="truncate text-xs text-ink-soft">
+                                    {[who ? t('gift.for_label', { who }) : null, count].filter(Boolean).join(' · ')}
+                                </p>
+                            )}
                         </div>
-
-                        <div className="mt-5 flex items-center justify-center gap-3">
-                            <Button variant="secondary" onClick={() => verdict('no')} className="min-w-28">
-                                <span aria-hidden>←</span> {t('gift.swipe.no_button')}
-                            </Button>
-                            <Button onClick={() => verdict('yes')} className="min-w-28">
-                                {t('gift.swipe.yes_button')} <span aria-hidden>→</span>
-                            </Button>
-                        </div>
-
-                        <p className="mt-6 text-center text-xs text-ink-soft">
-                            <span className="sm:hidden">{t('gift.swipe.swipe_hint')}</span>
-                            <span className="hidden sm:inline">{t('gift.swipe.keys_hint')}</span>
-                        </p>
-                    </>
-                ) : fetching ? (
-                    <p className="mt-10 text-center text-ink-soft">
-                        {t('gift.swipe.loading')}
-                        <span className="motion-safe:animate-pulse">...</span>
-                    </p>
-                ) : (
-                    <div className="mt-10 text-center">
-                        <p className="text-ink-soft">{t('gift.swipe.empty')}</p>
-                        {chosen.length > 0 && !auth.user ? (
-                            <Chosen cards={chosen} finder={urls.finder} />
-                        ) : (
-                            <Link
-                                href={list ? `${base}/lists/${list.id}` : urls.finder}
-                                className={`${buttonClasses('secondary')} mt-4`}
-                            >
-                                {list ? t('gift.swipe.to_list') : t('gift.swipe.back')}
+                        {list && (
+                            <Link href={`${base}/lists/${list.id}`} className="shrink-0 text-sm font-medium text-accent-dark underline">
+                                {t('gift.swipe.to_list')}
                             </Link>
                         )}
+                        <button
+                            type="button"
+                            onClick={stop}
+                            aria-label={t('gift.swipe.stop')}
+                            title={t('gift.swipe.stop')}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-card hover:border-ink"
+                        >
+                            <ToolIcon name="close" className="h-5 w-5" />
+                        </button>
                     </div>
-                )}
-            </section>
+
+                    {failed && (
+                        <p role="alert" className="px-4 text-sm text-danger">
+                            {t('gift.swipe.save_failed')}
+                        </p>
+                    )}
+
+                    {stopped ? (
+                        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+                            <Chosen cards={chosen} finder={urls.finder} />
+                        </div>
+                    ) : current ? (
+                        <>
+                            {/* Every pixel the bars leave, most of it the picture. */}
+                            <div className="flex min-h-0 flex-1 justify-center px-3 pt-1">
+                                <SwipeCard
+                                    key={current.id}
+                                    label={t('gift.swipe.card_label', { title: current.title })}
+                                    onVerdict={verdict}
+                                    yesLabel={t('gift.swipe.yes')}
+                                    noLabel={t('gift.swipe.no')}
+                                    className="h-full w-full"
+                                >
+                                    <CardPicture card={current} />
+                                    <span className="mt-3 shrink-0">
+                                        {current.brand && <span className="block text-xs text-ink-soft">{current.brand}</span>}
+                                        <span className="line-clamp-2 font-medium">{current.title}</span>
+                                        {current.price !== null && (
+                                            <span className="mt-1 block text-sm text-ink-soft">{formatPrice(current.price, market)}</span>
+                                        )}
+                                    </span>
+                                </SwipeCard>
+                            </div>
+
+                            {/* Two round buttons within a thumb's reach: the swipe's equals, never replaced by it. */}
+                            <div className="flex shrink-0 items-start justify-center gap-10 px-4 pt-3 pb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => verdict('no')}
+                                    className="flex flex-col items-center gap-1 text-xs text-ink-soft"
+                                >
+                                    <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-line bg-card text-ink shadow-sm hover:border-ink">
+                                        <ToolIcon name="close" className="h-7 w-7" />
+                                    </span>
+                                    {t('gift.swipe.no_button')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => verdict('yes')}
+                                    className="flex flex-col items-center gap-1 text-xs text-ink-soft"
+                                >
+                                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white shadow-sm hover:bg-accent-dark">
+                                        <ToolIcon name="wishlist" className="h-7 w-7" />
+                                    </span>
+                                    {t('gift.swipe.yes_button')}
+                                </button>
+                            </div>
+                            <p className="hidden shrink-0 pb-3 text-center text-xs text-ink-soft sm:block">{t('gift.swipe.keys_hint')}</p>
+                        </>
+                    ) : fetching ? (
+                        <p className="flex flex-1 items-center justify-center text-ink-soft">
+                            {t('gift.swipe.loading')}
+                            <span className="motion-safe:animate-pulse">...</span>
+                        </p>
+                    ) : (
+                        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-4 text-center">
+                            <p className="text-ink-soft">{t('gift.swipe.empty')}</p>
+                            {chosen.length > 0 && !auth.user ? (
+                                <Chosen cards={chosen} finder={urls.finder} />
+                            ) : (
+                                <Link
+                                    href={list ? `${base}/lists/${list.id}` : urls.finder}
+                                    className={`${buttonClasses('secondary')} mt-4`}
+                                >
+                                    {list ? t('gift.swipe.to_list') : t('gift.swipe.back')}
+                                </Link>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </>
+    )
+}
+
+/**
+ * The picture, as large as the card allows: the image proxy's copies up to
+ * 960 wide when the server signed one, the shop's own picture otherwise.
+ */
+function CardPicture({ card }: { card: Card }) {
+    const [proxyFailed, setProxyFailed] = useState(false)
+
+    if (!card.image) {
+        return <span className="min-h-0 flex-1" />
+    }
+
+    return (
+        <span className="flex min-h-0 flex-1 items-center justify-center">
+            <img
+                {...pictureAttributes(card.image, card.imageToken, proxyFailed, 640, '(min-width: 640px) 448px, 100vw', [480, 640, 960])}
+                onError={() => setProxyFailed(true)}
+                alt=""
+                draggable={false}
+                // Filling the box, not only shrinking into it: a shop's small
+                // picture grows to the card rather than floating in white.
+                className="h-full w-full object-contain"
+            />
+        </span>
     )
 }
 

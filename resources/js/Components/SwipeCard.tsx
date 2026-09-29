@@ -20,6 +20,7 @@ export default function SwipeCard({
     onVerdict,
     yesLabel,
     noLabel,
+    className = 'w-full max-w-sm',
     children,
 }: {
     /** The accessible name of the card: the product's title. */
@@ -27,6 +28,8 @@ export default function SwipeCard({
     onVerdict: (v: 'yes' | 'no') => void
     yesLabel: string
     noLabel: string
+    /** Its size: a column's width by default, the whole popup in Swipe gifts. */
+    className?: string
     children: ReactNode
 }) {
     const [dx, setDx] = useState(0)
@@ -77,7 +80,7 @@ export default function SwipeCard({
                 transition: start.current !== null || reduced ? 'none' : 'transform 180ms ease-out',
                 touchAction: 'pan-y',
             }}
-            className="relative flex w-full max-w-sm cursor-grab flex-col rounded-card border border-line bg-card p-4 select-none active:cursor-grabbing"
+            className={`relative flex cursor-grab flex-col rounded-card border border-line bg-card p-4 select-none active:cursor-grabbing ${className}`}
         >
             {children}
             <span

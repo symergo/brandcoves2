@@ -17,6 +17,21 @@ list.
 It is called "Swipe door cadeaus" / "Swipe through gifts" on the site, not "Tinder": that is
 somebody else's brand name.
 
+## A popup, not a page (2026-09-29)
+
+The first version was an ordinary page, and on a phone the site's header and footer left a small
+card in a page that scrolled. The owner asked for "bigger pictures, no scrolling... maybe a popup?".
+So it opens as a dialog over the page: the full screen on a phone (clear of the notch and the home
+bar), a tall panel over a dimmed page from `sm` up.
+
+- One slim top bar: the title, who it is for and the count once there is one, and a close button,
+  which is Stop (so is Escape).
+- The card takes every pixel the bar and the buttons leave; the picture takes most of the card and
+  grows a small shop picture to fill it. It is the image proxy's copy at up to 960 wide
+  (`imageToken`), the shop's own picture when the proxy may not serve it.
+- Two round buttons with their words under them, within a thumb's reach: the swipe's equals, never
+  replaced by it. The page behind does not scroll while it is open.
+
 ## No end, and a way out
 
 - **No round count.** This or that stops after twelve rounds (`TasteDeck::ROUNDS`); this does not.
