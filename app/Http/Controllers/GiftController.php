@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Gender;
 use App\Enums\Interest;
 use App\Enums\Preference;
 use App\Enums\RecipientType;
@@ -437,6 +438,8 @@ class GiftController extends Controller
         $recipient->update(array_filter([
             'occasion' => $validated['occasion'] ?? null,
             'age_band' => $validated['age_band'] ?? null,
+            // "Voor hem / Voor haar", remembered like the age: the giver's fact.
+            'gender' => $validated['gender'] ?? null,
             'budget_max' => isset($validated['budget_max'])
                 ? (int) round((float) $validated['budget_max'] * 100)
                 : null,
@@ -471,6 +474,8 @@ class GiftController extends Controller
             'occasion' => ['nullable', 'string', 'max:40'],
             // One of the fixed groups, the same strings a product is tagged with.
             'age_band' => ['nullable', 'string', Rule::in(GiftTags::AGE_BANDS)],
+            // For him or for her (Gender, 2026-09-29); null is "either".
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'recipient_id' => ['nullable', 'uuid'],
             // "Voor mezelf" (owner, 2026-09-28): ranked for your own list, and
             // echoed back in `brief` so the choice survives every post.
@@ -555,6 +560,7 @@ class GiftController extends Controller
             relationship: empty($validated['for_me']) ? ($validated['relationship'] ?? null) : null,
             occasion: $validated['occasion'] ?? null,
             ageBand: $validated['age_band'] ?? null,
+            gender: empty($validated['for_me']) ? ($validated['gender'] ?? null) : null,
             limit: (int) config('giftcoves.gift.results'),
             /*
              * For yourself, ranked as for your own list, the same profile This
@@ -590,6 +596,7 @@ class GiftController extends Controller
             'relationship' => $stored->relationship,
             'occasion' => $stored->occasion,
             'age_band' => $stored->ageBand,
+            'gender' => $stored->gender,
         ], fn ($v) => $v !== null);
     }
 
@@ -697,6 +704,7 @@ class GiftController extends Controller
             'preferences' => array_values($taste['preferences']),
             'avoid' => array_values($taste['avoid']),
             'ageBand' => $taste['age_band'],
+            'gender' => $r->gender,
             // So the page can say the taste is their own word.
             'ownTaste' => $own !== null,
         ];

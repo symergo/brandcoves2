@@ -56,7 +56,7 @@ class SwipeGiftsTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Gift/Swipe')
                 ->has('cards', 8)
-                ->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false])
+                ->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false, 'gender' => null])
                 ->where('urls.next', '/be-nl/gift/swipe/next'));
     }
 
@@ -102,7 +102,7 @@ class SwipeGiftsTest extends TestCase
     }
 
     #[Test]
-    public function a_son_never_gets_drinks(): void
+    public function a_child_never_gets_drinks(): void
     {
         // The relationship's exclusions are a hard rule (gift_landings.excluded_pairs).
         $drinks = [];
@@ -111,7 +111,7 @@ class SwipeGiftsTest extends TestCase
             $drinks[] = $this->group('drinks')->id;
         }
 
-        $cards = $this->get('/be-nl/gift/swipe?relationship=son')->viewData('page')['props']['cards'];
+        $cards = $this->get('/be-nl/gift/swipe?relationship=child')->viewData('page')['props']['cards'];
 
         $this->assertNotEmpty($cards);
         $this->assertEmpty(array_intersect(array_column($cards, 'id'), $drinks));

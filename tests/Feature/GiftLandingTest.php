@@ -214,7 +214,7 @@ class GiftLandingTest extends TestCase
 
         $mother = $planner->hubInterests(RecipientType::Mother, $counts);
         $father = $planner->hubInterests(RecipientType::Father, $counts);
-        $child = $planner->hubInterests(RecipientType::Son, $counts);
+        $child = $planner->hubInterests(RecipientType::Child, $counts);
 
         $this->assertSame('gardening', $mother[0]);
         $this->assertSame(['diy', 'drinks'], array_slice($father, 0, 2));
@@ -246,8 +246,7 @@ class GiftLandingTest extends TestCase
         PlanGiftLandingPages::dispatchSync(Market::BeNl);
 
         $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Drinks));
-        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Son, Interest::Drinks));
-        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Daughter, Interest::Drinks));
+        $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Child, Interest::Drinks));
     }
 
     #[Test]

@@ -48,8 +48,7 @@ class PersonaDemandTest extends TestCase
 
         // The reading and a count: no words, no budget, nobody.
         $this->assertSame('be-nl', $row->market);
-        // "mijn zus" is a sister since the gender split (2026-09-29).
-        $this->assertSame('sister', $row->relationship);
+        $this->assertSame('sibling', $row->relationship);
         $this->assertSame('yoga', $row->interest);
         $this->assertSame(2, (int) $row->searches);
 
@@ -67,7 +66,7 @@ class PersonaDemandTest extends TestCase
     {
         $this->forbidAi();
         $this->yogaShelf();
-        $this->searched('sister', 'yoga', searches: 6, days: 3);
+        $this->searched('sibling', 'yoga', searches: 6, days: 3);
 
         $result = app(PersonaDemandPlanner::class)->plan(Market::BeNl);
 
@@ -76,10 +75,10 @@ class PersonaDemandTest extends TestCase
         $plan = CovePlan::query()->where('kind', CoveKind::Persona->value)->sole();
 
         $this->assertSame('draft', $plan->status);
-        $this->assertEquals(['relationship' => 'sister', 'interests' => ['yoga']], $plan->brief);
+        $this->assertEquals(['relationship' => 'sibling', 'interests' => ['yoga']], $plan->brief);
         $this->assertStringStartsWith(PersonaDemandPlanner::MARK, (string) $plan->note);
         // A template title in the market's words, not a model's.
-        $this->assertSame('Je zus die van yoga houdt', $plan->title);
+        $this->assertSame('Je broer of zus die van yoga houdt', $plan->title);
         // Pre-filled with the owner's minimum of eight, all answering yoga.
         $this->assertSame(8, $plan->items()->count());
 
@@ -94,7 +93,7 @@ class PersonaDemandTest extends TestCase
         $this->yogaShelf();
 
         // Enough searches, one afternoon: one person, or one crawler.
-        $this->searched('sister', 'yoga', searches: 9, days: 1);
+        $this->searched('sibling', 'yoga', searches: 9, days: 1);
         // Enough days, too few searches.
         $this->searched('mother', 'yoga', searches: 4, days: 4);
 
@@ -109,14 +108,14 @@ class PersonaDemandTest extends TestCase
     public function a_reading_a_landing_page_answers_is_not_drafted(): void
     {
         $this->yogaShelf();
-        $this->searched('sister', 'yoga', searches: 6, days: 3);
+        $this->searched('sibling', 'yoga', searches: 6, days: 3);
 
         GiftLanding::create([
             'market' => Market::BeNl->value,
-            'recipient' => 'sister',
+            'recipient' => 'sibling',
             'interest' => 'yoga',
             'path' => '/be-nl/gift-ideas/for/zus/yoga',
-            'brief' => ['relationship' => 'sister', 'interests' => ['yoga']],
+            'brief' => ['relationship' => 'sibling', 'interests' => ['yoga']],
             'product_count' => 12,
             'checked_at' => now(),
         ]);
@@ -177,7 +176,7 @@ class PersonaDemandTest extends TestCase
             $this->giftable("Yogablok {$i}", 1500 + $i * 100, ['interest:yoga']);
         }
 
-        $this->searched('sister', 'yoga', searches: 6, days: 3);
+        $this->searched('sibling', 'yoga', searches: 6, days: 3);
 
         $result = app(PersonaDemandPlanner::class)->plan(Market::BeNl);
 
@@ -211,9 +210,9 @@ class PersonaDemandTest extends TestCase
     {
         $this->forbidAi();
         $this->yogaShelf();
-        $this->searched('sister', 'yoga', searches: 6, days: 3);
+        $this->searched('sibling', 'yoga', searches: 6, days: 3);
         // Demand in another market is that market's.
-        $this->searched('sister', 'yoga', searches: 60, days: 30, market: Market::NlNl);
+        $this->searched('sibling', 'yoga', searches: 60, days: 30, market: Market::NlNl);
 
         PlanPersonasFromDemand::dispatchSync(Market::BeNl);
 
@@ -224,7 +223,7 @@ class PersonaDemandTest extends TestCase
     public function the_command_is_a_dry_run_unless_asked_to_write(): void
     {
         $this->yogaShelf();
-        $this->searched('sister', 'yoga', searches: 6, days: 3);
+        $this->searched('sibling', 'yoga', searches: 6, days: 3);
 
         $this->artisan('bc:plan-demand-personas', ['--market' => 'be-nl'])->assertSuccessful();
         $this->assertSame(0, CovePlan::query()->count());

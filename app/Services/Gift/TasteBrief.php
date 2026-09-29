@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Enums\EventType;
+use App\Enums\Gender;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\Preference;
@@ -55,7 +56,19 @@ final readonly class TasteBrief
         public ?string $query = null,
         public bool $hasEverything = false,
         public ?string $recipientId = null,
+        /** 'male' or 'female' when the giver said so ("Voor hem / Voor haar"); see gender(). */
+        public ?string $gender = null,
     ) {}
+
+    /**
+     * Him or her: what the giver said, else what the relation says (a mother
+     * is her). Null is "either", which leaves every product in.
+     */
+    public function gender(): ?Gender
+    {
+        return Gender::tryFrom((string) $this->gender)
+            ?? RecipientType::tryFrom(mb_strtolower(trim((string) $this->relationship)))?->impliedGender();
+    }
 
     public static function fromRecipient(Recipient $recipient, Market $market, int $limit = 4): self
     {
@@ -87,6 +100,7 @@ final readonly class TasteBrief
             budgetMax: $recipient->budget_max,
             avoid: array_values(array_filter($taste['avoid'])),
             relationship: $recipient->relationship,
+            gender: $recipient->gender,
             occasion: $recipient->occasion,
             ageBand: $taste['age_band'],
             limit: $limit,
@@ -209,6 +223,7 @@ final readonly class TasteBrief
     {
         return array_filter([
             'relationship' => $this->relationship,
+            'gender' => $this->gender,
             'interests' => $this->interests,
             'occasion' => $this->occasion,
             'ageBand' => $this->ageBand,
@@ -260,6 +275,7 @@ final readonly class TasteBrief
                 (array) ($data['avoid'] ?? []),
             )))), 0, 10),
             relationship: self::one($data['relationship'] ?? null, RecipientType::values()),
+            gender: self::one($data['gender'] ?? null, Gender::values()),
             occasion: self::one($data['occasion'] ?? null, GiftTags::vocabulary()[GiftTags::OCCASION]),
             ageBand: self::one($data['ageBand'] ?? null, GiftTags::AGE_BANDS),
             limit: $limit,
@@ -278,6 +294,7 @@ final readonly class TasteBrief
     {
         $closed = [
             'relationship' => RecipientType::values(),
+            'gender' => Gender::values(),
             'occasion' => GiftTags::vocabulary()[GiftTags::OCCASION],
             'ageBand' => GiftTags::AGE_BANDS,
         ];
@@ -438,6 +455,7 @@ final readonly class TasteBrief
             query: $this->query,
             hasEverything: $this->hasEverything,
             recipientId: $this->recipientId,
+            gender: $this->gender,
         );
     }
 
@@ -495,6 +513,7 @@ final readonly class TasteBrief
             query: $query ?? $this->query,
             hasEverything: $this->hasEverything,
             recipientId: $this->recipientId,
+            gender: $this->gender,
         );
     }
 }

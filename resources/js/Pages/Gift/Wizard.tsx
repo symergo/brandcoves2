@@ -46,6 +46,8 @@ interface Recipient {
     budgetMax: Cents | null
     avoid: string[]
     ageBand: string | null
+    /** "Voor hem" or "Voor haar" when the giver said so once: 'male' | 'female'. */
+    gender?: string | null
     /** Their own link (`/for/{token}`); null once an account is behind them. */
     selfUrl?: string | null
     personUrl?: string
@@ -60,6 +62,7 @@ interface Brief {
     relationship?: string | null
     occasion?: string | null
     age_band?: string | null
+    gender?: string | null
     recipient_id?: string | null
     /** "Voor mezelf": the answers describe the visitor, not somebody else. */
     for_me?: boolean
@@ -456,6 +459,12 @@ export default function GiftWizard(props: Props) {
     // One of the fixed groups the server offers, never typed: an editor tags
     // a product with the same strings, so the two meet as one value.
     const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
+    /*
+     * "Voor hem / Voor haar" (owner, 2026-09-29): asked on its own rather than
+     * folded into the relation, and optional. It only ever leaves out a product
+     * tagged for the other one; most carry no gender and stay in.
+     */
+    const [gender, setGender] = useState<string | null>(brief?.gender ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
     /*
      * "Voor mezelf" (owner, 2026-09-28): the same questions about yourself.
@@ -510,6 +519,7 @@ export default function GiftWizard(props: Props) {
         avoid,
         relationship,
         age_band: ageBand,
+        gender: forMe ? null : gender,
         recipient_id: recipientId,
         for_me: forMe,
     })
@@ -552,6 +562,7 @@ export default function GiftWizard(props: Props) {
         setAvoid(chosen.avoid)
         setRelationship(chosen.relationship)
         setAgeBand(chosen.ageBand)
+        setGender(chosen.gender ?? null)
         setBudgetMax(chosen.budgetMax != null ? String(chosen.budgetMax / 100) : '')
         setBudgetMin(null)
         setStage('ways')
@@ -624,6 +635,7 @@ export default function GiftWizard(props: Props) {
         }
 
         setForMe(false)
+        setGender(null)
         setRelationship(value)
         setStage('ways')
     }
@@ -675,11 +687,14 @@ export default function GiftWizard(props: Props) {
             return `${base}?for=me`
         }
 
-        if (recipient) {
-            return `${base}?person=${encodeURIComponent(recipient.id)}`
-        }
+        const who = recipient
+            ? `${base}?person=${encodeURIComponent(recipient.id)}`
+            : kind
+              ? `${base}?relationship=${encodeURIComponent(kind)}`
+              : base
 
-        return kind ? `${base}?relationship=${encodeURIComponent(kind)}` : base
+        // "Voor hem / Voor haar" travels too: it says nothing about the person but that.
+        return gender ? `${who}${who.includes('?') ? '&' : '?'}gender=${gender}` : who
     }
     const tasteHref = withWho(tasteUrl ?? `/${market.key}/gift/taste`)
     // Swipe gifts carries who it is for the same way (CarriedWho).
@@ -727,12 +742,35 @@ export default function GiftWizard(props: Props) {
 
     const showResults = picks !== null && !editing
 
+    /*
+      Him or her, when the relation does not already say so: not for yourself,
+      and not for mama or papa (RecipientType::impliedGender).
+    */
+    const asksGender = !forMe && kind !== 'mother' && kind !== 'father'
+
     /** "For Mum · change", above the ways and the questions. */
     const forLine = !card && (
         <p className="flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">
                 {whoLabel ? t('gift.for_label', { who: whoLabel }) : t('gift.for_someone')}
             </span>
+            {asksGender && (
+                <span role="group" aria-label={t('gift.gender_label')} className="inline-flex gap-1">
+                    {(['male', 'female'] as const).map((value) => (
+                        <button
+                            key={value}
+                            type="button"
+                            aria-pressed={gender === value}
+                            onClick={() => setGender(gender === value ? null : value)}
+                            className={`rounded-full border px-3 py-1 ${
+                                gender === value ? 'border-accent bg-accent text-white' : 'border-line hover:border-ink'
+                            }`}
+                        >
+                            {t(`gift.genders.${value}`)}
+                        </button>
+                    ))}
+                </span>
+            )}
             <button
                 type="button"
                 className="text-accent underline"

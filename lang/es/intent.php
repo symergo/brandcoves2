@@ -9,22 +9,16 @@ return [
     'triggers' => ['regalo para', 'regalos para', 'ideas de regalo para', 'algo para', 'detalle para', 'regalo'],
 
     'recipients' => [
-        'brother' => ['hermano'],
-        'sister' => ['hermana'],
+        'sibling' => ['hermana', 'hermano', 'hermanos'],
         'mother' => ['mamá', 'mama', 'madre', 'suegra'],
         'father' => ['papá', 'papa', 'padre', 'suegro'],
         'partner' => ['novia', 'novio', 'mi mujer', 'marido', 'esposa', 'esposo', 'pareja'],
-        'grandmother' => ['abuela', 'abuelita'],
-        'grandfather' => ['abuelo', 'abuelito'],
-        'son' => ['hijo'],
-        'daughter' => ['hija'],
-        'male_friend' => ['mejor amigo', 'amigo'],
-        'female_friend' => ['mejor amiga', 'amiga'],
+        'grandparent' => ['abuela', 'abuelo', 'abuelos'],
+        'child' => ['hijo', 'hija', 'niño', 'niña', 'niños', 'bebé', 'bebe', 'adolescente', 'sobrino', 'sobrina', 'ahijado', 'ahijada'],
+        'friend' => ['mejor amiga', 'mejor amigo', 'amiga', 'amigo', 'amigos', 'vecino', 'vecina'],
         'colleague' => ['compañera', 'compañero', 'colega', 'jefe', 'jefa'],
-        'female_teacher' => ['profesora', 'maestra'],
-        'male_teacher' => ['profesor', 'maestro'],
-        'male_host' => ['anfitrión', 'anfitrion'],
-        'female_host' => ['anfitriona'],
+        'teacher' => ['profesora', 'profesor', 'profe', 'maestra', 'maestro'],
+        'host' => ['anfitriona', 'anfitrión', 'anfitrion', 'anfitriones'],
     ],
 
     'occasions' => [

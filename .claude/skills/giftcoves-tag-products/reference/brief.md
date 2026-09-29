@@ -2,7 +2,7 @@
 
 The judging rules. Also used, word for word, by the whole-catalogue pass of 2026-09-28, so a
 product tagged from the admin queue is judged the same way as the 343,000 before it. The line
-format below (`x`, `-`, `i:… r:… o:… p:…`) is shorthand for a verdict; SKILL.md says how
+format below (`x`, `-`, `i:… r:… o:… g:… p:…`) is shorthand for a verdict; SKILL.md says how
 each one becomes an entry for `POST /products/tags`.
 
 You are judging products from a gift-finding website's catalogue. For each product decide (1) is it a
@@ -19,7 +19,7 @@ Markets: be-nl and nl-nl titles are Dutch, be-fr French, en English. Brand and c
     id<TAB>-                                   a gift, but no tag fits
     id<TAB>i:coffee,home r:partner o:christmas p:design,luxurious   a gift, with tags
 
-Groups are space-separated and each is optional: `i:` interests, `r:` recipients, `o:` occasions,
+Groups are space-separated and each is optional: `i:` interests, `r:` recipients, `o:` occasions, `g:` gender,
 `p:` preference,
 values comma-separated with no spaces. Use ONLY the values below, spelled exactly. Nothing else on
 the line, no header, no commentary.
@@ -30,8 +30,7 @@ the line, no header, no commentary.
   diy, beauty, fashion, tech, home, craft, film, pets, wellness, kids, art, cycling, boardgames,
   drinks, baking, running, yoga, cars, science, water, wintersports, football, collecting, nature,
   fishing, horses, hunting, gadgets, it
-- **r:** partner, mother, father, colleague, grandmother, grandfather, son, daughter, brother,
-  sister, male_friend, female_friend, female_teacher, male_teacher, male_host, female_host
+- **r:** partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host
 - **o:** birthday, christmas, wedding, anniversary, baby, housewarming, graduation, retirement,
   farewell, valentines, mothers_day, fathers_day, thank_you, sinterklaas, easter, new_year,
   halloween, communion, christening, engagement, get_well, new_job, secret_santa
@@ -72,26 +71,25 @@ What the product is *for*, not everything it could touch. Most specific first.
   hiking; `travel` luggage and travel accessories; `craft` for making things (sewing, knitting).
 - Use `-` only when truly nothing fits.
 
+## g: gender (almost never)
+
+`g:male` or `g:female` only when the product is genuinely for one: a men's razor, a dress, a
+bra, a beard kit, a "best grandma" mug. A giver who chooses "for her" never sees a product tagged
+`g:male`, so a wrong gender tag hides a good gift. Most products suit both and get no `g:`; never
+tag both. Relations have no gender (since 2026-09-29, docs/features/gift-gender.md): tag
+`r:grandparent`, not a grandmother, and add `g:female` only when the product itself is hers.
+
 ## r: recipients (only when the product plausibly suits that person)
 
 Leave `r:` off for products that suit anyone equally: an untagged product scores neutral, a product
 tagged for the wrong person scores lower for everyone else. Good uses:
-- `son`/`daughter` for products made for children. `partner` for romantic, intimate or
-  luxury-personal items (jewellery, perfume, lingerie, couples' things). `grandmother`/`grandfather`
-  for products made for older people or family keepsakes. `male_host`/`female_host` for gifts you
-  bring when invited (wine, chocolates, flowers, candles, serving pieces). `colleague` and
-  `female_teacher`/`male_teacher` for small, neutral, affordable gifts (under about 30 euros: a mug,
-  a nice notebook, chocolates). `male_friend`/`female_friend` and `brother`/`sister` for fun, social,
-  everyday gifts.
-- **The relations come in pairs, and there is no "either" value** (split by gender on 2026-09-29).
-  When a product suits both of a pair, which is nearly always, tag both: `r:grandmother,grandfather`,
-  `r:son,daughter`, `r:male_host,female_host`. Tag one of the pair only when the product is clearly
-  for that one: it names them ("beste oma" mug → `grandmother`, "thank you juf" card →
-  `female_teacher`, "best brother" keyring → `brother`), or it is genuinely made for one gender and
-  the relation fits as well. A men's razor is not a `brother` gift by default; it simply gets no
-  `r:`. `grandparent`, `child`, `sibling`, `friend`, `teacher` and `host` are refused.
-- `mother`/`father` only where the product is about being a parent (a baby-photo frame, a "best
-  dad" mug), not because it is for a woman or a man: a dress is not for "mother".
+- `child` for products made for children. `partner` for romantic, intimate or luxury-personal items
+  (jewellery, perfume, lingerie, couples' things). `grandparent` for products made for older people
+  or family keepsakes. `host` for gifts you bring when invited (wine, chocolates, flowers, candles,
+  serving pieces). `colleague` and `teacher` for small, neutral, affordable gifts (under about 30
+  euros: a mug, a nice notebook, chocolates). `friend` and `sibling` for fun, social, everyday gifts.
+- Never tag by gender: a razor or a dress is not for "father" or "mother". `mother`/`father` only
+  where the product is about being a parent (a baby-photo frame, a "best dad" mug).
 - At most three.
 
 ## o: occasions (only when the product is tied to the occasion)
@@ -136,13 +134,13 @@ lamp), not every nice-looking product.
 ## Examples
 
     1	SoundLink Flex Bluetooth speaker (2nd Gen)	Bose	Speakers	164
-    1	i:music,tech,outdoors r:male_friend,female_friend p:powered,modern
+    1	i:music,tech,outdoors r:friend p:powered,modern
 
     5	Fellowes Admire A3 Lamineerhoezen Stylish Matt	Fellowes		18
     5	x
 
     7	LEGO Harry Potter Kasteel Zweinstein	LEGO	Bouwsets	169
-    7	i:kids,collecting,film r:son,daughter o:sinterklaas,christmas
+    7	i:kids,collecting,film r:child o:sinterklaas,christmas
 
     9	Étui My Case pour iPhone 17 MagSafe Transparent		Étui pour téléphone portable	12
     9	x
@@ -151,7 +149,4 @@ lamp), not every nice-looking product.
     11	i:coffee,cooking o:housewarming p:powered
 
     13	Yankee Candle Christmas Cookie Large Jar	Yankee Candle	Kaarsen	29
-    13	i:home r:male_host,female_host,colleague o:christmas,thank_you p:everyday
-
-    15	Mok "Liefste oma van de wereld"	Mug Design	Mokken	14
-    15	i:home r:grandmother o:mothers_day p:everyday,quirky
+    13	i:home r:host,colleague o:christmas,thank_you p:everyday

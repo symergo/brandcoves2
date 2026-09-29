@@ -526,6 +526,15 @@ class SuggestionEngine
                 ->whereRaw('not jsonb_exists_any(product_groups.crowd_tags, ?::text[])', [$this->pgTextArray($avoidedTags)]);
         }
 
+        /*
+         * For him or for her (Gender, 2026-09-29): a product an editor tagged
+         * for the other one is left out. Only a tag counts; an untagged product
+         * suits both, which is most of them.
+         */
+        if (($gender = $brief->gender()) !== null) {
+            $groups->whereRaw('not jsonb_exists(product_groups.gift_tags, ?)', [GiftTags::gender($gender->other()->value)]);
+        }
+
         if ($queries !== []) {
             $tsquery = implode(' OR ', array_map(fn (string $q) => trim($q), $queries));
 

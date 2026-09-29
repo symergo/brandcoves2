@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\Gender;
 use App\Enums\RecipientType;
 use App\Models\Recipient;
 use App\Support\CurrentMarket;
@@ -23,11 +24,11 @@ use Illuminate\Support\Str;
  */
 final class CarriedWho
 {
-    /** @return array{person: array{id: string, name: string}|null, relationship: string|null, forMe: bool} */
+    /** @return array{person: array{id: string, name: string}|null, relationship: string|null, forMe: bool, gender: string|null} */
     public function read(Request $request, CurrentMarket $current): array
     {
         if ($request->query('for') === 'me') {
-            return ['person' => null, 'relationship' => null, 'forMe' => true];
+            return ['person' => null, 'relationship' => null, 'forMe' => true, 'gender' => null];
         }
 
         $recipient = $this->recipient($request, (string) $request->query('person', ''));
@@ -40,6 +41,8 @@ final class CarriedWho
             'person' => $recipient === null ? null : ['id' => $recipient->id, 'name' => $recipient->name],
             'relationship' => $relationship?->value,
             'forMe' => false,
+            // "Voor hem / Voor haar" from Find a gift, else what the saved person holds.
+            'gender' => Gender::tryFrom((string) $request->query('gender'))?->value ?? Gender::tryFrom((string) $recipient?->gender)?->value,
         ];
     }
 
@@ -48,13 +51,14 @@ final class CarriedWho
      * one of your own people by id, a relationship by value, or yourself.
      * Anybody else's person id counts as nobody.
      */
-    public function seed(Request $request, CurrentMarket $current, ?string $personId, ?string $relationship, bool $forMe): DeckSeed
+    public function seed(Request $request, CurrentMarket $current, ?string $personId, ?string $relationship, bool $forMe, ?string $gender = null): DeckSeed
     {
         return app(DeckSeeds::class)->for(
             $current->get(),
             $forMe ? null : $this->recipient($request, $personId),
             $forMe ? null : RecipientType::tryFrom((string) $relationship),
             $forMe ? $request->user() : null,
+            $forMe ? null : Gender::tryFrom((string) $gender),
         );
     }
 

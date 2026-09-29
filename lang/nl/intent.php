@@ -15,22 +15,16 @@ return [
     'triggers' => ['cadeau voor', 'cadeautje voor', 'kado voor', 'kadootje voor', 'geschenk voor', 'geschenkje voor', 'iets voor', 'cadeau', 'cadeautje', 'kado', 'geschenk', 'cadeaus voor'],
 
     'recipients' => [
-        'brother' => ['broer', 'broertje', 'broers'],
-        'sister' => ['zus', 'zusje', 'zussen'],
+        'sibling' => ['zus', 'zusje', 'zussen', 'broer', 'broertje', 'broers'],
         'mother' => ['mama', 'moeder', 'mam', 'schoonmoeder'],
         'father' => ['papa', 'vader', 'pa', 'schoonvader'],
         'partner' => ['mijn man', 'mijn vrouw', 'partner', 'lief', 'lieverd', 'echtgenoot', 'echtgenote'],
-        'grandmother' => ['oma', 'omi', 'grootmoeder', 'bomma'],
-        'grandfather' => ['opa', 'grootvader', 'bompa'],
-        'son' => ['zoon', 'zoontje'],
-        'daughter' => ['dochter', 'dochtertje'],
-        'male_friend' => ['beste vriend', 'vriend'],
-        'female_friend' => ['beste vriendin', 'vriendin'],
+        'grandparent' => ['oma', 'opa', 'grootmoeder', 'grootvader', 'grootouders', 'bomma', 'bompa'],
+        'child' => ['zoon', 'dochter', 'kind', 'kinderen', 'zoontje', 'dochtertje', 'baby', 'peuter', 'kleuter', 'tiener', 'neefje', 'nichtje', 'petekind'],
+        'friend' => ['beste vriend', 'beste vriendin', 'vriendin', 'vriend', 'vrienden', 'kameraad', 'buurman', 'buurvrouw'],
         'colleague' => ['collega', 'collega\'s', 'baas', 'chef'],
-        'female_teacher' => ['juf', 'juffrouw', 'lerares'],
-        'male_teacher' => ['meester', 'leraar'],
-        'male_host' => ['gastheer'],
-        'female_host' => ['gastvrouw'],
+        'teacher' => ['juf', 'meester', 'leraar', 'lerares', 'leerkracht', 'juffrouw'],
+        'host' => ['gastvrouw', 'gastheer', 'gastgever', 'gastgevers'],
     ],
 
     'occasions' => [

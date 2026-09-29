@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Gender;
 use App\Enums\RecipientStatus;
 use App\Enums\RecipientType;
 use App\Enums\TasteSource;
@@ -88,6 +89,7 @@ class TasteController extends Controller
                 $carried['person']['id'] ?? null,
                 $carried['relationship'],
                 $carried['forMe'],
+                $carried['gender'],
             )),
             'result' => null,
         ]);
@@ -106,6 +108,7 @@ class TasteController extends Controller
             'recipient_id' => ['nullable', 'uuid'],
             'relationship' => ['nullable', 'string', Rule::in(RecipientType::values())],
             'for' => ['nullable', 'string', 'in:someone,me'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
         ]);
 
         $choices = $reader->read($validated['choices'], $current->get());
@@ -115,6 +118,7 @@ class TasteController extends Controller
             $validated['recipient_id'] ?? null,
             $validated['relationship'] ?? null,
             ($validated['for'] ?? null) === 'me',
+            $validated['gender'] ?? null,
         );
 
         $exclude = array_values(array_unique([

@@ -106,10 +106,7 @@ class FindAGiftTest extends TestCase
                 ->where('tasteUrl', '/be-nl/gift/taste')
                 // The closed vocabulary, in the market's words.
                 ->where('options.relationships.1', ['value' => 'mother', 'label' => 'Mama'])
-                // The specific relations only (the gender split, 2026-09-29):
-                // "oma of opa" and the other "either" values are not chips.
-                ->has('options.relationships', 16)
-                ->where('options.relationships.3', ['value' => 'grandmother', 'label' => 'Oma'])
+                ->has('options.relationships', 10)
                 // "mama" typed on the person is read as the vocabulary, so
                 // the Coves for her can come first without asking again.
                 ->where('recipients.0.relationshipType', 'mother'));
@@ -139,12 +136,12 @@ class FindAGiftTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Gift/Taste')
-                ->where('carried', ['person' => null, 'relationship' => 'mother', 'forMe' => false]));
+                ->where('carried', ['person' => null, 'relationship' => 'mother', 'forMe' => false, 'gender' => null]));
 
         // Anything outside the vocabulary is not carried.
         $this->get('/be-nl/gift/taste?relationship=grote-baas')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false]));
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false, 'gender' => null]));
     }
 
     #[Test]
@@ -156,10 +153,10 @@ class FindAGiftTest extends TestCase
 
         $this->actingAs($user)->get("/be-nl/gift/taste?person={$mum->id}")
             ->assertInertia(fn ($page) => $page
-                ->where('carried', ['person' => ['id' => $mum->id, 'name' => 'Mum'], 'relationship' => 'mother', 'forMe' => false]));
+                ->where('carried', ['person' => ['id' => $mum->id, 'name' => 'Mum'], 'relationship' => 'mother', 'forMe' => false, 'gender' => null]));
 
         $this->actingAs($user)->get("/be-nl/gift/taste?person={$theirs->id}")
-            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false]));
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => false, 'gender' => null]));
     }
 
     #[Test]
@@ -284,7 +281,7 @@ class FindAGiftTest extends TestCase
     {
         $this->get('/be-nl/gift/taste?for=me')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => true]));
+            ->assertInertia(fn ($page) => $page->where('carried', ['person' => null, 'relationship' => null, 'forMe' => true, 'gender' => null]));
     }
 
     #[Test]

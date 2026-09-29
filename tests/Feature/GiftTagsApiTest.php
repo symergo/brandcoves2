@@ -110,7 +110,7 @@ class GiftTagsApiTest extends TestCase
     {
         $vocabulary = GiftTags::vocabulary();
 
-        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'preference'], array_keys($vocabulary));
+        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'gender', 'preference'], array_keys($vocabulary));
         $this->assertContains('coffee', $vocabulary['interest']);
         $this->assertContains('christmas', $vocabulary['occasion']);
         $this->assertContains('sinterklaas', $vocabulary['occasion']);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Enums\EventType;
+use App\Enums\Gender;
 use App\Enums\Interest;
 use App\Enums\Preference;
 use App\Enums\RecipientType;
@@ -39,6 +40,12 @@ class GiftTags
     public const RECIPIENT = 'recipient';
 
     public const AGE = 'age';
+
+    /**
+     * For him or for her, only on a product that is genuinely one (a razor, a
+     * dress); most suit both and carry none (Gender, 2026-09-29).
+     */
+    public const GENDER = 'gender';
 
     public const PREFERENCE = 'preference';
 
@@ -91,6 +98,7 @@ class GiftTags
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,
+            self::GENDER => Gender::values(),
             // The wizard's "which way does their taste go". The engine guesses
             // it from title words ("eiken", "retro"); a tag is an editor
             // saying so, and it wins.
@@ -161,6 +169,11 @@ class GiftTags
     public static function recipient(string $value): string
     {
         return self::RECIPIENT.':'.mb_strtolower(trim($value));
+    }
+
+    public static function gender(string $value): string
+    {
+        return self::GENDER.':'.mb_strtolower(trim($value));
     }
 
     public static function age(string $value): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\Gender;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\RecipientType;
@@ -34,7 +35,7 @@ final class DeckSeeds
 {
     public function __construct(private readonly OwnTaste $ownTaste) {}
 
-    public function for(Market $market, ?Recipient $person, ?RecipientType $relationship, ?User $me): DeckSeed
+    public function for(Market $market, ?Recipient $person, ?RecipientType $relationship, ?User $me, ?Gender $gender = null): DeckSeed
     {
         if ($person !== null) {
             $brief = TasteBrief::fromRecipient($person, $market);
@@ -47,11 +48,24 @@ final class DeckSeeds
                 avoid: array_values(array_unique([...self::avoided($brief->avoid), ...$typical->avoid])),
                 ageBand: $brief->ageBand,
                 recipient: $type?->value,
+                // Said now, else stored on the person, else what the relation says.
+                gender: ($gender ?? Gender::tryFrom((string) $person->gender) ?? $type?->impliedGender())?->value,
             );
         }
 
         if ($relationship !== null) {
-            return $this->typical($relationship);
+            $typical = $this->typical($relationship);
+
+            return new DeckSeed(
+                explore: $typical->explore,
+                avoid: $typical->avoid,
+                recipient: $typical->recipient,
+                gender: ($gender ?? $relationship->impliedGender())?->value,
+            );
+        }
+
+        if ($gender !== null) {
+            return new DeckSeed(gender: $gender->value);
         }
 
         $own = $me === null ? null : $this->ownTaste->of($me);

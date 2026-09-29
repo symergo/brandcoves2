@@ -325,24 +325,24 @@ return [
             'body' => 'Guarda en el menú de tu cuenta lo que te gusta recibir, o juega a Esto o aquello para ti y guarda el resultado. Tus amigos en GiftCoves que buscan un regalo para ti empiezan desde ahí. Sin presupuesto: lo que gastan lo eligen ellos.',
         ],
     ],
-    'relations-by-gender' => [
+    'gift-for-him-or-her' => [
         'status' => 'done',
         'sort' => 97,
         'nl' => [
-            'title' => 'Oma of opa, zoon of dochter: apart',
-            'body' => 'Kies voor wie het is zoals je het zelf zegt: oma of opa, zoon of dochter, broer of zus, vriend of vriendin, juf of meester, gastheer of gastvrouw. Elk krijgt zijn eigen ideeën en een eigen pagina met cadeaus.',
+            'title' => 'Voor hem of voor haar',
+            'body' => 'In Cadeau vinden zeg je, als je wilt, of het voor hem of voor haar is. Cadeaus die duidelijk voor de ander bedoeld zijn, vallen dan weg; al de rest blijft.',
         ],
         'en' => [
-            'title' => 'Grandma or grandpa, son or daughter: separate',
-            'body' => 'Choose who it is for the way you would say it: grandma or grandpa, son or daughter, brother or sister, a male or female friend, teacher or host. Each gets its own ideas and its own page of gifts.',
+            'title' => 'For him or for her',
+            'body' => 'In Find a gift you can say, if you like, whether it is for him or for her. Gifts clearly meant for the other then drop out; everything else stays.',
         ],
         'fr' => [
-            'title' => 'Mamie ou papi, fils ou fille : séparés',
-            'body' => "Choisissez pour qui c'est comme vous le diriez : mamie ou papi, fils ou fille, frère ou sœur, ami ou amie, maîtresse ou maître, hôte ou hôtesse. Chacun a ses propres idées et sa propre page de cadeaux.",
+            'title' => 'Pour lui ou pour elle',
+            'body' => "Dans Trouver un cadeau, vous pouvez dire, si vous le souhaitez, si c'est pour lui ou pour elle. Les cadeaux clairement destinés à l'autre disparaissent alors ; tout le reste reste.",
         ],
         'es' => [
-            'title' => 'Abuela o abuelo, hijo o hija: por separado',
-            'body' => 'Elige para quién es como lo dirías tú: abuela o abuelo, hijo o hija, hermano o hermana, amigo o amiga, profesora o profesor, anfitrión o anfitriona. Cada uno tiene sus propias ideas y su propia página de regalos.',
+            'title' => 'Para él o para ella',
+            'body' => 'En Buscar un regalo puedes decir, si quieres, si es para él o para ella. Los regalos claramente pensados para el otro desaparecen; todo lo demás se queda.',
         ],
     ],
     'find-a-gift-for-myself' => [

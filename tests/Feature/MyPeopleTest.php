@@ -166,14 +166,14 @@ class MyPeopleTest extends TestCase
     {
         $this->actingAs($this->me)
             ->from('/be-nl/people')
-            ->post('/be-nl/recipients', ['name' => 'Oma', 'relationship' => 'grandmother', 'birthday' => '2000-02-29'])
+            ->post('/be-nl/recipients', ['name' => 'Oma', 'relationship' => 'grandparent', 'birthday' => '2000-02-29'])
             ->assertRedirect('/be-nl/people');
 
         $this->actingAs($this->me)->get('/be-nl/people')
             ->assertInertia(fn ($page) => $page
                 ->has('people', 1)
                 ->where('people.0.name', 'Oma')
-                ->where('people.0.relationship', 'Oma')
+                ->where('people.0.relationship', 'Oma of opa')
                 // A leap-day birthday in a year without one: the 28th.
                 ->where('people.0.next.date', '2027-02-28'));
     }

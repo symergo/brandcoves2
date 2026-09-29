@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\Gender;
+
 /**
  * What the choosing games (This or that, Swipe gifts) start from, when
  * something is already known about who it is for (owner, 2026-09-29: start
@@ -36,6 +38,8 @@ final class DeckSeed
         public readonly array $avoid = [],
         public readonly ?string $ageBand = null,
         public readonly ?string $recipient = null,
+        /** 'male' or 'female': a card tagged for the other one never comes. */
+        public readonly ?string $gender = null,
     ) {}
 
     public static function none(): self
@@ -46,7 +50,7 @@ final class DeckSeed
     public function isEmpty(): bool
     {
         return $this->known === [] && $this->explore === [] && $this->avoid === []
-            && $this->ageBand === null && $this->recipient === null;
+            && $this->ageBand === null && $this->recipient === null && $this->gender === null;
     }
 
     /**
@@ -67,6 +71,12 @@ final class DeckSeed
         }
 
         $tags = [...$card->tags, ...$card->crowdTags];
+
+        // Tagged for the other one: never. Untagged suits both.
+        if (($gender = Gender::tryFrom((string) $this->gender)) !== null
+            && in_array(GiftTags::gender($gender->other()->value), $tags, true)) {
+            return false;
+        }
 
         if ($this->ageBand !== null && ! $this->fits($tags, GiftTags::AGE, $this->ageBand)) {
             return false;

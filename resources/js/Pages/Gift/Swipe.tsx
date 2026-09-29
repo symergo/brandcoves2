@@ -25,7 +25,7 @@ interface Card {
 
 interface Props {
     /** Who "Find a gift" said this is for; see App\Services\Gift\CarriedWho. */
-    carried: { person: { id: string; name: string } | null; relationship: string | null; forMe: boolean }
+    carried: { person: { id: string; name: string } | null; relationship: string | null; forMe: boolean; gender?: string | null }
     cards: Card[]
     urls: { next: string; finder: string; mine?: string | null; back?: string | null }
 }
@@ -109,6 +109,7 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
             // Who it is for, so the server starts from the same seed (DeckSeeds).
             relationship: carried.relationship,
             for_me: carried.forMe,
+            gender: carried.gender ?? null,
         })
             .then(({ cards }) => {
                 const fresh = cards.filter((c) => !seen.current.includes(c.id))

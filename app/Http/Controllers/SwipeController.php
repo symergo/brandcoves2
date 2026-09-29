@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Gender;
 use App\Enums\RecipientType;
 use App\Models\ProductGroup;
 use App\Services\Gift\CarriedWho;
@@ -50,7 +51,7 @@ class SwipeController extends Controller
                 [],
                 $person === null ? [] : app(GiftHistory::class)->excludedGroupIds($person),
                 SwipeDeck::BATCH,
-                $who->seed($request, $current, $carried['person']['id'] ?? null, $carried['relationship'], $carried['forMe']),
+                $who->seed($request, $current, $carried['person']['id'] ?? null, $carried['relationship'], $carried['forMe'], $carried['gender']),
             )),
             'urls' => [
                 'next' => $current->url('gift/swipe/next'),
@@ -79,6 +80,7 @@ class SwipeController extends Controller
             // Who it is for, as the page was opened with, for the same seed.
             'relationship' => ['nullable', 'string', Rule::in(RecipientType::values())],
             'for_me' => ['boolean'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
         ]);
 
         // What a saved person was already given is never offered again.
@@ -100,6 +102,7 @@ class SwipeController extends Controller
                     $validated['recipient_id'] ?? null,
                     $validated['relationship'] ?? null,
                     (bool) ($validated['for_me'] ?? false),
+                    $validated['gender'] ?? null,
                 ),
             )),
         ]);

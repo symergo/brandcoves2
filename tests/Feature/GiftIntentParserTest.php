@@ -55,8 +55,7 @@ class GiftIntentParserTest extends TestCase
     /** @return array<string, array{0: Market, 1: string, 2: array<string, mixed>}> */
     public static function searches(): array
     {
-        // "zus" is a sister since the gender split (2026-09-29), not "broer of zus".
-        $sisterGardening = ['relationship' => 'sister', 'interests' => ['gardening'], 'min' => 3000, 'max' => 5000, 'rest' => ''];
+        $sisterGardening = ['relationship' => 'sibling', 'interests' => ['gardening'], 'min' => 3000, 'max' => 5000, 'rest' => ''];
 
         return [
             'the owner\'s example, nl' => [Market::BeNl, 'cadeau voor mijn zus die van tuinieren houdt, €30–€50', $sisterGardening],
@@ -70,13 +69,11 @@ class GiftIntentParserTest extends TestCase
             'an occasion without a recipient is still a gift' => [Market::BeNl, 'kerstcadeau onder de 25', [
                 'relationship' => null, 'occasion' => 'christmas', 'max' => 2500,
             ]],
-            // "a friend" names no relation in English since the gender split
-            // (2026-09-29); "my sister" does.
-            'the interest label itself is recognised' => [Market::En, 'present for my sister into board games', [
-                'relationship' => 'sister', 'interests' => ['boardgames'],
+            'the interest label itself is recognised' => [Market::En, 'present for a friend into board games', [
+                'relationship' => 'friend', 'interests' => ['boardgames'],
             ]],
             'two interests' => [Market::BeNl, 'cadeau voor mijn broer, fietsen en koffie', [
-                'relationship' => 'brother', 'interests' => ['cycling', 'coffee'],
+                'relationship' => 'sibling', 'interests' => ['cycling', 'coffee'],
             ]],
             'what is left stays as search words' => [Market::En, 'gift for my mum, a silk scarf', [
                 'relationship' => 'mother', 'rest' => 'silk scarf',

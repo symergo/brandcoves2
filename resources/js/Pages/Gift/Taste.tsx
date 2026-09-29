@@ -87,7 +87,7 @@ interface Props {
      * kind of person. Either one skips "for someone or for yourself?".
      * A giver's page only.
      */
-    carried?: { person: { id: string; name: string } | null; relationship: string | null; forMe?: boolean }
+    carried?: { person: { id: string; name: string } | null; relationship: string | null; forMe?: boolean; gender?: string | null }
 }
 
 /** Rounds answered (not skipped) before "Show the result" is offered. */
@@ -243,6 +243,7 @@ function Play({ mode, urls, total, rounds, carried }: Props) {
             recipient_id: person,
             relationship,
             for: forWhom ?? 'someone',
+            gender: carried?.gender ?? null,
         })
             .then(({ rounds: more }) => {
                 if (more.length === 0) {
