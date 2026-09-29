@@ -27,6 +27,10 @@ alike, so they needed both. A separate gender needs a tag only where it matters.
   on a person's page next to the age, and in My taste. Optional everywhere; not asked for mama or
   papa, whose relation already says it (`RecipientType::impliedGender()`). A first version had two
   "Voor hem / Voor haar" switches at the top of Find a gift; the owner moved it to the profile.
+- **Three answers**: Man, Vrouw, and "Zeg ik liever niet" (owner, the same day). The third is
+  remembered, so the question doesn't come back as if it were open, and behaves exactly like no
+  answer: nothing is left out, and a relation implies nothing over it. It is never a product tag
+  (`Gender::tagValues()` is male and female only).
 - **Kept** on a saved person (`recipients.gender`, a giver's fact like the age, so not on the
   self-describe link) and on My taste (`user_tastes.gender`, which a friend's search reads like the
   rest of your taste), nullable, CHECK male/female.

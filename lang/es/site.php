@@ -1462,6 +1462,7 @@ return [
         'genders' => [
             'male' => 'Hombre',
             'female' => 'Mujer',
+                'unsaid' => 'Prefiero no decirlo',
         ],
         'change' => 'Cambiar',
         'ways_title' => '¿Cómo quieres buscar?',

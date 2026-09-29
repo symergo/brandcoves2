@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserTaste;
 use App\Services\Ai\AiClient;
 use App\Services\Gift\DeckSeed;
+use App\Services\Gift\GiftTags;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use App\Services\Gift\TasteCard;
@@ -119,6 +120,31 @@ class GiftGenderTest extends TestCase
         $this->actingAs($user)
             ->get('/be-nl/gift')
             ->assertInertia(fn ($page) => $page->where('myTaste.gender', 'male'));
+    }
+
+    #[Test]
+    public function rather_not_say_is_remembered_and_leaves_nothing_out(): void
+    {
+        $forHim = $this->product('Scheerset', ['interest:beauty', 'gender:male']);
+        $user = User::factory()->create();
+        $sam = Recipient::factory()->create(['owner_user_id' => $user->id, 'name' => 'Sam', 'relationship' => 'friend']);
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', ['interests' => ['beauty'], 'recipient_id' => $sam->id, 'gender' => 'unsaid'])
+            ->assertOk();
+
+        $this->assertSame('unsaid', $sam->fresh()->gender);
+
+        // Nothing left out, and "rather not say" is not overruled by a relation that implies one.
+        $this->assertContains($forHim->id, $this->picks(new TasteBrief(market: Market::BeNl, interests: ['beauty'], gender: 'unsaid', limit: 8)));
+        $this->assertNull((new TasteBrief(market: Market::BeNl, relationship: 'mother', gender: 'unsaid'))->gender());
+        $this->assertTrue((new DeckSeed(gender: 'unsaid'))->allows(new TasteCard(1, ['gender:male'], [], 3000)));
+    }
+
+    #[Test]
+    public function rather_not_say_is_never_a_product_tag(): void
+    {
+        $this->assertSame(['male', 'female'], GiftTags::vocabulary()['gender']);
     }
 
     #[Test]

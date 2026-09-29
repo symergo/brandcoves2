@@ -66,8 +66,14 @@ final readonly class TasteBrief
      */
     public function gender(): ?Gender
     {
-        return Gender::tryFrom((string) $this->gender)
-            ?? RecipientType::tryFrom(mb_strtolower(trim((string) $this->relationship)))?->impliedGender();
+        $said = Gender::tryFrom((string) $this->gender);
+
+        // "Rather not say" is an answer: the relation implies nothing over it.
+        if ($said !== null) {
+            return $said->stated();
+        }
+
+        return RecipientType::tryFrom(mb_strtolower(trim((string) $this->relationship)))?->impliedGender();
     }
 
     public static function fromRecipient(Recipient $recipient, Market $market, int $limit = 4): self

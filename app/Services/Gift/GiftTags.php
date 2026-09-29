@@ -98,7 +98,7 @@ class GiftTags
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,
-            self::GENDER => Gender::values(),
+            self::GENDER => Gender::tagValues(),
             // The wizard's "which way does their taste go". The engine guesses
             // it from title words ("eiken", "retro"); a tag is an editor
             // saying so, and it wins.

@@ -838,7 +838,7 @@ function AboutForm({
             <fieldset>
                 <legend className="text-xs font-medium">{t('people.field_gender')}</legend>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                    {(['male', 'female'] as const).map((value) => (
+                    {(['male', 'female', 'unsaid'] as const).map((value) => (
                         <button
                             key={value}
                             type="button"

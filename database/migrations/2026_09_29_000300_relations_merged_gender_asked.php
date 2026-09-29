@@ -26,8 +26,9 @@ use Illuminate\Support\Facades\Schema;
  * - Crowd counts under a gendered relation go; the nightly count remakes them.
  * - The "done" idea announcing the split leaves the Denk mee board.
  * - `recipients.gender` and `user_tastes.gender`: man or woman, a profile
- *   question beside the age, on a saved person and on My taste. Nullable, and
- *   a CHECK rather than a native enum (CLAUDE.md).
+ *   question beside the age, on a saved person and on My taste, with "zeg ik
+ *   liever niet" ('unsaid') as a third answer. Nullable, and a CHECK rather
+ *   than a native enum (CLAUDE.md).
  *
  * The mapping is written out here, so the migration means the same thing
  * whatever the enum says later. Forward-only: down() does nothing.
@@ -116,14 +117,14 @@ return new class extends Migration
             $table->string('gender', 6)->nullable();
         });
 
-        DB::statement("ALTER TABLE recipients ADD CONSTRAINT recipients_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female'))");
+        DB::statement("ALTER TABLE recipients ADD CONSTRAINT recipients_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female', 'unsaid'))");
 
         // Your own, on My taste.
         Schema::table('user_tastes', function (Blueprint $table): void {
             $table->string('gender', 6)->nullable();
         });
 
-        DB::statement("ALTER TABLE user_tastes ADD CONSTRAINT user_tastes_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female'))");
+        DB::statement("ALTER TABLE user_tastes ADD CONSTRAINT user_tastes_gender_check CHECK (gender IS NULL OR gender IN ('male', 'female', 'unsaid'))");
     }
 
     public function down(): void

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Enums;
 
 /**
- * Whether a gift is for him or for her, asked on its own (owner,
- * 2026-09-29) rather than folded into the relation.
+ * Man or woman, an optional profile question beside the age (owner,
+ * 2026-09-29), rather than folded into the relation.
  *
  * The relations were split by gender for a day (oma/opa, zoon/dochter, ...)
  * and that was reverted: it doubled every tag, since most products suit
@@ -21,18 +21,51 @@ enum Gender: string
     case Male = 'male';
     case Female = 'female';
 
-    /** @return list<string> */
+    /**
+     * "Zeg ik liever niet" (owner, 2026-09-29): an answer, remembered so the
+     * question does not come back as if it were open, and treated exactly as
+     * no answer: nothing is left out, and a relation implies nothing over it.
+     * Never a product tag ({@see tagValues()}).
+     */
+    case Unsaid = 'unsaid';
+
+    /**
+     * Every answer a form may send or a profile may hold.
+     *
+     * @return list<string>
+     */
     public static function values(): array
     {
         return array_map(fn (self $g) => $g->value, self::cases());
     }
 
-    public function other(): self
+    /**
+     * What a product can be tagged with: man or woman, never "rather not say".
+     *
+     * @return list<string>
+     */
+    public static function tagValues(): array
     {
-        return $this === self::Male ? self::Female : self::Male;
+        return [self::Male->value, self::Female->value];
     }
 
-    /** "Voor hem" / "Voor haar": the answer as the chip says it. */
+    /** The gender this answer states, or null for "rather not say". */
+    public function stated(): ?self
+    {
+        return $this === self::Unsaid ? null : $this;
+    }
+
+    /** The other one of a stated gender. */
+    public function other(): self
+    {
+        return match ($this) {
+            self::Male => self::Female,
+            self::Female => self::Male,
+            self::Unsaid => self::Unsaid,
+        };
+    }
+
+    /** "Man", "Vrouw" or "Zeg ik liever niet": the answer as the chip says it. */
     public function label(): string
     {
         return (string) __("site.gift.genders.{$this->value}");

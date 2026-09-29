@@ -1175,7 +1175,7 @@ export default function GiftWizard(props: Props) {
                                     <div>
                                         <p className="mb-3 text-sm text-ink-soft">{t(own('gift.gender_label'))}</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {(['male', 'female'] as const).map((value) => (
+                                            {(['male', 'female', 'unsaid'] as const).map((value) => (
                                                 <button
                                                     key={value}
                                                     type="button"

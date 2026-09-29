@@ -73,7 +73,7 @@ final class DeckSeed
         $tags = [...$card->tags, ...$card->crowdTags];
 
         // Tagged for the other one: never. Untagged suits both.
-        if (($gender = Gender::tryFrom((string) $this->gender)) !== null
+        if (($gender = Gender::tryFrom((string) $this->gender)?->stated()) !== null
             && in_array(GiftTags::gender($gender->other()->value), $tags, true)) {
             return false;
         }
