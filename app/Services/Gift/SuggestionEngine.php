@@ -532,7 +532,10 @@ class SuggestionEngine
          * suits both, which is most of them.
          */
         if (($gender = $brief->gender()) !== null) {
-            $groups->whereRaw('not jsonb_exists(product_groups.gift_tags, ?)', [GiftTags::gender($gender->other()->value)]);
+            $groups->whereRaw('not jsonb_exists(product_groups.gift_tags, ?)', [GiftTags::gender($gender->other()->value)])
+                // And what its title says is for the other: "Dames" or
+                // "Heren" (TitleGender, owner 2026-09-30).
+                ->whereRaw('not '.TitleGender::sql($gender->other()));
         }
 
         if ($queries !== []) {

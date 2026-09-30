@@ -45,9 +45,20 @@ final readonly class TasteCard
 
     public static function fromGroup(ProductGroup $group): self
     {
+        $tags = $group->giftTags();
+
+        // "Dames" or "Heren" in the title says who it is for (TitleGender,
+        // 2026-09-30), so the games leave it out for the other, as they do a
+        // tagged product. An editor's own gender tag wins.
+        $gender = TitleGender::of((string) $group->title);
+
+        if ($gender !== null && ! collect($tags)->contains(fn (string $t) => str_starts_with($t, GiftTags::GENDER.':'))) {
+            $tags[] = GiftTags::gender($gender->value);
+        }
+
         return new self(
             id: (int) $group->id,
-            tags: $group->giftTags(),
+            tags: $tags,
             crowdTags: $group->crowdTags(),
             price: $group->min_price === null ? null : (int) $group->min_price,
             guessed: app(InterestGuesser::class)->interests((string) $group->title, $group->category),

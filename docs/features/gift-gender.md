@@ -67,3 +67,16 @@ landing pages and crowd counts went, the relation Coves got their relationship b
 - `app/Http/Controllers/GiftController.php`, `TasteController.php`, `SwipeController.php`
 - `resources/js/Pages/Gift/Wizard.tsx`, `Taste.tsx`, `Swipe.tsx`
 - `tests/Feature/GiftGenderTest.php`
+
+## "Dames" and "Heren" in the title (2026-09-30)
+
+Owner: "alles met dames in de titel is voor vrouw en alles met heren is voor man". `TitleGender`
+reads it from the title at the moment it matters, rather than writing tags: the gift engine's
+gender filter also leaves out a product whose title says it is for the other
+(`TitleGender::sql()`), and a card in Swipe gifts or This or that carries the gender from its title
+unless an editor gave one (`TasteCard::fromGroup`). A product arriving tomorrow is covered too.
+
+Words: dames, femme(s), women, woman for her; heren, homme(s), men for him; "dames" and "heren" also
+at the start of a Dutch compound (damesfiets, herenhorloge). Left out after reading samples: "dame"
+alone (Notre-Dame, "der alten Dame") and "mens" ("Mens erger je niet"). A title naming both, or
+"unisex", says nothing. About 11,700 products on production that day, none of them tagged.

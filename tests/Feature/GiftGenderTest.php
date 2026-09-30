@@ -42,6 +42,27 @@ class GiftGenderTest extends TestCase
     }
 
     #[Test]
+    public function a_title_saying_heren_or_dames_counts_like_the_tag(): void
+    {
+        // Owner, 2026-09-30: "Dames" in the title is for her, "Heren" for him.
+        $his = $this->product('Pantoffels Heren', ['interest:fashion']);
+        $hers = $this->product('Pantoffels Dames', ['interest:fashion']);
+        $both = $this->product('Pantoffels heren en dames', ['interest:fashion']);
+
+        $forHer = $this->picks(new TasteBrief(market: Market::BeNl, interests: ['fashion'], gender: 'female', limit: 8));
+        $this->assertNotContains($his->id, $forHer);
+        $this->assertContains($hers->id, $forHer);
+        $this->assertContains($both->id, $forHer);
+
+        $forHim = $this->picks(new TasteBrief(market: Market::BeNl, interests: ['fashion'], gender: 'male', limit: 8));
+        $this->assertNotContains($hers->id, $forHim);
+        $this->assertContains($his->id, $forHim);
+
+        // The games read the same: a card from the title carries the gender.
+        $this->assertContains('gender:male', TasteCard::fromGroup($his)->tags);
+    }
+
+    #[Test]
     public function for_her_leaves_out_what_is_tagged_for_him_and_keeps_the_rest(): void
     {
         $forHim = $this->product('Scheerset', ['interest:beauty', 'gender:male']);
