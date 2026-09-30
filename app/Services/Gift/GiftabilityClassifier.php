@@ -73,6 +73,29 @@ class GiftabilityClassifier
         private int $maxPrice = 50000,
     ) {}
 
+    /** @var array<string, true> folded category name => true */
+    private array $notGiftCategories = [];
+
+    /**
+     * The same classifier with a list of shop categories whose products are
+     * not gifts (resources/content/not-gift-categories.php, 2026-09-30).
+     * Handed in rather than read here, so the class stays pure and a test can
+     * give it its own list.
+     *
+     * @param  list<string>  $categories
+     */
+    public function withNotGiftCategories(array $categories): static
+    {
+        $clone = clone $this;
+        $clone->notGiftCategories = [];
+
+        foreach ($categories as $category) {
+            $clone->notGiftCategories[$this->normalise($category)] = true;
+        }
+
+        return $clone;
+    }
+
     /**
      * Terms that mean "this is not a gift", grouped by why.
      *
@@ -175,10 +198,16 @@ class GiftabilityClassifier
         'kado', 'cadeaupakket', 'proefpakket', 'gift box',
     ];
 
+    /**
+     * @param  bool  $judgedGift  an editor tagged it with an interest: a person
+     *                            decided it is a present, which a category rule
+     *                            must not overturn.
+     */
     public function classify(
         string $title,
         ?string $category = null,
         ?int $priceCents = null,
+        bool $judgedGift = false,
     ): Giftability {
         $haystack = $this->normalise($title.' '.($category ?? ''));
 
@@ -229,6 +258,16 @@ class GiftabilityClassifier
             if (preg_match($pattern, $haystack) === 1 && ! $this->hasGiftMarker($haystack)) {
                 return Giftability::no('bulk');
             }
+        }
+
+        /*
+         * A category of things nobody gives (2026-09-30): cables, phone cases,
+         * spotlights, shampoo. Judged per category by reviewers and accepted by
+         * the owner. Not a suggestion any more, still worth showing: the owner
+         * asked for the gift flag to go, not the product.
+         */
+        if (! $judgedGift && $category !== null && isset($this->notGiftCategories[$this->normalise($category)])) {
+            return Giftability::notAGiftButWorthShowing('not_a_gift_category');
         }
 
         return Giftability::yes();

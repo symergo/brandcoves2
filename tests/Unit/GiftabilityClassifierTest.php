@@ -214,4 +214,32 @@ class GiftabilityClassifierTest extends TestCase
     {
         $this->assertFalse($this->classifier()->classify('', null, 2999)->giftable);
     }
+
+    #[Test]
+    public function a_product_in_a_category_of_non_gifts_is_not_suggested_but_still_shown(): void
+    {
+        // Owner, 2026-09-30: remove the gift flag, not the product.
+        $classifier = $this->classifier()->withNotGiftCategories(['Kabel', 'Étui pour téléphone portable']);
+
+        $verdict = $classifier->classify('Ugreen USB-C kabel 2 m', 'Kabel', 1299);
+        $this->assertFalse($verdict->giftable);
+        $this->assertTrue($verdict->worthShowing);
+        $this->assertSame('not_a_gift_category', $verdict->reason);
+
+        // Case and accents do not matter: the feeds are inconsistent.
+        $this->assertFalse($classifier->classify('Coque iPhone 16', 'ETUI POUR TELEPHONE PORTABLE', 1999)->giftable);
+
+        // Another category is not touched.
+        $this->assertTrue($classifier->classify('Sony WH-1000XM5', 'Koptelefoon', 32999)->giftable);
+    }
+
+    #[Test]
+    public function an_editor_tagged_gift_keeps_its_verdict_in_such_a_category(): void
+    {
+        // A dashcam an editor tagged with an interest was judged a present by a person.
+        $classifier = $this->classifier()->withNotGiftCategories(['Dashcam']);
+
+        $this->assertFalse($classifier->classify('Garmin Dash Cam Mini 2', 'Dashcam', 12999)->giftable);
+        $this->assertTrue($classifier->classify('Garmin Dash Cam Mini 2', 'Dashcam', 12999, judgedGift: true)->giftable);
+    }
 }

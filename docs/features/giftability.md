@@ -55,7 +55,26 @@ Price first — cheapest check, least arguable, and it settles 85% of rejections
 | `fitment` | 689 | 3.7% |
 | `bulk` | 456 | 2.4% |
 
-Then the disqualifying terms, then the bulk patterns.
+Then the disqualifying terms, then the bulk patterns, then the category list.
+
+## Categories that are not gifts (2026-09-30)
+
+The owner asked for a critical pass over what the catalogue offers as a gift ("if they are not really
+good things that people give ... remove the giftable tag"). 320,000 products were giftable, far too
+many to judge one by one, but 3,647 shop categories covered 94% of them. Reviewers sorted each into
+gift (1,773), not a gift (1,742) or mixed (132) from its name and three sample products; the owner
+accepted the verdicts as judged. The 1,742 are in `resources/content/not-gift-categories.php`,
+biggest first: phone accessories, cables, computer parts, spotlights, pet bowls, shampoo, wall plugs.
+About 83,000 products were in them that day.
+
+- A product in a listed category gets `giftable = false` with `worth_showing = true` and the reason
+  `not_a_gift_category`: no longer suggested as a present, still in search and on pages.
+- It is the last rule, so a more specific reason (a cartridge, a bulk pack) is the one stored.
+- A product an editor tagged with an interest keeps its verdict (`judgedGift`): a person decided it is
+  a present, which a category must not overturn. An editor's `giftable_override` wins as before.
+- Mixed categories are left to the other rules.
+- Matching ignores case, accents and punctuation. To give a category back, delete its line; the next
+  classification pass (after every ingestion run, or `bc:refresh-discovery`) puts its products back.
 
 ## Two decisions that shape the term lists
 

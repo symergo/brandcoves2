@@ -43,13 +43,15 @@ class ClassifyGiftability implements ShouldQueue
 
     public function handle(GiftabilityClassifier $classifier): void
     {
+        $classifier = $classifier->withNotGiftCategories(require resource_path('content/not-gift-categories.php'));
+
         $giftable = 0;
         $rejected = 0;
         $showable = 0;
 
         ProductGroup::query()
             ->forMarket($this->market)
-            ->select(['id', 'title', 'category', 'min_price', 'giftable_override'])
+            ->select(['id', 'title', 'category', 'min_price', 'giftable_override', 'gift_tags'])
             ->chunkById(1000, function ($groups) use ($classifier, &$giftable, &$rejected, &$showable): void {
                 $updates = [];
 
@@ -57,7 +59,14 @@ class ClassifyGiftability implements ShouldQueue
                     // An editor's verdict wins over the rules, or it would
                     // last only until this pass ran again.
                     $verdict = $group->giftable_override === null
-                        ? $classifier->classify($group->title, $group->category, $group->min_price)
+                        ? $classifier->classify(
+                            $group->title,
+                            $group->category,
+                            $group->min_price,
+                            // An interest an editor gave it: a person judged
+                            // it a present, whatever its category.
+                            judgedGift: collect($group->giftTags())->contains(fn (string $t) => str_starts_with($t, 'interest:')),
+                        )
                         : Giftability::byEditor($group->giftable_override);
 
                     $verdict->giftable ? $giftable++ : $rejected++;
