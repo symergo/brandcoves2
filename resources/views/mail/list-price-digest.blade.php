@@ -25,12 +25,17 @@
 @foreach ($sections as $section)
 <p><strong><a href="{{ $section['url'] }}">{{ $section['title'] }}</a></strong></p>
 
+{{--
+  One cell per product: the name across the full width, the prices under it.
+  Four columns (product, was, now, change) left the name two words wide on a
+  phone and broke it mid-word (owner's screenshot, 2026-09-30). The old price
+  struck through says "was" in every language, so the rows need no header.
+--}}
 @if ($section['drops'] !== [])
 <div class="table"><table>
-<thead><tr><th align="left">{{ __('site.list_watch.col_product') }}</th><th align="right">{{ __('site.list_watch.col_was') }}</th><th align="right">{{ __('site.list_watch.col_now') }}</th><th align="right">{{ __('site.list_watch.col_change') }}</th></tr></thead>
 <tbody>
 @foreach ($section['drops'] as $line)
-<tr><td><a href="{{ $line['url'] }}">{{ $line['title'] }}</a></td><td align="right">{{ $line['was'] === null ? '' : $money($line['was']) }}</td><td align="right"><strong>{{ $line['now'] === null ? '' : $money($line['now']) }}</strong></td><td align="right">{{ $line['percent'] === null ? '' : '-'.$line['percent'].'%' }}</td></tr>
+<tr><td><a href="{{ $line['url'] }}">{{ Illuminate\Support\Str::limit($line['title'], 90) }}</a><br><span style="font-size: 17px;"><strong>{{ $line['now'] === null ? '' : $money($line['now']) }}</strong></span>@if ($line['was'] !== null)&nbsp;&nbsp;<s style="color: #8a8078;">{{ $money($line['was']) }}</s>@endif @if ($line['percent'] !== null)&nbsp;&nbsp;<span style="color: #3f7a4a; font-weight: 600;">-{{ $line['percent'] }}%</span>@endif</td></tr>
 @endforeach
 </tbody>
 </table></div>
