@@ -1274,7 +1274,7 @@ return [
 
     'my_taste' => [
         'title' => 'Mes goûts',
-        'intro' => 'Ce que vous aimez recevoir. Vos amis sur GiftCoves qui cherchent un cadeau pour vous partent de là, tout comme Pour moi dans Trouver un cadeau.',
+        'intro' => 'Ce que vous aimez recevoir. Vos amis sur GiftCoves qui cherchent un cadeau pour vous partent de là.',
         'privacy' => 'Seuls vos amis sur GiftCoves l’utilisent, quand ils cherchent pour vous. Ce qu’ils dépensent, ils le choisissent eux-mêmes.',
         'interests' => 'Qu’est-ce qui vous plaît ?',
         'interests_other' => 'Autre chose ?',

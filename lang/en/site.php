@@ -1477,7 +1477,7 @@ return [
 
     'my_taste' => [
         'title' => 'My taste',
-        'intro' => 'What you like to get. Friends on GiftCoves who look for a gift for you start from this, and so does For myself in Find a gift.',
+        'intro' => 'What you like to get. Friends on GiftCoves who look for a gift for you start from this.',
         'privacy' => 'Only your friends on GiftCoves use this, when they look for you. What they spend is up to them.',
         'interests' => 'What are you into?',
         'interests_other' => 'Anything else?',

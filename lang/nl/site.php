@@ -1279,7 +1279,7 @@ return [
 
     'my_taste' => [
         'title' => 'Mijn smaak',
-        'intro' => 'Wat je graag krijgt. Vrienden op GiftCoves die een cadeau voor je zoeken, beginnen hiermee, en Voor mezelf in Cadeau vinden ook.',
+        'intro' => 'Wat je graag krijgt. Vrienden op GiftCoves die een cadeau voor je zoeken, beginnen hiermee.',
         'privacy' => 'Alleen je vrienden op GiftCoves gebruiken dit, wanneer ze voor jou zoeken. Wat ze uitgeven, kiezen ze zelf.',
         'interests' => 'Waar hou je van?',
         'interests_other' => 'Nog iets?',
