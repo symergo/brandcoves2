@@ -52,6 +52,7 @@ is true now.
 | [list-names-in-text.md](list-names-in-text.md) | Frontend / Wishlist | Active — a list's name in a sentence is `ListName` (kind icon, medium weight); bold in e-mail |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
+| [brand-fill.md](brand-fill.md) | Catalogue / Ingestion | Active since 2026-09-30: an offer without a brand gets the known brand its title starts with; `bc:fill-brands` for the stored ones |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [popular-searches.md](popular-searches.md) | Search / SEO | Active |
 | [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) | Search / SEO | Active |

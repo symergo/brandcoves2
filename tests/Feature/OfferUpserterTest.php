@@ -7,7 +7,9 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Services\Catalogue\TitleBrand;
 use App\Services\Connectors\Offer;
+use App\Services\Identity\IdentityResolver;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -141,5 +143,56 @@ class OfferUpserterTest extends TestCase
         $this->upserter()->upsert([$nl, $be]);
 
         $this->assertSame(2, DB::table('products')->count());
+    }
+
+    #[Test]
+    public function an_offer_without_a_brand_gets_the_one_its_title_starts_with_and_keeps_its_identity(): void
+    {
+        // Owner, 2026-09-30: fill missing brands. The brand is read from the
+        // title only for storage; identity is resolved from what the source
+        // sent, or a barcode-less offer would move to another group.
+        config()->set('giftcoves.identity.allow_title_fallback', true);
+        $this->app->instance(TitleBrand::class, new TitleBrand(['sony' => 'Sony']));
+
+        $offer = new Offer(
+            source: Source::Ebay,
+            externalId: 'ebay-1',
+            market: Market::NlNl,
+            title: 'Sony WH-1000XM5 draadloze koptelefoon',
+            affiliateUrl: 'https://www.ebay.nl/itm/1',
+            price: 29900,
+            merchantName: 'shop',
+            merchantExternalId: 'shop',
+            availability: Availability::InStock,
+        );
+
+        $this->upserter()->upsert([$offer]);
+
+        $row = DB::table('products')->where('external_id', 'ebay-1')->first();
+        $this->assertSame('Sony', $row->brand);
+        $this->assertSame(IdentityResolver::resolve(null, null, $offer->title)?->key, $row->identity_key);
+    }
+
+    #[Test]
+    public function a_brand_the_source_sent_is_never_replaced(): void
+    {
+        $this->app->instance(TitleBrand::class, new TitleBrand(['sony' => 'Sony']));
+
+        $offer = new Offer(
+            source: Source::Awin,
+            externalId: 'awin-1',
+            market: Market::NlNl,
+            title: 'Sony-compatible oplaadkabel',
+            affiliateUrl: 'https://www.awin1.com/cread.php?x=1',
+            price: 999,
+            merchantName: 'shop',
+            merchantExternalId: 'shop',
+            brand: 'Ugreen',
+            availability: Availability::InStock,
+        );
+
+        $this->upserter()->upsert([$offer]);
+
+        $this->assertSame('Ugreen', DB::table('products')->where('external_id', 'awin-1')->value('brand'));
     }
 }

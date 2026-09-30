@@ -134,6 +134,9 @@ php artisan bc:withdraw-source --market=en --source=bol   # suppress the offers 
                                       # behind after it stopped serving a market. Turning a
                                       # connector off does NOT hide what it already stored.
                                       # --restore is the undo; refuses while the source still serves
+php artisan bc:fill-brands             # give offers without a brand the known brand their title
+                                      # starts with. Ingestion does it since 2026-09-30; this is
+                                      # for what was stored before. Dry run unless --write
 php artisan bc:find-matches --full    # propose products that may be one (same barcode, model
                                       # number or similar title within a brand) for a person to
                                       # confirm at /admin, Match review. Nothing merges on its own.

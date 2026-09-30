@@ -60,6 +60,8 @@ use Illuminate\Support\Str;
  * one for a product no feed carries.
  *
  * The connector refuses this inference because it has a title and nothing else.
+ * (Since 2026-09-30 ingestion does infer from the title start, but only brands a
+ * source already named on five offers: Catalogue\TitleBrand, docs/features/brand-fill.md.)
  * Here there is a second piece of evidence: we asked for this brand by name, and
  * the spellings come from `brand_stats`, which was built from the catalogue.
  *
