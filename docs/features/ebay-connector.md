@@ -7,6 +7,15 @@ alongside bol and Awin.
 Adding it touched no search code, no ingestion code and no controller. That was the point of
 `ConnectorRegistry` and it held: a class, a config block, one registration line, and a migration.
 
+> **Off for `be-nl` and `nl-nl` since 2026-09-30 (owner: "remove ebay offers for be-nl and
+> nl-nl").** `EBAY_MARKETPLACE_BE_NL` and `EBAY_MARKETPLACE_NL_NL` are set blank on
+> `GiftCoves-prod`, so eBay is never asked there, and the stored offers were withdrawn with
+> `bc:withdraw-source --source=ebay` (103,580 in be-nl, 54,134 in nl-nl, now `excluded`). About
+> 52,000 groups had eBay as their only offer and left search with them. `be-fr`, `en` and `es`
+> still ask eBay. The undo is removing those two env vars and running `--restore` per market.
+> Note also that `EBAY_CAMPAIGN_ID_*` were empty on production that day, so eBay links carried no
+> affiliate campaign.
+
 ---
 
 ## Why live and not a feed
