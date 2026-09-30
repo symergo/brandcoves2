@@ -1489,6 +1489,7 @@ return [
         'remove' => 'Remove :word',
         'save' => 'Save',
         'saved' => 'Your taste is saved.',
+        'saving' => 'Saving…',
         'learn_title' => 'Rather choose than fill in?',
         'keep_title' => 'Keep as my taste',
         'keep_hint' => 'Friends on GiftCoves who look for a gift for you then start from it.',
@@ -1499,7 +1500,7 @@ return [
         'clear' => 'Clear everything',
         'cleared' => 'Your taste is cleared.',
         'swipe_hint' => 'One product at a time: right for what you want, left for what you don\'t. Your taste fills in by itself.',
-        'taste_hint' => 'Choose between two things a dozen times and keep the result here.',
+        'taste_hint' => 'Choose between two things a dozen times. What it shows lands here by itself.',
     ],
 
     'gift' => [

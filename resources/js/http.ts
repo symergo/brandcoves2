@@ -89,7 +89,7 @@ export class HttpError extends Error {
  */
 export async function send<T>(
     url: string,
-    method: 'POST' | 'DELETE' | 'PATCH',
+    method: 'POST' | 'DELETE' | 'PATCH' | 'PUT',
     body?: Record<string, unknown>,
 ): Promise<T> {
     const token = await ensureCsrfToken()

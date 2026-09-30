@@ -1,10 +1,11 @@
-import { Head, Link, router } from '@inertiajs/react'
-import { useState } from 'react'
+import { Head, Link } from '@inertiajs/react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '../Components/Button'
 import InfoTip from '../Components/InfoTip'
 import PageHeader from '../Components/PageHeader'
 import TastePairs from '../Components/TastePairs'
 import ToolIcon from '../Components/ToolIcon'
+import { send } from '../http'
 import { useTranslations } from '../useTranslations'
 
 interface Option {
@@ -31,6 +32,9 @@ interface Props {
 /** The same bounds as the server's (MyTasteController::update). */
 const MAX_INTERESTS = 8
 
+/** How long after the last click the taste is saved: one request for a burst of clicks. */
+const SAVE_AFTER_MS = 600
+
 /** An interest learned as "not this" in This or that, kept in the tag's spelling. */
 const LEARNED = 'interest:'
 
@@ -48,6 +52,11 @@ const chip = (on: boolean) =>
  * No "how should it feel" and no values either (owner, 2026-09-29): the
  * pairs of opposites cover the feel, and values are gone site-wide.
  *
+ * Saved as you go (owner, 2026-09-30: "save automatically"): every click on
+ * an interest, a pair, the age or the gender, and every word added or taken
+ * away, is sent a moment later, with a quiet "Bewaard" beside it. There is no
+ * save button to forget.
+ *
  * Two columns, since both have something (the site's rule): the form, and
  * the two quicker ways to fill it, swiping and This or that. On a phone the
  * two ways come first.
@@ -63,7 +72,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
     const [gender, setGender] = useState<string | null>(taste.gender ?? null)
     const [ownWord, setOwnWord] = useState('')
     const [avoidWord, setAvoidWord] = useState('')
-    const [busy, setBusy] = useState(false)
+    const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
 
     const vocabulary = new Set(options.interests.map((o) => o.value))
     const ownWords = interests.filter((i) => !vocabulary.has(i))
@@ -91,19 +100,34 @@ export default function MyTaste({ taste, options, urls }: Props) {
         setAvoidWord('')
     }
 
-    const save = () => {
-        setBusy(true)
-        router.put(
-            urls.update,
-            { interests, preferences, avoid, age_band: ageBand, gender },
-            { preserveScroll: true, onFinish: () => setBusy(false) },
-        )
-    }
+    /*
+     * Save a moment after the last change. Skipped on the first render, which
+     * is what the server just sent; a later change cancels a pending save, so
+     * a burst of clicks is one request carrying the last state.
+     */
+    const first = useRef(true)
+
+    useEffect(() => {
+        if (first.current) {
+            first.current = false
+
+            return
+        }
+
+        setStatus('saving')
+        const timer = window.setTimeout(() => {
+            send(urls.update, 'PUT', { interests, preferences, avoid, age_band: ageBand, gender })
+                .then(() => setStatus('saved'))
+                .catch(() => setStatus('failed'))
+        }, SAVE_AFTER_MS)
+
+        return () => window.clearTimeout(timer)
+    }, [interests, preferences, avoid, ageBand, gender, urls.update])
 
     /*
      * Clearing is withdrawing the consent the privacy policy names: an empty
      * taste leaves no row (MyTasteController::keep), and friends' searches
-     * stop reading it at once.
+     * stop reading it at once. It saves like any other change.
      */
     const clear = () => {
         setInterests([])
@@ -111,20 +135,9 @@ export default function MyTaste({ taste, options, urls }: Props) {
         setAvoid([])
         setAgeBand(null)
         setGender(null)
-        setBusy(true)
-        router.put(
-            urls.update,
-            { interests: [], preferences: [], avoid: [], age_band: null, gender: null },
-            { preserveScroll: true, onFinish: () => setBusy(false) },
-        )
     }
 
-    const hasAnything =
-        taste.interests.length > 0 ||
-        taste.preferences.length > 0 ||
-        taste.avoid.length > 0 ||
-        taste.ageBand !== null ||
-        (taste.gender ?? null) !== null
+    const hasAnything = interests.length > 0 || preferences.length > 0 || avoid.length > 0 || ageBand !== null || gender !== null
 
     return (
         <>
@@ -153,10 +166,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
                 </aside>
 
                 <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        save()
-                    }}
+                    onSubmit={(e) => e.preventDefault()}
                     className="space-y-6 rounded-card border border-line bg-card p-4 sm:p-5"
                 >
                     <fieldset>
@@ -296,12 +306,14 @@ export default function MyTaste({ taste, options, urls }: Props) {
                         </div>
                     </fieldset>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button type="submit" busy={busy}>
-                            {t('my_taste.save')}
-                        </Button>
+                    <div className="flex min-h-9 flex-wrap items-center gap-3">
+                        <p role="status" aria-live="polite" className="text-sm text-ink-soft">
+                            {status === 'saving' && t('my_taste.saving')}
+                            {status === 'saved' && t('my_taste.saved')}
+                            {status === 'failed' && <span className="text-danger">{t('my_taste.keep_failed')}</span>}
+                        </p>
                         {hasAnything && (
-                            <Button type="button" variant="ghost" disabled={busy} onClick={clear}>
+                            <Button type="button" variant="ghost" className="ml-auto" onClick={clear}>
                                 {t('my_taste.clear')}
                             </Button>
                         )}

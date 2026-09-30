@@ -82,6 +82,24 @@ class MyTasteTest extends TestCase
     }
 
     #[Test]
+    public function the_page_saving_on_every_click_gets_a_quiet_answer(): void
+    {
+        // Owner, 2026-09-30: save automatically. The page asks for JSON, so no
+        // banner flashes on every click.
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->putJson('/be-nl/my-taste', ['interests' => ['music'], 'preferences' => ['modern']])
+            ->assertOk()
+            ->assertExactJson(['saved' => true, 'cleared' => false])
+            ->assertSessionMissing('success');
+
+        $this->assertSame(['modern'], UserTaste::query()->findOrFail($user->id)->preferences);
+
+        $this->actingAs($user)->putJson('/be-nl/my-taste', [])->assertExactJson(['saved' => true, 'cleared' => true]);
+        $this->assertNull(UserTaste::query()->find($user->id));
+    }
+
+    #[Test]
     public function clearing_everything_leaves_no_row(): void
     {
         $user = User::factory()->create();

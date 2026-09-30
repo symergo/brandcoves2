@@ -1285,6 +1285,7 @@ return [
         'remove' => 'Quitar :word',
         'save' => 'Guardar',
         'saved' => 'Tus gustos están guardados.',
+        'saving' => 'Guardando…',
         'learn_title' => '¿Prefieres elegir a rellenar?',
         'keep_title' => 'Guardar como mis gustos',
         'keep_hint' => 'Tus amigos en GiftCoves que buscan un regalo para ti empezarán desde aquí.',
@@ -1295,7 +1296,7 @@ return [
         'clear' => 'Borrar todo',
         'cleared' => 'Tus gustos están borrados.',
         'swipe_hint' => 'Un producto cada vez: a la derecha lo que quieres, a la izquierda lo que no. Tus gustos se completan solos.',
-        'taste_hint' => 'Elige una docena de veces entre dos cosas y guarda el resultado aquí.',
+        'taste_hint' => 'Elige una docena de veces entre dos cosas. El resultado llega aquí solo.',
     ],
 
     'gift' => [

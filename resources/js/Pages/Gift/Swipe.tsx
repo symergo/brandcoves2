@@ -188,7 +188,9 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
      */
     const swipes = useRef<{ shown: number[]; verdict: 'like' | 'dislike' }[]>([])
     const keepInMine = (): Promise<unknown> =>
-        urls.mine && swipes.current.length >= KEEP_EVERY
+        // Any swipe at all (2026-09-30): Stop after three swipes used to keep
+        // nothing, because only every KEEP_EVERY-th swipe sent.
+        urls.mine && swipes.current.length > 0
             ? send(urls.mine, 'POST', { choices: swipes.current.slice(-100) }).catch(() => undefined)
             : Promise.resolve()
 

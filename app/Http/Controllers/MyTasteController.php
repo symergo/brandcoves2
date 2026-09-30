@@ -63,7 +63,7 @@ class MyTasteController extends Controller
         ]);
     }
 
-    public function update(Request $request, CurrentMarket $current): RedirectResponse
+    public function update(Request $request, CurrentMarket $current): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             // The same bounds as Find a gift's own answers (GiftController::validateBrief).
@@ -86,6 +86,12 @@ class MyTasteController extends Controller
         ]);
 
         $cleared = UserTaste::query()->find($request->user()->id) === null;
+
+        // The page saves on every click since 2026-09-30 (owner: "save
+        // automatically"). It asks for JSON so no banner flashes each time.
+        if ($request->wantsJson()) {
+            return response()->json(['saved' => true, 'cleared' => $cleared]);
+        }
 
         return redirect($current->url('my-taste'))->with('success', __($cleared ? 'site.my_taste.cleared' : 'site.my_taste.saved'));
     }

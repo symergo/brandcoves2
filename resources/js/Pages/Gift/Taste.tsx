@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Button, { buttonClasses } from '../../Components/Button'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import ShareRow from '../../Components/ShareRow'
@@ -827,6 +827,11 @@ function SelfSave({ urls, choices, name }: { urls: Props['urls']; choices: Choic
  * Keep a result for yourself as "Mijn smaak" (docs/features/my-taste.md): the
  * choices go up and the taste is worked out on the server, merged into what
  * you already said there.
+ *
+ * Kept as soon as the result shows (owner, 2026-09-30: "save automatically,
+ * also after a swiping or dit of dat game"); the card says it was kept and
+ * links to it. The button stays only for a retry after a failure. Sending
+ * twice is harmless: the server merges.
  */
 function KeepAsMine({ url, choices }: { url: string; choices: Choice[] }) {
     const { t } = useTranslations()
@@ -843,6 +848,17 @@ function KeepAsMine({ url, choices }: { url: string; choices: Choice[] }) {
             .finally(() => setBusy(false))
     }
 
+    const started = useRef(false)
+
+    useEffect(() => {
+        if (!started.current) {
+            started.current = true
+            keep()
+        }
+        // Once per result; `keep` is recreated each render and must not re-run it.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     return (
         <div className="mt-5 rounded-card border border-line bg-card p-5">
             <h3 className="font-medium">{t('my_taste.keep_title')}</h3>
@@ -855,10 +871,12 @@ function KeepAsMine({ url, choices }: { url: string; choices: Choice[] }) {
                 </p>
             ) : (
                 <>
-                    <p className="mt-1 text-sm text-ink-soft">{t('my_taste.keep_hint')}</p>
-                    <Button className="mt-4" busy={busy} onClick={keep}>
-                        {t('my_taste.keep')}
-                    </Button>
+                    <p className="mt-1 text-sm text-ink-soft">{busy ? t('my_taste.saving') : t('my_taste.keep_hint')}</p>
+                    {failed && (
+                        <Button className="mt-4" busy={busy} onClick={keep}>
+                            {t('my_taste.keep')}
+                        </Button>
+                    )}
                 </>
             )}
             {failed && (

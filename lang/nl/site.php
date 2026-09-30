@@ -1291,6 +1291,7 @@ return [
         'remove' => ':word weghalen',
         'save' => 'Bewaren',
         'saved' => 'Je smaak is bewaard.',
+        'saving' => 'Bewaren…',
         'learn_title' => 'Liever kiezen dan invullen?',
         'keep_title' => 'Bewaar als mijn smaak',
         'keep_hint' => 'Vrienden op GiftCoves die een cadeau voor je zoeken, beginnen dan hiermee.',
@@ -1301,7 +1302,7 @@ return [
         'clear' => 'Alles wissen',
         'cleared' => 'Je smaak is gewist.',
         'swipe_hint' => 'Eén product tegelijk: naar rechts wat je wilt, naar links wat niet. Je smaak vult zich vanzelf aan.',
-        'taste_hint' => 'Kies een tiental keer tussen twee dingen en bewaar het resultaat hier.',
+        'taste_hint' => 'Kies een tiental keer tussen twee dingen. Wat het oplevert, komt vanzelf hier.',
     ],
 
     'gift' => [
