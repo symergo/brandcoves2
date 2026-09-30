@@ -1330,6 +1330,7 @@ return [
             'water' => 'Natation et sports nautiques', 'wintersports' => 'Sports d\'hiver', 'football' => 'Le football',
             'collecting' => 'Objets de collection', 'nature' => 'Nature et oiseaux', 'fishing' => 'La pêche',
             'horses' => 'Les chevaux', 'hunting' => 'La chasse', 'gadgets' => 'Gadgets', 'it' => 'Informatique',
+            'sweets' => 'Bonbons et chocolat', 'stationery' => 'La papeterie', 'pubgames' => 'Fléchettes et jeux de cartes', 'adult' => 'Érotisme',
         ],
 
         'vibes' => [
@@ -1934,6 +1935,10 @@ return [
             'hunting' => ['slug' => 'chasse', 'name' => 'la chasse'],
             'gadgets' => ['slug' => 'gadgets', 'name' => 'les gadgets'],
             'it' => ['slug' => 'informatique', 'name' => 'l\'informatique'],
+            'sweets' => ['slug' => 'chocolat', 'name' => 'le chocolat'],
+            'stationery' => ['slug' => 'papeterie', 'name' => 'la papeterie'],
+            'pubgames' => ['slug' => 'flechettes', 'name' => 'les fléchettes'],
+            'adult' => ['slug' => 'erotisme', 'name' => 'l\'érotisme'],
         ],
     ],
 

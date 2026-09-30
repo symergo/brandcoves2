@@ -80,6 +80,10 @@ class AngleMap
         'hunting' => ['jachtmes', 'verrekijker jacht', 'jachtvest', 'wildlokker', 'jachtrugzak', 'schietbril'],
         'gadgets' => ['gadget', 'mini drone', 'sleutelzoeker', 'draadloze oplader', 'smart plug', 'actiecamera'],
         'it' => ['mechanisch toetsenbord', 'monitor 27 inch', 'usb-c hub', 'externe ssd', 'nas', 'wifi router'],
+        'sweets' => ['chocolade geschenkdoos', 'pralines', 'bonbons', 'snoepdoos', 'chocoladeletter', 'truffels'],
+        'stationery' => ['vulpen', 'balpen cadeau', 'notitieboek', 'kalligrafie set', 'schrijfset', 'bullet journal'],
+        'pubgames' => ['dartbord', 'dartpijlen', 'pokerset', 'speelkaarten', 'tafelvoetbal', 'biljartkeu'],
+        'adult' => ['erotische geschenkset', 'massageolie', 'koppelspel', 'erotische adventskalender', 'massagekaars', 'erotisch spel'],
     ];
 
     /**

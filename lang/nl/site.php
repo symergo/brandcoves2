@@ -1335,6 +1335,7 @@ return [
             'water' => 'Zwemmen en watersport', 'wintersports' => 'Wintersport', 'football' => 'Voetbal',
             'collecting' => 'Verzamelen', 'nature' => 'Natuur en vogels', 'fishing' => 'Vissen',
             'horses' => 'Paarden', 'hunting' => 'Jagen', 'gadgets' => 'Gadgets', 'it' => 'Computers en IT',
+            'sweets' => 'Snoep en chocolade', 'stationery' => 'Pennen en papier', 'pubgames' => 'Darts en kaartspellen', 'adult' => 'Erotiek',
         ],
 
         'vibes' => [
@@ -1939,6 +1940,10 @@ return [
             'hunting' => ['slug' => 'jagen', 'name' => 'jagen'],
             'gadgets' => ['slug' => 'gadgets', 'name' => 'gadgets'],
             'it' => ['slug' => 'computers', 'name' => 'computers'],
+            'sweets' => ['slug' => 'snoep-en-chocolade', 'name' => 'snoep en chocolade'],
+            'stationery' => ['slug' => 'pennen-en-papier', 'name' => 'pennen en papier'],
+            'pubgames' => ['slug' => 'darts-en-kaarten', 'name' => 'darts en kaarten'],
+            'adult' => ['slug' => 'erotiek', 'name' => 'erotiek'],
         ],
     ],
 

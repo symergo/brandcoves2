@@ -69,6 +69,15 @@ enum Interest: string
     // everything else with a plug.
     case Gadgets = 'gadgets';
     case It = 'it';
+    // Four the gift-set tagging found missing (owner, 2026-09-30): chocolate
+    // boxes, a good pen, a darts set and erotic gift sets had no interest
+    // that fitted, so they could not be found by one.
+    case Sweets = 'sweets';
+    case Stationery = 'stationery';
+    case PubGames = 'pubgames';
+    // Erotic gifts. They appear like any other gift (owner, 2026-09-30),
+    // except for a child: gift_landings.excluded_pairs.
+    case Adult = 'adult';
 
     /** @return list<string> */
     public static function values(): array

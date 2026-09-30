@@ -626,7 +626,7 @@ return [
         // coffee and hunting are not a child's hobby either. Every recipient had
         // all 38 interests until 2026-09-27.
         'excluded_pairs' => [
-            'child' => ['drinks', 'coffee', 'hunting'],
+            'child' => ['drinks', 'coffee', 'hunting', 'adult'],
         ],
 
         /*
