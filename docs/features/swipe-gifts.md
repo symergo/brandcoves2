@@ -73,6 +73,11 @@ to "Mijn smaak", which keeps the taste they show ([my-taste.md](my-taste.md)).
 - **Once something is liked, two cards in three follow a favourite** (the top three that reached a
   full like, in turn), near the price of what was liked (half to twice the median). The third card
   keeps exploring, so an early coffee grinder does not mean an hour of coffee.
+- **A narrower interest hides its broader one on a card** (`TasteCard::NARROWER`, 2026-09-30):
+  a perfume carries `perfume` and `beauty`, and counted twice one right swipe made two favourites,
+  so two cards in three were perfume or beauty (owner: "why do I get now all beauty and
+  perfumes?"). On a card only `perfume` counts; the product keeps both tags for search and the
+  gift engine.
 - The draw is This or that's cached random pool (`TasteDeck::draw()`), topped up per favourite with
   24 random products straight from the tag indexes (`gift_tags ??| …`, see SuggestionEngine), since
   a random 160 may hold only two of a given interest.

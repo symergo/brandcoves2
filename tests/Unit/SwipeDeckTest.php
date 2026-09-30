@@ -63,6 +63,20 @@ class SwipeDeckTest extends TestCase
     }
 
     #[Test]
+    public function a_liked_perfume_is_one_favourite_not_two(): void
+    {
+        // A perfume carries perfume and beauty. Counted twice it made two
+        // favourites, and the deck filled with perfume and beauty (2026-09-30).
+        $perfume = new TasteCard(900, ['interest:perfume', 'interest:beauty'], [], 6000);
+
+        $this->assertSame(['perfume'], $perfume->interests());
+        $this->assertSame(['perfume' => 1.0], SwipeDeck::scores([$perfume], []));
+
+        // Beauty on its own is still beauty.
+        $this->assertSame(['beauty'], (new TasteCard(901, ['interest:beauty'], [], 3000))->interests());
+    }
+
+    #[Test]
     public function a_liked_interest_comes_back_two_cards_in_three(): void
     {
         $cards = $this->deck()->compose($this->pool(), [$this->card('coffee')], [], 6);

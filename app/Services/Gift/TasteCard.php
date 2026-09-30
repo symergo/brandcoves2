@@ -89,8 +89,31 @@ final readonly class TasteCard
             }
         }
 
+        if ($vocabulary === GiftTags::INTEREST) {
+            foreach (self::NARROWER as $narrow => $broad) {
+                if (isset($values[$narrow])) {
+                    unset($values[$broad]);
+                }
+            }
+        }
+
         return $values;
     }
+
+    /**
+     * An interest split off from a broader one, which a product carries both
+     * of: narrower => broader. On a card only the narrower counts.
+     *
+     * Found 2026-09-30, the day perfume was split off from beauty: a perfume
+     * tagged both, so one right swipe made two favourites, and Swipe gifts,
+     * which follows up to three favourites for two cards in every three,
+     * filled with perfume and beauty (owner: "why do I get now all beauty and
+     * perfumes?"). Counted once, a perfume is one favourite like any other
+     * product. The tags stay on the product for search and the gift engine.
+     *
+     * @var array<string, string>
+     */
+    private const NARROWER = ['perfume' => 'beauty'];
 
     /** @return list<string> */
     public function interests(): array
