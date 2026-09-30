@@ -343,7 +343,6 @@ return [
         'seo_title' => 'Idées cadeaux et trouvailles, chaque jour',
         'seo_description' => 'Trois façons de trouver ce que vous ne cherchiez pas : une nouvelle édition chaque jour, une surprise choisie pour sa rareté, et des lectures par thème.',
         'title' => 'Découvrir',
-        'intro' => 'Trouvez ce que vous ne cherchiez pas : la Cove du jour, une surprise, ou choisissez entre deux choses jusqu\'à savoir ce que quelqu\'un aime.',
         'surprise_what' => "Quelque chose dont vous ignoriez l'existence, choisi pour sa rareté et non pour ses ventes.",
         'persona_all' => 'Toutes les idées cadeaux',
         'guides_all' => 'Tous les guides',

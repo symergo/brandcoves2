@@ -346,7 +346,6 @@ return [
         'seo_title' => 'Cadeaus en vondsten, elke dag nieuw',
         'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
         'title' => 'Ontdek',
-        'intro' => 'Vind iets waar je niet naar zocht: de Cove van vandaag, een verrassing, of kies tussen twee dingen tot je weet wat iemand leuk vindt.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
         'persona_all' => 'Alle cadeaus',
         'guides_all' => 'Alle gidsen',

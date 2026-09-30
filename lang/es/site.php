@@ -342,7 +342,6 @@ return [
         'seo_title' => 'Ideas de regalo y hallazgos, nuevos cada día',
         'seo_description' => 'Tres maneras de encontrar algo que no buscabas: una edición nueva cada día, una sorpresa elegida por lo rara que es, y lecturas largas por tema.',
         'title' => 'Descubre',
-        'intro' => 'Encuentra lo que no buscabas: la Cove de hoy, una sorpresa, o elige entre dos cosas hasta saber qué le gusta a alguien.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
         'persona_all' => 'Todas las ideas de regalo',
         'guides_all' => 'Todas las guías',

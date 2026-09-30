@@ -113,7 +113,7 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
             <Head title={t('discover_cove.seo_title')} />
 
             <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{t('discover_cove.title')}</h1>
-            <p className="mt-2 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
+            {/* No line under the title (owner, 2026-09-30); the jump links say what is here. */}
 
             <nav aria-label={t('discover_cove.jump_label')} className="mt-5 flex flex-wrap gap-2">
                 {jumps.map((jump) => (

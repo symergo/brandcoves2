@@ -473,7 +473,6 @@ return [
         // Counts no longer. The hub described "three" while the cards were
         // four, and the persona card made it five — a number in the copy is a
         // promise the card row has to keep, and this one has been broken twice.
-        'intro' => 'Find something you were not looking for: today\'s Cove, a surprise, or choose between two things until you know what somebody likes.',
         'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
         'persona_all' => 'All gift ideas',
         'guides_all' => 'All guides',
