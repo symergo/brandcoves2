@@ -131,6 +131,10 @@ press that was the only way before; played for nobody in particular, the buttons
 
 A gift profile card (`/gift/card/{token}`) opens straight on the questions, filled in from the card,
 as before. `/gift?for=<person>` (reminder emails, the person page) opens straight on the results.
+So do `/gift?interest=<value>` and `/gift?vibe=<pole>` (2026-09-30), with that one answer filled in:
+the chips on a product page, which show an editor's interests and taste poles, link there (owner:
+"when clicked they should serve as gift search"). A value outside the vocabulary opens the empty
+questions.
 
 ## The one results page
 

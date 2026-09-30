@@ -89,6 +89,26 @@ class GiftController extends Controller
             return $this->board($request, $current, $picks, $validated, $recipient, $brief, $past);
         }
 
+        /*
+         * `?interest=coffee` and/or `?vibe=design`: straight to ideas for that
+         * one answer, from the chips on a product page (owner, 2026-09-30: "when
+         * clicked they should serve as gift search"). The board keeps the
+         * answer, so "Aanpassen" goes on from there. A value outside the
+         * vocabulary is ignored, as if it were not in the address.
+         */
+        $interest = Interest::tryFrom((string) $request->query('interest', ''));
+        $pole = Preference::tryFrom((string) $request->query('vibe', ''));
+
+        if ($interest !== null || $pole !== null) {
+            $validated = [
+                'interests' => $interest === null ? [] : [$interest->value],
+                'preferences' => $pole === null ? [] : [$pole->value],
+            ];
+            $brief = $this->brief($validated, $current);
+
+            return $this->board($request, $current, $engine->suggest($brief), $validated, null, $brief);
+        }
+
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
             'recipients' => $this->recipients($request, $current),

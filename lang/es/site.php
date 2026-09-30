@@ -287,6 +287,7 @@ return [
      */
 
     'product' => [
+        'gift_tags' => 'Un regalo para quien le gusta',
         'from' => 'desde',
         'one_offer' => '1 oferta',
         'offers' => ':count ofertas',

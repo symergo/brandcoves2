@@ -398,6 +398,7 @@ return [
      */
 
     'product' => [
+        'gift_tags' => 'A gift for someone into',
         'from' => 'from',
         'one_offer' => '1 offer',
         'offers' => ':count offers',

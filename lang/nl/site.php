@@ -291,6 +291,7 @@ return [
      */
 
     'product' => [
+        'gift_tags' => 'Cadeau voor wie houdt van',
         'from' => 'vanaf',
         'one_offer' => '1 aanbod',
         'offers' => ':count aanbiedingen',

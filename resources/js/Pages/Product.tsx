@@ -55,6 +55,11 @@ interface Props {
         ean: string | null
     }
     offers: Offer[]
+    /** An editor's interests and taste poles (2026-09-30); empty lists when untagged. */
+    giftTags?: {
+        interests: { value: string; label: string; url: string }[]
+        vibes: { value: string; label: string; url: string }[]
+    }
     alert: AlertState
     /**
      * The tagged Amazon search for this product's barcode. Null when the group
@@ -106,7 +111,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, alert, amazonSearch, description, signals }: Props) {
+export default function Product({ product, offers, giftTags, alert, amazonSearch, description, signals }: Props) {
     const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     // Which token failed, not a flag: Inertia keeps this component mounted from
@@ -196,6 +201,37 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                         </div>
                     )}
                     <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{product.title}</h1>
+
+                    {/*
+                      What it is a gift for, and which way its taste goes
+                      (owner, 2026-09-30). Each opens Find a gift with that one
+                      answer filled in: a gift search, not a word search. Only
+                      an editor's tags.
+                    */}
+                    {giftTags && (giftTags.interests.length > 0 || giftTags.vibes.length > 0) && (
+                        <ul aria-label={t('product.gift_tags')} className="mt-3 flex flex-wrap gap-1.5">
+                            {giftTags.interests.map((interest) => (
+                                <li key={interest.value}>
+                                    <Link
+                                        href={interest.url}
+                                        className="inline-flex items-center rounded-full border border-accent/40 bg-accent/5 px-2.5 py-0.5 text-sm text-accent-dark hover:border-accent"
+                                    >
+                                        {interest.label}
+                                    </Link>
+                                </li>
+                            ))}
+                            {giftTags.vibes.map((vibe) => (
+                                <li key={vibe.value}>
+                                    <Link
+                                        href={vibe.url}
+                                        className="inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
+                                    >
+                                        {vibe.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
 
                     {/*
                       The price is the fact, so it is the biggest thing here.

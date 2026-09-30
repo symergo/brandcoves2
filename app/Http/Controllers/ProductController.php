@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Interest;
 use App\Enums\Market;
+use App\Enums\Preference;
 use App\Enums\ProductStatus;
 use App\Models\PriceAlert;
 use App\Models\Product;
@@ -114,6 +116,10 @@ class ProductController extends Controller
                 'ean' => $productGroup->identity_kind?->value === 'ean' ? $productGroup->identity_key : null,
             ],
             'offers' => $this->presentOffers($offers),
+
+            // What the product is a gift for and which way its taste goes, as
+            // an editor tagged it (owner, 2026-09-30: show them on the page).
+            'giftTags' => $this->giftTags($productGroup, $current),
 
             /*
              * The long description, quoted from whichever shop supplies the
@@ -287,6 +293,41 @@ class ProductController extends Controller
      * @param  Collection<int, Product>  $offers
      * @return list<array<string, mixed>>
      */
+    /**
+     * The product's interests and taste poles, in the visitor's language.
+     *
+     * Only an editor's tags (`gift_tags`), not the crowd's: a label printed on
+     * the page is a statement about the product, and the crowd's signal is too
+     * noisy for that. Each one opens Find a gift with that answer filled in
+     * (`/gift?interest=` or `?vibe=`), so a click is a gift search (owner,
+     * 2026-09-30) rather than a word search.
+     *
+     * @return array{interests: list<array{value: string, label: string, url: string}>, vibes: list<array{value: string, label: string, url: string}>}
+     */
+    private function giftTags(ProductGroup $group, CurrentMarket $current): array
+    {
+        $interests = [];
+        $vibes = [];
+
+        foreach ($group->giftTags() as $tag) {
+            [$kind, $value] = array_pad(explode(':', $tag, 2), 2, '');
+
+            if ($kind === 'interest' && ($interest = Interest::tryFrom($value)) !== null) {
+                $interests[] = [
+                    'value' => $interest->value,
+                    'label' => $interest->label(),
+                    'url' => $current->url('gift').'?interest='.$interest->value,
+                ];
+            }
+
+            if ($kind === 'preference' && ($pole = Preference::tryFrom($value)) !== null) {
+                $vibes[] = ['value' => $pole->value, 'label' => $pole->label(), 'url' => $current->url('gift').'?vibe='.$pole->value];
+            }
+        }
+
+        return ['interests' => $interests, 'vibes' => $vibes];
+    }
+
     private function presentOffers(Collection $offers): array
     {
         return $offers
