@@ -32,14 +32,18 @@ how you withdraw the consent the privacy policy names. Deleting the account dele
 
 ## Three ways to fill it
 
-- **Fill it in** on the page.
-- **Play This or that for yourself** and press "Keep in My taste" on the result (`POST
+- **Fill it in** on the page. Saved as you go since 2026-09-30 (owner: "save automatically"):
+  every click on an interest, a pair, the age or the gender, and every word added or taken away,
+  is sent 0.6 s after the last one, as JSON so no banner flashes (`PUT /my-taste` answers
+  `{saved, cleared}` when asked for JSON). A quiet "Bewaard" shows beside it. No save button.
+- **Play This or that for yourself**: the result is kept by itself as soon as it shows (since
+  2026-09-30; the button stays only for a retry after a failure) (`POST
   /my-taste/learn`). As with every saved This or that result, the page sends its choices and the
   taste is worked out on the server from the catalogue, then merged into what you already said
   (`TasteProfile::mergedWith`). The age is left alone.
 - **Swipe for yourself, signed in** (owner, the same day: "include results from swiping and
   vibe"). Swipe gifts sends its swipes to the same endpoint as one-card choices, right a like and
-  left a dislike, every ten swipes and on Stop, the latest hundred each time (hence the endpoint's
+  left a dislike, every ten swipes and on Stop (on Stop even after one swipe, since 2026-09-30), the latest hundred each time (hence the endpoint's
   cap of 100). The profiler reads interests and taste poles from them as from This or that's
   single cards (the "vibe" the owner asked for here turned out to mean the pairs), and an
   interest passed on twice lands under "rather not". Merging makes a resend harmless. The popup says so in its top bar
