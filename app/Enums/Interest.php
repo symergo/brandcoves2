@@ -78,6 +78,11 @@ enum Interest: string
     // Erotic gifts. They appear like any other gift (owner, 2026-09-30),
     // except for a child: gift_landings.excluded_pairs.
     case Adult = 'adult';
+    // Split off from `beauty` (owner, 2026-09-30, "waarom geen parfums?"): in
+    // Swipe gifts an interest gets a card about once every forty, and a beauty
+    // card was a hair dryer or mascara as often as a perfume, so perfume almost
+    // never came up. A perfume keeps `beauty` too.
+    case Perfume = 'perfume';
 
     /** @return list<string> */
     public static function values(): array

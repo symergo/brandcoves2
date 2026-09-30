@@ -1529,7 +1529,7 @@ return [
             'water' => 'Swimming and water sports', 'wintersports' => 'Winter sports', 'football' => 'Football',
             'collecting' => 'Collecting', 'nature' => 'Nature and birds', 'fishing' => 'Fishing',
             'horses' => 'Horses', 'hunting' => 'Hunting', 'gadgets' => 'Gadgets', 'it' => 'Computers and IT',
-            'sweets' => 'Sweets and chocolate', 'stationery' => 'Pens and paper', 'pubgames' => 'Darts and card games', 'adult' => 'Erotica',
+            'sweets' => 'Sweets and chocolate', 'stationery' => 'Pens and paper', 'pubgames' => 'Darts and card games', 'adult' => 'Erotica', 'perfume' => 'Perfume and fragrance',
         ],
 
         'vibes' => [
@@ -2246,6 +2246,7 @@ return [
             'stationery' => ['slug' => 'stationery', 'name' => 'pens and paper'],
             'pubgames' => ['slug' => 'darts-and-cards', 'name' => 'darts and cards'],
             'adult' => ['slug' => 'erotica', 'name' => 'erotica'],
+            'perfume' => ['slug' => 'perfume', 'name' => 'perfume'],
         ],
     ],
 

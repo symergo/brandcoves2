@@ -1325,7 +1325,7 @@ return [
             'water' => 'Natación y deportes acuáticos', 'wintersports' => 'Deportes de invierno', 'football' => 'Fútbol',
             'collecting' => 'Coleccionismo', 'nature' => 'Naturaleza y aves', 'fishing' => 'Pesca',
             'horses' => 'Caballos', 'hunting' => 'Caza', 'gadgets' => 'Gadgets', 'it' => 'Informática',
-            'sweets' => 'Dulces y chocolate', 'stationery' => 'Papelería', 'pubgames' => 'Dardos y juegos de cartas', 'adult' => 'Erotismo',
+            'sweets' => 'Dulces y chocolate', 'stationery' => 'Papelería', 'pubgames' => 'Dardos y juegos de cartas', 'adult' => 'Erotismo', 'perfume' => 'Perfumes',
         ],
 
         'vibes' => [
@@ -1934,6 +1934,7 @@ return [
             'stationery' => ['slug' => 'papeleria', 'name' => 'de la papelería'],
             'pubgames' => ['slug' => 'dardos', 'name' => 'de los dardos'],
             'adult' => ['slug' => 'erotismo', 'name' => 'del erotismo'],
+            'perfume' => ['slug' => 'perfume', 'name' => 'del perfume'],
         ],
     ],
 

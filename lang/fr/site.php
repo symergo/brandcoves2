@@ -1326,7 +1326,7 @@ return [
             'water' => 'Natation et sports nautiques', 'wintersports' => 'Sports d\'hiver', 'football' => 'Le football',
             'collecting' => 'Objets de collection', 'nature' => 'Nature et oiseaux', 'fishing' => 'La pêche',
             'horses' => 'Les chevaux', 'hunting' => 'La chasse', 'gadgets' => 'Gadgets', 'it' => 'Informatique',
-            'sweets' => 'Bonbons et chocolat', 'stationery' => 'La papeterie', 'pubgames' => 'Fléchettes et jeux de cartes', 'adult' => 'Érotisme',
+            'sweets' => 'Bonbons et chocolat', 'stationery' => 'La papeterie', 'pubgames' => 'Fléchettes et jeux de cartes', 'adult' => 'Érotisme', 'perfume' => 'Parfums',
         ],
 
         'vibes' => [
@@ -1935,6 +1935,7 @@ return [
             'stationery' => ['slug' => 'papeterie', 'name' => 'la papeterie'],
             'pubgames' => ['slug' => 'flechettes', 'name' => 'les fléchettes'],
             'adult' => ['slug' => 'erotisme', 'name' => 'l\'érotisme'],
+            'perfume' => ['slug' => 'parfum', 'name' => 'le parfum'],
         ],
     ],
 

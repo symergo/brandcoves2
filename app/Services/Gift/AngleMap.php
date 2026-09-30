@@ -84,6 +84,7 @@ class AngleMap
         'stationery' => ['vulpen', 'balpen cadeau', 'notitieboek', 'kalligrafie set', 'schrijfset', 'bullet journal'],
         'pubgames' => ['dartbord', 'dartpijlen', 'pokerset', 'speelkaarten', 'tafelvoetbal', 'biljartkeu'],
         'adult' => ['erotische geschenkset', 'massageolie', 'koppelspel', 'erotische adventskalender', 'massagekaars', 'erotisch spel'],
+        'perfume' => ['eau de parfum', 'eau de toilette', 'parfum geschenkset', 'herenparfum', 'damesparfum', 'niche parfum'],
     ];
 
     /**
