@@ -122,7 +122,19 @@ class MyTasteController extends Controller
             'choices.*.verdict' => ['nullable', 'string', 'in:like,dislike'],
         ]);
 
-        $profile = TasteProfiler::fromConfig()->profile($reader->read($validated['choices'], $current->get()));
+        /*
+         * Swipes are single cards with a verdict; This or that sends pairs.
+         * A swipe session learns its taste poles at a lower bar
+         * (TasteProfiler::SWIPE_TASTE_THRESHOLD), or it learns none.
+         */
+        $swiped = collect($validated['choices'])->every(fn (array $c) => count($c['shown']) === 1 && isset($c['verdict']));
+        $profiler = TasteProfiler::fromConfig();
+
+        if ($swiped) {
+            $profiler = $profiler->withTasteThreshold(TasteProfiler::SWIPE_TASTE_THRESHOLD);
+        }
+
+        $profile = $profiler->profile($reader->read($validated['choices'], $current->get()));
 
         abort_if($profile->isEmpty(), 422, __('site.gift.taste.nothing_to_save'));
 

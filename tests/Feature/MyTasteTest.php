@@ -240,6 +240,24 @@ class MyTasteTest extends TestCase
     }
 
     #[Test]
+    public function one_right_swipe_on_a_vibe_is_enough_unless_it_was_also_swiped_left(): void
+    {
+        // Owner, 2026-09-30: "no vibes are selected after swipe game". A swipe
+        // learns a taste pole at a lower bar than This or that.
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/be-nl/my-taste/learn', ['choices' => [
+            ['shown' => [$this->product('coffee', ['preference:design'])->id], 'verdict' => 'like'],
+            ['shown' => [$this->product('music', ['preference:modern'])->id], 'verdict' => 'like'],
+            ['shown' => [$this->product('gaming', ['preference:modern'])->id], 'verdict' => 'dislike'],
+            ['shown' => [$this->product('reading')->id], 'verdict' => 'dislike'],
+        ]])->assertOk();
+
+        // Design: one like. Modern: one like and one dislike, 0.5, not enough.
+        $this->assertSame(['design'], UserTaste::query()->findOrFail($user->id)->preferences);
+    }
+
+    #[Test]
     public function the_swipe_page_feeds_my_taste_only_for_yourself_signed_in(): void
     {
         $this->get('/be-nl/gift/swipe?for=me')->assertInertia(fn ($page) => $page->where('urls.mine', null));

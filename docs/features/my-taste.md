@@ -46,7 +46,11 @@ how you withdraw the consent the privacy policy names. Deleting the account dele
   left a dislike, every ten swipes and on Stop (on Stop even after one swipe, since 2026-09-30), the latest hundred each time (hence the endpoint's
   cap of 100). The profiler reads interests and taste poles from them as from This or that's
   single cards (the "vibe" the owner asked for here turned out to mean the pairs), and an
-  interest passed on twice lands under "rather not". Merging makes a resend harmless. The popup says so in its top bar
+  interest passed on twice lands under "rather not". A taste pole from swipes needs a net 1.0
+  rather than This or that's 1.5 (`TasteProfiler::SWIPE_TASTE_THRESHOLD`, 2026-09-30, owner: "no
+  vibes are selected after swipe game"): a swipe is one card, only a third of be-nl's cards carry
+  a pole and far fewer elsewhere, and 1.5 needed two right swipes on one pole with no left swipe,
+  which a session almost never gave. One like now counts, one like and one dislike does not. Merging makes a resend harmless. The popup says so in its top bar
   ("also to My taste"), and only then: for somebody else, or signed out, nothing is kept.
 
 ## Who reads it (`OwnTaste`)

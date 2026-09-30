@@ -73,6 +73,21 @@ final class TasteProfiler
     /** Net score a taste pole needs. The same bar as an interest. */
     public const TASTE_THRESHOLD = 1.5;
 
+    /**
+     * The bar for a taste pole learned from Swipe gifts (2026-09-30).
+     *
+     * Owner: "no vibes are selected after swipe game". A swipe is one card,
+     * not a choice between two, and only a third of the cards carry a pole at
+     * all (be-nl; fewer elsewhere), spread over fourteen poles. Reaching 1.5
+     * needed two right swipes on the same pole with no left swipe on it, which
+     * an ordinary session almost never gives. At 1.0 one right swipe counts, as
+     * long as the pole was swiped right more than left (one like and one
+     * dislike is 0.5). The strongest pole per axis and three at most, as ever.
+     */
+    public const SWIPE_TASTE_THRESHOLD = 1.0;
+
+    private float $tasteThreshold = self::TASTE_THRESHOLD;
+
     public const MIN_PRICES = 3;
 
     /** Widening of the quartile band, each way. */
@@ -86,6 +101,15 @@ final class TasteProfiler
         private readonly int $floor = 500,
         private readonly int $ceiling = 50000,
     ) {}
+
+    /** The same profiler with another bar for taste poles. */
+    public function withTasteThreshold(float $threshold): self
+    {
+        $clone = clone $this;
+        $clone->tasteThreshold = $threshold;
+
+        return $clone;
+    }
 
     public static function fromConfig(): self
     {
@@ -245,7 +269,7 @@ final class TasteProfiler
     {
         return array_slice(array_values(array_filter(
             $this->ranked($rows),
-            fn (string $value) => $rows[$value]['score'] >= self::TASTE_THRESHOLD,
+            fn (string $value) => $rows[$value]['score'] >= $this->tasteThreshold,
         )), 0, $limit);
     }
 
