@@ -732,7 +732,6 @@ return [
         'done_adding' => 'Listo',
         'add_product' => 'Añadir un producto',
         'add_swipe' => 'O desliza entre regalos',
-        'add_swipe_hint' => 'Un producto a la vez: a la derecha va a esta lista.',
         'ask_others' => 'Pregunta a los demás',
         'add_search_placeholder' => 'Busca, o pega un enlace...',
         'search_failed' => 'La búsqueda ha fallado. ¿Lo intentamos otra vez?',

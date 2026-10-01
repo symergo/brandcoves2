@@ -893,7 +893,6 @@ return [
         // something we do not sell — without searching first.
         'add_product' => 'Add a product',
         'add_swipe' => 'Or swipe through gifts',
-        'add_swipe_hint' => 'One product at a time: swipe right to put it on this list.',
         'ask_others' => 'Ask others',
         'add_search_placeholder' => 'Search, or paste a link...',
         'search_failed' => 'The search did not work. Try again?',
