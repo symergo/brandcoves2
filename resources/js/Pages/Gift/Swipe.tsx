@@ -27,6 +27,8 @@ interface Props {
     /** Who "Find a gift" said this is for; see App\Services\Gift\CarriedWho. */
     carried: { person: { id: string; name: string } | null; relationship: string | null; forMe: boolean; gender?: string | null }
     cards: Card[]
+    /** The list right swipes go into, when opened from "Add a product" on a list. */
+    into?: { id: string; title: string } | null
     urls: { next: string; finder: string; mine?: string | null; back?: string | null }
 }
 
@@ -74,7 +76,7 @@ const MAX_EXCLUDE = 400
  * the top bar and the two round buttons leave, the picture most of it, and
  * the page behind does not scroll while it is open. Its close button is Stop.
  */
-export default function Swipe({ carried, cards: first, urls }: Props) {
+export default function Swipe({ carried, cards: first, into = null, urls }: Props) {
     const { t } = useTranslations()
     const { market, auth, savingTo } = usePage<SharedProps>().props
     const base = `/${market.key}`
@@ -87,8 +89,8 @@ export default function Swipe({ carried, cards: first, urls }: Props) {
     const [exhausted, setExhausted] = useState(first.length === 0)
     const [stopped, setStopped] = useState(false)
     const [failed, setFailed] = useState(false)
-    // Where the right swipes went: learned from the first save.
-    const [list, setList] = useState<{ id: string; title: string } | null>(null)
+    // Where the right swipes go: the list it was opened for, else learned from the first save.
+    const [list, setList] = useState<{ id: string; title: string } | null>(into)
     const [saved, setSaved] = useState(0)
     const listRequest = useRef<Promise<string | undefined> | null>(null)
     const seen = useRef<number[]>(first.map((c) => c.id))

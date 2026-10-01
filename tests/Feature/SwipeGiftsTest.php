@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\UserTaste;
+use App\Models\Wishlist;
 use App\Services\Ai\AiClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -181,5 +182,20 @@ class SwipeGiftsTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get("/be-nl/gift/swipe?person={$theirs->id}")
             ->assertInertia(fn ($page) => $page->where('carried.person', null));
+    }
+
+    #[Test]
+    public function opened_for_a_list_the_right_swipes_go_into_it_and_only_into_your_own(): void
+    {
+        // "Add a product" on Mijn Coves links here with ?list= (owner, 2026-10-01).
+        $me = User::factory()->create();
+        $mine = Wishlist::factory()->create(['owner_user_id' => $me->id, 'market' => Market::BeNl, 'title' => 'Camping']);
+        $theirs = Wishlist::factory()->create(['owner_user_id' => User::factory()->create()->id, 'market' => Market::BeNl]);
+
+        $this->actingAs($me)->get("/be-nl/gift/swipe?list={$mine->id}")
+            ->assertInertia(fn ($page) => $page->where('into.id', (string) $mine->id)->where('into.title', 'Camping'));
+
+        $this->actingAs($me)->get("/be-nl/gift/swipe?list={$theirs->id}")
+            ->assertInertia(fn ($page) => $page->where('into', null));
     }
 }

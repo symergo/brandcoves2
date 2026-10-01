@@ -737,6 +737,8 @@ return [
         'added_count' => ':count toegevoegd',
         'done_adding' => 'Klaar',
         'add_product' => 'Product toevoegen',
+        'add_swipe' => 'Of swipe door cadeaus',
+        'add_swipe_hint' => 'Eén product tegelijk: naar rechts komt op deze lijst.',
         'ask_others' => 'Vraag het aan anderen',
         'add_search_placeholder' => 'Zoek, of plak een link...',
         'search_failed' => 'Zoeken lukte niet. Nog eens proberen?',

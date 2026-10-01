@@ -57,6 +57,10 @@ button, so the toast, its Undo and the saved state on other cards are the site's
   `POST /people/for-relationship/list` as Find a gift's search card.
 - **For yourself or nobody in particular**: the list a Save button would pick (the one being
   filled, else the server's default list).
+- **A list chosen up front** (`?list=<id>`, 2026-10-01): "Add a product" on Mijn Coves offers
+  swiping as another way to fill that list (owner). Right swipes go into it and Stop returns to it;
+  a list about somebody adds `&person=` so the cards start from what is known about them. Only a
+  list the visitor may add to (`ListAccess::canEdit`); any other id is ignored.
 
 The swipes themselves are only in the page's state, as in This or that: a half-finished session is
 not worth a row. The one exception is swiping for yourself while signed in: then the swipes also go

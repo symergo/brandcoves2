@@ -7,14 +7,18 @@ namespace App\Http\Controllers;
 use App\Enums\Gender;
 use App\Enums\RecipientType;
 use App\Models\ProductGroup;
+use App\Models\Wishlist;
 use App\Services\Gift\CarriedWho;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\SwipeDeck;
 use App\Services\Images\ImageProxy;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\ListAccess;
+use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,6 +48,7 @@ class SwipeController extends Controller
 
         return Inertia::render('Gift/Swipe', [
             'carried' => $carried,
+            'into' => $this->into($request),
             // The first cards start from what is known about who it is for (DeckSeeds).
             'cards' => $this->present($deck->next(
                 $current->get(),
@@ -62,6 +67,30 @@ class SwipeController extends Controller
                 'mine' => $request->user() !== null && $carried['forMe'] ? $current->url('my-taste/learn') : null,
             ],
         ]);
+    }
+
+    /**
+     * `?list=<id>`: the list the right swipes go into, from "Add a product"
+     * on Mijn Coves (owner, 2026-10-01). Only a list this visitor may add to;
+     * any other id is ignored, as if it were not in the address, and the
+     * swipes go where a Save button would put them.
+     *
+     * @return array{id: string, title: string}|null
+     */
+    private function into(Request $request): ?array
+    {
+        $id = (string) $request->query('list', '');
+
+        if ($id === '' || ! Str::isUuid($id)) {
+            return null;
+        }
+
+        $owner = Owner::fromRequest($request);
+        $list = ListAccess::scope(Wishlist::query(), $owner)->find($id);
+
+        return $list !== null && ListAccess::canEdit($list, $owner)
+            ? ['id' => (string) $list->id, 'title' => (string) $list->title]
+            : null;
     }
 
     /** The next batch. JSON: the page keeps its own swipes. */

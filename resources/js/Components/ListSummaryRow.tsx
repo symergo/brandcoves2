@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react'
+import { Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import AddProduct from './AddProduct'
 import Badge from './Badge'
@@ -275,12 +275,37 @@ function ShareListDialog({ list, friends, onClose }: { list: ListSummary; friend
  */
 function AddToListDialog({ list, onClose }: { list: ListSummary; onClose: () => void }) {
     const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+
+    /*
+     * Swiping as another way to fill this list (owner, 2026-10-01): right
+     * swipes go straight into it (`?list=`), and Stop comes back to it. A list
+     * about somebody starts from what is known about them (`&person=`).
+     */
+    const swipe = `/${market.key}/gift/swipe?list=${encodeURIComponent(list.id)}${
+        list.recipient ? `&person=${encodeURIComponent(list.recipient.id)}` : ''
+    }`
 
     return (
         <Modal title={list.title} onClose={onClose} width="lg">
             <div className="mt-3">
                 <AddProduct base={`/${market.key}`} listId={list.id} market={market} defaultOpen onListPage={false} onClose={onClose} />
             </div>
+            <Link
+                href={swipe}
+                className="mt-4 flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
+            >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <ToolIcon name="swipe" className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                    <span className="block font-medium">{t('lists.add_swipe')}</span>
+                    <span className="block text-sm text-ink-soft">{t('lists.add_swipe_hint')}</span>
+                </span>
+                <span className="ml-auto shrink-0 text-accent-dark" aria-hidden>
+                    →
+                </span>
+            </Link>
         </Modal>
     )
 }
