@@ -30,9 +30,10 @@ interface Props {
  *
  *  1. Hero: the idea, Create a Cove and Explore Coves.
  *  2. Three ways in, one per audience: a gift, a wish list, browsing.
- *  3. From anywhere: what makes this more than an affiliate catalogue.
- *  4. Coves: one card per kind of Cove.
- *  5. Daily: only now, the thing that makes somebody come back.
+ *  3. Daily, the thing that makes somebody come back (moved up from fifth
+ *     on 2026-10-02, owner: right under "Gewoon rondkijken").
+ *  4. From anywhere: what makes this more than an affiliate catalogue.
+ *  5. Coves: one card per kind of Cove.
  *  6. Trust, short.
  *  7. Start your first Cove.
  *
@@ -126,63 +127,10 @@ export default function Home({ today }: Props) {
             </section>
 
             {/*
-              3. From anywhere. The difference from an affiliate catalogue,
-              said outright. Generic sources, never other companies' names
-              (owner's decision, 2026-09-26).
+              The Daily, right under the three ways in, the last of which is
+              "Gewoon rondkijken?" (owner, 2026-10-02). It stood fifth, after
+              the Coves cards, until then.
             */}
-            <section className="mt-14 sm:mt-20" aria-labelledby="open-heading">
-                <div className="rounded-card bg-accent/5 p-6 sm:p-10">
-                    <h2 id="open-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {t('home.open_title')}
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-ink-soft">{t('home.open_intro')}</p>
-
-                    {/* Four ways, so 2 or 4 columns: 3 would leave the fourth alone on a row. */}
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <OpenWay icon="link" text={t('home.open_link')} href={`${base}/lists`} />
-                        <OpenWay icon="barcode" text={t('home.open_scan')} href={`${base}/scan`} />
-                        <OpenWay icon="search" text={t('home.open_search')} href={`${base}/search`} />
-                        {/* Offline items with a photo (owner, 2026-09-27). */}
-                        <OpenWay icon="picture" text={t('home.open_photo')} href={`${base}/lists`} />
-                    </ul>
-
-                    <p className="mt-6 text-xs tracking-wide text-ink-soft uppercase">{t('home.open_sources')}</p>
-
-                    <Link href={createCove} className={`mt-6 ${buttonClasses('primary', 'md')}`}>
-                        {t('home.open_cta')}
-                    </Link>
-                </div>
-            </section>
-
-            {/*
-              4. Coves: one card per kind, where two lists of Coves stood (six
-              drawn at random, then the newest Community Coves) until the owner
-              swapped them (2026-09-29). The same six entries, names and icons
-              as the Discover menu, so a visitor learns them once.
-            */}
-            <section className="mt-14 sm:mt-20" aria-labelledby="coves-heading">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {t('home.coves_heading')}
-                    </h2>
-                    <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                        {t('home.coves_all')} →
-                    </Link>
-                </div>
-
-                {/* One card per row on a phone: two side by side split "Verrassingscove"
-                    and "Community Coves" mid-word. Two rows of three on a desktop. */}
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
-                    <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
-                    <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
-                    <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />
-                    <CoveKindCard icon="ask" label={t('community.index_heading')} href={`${base}/coves/community`} />
-                    <CoveKindCard icon="brand" label={t('nav.brands_shops')} href={`${base}/brands`} />
-                </ul>
-            </section>
-
-            {/* 5. Daily. Only now, as the owner ordered it. */}
             {today && (
                 <section className="mt-14 sm:mt-20" aria-labelledby="today-heading">
                     <p className="text-sm font-medium text-accent-dark">{t('home.daily_title')}</p>
@@ -254,6 +202,63 @@ export default function Home({ today }: Props) {
                     </div>
                 </section>
             )}
+
+            {/*
+              3. From anywhere. The difference from an affiliate catalogue,
+              said outright. Generic sources, never other companies' names
+              (owner's decision, 2026-09-26).
+            */}
+            <section className="mt-14 sm:mt-20" aria-labelledby="open-heading">
+                <div className="rounded-card bg-accent/5 p-6 sm:p-10">
+                    <h2 id="open-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {t('home.open_title')}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-ink-soft">{t('home.open_intro')}</p>
+
+                    {/* Four ways, so 2 or 4 columns: 3 would leave the fourth alone on a row. */}
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <OpenWay icon="link" text={t('home.open_link')} href={`${base}/lists`} />
+                        <OpenWay icon="barcode" text={t('home.open_scan')} href={`${base}/scan`} />
+                        <OpenWay icon="search" text={t('home.open_search')} href={`${base}/search`} />
+                        {/* Offline items with a photo (owner, 2026-09-27). */}
+                        <OpenWay icon="picture" text={t('home.open_photo')} href={`${base}/lists`} />
+                    </ul>
+
+                    <p className="mt-6 text-xs tracking-wide text-ink-soft uppercase">{t('home.open_sources')}</p>
+
+                    <Link href={createCove} className={`mt-6 ${buttonClasses('primary', 'md')}`}>
+                        {t('home.open_cta')}
+                    </Link>
+                </div>
+            </section>
+
+            {/*
+              4. Coves: one card per kind, where two lists of Coves stood (six
+              drawn at random, then the newest Community Coves) until the owner
+              swapped them (2026-09-29). The same six entries, names and icons
+              as the Discover menu, so a visitor learns them once.
+            */}
+            <section className="mt-14 sm:mt-20" aria-labelledby="coves-heading">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {t('home.coves_heading')}
+                    </h2>
+                    <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                        {t('home.coves_all')} →
+                    </Link>
+                </div>
+
+                {/* One card per row on a phone: two side by side split "Verrassingscove"
+                    and "Community Coves" mid-word. Two rows of three on a desktop. */}
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
+                    <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
+                    <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
+                    <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />
+                    <CoveKindCard icon="ask" label={t('community.index_heading')} href={`${base}/coves/community`} />
+                    <CoveKindCard icon="brand" label={t('nav.brands_shops')} href={`${base}/brands`} />
+                </ul>
+            </section>
 
             {/*
               6 and 7, side by side (owner, 2026-09-27: "sections on the

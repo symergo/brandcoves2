@@ -35,8 +35,10 @@ bottom (`Pages/Home.tsx`):
    then the band was six Coves drawn at random (held an hour per market), followed by a band of the
    newest Community Coves ("Wat anderen verzamelen"). Both lists went, and the controller no longer
    sends `coves` or `collected`.
-5. **Daily**: today's Cove and the signup, as before, moved down: the owner put it after the
-   Coves on purpose.
+5. **Daily**: today's Cove and the signup. The owner first put it after the Coves on purpose;
+   **since 2026-10-02 it sits right under the three ways in** (owner: "zet cove van de dag op home
+   net onder 'gewoon rondkijken'", the third of those cards), so it now comes third, before From
+   anywhere and the Coves cards. The numbering above is the original order.
 6. **Trust, short**: where products come from, and that a commission never changes the price.
 7. **Start your first Cove**, the page's first question asked again at the end.
 
