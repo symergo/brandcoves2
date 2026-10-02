@@ -90,7 +90,7 @@ necessary"). A year, then the bar may come back once, by which time the board ha
 
 ## Where the page is linked
 
-The bar, the footer (next to "How it works"), and a line at the end of `/help` under the report form
+The bar, the footer (next to "How it works"), and a line on `/help` under the report form, which sits at the top of that page since 2026-10-02
 ("Een idee voor GiftCoves, of wil je stemmen op wat we bouwen? Denk mee →"). **Not the account
 menu:** it holds My Coves, My people, My taste and Secret Friend, then Notifications, Help, Admin
 and signing out, and the owner has already trimmed it twice (docs/features/navigation.md). Everything
@@ -103,22 +103,25 @@ landing pages); nobody searches for this one.
 
 ## The page
 
-One column, as /help: there is nothing to put beside it. Three sections, in the owner's order:
+One column, as /help: there is nothing to put beside it. In the owner's order, since 2026-10-02:
 
-1. **A short intro and the feedback form.** `FeedbackForm` from /help, the same component and the
-   same `POST /feedback`, so the honeypot, the rate limit and the owner's email come with it
-   (docs/features/feedback.md). It does not take the focus here (`autoFocus={false}`), because on
-   this page it is one of three things and grabbing a phone's keyboard on arrival would hide the
-   board.
+1. **Suggest something**: title (required, 5 to 120 characters) and an optional longer text, for
+   signed-in readers; a guest gets the sign-in button in its place. Under it, "Jouw voorstellen, die
+   we nog lezen" lists the reader's own pending suggestions, so a suggestion visibly arrived even
+   though it is not on the board; the flash says the same. What happens to a suggestion is behind
+   the (i).
 2. **The board**: a card per idea with a status pill, the title, a sentence, and the vote count. A
    signed-in reader gets a toggle button (an up arrow, `ToolIcon` `vote`, "Stem" / "Gestemd" and the
    count, `aria-pressed`); a guest sees the count and one "Meld je aan om te stemmen" line with a
    `SignInLink`. How voting works is behind the (i) next to the heading. Done ideas fold away under
    "Al gebouwd (n)" at the end: they are news, not a question.
-3. **Suggest something**: title (required, 5 to 120 characters) and an optional longer text, for
-   signed-in readers. Under it, "Jouw voorstellen, die we nog lezen" lists the reader's own pending
-   suggestions, so a suggestion visibly arrived even though it is not on the board; the flash says
-   the same. What happens to a suggestion is behind the (i).
+3. **A link to the form on /help** ("Werkt iets niet, of heb je een vraag? Laat het weten via de
+   helppagina →", to `/help#contact`).
+
+Until 2026-10-02 the page opened with the feedback form itself (`FeedbackForm`, the /help component)
+and ended with the suggestion form. The owner put the suggestion first and replaced the feedback
+form with the link: this page is for ideas, and a problem has one place to go, the form at the top
+of /help (docs/features/feedback.md).
 
 **The order of the board** (`FeatureBoard`): building, planned, considering, done. Within
 "considering" the votes decide, then the admin's `sort`; within the others `sort` first, then votes.

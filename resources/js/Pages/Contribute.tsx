@@ -1,7 +1,6 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import Badge, { type BadgeTone } from '../Components/Badge'
 import Button, { buttonClasses } from '../Components/Button'
-import FeedbackForm from '../Components/FeedbackForm'
 import InfoTip from '../Components/InfoTip'
 import SignInLink from '../Components/SignInLink'
 import ToolIcon from '../Components/ToolIcon'
@@ -46,8 +45,10 @@ const tones: Record<Status, BadgeTone> = {
  * One column, as /help: there is nothing to put beside it, and a side column
  * with nothing in it is the thing the site does not do.
  *
- * The order is the owner's: say what could be better (the /help form, the
- * same component, not a copy), then the board, then suggesting something.
+ * The order is the owner's (2026-10-02): suggesting something first, then the
+ * board, then a link to the form on /help for problems and questions. That
+ * form used to sit here too, first; the owner moved the suggestion to the top
+ * and sent the rest to /help, so the site has one place to report a problem.
  * The board comes sorted from the server (FeatureBoard); what is done folds
  * away at the end, because it is news rather than a question.
  *
@@ -55,7 +56,7 @@ const tones: Record<Status, BadgeTone> = {
  * what happens to a suggestion are one tap away, and the page itself stays a
  * list of ideas.
  */
-export default function Contribute({ ideas, waiting, isSignedIn, path }: Props) {
+export default function Contribute({ ideas, waiting, isSignedIn }: Props) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const base = `/${market.key}`
@@ -73,13 +74,37 @@ export default function Contribute({ ideas, waiting, isSignedIn, path }: Props) 
                 </h1>
                 <p className="mt-3 max-w-2xl text-lg text-ink-soft">{t('contribute.intro')}</p>
 
-                <section className="mt-10" aria-labelledby="contribute-feedback">
-                    <h2 id="contribute-feedback" className="text-xl font-semibold tracking-tight">
-                        {t('contribute.feedback_title')}
-                    </h2>
-                    <div className="mt-4">
-                        <FeedbackForm path={path} autoFocus={false} />
+                <section className="mt-10" aria-labelledby="contribute-suggest">
+                    <div className="flex items-center gap-1">
+                        <h2 id="contribute-suggest" className="text-xl font-semibold tracking-tight">
+                            {t('contribute.suggest_title')}
+                        </h2>
+                        <InfoTip>{t('contribute.suggest_info')}</InfoTip>
                     </div>
+
+                    {isSignedIn ? (
+                        <SuggestForm base={base} />
+                    ) : (
+                        <p className="mt-3">
+                            <SignInLink hint={t('contribute.sign_in_to_vote')} className={buttonClasses('secondary', 'md')}>
+                                {t('contribute.sign_in')}
+                            </SignInLink>
+                        </p>
+                    )}
+
+                    {waiting.length > 0 && (
+                        <div className="mt-6">
+                            <h3 className="text-sm font-semibold text-ink">{t('contribute.waiting_title')}</h3>
+                            <ul className="mt-2 space-y-1 text-sm text-ink-soft">
+                                {waiting.map((item) => (
+                                    <li key={item.id} className="flex items-start gap-2">
+                                        <ToolIcon name="suggestions" className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                                        <span>{item.title}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </section>
 
                 <section className="mt-12 border-t border-line pt-10" aria-labelledby="contribute-board">
@@ -124,38 +149,13 @@ export default function Contribute({ ideas, waiting, isSignedIn, path }: Props) 
                     )}
                 </section>
 
-                <section className="mt-12 border-t border-line pt-10" aria-labelledby="contribute-suggest">
-                    <div className="flex items-center gap-1">
-                        <h2 id="contribute-suggest" className="text-xl font-semibold tracking-tight">
-                            {t('contribute.suggest_title')}
-                        </h2>
-                        <InfoTip>{t('contribute.suggest_info')}</InfoTip>
-                    </div>
-
-                    {isSignedIn ? (
-                        <SuggestForm base={base} />
-                    ) : (
-                        <p className="mt-3">
-                            <SignInLink hint={t('contribute.sign_in_to_vote')} className={buttonClasses('secondary', 'md')}>
-                                {t('contribute.sign_in')}
-                            </SignInLink>
-                        </p>
-                    )}
-
-                    {waiting.length > 0 && (
-                        <div className="mt-6">
-                            <h3 className="text-sm font-semibold text-ink">{t('contribute.waiting_title')}</h3>
-                            <ul className="mt-2 space-y-1 text-sm text-ink-soft">
-                                {waiting.map((item) => (
-                                    <li key={item.id} className="flex items-start gap-2">
-                                        <ToolIcon name="suggestions" className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                                        <span>{item.title}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </section>
+                {/* Problems and questions go to the one form, on /help. */}
+                <p className="mt-12 border-t border-line pt-8 text-ink-soft">
+                    {t('contribute.feedback_line')}{' '}
+                    <Link href={`${base}/help#contact`} className="font-medium whitespace-nowrap text-accent-dark hover:text-ink">
+                        {t('contribute.feedback_link')} →
+                    </Link>
+                </p>
             </div>
         </>
     )

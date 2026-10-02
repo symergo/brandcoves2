@@ -17,6 +17,12 @@ browsing Coves), adding anything (link, barcode, photo, writing it down), sharin
 where products come from; then three detailed guides (search tips, lists, the list tools step by
 step); then the form under "Something wrong, or a question?". `HomePageTest` holds it.
 
+**Since 2026-10-02 the form is at the top of `/help`**, under the intro, and the explanation follows
+it. The Denk mee page (`/contribute`) dropped its own copy of the form for a link to `/help#contact`,
+so this is the one place to report a problem, and the owner wanted it found without scrolling past
+the manual. It does not take the focus on arrival (`autoFocus={false}`): most readers came to read
+the explanation below it, and a phone keyboard opening over it would hide that.
+
 - Page: [`Help.tsx`](../../resources/js/Pages/Help.tsx) and the form it renders,
   [`FeedbackForm.tsx`](../../resources/js/Components/FeedbackForm.tsx);
   [`FeedbackController`](../../app/Http/Controllers/FeedbackController.php) still takes the POST.

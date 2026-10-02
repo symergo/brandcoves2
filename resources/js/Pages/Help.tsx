@@ -20,14 +20,15 @@ interface Props {
  * support found neither the search, nor what a Cove is, nor a way to tell us
  * something was wrong (the owner's report, 2026-09-26). This page now says, in
  * order, what a Cove is, how you find things, how you add anything, how you
- * share and give, and where products come from; then the detailed guides; then
- * the form.
+ * share and give, and where products come from; then the detailed guides.
  *
- * ## The order is the odds
+ * ## The form comes first (2026-10-02)
  *
- * Explanation first, form last. Most people arriving here are stuck rather than
- * reporting a fault, and a form at the top asks them to describe a problem they
- * would rather just solve.
+ * It used to come last, on the reasoning that most people here are stuck
+ * rather than reporting a fault. The owner moved it to the top when the Denk
+ * mee page dropped its own copy of the form and started linking here instead:
+ * this is now the one place to report a problem, and someone who came to
+ * report one should not have to scroll past the manual to find it.
  *
  * ## The form is the real one
  *
@@ -49,6 +50,30 @@ export default function Help({ guides, path }: Props) {
                     {t('help.title')}
                 </h1>
                 <p className="mt-3 max-w-2xl text-lg text-ink-soft">{t('help.intro')}</p>
+
+                {/*
+                  The form first, since 2026-10-02 (the owner's call). The
+                  Denk mee page links here for problems and questions, so the
+                  reader arriving by that link lands on the form, not under a
+                  page of explanation. #contact still names it.
+                */}
+                <section id="contact" className="mt-10 scroll-mt-8" aria-labelledby="help-contact">
+                    <h2 id="help-contact" className="text-xl font-semibold tracking-tight">
+                        {t('help.contact_title')}
+                    </h2>
+                    <div className="mt-4">
+                        <FeedbackForm path={path} autoFocus={false} />
+                    </div>
+                    {/* The ideas board and suggestions live on their own page
+                        (2026-09-27, docs/features/contribute.md); somebody
+                        with an idea rather than a problem goes there. */}
+                    <p className="mt-6 text-ink-soft">
+                        {t('help.contribute_line')}{' '}
+                        <Link href={`${base}/contribute`} className="font-medium whitespace-nowrap text-accent-dark hover:text-ink">
+                            {t('contribute.title')} →
+                        </Link>
+                    </p>
+                </section>
 
                 {/* What a Cove is: the one word on this site nobody knows yet. */}
                 <section className="mt-10 rounded-card bg-accent/5 p-6 sm:p-8" aria-labelledby="help-coves">
@@ -147,30 +172,6 @@ export default function Help({ guides, path }: Props) {
                     ))}
                 </ul>
 
-                {/*
-                  A rule, not just space. Everything above answers "how does this
-                  work"; everything below is for when the answer is "it does not".
-                  The heading says so in a few words, because the form is now at
-                  the end of a long page and has to be findable by scrolling.
-                */}
-                <section id="contact" className="mt-12 scroll-mt-8 border-t border-line pt-10" aria-labelledby="help-contact">
-                    <h2 id="help-contact" className="text-xl font-semibold tracking-tight">
-                        {t('help.contact_title')}
-                    </h2>
-                    <div className="mt-4">
-                        <FeedbackForm path={path} />
-                    </div>
-                    {/* The ideas board and suggestions live on their own page
-                        (2026-09-27, docs/features/contribute.md); somebody
-                        at the end of the help page with an idea rather than
-                        a problem goes there. */}
-                    <p className="mt-8 text-ink-soft">
-                        {t('help.contribute_line')}{' '}
-                        <Link href={`${base}/contribute`} className="font-medium whitespace-nowrap text-accent-dark hover:text-ink">
-                            {t('contribute.title')} →
-                        </Link>
-                    </p>
-                </section>
             </div>
         </>
     )
