@@ -122,6 +122,9 @@ class SitemapController extends Controller
                     ['loc' => url("/{$resolved->value}/contribute"), 'priority' => '0.3', 'changefreq' => 'weekly'],
 
                     ['loc' => url($resolved->covePath()), 'priority' => '0.9', 'changefreq' => 'daily'],
+                    // Every edition in one list (2026-10-02): the page that
+                    // links the whole archive, so crawlers reach the old ones.
+                    ['loc' => url($resolved->covePath('archive')), 'priority' => '0.7', 'changefreq' => 'daily'],
                     ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                     ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
 

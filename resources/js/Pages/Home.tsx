@@ -251,7 +251,8 @@ export default function Home({ today }: Props) {
                 {/* One card per row on a phone: two side by side split "Verrassingscove"
                     and "Community Coves" mid-word. Two rows of three on a desktop. */}
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
+                    {/* The archive of every edition, today's first (owner, 2026-10-02). */}
+                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}/archive`} />
                     <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
                     <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
                     <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />

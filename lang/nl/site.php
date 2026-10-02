@@ -1996,6 +1996,17 @@ return [
         'has_everything_title_for' => ':Recipient, die alles al heeft',
     ],
 
+    'daily_archive' => [
+        'title' => 'Alle Coves van de dag',
+        'intro' => 'Elke dag een Cove rond een thema, met de producten erbij. Hier staan ze allemaal, de nieuwste eerst.',
+        'seo_title' => 'Alle Coves van de dag, het archief',
+        'seo_description' => 'Het archief van de Cove van de dag: elke dag een thema met cadeau-ideeën en prijzen van verschillende winkels, de nieuwste eerst.',
+        'empty' => 'Er is nog geen Cove van de dag verschenen.',
+        'newer' => 'Nieuwer',
+        'older' => 'Ouder',
+        'pages' => 'Pagina\'s',
+    ],
+
     'daily' => [
         // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
         'react_up' => 'Vind ik leuk',
@@ -2396,6 +2407,7 @@ return [
         'find_offline_ideas' => 'Onder de ideeën van Cadeau vinden en Dit of dat zie je soms Ideeën zonder winkel: dingen die veel verschillende mensen zelf op hun lijst schreven, zoals een workshop of een dagje uit. We tonen er pas een nadat we het zelf nalazen, nooit wie het schreef, en Bewaren zet het als offline artikel op je lijst.',
         'find_personas' => 'Een pagina met cadeaus voor een type persoon (de thuiskok, wie alles al heeft) heeft onder de gekozen producten ook tabbladen rond 15, 40 en 100 euro. Voor wie alles al heeft zoeken we dingen die opgaan of die je doet, zoals een proeverij, een workshop of een navulling; typ "die alles al heeft" in het zoekvak en we zoeken ook zo. Onderaan staat een top 10 van de week: wat binnen dat thema het meest gekocht en gewenst wordt, elke maandag opnieuw berekend. Naast de types staan pagina\'s per gelegenheid, zoals Moederdag, een housewarming of een pensioen, met dezelfde opbouw.',
         'find_browse' => 'Blader door de Coves: elke dag een nieuwe, cadeaus per persoon, en koopgidsen.',
+        'find_daily_archive' => 'Cove van de dag in het menu opent het archief: elke Cove van de dag die verscheen, per maand, de nieuwste eerst en die van vandaag bovenaan.',
         'find_filters' => 'Zoek vanaf een pagina met cadeaus alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',
         'find_pages' => 'Cadeaus per persoon en wat die graag doet, zoals "cadeaus voor papa die van koken houdt", elk op een eigen pagina. Cadeau vinden linkt naar de pagina die het dichtst bij je antwoorden ligt, met "Open als pagina".',
         'find_product' => 'De pagina van een product toont de prijs bij elke winkel, hoeveel mensen het op een lijst hebben, en in welke Coves het staat.',

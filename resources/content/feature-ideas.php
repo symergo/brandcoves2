@@ -365,4 +365,24 @@ return [
             'body' => 'En Buscar un regalo ahora puedes elegir Para mí. Las preguntas tratan entonces de ti, Esto o aquello ya no pregunta para quién es, y guardas lo que encuentras en tu propia lista.',
         ],
     ],
+    'daily-cove-archive' => [
+        'status' => 'done',
+        'sort' => 98,
+        'nl' => [
+            'title' => 'Alle Coves van de dag',
+            'body' => 'Cove van de dag in het menu en op de startpagina opent nu een archief met elke Cove van de dag die verscheen, per maand en de nieuwste eerst. Die van vandaag staat bovenaan.',
+        ],
+        'en' => [
+            'title' => 'Every Cove of the day',
+            'body' => "Cove of the day in the menu and on the home page now opens an archive of every Cove of the day so far, by month and newest first. Today's is at the top.",
+        ],
+        'fr' => [
+            'title' => 'Toutes les Coves du jour',
+            'body' => "Cove du jour, dans le menu et sur la page d'accueil, ouvre maintenant les archives de chaque Cove du jour parue, par mois et les plus récentes d'abord. Celle d'aujourd'hui est en tête.",
+        ],
+        'es' => [
+            'title' => 'Todas las Coves del día',
+            'body' => 'Cove del día, en el menú y en la página de inicio, abre ahora el archivo de cada Cove del día publicada, por mes y las más recientes primero. La de hoy está arriba.',
+        ],
+    ],
 ];

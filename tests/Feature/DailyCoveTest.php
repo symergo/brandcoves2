@@ -18,6 +18,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -270,6 +271,46 @@ class DailyCoveTest extends TestCase
         $this->get('/be-nl/cadeautips/'.$edition->drop_date->toDateString())
             ->assertRedirect('/be-nl/tips/'.$edition->slug)
             ->assertStatus(301);
+    }
+
+    #[Test]
+    public function the_archive_lists_every_published_edition_newest_first(): void
+    {
+        $today = $this->buildEdition();
+
+        $past = $this->publishedEdition('Een week geleden', CarbonImmutable::today()->subWeek());
+        // Tomorrow's is not published yet, so two editions and not three.
+        $this->publishedEdition('Morgen', CarbonImmutable::tomorrow());
+
+        $this->get('/be-nl/tips/archive')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Daily/Archive')
+                ->has('editions', 2)
+                ->where('editions.0.id', $today->id)
+                ->where('editions.0.isToday', true)
+                ->where('editions.0.url', '/be-nl/tips/'.$today->slug)
+                ->where('editions.1.id', $past->id)
+                ->where('pagination.last', 1));
+
+        // A retired spelling of the segment reaches the archive in one hop.
+        $this->get('/be-nl/cadeautips/archive')
+            ->assertRedirect('/be-nl/tips/archive')
+            ->assertStatus(301);
+    }
+
+    private function publishedEdition(string $title, CarbonImmutable $date): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => 'daily',
+            'drop_date' => $date->toDateString(),
+            'theme_title' => $title,
+            'theme_slug' => Str::slug($title),
+            'theme_source' => 'planned',
+            'status' => 'published',
+            'published_at' => $date->setTime(9, 0),
+        ]);
     }
 
     // ── The theme is the page, not a bias on it ──────────────────────────

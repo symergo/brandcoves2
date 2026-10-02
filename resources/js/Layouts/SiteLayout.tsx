@@ -239,7 +239,8 @@ function Chrome({ children }: PropsWithChildren) {
                 label: t('nav.every_day'),
                 items: [
                     {
-                        href: `${base}/${market.coveSegment}`,
+                        // The archive, today's edition first (owner, 2026-10-02).
+                        href: `${base}/${market.coveSegment}/archive`,
                         label: t('nav.daily'),
                         icon: <CoveIcon name="daily" className="h-5 w-5" />,
                     },

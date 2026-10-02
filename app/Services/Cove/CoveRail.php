@@ -253,12 +253,11 @@ class CoveRail
             'key' => $key,
             /*
              * Where the whole of this kind lives — the same destinations
-             * `/coves` sends its bands to, including the one that looks wrong:
-             * `daily` points at `/daily`, which is today's edition rather than
-             * an index, because that is the page every past edition hangs off.
+             * `/coves` sends its bands to. `daily` points at the archive of
+             * every edition, `tips/archive`, since 2026-10-02.
              */
             'url' => $current->url(match ($key) {
-                'daily' => $current->get()->coveSegment(),
+                'daily' => $current->get()->coveSegment().'/archive',
                 'gift', 'occasion' => 'gift-ideas',
                 'shop' => 'shops',
                 default => 'guides',

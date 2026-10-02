@@ -1990,6 +1990,17 @@ return [
         'has_everything_title_for' => ':Recipient, que lo tiene todo',
     ],
 
+    'daily_archive' => [
+        'title' => 'Todas las Coves del día',
+        'intro' => 'Cada día una Cove sobre un tema, con sus productos. Aquí están todas, las más recientes primero.',
+        'seo_title' => 'Todas las Coves del día, el archivo',
+        'seo_description' => 'El archivo de la Cove del día: cada día un tema con ideas de regalo y precios de varias tiendas, las más recientes primero.',
+        'empty' => 'Todavía no se ha publicado ninguna Cove del día.',
+        'newer' => 'Más recientes',
+        'older' => 'Más antiguas',
+        'pages' => 'Páginas',
+    ],
+
     'daily' => [
         // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
         'react_up' => 'Me gusta',
@@ -2381,6 +2392,7 @@ return [
         'find_offline_ideas' => 'Debajo de las ideas de «Encontrar un regalo» y de Esto o aquello verás a veces Ideas sin tienda: cosas que muchas personas distintas apuntaron a mano en sus listas, como un taller o una salida. Solo mostramos una después de revisarla, nunca quién la escribió, y Guardar la pone en tu lista como artículo offline.',
         'find_personas' => 'Una idea de regalo sobre un tipo de persona (quien cocina en casa, quien lo tiene todo) tiene también pestañas de unos 15, 40 y 100 euros bajo sus productos elegidos. Para quien lo tiene todo buscamos cosas que se gastan o se viven, como una cata, un taller o una recarga; escribe «que lo tiene todo» en el buscador y buscamos así también. Al final hay un top 10 de la semana: lo que más se compra y se desea en ese tema, recalculado cada lunes. Junto a los tipos hay páginas por ocasión, como el Día de la Madre, una inauguración de casa o una jubilación, con la misma estructura.',
         'find_browse' => 'Explora las Coves: una nueva cada día, ideas de regalo por persona y guías de compra.',
+        'find_daily_archive' => 'Cove del día en el menú abre el archivo: cada Cove del día publicada, por mes, las más recientes primero y la de hoy arriba.',
         'find_filters' => 'Desde una página de ideas de regalo, busca todo lo pensado para esa persona y esa afición. Los filtros aparecen encima de los resultados y cada uno se quita con un toque.',
         'find_pages' => 'Ideas de regalo según la persona y lo que le gusta, como «ideas de regalo para papá amante de la cocina», cada una en su propia página. «Encontrar un regalo» enlaza con la más cercana a tus respuestas con «Abrir como página».',
         'find_product' => 'La página de un producto muestra el precio en cada tienda, cuántas personas lo tienen en una lista y en qué Coves aparece.',

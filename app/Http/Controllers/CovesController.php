@@ -314,18 +314,16 @@ class CovesController extends Controller
             /*
              * Where the whole of this kind lives.
              *
-             * Daily points at today's edition rather than an index — that is
-             * what "all the editions" means here, because the recent editions
-             * are listed on it and every past edition keeps its own URL. Naming
-             * a route that does not exist would be worse than pointing at the
-             * page that actually holds them.
+             * Daily points at its archive, `tips/archive`, since 2026-10-02
+             * (owner). Before that there was no index and this pointed at
+             * today's edition, which listed only the latest few.
              *
              * By the market's segment (`tips`), not the old `/daily`: that one
              * is kept only as a 301 for addresses already out there, and a link
              * of ours through it costs every click a redirect.
              */
             'url' => $current->url(match ($key) {
-                'daily' => $current->get()->coveSegment(),
+                'daily' => $current->get()->coveSegment().'/archive',
                 'gift', 'occasion' => 'gift-ideas',
                 default => 'guides',
             }),

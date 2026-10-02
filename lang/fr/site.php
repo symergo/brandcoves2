@@ -1991,6 +1991,17 @@ return [
         'has_everything_title_for' => ':Recipient, qui a déjà tout',
     ],
 
+    'daily_archive' => [
+        'title' => 'Toutes les Coves du jour',
+        'intro' => 'Chaque jour une Cove autour d\'un thème, avec ses produits. Les voici toutes, les plus récentes d\'abord.',
+        'seo_title' => 'Toutes les Coves du jour, les archives',
+        'seo_description' => 'Les archives de la Cove du jour : chaque jour un thème avec des idées cadeaux et les prix de plusieurs boutiques, les plus récentes d\'abord.',
+        'empty' => 'Aucune Cove du jour n\'a encore paru.',
+        'newer' => 'Plus récentes',
+        'older' => 'Plus anciennes',
+        'pages' => 'Pages',
+    ],
+
     'daily' => [
         // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
         'react_up' => 'J\'aime',
@@ -2383,6 +2394,7 @@ return [
         'find_offline_ideas' => 'Sous les idées de « Trouver un cadeau » et de Ceci ou cela, vous verrez parfois des Idées hors boutique : des choses que beaucoup de personnes différentes ont notées elles-mêmes sur leur liste, comme un atelier ou une sortie. Nous n\'en montrons une qu\'après l\'avoir relue, jamais qui l\'a écrite, et Enregistrer la met sur votre liste comme article hors ligne.',
         'find_personas' => 'Une idée cadeau autour d\'un type de personne (le cuisinier, celui qui a déjà tout) propose aussi, sous ses produits choisis, des onglets autour de 15, 40 et 100 euros. Pour qui a déjà tout, nous cherchons ce qui se consomme ou se vit, comme une dégustation, un atelier ou une recharge ; tapez « qui a déjà tout » dans la recherche et nous cherchons ainsi aussi. Tout en bas, un top 10 de la semaine : ce qui se vend et se souhaite le plus dans ce thème, recalculé chaque lundi. À côté des types, il y a des pages par occasion, comme la fête des mères, une pendaison de crémaillère ou un départ à la retraite, construites de la même façon.',
         'find_browse' => 'Parcourez les Coves : une nouvelle chaque jour, des idées cadeaux par personne, et des guides d\'achat.',
+        'find_daily_archive' => 'Cove du jour dans le menu ouvre les archives : chaque Cove du jour parue, par mois, les plus récentes d\'abord et celle d\'aujourd\'hui en tête.',
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',
         'find_pages' => 'Des idées cadeaux selon la personne et ce qu\'elle aime, comme « idées cadeaux pour papa qui aime la cuisine », chacune sur sa propre page. Trouver un cadeau renvoie à la plus proche de vos réponses avec « Ouvrir en page ».',
         'find_product' => 'La page d\'un produit montre le prix dans chaque boutique, combien de personnes l\'ont dans une liste, et les Coves où il figure.',

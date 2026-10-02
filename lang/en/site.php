@@ -2252,6 +2252,17 @@ return [
         ],
     ],
 
+    'daily_archive' => [
+        'title' => 'Every Cove of the day',
+        'intro' => 'A Cove around a theme every day, with its products. Here they all are, newest first.',
+        'seo_title' => 'Every Cove of the day, the archive',
+        'seo_description' => 'The Cove of the day archive: a theme every day with gift ideas and prices from several shops, newest first.',
+        'empty' => 'No Cove of the day has been published yet.',
+        'newer' => 'Newer',
+        'older' => 'Older',
+        'pages' => 'Pages',
+    ],
+
     'daily' => [
         // The two reaction buttons, drawn as thumbs: their names for a screen reader and a tooltip.
         'react_up' => 'I like this',
@@ -2652,6 +2663,7 @@ return [
         'find_offline_ideas' => 'Under Find a gift\'s and This or that\'s ideas you may see Ideas without a shop: things many different people wrote onto their own lists by hand, like a workshop or a day out. We only show one after reading it ourselves, never who wrote it, and Save puts it on your list as an offline item.',
         'find_personas' => 'A gift idea about a kind of person (the home cook, someone who has everything) also has tabs around 15, 40 and 100 euros under its chosen products. For someone who has everything we look for things that get used up or done, like a tasting box, a workshop or a refill; type "who has everything" in the search box and we search that way too. At the bottom is a top 10 of the week: what is most bought and wanted in that theme, worked out again every Monday. Beside the types are pages per occasion, such as Mother\'s Day, a housewarming or a retirement, built the same way.',
         'find_browse' => 'Browse the Coves: a new one every day, gift ideas by person, and buying guides.',
+        'find_daily_archive' => 'Cove of the day in the menu opens the archive: every Cove of the day so far, by month, newest first with today\'s at the top.',
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. Find a gift links to the one closest to your answers with "Open as a page".',
         'find_product' => 'A product\'s page shows every shop\'s price, how many people keep it on a list, and the Coves it is in.',

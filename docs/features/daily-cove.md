@@ -119,6 +119,27 @@ name** — the segment and legacy dated routes carry different parameter lists, 
 methods rather than one with an optional parameter. Sharing a signature hands `$date` the segment,
 which 404s a URL whose route is registered and whose regex matches.
 
+### The archive: every edition in one list (2026-10-02)
+
+`/{market}/tips/archive` lists every published Daily of the market, newest first, grouped by month,
+thirty to a page, each card with the edition's first four pictures, its date, title and blurb.
+Today's edition is the first card, with the "Cove van vandaag" badge. `DailyArchiveController`,
+page `Daily/Archive`.
+
+**Why it exists.** The owner asked that "Cove van de dag" open an archive of all daily Coves. Until
+then the column had no index: `/tips` is today's edition, and the past ones were reachable only
+through the six cards in its rail or by their own address. So the four places that mean "the daily
+column" now point at the archive: the Discover menu entry, the home page's Coves card, the daily
+band's "all" link on `/coves`, and the "more Coves" band under an edition (`CoveRail`). The
+sitemap lists it too, so crawlers reach editions older than the rail's six.
+
+**One word, `archive`, in every market**, like `tips` itself: it reads in all four languages and
+sits under a segment that is already English. The route is declared **before** the edition slug
+route, or `archive` would be read as an edition's name; a retired segment (`cadeautips/archive`)
+301s to `tips/archive` in one hop. Only `published()` editions appear, which keeps tomorrow's out.
+Each page is its own canonical, because page two lists other editions than page one.
+`DailyCoveTest::the_archive_lists_every_published_edition_newest_first` covers it.
+
 ## The column beside the article
 
 Three cards, from `lg` up, stacking under the article below it. The article keeps

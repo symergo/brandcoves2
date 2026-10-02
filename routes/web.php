@@ -19,6 +19,7 @@ use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\CsrfTokenController;
+use App\Http\Controllers\DailyArchiveController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\Ebay\AccountDeletionController;
@@ -1142,6 +1143,13 @@ Route::prefix('{market}')->group(function () {
         ->middleware(CacheAnonymousPage::ALIAS)
         ->where(['cove' => $coveSegment, 'date' => '\d{4}-\d{2}-\d{2}'])
         ->name('daily.dated');
+
+    // Every edition, newest first (owner, 2026-10-02). Before the slug route,
+    // which would otherwise read "archive" as an edition's name.
+    Route::get('/{cove}/archive', DailyArchiveController::class)
+        ->middleware(CacheAnonymousPage::ALIAS)
+        ->where('cove', $coveSegment)
+        ->name('daily.archive');
 
     Route::get('/{cove}/{slug}', DailyCoveController::class)
         ->middleware(CacheAnonymousPage::ALIAS)
