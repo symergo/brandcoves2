@@ -126,12 +126,23 @@ thirty to a page, each card with the edition's first four pictures, its date, ti
 Today's edition is the first card, with the "Cove van vandaag" badge. `DailyArchiveController`,
 page `Daily/Archive`.
 
-**Why it exists.** The owner asked that "Cove van de dag" open an archive of all daily Coves. Until
+**Why it exists.** The owner asked for an archive of all daily Coves. Until
 then the column had no index: `/tips` is today's edition, and the past ones were reachable only
-through the six cards in its rail or by their own address. So the four places that mean "the daily
-column" now point at the archive: the Discover menu entry, the home page's Coves card, the daily
-band's "all" link on `/coves`, and the "more Coves" band under an edition (`CoveRail`). The
-sitemap lists it too, so crawlers reach editions older than the rail's six.
+through the six cards in its rail or by their own address. The sitemap lists the archive too, so
+crawlers reach editions older than the rail's six.
+
+**Which link goes where** (settled the same day, after a first version sent the menu to the
+archive; the owner: "they should link to the cove of the day and mention the archive where
+logical"):
+
+- A link **named after the column** ("Cove van de dag" in the Discover menu, the home page's Coves
+  card, the 404 page, the tile in My Coves) opens **today's edition**.
+- A link that means **all of them** opens the archive, labelled "Alle Coves van de dag"
+  (`coves.daily_all`, which until then read "Lees de editie van vandaag"): the daily band on
+  `/coves`, the "more Coves" band under an edition (`CoveRail`) and "Alle edities" on Discover.
+- **Today's edition mentions the archive** where a reader would look for it: beside the
+  "Cove van de dag · date" line at the top of every edition, and under today's Cove on the home
+  page, next to "Bekijk de vondsten van vandaag".
 
 **One word, `archive`, in every market**, like `tips` itself: it reads in all four languages and
 sits under a segment that is already English. The route is declared **before** the edition slug

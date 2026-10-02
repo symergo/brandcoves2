@@ -160,6 +160,8 @@ class DiscoverCoveController extends Controller
         return Inertia::render('DiscoverCove', [
             'urls' => [
                 'daily' => $current->get()->covePath(),
+                // "Alle edities" under the earlier editions (2026-10-02).
+                'dailyArchive' => $current->get()->covePath('archive'),
                 'surprise' => $current->url('surprise'),
                 'guides' => $current->url('guides'),
                 'giftIdeas' => $current->url('gift-ideas'),

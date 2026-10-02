@@ -214,8 +214,14 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
 
     const header = (
         <header className="max-w-2xl">
-            <p className="text-xs tracking-wide text-ink-soft uppercase">
-                {t('daily.title')} · {edition.label}
+            <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-ink-soft">
+                <span className="tracking-wide uppercase">
+                    {t('daily.title')} · {edition.label}
+                </span>
+                {/* Every edition, from any one of them (owner, 2026-10-02). */}
+                <Link href={`/${market.key}/${market.coveSegment}/archive`} className="text-accent-dark hover:text-ink">
+                    {t('coves.daily_all')} →
+                </Link>
             </p>
             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{edition.theme}</h1>
             {edition.blurb && <p className="mt-2 text-ink-soft">{edition.blurb}</p>}

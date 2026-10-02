@@ -370,19 +370,19 @@ return [
         'sort' => 98,
         'nl' => [
             'title' => 'Alle Coves van de dag',
-            'body' => 'Cove van de dag in het menu en op de startpagina opent nu een archief met elke Cove van de dag die verscheen, per maand en de nieuwste eerst. Die van vandaag staat bovenaan.',
+            'body' => 'Bovenaan elke Cove van de dag, en onder die van vandaag op de startpagina, staat nu Alle Coves van de dag: een archief met elke Cove van de dag die verscheen, per maand en de nieuwste eerst.',
         ],
         'en' => [
             'title' => 'Every Cove of the day',
-            'body' => "Cove of the day in the menu and on the home page now opens an archive of every Cove of the day so far, by month and newest first. Today's is at the top.",
+            'body' => 'At the top of each Cove of the day, and under today\'s on the home page, there is now Every Cove of the day: an archive of every Cove of the day so far, by month and newest first.',
         ],
         'fr' => [
             'title' => 'Toutes les Coves du jour',
-            'body' => "Cove du jour, dans le menu et sur la page d'accueil, ouvre maintenant les archives de chaque Cove du jour parue, par mois et les plus récentes d'abord. Celle d'aujourd'hui est en tête.",
+            'body' => 'En haut de chaque Cove du jour, et sous celle d\'aujourd\'hui sur la page d\'accueil, il y a maintenant Toutes les Coves du jour : les archives de chaque Cove du jour parue, par mois et les plus récentes d\'abord.',
         ],
         'es' => [
             'title' => 'Todas las Coves del día',
-            'body' => 'Cove del día, en el menú y en la página de inicio, abre ahora el archivo de cada Cove del día publicada, por mes y las más recientes primero. La de hoy está arriba.',
+            'body' => 'Arriba de cada Cove del día, y bajo la de hoy en la página de inicio, ahora está Todas las Coves del día: el archivo de cada Cove del día publicada, por mes y las más recientes primero.',
         ],
     ],
 ];

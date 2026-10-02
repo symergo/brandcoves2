@@ -18,9 +18,10 @@ use Inertia\Response;
  *
  * Until 2026-10-02 the daily column had no index: `/tips` is today's edition,
  * and the past ones were reachable only through the six cards beside it or by
- * their own address. The owner asked for the "Cove van de dag" entry to open an
- * archive of all of them instead, so the menu, the home page card and the
- * /coves band now link here, and today's edition is the first card.
+ * their own address. The owner asked for an archive of all of them. Every "all
+ * of them" link leads here (the /coves band, the band under an edition, Discover)
+ * and every edition links here at its top; the menu entry itself still opens
+ * today's edition, which is also this list's first card.
  *
  * `/tips/archive` in every market, like `tips` itself: one word that reads in
  * all four languages, under a segment that is already English. It is declared

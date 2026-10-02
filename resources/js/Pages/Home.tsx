@@ -189,9 +189,15 @@ export default function Home({ today }: Props) {
                             </ul>
                         )}
 
-                        <Link href={today.url} className="mt-6 inline-block font-medium text-accent-dark hover:text-ink">
-                            {t('home.today_cta')} →
-                        </Link>
+                        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                            <Link href={today.url} className="font-medium text-accent-dark hover:text-ink">
+                                {t('home.today_cta')} →
+                            </Link>
+                            {/* Every earlier edition (owner, 2026-10-02). */}
+                            <Link href={`${base}/${market.coveSegment}/archive`} className="text-sm text-ink-soft hover:text-ink">
+                                {t('coves.daily_all')} →
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Only where there is a Cove to subscribe to: a daily email
@@ -251,8 +257,7 @@ export default function Home({ today }: Props) {
                 {/* One card per row on a phone: two side by side split "Verrassingscove"
                     and "Community Coves" mid-word. Two rows of three on a desktop. */}
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {/* The archive of every edition, today's first (owner, 2026-10-02). */}
-                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}/archive`} />
+                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
                     <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
                     <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
                     <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />

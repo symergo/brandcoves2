@@ -40,7 +40,7 @@ interface Find {
 }
 
 interface Props {
-    urls: { daily: string; surprise: string; guides: string; giftIdeas: string; ask: string; taste: string; gift: string }
+    urls: { daily: string; dailyArchive: string; surprise: string; guides: string; giftIdeas: string; ask: string; taste: string; gift: string }
     coves: Cove[]
     /** Empty until a market publishes its first; the band goes with it. */
     personas: Persona[]
@@ -338,7 +338,7 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
             </Band>
 
             {dailies.length > 0 && (
-                <Band id="dailies" title={t('discover_cove.dailies_heading')} more={{ href: urls.daily, label: t('discover_cove.dailies_all') }}>
+                <Band id="dailies" title={t('discover_cove.dailies_heading')} more={{ href: urls.dailyArchive, label: t('discover_cove.dailies_all') }}>
                     <ul className="divide-y divide-line rounded-card border border-line bg-card">
                         {dailies.map((edition) => (
                             <li key={edition.url}>
