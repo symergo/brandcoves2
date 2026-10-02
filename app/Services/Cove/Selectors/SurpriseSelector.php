@@ -10,6 +10,7 @@ use App\Models\CovePlan;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
 use App\Services\Cove\ThemeRelevance;
+use App\Services\Cove\VariantKey;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -353,8 +354,22 @@ class SurpriseSelector implements CoveSelector
         $picked = array_slice($lead, 0, $count);
         $seen = [];
 
+        /*
+         * One size or colour of a product, never two, in either pass.
+         *
+         * Different from the category rule: that one is a preference the
+         * backfill may give up, this one is not. Each size of a slipper is its
+         * own product in the catalogue, and on 2 Oct 2026 the backfill filled
+         * be-nl's "Naar binnen" with the same Sonic slippers three times and
+         * be-fr's with three sizes of one Alwero slipper. A shorter page is
+         * better than that one. The curator's lead is kept whole, as for the
+         * category rule, but its variants count as taken.
+         */
+        $variants = [];
+
         foreach ($picked as $group) {
             $seen[$group->category ?? 'unknown'] = true;
+            $variants[VariantKey::of((string) $group->title)] = true;
         }
 
         if (count($picked) >= $count) {
@@ -363,12 +378,14 @@ class SurpriseSelector implements CoveSelector
 
         foreach ($ranked as $group) {
             $key = $group->category ?? 'unknown';
+            $variant = VariantKey::of((string) $group->title);
 
-            if (isset($seen[$key])) {
+            if (isset($seen[$key]) || isset($variants[$variant])) {
                 continue;
             }
 
             $seen[$key] = true;
+            $variants[$variant] = true;
             $picked[] = $group;
 
             if (count($picked) === $count) {
@@ -378,12 +395,16 @@ class SurpriseSelector implements CoveSelector
 
         // Backfill from the remainder if the catalogue genuinely lacks the
         // variety — a short edition is worse than a slightly repetitive one.
+        // Repetitive in category, that is; never a second size of a product.
         foreach ($ranked as $group) {
             if (count($picked) === $count) {
                 break;
             }
 
-            if (! in_array($group, $picked, true)) {
+            $variant = VariantKey::of((string) $group->title);
+
+            if (! in_array($group, $picked, true) && ! isset($variants[$variant])) {
+                $variants[$variant] = true;
                 $picked[] = $group;
             }
         }

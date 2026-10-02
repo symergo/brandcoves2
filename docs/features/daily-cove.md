@@ -289,6 +289,23 @@ The database side only narrows (`title` or `category` `ILIKE` each word, which t
 index serves) and over-fetches ten times the page, because the tool cases and toys it lets through
 outscore the real matches; the class decides.
 
+### One size of a product, never each of them (2026-10-02)
+
+Shops list every size and colour of a product as its own product, with its own barcode, so the
+catalogue holds "Alwero Sloffen Basic Mono Naturel 37/38", "39/40" and "41/42" as three. On 2 Oct
+2026 the "Naar binnen" (going indoors) theme matched only slippers. The one-per-category rule gave
+up after one, and its backfill then filled be-nl with the same Sonic slippers three times and be-fr
+with three sizes of one Alwero slipper.
+
+`App\Services\Cove\VariantKey` gives the sizes and colours of one product one key: the title
+without size and colour words, without the numbers that are sizes (37/38, "maat 42", "500 ml"), cut
+to its first five words. Other numbers stay, because "iPhone 15" is not "iPhone 16".
+`SurpriseSelector::spread()` takes one product per key in both passes, the backfill included. The
+category rule is a preference the backfill may give up; this one is not, because a shorter page
+reads better than a page that shows one thing three times. The curator's shortlist is still kept
+whole, but its keys count as taken. Tests: `VariantKeyTest`, and
+`DailyCoveTest::a_cove_shows_one_size_of_a_product_not_each_of_them`.
+
 ### No prose, no page (2026-09-27)
 
 The same morning be-nl published **with no editorial at all**: the writer was called, nothing usable

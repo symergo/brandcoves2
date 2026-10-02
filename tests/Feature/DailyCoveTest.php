@@ -332,6 +332,31 @@ class DailyCoveTest extends TestCase
     }
 
     #[Test]
+    public function a_cove_shows_one_size_of_a_product_not_each_of_them(): void
+    {
+        // be-fr, 2 Oct 2026: three sizes of one slipper, one under the other.
+        foreach (['37/38', '39/40', '41/42'] as $i => $size) {
+            $this->find("Alwero Sloffen Basic Mono Naturel {$size}", 2500, 'Sloffen', 80 - $i);
+        }
+        foreach (['Sonic the Hedgehog Pantoffels Sloffen', 'Sonic the Hedgehog Pantoffels Sloffen'] as $title) {
+            $this->find($title, 1900, 'Sloffen', 70);
+        }
+        $this->find('Hot Potatoes Harrietta Sloffen Dames', 3200, 'Sloffen', 60);
+        $this->find('Clog Sloffen Viv', 2900, 'Sloffen', 50);
+
+        $this->planDay(queries: ['sloffen']);
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertNotNull($edition);
+
+        $titles = $edition->picks()->with('group')->get()->map(fn ($pick) => $pick->group->title)->all();
+
+        $this->assertCount(1, array_filter($titles, fn ($t) => str_starts_with($t, 'Alwero')), implode(' | ', $titles));
+        $this->assertCount(1, array_filter($titles, fn ($t) => str_starts_with($t, 'Sonic')), implode(' | ', $titles));
+        $this->assertCount(4, $titles);
+    }
+
+    #[Test]
     public function a_curated_shortlist_survives_the_variety_trim(): void
     {
         /*
