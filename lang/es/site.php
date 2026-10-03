@@ -1992,7 +1992,6 @@ return [
 
     'daily_archive' => [
         'title' => 'Todas las Coves del día',
-        'intro' => 'Cada día una Cove sobre un tema, con sus productos. Aquí están todas, las más recientes primero.',
         'seo_title' => 'Todas las Coves del día, el archivo',
         'seo_description' => 'El archivo de la Cove del día: cada día un tema con ideas de regalo y precios de varias tiendas, las más recientes primero.',
         'empty' => 'Todavía no se ha publicado ninguna Cove del día.',

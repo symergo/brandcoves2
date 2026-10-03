@@ -1993,7 +1993,6 @@ return [
 
     'daily_archive' => [
         'title' => 'Toutes les Coves du jour',
-        'intro' => 'Chaque jour une Cove autour d\'un thème, avec ses produits. Les voici toutes, les plus récentes d\'abord.',
         'seo_title' => 'Toutes les Coves du jour, les archives',
         'seo_description' => 'Les archives de la Cove du jour : chaque jour un thème avec des idées cadeaux et les prix de plusieurs boutiques, les plus récentes d\'abord.',
         'empty' => 'Aucune Cove du jour n\'a encore paru.',

@@ -2254,7 +2254,6 @@ return [
 
     'daily_archive' => [
         'title' => 'Every Cove of the day',
-        'intro' => 'A Cove around a theme every day, with its products. Here they all are, newest first.',
         'seo_title' => 'Every Cove of the day, the archive',
         'seo_description' => 'The Cove of the day archive: a theme every day with gift ideas and prices from several shops, newest first.',
         'empty' => 'No Cove of the day has been published yet.',

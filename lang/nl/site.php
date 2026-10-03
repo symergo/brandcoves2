@@ -1998,7 +1998,6 @@ return [
 
     'daily_archive' => [
         'title' => 'Alle Coves van de dag',
-        'intro' => 'Elke dag een Cove rond een thema, met de producten erbij. Hier staan ze allemaal, de nieuwste eerst.',
         'seo_title' => 'Alle Coves van de dag, het archief',
         'seo_description' => 'Het archief van de Cove van de dag: elke dag een thema met cadeau-ideeën en prijzen van verschillende winkels, de nieuwste eerst.',
         'empty' => 'Er is nog geen Cove van de dag verschenen.',

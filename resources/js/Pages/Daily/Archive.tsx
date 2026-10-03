@@ -22,7 +22,8 @@ interface Props {
  *
  * The "Cove van de dag" entry in the menu, the home page card and the /coves
  * band open this page; today's edition is its first card, marked as such. One
- * column of month headings with a grid under each, so a reader scanning for
+ * column of month headings with a grid under each, and no intro line (the
+ * owner removed it on 2026-10-03: the title says it), so a reader scanning for
  * "that one about slippers in October" can find the month first.
  * docs/features/daily-cove.md.
  */
@@ -54,7 +55,6 @@ export default function Archive({ editions, pagination }: Props) {
                 <h1 className="text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
                     {t('daily_archive.title')}
                 </h1>
-                <p className="mt-3 max-w-2xl text-lg text-ink-soft">{t('daily_archive.intro')}</p>
 
                 {editions.length === 0 && <p className="mt-10 text-ink-soft">{t('daily_archive.empty')}</p>}
 
