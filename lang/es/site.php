@@ -84,7 +84,7 @@ return [
 
     'home' => [
         // Consulta la explicación de estas claves en lang/en/site.php.
-        'seo_description' => 'Crea listas de deseos con lo que encuentres, elige regalos en grupo, haz el amigo invisible y encuentra ideas para cada persona. Nuevas ideas cada día.',
+        'seo_description' => 'Crea listas de deseos, elige regalos en grupo, haz el amigo invisible y encuentra ideas para cada persona. Una comunidad a la que le gusta regalar.',
         'title' => 'GiftCoves: listas de deseos, ideas de regalo y regalar juntos',
         'hero_title' => 'Encuentra cosas que merece la pena regalar, recibir y compartir.',
         'hero_intro' => 'GiftCoves es un lugar abierto para descubrir productos de tiendas, marcas y creadores independientes, y guardarlos en Coves para conservar, compartir o regalar.',

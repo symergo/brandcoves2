@@ -51,8 +51,11 @@ verlanglijsten: cadeaus geven en ontvangen aan de beste prijs"), from before the
 gift-idea pages and the Cove van de dag existed. A first rewrite led with price comparison; the
 owner turned that down the same day ("remove the price comparison aspect, focus on the tools to
 build lists, collaborate, inspire"). So they now name **verlanglijsten, cadeau-ideeën en samen
-cadeaus kiezen**, and the description says what you do: make lists from any shop, choose a gift
-together, draw names, find ideas per person, something new every day. Prices are not mentioned.
+geven**, and the description says what you do: make lists from any shop, choose a gift
+together, draw names, find ideas per person. A third pass the same day added the **giving
+community** (owner: "add idea of the 'giving community'"): the title says "samen geven" (en: "a
+giving community") and the description ends on a community of givers who inspire each other.
+Prices are not mentioned.
 Kept under about 65 characters for the title and 155 for the description, the length a results
 page shows before it cuts.
 
