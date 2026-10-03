@@ -69,7 +69,7 @@ class HeaderMenuTest extends TestCase
         $keys = array_values(array_unique($keys));
 
         // The new entries are among them, so this is not passing on an empty scan.
-        foreach (['nav.every_day', 'nav.brands_shops', 'nav.all_coves', 'nav.people', 'nav.help', 'nav.gift_ideas', 'nav.market_button'] as $new) {
+        foreach (['nav.daily', 'nav.brands_shops', 'nav.all_coves', 'nav.people', 'nav.help', 'nav.gift_ideas', 'nav.market_button'] as $new) {
             $this->assertContains($new, $keys, "{$new} is no longer used by the header.");
         }
 

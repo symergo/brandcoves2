@@ -12,18 +12,23 @@ section (Discover ▾ | Coves ▾ | Find a gift | How it works, three flags and 
 one **country-and-language button** · the bell when something is unread · the account.
 
 **Discover ▾** is the only menu. Its label still goes to the Discover page (`/discover-cove`); the
-chevron opens two labelled groups and a link under a rule (`Components/NavMenu.tsx`, which now takes
-`groups` and a `footer`):
+chevron opens one list of six entries and a link under a rule (`Components/NavMenu.tsx`, which takes
+`groups` and a `footer`; a group without a label is just its entries):
 
-| Group | Entry | Goes to |
-|---|---|---|
-| Every day (`nav.every_day`) | Daily Cove | `/tips` |
-| | Surprise Cove | `/surprise` |
-| Coves (`nav.coves`) | Gift ideas by person (`nav.gift_ideas`) | `/gift-ideas` |
-| | Shop Smarter | `/guides` |
-| | Community Coves (`community.index_heading`) | `/coves/community` |
-| | Brands & shops (`nav.brands_shops`) | `/brands` |
-| | All Coves → (`nav.all_coves`) | `/coves` |
+| Entry | Goes to |
+|---|---|
+| Daily Cove (`nav.daily`) | `/tips`, today's edition |
+| Surprise Cove | `/surprise` |
+| Gift ideas by person (`nav.gift_ideas`) | `/gift-ideas` |
+| Shop Smarter | `/guides` |
+| Community Coves (`community.index_heading`) | `/coves/community` |
+| Brands & shops (`nav.brands_shops`) | `/brands` |
+| All Coves → (`nav.all_coves`) | `/coves` |
+
+**No section headings since 2026-10-03** (owner: "verwijder menu sections 'elke dag' en 'coves'").
+The first two entries stood under "Every day" (`nav.every_day`) and the other four under "Coves"
+(`nav.coves`); the entries and their order stayed, only the two headings and the rule between them
+went, on the desktop menu and in the phone panel alike. The two strings are left in `lang/` unused.
 
 What left the top row, and where it went:
 
@@ -45,7 +50,7 @@ separate change; `/friends` keeps working. The desktop menu is built on `Menu` n
 the arrow keys, Escape (focus back to the button) and Tab like the site's other menus. It also
 shows the unread count beside Notifications, as the phone sheet already did.
 
-**The phone:** logo, search icon, account, ☰. The ☰ panel: Find a gift, Discover with both groups
+**The phone:** logo, search icon, account, ☰. The ☰ panel: Find a gift, Discover with its six entries
 and All Coves, My Coves, then the country-and-language list, then Help.
 
 **One country-and-language button.** It shows the flag and the language code and opens a list of

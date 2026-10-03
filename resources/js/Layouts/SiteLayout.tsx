@@ -234,9 +234,12 @@ function Chrome({ children }: PropsWithChildren) {
         href: `${base}/discover-cove`,
         label: t('nav.discover'),
         icon: <CoveIcon name="compass" className="h-5 w-5" />,
+        /*
+         * One list without headings since 2026-10-03 (owner: remove the
+         * sections "Elke dag" and "Coves"). The entries and their order stayed.
+         */
         groups: [
             {
-                label: t('nav.every_day'),
                 items: [
                     {
                         // Today's edition. The archive is linked from that page
@@ -250,11 +253,6 @@ function Chrome({ children }: PropsWithChildren) {
                         label: t('nav.surprise'),
                         icon: <CoveIcon name="surprise" className="h-5 w-5" />,
                     },
-                ],
-            },
-            {
-                label: t('nav.coves'),
-                items: [
                     // Named as the page is named ("Gift ideas, by person").
                     {
                         href: `${base}/gift-ideas`,
@@ -640,11 +638,13 @@ function Chrome({ children }: PropsWithChildren) {
                                     entries indented under a rule: the cheapest
                                     way to say "these belong to that" without a
                                     control to expand. */}
-                                {discover.groups.map((group) => (
-                                    <div key={group.label} className="mt-2">
-                                        <p className="pl-3 text-2xs font-semibold tracking-wide text-ink-soft uppercase">
-                                            {group.label}
-                                        </p>
+                                {discover.groups.map((group, g) => (
+                                    <div key={group.label ?? g} className="mt-2">
+                                        {group.label && (
+                                            <p className="pl-3 text-2xs font-semibold tracking-wide text-ink-soft uppercase">
+                                                {group.label}
+                                            </p>
+                                        )}
                                         <ul aria-label={group.label} className="mt-1 border-l border-line pl-3">
                                             {group.items.map((item) => (
                                                 <li key={item.href}>
