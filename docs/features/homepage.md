@@ -17,8 +17,16 @@ before 2026-09-26 describes a page that has since been replaced.
 What is this, why should I care, what can I do now. Nothing else. The owner's structure, top to
 bottom (`Pages/Home.tsx`):
 
-1. **Hero.** "Find things worth giving, getting and sharing." across the full width; under it the
-   pitch with **Create a Cove** and **Find gifts** (to `/gift`; "Explore Coves" to `/coves` until the
+1. **Hero.** Since 2026-10-03 a small line naming the category, **"Het sociale cadeaunetwerk"** (en
+   "The social gift network"), over the headline **"Cadeaus geven en krijgen. Samen."** (en "Give
+   and get the right gift. The social way.", fr "Offrir et recevoir. Ensemble.", es "Regalar y
+   recibir. Juntos."), then the two buttons beside the drawing. Settled with the owner over several
+   rounds: humour was liked but did not cover the site; "perfect gift" was dropped as a promise
+   every gift site makes; "sociaal" was kept in English and in the category line only, because
+   "op de sociale manier" reads as "being kind" in Dutch, where "samen" says it; four points under
+   the headline (own list, choosing together, daily ideas, drawing names) were left out at the
+   owner's word, and the pitch paragraph went with them. Before: "Find things worth giving, getting
+   and sharing." with the pitch under it, and **Create a Cove** and **Find gifts** (to `/gift`; "Explore Coves" to `/coves` until the
    owner swapped it on 2026-09-28) beside the drawing; across the full width
    underneath, until 2026-09-27, a row of three verbs ("Zoek alles · Voeg alles toe · Deel alles",
    briefly "Zoek · Verzamel · Deel" with links). The owner removed it the same day: the search card

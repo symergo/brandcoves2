@@ -87,8 +87,8 @@ return [
         // Voir l'explication de ces clés dans lang/en/site.php.
         'seo_description' => "Créez des listes d'envies, choisissez un cadeau à plusieurs, tirez au sort et trouvez des idées par personne. Une communauté de gens qui aiment offrir.",
         'title' => "GiftCoves : listes d'envies, idées cadeaux et offrir ensemble",
-        'hero_title' => 'Trouvez ce qui vaut la peine d’être offert, reçu et partagé.',
-        'hero_intro' => 'GiftCoves est un espace ouvert pour découvrir des produits de boutiques, de marques et de créateurs indépendants, et les garder dans des Coves à conserver, partager ou offrir.',
+        'hero_kicker' => 'Le réseau social du cadeau',
+        'hero_title' => 'Offrir et recevoir. Ensemble.',
         'cta_create' => 'Créer une Cove',
         'cta_find_gift' => 'Trouver des cadeaux',
         'entries_label' => 'Trois façons de commencer',

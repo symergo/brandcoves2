@@ -63,7 +63,16 @@ export default function Home({ today }: Props) {
               drawing.
             */}
             <section aria-labelledby="hero-heading">
-                <h1 id="hero-heading" className="max-w-4xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+                {/*
+                  Rewritten 2026-10-03 with the owner, over several rounds: a
+                  small line naming the category ("the social gift network"),
+                  the headline ("Cadeaus geven en krijgen. Samen.") and the
+                  two buttons. The pitch paragraph under it went, and four
+                  points proposed in its place were left out on the owner's
+                  word. docs/features/homepage.md.
+                */}
+                <p className="text-sm font-medium tracking-wide text-accent-dark uppercase">{t('home.hero_kicker')}</p>
+                <h1 id="hero-heading" className="mt-2 max-w-4xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
                     {t('home.hero_title')}
                 </h1>
 
@@ -71,9 +80,7 @@ export default function Home({ today }: Props) {
                     illustrates the promise, it is not the promise. */}
                 <div className="mt-6 grid items-center gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
-                        <p className="max-w-xl text-lg text-ink-soft">{t('home.hero_intro')}</p>
-
-                        <div className="mt-7 flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-3">
                             <Link href={createCove} className={buttonClasses('primary', 'lg')}>
                                 {t('home.cta_create')}
                             </Link>

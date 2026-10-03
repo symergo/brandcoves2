@@ -86,8 +86,8 @@ return [
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'seo_description' => 'Maak verlanglijsten van alles wat je vindt, kies samen een cadeau, trek lootjes en vind ideeën per persoon. Een community van gevers die elkaar inspireert.',
         'title' => 'GiftCoves: verlanglijsten, cadeau-ideeën en samen geven',
-        'hero_title' => 'Vind dingen die het geven, krijgen en delen waard zijn.',
-        'hero_intro' => 'GiftCoves is een open plek om producten te ontdekken van winkels, merken en zelfstandige makers, en ze te bewaren in Coves die je kunt houden, delen of geven.',
+        'hero_kicker' => 'Het sociale cadeaunetwerk',
+        'hero_title' => 'Cadeaus geven en krijgen. Samen.',
         'cta_create' => 'Maak een Cove',
         'cta_find_gift' => 'Zoek cadeaus',
         'entries_label' => 'Drie manieren om te beginnen',

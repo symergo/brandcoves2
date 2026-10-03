@@ -147,8 +147,8 @@ return [
          * and `coves_heading` do not promise other people's Coves, because
          * there are none to show until public lists ship (roadmap step 6).
          */
-        'hero_title' => 'Find things worth giving, getting and sharing.',
-        'hero_intro' => 'GiftCoves is an open place to discover products from shops, brands and independent sellers, and save them in Coves you can keep, share or give.',
+        'hero_kicker' => 'The social gift network',
+        'hero_title' => 'Give and get the right gift. The social way.',
         'cta_create' => 'Make a Cove',
         'cta_find_gift' => 'Find gifts',
         'entries_label' => 'Three ways to start',
