@@ -20,7 +20,7 @@ bottom (`Pages/Home.tsx`):
 1. **Hero.** Since 2026-10-03 a small line naming the category, **"Het sociale cadeaunetwerk"** (en
    "The social gift network"), over the headline **"Cadeaus geven en krijgen. Samen."** (en "Give
    and get the right gift. The social way.", fr "Offrir et recevoir. Ensemble.", es "Regalar y
-   recibir. Juntos."), then a subtitle, **"Hou bij wat je zelf wil, deel je lijst, kies en geef samen wat een ander
+   recibir. Juntos."), then a subtitle, **"Hou bij wat je zelf wil, deel, kies en geef samen wat een ander
    blij maakt. Minder gokken, meer 'hoe wist je dát?'"** (the owner's combination of three
    proposals plus "geef samen"), then the two buttons; the drawing beside the whole block, at the
    height of the title, which went one size down for it. Settled with the owner over several
