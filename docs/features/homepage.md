@@ -44,6 +44,17 @@ bottom (`Pages/Home.tsx`):
 
 **6 and 7 side by side since 2026-09-27** (owner: "sections on the homepage with no content on the right"): two cards in one row, trust left and the last call to action right, stacked on a phone. Each was a short block on the left of an empty width. The morning-email card (`CoveSubscribe`, also on the daily Cove) went the same way: text left, form right.
 
+**The title and meta description, rewritten 2026-10-03** (owner: "update the site title and
+meta"). `home.title` serves the browser tab, the search listing and the social card at once (the
+hero has its own headline), so it carries the brand. Both led with wish lists only ("GiftCoves
+verlanglijsten: cadeaus geven en ontvangen aan de beste prijs"), from before the gift finder, the
+gift-idea pages and the Cove van de dag existed. They now name the three things the site does, in
+the words people search with: **cadeau-ideeën, prijzen vergelijken en verlanglijsten**, and the
+description adds "per persoon en hobby", "honderden winkels" and "elke dag nieuwe cadeautips".
+No "beste prijs": a promise the comparison makes per product, not the site in a listing. Kept
+under about 65 characters for the title and 155 for the description, the length a results page
+shows before it cuts.
+
 **Create a Cove works without an account** (owner's decision, 2026-09-26): it opens
 `/lists?new=mine`, which an anonymous visitor can use; asking for an account first would put a form
 on the first step of the growth loop. `HomePageTest` holds that.

@@ -85,8 +85,8 @@ return [
 
     'home' => [
         // Voir l'explication de ces clés dans lang/en/site.php.
-        'seo_description' => "Une liste d'envies avec tout, de n'importe quelle boutique : partagez-la et trouvez des cadeaux pour chacun. Prix comparés dans des centaines de boutiques.",
-        'title' => "GiftCoves : listes d'envies, offrir et recevoir au meilleur prix",
+        'seo_description' => "Des idées cadeaux par personne et par passion, les prix de centaines de boutiques comparés, et des listes d'envies à partager. Du nouveau chaque jour.",
+        'title' => "GiftCoves : idées cadeaux, comparateur de prix et listes d'envies",
         'hero_title' => 'Trouvez ce qui vaut la peine d’être offert, reçu et partagé.',
         'hero_intro' => 'GiftCoves est un espace ouvert pour découvrir des produits de boutiques, de marques et de créateurs indépendants, et les garder dans des Coves à conserver, partager ou offrir.',
         'cta_create' => 'Créer une Cove',

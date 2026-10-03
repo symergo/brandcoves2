@@ -138,8 +138,8 @@ return [
          * title template in app.tsx skips its own suffix when the name is
          * already there.
          */
-        'seo_description' => 'Keep a wish list of anything from any shop, share it, and find gifts for anyone. Prices compared across hundreds of shops.',
-        'title' => 'GiftCoves wish lists: give and get gifts at the best price',
+        'seo_description' => 'Gift ideas by person and hobby, prices compared across hundreds of shops, and wish lists you can share. New gift ideas every day.',
+        'title' => 'GiftCoves: gift ideas, price comparison and wish lists',
         /*
          * The homepage since 2026-09-26, in the owner's structure and words
          * (docs/strategy.md, section 6). Two places deliberately say less

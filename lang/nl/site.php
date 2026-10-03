@@ -84,8 +84,8 @@ return [
 
     'home' => [
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
-        'seo_description' => 'Maak een verlanglijst van alles uit elke winkel, deel hem en vind cadeaus voor iedereen. Prijzen vergeleken over honderden winkels.',
-        'title' => 'GiftCoves verlanglijsten: cadeaus geven en ontvangen aan de beste prijs',
+        'seo_description' => 'Cadeau-ideeën per persoon en hobby, prijzen vergeleken over honderden winkels, en verlanglijsten die je deelt. Elke dag nieuwe cadeautips.',
+        'title' => 'GiftCoves: cadeau-ideeën, prijzen vergelijken en verlanglijsten',
         'hero_title' => 'Vind dingen die het geven, krijgen en delen waard zijn.',
         'hero_intro' => 'GiftCoves is een open plek om producten te ontdekken van winkels, merken en zelfstandige makers, en ze te bewaren in Coves die je kunt houden, delen of geven.',
         'cta_create' => 'Maak een Cove',
