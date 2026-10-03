@@ -88,6 +88,7 @@ return [
         'title' => 'GiftCoves: listas de deseos, ideas de regalo y regalar juntos',
         'hero_kicker' => 'La red social de los regalos',
         'hero_title' => 'Regalar y recibir. Juntos.',
+        'hero_subtitle' => 'Guarda tu propia lista de deseos, compártela, elegid y regalad juntos lo que hará feliz a alguien. Menos adivinar, más «¿cómo lo sabías?»',
         'cta_create' => 'Crear una Cove',
         'cta_find_gift' => 'Buscar regalos',
         'entries_label' => 'Tres maneras de empezar',

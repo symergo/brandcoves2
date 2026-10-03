@@ -88,6 +88,7 @@ return [
         'title' => 'GiftCoves: verlanglijsten, cadeau-ideeën en samen geven',
         'hero_kicker' => 'Het sociale cadeaunetwerk',
         'hero_title' => 'Cadeaus geven en krijgen. Samen.',
+        'hero_subtitle' => 'Hou bij wat je zelf wil, deel je lijst, kies en geef samen wat een ander blij maakt. Minder gokken, meer “hoe wist je dát?”',
         'cta_create' => 'Maak een Cove',
         'cta_find_gift' => 'Zoek cadeaus',
         'entries_label' => 'Drie manieren om te beginnen',

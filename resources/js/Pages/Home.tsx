@@ -82,6 +82,8 @@ export default function Home({ today }: Props) {
                         <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
                             {t('home.hero_title')}
                         </h1>
+                        {/* The owner's combination of three proposals (2026-10-03). */}
+                        <p className="mt-4 max-w-xl text-lg text-ink-soft">{t('home.hero_subtitle')}</p>
 
                         <div className="mt-7 flex flex-wrap gap-3">
                             <Link href={createCove} className={buttonClasses('primary', 'lg')}>

@@ -89,6 +89,7 @@ return [
         'title' => "GiftCoves : listes d'envies, idées cadeaux et offrir ensemble",
         'hero_kicker' => 'Le réseau social du cadeau',
         'hero_title' => 'Offrir et recevoir. Ensemble.',
+        'hero_subtitle' => 'Gardez votre propre liste d’envies, partagez-la, choisissez et offrez ensemble ce qui fera plaisir. Moins de hasard, plus de « comment tu as deviné ? »',
         'cta_create' => 'Créer une Cove',
         'cta_find_gift' => 'Trouver des cadeaux',
         'entries_label' => 'Trois façons de commencer',

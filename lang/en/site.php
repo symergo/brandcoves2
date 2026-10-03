@@ -149,6 +149,7 @@ return [
          */
         'hero_kicker' => 'The social gift network',
         'hero_title' => 'Give and get the right gift. The social way.',
+        'hero_subtitle' => 'Keep your own wish list, share it, choose and give together what will make someone happy. Less guessing, more “how did you know?”',
         'cta_create' => 'Make a Cove',
         'cta_find_gift' => 'Find gifts',
         'entries_label' => 'Three ways to start',
