@@ -84,8 +84,8 @@ return [
 
     'home' => [
         // Consulta la explicación de estas claves en lang/en/site.php.
-        'seo_description' => 'Ideas de regalo por persona y afición, precios comparados en cientos de tiendas y listas de deseos para compartir. Nuevas ideas cada día.',
-        'title' => 'GiftCoves: ideas de regalo, comparador de precios y listas de deseos',
+        'seo_description' => 'Crea listas de deseos con lo que encuentres, elige regalos en grupo, haz el amigo invisible y encuentra ideas para cada persona. Nuevas ideas cada día.',
+        'title' => 'GiftCoves: listas de deseos, ideas de regalo y regalar juntos',
         'hero_title' => 'Encuentra cosas que merece la pena regalar, recibir y compartir.',
         'hero_intro' => 'GiftCoves es un lugar abierto para descubrir productos de tiendas, marcas y creadores independientes, y guardarlos en Coves para conservar, compartir o regalar.',
         'cta_create' => 'Crear una Cove',
