@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import { Honeypot, useFormClock } from './BotTrap'
+import ToolIcon from './ToolIcon'
 
 /**
  * Signing in without leaving the page you were on.
@@ -202,11 +203,12 @@ export default function SignInDialog({
 
                 {sent && (
                     <p
-                        className="rounded-lg border border-sage bg-sage/10 px-4 py-3 text-base font-medium text-sage"
+                        className="flex items-start gap-3 rounded-lg border border-sage bg-sage/10 px-4 py-3 text-base font-medium text-sage"
                         role="status"
                         aria-live="polite"
                     >
-                        {sent}
+                        <ToolIcon name="mailAccount" className="h-7 w-7 shrink-0" />
+                        <span>{sent}</span>
                     </p>
                 )}
 

@@ -48,6 +48,7 @@ export type ToolKey =
     | 'package'
     | 'gift'
     | 'heart'
+    | 'mailAccount'
 
 /*
  * Two drawings with two names each, drawn once so the pairs cannot drift
@@ -151,6 +152,17 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <circle cx="12" cy="8" r="3.5" />
             <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+        </>
+    ),
+
+    // An envelope with a person at its corner: "your sign-in link is in the
+    // mail", in the sign-in dialog's sent notice (2026-10-04).
+    mailAccount: (
+        <>
+            <rect x="2.5" y="4.5" width="13.5" height="10" rx="1.5" />
+            <path d="m3 5.5 6.25 4.5L15.5 5.5" />
+            <circle cx="18.5" cy="15.5" r="2.2" />
+            <path d="M14.5 21.5a4 4 0 0 1 8 0" />
         </>
     ),
 
