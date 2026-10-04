@@ -33,6 +33,9 @@ class MagicLinkController extends Controller
     /** Shortest time a person has the form open before sending; see automated(). */
     private const MIN_FORM_MS = 1200;
 
+    /** Session key: the hash of the last link this browser asked for. See confirm(). */
+    private const REQUESTED_HERE = 'magic_link_requested';
+
     public function show(Request $request): Response
     {
         /*
@@ -142,6 +145,11 @@ class MagicLinkController extends Controller
 
         ['token' => $token] = LoginToken::issue($email, $request->ip(), $name);
 
+        // This browser asked for this link, so it may open it without the
+        // button; see confirm(). The hash, never the link itself: the session
+        // is not where a working key to the account should sit.
+        $request->session()->put(self::REQUESTED_HERE, hash('sha256', $token));
+
         /*
          * A mail transport that is down must not be a stack trace.
          *
@@ -198,10 +206,29 @@ class MagicLinkController extends Controller
      * it. The button POSTs; scanners do not press buttons. The invitation
      * email's button has worked this way since 2026-09-27 (InviteAcceptController).
      *
+     * Except in the browser that asked for the link (2026-10-04): its session
+     * holds the link's hash from send(), so it signs in at once, without the
+     * extra press the owner found pointless. A scanner never has that session,
+     * so it still gets the page. Someone who asks on the laptop and opens the
+     * mail on the phone gets the button too, which is no worse than before.
+     * Clicking a link in a mail is a top-level navigation, so the `lax`
+     * session cookie is sent with it.
+     *
      * `{market}` is consumed by middleware but still passed positionally.
      */
-    public function confirm(string $market, string $token): Response
+    public function confirm(Request $request, string $market, string $token, EmailSignIn $signIn): Response|RedirectResponse
     {
+        $requested = $request->session()->get(self::REQUESTED_HERE);
+
+        if (is_string($requested) && hash_equals($requested, hash('sha256', $token))) {
+            $request->session()->forget(self::REQUESTED_HERE);
+
+            // Spent, or expired: fall through to the page, which says so.
+            if (($loginToken = LoginToken::consume($token)) !== null) {
+                return $this->signInWith($request, $loginToken, $market, $signIn);
+            }
+        }
+
         app(PageMeta::class)->set(
             title: __('site.auth.confirm_title'),
             robots: 'noindex, nofollow',
@@ -230,6 +257,11 @@ class MagicLinkController extends Controller
             ]);
         }
 
+        return $this->signInWith($request, $loginToken, $market, $signIn);
+    }
+
+    private function signInWith(Request $request, LoginToken $loginToken, string $market, EmailSignIn $signIn): RedirectResponse
+    {
         // Find or create, then sign in. Shared with the invitation button
         // (2026-09-27) so both create an account the same way.
         $signIn->signIn($request, $loginToken->email, $loginToken->name, $market);

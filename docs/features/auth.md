@@ -267,6 +267,14 @@ Two changes:
   form with the CSRF token, so it works before the script loads, exactly as the invitation email's
   button has since 2026-09-27 (`InviteAcceptController`). One extra press for a person; scanners do
   not press buttons.
+
+  **Except in the browser that asked for the link (2026-10-04).** The owner asked why the extra
+  button was there at all. `send()` now puts the link's hash (never the link) in the session, and
+  when that same session opens the link, `confirm()` signs in at once. A scanner has no such session,
+  so it still gets the button. So does someone who asks on the laptop and opens the mail on the
+  phone, or in a mail app's own browser — the same one press as before, never worse. Auto-pressing
+  the button with a script was the other option and was turned down: Microsoft's scanner runs
+  scripts, so it would have signed in again.
 - **A bot trap on both sign-in forms, no captcha** (`Components/BotTrap.tsx`,
   `MagicLinkController::automated()`). A hidden field (`website`) no person sees, and the time the
   form was open (`elapsed_ms`, at least 1.2 s). A bot posting straight to the server sends no time

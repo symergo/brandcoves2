@@ -110,6 +110,9 @@ class AuthTest extends TestCase
          */
         $token = $this->requestLink('scanned@example.test');
 
+        // The scanner is not the browser that asked for the link.
+        $this->flushSession();
+
         $this->get("/be-nl/auth/magic/{$token}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -125,6 +128,41 @@ class AuthTest extends TestCase
         // The button is what signs in.
         $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
         $this->assertAuthenticated();
+    }
+
+    #[Test]
+    public function the_browser_that_asked_for_the_link_is_signed_in_without_the_button(): void
+    {
+        /*
+         * The owner's question, 2026-10-04: why an extra button after the link?
+         * The button is for scanners, and a scanner never holds the session
+         * that sent the form. The browser that did may skip it.
+         */
+        $token = $this->requestLink('here@example.test');
+
+        $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', ['email' => 'here@example.test']);
+
+        // Spent like any other: nothing left to sign in with.
+        $this->assertNull(LoginToken::peek($token));
+    }
+
+    #[Test]
+    public function only_the_link_this_browser_asked_for_skips_the_button(): void
+    {
+        // Another address's link, opened here: the session holds a different
+        // hash, so this is the page with the button, as for anybody else.
+        $theirs = $this->requestLink('theirs@example.test');
+        $this->flushSession();
+        $this->requestLink('mine@example.test');
+
+        $this->get("/be-nl/auth/magic/{$theirs}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Auth/ConfirmLink'));
+
+        $this->assertGuest();
     }
 
     #[Test]
