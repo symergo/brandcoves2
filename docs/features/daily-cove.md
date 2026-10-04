@@ -321,6 +321,30 @@ The database side only narrows (`title` or `category` `ILIKE` each word, which t
 index serves) and over-fetches ten times the page, because the tool cases and toys it lets through
 outscore the real matches; the class decides.
 
+### No more strangers on a themed day (2026-10-04)
+
+nl-nl's uncurated "Iets warms" of 2 Oct 2026 (words waterkoker, thermosbeker, chocolademelk)
+published a MEDION freezer between five kettles; the writer itself called it the odd one out. The
+owner asked whether Dailies still pick "surprise" products. Three causes, three fixes:
+
+- **A feed filed the freezer under the category Waterkoker**, and `ThemeRelevance` ranked a category
+  match above everything. There is now a stronger tier, **title and category both**
+  (`ThemeRelevance::BOTH`), ahead of category alone and title alone. A product both name cannot be
+  a filing mistake; a mis-filed one now only fills a page the real matches cannot.
+- **Nothing asked whether the product is a gift.** `SurpriseSelector` now reads `giftable()` on
+  every lane (themed, full-text and the fallback pool), so the 82,942 products the category rule
+  judged not a gift stay off unattended Dailies. Not `worthShowing()`: that one keeps exactly those
+  categories. It also drops what is over the €500 gift ceiling, which a curator can still pick.
+- **The writing instructions in code still said "a daily column about unusual products"** and
+  "points at the odd thing at the back of the shelf". Production's override (owner, 2026-09-01)
+  already says "products that fit the topic of today"; `Defaults::DAILY_SYSTEM` and `THEME_SYSTEM`
+  now say the same, so a fresh database and the never-overridden title slot no longer ask for
+  curiosities.
+
+Within a tier the order is still `surprise_score`, which on a themed day means "the less common
+of the on-theme products". `ThemeRelevanceTest::a_product_filed_under_the_theme_ranks_below_one_whose_title_agrees`
+pins the freezer.
+
 ### One size of a product, never each of them (2026-10-02)
 
 Shops list every size and colour of a product as its own product, with its own barcode, so the

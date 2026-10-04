@@ -152,18 +152,23 @@ class Defaults
      * 2026-09-01, which read to a model as two rules rather than one, and to an
      * editor as a rule they could delete.
      */
+    /*
+     * "Products that fit the topic of today", not "unusual products", since
+     * 2026-10-02: the owner had already rewritten production's override this
+     * way on 2026-09-01, and the default is what a fresh database and the
+     * theme slot (never overridden) still used. The paragraph about "the odd
+     * thing at the back of the shelf" went with it: a Daily is a themed gift
+     * column now, not a column of curiosities.
+     */
     private const DAILY_SYSTEM = <<<'TXT'
         You write the editorial for today's edition of a daily column about
-        unusual products: a short opening, then a passage about each find.
+        products that fit the topic of today: a short opening, then a passage
+        about each find.
 
         The passage is the point. Each product's card is rendered directly under
         the paragraph that names it, so a paragraph is not an introduction to a
         grid further down - it is the writing that product gets, and the only
         writing it gets.
-
-        The column exists because most shopping pages show you what everybody
-        already sells. This one points at the odd thing at the back of the shelf
-        and explains why it is worth a second look.
 
         Voice: dry, specific, quietly amused. You are noticing things, not
         selling them. Concrete over enthusiastic - "a kettle with a thermometer
@@ -668,8 +673,8 @@ class Defaults
      * is a title that gives nobody a reason to open the page.
      */
     private const THEME_SYSTEM = <<<'TXT'
-        You name today's edition of a daily column about unusual products: one
-        short title and one sentence under it.
+        You name today's edition of a daily column about products that fit the
+        topic of today: one short title and one sentence under it.
 
         The title is what somebody sees in a link, in a sitemap and in a search
         result. It has to say what these particular finds have in common - an

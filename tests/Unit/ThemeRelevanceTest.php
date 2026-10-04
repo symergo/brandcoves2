@@ -109,6 +109,20 @@ class ThemeRelevanceTest extends TestCase
     }
 
     #[Test]
+    public function a_product_filed_under_the_theme_ranks_below_one_whose_title_agrees(): void
+    {
+        // nl-nl, 2 Oct 2026: "Iets warms" published this freezer between kettles.
+        $warm = new ThemeRelevance(['thermosbeker', 'waterkoker', 'chocolademelk']);
+
+        $kettle = $warm->strength('Solis Waterkoker Eco Boil Kettle - RVS met Kalkfilter - 1,7 Liter', 'Waterkoker');
+        $freezer = $warm->strength('MEDION Vriezer 64 L, extra stille inverter, 37 dB - MD370031 - Wit', 'Waterkoker');
+
+        $this->assertSame(ThemeRelevance::BOTH, $kettle);
+        $this->assertSame(ThemeRelevance::CATEGORY, $freezer);
+        $this->assertGreaterThan($freezer, $kettle);
+    }
+
+    #[Test]
     public function a_query_of_two_words_matches_them_apart_or_as_one_compound(): void
     {
         $pizza = new ThemeRelevance(['pizza oven']);

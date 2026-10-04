@@ -54,9 +54,14 @@ use Illuminate\Support\Str;
  * ("pet" ends "trompet", "nas" ends "ananas"), and count in the category only:
  * in a title "pet" is as often the English word or a PET bottle.
  *
- * **Then the category ranks ahead of the title** ({@see self::strength()}):
- * the category is the feed's statement of what the product is, the title the
- * seller's advert.
+ * **Then title and category together rank first, the category alone next,
+ * the title alone last** ({@see self::strength()}). The category is the feed's
+ * statement of what the product is, the title the seller's advert, and either
+ * one alone can be wrong: on 2 Oct 2026 nl-nl's "Iets warms" (waterkoker,
+ * thermosbeker, chocolademelk) published a MEDION freezer between five
+ * kettles, because a feed filed the freezer under Waterkoker and the category
+ * outranked everything. A product whose title *and* category both name the
+ * theme is the one that cannot be a filing mistake.
  *
  * **Being wrong in the strict direction is cheap.** A real suitcase the rule
  * misses is one fewer candidate among dozens; a tool case it lets through is a
@@ -117,6 +122,9 @@ final readonly class ThemeRelevance
     public const TITLE = 1;
 
     public const CATEGORY = 2;
+
+    /** Title and category both name the theme: neither can be a filing mistake. */
+    public const BOTH = 3;
 
     /** @var list<list<string>> each query, folded to its words */
     private array $queries;
@@ -180,25 +188,28 @@ final readonly class ThemeRelevance
     }
 
     /**
-     * How sure the match is: the category says so, only the title does, or neither.
+     * How sure the match is: title and category both, the category only, the
+     * title only, or neither.
      *
-     * The category ranks first because it is the feed's own statement of what
-     * the product is, where the title is the seller's advert for it. Read on
+     * Both first, since 2026-10-02: a freezer filed under Waterkoker matched on
+     * its category alone and outranked every kettle (see the class header).
+     * Then the category, because it is the feed's own statement of what the
+     * product is, where the title is the seller's advert for it. Read on
      * be-nl's catalogue, a title-only "koffer" still lets through a fireproof
-     * document case and a toy called "Koffer Blokjes en Stokjes", and ranked by
-     * surprise alone those outscore every product filed under Reiskoffer. So
-     * the builder takes the category-confirmed products first and ranks by
-     * surprise within each tier.
+     * document case and a toy called "Koffer Blokjes en Stokjes". The builder
+     * takes the strongest tier first and ranks within each tier.
      */
     public function strength(string $title, ?string $category): int
     {
         $titleWords = self::words($title);
         $categoryWords = self::words((string) $category);
-        $best = self::NONE;
+
+        $inCategory = false;
+        $inTitle = false;
 
         foreach ($this->queries as $query) {
             if ($this->found($query, $categoryWords, checkPackaging: false)) {
-                return self::CATEGORY;
+                $inCategory = true;
             }
 
             /*
@@ -215,11 +226,16 @@ final readonly class ThemeRelevance
             }
 
             if ($this->found($query, $titleWords, checkPackaging: true)) {
-                $best = self::TITLE;
+                $inTitle = true;
             }
         }
 
-        return $best;
+        return match (true) {
+            $inCategory && $inTitle => self::BOTH,
+            $inCategory => self::CATEGORY,
+            $inTitle => self::TITLE,
+            default => self::NONE,
+        };
     }
 
     /** @param list<string> $query */

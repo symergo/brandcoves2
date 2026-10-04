@@ -166,6 +166,12 @@ class SurpriseSelector implements CoveSelector
         $rest = ProductGroup::query()
             ->forMarket($market)
             ->presentable()
+            // A gift column: what the catalogue judged not a gift stays off
+            // the page, however well its words match (2026-10-02). `giftable`
+            // and not `worthShowing`: the latter keeps the not-a-gift
+            // categories, which is what this keeps out. It also drops what
+            // costs over the €500 gift ceiling; a curator can still pick it.
+            ->giftable()
             ->where('surprise_score', '>', 0)
             ->whereNotIn('id', $recent)
             ->whereNotIn('id', $curated->pluck('id'))
@@ -250,6 +256,12 @@ class SurpriseSelector implements CoveSelector
         return ProductGroup::query()
             ->forMarket($market)
             ->presentable()
+            // A gift column: what the catalogue judged not a gift stays off
+            // the page, however well its words match (2026-10-02). `giftable`
+            // and not `worthShowing`: the latter keeps the not-a-gift
+            // categories, which is what this keeps out. It also drops what
+            // costs over the €500 gift ceiling; a curator can still pick it.
+            ->giftable()
             ->where('surprise_score', '>', 0)
             ->whereNotIn('id', $recent)
             ->whereExists(fn ($sub) => $sub
@@ -294,6 +306,12 @@ class SurpriseSelector implements CoveSelector
         $candidates = ProductGroup::query()
             ->forMarket($market)
             ->presentable()
+            // A gift column: what the catalogue judged not a gift stays off
+            // the page, however well its words match (2026-10-02). `giftable`
+            // and not `worthShowing`: the latter keeps the not-a-gift
+            // categories, which is what this keeps out. It also drops what
+            // costs over the €500 gift ceiling; a curator can still pick it.
+            ->giftable()
             ->where('surprise_score', '>', 0)
             ->whereNotIn('id', $recent)
             ->where(function ($any) use ($relevance): void {
@@ -319,9 +337,10 @@ class SurpriseSelector implements CoveSelector
             ->get();
 
         /*
-         * The category-confirmed matches first, then the title-only ones, by
-         * surprise within each (ThemeRelevance::strength() says why). A stable
-         * sort on the tier alone keeps the SQL's surprise order inside it.
+         * Title and category together first, then the category alone, then the
+         * title alone, by surprise within each (ThemeRelevance::strength() says
+         * why). A stable sort on the tier alone keeps the SQL's surprise order
+         * inside it.
          */
         return $candidates
             ->map(fn (ProductGroup $group) => [$group, $relevance->strength((string) $group->title, $group->category)])
