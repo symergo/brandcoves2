@@ -126,6 +126,31 @@ class SeoTest extends TestCase
         }
     }
 
+    #[Test]
+    public function a_shared_homepage_link_says_what_the_front_page_says(): void
+    {
+        /*
+         * 2026-10-04: the shared-link card carries the hero's headline and
+         * subtitle, while the search listing keeps its keywords. Two
+         * audiences, two texts; a page that sets no social pair shares its
+         * search title, which the product test above covers.
+         */
+        $html = (string) $this->get('/be-nl')->assertOk()->getContent();
+
+        $this->assertStringContainsString(
+            '<meta property="og:title" content="'.e('GiftCoves - het sociale cadeaunetwerk').'">',
+            $html,
+        );
+        $this->assertStringContainsString(
+            '<meta property="og:description" content="'.e(__('site.home.hero_subtitle')).'">',
+            $html,
+        );
+        $this->assertStringContainsString(
+            '<meta name="description" content="'.e(__('site.home.seo_description')).'">',
+            $html,
+        );
+    }
+
     /**
      * The home page shipped with no `PageMeta` call at all, so the page most
      * likely to be linked from outside had no meta description and an og:title

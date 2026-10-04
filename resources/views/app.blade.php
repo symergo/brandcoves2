@@ -226,13 +226,15 @@
     <meta property="og:site_name" content="GiftCoves">
     <meta property="og:locale" content="{{ str_replace('-', '_', $market->hrefLang()) }}">
     <meta property="og:url" content="{{ $canonical }}">
-    @isset($meta['title'])
-        <meta property="og:title" content="{{ $meta['title'] }}">
-        <meta name="twitter:title" content="{{ $meta['title'] }}">
+    {{-- social_* is the page's own title and description unless it set a
+         separate pair for shared links (PageMeta::social(), the homepage). --}}
+    @isset($meta['social_title'])
+        <meta property="og:title" content="{{ $meta['social_title'] }}">
+        <meta name="twitter:title" content="{{ $meta['social_title'] }}">
     @endisset
-    @isset($meta['description'])
-        <meta property="og:description" content="{{ $meta['description'] }}">
-        <meta name="twitter:description" content="{{ $meta['description'] }}">
+    @isset($meta['social_description'])
+        <meta property="og:description" content="{{ $meta['social_description'] }}">
+        <meta name="twitter:description" content="{{ $meta['social_description'] }}">
     @endisset
     @isset($meta['image'])
         <meta property="og:image" content="{{ $meta['image'] }}">

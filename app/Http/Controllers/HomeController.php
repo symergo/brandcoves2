@@ -32,6 +32,13 @@ class HomeController extends Controller
             title: __('site.home.title'),
             description: __('site.home.seo_description'),
             canonical: url($current->url()),
+        )->social(
+            // A shared link says what the front page says (2026-10-04):
+            // "GiftCoves - het sociale cadeaunetwerk", the default card's
+            // headline (one key for both), and the hero's subtitle. The
+            // search listing above keeps its keywords.
+            title: __('site.og.default_title'),
+            description: __('site.home.hero_subtitle'),
         );
 
         return Inertia::render('Home', [

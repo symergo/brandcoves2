@@ -1635,11 +1635,11 @@ return [
         'for_someone' => 'For someone',
         'for_label' => 'For :who',
         'gender_label' => 'Man or woman?',
-            'gender_label_me' => 'Are you a man or a woman?',
+        'gender_label_me' => 'Are you a man or a woman?',
         'genders' => [
             'male' => 'Man',
             'female' => 'Woman',
-                'unsaid' => 'Rather not say',
+            'unsaid' => 'Rather not say',
         ],
         'change' => 'Change',
         'ways_title' => 'How would you like to look?',
@@ -2541,7 +2541,9 @@ return [
 
     'og' => [
         'daily' => 'The Daily Cove',
-        'default_title' => 'Discover products and brands',
+        // The default share card's headline and the homepage's share title
+        // (2026-10-04, owner's wording).
+        'default_title' => 'GiftCoves - the social gift network',
         'default_footnote' => 'giftcoves.com',
         'product' => 'Product',
         'guide' => 'Buying guide',

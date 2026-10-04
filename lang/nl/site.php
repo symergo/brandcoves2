@@ -1437,11 +1437,11 @@ return [
         'for_someone' => 'Voor iemand',
         'for_label' => 'Voor :who',
         'gender_label' => 'Man of vrouw?',
-            'gender_label_me' => 'Ben je een man of een vrouw?',
+        'gender_label_me' => 'Ben je een man of een vrouw?',
         'genders' => [
             'male' => 'Man',
             'female' => 'Vrouw',
-                'unsaid' => 'Zeg ik liever niet',
+            'unsaid' => 'Zeg ik liever niet',
         ],
         'change' => 'Wijzig',
         'ways_title' => 'Hoe wil je zoeken?',
@@ -2289,7 +2289,9 @@ return [
 
     'og' => [
         'daily' => 'De Dagelijkse Cove',
-        'default_title' => 'Ontdek producten en merken',
+        // The default share card's headline and the homepage's share title
+        // (2026-10-04, owner's wording).
+        'default_title' => 'GiftCoves - het sociale cadeaunetwerk',
         'default_footnote' => 'giftcoves.com',
         'product' => 'Product',
         'guide' => 'Koopgids',

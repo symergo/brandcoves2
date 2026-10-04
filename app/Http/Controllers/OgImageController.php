@@ -81,12 +81,21 @@ class OgImageController extends Controller
     {
         $language = $current->get()->language();
 
+        /*
+         * "GiftCoves - het sociale cadeaunetwerk" beside the homepage's drawing
+         * (owner, 2026-10-04). It is the card for every page without one of its
+         * own, and the old "Ontdek producten en merken" no longer described the
+         * site. The homepage's share title reads the same key. The drawing
+         * comes from scripts/og-illustration.mjs; the cache key carries the
+         * commit, so a redrawn PNG shows after a deploy.
+         */
         return $this->card(
             'default:'.$current->value(),
             $og,
             __('site.og.default_title', [], $language),
             null,
             __('site.og.default_footnote', [], $language),
+            resource_path('og/shared-cove.png'),
         );
     }
 
@@ -259,14 +268,14 @@ class OgImageController extends Controller
     /**
      * @param  string  $scope  which record this is, so two of them never share an entry
      */
-    private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
+    private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null, ?string $illustration = null): Response
     {
         $version = self::version($scope, $title, $kicker, $footnote);
 
         return $this->respond($version, fn (): string => Cache::remember(
             'og:'.$version,
             self::TTL,
-            fn (): string => $og->render($title, $kicker, $footnote),
+            fn (): string => $og->render($title, $kicker, $footnote, $illustration),
         ));
     }
 

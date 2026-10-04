@@ -31,6 +31,11 @@ class PageMeta
 
     private ?string $robots = null;
 
+    /** What a shared link says, when it should differ from the search listing. See social(). */
+    private ?string $socialTitle = null;
+
+    private ?string $socialDescription = null;
+
     /** @var list<array<string, mixed>> */
     private array $jsonLd = [];
 
@@ -72,6 +77,25 @@ class PageMeta
         $this->image = $image;
         $this->canonical = $canonical;
         $this->robots = $robots;
+        $this->socialTitle = null;
+        $this->socialDescription = null;
+
+        return $this;
+    }
+
+    /**
+     * A title and description for the shared-link card only (og:, twitter:).
+     *
+     * For the homepage (2026-10-04). Its `<title>` and meta description are
+     * written for a search listing and carry the words people search for
+     * ("verlanglijsten, cadeau-ideeën"); a link pasted into a chat is better
+     * served by the front page's own headline. Call after set(), which clears
+     * these. A page that never calls it shares its search title, as before.
+     */
+    public function social(?string $title, ?string $description = null): self
+    {
+        $this->socialTitle = $title;
+        $this->socialDescription = $description === null ? null : $this->truncate($description, 200);
 
         return $this;
     }
@@ -100,6 +124,8 @@ class PageMeta
         $this->image = null;
         $this->canonical = null;
         $this->robots = null;
+        $this->socialTitle = null;
+        $this->socialDescription = null;
         $this->jsonLd = [];
         $this->alternates = null;
 
@@ -115,6 +141,8 @@ class PageMeta
             'image' => $this->image,
             'canonical' => $this->canonical,
             'robots' => $this->robots,
+            'social_title' => $this->socialTitle ?? $this->title,
+            'social_description' => $this->socialDescription ?? $this->description,
             'alternates' => $this->alternates,
         ];
     }

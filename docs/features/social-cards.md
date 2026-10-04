@@ -44,6 +44,8 @@ parser](amazon-link-paste.md) refuses to do.
 
 So the card carries the mark, the type, and numbers we computed ourselves.
 
+The one picture on any card is our own: the homepage drawing on the default card (below).
+
 ## Text comes from records, never from the request
 
 Every route takes an id or a slug and reads its own text. **Nothing renders a string from a query
@@ -149,7 +151,7 @@ which enables FreeType, so the guard is insurance against a future edit to that 
 | Brand | Brand | The brand name | Products and shops |
 | Daily Cove | The Daily Cove | The edition's theme | The edition's date |
 | Shared list | Wish list / Gift list | The list's title | The number of ideas |
-| Everything else | — | "Discover products and brands" | giftcoves.com |
+| Everything else | — | "GiftCoves - the social gift network", beside the homepage drawing | giftcoves.com |
 
 A product carried by one shop is not "1 shops" and one with no price is not "from €0"; both are
 common enough in a feed that a card built from the happy path would be visibly wrong in public.
@@ -182,3 +184,22 @@ goes wherever the link goes, and the items are for whoever opens it. The card is
 brand and guide cards, keyed on the text it draws and the commit; shared lists are bounded by what
 people share and re-read by every chat they are pasted into, which is the profile that earns a cache
 entry.
+
+## The default card: the network's name and the homepage drawing (2026-10-04)
+
+The card for every page without one of its own read "Discover products and brands", which stopped
+describing the site once it became a place to keep lists and give together. The owner chose the
+wording: the headline is "GiftCoves - het sociale cadeaunetwerk" (`site.og.default_title`), with the
+homepage drawing (`SharedCoveIllustration`) on the right.
+
+- **The drawing is a committed PNG**, `resources/og/shared-cove.png`, because GD cannot read SVG.
+  `node scripts/og-illustration.mjs` makes it from the component's own SVG, recoloured for the teal
+  card (sand lines, amber washes); rerun it after changing the drawing. The cache key carries the
+  commit, so the new picture shows after the deploy that ships it.
+- **The headline stops short of the drawing**, and now shrinks when one word is wider than that
+  column, not only when there are too many lines: "cadeaunetwerk" at 60pt ran into the drawing.
+- **The homepage's shared link says the same thing.** `PageMeta::social()` gives a page a separate
+  og:/twitter: title and description; the homepage uses `site.og.default_title` and the hero's
+  subtitle. Its `<title>` and meta description stay as they were, written for a search listing with
+  the words people search for. A page that does not call `social()` shares its search title, as
+  before.

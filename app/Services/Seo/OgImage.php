@@ -56,9 +56,10 @@ class OgImage
      * @param  string  $title  the headline, wrapped over at most three lines
      * @param  string|null  $kicker  small amber label above it ("Buying guide")
      * @param  string|null  $footnote  the line along the bottom ("14 shops · from €329")
+     * @param  string|null  $illustration  a PNG drawn on the right; only the default card has one
      * @return string PNG bytes
      */
-    public function render(string $title, ?string $kicker = null, ?string $footnote = null): string
+    public function render(string $title, ?string $kicker = null, ?string $footnote = null, ?string $illustration = null): string
     {
         $this->assertFontsUsable();
 
@@ -69,6 +70,14 @@ class OgImage
         $this->drawGlow($canvas);
         $this->drawMark($canvas, self::MARGIN, self::MARGIN, 64);
         $this->drawWordmark($canvas);
+
+        $titleWidth = self::WIDTH - (self::MARGIN * 2);
+
+        if ($illustration !== null) {
+            $left = $this->drawIllustration($canvas, $illustration);
+            // The headline stops short of the drawing rather than running under it.
+            $titleWidth = $left - self::MARGIN - 40;
+        }
 
         $bottom = self::HEIGHT - self::MARGIN;
 
@@ -81,7 +90,7 @@ class OgImage
         // footnote, so the two never collide however many lines the title takes.
         $this->rule($canvas, self::MARGIN, $bottom - 30, 96);
 
-        $this->drawTitle($canvas, $title, $kicker, $bottom - 74);
+        $this->drawTitle($canvas, $title, $kicker, $bottom - 74, $titleWidth);
 
         ob_start();
         imagepng($canvas, null, 6);
@@ -99,11 +108,10 @@ class OgImage
      * three-line title then share the same baseline above the rule, instead of
      * a short title leaving a hole in the middle of the card.
      */
-    private function drawTitle(GdImage $canvas, string $title, ?string $kicker, int $baseline): void
+    private function drawTitle(GdImage $canvas, string $title, ?string $kicker, int $baseline, int $maxWidth): void
     {
         $font = self::bold();
         $size = 60;
-        $maxWidth = self::WIDTH - (self::MARGIN * 2);
 
         /*
          * Shrink before truncating. Feeds produce eighty-character titles
@@ -114,7 +122,7 @@ class OgImage
          * Measured against a generous line cap, so `wrap()` reports how many
          * lines the title actually wants rather than how many it is allowed.
          */
-        while ($size > 42 && count($this->wrap($title, $font, $size, $maxWidth, 8)) > 3) {
+        while ($size > 42 && (count($this->wrap($title, $font, $size, $maxWidth, 8)) > 3 || $this->longestWord($title, $font, $size) > $maxWidth)) {
             $size -= 6;
         }
 
@@ -166,6 +174,37 @@ class OgImage
             (int) round(10 * $scale),
             $this->colour($canvas, self::AMBER),
         );
+    }
+
+    /**
+     * The homepage drawing, on the right of the default card (2026-10-04).
+     *
+     * A PNG made by `scripts/og-illustration.mjs` from the homepage's own SVG,
+     * because GD cannot read SVG. Not a product photo, so the typographic rule
+     * in the class docblock still holds: it is our own drawing.
+     *
+     * @return int the drawing's left edge, so the headline can stop short of it
+     */
+    private function drawIllustration(GdImage $canvas, string $path): int
+    {
+        $source = imagecreatefrompng($path);
+
+        if ($source === false) {
+            throw new RuntimeException("Cannot read the social card illustration at {$path}.");
+        }
+
+        // 440 px wide: big enough to read in a chat preview, narrow enough
+        // to leave the headline two thirds of the card.
+        $width = 440;
+        $height = (int) round($width * imagesy($source) / imagesx($source));
+        $x = self::WIDTH - self::MARGIN - $width;
+        $y = (int) round((self::HEIGHT - $height) / 2) + 20;
+
+        imagealphablending($canvas, true);
+        imagecopyresampled($canvas, $source, $x, $y, 0, 0, $width, $height, imagesx($source), imagesy($source));
+        imagedestroy($source);
+
+        return $x;
     }
 
     private function drawWordmark(GdImage $canvas): void
@@ -264,6 +303,24 @@ class OgImage
         }
 
         return array_values($lines);
+    }
+
+    /**
+     * The widest single word, which `wrap()` cannot break.
+     *
+     * "cadeaunetwerk" at 60pt is wider than the column beside the default
+     * card's drawing (2026-10-04) and ran into it, while the line count looked
+     * fine. A word that does not fit is a reason to shrink, too.
+     */
+    private function longestWord(string $text, string $font, int $size): int
+    {
+        $widest = 0;
+
+        foreach (preg_split('/\s+/u', trim($text)) ?: [] as $word) {
+            $widest = max($widest, $this->width($word, $font, $size));
+        }
+
+        return $widest;
     }
 
     private function width(string $text, string $font, int $size): int

@@ -1432,11 +1432,11 @@ return [
         'for_someone' => 'Pour quelqu\'un',
         'for_label' => 'Pour :who',
         'gender_label' => 'Homme ou femme ?',
-            'gender_label_me' => 'Êtes-vous un homme ou une femme ?',
+        'gender_label_me' => 'Êtes-vous un homme ou une femme ?',
         'genders' => [
             'male' => 'Homme',
             'female' => 'Femme',
-                'unsaid' => 'Je préfère ne pas le dire',
+            'unsaid' => 'Je préfère ne pas le dire',
         ],
         'change' => 'Modifier',
         'ways_title' => 'Comment voulez-vous chercher ?',
@@ -2276,7 +2276,9 @@ return [
 
     'og' => [
         'daily' => 'La Cove Quotidienne',
-        'default_title' => 'Découvrez des produits et des marques',
+        // The default share card's headline and the homepage's share title
+        // (2026-10-04, owner's wording).
+        'default_title' => 'GiftCoves - le réseau social du cadeau',
         'default_footnote' => 'giftcoves.com',
         'product' => 'Produit',
         'guide' => 'Guide d\'achat',
