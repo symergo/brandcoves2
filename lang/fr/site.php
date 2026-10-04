@@ -577,7 +577,7 @@ return [
         'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
-        'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes. Pas encore de compte ? Il est créé dès que vous ouvrez le lien.',
+        'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes.',
         'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
         'confirm_title' => 'Se connecter à GiftCoves',
         'confirm_body' => 'Appuyez sur le bouton pour vous connecter. Certaines messageries ouvrent déjà les liens pour les vérifier ; c\'est pourquoi nous demandons encore un clic.',

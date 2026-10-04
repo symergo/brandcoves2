@@ -725,7 +725,7 @@ return [
         'intro' => 'Enter your email and we will send you a link. No password to remember.',
         'email' => 'Email address',
         'send' => 'Send me a link',
-        'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes. No account yet? It is made the moment you open the link.',
+        'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'confirm_title' => 'Sign in to GiftCoves',
         'confirm_body' => 'Press the button to sign in. Some mail programs open links to check them before you do; that is why we ask for one more press.',

@@ -580,7 +580,7 @@ return [
         'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
-        'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten. Nog geen account? Dat maken we aan zodra je de link opent.',
+        'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
         // The page the link in the email opens: a button, because mail
         // scanners open links (MagicLinkController::confirm).

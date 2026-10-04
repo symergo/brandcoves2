@@ -83,7 +83,7 @@ button must stay hidden when the client id is unset.
 **"Check your inbox" shows inside the dialog** (fixed 2026-10-04). The controller redirects back
 with a `success` flash, and `FlashMessage` in the layout renders it — but behind the dialog, because
 the top layer and its backdrop sit over everything the layout draws. Sending a link looked like
-nothing happened. The dialog now reads the flash from the visit's response and prints it above the
+nothing happened. The dialog now reads the flash from the visit's response and prints it, large and in sage green, above the
 send button; the form stays on screen so "send another" is one click.
 
 ## Registration is not a separate flow

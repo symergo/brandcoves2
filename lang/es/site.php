@@ -576,7 +576,7 @@ return [
         'intro' => 'Escribe tu correo y te enviaremos un enlace. Sin contraseñas que recordar.',
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',
-        'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos. ¿Aún no tienes cuenta? Se crea en cuanto abres el enlace.',
+        'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',
         'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
         'confirm_title' => 'Entrar en GiftCoves',
         'confirm_body' => 'Pulsa el botón para entrar. Algunos programas de correo ya abren los enlaces para comprobarlos; por eso pedimos un clic más.',

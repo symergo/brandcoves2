@@ -202,7 +202,7 @@ export default function SignInDialog({
 
                 {sent && (
                     <p
-                        className="rounded-lg border border-line bg-cream px-4 py-3 text-sm"
+                        className="rounded-lg border border-sage bg-sage/10 px-4 py-3 text-base font-medium text-sage"
                         role="status"
                         aria-live="polite"
                     >
