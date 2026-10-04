@@ -82,20 +82,22 @@ class OgImageController extends Controller
         $language = $current->get()->language();
 
         /*
-         * "GiftCoves - het sociale cadeaunetwerk" beside the homepage's drawing
-         * (owner, 2026-10-04). It is the card for every page without one of its
-         * own, and the old "Ontdek producten en merken" no longer described the
-         * site. The homepage's share title reads the same key. The drawing
-         * comes from scripts/og-illustration.mjs; the cache key carries the
-         * commit, so a redrawn PNG shows after a deploy.
+         * The brand card (owner, 2026-10-04): a large logo, the name, and
+         * "Het sociale cadeaunetwerk" under it. It is the card for every page
+         * without one of its own, and the old headline "Ontdek producten en
+         * merken" no longer described the site. The tagline is the homepage
+         * hero's kicker, so the two cannot drift.
          */
+        $tagline = __('site.home.hero_kicker', [], $language);
+        $footnote = __('site.og.default_footnote', [], $language);
+
         return $this->card(
             'default:'.$current->value(),
             $og,
-            __('site.og.default_title', [], $language),
+            $tagline,
             null,
-            __('site.og.default_footnote', [], $language),
-            resource_path('og/shared-cove.png'),
+            $footnote,
+            fn (): string => $og->renderBrand('GiftCoves', $tagline, $footnote),
         );
     }
 
@@ -267,15 +269,16 @@ class OgImageController extends Controller
 
     /**
      * @param  string  $scope  which record this is, so two of them never share an entry
+     * @param  (Closure(): string)|null  $draw  a different layout than render(); the default card's
      */
-    private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null, ?string $illustration = null): Response
+    private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null, ?Closure $draw = null): Response
     {
         $version = self::version($scope, $title, $kicker, $footnote);
 
         return $this->respond($version, fn (): string => Cache::remember(
             'og:'.$version,
             self::TTL,
-            fn (): string => $og->render($title, $kicker, $footnote, $illustration),
+            $draw ?? fn (): string => $og->render($title, $kicker, $footnote),
         ));
     }
 

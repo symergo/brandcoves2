@@ -56,10 +56,9 @@ class OgImage
      * @param  string  $title  the headline, wrapped over at most three lines
      * @param  string|null  $kicker  small amber label above it ("Buying guide")
      * @param  string|null  $footnote  the line along the bottom ("14 shops · from €329")
-     * @param  string|null  $illustration  a PNG drawn on the right; only the default card has one
      * @return string PNG bytes
      */
-    public function render(string $title, ?string $kicker = null, ?string $footnote = null, ?string $illustration = null): string
+    public function render(string $title, ?string $kicker = null, ?string $footnote = null): string
     {
         $this->assertFontsUsable();
 
@@ -70,14 +69,6 @@ class OgImage
         $this->drawGlow($canvas);
         $this->drawMark($canvas, self::MARGIN, self::MARGIN, 64);
         $this->drawWordmark($canvas);
-
-        $titleWidth = self::WIDTH - (self::MARGIN * 2);
-
-        if ($illustration !== null) {
-            $left = $this->drawIllustration($canvas, $illustration);
-            // The headline stops short of the drawing rather than running under it.
-            $titleWidth = $left - self::MARGIN - 40;
-        }
 
         $bottom = self::HEIGHT - self::MARGIN;
 
@@ -90,7 +81,7 @@ class OgImage
         // footnote, so the two never collide however many lines the title takes.
         $this->rule($canvas, self::MARGIN, $bottom - 30, 96);
 
-        $this->drawTitle($canvas, $title, $kicker, $bottom - 74, $titleWidth);
+        $this->drawTitle($canvas, $title, $kicker, $bottom - 74, self::WIDTH - (self::MARGIN * 2));
 
         ob_start();
         imagepng($canvas, null, 6);
@@ -99,6 +90,82 @@ class OgImage
         imagedestroy($canvas);
 
         return $png;
+    }
+
+    /**
+     * The default card: the logo, the name and what it is, large and centred.
+     *
+     * Every other card is about one thing (a product, a guide, a list) and
+     * leads with that thing's title. This one stands for the site as a whole,
+     * on every page without a card of its own, so it leads with the brand
+     * (owner, 2026-10-04: "a bigger logo", "GiftCoves - het sociale
+     * cadeaunetwerk").
+     *
+     * The logo is the site's own 512px icon scaled down, not `drawMark()`: GD
+     * draws a thick arc with square, stepped ends, which is invisible at 64px
+     * and plainly wrong at 200. The icon's tile is this card's teal, so only
+     * the cove and the buoy show.
+     *
+     * @return string PNG bytes
+     */
+    public function renderBrand(string $name, string $tagline, ?string $footnote = null): string
+    {
+        $this->assertFontsUsable();
+
+        $canvas = imagecreatetruecolor(self::WIDTH, self::HEIGHT);
+        imagefill($canvas, 0, 0, $this->colour($canvas, self::INK));
+        $this->drawGlow($canvas);
+
+        // Logo and name on one line, centred as a pair.
+        $logo = 200;
+        // No gap: the icon carries its own margin inside the tile, which is
+        // already about the space a letter would leave.
+        $gap = 0;
+        $nameSize = 104;
+        $nameWidth = $this->width($name, self::bold(), $nameSize);
+        $left = (int) round((self::WIDTH - ($logo + $gap + $nameWidth)) / 2);
+        $top = 128;
+
+        $this->drawLogo($canvas, $left, $top, $logo);
+        // Baseline set so the capitals sit centred on the logo.
+        $this->text($canvas, $name, $left + $logo + $gap, $top + (int) round($logo / 2) + 38, $nameSize, self::SAND, self::bold());
+
+        $taglineSize = 44;
+        $this->text($canvas, $tagline, $this->centred($tagline, self::semibold(), $taglineSize), $top + $logo + 92, $taglineSize, self::SAND, self::semibold(), 0.85);
+
+        $this->rule($canvas, (int) round((self::WIDTH - 96) / 2), $top + $logo + 138, 96);
+
+        if ($footnote !== null && $footnote !== '') {
+            $this->text($canvas, $footnote, $this->centred($footnote, self::regular(), 26), self::HEIGHT - self::MARGIN, 26, self::SAND, self::regular(), 0.72);
+        }
+
+        ob_start();
+        imagepng($canvas, null, 6);
+        $png = (string) ob_get_clean();
+
+        imagedestroy($canvas);
+
+        return $png;
+    }
+
+    /** The x at which a line of text is centred on the card. */
+    private function centred(string $text, string $font, int $size): int
+    {
+        return (int) round((self::WIDTH - $this->width($text, $font, $size)) / 2);
+    }
+
+    private function drawLogo(GdImage $canvas, int $x, int $y, int $size): void
+    {
+        $path = public_path('icons/giftcoves-512.png');
+        $source = @imagecreatefrompng($path);
+
+        if ($source === false) {
+            throw new RuntimeException("Cannot read the logo for the social card at {$path}.");
+        }
+
+        imagealphablending($canvas, true);
+        imagecopyresampled($canvas, $source, $x, $y, 0, 0, $size, $size, imagesx($source), imagesy($source));
+        imagedestroy($source);
     }
 
     /**
@@ -174,37 +241,6 @@ class OgImage
             (int) round(10 * $scale),
             $this->colour($canvas, self::AMBER),
         );
-    }
-
-    /**
-     * The homepage drawing, on the right of the default card (2026-10-04).
-     *
-     * A PNG made by `scripts/og-illustration.mjs` from the homepage's own SVG,
-     * because GD cannot read SVG. Not a product photo, so the typographic rule
-     * in the class docblock still holds: it is our own drawing.
-     *
-     * @return int the drawing's left edge, so the headline can stop short of it
-     */
-    private function drawIllustration(GdImage $canvas, string $path): int
-    {
-        $source = imagecreatefrompng($path);
-
-        if ($source === false) {
-            throw new RuntimeException("Cannot read the social card illustration at {$path}.");
-        }
-
-        // 440 px wide: big enough to read in a chat preview, narrow enough
-        // to leave the headline two thirds of the card.
-        $width = 440;
-        $height = (int) round($width * imagesy($source) / imagesx($source));
-        $x = self::WIDTH - self::MARGIN - $width;
-        $y = (int) round((self::HEIGHT - $height) / 2) + 20;
-
-        imagealphablending($canvas, true);
-        imagecopyresampled($canvas, $source, $x, $y, 0, 0, $width, $height, imagesx($source), imagesy($source));
-        imagedestroy($source);
-
-        return $x;
     }
 
     private function drawWordmark(GdImage $canvas): void
@@ -308,9 +344,9 @@ class OgImage
     /**
      * The widest single word, which `wrap()` cannot break.
      *
-     * "cadeaunetwerk" at 60pt is wider than the column beside the default
-     * card's drawing (2026-10-04) and ran into it, while the line count looked
-     * fine. A word that does not fit is a reason to shrink, too.
+     * Found 2026-10-04: "cadeaunetwerk" at 60pt was wider than a narrowed
+     * column and ran past it while the line count looked fine. A word that
+     * does not fit is a reason to shrink, too.
      */
     private function longestWord(string $text, string $font, int $size): int
     {

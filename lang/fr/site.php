@@ -2276,8 +2276,8 @@ return [
 
     'og' => [
         'daily' => 'La Cove Quotidienne',
-        // The default share card's headline and the homepage's share title
-        // (2026-10-04, owner's wording).
+        // The homepage's share title (2026-10-04, owner's wording). The
+        // default card draws the same words as logo, name and tagline.
         'default_title' => 'GiftCoves - le réseau social du cadeau',
         'default_footnote' => 'giftcoves.com',
         'product' => 'Produit',
