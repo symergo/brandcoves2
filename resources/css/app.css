@@ -90,29 +90,44 @@
  * unchanged, and `amber`, the badge tint for a list about somebody, went a
  * shade yellower so it stays apart from the accent beside it.
  *
+ * Koraal since 2026-10-04, chosen by the owner from sixteen palettes rendered
+ * side by side (the brief: livelier, not "Claude", no electric or fluorescent
+ * colours, red without yellow, softer). A white page, brick-red buttons and a
+ * coral band for the homepage hero (`hero`). Contrast checked for every pair
+ * before it went in: white on `accent` 5.2:1, `accent-dark` 6.8:1 and
+ * `ink-soft` 7.5:1 on white, `ink` on `hero` 7.2:1. Text on the coral band is
+ * `ink`, never `ink-soft` or `accent-dark`, which fall to about 3:1 there.
+ * `amber`, the badge tint for a list about somebody, became a peach so no
+ * yellow is left; `danger` moved to a crimson so an error is not the same red
+ * as the button beside it.
+ *
  * Inter throughout. v1 replaced a three-font stack with one and the pages got
  * both faster and more coherent.
  */
 @theme {
-    --color-cream: #fbf6ee;
-    --color-ink: #1d1710;
-    --color-ink-soft: #63594c;
-    --color-accent: #b2601f;
-    --color-accent-dark: #93501a;
-    --color-sage: #4a6741;
-    --color-amber: #b99055;
-    --color-line: #ebe0cf;
+    --color-cream: #ffffff;
+    --color-ink: #2a1213;
+    --color-ink-soft: #6a4e50;
+    --color-accent: #b8473a;
+    --color-accent-dark: #9c3b30;
+    --color-sage: #0e7a4c;
+    --color-amber: #e8a07a;
+    --color-line: #f2dfd8;
     --color-card: #ffffff;
+
+    /* The homepage hero's band (Koraal, 2026-10-04). Text on it is `ink`. */
+    --color-hero: #ee8a7a;
 
     /*
      * Something went wrong, in its own colour.
      *
      * Validation errors used to be painted `text-accent` — the same colour
      * as the submit button directly beneath them, so a refused field and the
-     * call to action were one colour. A red that is clearly not the brand,
-     * 6.4:1 on cream so it reads at `text-sm`.
+     * call to action were one colour. A red that is clearly not the brand:
+     * since the brand became brick red (Koraal, 2026-10-04), a crimson,
+     * leaning to pink where the accent leans to orange. 7.9:1 on white.
      */
-    --color-danger: #b42318;
+    --color-danger: #a3123a;
 
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 

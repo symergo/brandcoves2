@@ -171,7 +171,7 @@
     {{-- The cream the page actually paints. It said #12232B, a dark teal that
          appears nowhere in the palette, so the browser chrome on Android and the
          iOS status bar were a colour the site does not contain. --}}
-    <meta name="theme-color" content="#fbf6ee">
+    <meta name="theme-color" content="#ffffff">
 
     {{-- When a theme switch is built it needs one more thing here: an inline
          script, in <head>, that stamps the stored choice onto <html> before

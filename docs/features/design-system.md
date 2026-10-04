@@ -102,7 +102,7 @@ waits its turn, and the description has the same ~70-character measure as every 
   woff2) is in `resources/fonts/inter/` and built by Vite; the bunny.net stylesheet is gone. See
   speed.md, "Fonts, images and worker mode".
 - The footer carries no mark; the social card palette (teal and amber) and the site palette
-  (cream, and amber since 2026-09-13) are strangers — a decision to make, not a bug.
+  (white and brick red since 2026-10-04) are strangers — a decision to make, not a bug.
 - A sticky header, and tap targets under 40px on the picker chevron, pagination and chips.
 
 ## The phone pass (2026-09-07)
@@ -177,6 +177,43 @@ sit under the new accent; `amber`, the badge tint for a list about somebody, wen
 values went into the mail theme, the Inertia progress bar and the browser theme colour, the three
 places the palette is written out rather than read from the tokens. The dark theme keeps its own
 surfaces and takes the accent as is: 4.0:1 on its ground, the same as before.
+
+*(Replaced by Koraal on 2026-10-04, below.)*
+
+## Koraal: brick red on white, a coral hero (2026-10-04)
+
+The owner found the cream-and-amber site too much like Claude's own look and asked for something
+livelier. Sixteen palettes were rendered on one homepage mock, over five rounds of direction: more
+lively, then more stimulating, then a red and a yellow, then no electric and no fluorescent
+colours, red without yellow, and softer. The owner chose **Koraal**.
+
+The tokens, every text pair checked for AA before they went in:
+
+| Token | Value | Checked |
+|---|---|---|
+| `cream` (the page) | `#ffffff` | |
+| `ink` | `#2a1213` | |
+| `ink-soft` | `#6a4e50` | 7.5:1 on white |
+| `accent` (filled buttons) | `#b8473a` | white on it 5.2:1 |
+| `accent-dark` (links) | `#9c3b30` | 6.8:1 on white |
+| `sage` (success) | `#0e7a4c` | 5.4:1 on white |
+| `amber` (a list about somebody) | `#e8a07a` | a peach, so no yellow is left anywhere |
+| `line` | `#f2dfd8` | |
+| `hero` (new) | `#ee8a7a` | `ink` on it 7.2:1 |
+| `danger` | `#a3123a` | 7.9:1 on white |
+
+- **The homepage hero is a coral band** (`bg-hero`, rounded, inside the page width). Text on it is
+  `ink` only: `ink-soft` and `accent-dark` fall to about 3:1 on coral. The brick-red button would
+  vanish into the band, so the primary action there is the new `dark` button variant (`bg-ink`).
+- **`danger` moved off the brand.** It was `#b42318`, practically the new accent. An error and the
+  button beside it in one colour is the mistake recorded under "What the review found", so errors
+  are now a crimson that leans to pink where the accent leans to orange.
+- **The page is white, not cream.** Cards still separate by their border (`line`), which is how the
+  proposal looked when it was chosen.
+- The same values went into the mail theme, the Inertia progress bar, the browser theme colour and
+  an admin placeholder thumbnail, the places the palette is written out instead of read. The
+  dormant dark theme is unchanged. The logo and the social cards keep the mark's own teal and buoy
+  amber.
 
 ## How to name a list in text (2026-09-26, the standard from here on)
 

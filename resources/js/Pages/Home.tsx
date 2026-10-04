@@ -76,17 +76,23 @@ export default function Home({ today }: Props) {
                   drawing beside the title rather than under it. The title one
                   step smaller so the two sit at the same height.
                 */}
-                <div className="grid items-center gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
+                {/*
+                  On a coral band since 2026-10-04 (Koraal, owner's choice).
+                  Everything on it is `ink`: `accent-dark` and `ink-soft` fall
+                  to about 3:1 on coral, and the brick-red button would vanish
+                  into it, so the primary button is the `dark` variant here.
+                */}
+                <div className="grid items-center gap-8 rounded-card bg-hero px-5 py-8 sm:px-10 sm:py-12 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
-                        <p className="text-sm font-medium tracking-wide text-accent-dark uppercase">{t('home.hero_kicker')}</p>
+                        <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
                         <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
                             {t('home.hero_title')}
                         </h1>
                         {/* The owner's combination of three proposals (2026-10-03). */}
-                        <p className="mt-4 max-w-xl text-lg text-ink-soft">{t('home.hero_subtitle')}</p>
+                        <p className="mt-4 max-w-xl text-lg text-ink">{t('home.hero_subtitle')}</p>
 
                         <div className="mt-7 flex flex-wrap gap-3">
-                            <Link href={createCove} className={buttonClasses('primary', 'lg')}>
+                            <Link href={createCove} className={buttonClasses('dark', 'lg')}>
                                 {t('home.cta_create')}
                             </Link>
                             {/* "Zoek cadeaus" to Find a gift, where "Ontdek Coves" to /coves stood (owner, 2026-09-28). */}
