@@ -1,5 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react'
-import { useEffect, useRef, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import { Honeypot, useFormClock } from './BotTrap'
@@ -48,6 +48,16 @@ export default function SignInDialog({
     const form = useForm({ email: '', name: '', website: '' })
     const elapsed = useFormClock(open)
 
+    // "Check your inbox", shown inside the dialog. See submit() for why the
+    // layout's banner is not enough.
+    const [sent, setSent] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (open) {
+            setSent(null)
+        }
+    }, [open])
+
     useEffect(() => {
         const el = ref.current
 
@@ -68,15 +78,27 @@ export default function SignInDialog({
         e.preventDefault()
 
         /*
-         * `preserveScroll` and no redirect handling: the controller answers
-         * with a redirect back, and `FlashMessage` in the layout renders
-         * "check your inbox". The dialog stays open on purpose — the commonest
-         * next action is "it did not arrive, send another", which is exactly
-         * the reasoning the login page records for keeping its form on screen.
+         * The controller answers with a redirect back and a `success` flash.
+         * `FlashMessage` in the layout renders it too, but behind this dialog:
+         * `showModal()` puts the dialog in the top layer over a backdrop, so
+         * the banner was there and nobody could see it, and sending a link
+         * looked like nothing happened. So the dialog shows the sentence
+         * itself.
+         *
+         * The dialog stays open on purpose — the commonest next action is "it
+         * did not arrive, send another", which is exactly the reasoning the
+         * login page records for keeping its form on screen.
          */
+        setSent(null)
         // How long the dialog was open: the bot trap, see Components/BotTrap.
         form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
-        form.post(`${base}/login`, { preserveScroll: true })
+        form.post(`${base}/login`, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const flash = (page.props as unknown as SharedProps).flash
+                setSent(flash.error ? null : (flash.success ?? flash.status ?? null))
+            },
+        })
     }
 
     return (
@@ -175,6 +197,16 @@ export default function SignInDialog({
                 {form.errors.email && (
                     <p id="signin-email-error" className="text-sm text-danger" role="alert">
                         {form.errors.email}
+                    </p>
+                )}
+
+                {sent && (
+                    <p
+                        className="rounded-lg border border-line bg-cream px-4 py-3 text-sm"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        {sent}
                     </p>
                 )}
 

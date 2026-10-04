@@ -80,6 +80,12 @@ exactly the people who would notice. `auth.googleEnabled` moved to the shared In
 because signing in is no longer something that only happens *on* the login page and the Google
 button must stay hidden when the client id is unset.
 
+**"Check your inbox" shows inside the dialog** (fixed 2026-10-04). The controller redirects back
+with a `success` flash, and `FlashMessage` in the layout renders it — but behind the dialog, because
+the top layer and its backdrop sit over everything the layout draws. Sending a link looked like
+nothing happened. The dialog now reads the flash from the visit's response and prints it above the
+send button; the form stays on screen so "send another" is one click.
+
 ## Registration is not a separate flow
 
 There is no sign-up form. First sign-in creates the account, on either path. Google's `email` is
