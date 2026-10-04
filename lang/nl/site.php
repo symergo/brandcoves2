@@ -585,7 +585,7 @@ return [
         // The page the link in the email opens: a button, because mail
         // scanners open links (MagicLinkController::confirm).
         'confirm_title' => 'Inloggen bij GiftCoves',
-        'confirm_body' => 'Druk op de knop om in te loggen. Sommige mailprogramma\'s openen links al om ze te controleren; daarom vragen we nog één druk.',
+        'confirm_body' => 'Druk op de knop om in te loggen: zo weten we dat je een mens bent.',
         'confirm_button' => 'Inloggen',
         'confirm_new_link' => 'Nieuwe link aanvragen',
         'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',

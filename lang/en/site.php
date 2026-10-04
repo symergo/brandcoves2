@@ -728,7 +728,7 @@ return [
         'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'confirm_title' => 'Sign in to GiftCoves',
-        'confirm_body' => 'Press the button to sign in. Some mail programs open links to check them before you do; that is why we ask for one more press.',
+        'confirm_body' => 'Press the button to sign in: that way we know you are a person.',
         'confirm_button' => 'Sign in',
         'confirm_new_link' => 'Request a new link',
         'too_many' => 'Too many requests. Try again in :seconds seconds.',

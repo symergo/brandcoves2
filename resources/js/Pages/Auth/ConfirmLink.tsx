@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import Button from '../../Components/Button'
+import ToolIcon from '../../Components/ToolIcon'
 import { useTranslations } from '../../useTranslations'
 
 interface Props {
@@ -33,7 +34,12 @@ export default function ConfirmLink({ confirmUrl, loginUrl, csrfToken }: Props) 
                         <p className="mt-3 text-ink-soft">{t('auth.confirm_body')}</p>
                         <form method="post" action={confirmUrl} className="mt-5">
                             <input type="hidden" name="_token" value={csrfToken} />
-                            <Button type="submit">{t('auth.confirm_button')}</Button>
+                            <Button type="submit">
+                                <span className="inline-flex items-center gap-2">
+                                    <ToolIcon name="click" />
+                                    {t('auth.confirm_button')}
+                                </span>
+                            </Button>
                         </form>
                     </>
                 ) : (

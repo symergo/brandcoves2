@@ -579,7 +579,7 @@ return [
         'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',
         'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
         'confirm_title' => 'Entrar en GiftCoves',
-        'confirm_body' => 'Pulsa el botón para entrar. Algunos programas de correo ya abren los enlaces para comprobarlos; por eso pedimos un clic más.',
+        'confirm_body' => 'Pulsa el botón para entrar: así sabemos que eres una persona.',
         'confirm_button' => 'Entrar',
         'confirm_new_link' => 'Pedir un enlace nuevo',
         'too_many' => 'Demasiadas solicitudes. Inténtalo de nuevo en :seconds segundos.',

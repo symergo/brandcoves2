@@ -49,6 +49,7 @@ export type ToolKey =
     | 'gift'
     | 'heart'
     | 'mailAccount'
+    | 'click'
 
 /*
  * Two drawings with two names each, drawn once so the pairs cannot drift
@@ -163,6 +164,15 @@ const paths: Record<ToolKey, ReactNode> = {
             <path d="m3 5.5 6.25 4.5L15.5 5.5" />
             <circle cx="18.5" cy="15.5" r="2.2" />
             <path d="M14.5 21.5a4 4 0 0 1 8 0" />
+        </>
+    ),
+
+    // A mouse pointer clicking: the button on the page a sign-in link opens,
+    // the one press that tells a person from a mail scanner (2026-10-04).
+    click: (
+        <>
+            <path d="M8.5 8.5 19.5 13l-5 1.5-1.5 5z" />
+            <path d="M8.5 3v2.5M3 8.5h2.5M4.6 4.6l1.7 1.7M12.4 4.6l-1.7 1.7M4.6 12.4l1.7-1.7" />
         </>
     ),
 
