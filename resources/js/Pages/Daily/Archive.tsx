@@ -73,7 +73,7 @@ export default function Archive({ editions, pagination }: Props) {
                                         {edition.images.length > 0 && (
                                             <div className="grid grid-cols-4 gap-2" aria-hidden="true">
                                                 {edition.images.map((src) => (
-                                                    <div key={src} className="aspect-square overflow-hidden rounded-lg bg-cream">
+                                                    <div key={src} className="aspect-square overflow-hidden rounded-lg bg-card">
                                                         <img src={src} alt="" loading="lazy" className="h-full w-full object-contain" />
                                                     </div>
                                                 ))}

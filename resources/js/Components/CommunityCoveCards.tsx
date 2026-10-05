@@ -26,7 +26,7 @@ export default function CommunityCoveCards({ coves }: { coves: CommunityCoveCard
                         href={cove.url}
                         className="group flex h-full gap-3 rounded-card border border-line bg-card p-4 transition hover:border-ink"
                     >
-                        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-cream">
+                        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-card">
                             {cove.image && (
                                 <img src={cove.image} alt="" loading="lazy" className="h-full w-full object-contain" />
                             )}

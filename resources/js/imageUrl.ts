@@ -13,9 +13,17 @@ export const IMAGE_WIDTHS = [160, 320, 480, 640, 960] as const
 
 export type ImageWidth = (typeof IMAGE_WIDTHS)[number]
 
+/**
+ * Bumped with `ProxiedImages::VERSION` on the server. A copy is served with a
+ * year's `immutable` cache, so a browser or Cloudflare that holds an old copy
+ * never asks again; a new query string is a new address to them, while the
+ * route ignores it, so older addresses in cached pages still work.
+ */
+const IMAGE_VERSION = 2
+
 /** The proxied address at one width. */
 export function imageUrl(token: string, width: ImageWidth): string {
-    return `/img/${width}/${token}`
+    return `/img/${width}/${token}?v=${IMAGE_VERSION}`
 }
 
 /** A `srcset` over the given widths, for the browser to pick from with `sizes`. */

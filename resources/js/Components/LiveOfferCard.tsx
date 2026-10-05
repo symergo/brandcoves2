@@ -36,7 +36,7 @@ export default function LiveOfferCard({ offer }: { offer: LiveOffer }) {
 
     return (
         <li className="flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
-            <div className="relative aspect-square overflow-hidden bg-cream">
+            <div className="relative aspect-square overflow-hidden bg-card">
                 {offer.image && (
                     <img
                         src={offer.image}

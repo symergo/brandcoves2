@@ -162,7 +162,7 @@ export function RailCard({
 
     return (
         <Link href={product.url} className="group block">
-            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
+            <div className="aspect-square overflow-hidden rounded-lg bg-card">
                 {product.image && (
                     <img
                         src={product.image}

@@ -20,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -75,6 +76,62 @@ class ImageProxyTest extends TestCase
         [$width, $height] = getimagesizefromstring($bytes);
         $this->assertSame(320, $height);
         $this->assertSame(427, $width);
+    }
+
+    /**
+     * Both kinds of transparent PNG: full colour with an alpha channel, and a
+     * palette whose transparency is one entry, which is what Coolblue serves.
+     *
+     * @return array<string, array{bool}>
+     */
+    public static function transparentPngs(): array
+    {
+        return ['full colour with alpha' => [false], 'palette, as Coolblue serves' => [true]];
+    }
+
+    #[Test]
+    #[DataProvider('transparentPngs')]
+    public function a_transparent_picture_comes_out_on_white_not_black(bool $palette): void
+    {
+        /*
+         * Found 2026-10-05: Coolblue's product photos are PNGs with a
+         * transparent ground, and the resize dropped the alpha, so every
+         * AEG appliance sat on black in the search results. Shrunk, as the
+         * real ones are, because the resize is where the alpha went. The
+         * first fix covered full-colour PNGs only; Coolblue's are palette
+         * PNGs, and they stayed black until the palette case was tested too.
+         */
+        if ($palette) {
+            $png = imagecreate(800, 800);
+            $clear = (int) imagecolorallocate($png, 71, 112, 76);
+            imagecolortransparent($png, $clear);
+            imagefill($png, 0, 0, $clear);
+        } else {
+            $png = imagecreatetruecolor(800, 800);
+            imagealphablending($png, false);
+            imagesavealpha($png, true);
+            imagefill($png, 0, 0, (int) imagecolorallocatealpha($png, 0, 0, 0, 127));
+        }
+        imagefilledrectangle($png, 300, 300, 500, 500, (int) imagecolorallocate($png, 200, 30, 30));
+        ob_start();
+        imagepng($png);
+        $bytes = (string) ob_get_clean();
+
+        Http::fake([self::BOL => Http::response($bytes, 200, ['Content-Type' => 'image/png'])]);
+
+        $response = $this->get($this->address(self::BOL, 320))->assertOk();
+        $copy = imagecreatefromwebp($response->baseResponse->getFile()->getPathname());
+
+        // A corner, which was transparent: white, give or take the encoder.
+        $corner = imagecolorsforindex($copy, imagecolorat($copy, 2, 2));
+        $this->assertGreaterThan(245, $corner['red']);
+        $this->assertGreaterThan(245, $corner['green']);
+        $this->assertGreaterThan(245, $corner['blue']);
+
+        // And the product itself is untouched: still red in the middle.
+        $middle = imagecolorsforindex($copy, imagecolorat($copy, 160, 160));
+        $this->assertGreaterThan(150, $middle['red']);
+        $this->assertLessThan(80, $middle['green']);
     }
 
     #[Test]

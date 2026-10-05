@@ -180,3 +180,31 @@ volume. Switching it back on needs nothing else.
 - `resources/js/imageUrl.ts`, `Components/ProductCard.tsx`, `Pages/Product.tsx`.
 - `config/giftcoves.php` → `image_proxy`.
 - `tests/Feature/ImageProxyTest.php`.
+
+## Transparent pictures come out on white (2026-10-05)
+
+Found by the owner: in the search results for AEG, half the products sat on black. Coolblue serves
+its photos as PNGs with a transparent ground, and the conversion to WebP lost the transparency, so
+every transparent pixel became black. Two causes, both in `ImageStore::webp()`:
+
+- **Coolblue's PNGs are palette images**: the transparency is one palette entry, not an alpha
+  channel. A palette image goes through `imagescale()` with that entry turned black. The picture is
+  now made full colour with its alpha straight after decoding (`imagepalettetotruecolor`, alpha
+  saved), before it is turned upright or shrunk.
+- **Then it is flattened onto white** (`onWhite()`), after the shrink. Every product card is white,
+  so white is what a transparent ground should become, and flattening last makes it so whatever GD
+  did to the alpha on the way.
+
+The first attempt flattened onto white but missed the palette case, and was caught by trying the real
+Coolblue picture: the test now covers both kinds of PNG (`a_transparent_picture_comes_out_on_white_
+not_black`, with a data provider), and fails on the old code.
+
+**The black copies are never served again.** A stored copy is kept on disk and served with a year's
+`immutable` cache, so the fix alone would change nothing for a picture already made. Two versions:
+
+- `ProxiedImages::VERSION` (`v2`) is a folder in the stored copy's path, so the server makes a new copy
+  instead of serving the black one. The old folder holds orphans that `bc:prune-image-cache` deletes
+  with age.
+- `IMAGE_VERSION` in `resources/js/imageUrl.ts` adds `?v=2` to the address, so a browser or
+  Cloudflare holding the black copy asks again. The route ignores the query string, so older
+  addresses in cached pages still work. Raise both together.

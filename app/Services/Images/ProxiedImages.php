@@ -37,12 +37,21 @@ class ProxiedImages
         private readonly ImageStore $encoder,
     ) {}
 
+    /**
+     * Which encoding the stored copies are. Raised when copies made before a
+     * change to the encoding must not be served again: `v2` (2026-10-05) for
+     * transparent PNGs, which came out with a black ground before
+     * `ImageStore::onWhite()`. Copies under an older version are orphans that
+     * `bc:prune-image-cache` removes with age.
+     */
+    public const VERSION = 'v2';
+
     /** The disk path of a stored copy (relative to the disk), whether or not it exists yet. */
     public static function path(string $url, int $width): string
     {
         $hash = sha1($url);
 
-        return self::DIRECTORY.'/'.$width.'/'.substr($hash, 0, 2).'/'.$hash.'.webp';
+        return self::DIRECTORY.'/'.self::VERSION.'/'.$width.'/'.substr($hash, 0, 2).'/'.$hash.'.webp';
     }
 
     /** The absolute file path of the copy, when there is one. */

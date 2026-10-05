@@ -128,12 +128,18 @@ class ImageStore
             return null;
         }
 
+        /*
+         * Full colour with its alpha, before anything else touches it. Coolblue's
+         * PNGs are palette images whose transparency is one palette entry, and a
+         * palette image goes through `imagescale()` with that entry turned black.
+         */
+        imagepalettetotruecolor($image);
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
         $image = $this->oriented($image, $bytes, $info[2]);
         $image = $this->shrunk($image, $maxSide, $coverSide);
-
-        imagepalettetotruecolor($image);
-        imagealphablending($image, true);
-        imagesavealpha($image, true);
+        $image = $this->onWhite($image);
 
         ob_start();
         imagewebp($image, null, $quality);
@@ -177,6 +183,31 @@ class ImageStore
         return $rotated instanceof GdImage ? $rotated : $image;
     }
 
+    /**
+     * The picture on a white ground, its transparency spent.
+     *
+     * Found 2026-10-05 (owner: "some are black, in search results for brands";
+     * AEG): Coolblue serves its product photos as PNGs with a transparent
+     * ground, and `imagescale()` drops the alpha channel, so every transparent
+     * pixel came out black. Every product card is white, so white is what a
+     * transparent ground should become; flattening here, after the shrink,
+     * makes it so whatever GD did to the alpha on the way. An upload with a
+     * transparent ground goes through here too and gets the same white.
+     */
+    private function onWhite(GdImage $image): GdImage
+    {
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $canvas = imagecreatetruecolor($width, $height);
+        imagefill($canvas, 0, 0, (int) imagecolorallocate($canvas, 255, 255, 255));
+        imagealphablending($canvas, true);
+        imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+        imagedestroy($image);
+
+        return $canvas;
+    }
+
     private function shrunk(GdImage $image, int $maxSide, ?int $coverSide = null): GdImage
     {
         $width = imagesx($image);
@@ -192,6 +223,11 @@ class ImageStore
         if ($scale >= 1.0) {
             return $image;
         }
+
+        // Keep the alpha through the resize, so `onWhite()` blends the edges
+        // of a transparent picture instead of meeting black ones.
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
 
         $resized = imagescale($image, max(1, (int) round($width * $scale)), max(1, (int) round($height * $scale)));
 
