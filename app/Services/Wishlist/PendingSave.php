@@ -41,6 +41,10 @@ use Illuminate\Contracts\Session\Session;
  * across a week of browsing, and replaying five products somebody has forgotten
  * choosing is a worse outcome than dropping them.
  *
+ * A set of products pressed in one go is still one intent, not a queue: the
+ * end of a swipe round offers "sign in to save them" for what was just chosen
+ * (`group_ids`, 2026-10-05). Same hour, same single use, same default list.
+ *
  * ## Why it expires
  *
  * An hour, single-use. A save replayed days later — plausibly on a shared
@@ -154,6 +158,26 @@ class PendingSave
             }
 
             $saver->saveManual($list, $idea->title);
+
+            return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
+        }
+
+        // Several products chosen together (the end of a swipe round): all of
+        // them, read in the market, to the default list. Any that no longer
+        // exist are left out rather than failing the rest.
+        if (! empty($payload['group_ids']) && is_array($payload['group_ids'])) {
+            $groups = ProductGroup::query()
+                ->forMarket($market)
+                ->whereIn('id', array_map('intval', $payload['group_ids']))
+                ->get();
+
+            if ($groups->isEmpty()) {
+                return null;
+            }
+
+            foreach ($groups as $group) {
+                $saver->saveGroup($list, $group, $current);
+            }
 
             return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
         }

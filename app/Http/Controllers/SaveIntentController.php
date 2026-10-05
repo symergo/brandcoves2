@@ -39,12 +39,18 @@ class SaveIntentController extends Controller
          * it and accepting one here would be a free-text channel with no owner.
          */
         $validated = $request->validate([
-            'group_id' => ['nullable', 'integer', 'required_without_all:source,cove_id,idea_id,community_cove'],
+            'group_id' => ['nullable', 'integer', 'required_without_all:source,cove_id,idea_id,community_cove,group_ids'],
+
+            // Several products chosen in one go, saved together after sign-in:
+            // the end of a swipe round (2026-10-05). Ids, read at replay in the
+            // market, like `group_id`; capped well above any round.
+            'group_ids' => ['nullable', 'array', 'max:50'],
+            'group_ids.*' => ['integer'],
             'source' => [
                 'nullable',
                 'string',
                 'in:'.implode(',', array_diff(Source::values(), [Source::Manual->value])),
-                'required_without_all:group_id,cove_id,idea_id,community_cove',
+                'required_without_all:group_id,cove_id,idea_id,community_cove,group_ids',
             ],
 
             // An approved offline idea to add after sign-in. Not free text:

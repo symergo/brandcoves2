@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { buttonClasses } from '../../Components/Button'
 import PlayDialog from '../../Components/PlayDialog'
 import SaveToList from '../../Components/SaveToList'
-import SignInLink from '../../Components/SignInLink'
 import SwipeCard from '../../Components/SwipeCard'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
+import { useSignIn } from '../../signIn'
 import { pictureAttributes } from '../../imageUrl'
 import { listFrom, show as showToast } from '../../saveToast'
 import { markSaved } from '../../savedItems'
@@ -422,6 +422,28 @@ function CardPicture({ card }: { card: Card }) {
 function Chosen({ cards, finder }: { cards: Card[]; finder: string }) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
+    const signIn = useSignIn()
+
+    /*
+     * Remember what was chosen before asking to sign in, so signing in saves
+     * it (owner, 2026-10-05: "the items are not saved"). The button only
+     * opened the dialog, and the choice lived in this page alone: a magic
+     * link comes back in another tab or another hour, to a round that has
+     * started over. `PendingSave` holds the ids for an hour and puts them all
+     * on the default list at sign-in, as it does for a single save.
+     */
+    async function signInToSave(): Promise<void> {
+        try {
+            await send(`/${market.key}/save-intent`, 'POST', {
+                group_ids: cards.map((card) => card.id),
+                return_to: window.location.pathname + window.location.search,
+            })
+        } catch {
+            // Losing the intent makes for a worse sign-in, not a broken one.
+        }
+
+        signIn.open(t('gift.swipe.sign_in_to_save'))
+    }
 
     return (
         <div className="mt-6 text-left">
@@ -431,9 +453,9 @@ function Chosen({ cards, finder }: { cards: Card[]; finder: string }) {
               "Bewaar ze op een lijst. Daarvoor log je in." and left the
               visitor to find the way in themselves.
             */}
-            <SignInLink hint={t('gift.swipe.sign_in_to_save')} className={buttonClasses('primary', 'md', 'mt-3')}>
+            <button type="button" onClick={() => void signInToSave()} className={buttonClasses('primary', 'md', 'mt-3')}>
                 {t('gift.swipe.sign_in_to_save')}
-            </SignInLink>
+            </button>
             <ul className="mt-4 space-y-3">
                 {cards.map((card) => (
                     <li key={card.id} className="flex items-center gap-3 rounded-card border border-line bg-card p-3">

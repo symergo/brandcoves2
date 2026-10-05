@@ -10,8 +10,11 @@ use App\Models\Recipient;
 use App\Models\User;
 use App\Models\UserTaste;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use App\Services\Ai\AiClient;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -197,5 +200,31 @@ class SwipeGiftsTest extends TestCase
 
         $this->actingAs($me)->get("/be-nl/gift/swipe?list={$theirs->id}")
             ->assertInertia(fn ($page) => $page->where('into', null));
+    }
+
+    #[Test]
+    public function what_a_guest_chose_is_saved_when_they_sign_in(): void
+    {
+        /*
+         * Found by the owner, 2026-10-05: the end of a round said "sign in to
+         * save them", and signing in saved nothing. The button now leaves the
+         * chosen ids with PendingSave before the dialog opens.
+         */
+        $chosen = ProductGroup::factory()->count(3)->create(['market' => Market::BeNl]);
+        // One from another market: an id is only meaningful in its own.
+        $foreign = ProductGroup::factory()->create(['market' => Market::NlNl]);
+
+        $this->postJson('/be-nl/save-intent', [
+            'group_ids' => [...$chosen->pluck('id')->all(), $foreign->id],
+            'return_to' => '/be-nl/gift/swipe',
+        ])->assertOk();
+
+        $user = User::factory()->create();
+        Auth::login($user);
+        event(new Login('web', $user, false));
+
+        $saved = WishlistItem::query()->pluck('group_id')->sort()->values()->all();
+        $this->assertSame($chosen->pluck('id')->sort()->values()->all(), $saved);
+        $this->assertSame([$user->id], WishlistItem::query()->with('wishlist')->get()->pluck('wishlist.owner_user_id')->unique()->values()->all());
     }
 }

@@ -110,3 +110,14 @@ See [taste-discovery.md](taste-discovery.md#starting-from-what-is-known-2026-09-
 - `resources/js/Pages/Gift/Swipe.tsx`, `resources/js/Components/SwipeCard.tsx`
 - the card on `resources/js/Pages/Gift/Wizard.tsx`
 - `tests/Unit/SwipeDeckTest.php`, `tests/Feature/SwipeGiftsTest.php`
+
+## Signing in saves what was chosen (2026-10-05)
+
+A visitor who is not signed in ends a round on what they chose, each with the Save button. The line
+above them, "Bewaar ze op een lijst. Daarvoor log je in.", became a button, "Log in om ze te
+bewaren" (owner), and the owner found it saved nothing: it only opened the sign-in dialog, and the
+choice lived in the page, gone by the time a magic link brings the visitor back. The button now posts
+the chosen ids to `/save-intent` as `group_ids` first; `PendingSave` keeps them for an hour and
+puts them all on the default list at sign-in, read in the market, the same as a single save. Covered
+by `SwipeGiftsTest::what_a_guest_chose_is_saved_when_they_sign_in`.
+
