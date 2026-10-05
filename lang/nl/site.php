@@ -2512,6 +2512,7 @@ return [
         'taste_is_theirs' => ':name vulde hun smaak zelf in, dus die pas je hier niet aan: hun antwoord telt boven een gok. Leeftijd en budget blijven van jou.',
         'field_birthday' => 'Verjaardag',
         'field_interests' => 'Interesses',
+        'field_vibe' => 'Smaak',
         'field_age' => 'Leeftijd',
         'field_gender' => 'Geslacht',
         'field_budget' => 'Budget',

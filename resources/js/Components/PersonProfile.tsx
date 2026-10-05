@@ -43,6 +43,8 @@ export interface Profile {
         ageBand: string | null
         /** 'male' | 'female', a profile fact like the age (2026-09-29). */
         gender?: string | null
+        /** The sides chosen on the taste pairs, e.g. `design`, `vintage`. */
+        preferences?: string[]
         avoid: string[]
         budgetMin: Cents | null
         budgetMax: Cents | null
@@ -149,6 +151,7 @@ export default function PersonProfile({
 
     const facts: { label: string; items: string[] }[] = [
         { label: t('people.field_interests'), items: about.interests.map((i) => i.label) },
+        { label: t('people.field_vibe'), items: (about.preferences ?? []).map((p) => t(`gift.preferences.${p}`)) },
         { label: t('people.field_age'), items: about.ageBand ? [options.ages.find((a) => a.value === about.ageBand)?.label ?? about.ageBand] : [] },
         { label: t('people.field_gender'), items: about.gender ? [t(`gift.genders.${about.gender}`)] : [] },
         { label: t('people.field_budget'), items: budget === null ? [] : [budget] },

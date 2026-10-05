@@ -2497,6 +2497,7 @@ return [
         'taste_is_theirs' => ':name rellenó sus gustos por sí misma, así que aquí no los cambias: su respuesta cuenta más que una suposición. La edad y el presupuesto siguen siendo tuyos.',
         'field_birthday' => 'Cumpleaños',
         'field_interests' => 'Intereses',
+        'field_vibe' => 'Gustos',
         'field_age' => 'Edad',
         'field_gender' => 'Género',
         'field_budget' => 'Presupuesto',

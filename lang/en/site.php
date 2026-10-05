@@ -2768,6 +2768,7 @@ return [
         'taste_is_theirs' => ':name filled in their taste themselves, so you do not change it here: their answer counts above a guess. Age and budget stay yours.',
         'field_birthday' => 'Birthday',
         'field_interests' => 'Interests',
+        'field_vibe' => 'Taste',
         'field_age' => 'Age',
         'field_gender' => 'Gender',
         'field_budget' => 'Budget',
