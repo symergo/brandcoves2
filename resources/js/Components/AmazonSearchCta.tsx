@@ -54,6 +54,7 @@ export default function AmazonSearchCta({
     label,
     detail = null,
     compact = false,
+    wide = false,
 }: {
     link: AmazonSearch | null
     /** Already translated — the two pages ask the question differently. */
@@ -66,6 +67,12 @@ export default function AmazonSearchCta({
      * the storefront's host moves into the label's line instead of under it.
      */
     compact?: boolean
+    /**
+     * The compact button as wide as its container, label centred: under the
+     * first products on a phone (owner, 2026-10-05: "a mobile screen wide
+     * button").
+     */
+    wide?: boolean
 }) {
     if (link === null) {
         return null
@@ -77,7 +84,9 @@ export default function AmazonSearchCta({
                 href={link.url}
                 rel="sponsored noopener nofollow"
                 target="_blank"
-                className="group inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-accent"
+                className={`group min-h-10 max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-accent ${
+                    wide ? 'flex w-full justify-center py-2.5 font-medium' : 'inline-flex'
+                }`}
             >
                 <img
                     src={link.icon}

@@ -1164,11 +1164,12 @@ export default function Search({
                                       (owner, 2026-10-05). It is an alternative to
                                       the page, so it comes after the page has had
                                       its say rather than above it. A short label,
-                                      so it is one row on any phone.
+                                      so it is one row on any phone, on a button
+                                      as wide as the screen.
                                     */}
                                     {amazonSearch && i === Math.min(3, results.items.length - 1) && (
                                         <div className="col-span-full sm:hidden">
-                                            <AmazonSearchCta link={amazonSearch} label={t('search.amazon_more_link')} compact />
+                                            <AmazonSearchCta link={amazonSearch} label={t('search.amazon_more_link')} compact wide />
                                         </div>
                                     )}
                                 </Fragment>

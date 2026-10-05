@@ -142,7 +142,7 @@ independence visible rather than a thing you have to read the code to discover.
 The owner found the search page crowded on a phone: under the title sat the watch button, Filters,
 this Amazon button and the narrowing pills, four rows before the first product. On a phone the
 button now sits after the first four products (two rows), or after the last when there are fewer,
-as the same compact button with Amazon's logo and a short label, "Ook op Amazon zoeken", so it is
+as the same button with Amazon's logo, as wide as the screen, and a short label, "Ook op Amazon zoeken", so it is
 one row on any phone. From `sm` up it stays in the toolbar, where there is room. Same link, same
 `rel="sponsored"`. It is an alternative to the page, so on a phone it comes after the page has
 had its say.
