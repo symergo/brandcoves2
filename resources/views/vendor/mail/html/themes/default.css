@@ -2,7 +2,7 @@
  * The GiftCoves mail theme.
  *
  * Laravel's stock theme with the site's own palette from resources/css/app.css
- * (ink #2a1213, soft ink #6a4e50, accent #b8473a, line #f2dfd8) so a mail
+ * (ink #24170f, soft ink #62564c, accent #d32f2f, line #eee4da) so a mail
  * looks like the page it links to. Links are the accent colour and carry no
  * underline, tables have a tinted header row and a rule between rows, and the
  * button is the accent. Everything here is inlined at render, which is why
@@ -21,7 +21,7 @@ body *:not(html):not(style):not(br):not(tr):not(code) {
 
 body {
     -webkit-text-size-adjust: none;
-    background-color: #fcf3f0;
+    background-color: #fcf9f7;
     color: #3d3631;
     height: 100%;
     line-height: 1.4;
@@ -39,12 +39,12 @@ blockquote {
 }
 
 a {
-    color: #b8473a;
+    color: #d32f2f;
     text-decoration: none;
 }
 
 a:hover {
-    color: #9c3b30;
+    color: #b02525;
 }
 
 a img {
@@ -54,7 +54,7 @@ a img {
 /* Typography */
 
 h1 {
-    color: #2a1213;
+    color: #24170f;
     font-size: 22px;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -63,7 +63,7 @@ h1 {
 }
 
 h2 {
-    color: #2a1213;
+    color: #24170f;
     font-size: 17px;
     font-weight: 600;
     margin-top: 0;
@@ -71,7 +71,7 @@ h2 {
 }
 
 h3 {
-    color: #2a1213;
+    color: #24170f;
     font-size: 15px;
     font-weight: 600;
     margin-top: 0;
@@ -91,7 +91,7 @@ p.sub {
 }
 
 small {
-    color: #6a4e50;
+    color: #62564c;
     font-size: 13px;
     line-height: 1.5;
 }
@@ -114,7 +114,7 @@ li {
 
 hr {
     border: 0;
-    border-top: 1px solid #f2dfd8;
+    border-top: 1px solid #eee4da;
     margin: 24px 0;
 }
 
@@ -124,7 +124,7 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    background-color: #fcf3f0;
+    background-color: #fcf9f7;
     margin: 0;
     padding: 0;
     width: 100%;
@@ -147,7 +147,7 @@ hr {
 }
 
 .header a {
-    color: #2a1213;
+    color: #24170f;
     font-size: 20px;
     font-weight: 700;
     text-decoration: none;
@@ -163,7 +163,7 @@ hr {
 }
 
 .brand {
-    color: #2a1213;
+    color: #24170f;
     display: inline-block;
     font-size: 22px;
     font-weight: 700;
@@ -177,9 +177,9 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    background-color: #fcf3f0;
-    border-bottom: 1px solid #fcf3f0;
-    border-top: 1px solid #fcf3f0;
+    background-color: #fcf9f7;
+    border-bottom: 1px solid #fcf9f7;
+    border-top: 1px solid #fcf9f7;
     margin: 0;
     padding: 0;
     width: 100%;
@@ -190,7 +190,7 @@ hr {
     -premailer-cellspacing: 0;
     -premailer-width: 570px;
     background-color: #ffffff;
-    border: 1px solid #f2dfd8;
+    border: 1px solid #eee4da;
     border-radius: 10px;
     margin: 0 auto;
     padding: 0;
@@ -204,13 +204,13 @@ hr {
 /* Subcopy */
 
 .subcopy {
-    border-top: 1px solid #f2dfd8;
+    border-top: 1px solid #eee4da;
     margin-top: 25px;
     padding-top: 25px;
 }
 
 .subcopy p {
-    color: #6a4e50;
+    color: #62564c;
     font-size: 14px;
 }
 
@@ -243,7 +243,7 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    border: 1px solid #f2dfd8;
+    border: 1px solid #eee4da;
     border-collapse: separate;
     border-radius: 8px;
     margin: 16px auto 24px;
@@ -252,9 +252,9 @@ hr {
 }
 
 .table th {
-    background-color: #fcf3f0;
-    border-bottom: 1px solid #f2dfd8;
-    color: #6a4e50;
+    background-color: #fcf9f7;
+    border-bottom: 1px solid #eee4da;
+    color: #62564c;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -264,7 +264,7 @@ hr {
 }
 
 .table td {
-    border-bottom: 1px solid #f5e8e4;
+    border-bottom: 1px solid #f3ece5;
     color: #3d3631;
     font-size: 15px;
     line-height: 20px;
@@ -278,7 +278,7 @@ hr {
 }
 
 .table td a {
-    color: #2a1213;
+    color: #24170f;
     font-weight: 500;
 }
 
@@ -312,11 +312,11 @@ hr {
 
 .button-blue,
 .button-primary {
-    background-color: #b8473a;
-    border-bottom: 10px solid #b8473a;
-    border-left: 20px solid #b8473a;
-    border-right: 20px solid #b8473a;
-    border-top: 10px solid #b8473a;
+    background-color: #d32f2f;
+    border-bottom: 10px solid #d32f2f;
+    border-left: 20px solid #d32f2f;
+    border-right: 20px solid #d32f2f;
+    border-top: 10px solid #d32f2f;
 }
 
 .button-green,
@@ -330,22 +330,22 @@ hr {
 
 .button-red,
 .button-error {
-    background-color: #9c3b30;
-    border-bottom: 10px solid #9c3b30;
-    border-left: 20px solid #9c3b30;
-    border-right: 20px solid #9c3b30;
-    border-top: 10px solid #9c3b30;
+    background-color: #b02525;
+    border-bottom: 10px solid #b02525;
+    border-left: 20px solid #b02525;
+    border-right: 20px solid #b02525;
+    border-top: 10px solid #b02525;
 }
 
 /* Panels */
 
 .panel {
-    border-left: #b8473a solid 4px;
+    border-left: #d32f2f solid 4px;
     margin: 21px 0;
 }
 
 .panel-content {
-    background-color: #fcf3f0;
+    background-color: #fcf9f7;
     color: #3d3631;
     padding: 16px;
 }

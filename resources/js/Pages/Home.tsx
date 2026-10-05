@@ -77,10 +77,10 @@ export default function Home({ today }: Props) {
                   step smaller so the two sit at the same height.
                 */}
                 {/*
-                  On a coral band since 2026-10-04 (Koraal, owner's choice).
-                  Everything on it is `ink`: `accent-dark` and `ink-soft` fall
-                  to about 3:1 on coral, and the brick-red button would vanish
-                  into it, so the primary button is the `dark` variant here.
+                  On a red band since 2026-10-05 (Rood + oranje, owner's
+                  choice; Koraal's coral before it). Everything on it is
+                  white, 5.0:1 on the red, and the primary button is the
+                  `light` variant, because a red button vanishes into it.
                 */}
                 {/*
                   Edge to edge (2026-10-05), as in the chosen proposal. The
@@ -93,15 +93,15 @@ export default function Home({ today }: Props) {
                 */}
                 <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-20 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-24 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
-                        <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
-                        <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+                        <p className="text-sm font-semibold tracking-wide text-white uppercase">{t('home.hero_kicker')}</p>
+                        <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-white sm:text-4xl">
                             {t('home.hero_title')}
                         </h1>
                         {/* The owner's combination of three proposals (2026-10-03). */}
-                        <p className="mt-4 max-w-xl text-lg text-ink">{t('home.hero_subtitle')}</p>
+                        <p className="mt-4 max-w-xl text-lg text-white">{t('home.hero_subtitle')}</p>
 
                         <div className="mt-7 flex flex-wrap gap-3">
-                            <Link href={createCove} className={buttonClasses('dark', 'lg')}>
+                            <Link href={createCove} className={buttonClasses('light', 'lg')}>
                                 {t('home.cta_create')}
                             </Link>
                             {/* "Zoek cadeaus" to Find a gift, where "Ontdek Coves" to /coves stood (owner, 2026-09-28). */}
@@ -112,8 +112,8 @@ export default function Home({ today }: Props) {
                     </div>
 
                     {/*
-                      A wrapped present on two soft circles, blush and peach,
-                      as in the chosen proposal (owner, 2026-10-05). It
+                      A wrapped present on two circles, a deeper red and
+                      orange, as in the chosen proposal (owner, 2026-10-05). It
                       replaced the line drawing of shops, a cove and two
                       people. Decoration only.
                     */}
@@ -171,7 +171,14 @@ export default function Home({ today }: Props) {
               the Coves cards, until then.
             */}
             {today && (
-                <section className="mt-14 sm:mt-20" aria-labelledby="today-heading">
+                /*
+                  On a soft orange band, edge to edge (Rood + oranje,
+                  2026-10-05), painted the same way as the hero band.
+                */
+                <section
+                    className="mt-14 bg-band py-10 shadow-[0_0_0_100vmax_var(--color-band)] [clip-path:inset(0_-100vmax)] sm:mt-20 sm:py-14"
+                    aria-labelledby="today-heading"
+                >
                     <p className="text-sm font-medium text-accent-dark">{t('home.daily_title')}</p>
                     <div className="mt-3 rounded-card border border-line bg-card p-5 sm:p-8">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

@@ -16,7 +16,7 @@ import { type ButtonHTMLAttributes, type ReactNode } from 'react'
  * `buttonClasses()` is exported for the anchors that look like buttons (an
  * outbound shop link, a sign-in link), which cannot be a `<button>`.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'dark'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'dark' | 'light'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const variants: Record<ButtonVariant, string> = {
@@ -36,6 +36,12 @@ const variants: Record<ButtonVariant, string> = {
      * brick-red button on coral all but disappears, so on the band it is ink.
      */
     dark: 'bg-ink text-white hover:bg-ink/85',
+    /*
+     * The primary action on the red hero band (Rood + oranje, 2026-10-05):
+     * a red button on a red band disappears, so there it is white with red
+     * type. `accent-dark` on white is 6.6:1.
+     */
+    light: 'bg-white text-accent-dark hover:bg-white/90',
 }
 
 /*

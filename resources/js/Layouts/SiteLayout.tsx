@@ -742,7 +742,7 @@ function Chrome({ children }: PropsWithChildren) {
             {/* Fixed to the viewport, so it is mounted once and outside the flow. */}
             <SaveToast />
 
-            <footer className="border-t border-line">
+            <footer className="bg-hero text-white">
                 {/*
                   Two short rows and a small print line, in the smaller size.
 
@@ -757,6 +757,10 @@ function Chrome({ children }: PropsWithChildren) {
                   which is the one place on the site the name is written
                   without being the header.
 
+                  The same red as the homepage hero, white type (Rood + oranje,
+                  owner, 2026-10-05): the page opens and closes on the brand's
+                  colour. White on the red is 5.0:1.
+
                   The brand and Cove indexes live here rather than in the nav,
                   not because they matter less but because their job is
                   different: the nav is for someone deciding what to do, and
@@ -764,7 +768,7 @@ function Chrome({ children }: PropsWithChildren) {
                   and needs a route into the two largest indexable URL spaces
                   on the site. A footer link on every page is exactly that.
                 */}
-                <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-soft sm:py-4">
+                <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-white sm:py-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                         <nav aria-label={t('footer.explore')} className="flex flex-wrap gap-x-4 gap-y-0 sm:gap-y-1">
                             {/* Under its own name, not `nav.brand_coves`: with
@@ -772,7 +776,7 @@ function Chrome({ children }: PropsWithChildren) {
                                 header entry for this to agree with, and a footer
                                 link is not the place to introduce a name the rest
                                 of the site is not yet using. */}
-                            <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('brand.index_title')}
                             </Link>
                             {/* Only what the header lacks (2026-09-26). Shop
@@ -782,7 +786,7 @@ function Chrome({ children }: PropsWithChildren) {
                             {/* What this market searches for: the hub that
                                 replaced the related-search chips, and the only
                                 place a crawler reaches them from any page. */}
-                            <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('popular_searches.title')}
                             </Link>
                             {/* The search tips under their short name, and How it
@@ -790,16 +794,16 @@ function Chrome({ children }: PropsWithChildren) {
                                 report form. Both: somebody looking for "how do I
                                 search" scans for that phrase. How it works under
                                 the header's name for it, so /help has one name. */}
-                            <Link href={`/${market.key}/search-help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/search-help`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('search_help.footer_link')}
                             </Link>
-                            <Link href={`/${market.key}/help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/help`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('nav.how_it_works')}
                             </Link>
                             {/* Feedback, the ideas board and suggestions
                                 (2026-09-27). Here as well as in the bar under
                                 the header, because the bar can be closed. */}
-                            <Link href={`/${market.key}/contribute`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/contribute`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('contribute.title')}
                             </Link>
                         </nav>
@@ -807,13 +811,13 @@ function Chrome({ children }: PropsWithChildren) {
                         {/* Belgian law wants the operator's details reachable
                             from every page. The footer is that. */}
                         <nav aria-label={t('legal.about')} className="flex flex-wrap gap-x-4 gap-y-0 sm:shrink-0 sm:justify-end sm:gap-y-1">
-                            <Link href={`/${market.key}/about`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/about`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('legal.about')}
                             </Link>
-                            <Link href={`/${market.key}/privacy`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/privacy`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('legal.privacy')}
                             </Link>
-                            <Link href={`/${market.key}/terms`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                            <Link href={`/${market.key}/terms`} className="inline-flex min-h-10 items-center hover:underline sm:min-h-0">
                                 {t('legal.terms')}
                             </Link>
                             {/* Withdrawing consent has to be as easy as giving it
@@ -827,7 +831,7 @@ function Chrome({ children }: PropsWithChildren) {
                                 <button
                                     type="button"
                                     onClick={() => window.dispatchEvent(new Event('bc:cookie-settings'))}
-                                    className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0"
+                                    className="inline-flex min-h-10 items-center hover:underline sm:min-h-0"
                                 >
                                     {t('legal.cookies')}
                                 </button>
@@ -851,7 +855,7 @@ function Chrome({ children }: PropsWithChildren) {
                       page can. Only in markets that have a tag, since the
                       others show no Amazon link at all.
                     */}
-                    <p className="mt-3 border-t border-line/60 pt-3 text-2xs">
+                    <p className="mt-3 border-t border-white/30 pt-3 text-2xs">
                         {/*
                           The year on the site's clock, not the machine's: the
                           server renders in UTC and the browser in local time,
