@@ -73,6 +73,9 @@ class PersonProfile
             'relationshipLabel' => $this->people->relationshipLabel($person->relationship),
             'birthday' => $birthday?->toString(),
             'isFriend' => $friendship !== null,
+            // The "op GiftCoves" pill beside the name: a friend, or a saved person
+            // an account stands behind (owner, 2026-10-05; it showed for friends only).
+            'onGiftCoves' => $friendship !== null || $person->isLinked(),
             // Their account's id, for "Remove as friend" in the page's ⋯ menu
             // (DELETE /friends/{id}, the same request as on My people).
             'friendId' => $friendship === null ? null : (int) $friendship->friend_id,

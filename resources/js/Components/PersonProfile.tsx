@@ -36,6 +36,8 @@ export interface Profile {
     /** `MM-DD`, never a year. */
     birthday: string | null
     isFriend: boolean
+    /** A friend, or a saved person with an account: the pill beside the name. */
+    onGiftCoves: boolean
     /** Their account's id while they are your friend: "Remove as friend" in the ⋯. */
     friendId: number | null
     about: {
@@ -196,6 +198,8 @@ export default function PersonProfile({
                     </span>
                 }
                 title={person.name}
+                /* Beside the name (owner, 2026-10-05), for anyone with an account. */
+                beside={profile.onGiftCoves ? <Badge tone="accent">{t('people.on_giftcoves')}</Badge> : undefined}
                 actions={
                     <Menu
                         label={t('people.more_label', { name: person.name })}
@@ -275,24 +279,20 @@ export default function PersonProfile({
                     {profile.relationshipLabel !== null &&
                         profile.relationshipLabel.toLowerCase() !== person.name.toLowerCase() && <span>{profile.relationshipLabel}</span>}
                     {/* The birthday is in "About" since 2026-10-05 (owner). */}
-                    {profile.isFriend ? (
-                        <Badge tone="accent">{t('people.on_giftcoves')}</Badge>
-                    ) : (
-                        urls.invite !== null && (
-                            <span className="inline-flex items-center gap-1.5">
-                                <span>{t('people.not_on_giftcoves')}</span>
-                                <span aria-hidden>·</span>
-                                <button
-                                    type="button"
-                                    aria-expanded={panel === 'invite'}
-                                    onClick={() => toggle('invite')}
-                                    className={`${textButton} inline-flex items-center gap-1`}
-                                >
-                                    <ToolIcon name="friends" className="h-4 w-4" />
-                                    {t('people.invite_short')}
-                                </button>
-                            </span>
-                        )
+                    {!profile.onGiftCoves && urls.invite !== null && (
+                        <span className="inline-flex items-center gap-1.5">
+                            <span>{t('people.not_on_giftcoves')}</span>
+                            <span aria-hidden>·</span>
+                            <button
+                                type="button"
+                                aria-expanded={panel === 'invite'}
+                                onClick={() => toggle('invite')}
+                                className={`${textButton} inline-flex items-center gap-1`}
+                            >
+                                <ToolIcon name="friends" className="h-4 w-4" />
+                                {t('people.invite_short')}
+                            </button>
+                        </span>
                     )}
                 </p>
 
@@ -442,11 +442,15 @@ export default function PersonProfile({
                                 <ToolIcon name="edit" className="h-4 w-4" />
                                 {t('people.edit')}
                             </button>
-                            {/* They have not said it themselves yet: offer the link that lets them. */}
-                            {urls.selfDescribe !== null && about.tasteSource !== 'self' && (
+                            {/*
+                              Their link, to change it themselves. Always offered
+                              (owner, 2026-10-05), also once they answered or
+                              have an account: an answer can go out of date.
+                            */}
+                            {urls.selfDescribe !== null && (
                                 <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={`${textButton} inline-flex items-center gap-1`}>
                                     <ToolIcon name="link" className="h-4 w-4" />
-                                    {t('people.let_them_add', { name: person.name })}
+                                    {t('people.ask_to_update', { name: person.name })}
                                 </button>
                             )}
                         </div>

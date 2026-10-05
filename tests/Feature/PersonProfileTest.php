@@ -119,8 +119,10 @@ class PersonProfileTest extends TestCase
                 ->where('profile.friendId', $sam->id)
                 ->has('profile.theirLists', 1)
                 ->where('profile.theirLists.0.title', 'Sam wishes')
-                // Linked to an account: no profile link to send.
-                ->where('urls.selfDescribe', null));
+                // An account behind them: the pill, and still their link to
+                // change what you know (2026-10-05).
+                ->where('profile.onGiftCoves', true)
+                ->where('urls.selfDescribe', fn ($url) => str_ends_with($url, "/be-nl/for/{$saved->share_token}")));
 
         // Removing the friend takes their lists off the page at once.
         app(Friends::class)->unlink($this->me, $sam->id);

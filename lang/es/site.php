@@ -2488,7 +2488,7 @@ return [
         'nothing_known' => 'Aún no sabes nada de :name. ¿Qué le gusta, cuál es tu presupuesto?',
         'fill_in_yourself' => 'Rellénalo tú',
         'let_them_fill_in' => 'Que :name lo rellene',
-        'let_them_add' => 'Que :name lo complete',
+        'ask_to_update' => 'Pedir a :name que lo cambie',
         'not_on_giftcoves' => 'No está en GiftCoves',
         'invite_short' => 'Invitar',
         'source_you' => 'Rellenado por ti',

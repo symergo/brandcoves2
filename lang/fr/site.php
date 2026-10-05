@@ -2490,7 +2490,7 @@ return [
         'nothing_known' => 'Vous ne savez encore rien de :name. Qu\'aime cette personne, quel est votre budget ?',
         'fill_in_yourself' => 'Remplir vous-même',
         'let_them_fill_in' => 'Laisser :name le remplir',
-        'let_them_add' => 'Laisser :name compléter',
+        'ask_to_update' => 'Demander à :name de le modifier',
         'not_on_giftcoves' => 'Pas sur GiftCoves',
         'invite_short' => 'Inviter',
         'source_you' => 'Rempli par vous',

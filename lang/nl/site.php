@@ -2503,7 +2503,7 @@ return [
         'nothing_known' => 'Je weet nog niets over :name. Wat houden ze van, wat is je budget?',
         'fill_in_yourself' => 'Vul zelf in',
         'let_them_fill_in' => 'Laat :name het zelf invullen',
-        'let_them_add' => 'Laat :name aanvullen',
+        'ask_to_update' => 'Vraag :name om aan te passen',
         'not_on_giftcoves' => 'Niet op GiftCoves',
         'invite_short' => 'Nodig uit',
         'source_you' => 'Ingevuld door jou',

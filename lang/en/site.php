@@ -2759,7 +2759,7 @@ return [
         'nothing_known' => 'You know nothing about :name yet. What do they like, what is your budget?',
         'fill_in_yourself' => 'Fill it in yourself',
         'let_them_fill_in' => 'Let :name fill it in',
-        'let_them_add' => 'Let :name add to it',
+        'ask_to_update' => 'Ask :name to update it',
         'not_on_giftcoves' => 'Not on GiftCoves',
         'invite_short' => 'Invite',
         'source_you' => 'Filled in by you',

@@ -107,10 +107,11 @@ class PersonController extends Controller
                 /*
                  * Their own link, where they say what they like without
                  * seeing anything you picked (RecipientProfileController).
-                 * Not offered once they are linked to an account: they have
-                 * answered for themselves, or can, as a friend.
+                 * Offered for a person with an account too since 2026-10-05:
+                 * "Vraag :name om aan te passen" was missing for them (owner),
+                 * and the link page already knows a linked person.
                  */
-                'selfDescribe' => $person->isLinked() ? null : url($current->url("for/{$person->share_token}")),
+                'selfDescribe' => url($current->url("for/{$person->share_token}")),
                 /*
                  * "Nodig uit op GiftCoves" (2026-09-27): the friends' own
                  * invitation, naming this person so the connection lands on
