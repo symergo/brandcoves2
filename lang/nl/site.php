@@ -559,10 +559,10 @@ return [
      */
     'cookies' => [
         'title' => 'Cookies',
-        'body' => 'We tellen bezoeken graag met Google Analytics, en dat zet een cookie. Niets op deze site heeft het nodig, dus jij beslist.',
+        'body' => 'Deze site gebruikt cookies.',
         'accept' => 'Toestaan',
         'decline' => 'Liever niet',
-        'more' => 'Wat we verzamelen',
+        'more' => 'Lees meer',
     ],
 
     'footer' => [

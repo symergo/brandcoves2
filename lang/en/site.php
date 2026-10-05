@@ -702,10 +702,10 @@ return [
      */
     'cookies' => [
         'title' => 'Cookies',
-        'body' => 'We would like to count visits with Google Analytics, which sets a cookie. Nothing on this site needs it, so it is entirely your call.',
+        'body' => 'This site uses cookies.',
         'accept' => 'Allow',
         'decline' => 'No thanks',
-        'more' => 'What we collect',
+        'more' => 'Read more',
     ],
 
     'footer' => [

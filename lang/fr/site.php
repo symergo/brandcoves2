@@ -556,10 +556,10 @@ return [
      */
     'cookies' => [
         'title' => 'Cookies',
-        'body' => "Nous aimerions compter les visites avec Google Analytics, ce qui dépose un cookie. Rien sur ce site n'en a besoin : c'est vous qui décidez.",
+        'body' => 'Ce site utilise des cookies.',
         'accept' => 'Autoriser',
         'decline' => 'Non merci',
-        'more' => 'Ce que nous collectons',
+        'more' => 'En savoir plus',
     ],
 
     'footer' => [
