@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
+use App\Services\Wishlist\ListBudget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
@@ -523,7 +524,7 @@ class GiftWhispererTest extends TestCase
         $mum->refresh();
 
         $this->assertSame([], $mum->interests);
-        $this->assertNull($mum->budget_max);
+        $this->assertNull(app(ListBudget::class)->forRecipient($mum)['max']);
         $this->assertTrue($before->equalTo($mum->updated_at));
     }
 
@@ -574,8 +575,9 @@ class GiftWhispererTest extends TestCase
         $this->assertSame(['coffee', 'wielrennen'], $mum->interests);
         $this->assertSame(['vintage'], $mum->preferences);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
-        // Euros in, cents stored — invariant 7.
-        $this->assertSame(6000, $mum->budget_max);
+        // Euros in, cents stored (invariant 7), on her list: a budget is a
+        // list's, not a person's (2026-10-05).
+        $this->assertSame(6000, app(ListBudget::class)->forRecipient($mum)['max']);
     }
 
     #[Test]
@@ -601,7 +603,7 @@ class GiftWhispererTest extends TestCase
         // Her own description outranks a guess; the budget is the giver's
         // fact and is not gated the same way.
         $this->assertSame(['gardening'], $mum->interests);
-        $this->assertSame(6000, $mum->budget_max);
+        $this->assertSame(6000, app(ListBudget::class)->forRecipient($mum)['max']);
     }
 
     #[Test]

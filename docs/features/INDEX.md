@@ -114,6 +114,7 @@ is true now.
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |
 | [config-contract.md](config-contract.md) | Core / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — claiming needs an account |
+| [list-budget.md](list-budget.md) | Wishlist / Gifting | Active — the budget is a list's, not a person's, since 2026-10-05; the person columns are dropped in a later deploy |
 | [pasted-links.md](pasted-links.md) | Wishlist / Ingestion | Active — links looked up (catalogue and connectors first), own photos, unknown barcodes; needs the `media_data` volume |
 | [friends.md](friends.md) | Wishlist / Accounts | Active — the page itself merged into My people (`/people`) on 2026-09-26; `/friends` redirects |
 | [friend-invite-mail.md](friend-invite-mail.md) | Accounts / Email | Active since 2026-09-26 — inviting an address on My people emails it: 20 addresses a day, one email per address a month, never your own; "Wil je geen uitnodigingen meer ontvangen?" stops invitations to that address from anybody; only the separate "Meld als spam" button on its page counts a complaint (2026-09-27); 3 complaints stop a member's emails; admins see them under Community > Invitation complaints. Sent from a saved person, it links that person when it connects (2026-09-27). Its button signs a new invitee straight in, no second email: a single-use token, 14 days, never an existing account (2026-09-27) |

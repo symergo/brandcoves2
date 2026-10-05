@@ -783,6 +783,7 @@ return [
         'title_label' => 'Nombre de la lista',
         'recipient_label' => 'Para quién',
         'description_label' => 'Descripción',
+        'budget_label' => 'Presupuesto',
         'delete_confirm' => '¿Eliminar esta lista y todo su contenido?',
         'share' => 'Compartir',
         'sharing_off' => 'Solo tú ves esta lista.',
@@ -2553,7 +2554,7 @@ return [
         'invite_limit' => 'Hoy ya has invitado a :count personas. Vuelve a intentarlo mañana.',
         'invite_self' => 'Es tu propio correo electrónico.',
         'invite_person_tip' => 'Enviamos tu invitación a :name por correo. Si :name tiene una cuenta, o crea una, esta persona pasa a ser esa cuenta: lo que sabes de :name y tus listas para esa persona siguen juntos. Lo que guardaste sigue siendo tuyo.',
-        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Bajo cada nombre ves lo que sabes de esa persona (intereses, presupuesto, listas para ella), y las listas que comparte contigo aparecen ahí mismo. Pulsa el nombre para ir a su página: lo que sabes de esa persona (puedes editarlo), sus listas de deseos y tus listas para ella. Con un amigo en GiftCoves, también Junto con: sus listas para otra persona, regalos en grupo y Amigos invisibles en los que estáis los dos. Un Amigo invisible compartido también aparece como una pequeña marca junto a su nombre. Quién sacó a quién nunca se muestra. Buscar un regalo está en cada fila; Esto o aquello y Preguntar (pide ideas a otras personas) están en Más. A alguien que guardaste y que aún no está en GiftCoves puedes invitarle desde Más; cuando se une, sigue siendo una sola persona.',
+        'help' => 'Mi gente reúne a todas las personas a las que regalas: las que guardaste y tus amigos en GiftCoves. Añade a alguien que solo tú ves, o invita a alguien por correo. Bajo cada nombre ves lo que sabes de esa persona (intereses, listas para ella), y las listas que comparte contigo aparecen ahí mismo. Pulsa el nombre para ir a su página: lo que sabes de esa persona (puedes editarlo), sus listas de deseos y tus listas para ella. Con un amigo en GiftCoves, también Junto con: sus listas para otra persona, regalos en grupo y Amigos invisibles en los que estáis los dos. Un Amigo invisible compartido también aparece como una pequeña marca junto a su nombre. Quién sacó a quién nunca se muestra. Buscar un regalo está en cada fila; Esto o aquello y Preguntar (pide ideas a otras personas) están en Más. A alguien que guardaste y que aún no está en GiftCoves puedes invitarle desde Más; cuando se une, sigue siendo una sola persona.',
     ],
 
     /*

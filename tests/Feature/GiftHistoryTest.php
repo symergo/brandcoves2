@@ -351,7 +351,7 @@ class GiftHistoryTest extends TestCase
     public function the_next_step_keeps_to_her_budget(): void
     {
         $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
-        $this->mum->update(['budget_max' => 2000]);
+        $this->budgetOnHerList(2000);
         $this->gave($moka);
 
         $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
@@ -392,9 +392,18 @@ class GiftHistoryTest extends TestCase
         $this->assertSame(0, $fetches($ids), 'the second view fetched the candidates again');
         $this->assertSame($first, $ids());
 
-        $this->mum->update(['budget_max' => 2000]);
+        $this->budgetOnHerList(2000);
         $this->assertNotContains($dear->id, $ids());
         $this->assertContains($cheap->id, $ids());
+    }
+
+    /** The budget is her list's, not hers (2026-10-05); see ListBudget. */
+    private function budgetOnHerList(int $cents): void
+    {
+        $list = Wishlist::query()->where('recipient_id', $this->mum->id)->where('kind', ListKind::ForSomeone->value)->latest('created_at')->first()
+            ?? Wishlist::factory()->forSomeone($this->mum)->create(['owner_user_id' => $this->giver->id]);
+
+        $list->update(['budget_max' => $cents]);
     }
 
     /**

@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\Ai\AiClient;
 use App\Services\Gift\TasteTogether;
+use App\Services\Wishlist\ListBudget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -254,7 +255,7 @@ class TasteTogetherTest extends TestCase
         $person->refresh();
         $this->assertSame(['coffee', 'cooking', 'reading'], $person->interests);
         $this->assertSame(TasteSource::Suggested, $person->taste_source);
-        $this->assertNotNull($person->budget_min);
+        $this->assertNotNull(app(ListBudget::class)->forRecipient($person)['min']);
         $this->assertNotNull($invite->fresh()->applied_at);
     }
 
@@ -274,7 +275,7 @@ class TasteTogetherTest extends TestCase
         $this->assertSame(['gardening'], $person->interests);
         $this->assertSame(TasteSource::Self, $person->taste_source);
         // What the group will spend is the giver's fact, not their taste.
-        $this->assertNotNull($person->budget_min);
+        $this->assertNotNull(app(ListBudget::class)->forRecipient($person)['min']);
     }
 
     #[Test]

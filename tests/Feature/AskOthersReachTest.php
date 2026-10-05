@@ -71,7 +71,6 @@ class AskOthersReachTest extends TestCase
 
         $mum = Recipient::factory()
             ->into([Interest::Cooking, Interest::Coffee, 'her own words'])
-            ->budget(null, 4000)
             ->create([
                 'owner_user_id' => $me->id,
                 'name' => 'Greetje',
@@ -79,6 +78,8 @@ class AskOthersReachTest extends TestCase
                 'notes' => 'Allergic to lavender, lives in Gent',
                 'age_band' => '50-64',
             ]);
+        // The budget is her list's, not hers (2026-10-05).
+        Wishlist::factory()->forSomeone($mum)->create(['owner_user_id' => $me->id, 'title' => 'Kerst', 'budget_max' => 4000]);
 
         $response = $this->actingAs($me)->get("/be-nl/ask?from=gift&person={$mum->id}");
         $prefill = $this->props($response)['prefill'];
@@ -92,8 +93,9 @@ class AskOthersReachTest extends TestCase
         $this->assertArrayNotHasKey('vibe', $prefill);
         $this->assertArrayNotHasKey('values', $prefill);
 
-        // Nothing that could identify her reaches the page.
-        $page = json_encode($this->props($response));
+        // Nothing that could identify her reaches the form. (The site-wide save
+        // menu names your own lists' people back to you; that is yours.)
+        $page = json_encode($prefill);
         $this->assertStringNotContainsString('Greetje', $page);
         $this->assertStringNotContainsString('lavender', $page);
     }
@@ -113,7 +115,7 @@ class AskOthersReachTest extends TestCase
     #[Test]
     public function somebody_elses_saved_person_fills_in_nothing(): void
     {
-        $theirs = Recipient::factory()->budget(null, 9000)->create();
+        $theirs = Recipient::factory()->create();
 
         $response = $this->actingAs(User::factory()->create())->get("/be-nl/ask?person={$theirs->id}");
 
@@ -124,7 +126,7 @@ class AskOthersReachTest extends TestCase
     public function a_gift_list_fills_in_its_person_occasion_and_date(): void
     {
         $me = User::factory()->create();
-        $dad = Recipient::factory()->budget(null, 2500)->create([
+        $dad = Recipient::factory()->create([
             'owner_user_id' => $me->id,
             'name' => 'Jef',
             'relationship' => 'father',
@@ -133,6 +135,7 @@ class AskOthersReachTest extends TestCase
             'owner_user_id' => $me->id,
             'event_type' => EventType::Birthday,
             'event_date' => '2026-10-12',
+            'budget_max' => 2500,
         ]);
 
         $prefill = $this->props($this->actingAs($me)->get("/be-nl/ask?list={$list->id}"))['prefill'];

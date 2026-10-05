@@ -29,6 +29,7 @@ use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Images\ImageProxy;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\MyPeople;
+use App\Services\Wishlist\ListBudget;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
@@ -300,11 +301,9 @@ class TasteController extends Controller
 
         $written = $recipient->describeTaste($taste, TasteSource::Suggested);
 
+        // On their list, not on them (2026-10-05); see ListBudget.
         if ($profile->budgetMin !== null) {
-            $recipient->update([
-                'budget_min' => $profile->budgetMin,
-                'budget_max' => $profile->budgetMax,
-            ]);
+            app(ListBudget::class)->rememberFor($recipient, $profile->budgetMin, $profile->budgetMax);
         }
 
         return response()->json([

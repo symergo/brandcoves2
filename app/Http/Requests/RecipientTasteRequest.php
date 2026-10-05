@@ -67,34 +67,18 @@ class RecipientTasteRequest extends FormRequest
             'avoid' => ['sometimes', 'array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],
 
-            // Euros in the payload, cents in the column (invariant #7): the
-            // form shows a slider in the currency people think in.
-            'budget_min' => ['nullable', 'numeric', 'min:0', 'max:100000'],
-            'budget_max' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            // No budget since 2026-10-05: it is a list's, set in the list's settings.
         ];
     }
 
     /**
-     * The giver's own context, plus budget.
-     *
-     * Budget sits here rather than in taste because it describes what *I* am
-     * willing to spend, which is not a fact about them.
+     * The giver's own context.
      *
      * @return array<string, mixed>
      */
     public function context(): array
     {
-        $attributes = $this->present(self::CONTEXT);
-
-        foreach (['budget_min', 'budget_max'] as $key) {
-            if ($this->has($key)) {
-                $attributes[$key] = $this->validated($key) === null
-                    ? null
-                    : (int) round((float) $this->validated($key) * 100);
-            }
-        }
-
-        return $attributes;
+        return $this->present(self::CONTEXT);
     }
 
     /**

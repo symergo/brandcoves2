@@ -12,6 +12,7 @@ use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Services\Gift\GiftResults;
 use App\Services\Gift\GiftTags;
+use App\Services\Wishlist\ListBudget;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -74,9 +75,10 @@ class AskPrefill
             'age_band' => $person?->age_band !== null && in_array($person->age_band, GiftTags::AGE_BANDS, true)
                 ? (string) __('site.gift.age_band', ['band' => $person->age_band])
                 : '',
-            // Euros, as the form takes them.
-            'budget_max' => $person?->budget_max !== null
-                ? rtrim(rtrim(number_format($person->budget_max / 100, 2, '.', ''), '0'), '.')
+            // Euros, as the form takes them. The list's budget, or the person's
+            // list's (2026-10-05): a budget is a list's, not a person's.
+            'budget_max' => ($max = $list?->budget_max ?? ($person === null ? null : app(ListBudget::class)->forRecipient($person)['max'])) !== null
+                ? rtrim(rtrim(number_format($max / 100, 2, '.', ''), '0'), '.')
                 : '',
             'occasion' => $list === null ? '' : $this->occasion($list),
             'list' => $list === null ? null : ['id' => $list->id, 'title' => $list->displayTitle(), 'kind' => $list->kind->value],

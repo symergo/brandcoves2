@@ -29,6 +29,7 @@ use App\Services\Guides\CoveMarkup;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\MyPeople;
+use App\Services\Wishlist\ListBudget;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -476,10 +477,12 @@ class GiftController extends Controller
             'age_band' => $validated['age_band'] ?? null,
             // "Voor hem / Voor haar", remembered like the age: the giver's fact.
             'gender' => $validated['gender'] ?? null,
-            'budget_max' => isset($validated['budget_max'])
-                ? (int) round((float) $validated['budget_max'] * 100)
-                : null,
         ], fn ($v) => $v !== null));
+
+        // The budget on their list, not on them (2026-10-05); see ListBudget.
+        if (isset($validated['budget_max'])) {
+            app(ListBudget::class)->rememberFor($recipient, null, (int) round((float) $validated['budget_max'] * 100));
+        }
 
         $recipient->describeTaste(array_filter([
             'interests' => $validated['interests'] ?? null,
@@ -702,8 +705,8 @@ class GiftController extends Controller
                 // Their own "Mijn smaak" over what you noted, when they are a
                 // friend who keeps one (OwnTaste); the budget stays yours.
                 ...$this->tasteOf($r),
-                'budgetMin' => $r->budget_min,
-                'budgetMax' => $r->budget_max,
+                // Their list's budget (2026-10-05); see ListBudget.
+                ...(fn (array $b) => ['budgetMin' => $b['min'], 'budgetMax' => $b['max']])(app(ListBudget::class)->forRecipient($r)),
                 /*
                  * "Vraag het {naam} zelf" (owner, 2026-09-27): their own link,
                  * where they play This or that, suggest products and say

@@ -4,6 +4,7 @@ import AddProduct from '../../Components/AddProduct'
 import NewListPrompt from '../../Components/NewListPrompt'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
+import { formatBudget } from '../../types'
 import ListTools, { ListToolsBar, type Panel } from '../../Components/ListTools'
 import type { Publication } from '../../Components/PublishCove'
 import { type ListKind } from '../../Components/ListKindBadge'
@@ -20,6 +21,7 @@ import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
 import ShareMenu from '../../Components/ShareMenu'
 import TheirWishes, { type Wish } from '../../Components/TheirWishes'
 import { useTranslations } from '../../useTranslations'
+import { budgetLabel } from '../../Components/PersonParts'
 
 interface Item {
     id: number
@@ -123,6 +125,9 @@ interface Props {
         priceWatchPercent: number | null
         /** The owner's own words, under the title. Null when they wrote none. */
         description: string | null
+        /** The list's budget in cents (2026-10-05). */
+        budgetMin?: number | null
+        budgetMax?: number | null
     }
     items: Item[]
     /** The pot on a group list, for the organiser's own page. */
@@ -338,6 +343,16 @@ export default function ListShow({
                   for the people the link was sent to.
                 */}
                 {list.description && <p className="mt-2 max-w-prose text-ink-soft">{list.description}</p>}
+                {/* The list's budget, when one is set (2026-10-05). */}
+                {(() => {
+                    const label = budgetLabel(list.budgetMin ?? null, list.budgetMax ?? null, t, (cents) => formatBudget(cents, market))
+
+                    return label === null ? null : (
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {t('lists.budget_label')}: {label}
+                        </p>
+                    )
+                })()}
                 {/*
                   The quiz, named on the one list it cannot appear on.
 

@@ -49,7 +49,6 @@ class PersonProfileTest extends TestCase
             'values' => ['local'],
             'age_band' => '50-64',
             'avoid' => ['parfum'],
-            'budget_max' => 5000,
             'taste_source' => TasteSource::Suggested,
         ]);
         $list = $this->listFor($mum, 'Kerst', ListKind::ForSomeone);
@@ -70,7 +69,7 @@ class PersonProfileTest extends TestCase
                 ->missing('profile.about.values')
                 ->where('profile.about.ageBand', '50-64')
                 ->where('profile.about.avoid', ['parfum'])
-                ->where('profile.about.budgetMax', 5000)
+                ->missing('profile.about.budgetMax')
                 ->where('profile.about.tasteSource', 'suggested')
                 ->where('profile.theirLists', [])
                 ->has('profile.listsForThem', 1)
@@ -186,32 +185,26 @@ class PersonProfileTest extends TestCase
                 'vibe' => 'practical',
                 'avoid' => ['parfum'],
                 'age_band' => '50-64',
-                'budget_min' => 20,
-                'budget_max' => 50,
             ])
             ->assertRedirect("/be-nl/people/{$mum->id}");
 
         $mum->refresh();
         $this->assertSame(['cooking', 'wielrennen'], $mum->interests);
         $this->assertNull($mum->vibe);
-        $this->assertSame(2000, (int) $mum->budget_min);
-        $this->assertSame(5000, (int) $mum->budget_max);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
     }
 
     #[Test]
-    public function taste_they_gave_themselves_is_not_overwritten_but_budget_is_yours(): void
+    public function taste_they_gave_themselves_is_not_overwritten(): void
     {
         $mum = $this->saved('Mum', ['interests' => ['gardening'], 'taste_source' => TasteSource::Self]);
 
         $this->actingAs($this->me)->patch("/be-nl/recipients/{$mum->id}", [
             'interests' => ['cooking'],
-            'budget_max' => 30,
         ]);
 
         $mum->refresh();
         $this->assertSame(['gardening'], $mum->interests);
-        $this->assertSame(3000, (int) $mum->budget_max);
     }
 
     #[Test]

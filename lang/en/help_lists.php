@@ -89,6 +89,10 @@ return [
                     'shot' => 'occasion',
                     'alt' => 'The Occasion panel of a list, with the choice of occasion and the date.',
                 ],
+                [
+                    'title' => 'A budget',
+                    'body' => 'What you mean to spend is set per list: open the list, tap “⋯” then Settings, and fill in a from and a to amount under Budget. It then shows under the list’s name. For a list about somebody else, Find a gift uses that budget, and the budget you choose there goes on that list.',
+                ],
             ],
         ],
 

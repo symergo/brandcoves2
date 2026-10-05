@@ -789,6 +789,7 @@ return [
         'title_label' => 'Naam van de lijst',
         'recipient_label' => 'Voor wie',
         'description_label' => 'Omschrijving',
+        'budget_label' => 'Budget',
         'delete_confirm' => 'Deze lijst en alles erin verwijderen?',
         'share' => 'Delen',
         'sharing_off' => 'Alleen jij ziet deze lijst.',
@@ -2568,7 +2569,7 @@ return [
         'invite_limit' => 'Je nodigde vandaag al :count mensen uit. Probeer het morgen opnieuw.',
         'invite_self' => 'Dat is je eigen e-mailadres.',
         'invite_person_tip' => 'We mailen :name je uitnodiging. Heeft :name een account, of maakt :name er een, dan wordt deze persoon hun account: wat je over :name weet en je lijsten voor hen blijven bij elkaar. Wat jij bewaarde, blijft van jou.',
-        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Onder elke naam staat wat je over hen weet (interesses, budget, lijsten voor hen), en de lijsten die ze met je delen staan er meteen bij. Druk op de naam voor hun pagina: wat je over hen weet (pas het daar aan), hun verlanglijsten en jouw lijsten voor hen. Bij een vriend op GiftCoves ook Samen met: hun lijsten voor iemand anders, groepscadeaus en Geheime Vrienden waar jullie allebei in zitten. Een Geheime Vriend die jullie delen staat ook als klein teken bij hun naam. Wie wie trok, zie je nergens. Cadeau vinden staat bij iedereen; Dit of dat en Vraag (vraag anderen om ideeën voor hen) staan onder Meer. Iemand die je bewaarde en nog niet op GiftCoves zit, nodig je onder Meer uit op GiftCoves; doet die mee, dan blijft het één persoon.',
+        'help' => 'Mijn mensen toont iedereen voor wie je een cadeau koopt: mensen die je bewaarde en vrienden op GiftCoves. Voeg iemand toe die alleen jij ziet, of nodig iemand uit met hun e-mailadres. Onder elke naam staat wat je over hen weet (interesses, lijsten voor hen), en de lijsten die ze met je delen staan er meteen bij. Druk op de naam voor hun pagina: wat je over hen weet (pas het daar aan), hun verlanglijsten en jouw lijsten voor hen. Bij een vriend op GiftCoves ook Samen met: hun lijsten voor iemand anders, groepscadeaus en Geheime Vrienden waar jullie allebei in zitten. Een Geheime Vriend die jullie delen staat ook als klein teken bij hun naam. Wie wie trok, zie je nergens. Cadeau vinden staat bij iedereen; Dit of dat en Vraag (vraag anderen om ideeën voor hen) staan onder Meer. Iemand die je bewaarde en nog niet op GiftCoves zit, nodig je onder Meer uit op GiftCoves; doet die mee, dan blijft het één persoon.',
     ],
 
     /*

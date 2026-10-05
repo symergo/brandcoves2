@@ -9,6 +9,7 @@ use App\Enums\TasteSource;
 use App\Models\Recipient;
 use App\Models\TasteInvite;
 use App\Models\TasteRun;
+use App\Services\Wishlist\ListBudget;
 use App\Support\ShareCode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -181,11 +182,9 @@ final class TasteTogether
             'preferences' => $recipient->preferences,
         ]), TasteSource::Suggested);
 
+        // On their list, not on them (2026-10-05); see ListBudget.
         if ($profile->budgetMin !== null) {
-            $recipient->update([
-                'budget_min' => $profile->budgetMin,
-                'budget_max' => $profile->budgetMax,
-            ]);
+            app(ListBudget::class)->rememberFor($recipient, $profile->budgetMin, $profile->budgetMax);
         }
 
         $invite->update(['applied_at' => now()]);

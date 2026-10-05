@@ -108,8 +108,6 @@ class PersonProfile
             // shown in About since 2026-10-05 (owner: "and the vibes?").
             'preferences' => array_values(array_filter((array) $person->preferences, 'is_string')),
             'avoid' => array_values((array) $person->avoid),
-            'budgetMin' => $person->budget_min === null ? null : (int) $person->budget_min,
-            'budgetMax' => $person->budget_max === null ? null : (int) $person->budget_max,
             /*
              * Who last described their taste. Two values only, and "guessed
              * from This or that" is not one of them: a game you played for

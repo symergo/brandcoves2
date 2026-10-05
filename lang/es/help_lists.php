@@ -89,6 +89,10 @@ return [
                     'shot' => 'occasion',
                     'alt' => 'El panel Ocasión de una lista, con la elección de la ocasión y la fecha.',
                 ],
+                [
+                    'title' => 'Un presupuesto',
+                    'body' => 'Lo que piensas gastar se pone por lista: abre la lista, toca «⋯» y luego Ajustes, y escribe un importe desde y uno hasta en Presupuesto. Aparece entonces bajo el nombre de la lista. En una lista para otra persona, Buscar un regalo usa ese presupuesto, y el presupuesto que elijas allí va a esa lista.',
+                ],
             ],
         ],
 

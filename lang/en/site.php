@@ -947,6 +947,7 @@ return [
         'title_label' => 'Name of the list',
         'recipient_label' => 'For whom',
         'description_label' => 'Description',
+        'budget_label' => 'Budget',
         'delete_confirm' => 'Delete this list and everything in it?',
         'share' => 'Share',
         'sharing_off' => 'Only you can see this list.',
@@ -2824,7 +2825,7 @@ return [
         'invite_limit' => 'You have invited :count people today. Try again tomorrow.',
         'invite_self' => 'That is your own email address.',
         'invite_person_tip' => 'We email :name your invitation. If :name has an account, or makes one, this person becomes that account: what you know about :name and your lists for them stay together. What you saved stays yours.',
-        'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves. Add someone only you see, or invite someone by email. Under each name is what you know about them (interests, budget, lists for them), and the lists they share with you show right there. Press the name for their page: what you know about them (edit it there), their wish lists and your lists for them. For a friend on GiftCoves also Together with: their lists for somebody else, group gifts and Secret Friends you are both in. A Secret Friend you share also shows as a small mark by their name. Who drew whom is never shown. Find a gift is on every row; This or that and Ask (ask other people for ideas for them) are under More. Someone you saved who is not on GiftCoves yet can be invited from More; once they join, they stay one person.',
+        'help' => 'My people lists everybody you buy for: people you saved and friends on GiftCoves. Add someone only you see, or invite someone by email. Under each name is what you know about them (interests, lists for them), and the lists they share with you show right there. Press the name for their page: what you know about them (edit it there), their wish lists and your lists for them. For a friend on GiftCoves also Together with: their lists for somebody else, group gifts and Secret Friends you are both in. A Secret Friend you share also shows as a small mark by their name. Who drew whom is never shown. Find a gift is on every row; This or that and Ask (ask other people for ideas for them) are under More. Someone you saved who is not on GiftCoves yet can be invited from More; once they join, they stay one person.',
     ],
 
     /*

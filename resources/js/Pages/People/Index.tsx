@@ -9,7 +9,7 @@ import EmptyState from '../../Components/EmptyState'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from '../../Components/Menu'
 import { useConfirm } from '../../Components/Modal'
 import PageHeader from '../../Components/PageHeader'
-import { budgetLabel, DayMonth, InvitePerson, monthDay } from '../../Components/PersonParts'
+import { DayMonth, InvitePerson, monthDay } from '../../Components/PersonParts'
 import SignInLink from '../../Components/SignInLink'
 import ToolIcon from '../../Components/ToolIcon'
 import type { Cents, SharedProps } from '../../types'
@@ -55,7 +55,7 @@ interface Person {
     } | null
     friend: FriendPart | null
     /** What you saved about them; null for a friend nobody saved. */
-    known: { interests: string[]; budgetMin: Cents | null; budgetMax: Cents | null } | null
+    known: { interests: string[] } | null
     /** Lists you are making for them. */
     listsForThem: number
     /** `MM-DD`, never a year: the date the row shows. */
@@ -341,9 +341,9 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
 
 /**
  * The one line of what you know about somebody: "Koken, Tuinieren, Lezen +2 ·
- * tot €50 · 2 lijsten voor hen". A part that is empty is left out rather than
- * shown as "geen budget": the owner's rule is no empty blocks, and a line of
- * blanks is one.
+ * 2 lijsten voor hen". A part that is empty is left out: the owner's rule is no
+ * empty blocks, and a line of blanks is one. No budget since 2026-10-05: it is
+ * a list's, not a person's.
  */
 function summaryOf(
     person: Person,
@@ -357,12 +357,6 @@ function summaryOf(
         const shown = known.interests.slice(0, INTERESTS_SHOWN).join(', ')
         const rest = known.interests.length - INTERESTS_SHOWN
         parts.push(rest > 0 ? `${shown} +${rest}` : shown)
-    }
-
-    const budget = known === null ? null : budgetLabel(known.budgetMin, known.budgetMax, t, money)
-
-    if (budget !== null) {
-        parts.push(budget)
     }
 
     if (person.listsForThem > 0) {

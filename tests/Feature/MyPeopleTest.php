@@ -69,7 +69,6 @@ class MyPeopleTest extends TestCase
     {
         $mum = $this->saved('Mum', [
             'interests' => ['cooking', 'gardening', 'wielrennen'],
-            'budget_max' => 5000,
         ]);
         foreach (['Kerst', 'Verjaardag'] as $title) {
             Wishlist::create([
@@ -84,8 +83,8 @@ class MyPeopleTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 // The closed vocabulary in the reader's language; typed words as typed.
                 ->where('people.0.known.interests', ['Koken', 'Tuinieren', 'wielrennen'])
-                ->where('people.0.known.budgetMax', 5000)
-                ->where('people.0.known.budgetMin', null)
+                // No budget: it is a list's, not a person's (2026-10-05).
+                ->missing('people.0.known.budgetMax')
                 ->where('people.0.listsForThem', 2));
     }
 

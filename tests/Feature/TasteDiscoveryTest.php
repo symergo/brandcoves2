@@ -14,6 +14,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use App\Services\Social\Friends;
+use App\Services\Wishlist\ListBudget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -206,8 +207,10 @@ class TasteDiscoveryTest extends TestCase
         // Added in front of what was there, never replacing it.
         $this->assertSame(['cooking', 'reading'], $mum->interests);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
-        $this->assertNotNull($mum->budget_min);
-        $this->assertGreaterThan($mum->budget_min, $mum->budget_max);
+        // The band learned goes on her list (2026-10-05), made for her if need be.
+        $budget = app(ListBudget::class)->forRecipient($mum);
+        $this->assertNotNull($budget['min']);
+        $this->assertGreaterThan($budget['min'], $budget['max']);
     }
 
     #[Test]
@@ -230,7 +233,7 @@ class TasteDiscoveryTest extends TestCase
 
         $dad->refresh();
         $this->assertSame(['fishing'], $dad->interests);
-        $this->assertNotNull($dad->budget_min);
+        $this->assertNotNull(app(ListBudget::class)->forRecipient($dad)['min']);
     }
 
     #[Test]

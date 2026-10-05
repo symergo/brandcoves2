@@ -12,6 +12,7 @@ use App\Enums\Preference;
 use App\Enums\RecipientType;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Services\Wishlist\ListBudget;
 
 /**
  * What we know about a person's taste.
@@ -99,12 +100,15 @@ final readonly class TasteBrief
             $taste = OwnTaste::overlay($taste, $own);
         }
 
+        // The budget is the list's since 2026-10-05; see ListBudget.
+        $budget = app(ListBudget::class)->forRecipient($recipient);
+
         return new self(
             market: $market,
             interests: array_values(array_filter($taste['interests'])),
             preferences: array_values(array_filter($taste['preferences'])),
-            budgetMin: $recipient->budget_min,
-            budgetMax: $recipient->budget_max,
+            budgetMin: $budget['min'],
+            budgetMax: $budget['max'],
             avoid: array_values(array_filter($taste['avoid'])),
             relationship: $recipient->relationship,
             gender: $taste['gender'] ?? null,

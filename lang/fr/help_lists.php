@@ -89,6 +89,10 @@ return [
                     'shot' => 'occasion',
                     'alt' => 'Le volet Occasion d’une liste, avec le choix de l’occasion et la date.',
                 ],
+                [
+                    'title' => 'Un budget',
+                    'body' => 'Ce que vous comptez dépenser se règle par liste : ouvrez la liste, touchez « ⋯ » puis Réglages, et indiquez un montant de et un montant à sous Budget. Il s’affiche alors sous le nom de la liste. Pour une liste pour quelqu’un d’autre, Trouver un cadeau utilise ce budget, et le budget que vous y choisissez va sur cette liste.',
+                ],
             ],
         ],
 

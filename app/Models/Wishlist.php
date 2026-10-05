@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool|null $link_can_add
  * @property bool|null $pledgers_visible
  * @property int|null $pledge_amount cents, when everybody pays the same
+ * @property int|null $budget_min cents; what you mean to spend, from (2026-10-05)
+ * @property int|null $budget_max cents; and up to
  * @property bool|null $voting_enabled
  * @property bool $visible_to_friends read through isVisibleToFriends()
  */
@@ -94,6 +96,8 @@ class Wishlist extends Model
             'link_can_add' => 'boolean',
             'pledgers_visible' => 'boolean',
             'pledge_amount' => 'integer',
+            'budget_min' => 'integer',
+            'budget_max' => 'integer',
             'voting_enabled' => 'boolean',
             'price_watch_percent' => 'integer',
             'event_type' => EventType::class,

@@ -11,7 +11,7 @@ import ListSummaryRow, { type ListSummary } from './ListSummaryRow'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import Modal, { useConfirm } from './Modal'
 import PageHeader from './PageHeader'
-import { budgetLabel, DayMonth, InvitePerson, monthDay } from './PersonParts'
+import { DayMonth, InvitePerson, monthDay } from './PersonParts'
 import ShareRow from './ShareRow'
 import ToolIcon from './ToolIcon'
 import type { Cents, SharedProps } from '../types'
@@ -46,8 +46,6 @@ export interface Profile {
         /** The sides chosen on the taste pairs, e.g. `design`, `vintage`. */
         preferences?: string[]
         avoid: string[]
-        budgetMin: Cents | null
-        budgetMax: Cents | null
         /** `self`: they said it themselves, through their own link. `suggested`: you did. */
         tasteSource: 'self' | 'suggested' | null
     }
@@ -143,18 +141,15 @@ export default function PersonProfile({
         profile.together.lists.length + profile.together.groups.length + profile.together.santa.length > 0
             ? profile.together
             : null
-    const money = (cents: Cents) => formatBudget(cents, market)
 
     const interestLabel = (value: string) => options.interests.find((o) => o.value === value)?.label ?? value
     const avoidLabel = (word: string) => (word.startsWith(LEARNED) ? interestLabel(word.slice(LEARNED.length)) : word)
-    const budget = budgetLabel(about.budgetMin, about.budgetMax, t, money)
 
     const facts: { label: string; items: string[] }[] = [
         { label: t('people.field_interests'), items: about.interests.map((i) => i.label) },
         { label: t('people.field_vibe'), items: (about.preferences ?? []).map((p) => t(`gift.preferences.${p}`)) },
         { label: t('people.field_age'), items: about.ageBand ? [options.ages.find((a) => a.value === about.ageBand)?.label ?? about.ageBand] : [] },
         { label: t('people.field_gender'), items: about.gender ? [t(`gift.genders.${about.gender}`)] : [] },
-        { label: t('people.field_budget'), items: budget === null ? [] : [budget] },
         { label: t('people.field_avoid'), items: about.avoid.map(avoidLabel) },
     ].filter((fact) => fact.items.length > 0)
 
@@ -706,7 +701,8 @@ function DetailsForm({ person, options, url, onDone }: { person: ProfilePerson; 
  * theirs once they have said it themselves: the server then keeps their
  * answer and ignores a guess (Recipient::describeTaste). The form says so and
  * does not offer those fields, rather than accepting an edit that would
- * silently not be stored. Age and budget stay yours.
+ * silently not be stored. The age stays yours. The budget is not here since
+ * 2026-10-05: it is a list's, set in the list's settings.
  */
 function AboutForm({
     person,
@@ -728,8 +724,6 @@ function AboutForm({
     const [ageBand, setAgeBand] = useState<string | null>(about.ageBand)
     const [gender, setGender] = useState<string | null>(about.gender ?? null)
     const [avoid, setAvoid] = useState<string[]>(about.avoid)
-    const [min, setMin] = useState(about.budgetMin === null ? '' : String(about.budgetMin / 100))
-    const [max, setMax] = useState(about.budgetMax === null ? '' : String(about.budgetMax / 100))
     const [ownWord, setOwnWord] = useState('')
     const [avoidWord, setAvoidWord] = useState('')
     const [busy, setBusy] = useState(false)
@@ -755,7 +749,6 @@ function AboutForm({
         setAvoidWord('')
     }
 
-    const euros = (value: string) => (value.trim() === '' ? null : Number(value))
     const field = fieldClasses()
 
     return (
@@ -768,9 +761,6 @@ function AboutForm({
                     {
                         age_band: ageBand,
                         gender,
-                        // Euros here, cents in the column: RecipientTasteRequest converts.
-                        budget_min: euros(min),
-                        budget_max: euros(max),
                         ...(theirs ? {} : { interests, avoid }),
                     },
                     { preserveScroll: true, onSuccess: onDone, onFinish: () => setBusy(false) },
@@ -874,18 +864,6 @@ function AboutForm({
                         </button>
                     ))}
                 </div>
-            </fieldset>
-
-            <fieldset className="grid max-w-sm grid-cols-2 gap-3">
-                <legend className="col-span-2 text-xs font-medium">{t('people.field_budget')}</legend>
-                <label className="block text-xs text-ink-soft">
-                    {t('people.budget_min')}
-                    <input type="number" min={0} max={100000} step={1} inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value)} className={field} />
-                </label>
-                <label className="block text-xs text-ink-soft">
-                    {t('people.budget_max')}
-                    <input type="number" min={0} max={100000} step={1} inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} className={field} />
-                </label>
             </fieldset>
 
             {!theirs && (

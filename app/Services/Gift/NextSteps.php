@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\WishlistItem;
+use App\Services\Wishlist\ListBudget;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -65,7 +66,8 @@ final class NextSteps
             ...$alsoExclude,
         ];
 
-        $budget = $recipient->budget_max;
+        // Their list's budget (2026-10-05); see ListBudget.
+        $budget = app(ListBudget::class)->forRecipient($recipient)['max'];
         $year = CarbonImmutable::now()->year;
 
         /*

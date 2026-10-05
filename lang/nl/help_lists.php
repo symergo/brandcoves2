@@ -104,6 +104,10 @@ return [
                     'shot' => 'occasion',
                     'alt' => 'Het venster Gelegenheid van een lijst, met de keuze van de gelegenheid en de datum.',
                 ],
+                [
+                    'title' => 'Een budget',
+                    'body' => 'Wat je wilt uitgeven, zet je per lijst: open de lijst, tik op “⋯” en dan op Instellingen, en vul bij Budget een van- en een tot-bedrag in. Het staat dan onder de naam van de lijst. Voor een lijst over iemand anders gebruikt Cadeau vinden dat budget, en wat je daar als budget kiest, komt op die lijst.',
+                ],
             ],
         ],
 

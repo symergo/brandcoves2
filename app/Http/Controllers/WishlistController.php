@@ -1139,7 +1139,21 @@ class WishlistController extends Controller
              * offers. See App\Services\Alerts\ListPriceWatch.
              */
             'price_watch_percent' => ['sometimes', 'nullable', 'integer', Rule::in(ListPriceWatch::PERCENTAGES)],
+
+            /*
+             * What you mean to spend, from and up to (2026-10-05): a list's
+             * budget, no longer a person's. Euros in, cents stored, like the
+             * pledge amount above; null clears it.
+             */
+            'budget_min' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100000'],
+            'budget_max' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100000', 'gte:budget_min'],
         ]);
+
+        foreach (['budget_min', 'budget_max'] as $key) {
+            if (array_key_exists($key, $validated)) {
+                $validated[$key] = $validated[$key] === null ? null : (int) round((float) $validated[$key] * 100);
+            }
+        }
 
         /*
          * Euros to cents, once, here.
@@ -1485,6 +1499,9 @@ class WishlistController extends Controller
             'id' => $list->id,
             'title' => $list->displayTitle(),
             'description' => $list->description,
+            // Cents; the list's own budget (2026-10-05).
+            'budgetMin' => $list->budget_min,
+            'budgetMax' => $list->budget_max,
             'kind' => $list->kind->value,
             'claimable' => $list->allowsClaiming(),
 

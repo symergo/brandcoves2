@@ -429,12 +429,13 @@ class MyPeople
 
     /**
      * What you know about a saved person, for the one line under their name:
-     * their interests in the reader's language, and your budget.
+     * their interests in the reader's language. No budget since 2026-10-05: it
+     * is a list's, not a person's (ListBudget).
      *
      * Interests outside the closed vocabulary (typed by hand, "wielrennen")
-     * show as typed. Budget stays in cents (invariant 7); the page formats it.
+     * show as typed.
      *
-     * @return array{interests: list<string>, budgetMin: int|null, budgetMax: int|null}
+     * @return array{interests: list<string>}
      */
     private function known(Recipient $person): array
     {
@@ -443,8 +444,6 @@ class MyPeople
                 fn (string $interest) => Interest::tryFrom($interest)?->label() ?? $interest,
                 array_filter((array) $person->interests, fn ($v) => is_string($v) && trim($v) !== ''),
             )),
-            'budgetMin' => $person->budget_min === null ? null : (int) $person->budget_min,
-            'budgetMax' => $person->budget_max === null ? null : (int) $person->budget_max,
         ];
     }
 

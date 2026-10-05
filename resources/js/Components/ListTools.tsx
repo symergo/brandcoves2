@@ -93,6 +93,9 @@ interface Props {
         priceWatchPercent: number | null
         /** The owner's note under the title, or null. Edited in the settings panel. */
         description: string | null
+        /** What you mean to spend, in cents; set in the settings panel (2026-10-05). */
+        budgetMin?: number | null
+        budgetMax?: number | null
     }
     access: { isOwner: boolean; canEdit: boolean }
     collaborators: Collaborator[]
@@ -170,6 +173,9 @@ export default function ListTools({
     // The settings form: the name and the note, typed here and saved together.
     const [title, setTitle] = useState(list.title)
     const [note, setNote] = useState(list.description ?? '')
+    // The list's budget, in euros while typed (2026-10-05).
+    const [budgetMin, setBudgetMin] = useState(list.budgetMin == null ? '' : String(list.budgetMin / 100))
+    const [budgetMax, setBudgetMax] = useState(list.budgetMax == null ? '' : String(list.budgetMax / 100))
     // And who it is for, on a list about somebody else. Lives on the recipient,
     // not the list, so it is saved through its own endpoint first.
     const [personName, setPersonName] = useState(list.recipient?.name ?? '')
@@ -672,6 +678,9 @@ export default function ListTools({
                                             // is nullable and a blank string would render as
                                             // a gap under the title.
                                             description: note.trim() === '' ? null : note.trim(),
+                                            // Euros; the server stores cents. Empty clears it.
+                                            budget_min: budgetMin.trim() === '' ? null : Number(budgetMin),
+                                            budget_max: budgetMax.trim() === '' ? null : Number(budgetMax),
                                         })
                                     const renamed = personName.trim()
 
@@ -742,6 +751,41 @@ export default function ListTools({
                                         className="mt-1 w-full rounded-lg border border-line bg-cream p-3 text-sm"
                                     />
                                 </label>
+                                {/*
+                                  The budget, a fact about the list rather than
+                                  the person since 2026-10-05: two lists for
+                                  Mama can have two budgets. Find a gift and
+                                  swiping for this person start from it.
+                                */}
+                                <fieldset className="grid max-w-sm grid-cols-2 gap-3">
+                                    <legend className="col-span-2 text-sm text-ink-soft">{t('lists.budget_label')}</legend>
+                                    <label className="block text-xs text-ink-soft">
+                                        {t('people.budget_min')}
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100000}
+                                            step={1}
+                                            inputMode="numeric"
+                                            value={budgetMin}
+                                            onChange={(e) => setBudgetMin(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                    <label className="block text-xs text-ink-soft">
+                                        {t('people.budget_max')}
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100000}
+                                            step={1}
+                                            inputMode="numeric"
+                                            value={budgetMax}
+                                            onChange={(e) => setBudgetMax(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                </fieldset>
                                 <div className="flex items-center gap-3">
                                     <button type="submit" className="rounded-lg bg-ink px-3 py-1.5 text-sm text-cream">
                                         {t('lists.save')}
@@ -1150,7 +1194,7 @@ export function ListToolsBar({
      */
     const tools: { key: Panel; icon: ToolKey; label: string; show: boolean; set: boolean }[] = [
         /*
-         * The list's own settings: its name, the note under it, whether its
+         * The list's own settings: its name, the note under it, its budget, whether its
          * prices are watched, and what it is for. Share is who may see the
          * list; this is what the list is. The owner's alone.
          */
@@ -1159,7 +1203,7 @@ export function ListToolsBar({
             icon: 'settings',
             label: t('lists.settings'),
             show: access.isOwner,
-            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate),
+            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate) || list.budgetMax != null || list.budgetMin != null,
         },
         /*
          * Ask the recipient for suggestions, on a list about somebody else.

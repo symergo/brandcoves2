@@ -51,10 +51,4 @@ class RecipientFactory extends Factory
             'owner_anon_id' => $anonId,
         ]);
     }
-
-    /** Budget in cents, per invariant #7. */
-    public function budget(?int $min, ?int $max): static
-    {
-        return $this->state(fn () => ['budget_min' => $min, 'budget_max' => $max]);
-    }
 }
