@@ -207,6 +207,45 @@ class CoveMarkup
     }
 
     /**
+     * The closing link of a product paragraph, in the owner's two forms.
+     *
+     * Every product paragraph in a Daily or a persona ended with one fixed
+     * line, "Meer [[search:Cat|noun]]." (and "More …", "Plus de …"). On
+     * 2026-10-05 the owner asked for "Meer [categorie] vergelijken" and "De
+     * beste [categorie]", alternating. Hundreds of published plans carry the
+     * old line, so it is rewritten here, at render, rather than in the stored
+     * prose: one place, every page at once, and the stored text stays what was
+     * written. New prose is asked for the new lines directly (Defaults), which
+     * this leaves alone; only the old line, whole, with nothing else in it, is
+     * touched, so a "Meer koffie staat onder [[search:…]]" written by hand is
+     * not.
+     *
+     * Which of the two a paragraph gets comes from the category, so the same
+     * product always reads the same and neighbours differ.
+     */
+    public static function moreLine(string $text, Market $market): string
+    {
+        $forms = match ($market->language()) {
+            'nl' => ['Meer', ['Meer %s vergelijken.', 'De beste %s.']],
+            'en' => ['More', ['Compare more %s.', 'The best %s.']],
+            'fr' => ['Plus de', ['Comparer plus de %s.', 'Le meilleur des %s.']],
+            default => null,
+        };
+
+        if ($forms === null) {
+            return $text;
+        }
+
+        [$lead, $pair] = $forms;
+
+        return preg_replace_callback(
+            '/(?<![^\s])'.preg_quote($lead, '/').' (\[\[search:([^\]|]+)(?:\|[^\]]+)?\]\])\.(?=\s|$)/u',
+            fn (array $m): string => sprintf($pair[crc32(mb_strtolower(trim($m[2]))) % 2], $m[1]),
+            $text,
+        ) ?? $text;
+    }
+
+    /**
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      * @return array{html: string, links: int, rejected: list<string>}
      */
@@ -220,6 +259,8 @@ class CoveMarkup
         // before the walk rather than inside it — the callback runs once per
         // token and would otherwise be an N+1 on a page of prose.
         $brandUrls = $this->brands->urls($allowed['brands'] ?? [], $market);
+
+        $text = self::moreLine($text, $market);
 
         // Escape first, resolve second. The prose is model output and is
         // rendered as HTML, so anything that arrives already looking like

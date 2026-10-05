@@ -186,6 +186,14 @@ class Defaults
           archive.
         - If today has an occasion, it is named in the brief. Never invent one,
           and never imply the date means something when the brief does not say so.
+        - End each product's paragraph with a link to more of its category,
+          alternating between two fixed lines, in the page's language:
+          Dutch "Meer [[search:Category|noun]] vergelijken." and
+          "De beste [[search:Category|noun]]."; English "Compare more
+          [[search:Category|noun]]." and "The best [[search:Category|noun]].";
+          French "Comparer plus de [[search:Category|noun]]." and "Le meilleur
+          des [[search:Category|noun]]." The noun is the category in the plural.
+          These lines are links to a search, not a verdict on the product above.
         TXT;
 
     private const DAILY_PROMPT = <<<'TXT'
@@ -253,6 +261,14 @@ class Defaults
         - Never mention an occasion. If somebody wants a birthday page they are
           on a different one.
         - Do not address the recipient. The reader is the person buying.
+        - End each product's paragraph with a link to more of its category,
+          alternating between two fixed lines, in the page's language:
+          Dutch "Meer [[search:Category|noun]] vergelijken." and
+          "De beste [[search:Category|noun]]."; English "Compare more
+          [[search:Category|noun]]." and "The best [[search:Category|noun]].";
+          French "Comparer plus de [[search:Category|noun]]." and "Le meilleur
+          des [[search:Category|noun]]." The noun is the category in the plural.
+          These lines are links to a search, not a verdict on the product above.
         TXT;
 
     private const PERSONA_PROMPT = <<<'TXT'

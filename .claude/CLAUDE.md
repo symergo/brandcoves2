@@ -377,4 +377,8 @@ keeps the shortlist when no items are sent. Send the plan whole, or change one f
 `PATCH /coves/{id}`.
 
 House rules from the owner: **eight products minimum** on a daily or a persona, and every product
-paragraph ends with a search-for-more link on its category (`Meer [[search:Cat|noun]].`).
+paragraph ends with a link to more of its category, alternating (2026-10-05):
+`Meer [[search:Cat|noun]] vergelijken.` and `De beste [[search:Cat|noun]].` (English "Compare more
+…" / "The best …", French "Comparer plus de …" / "Le meilleur des …"). The old line,
+`Meer [[search:Cat|noun]].`, is rewritten to these at render (`CoveMarkup::moreLine()`), so the
+archive follows without touching stored prose.

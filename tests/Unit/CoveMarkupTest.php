@@ -575,4 +575,34 @@ Twee.',
         $this->assertSame(1, $result['links']);
         $this->assertSame([], $result['rejected']);
     }
+
+    #[Test]
+    public function the_old_more_line_becomes_the_owners_two_forms_and_alternates(): void
+    {
+        /*
+         * 2026-10-05: "Meer [categorie] vergelijken" or "De beste [categorie]",
+         * alternating, instead of "Meer [categorie]." on every product
+         * paragraph. Rewritten at render, so the archive follows.
+         */
+        $nl = fn (string $t) => CoveMarkup::moreLine($t, Market::BeNl);
+
+        $forms = [];
+        foreach (['Koffiemolens', 'Thee', 'Kaarsen', 'Puzzels', 'Sokken', 'Mokken'] as $category) {
+            $out = $nl("Een zin. Meer [[search:{$category}|x]].");
+            $this->assertMatchesRegularExpression('/^Een zin\. (Meer \[\[search:[^\]]+\]\] vergelijken|De beste \[\[search:[^\]]+\]\])\.$/u', $out);
+            $forms[str_starts_with(substr($out, 9), 'Meer') ? 'compare' : 'best'] = true;
+        }
+        $this->assertCount(2, $forms, 'both forms appear across categories');
+
+        // The same category always reads the same.
+        $this->assertSame($nl('Meer [[search:Thee|thee]].'), $nl('Meer [[search:Thee|thee]].'));
+
+        // A sentence written by hand around a search link is left alone.
+        $free = 'Meer koffie staat onder [[search:Koffie|koffie]].';
+        $this->assertSame($free, $nl($free));
+
+        // The other languages' old lines too.
+        $this->assertMatchesRegularExpression('/^(Compare more|The best) \[\[search:Kettles\|kettles\]\]\.$/', CoveMarkup::moreLine('More [[search:Kettles|kettles]].', Market::En));
+        $this->assertMatchesRegularExpression('/^(Comparer plus de|Le meilleur des) \[\[search:Bougies\|bougies\]\]\.$/u', CoveMarkup::moreLine('Plus de [[search:Bougies|bougies]].', Market::BeFr));
+    }
 }
