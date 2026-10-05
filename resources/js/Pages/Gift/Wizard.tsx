@@ -1036,7 +1036,8 @@ export default function GiftWizard(props: Props) {
                     </div>
 
                     <h3 className="mt-8 text-base font-medium">{t('gift.ways_ask_title')}</h3>
-                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    {/* One column when the gift is for yourself: the second card is gone (see below). */}
+                    <div className={`mt-3 grid gap-4 ${forMe ? '' : 'sm:grid-cols-2'}`}>
                         {/*
                           Ask other people (owner, 2026-09-26): the ask form,
                           already filled in with who it is for and what is
@@ -1072,7 +1073,12 @@ export default function GiftWizard(props: Props) {
                             </span>
                         </div>
 
-                        <AskThemCard recipient={recipient} peopleUrl={`/${market.key}/people`} />
+                        {/*
+                          Not when the gift is for yourself (owner,
+                          2026-10-05): "ask the person themselves" asks you to
+                          ask yourself.
+                        */}
+                        {!forMe && <AskThemCard recipient={recipient} peopleUrl={`/${market.key}/people`} />}
                     </div>
                 </section>
             ) : (
