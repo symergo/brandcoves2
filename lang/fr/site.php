@@ -2497,6 +2497,7 @@ return [
         'source_self' => 'Rempli par :name',
         'source_self_tip' => ':name a rempli ses goûts elle-même, via son lien de profil. L\'âge et le budget sont à vous, et vous les modifiez ici.',
         'taste_is_theirs' => ':name a rempli ses goûts elle-même, vous ne les modifiez donc pas ici : sa réponse passe avant une supposition. L\'âge et le budget restent à vous.',
+        'field_birthday' => 'Anniversaire',
         'field_interests' => 'Centres d\'intérêt',
         'field_age' => 'Âge',
         'field_gender' => 'Genre',

@@ -276,17 +276,7 @@ export default function PersonProfile({
                 <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
                     {profile.relationshipLabel !== null &&
                         profile.relationshipLabel.toLowerCase() !== person.name.toLowerCase() && <span>{profile.relationshipLabel}</span>}
-                    {profile.birthday !== null ? (
-                        <span className="inline-flex items-center">
-                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                            {formatDay(profile.birthday, market)}
-                        </span>
-                    ) : (
-                        <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
-                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
-                            {t('friends.add_birthday')}
-                        </button>
-                    )}
+                    {/* The birthday is in "About" since 2026-10-05 (owner). */}
                     {profile.isFriend ? (
                         <Badge tone="accent">{t('people.on_giftcoves')}</Badge>
                     ) : (
@@ -383,7 +373,7 @@ export default function PersonProfile({
             >
                 {panel === 'about' ? (
                     <AboutForm person={person} profile={profile} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
-                ) : facts.length === 0 ? (
+                ) : facts.length === 0 && profile.birthday === null ? (
                     <>
                         <EmptyState
                             quiet
@@ -392,6 +382,10 @@ export default function PersonProfile({
                                     <button type="button" onClick={() => setPanel('about')} className={secondary}>
                                         <ToolIcon name="edit" className="h-4 w-4" />
                                         {t('people.fill_in_yourself')}
+                                    </button>
+                                    <button type="button" onClick={() => toggle('details')} className={secondary}>
+                                        <ToolIcon name="cake" className="h-4 w-4" />
+                                        {t('friends.add_birthday')}
                                     </button>
                                     {urls.selfDescribe !== null && (
                                         <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={secondary}>
@@ -409,6 +403,27 @@ export default function PersonProfile({
                 ) : (
                     <>
                         <dl className="space-y-2">
+                            {/*
+                              The birthday first (owner, 2026-10-05: it moved
+                              here from under the name). Unknown, it is the way
+                              to add it; the form is "Naam en verjaardag".
+                            */}
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                <dt className="w-32 shrink-0 text-xs font-medium text-ink-soft">{t('people.field_birthday')}</dt>
+                                <dd className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                                    {profile.birthday !== null ? (
+                                        <span className="inline-flex items-center rounded-full bg-line/40 px-2.5 py-0.5 text-sm">
+                                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                                            {formatDay(profile.birthday, market)}
+                                        </span>
+                                    ) : (
+                                        <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
+                                            <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
+                                            {t('friends.add_birthday')}
+                                        </button>
+                                    )}
+                                </dd>
+                            </div>
                             {facts.map((fact) => (
                                 <div key={fact.label} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                     <dt className="w-32 shrink-0 text-xs font-medium text-ink-soft">{fact.label}</dt>

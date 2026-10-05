@@ -2510,6 +2510,7 @@ return [
         'source_self' => 'Ingevuld door :name zelf',
         'source_self_tip' => 'Hun smaak vulde :name zelf in, via hun profiellink. Leeftijd en budget zijn van jou en pas je hier aan.',
         'taste_is_theirs' => ':name vulde hun smaak zelf in, dus die pas je hier niet aan: hun antwoord telt boven een gok. Leeftijd en budget blijven van jou.',
+        'field_birthday' => 'Verjaardag',
         'field_interests' => 'Interesses',
         'field_age' => 'Leeftijd',
         'field_gender' => 'Geslacht',

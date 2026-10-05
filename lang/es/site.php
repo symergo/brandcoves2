@@ -2495,6 +2495,7 @@ return [
         'source_self' => 'Rellenado por :name',
         'source_self_tip' => ':name rellenó sus gustos por sí misma, con su enlace de perfil. La edad y el presupuesto son tuyos, y los cambias aquí.',
         'taste_is_theirs' => ':name rellenó sus gustos por sí misma, así que aquí no los cambias: su respuesta cuenta más que una suposición. La edad y el presupuesto siguen siendo tuyos.',
+        'field_birthday' => 'Cumpleaños',
         'field_interests' => 'Intereses',
         'field_age' => 'Edad',
         'field_gender' => 'Género',

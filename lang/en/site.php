@@ -2766,6 +2766,7 @@ return [
         'source_self' => 'Filled in by :name',
         'source_self_tip' => ':name filled in their taste themselves, through their profile link. Age and budget are yours, and you change them here.',
         'taste_is_theirs' => ':name filled in their taste themselves, so you do not change it here: their answer counts above a guess. Age and budget stay yours.',
+        'field_birthday' => 'Birthday',
         'field_interests' => 'Interests',
         'field_age' => 'Age',
         'field_gender' => 'Gender',
