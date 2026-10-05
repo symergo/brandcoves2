@@ -1492,7 +1492,7 @@ return [
             'loading' => 'Recherche',
             'empty' => 'C’est tout pour l’instant. Il y a du nouveau chaque jour.',
             'done_title' => 'Ce que vous avez choisi',
-            'done_hint' => 'Gardez-les sur une liste. Pour cela, connectez-vous.',
+            'sign_in_to_save' => 'Connectez-vous pour les garder',
             'back' => 'Retour à Trouver un cadeau',
             'to_list' => 'Voir la liste',
             'save_failed' => 'Impossible de l’ajouter à la liste. Réessayez.',

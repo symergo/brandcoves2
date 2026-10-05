@@ -1497,7 +1497,7 @@ return [
             'loading' => 'Even zoeken',
             'empty' => 'Meer hebben we nu niet. Er komt elke dag nieuws bij.',
             'done_title' => 'Wat je koos',
-            'done_hint' => 'Bewaar ze op een lijst. Daarvoor log je in.',
+            'sign_in_to_save' => 'Log in om ze te bewaren',
             'back' => 'Terug naar Cadeau vinden',
             'to_list' => 'Naar de lijst',
             'save_failed' => 'Dat kon niet op de lijst. Probeer het nog eens.',

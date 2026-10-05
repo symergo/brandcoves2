@@ -1695,7 +1695,7 @@ return [
             'loading' => 'Looking',
             'empty' => 'That is all we have for now. New things arrive every day.',
             'done_title' => 'What you chose',
-            'done_hint' => 'Save them to a list. You sign in for that.',
+            'sign_in_to_save' => 'Sign in to save them',
             'back' => 'Back to Find a gift',
             'to_list' => 'Go to the list',
             'save_failed' => 'That could not go on the list. Try again.',

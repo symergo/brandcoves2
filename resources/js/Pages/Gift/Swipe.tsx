@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { buttonClasses } from '../../Components/Button'
 import PlayDialog from '../../Components/PlayDialog'
 import SaveToList from '../../Components/SaveToList'
+import SignInLink from '../../Components/SignInLink'
 import SwipeCard from '../../Components/SwipeCard'
 import type { ListKind } from '../../Components/ListKindBadge'
 import ToolIcon from '../../Components/ToolIcon'
@@ -425,7 +426,14 @@ function Chosen({ cards, finder }: { cards: Card[]; finder: string }) {
     return (
         <div className="mt-6 text-left">
             <h2 className="text-lg font-medium">{t('gift.swipe.done_title')}</h2>
-            <p className="mt-1 text-sm text-ink-soft">{t('gift.swipe.done_hint')}</p>
+            {/*
+              A button rather than a sentence (owner, 2026-10-05): it read
+              "Bewaar ze op een lijst. Daarvoor log je in." and left the
+              visitor to find the way in themselves.
+            */}
+            <SignInLink hint={t('gift.swipe.sign_in_to_save')} className={buttonClasses('primary', 'md', 'mt-3')}>
+                {t('gift.swipe.sign_in_to_save')}
+            </SignInLink>
             <ul className="mt-4 space-y-3">
                 {cards.map((card) => (
                     <li key={card.id} className="flex items-center gap-3 rounded-card border border-line bg-card p-3">

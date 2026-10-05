@@ -1491,7 +1491,7 @@ return [
             'loading' => 'Buscando',
             'empty' => 'Es todo por ahora. Cada día llegan cosas nuevas.',
             'done_title' => 'Lo que elegiste',
-            'done_hint' => 'Guárdalos en una lista. Para eso inicias sesión.',
+            'sign_in_to_save' => 'Inicia sesión para guardarlos',
             'back' => 'Volver a Buscar un regalo',
             'to_list' => 'Ir a la lista',
             'save_failed' => 'No se pudo añadir a la lista. Inténtalo de nuevo.',
