@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import Badge from './Badge'
-import Button, { buttonClasses, fieldClasses, rowActionClasses } from './Button'
+import Button, { fieldClasses, rowActionClasses } from './Button'
 import EmptyState from './EmptyState'
 import InfoTip from './InfoTip'
 import ListKindBadge, { kindIcons, type ListKind } from './ListKindBadge'
@@ -206,6 +206,21 @@ export default function PersonProfile({
                     >
                         {(close) => (
                             <>
+                                {/*
+                                  The ways to an idea, first in the menu since
+                                  they left the page as buttons (owner,
+                                  2026-10-05), as on My people's row menu.
+                                */}
+                                <MenuItem href={urls.finder} icon={<ToolIcon name="whisperer" className="h-4 w-4" />}>
+                                    {t('people.find_gift')}
+                                </MenuItem>
+                                <MenuItem href={urls.taste} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
+                                    {t('people.taste')}
+                                </MenuItem>
+                                <MenuItem href={urls.ask} icon={<ToolIcon name="board" className="h-4 w-4" />}>
+                                    {t('people.ask')}
+                                </MenuItem>
+                                <MenuSeparator />
                                 <MenuItem
                                     onSelect={() => {
                                         close()
@@ -294,24 +309,10 @@ export default function PersonProfile({
                 </p>
 
                 {/*
-                  The ways to an idea. On a phone the filled button takes the
-                  row and the other two share the next one, so nothing wraps
-                  into a ragged third line.
+                  No "Cadeau vinden", "Dit of dat" and "Vraag" buttons here
+                  since 2026-10-05 (owner): they are the first items in the
+                  "…" menu above.
                 */}
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                    <Link href={urls.finder} className={buttonClasses('primary', 'md', 'col-span-2')}>
-                        <ToolIcon name="whisperer" className="h-4 w-4" />
-                        {t('people.find_gift')}
-                    </Link>
-                    <Link href={urls.taste} className={secondary}>
-                        <ToolIcon name="taste" className="h-4 w-4" />
-                        {t('people.taste')}
-                    </Link>
-                    <Link href={urls.ask} className={secondary}>
-                        <ToolIcon name="board" className="h-4 w-4" />
-                        {t('people.ask')}
-                    </Link>
-                </div>
 
                 {panel === 'invite' && urls.invite !== null && (
                     <InvitePerson
