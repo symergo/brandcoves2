@@ -145,7 +145,8 @@ class MyPeople
                 'invitable' => $person->user_id === null,
                 'urls' => [
                     'person' => $current->url("people/{$person->id}"),
-                    'finder' => $current->url('gift').'?for='.$person->id,
+                    // The wizard with them chosen, every way open (2026-10-05).
+                    'finder' => $current->url('gift').'?person='.$person->id,
                     'taste' => $current->url('gift/taste').'?person='.$person->id,
                     // "Vraag" (owner, 2026-09-27): the Ask others form, opened
                     // and filled in with what we know about them. AskPrefill

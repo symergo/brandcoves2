@@ -58,7 +58,8 @@ class MyPeopleTest extends TestCase
                 ->where('people.0.next.date', '2026-06-10')
                 ->where('people.0.next.days', 9)
                 ->where('people.0.urls.person', fn ($url) => str_ends_with($url, "/be-nl/people/{$mum->id}"))
-                ->where('people.0.urls.finder', fn ($url) => str_ends_with($url, "/be-nl/gift?for={$mum->id}"))
+                // The wizard with her chosen, every way open, swiping included (2026-10-05).
+                ->where('people.0.urls.finder', fn ($url) => str_ends_with($url, "/be-nl/gift?person={$mum->id}"))
                 // "Vraag": Ask others, filled in about them (2026-09-27).
                 ->where('people.0.urls.ask', fn ($url) => str_ends_with($url, "/be-nl/ask?person={$mum->id}")));
     }

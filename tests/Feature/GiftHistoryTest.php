@@ -252,6 +252,29 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
+    public function starting_from_a_person_opens_the_wizard_with_them_chosen(): void
+    {
+        /*
+         * "Cadeau vinden" on a person's page went to `?for=`, straight to
+         * eight ideas, with no way to swipe (owner, 2026-10-05). `?person=`
+         * opens the wizard with them chosen instead; the page starts on the
+         * ways step.
+         */
+        $this->actingAs($this->giver)->get("/be-nl/gift?person={$this->mum->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Gift/Wizard')
+                ->where('startWith', $this->mum->id)
+                ->where('picks', null)
+                ->where('brief', null));
+
+        // Somebody else's person id opens the plain wizard, chosen for nobody.
+        $this->actingAs(User::factory()->create())->get("/be-nl/gift?person={$this->mum->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('startWith', null));
+    }
+
+    #[Test]
     public function this_or_that_for_a_person_leaves_out_what_they_were_given(): void
     {
         $shown = [];

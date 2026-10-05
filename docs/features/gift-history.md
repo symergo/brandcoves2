@@ -259,3 +259,15 @@ storage.
 - The complement word lists have had no editor's pass.
 - Lists about the same human under two unlinked saved people (yours and your sister's) are not
   joined up; nothing in the data says they are one person.
+
+## From a person's page: the wizard, not the board (2026-10-05)
+
+"Cadeau vinden" on a person's page and in My people went to `/gift?for=<id>`, straight to eight
+ideas. The owner found no way to swipe from there: the board has the ideas and a search, not the
+ways in. Both buttons now go to `/gift?person=<id>`, which opens the wizard with that person chosen
+(their interests, budget and the rest, as picking them on the first step does) on the ways step:
+search, swipe, the questions, This or that, a type, asking others. The state is set as the wizard
+starts, not after, so "Voor wie?" never flashes. `?for=` is unchanged for the reminder email, where
+the ideas are the point. Both accept only the owner's own person; any other id opens the plain
+wizard.
+

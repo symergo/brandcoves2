@@ -98,7 +98,8 @@ class PersonController extends Controller
             'highlight' => $highlight,
             'recipientList' => $this->theirList($request, $current, $person, $steps !== [] || $highlight !== null),
             'urls' => [
-                'finder' => $current->url('gift').'?for='.$person->id,
+                // The wizard with them chosen, every way open (2026-10-05).
+                'finder' => $current->url('gift').'?person='.$person->id,
                 'taste' => $current->url('gift/taste').'?person='.$person->id,
                 'ask' => $current->url('ask').'?person='.$person->id,
                 'recipient' => $current->url("recipients/{$person->id}"),

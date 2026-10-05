@@ -90,6 +90,19 @@ class GiftController extends Controller
         }
 
         /*
+         * `?person=<person>`: the wizard with that person already chosen, on
+         * the step with every way to an idea (swipe, the questions, This or
+         * that, a type, search, asking), from "Cadeau vinden" on their page and
+         * in My people (owner, 2026-10-05: "there is no swiping option"). Those
+         * went to `?for=`, straight to eight ideas, which left out every other
+         * way. The reminder email keeps `?for=`: there the ideas are the point.
+         * Only the owner's own person; anybody else's id opens the plain
+         * wizard, as `?for=` does.
+         */
+        $person = (string) $request->query('person', '');
+        $startWith = Str::isUuid($person) ? $this->recipient($request, ['recipient_id' => $person]) : null;
+
+        /*
          * `?interest=coffee` and/or `?vibe=design`: straight to ideas for that
          * one answer, from the chips on a product page (owner, 2026-09-30: "when
          * clicked they should serve as gift search"). The board keeps the
@@ -131,6 +144,8 @@ class GiftController extends Controller
              * one (2026-09-29), as choosing a saved person starts from theirs.
              */
             'myTaste' => $this->myTaste($request),
+            // `?person=`: the saved person to start with, on the ways step.
+            'startWith' => $startWith?->id,
         ]);
     }
 

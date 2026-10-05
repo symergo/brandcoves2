@@ -98,6 +98,12 @@ interface Props extends GiftResultsExtras {
     card?: GiftProfileCardProps | null
     /** This or that, the second way in. */
     tasteUrl?: string
+    /**
+     * A saved person to start with, on the ways step (`?person=`, from their
+     * page and My people, 2026-10-05). As if they had been chosen as the first
+     * step, so swiping and every other way is there.
+     */
+    startWith?: string | null
     /** Your own "Mijn smaak", for "Voor mezelf"; null when you keep none or are not signed in. */
     myTaste?: {
         interests: string[]
@@ -434,7 +440,7 @@ function AskThemCard({ recipient, peopleUrl }: { recipient: Recipient | null; pe
  * straight on the results. See docs/features/find-a-gift.md.
  */
 export default function GiftWizard(props: Props) {
-    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl, people = [], myTaste = null } = props
+    const { options, recipients, picks, brief, recipientList, card = null, personas = [], tasteUrl, people = [], myTaste = null, startWith = null } = props
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -445,28 +451,35 @@ export default function GiftWizard(props: Props) {
      * are willing to spend on them. That does not belong in a URL that ends up
      * in a referrer header or in a browser history someone else can read.
      */
-    const [stage, setStage] = useState<'who' | 'ways' | 'questions'>(card || brief ? 'questions' : 'who')
+    /*
+     * `startWith`: the same answers `useRecipient` sets when a person is picked
+     * on the first step, set as the starting state rather than after mount, so
+     * the page opens on the ways step instead of flashing "Who is it for?".
+     */
+    const preset = !card && !brief && startWith ? (recipients.find((r) => r.id === startWith) ?? null) : null
+
+    const [stage, setStage] = useState<'who' | 'ways' | 'questions'>(card || brief ? 'questions' : preset ? 'ways' : 'who')
     const [step, setStep] = useState(0)
-    const [interests, setInterests] = useState<string[]>(brief?.interests ?? [])
-    const [preferences, setPreferences] = useState<string[]>(brief?.preferences ?? [])
+    const [interests, setInterests] = useState<string[]>(brief?.interests ?? preset?.interests ?? [])
+    const [preferences, setPreferences] = useState<string[]>(brief?.preferences ?? preset?.preferences ?? [])
     const [budgetMax, setBudgetMax] = useState<string>(
-        brief?.budget_max != null ? String(brief.budget_max) : '',
+        brief?.budget_max != null ? String(brief.budget_max) : preset?.budgetMax != null ? String(preset.budgetMax / 100) : '',
     )
     // Not asked, but carried: This or that learns a band, and "Refine with
     // the questions" posts it here, so it has to travel back with each post.
     const [budgetMin, setBudgetMin] = useState<number | null>(brief?.budget_min ?? null)
-    const [avoid, setAvoid] = useState<string[]>(brief?.avoid ?? [])
-    const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? null)
+    const [avoid, setAvoid] = useState<string[]>(brief?.avoid ?? preset?.avoid ?? [])
+    const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? preset?.relationship ?? null)
     // One of the fixed groups the server offers, never typed: an editor tags
     // a product with the same strings, so the two meet as one value.
-    const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
+    const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? preset?.ageBand ?? null)
     /*
      * Man or woman (owner, 2026-09-29): a profile question beside the age,
      * optional, never folded into the relation. It only ever leaves out a
      * product tagged for the other one; most carry no gender and stay in.
      */
-    const [gender, setGender] = useState<string | null>(brief?.gender ?? null)
-    const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
+    const [gender, setGender] = useState<string | null>(brief?.gender ?? preset?.gender ?? null)
+    const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? preset?.id ?? null)
     /*
      * "Voor mezelf" (owner, 2026-09-28): the same questions about yourself.
      * No saved person and no relationship; the questions say "you", and the
