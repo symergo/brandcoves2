@@ -377,9 +377,12 @@ function Entry({ icon, title, body, cta, href }: { icon: ToolKey; title: string;
                 href={href}
                 className="group flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
             >
-                <ToolIcon name={icon} className="h-8 w-8 text-accent" duo />
-                <span className="mt-4 text-lg font-semibold">{title}</span>
-                <span className="mt-1 flex-1 text-ink-soft">{body}</span>
+                {/* The title beside the icon, not under it (owner, 2026-10-05): one line saves a row. */}
+                <span className="flex items-center gap-3">
+                    <ToolIcon name={icon} className="h-8 w-8 shrink-0 text-accent" duo />
+                    <span className="text-lg font-semibold">{title}</span>
+                </span>
+                <span className="mt-2 flex-1 text-ink-soft">{body}</span>
                 <span className="mt-4 font-medium text-accent-dark group-hover:text-ink">{cta} →</span>
             </Link>
         </li>
