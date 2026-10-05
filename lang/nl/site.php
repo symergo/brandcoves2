@@ -237,6 +237,8 @@ return [
         'chip_comparable' => 'Bij meerdere winkels',
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'amazon_search' => 'Zoek :term ook op Amazon',
+        // The Amazon button under the first products on a phone (2026-10-05).
+        'amazon_more_link' => 'Ook op Amazon zoeken',
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page' => 'Pagina :current',

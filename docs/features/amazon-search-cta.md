@@ -136,3 +136,18 @@ That flag governs the PA-API connector, which needs credentials and is still Pha
 neither, so tying it to that flag would leave a shipped feature switched off waiting on an unrelated
 one. The config lives at `giftcoves.amazon_search`, outside `connectors.amazon`, to make that
 independence visible rather than a thing you have to read the code to discover.
+
+## On a phone: under the first products (2026-10-05)
+
+The owner found the search page crowded on a phone: under the title sat the watch button, Filters,
+this Amazon button and the narrowing pills, four rows before the first product. On a phone the
+button now sits after the first four products (two rows), or after the last when there are fewer,
+as the same compact button with Amazon's logo and a short label, "Ook op Amazon zoeken", so it is
+one row on any phone. From `sm` up it stays in the toolbar, where there is room. Same link, same
+`rel="sponsored"`. It is an alternative to the page, so on a phone it comes after the page has
+had its say.
+
+The same change put the watch button as a bell beside the title and Filters and the pills on one
+row that scrolls sideways (`Search.tsx`, `WatchSearch` `compact`). The pills' old row was 36px
+high around 40px buttons, which cut every pill off at the bottom on a phone.
+

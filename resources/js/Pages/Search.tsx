@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { preferred as preferredView, remember as rememberView } from '../viewPreference'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
@@ -548,16 +548,25 @@ export default function Search({
                       user input and a heading that opens lowercase reads as
                       broken.
                     */}
-                    <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
-                    </h1>
+                    {/*
+                      Title and bell on one row (owner, 2026-10-05: "less
+                      crowded"). "Hou me op de hoogte" was a button on a row of
+                      its own under the title; on a phone it was one of four
+                      rows between the search box and the first product. The
+                      title is a step smaller on a phone for the same reason.
+                    */}
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                        <h1 className="min-w-0 text-xl font-semibold tracking-tight sm:text-3xl">
+                            {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
+                        </h1>
 
-                    {/* Watch this search. Null on the landing, where there is no term. */}
-                    {q && watch && (
-                        <div className="mb-4">
-                            <WatchSearch term={q} watch={watch} />
-                        </div>
-                    )}
+                        {/* Watch this search. Null on the landing, where there is no term. */}
+                        {q && watch && (
+                            <div className="shrink-0">
+                                <WatchSearch term={q} watch={watch} compact />
+                            </div>
+                        )}
+                    </div>
 
 
                     {/*
@@ -590,8 +599,18 @@ export default function Search({
                       it sits in the middle of the screen
                       (docs/features/amazon-search-cta.md).
                     */}
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <div className="relative" ref={panelRef}>
+                    {/*
+                      Filters and the narrowing pills share this row since
+                      2026-10-05: a row that scrolls sideways on a phone, one
+                      clipped line from `sm` up. They were two rows, and the
+                      pills' row was 36px high around 40px buttons, so on a
+                      phone every pill was cut off at the bottom. The pills sit
+                      in their own list beside the button, not around it: the
+                      filters panel hangs off the button, and a scrolling
+                      container would clip it.
+                    */}
+                    <div className="mb-4 flex items-center gap-2">
+                        <div className="relative shrink-0" ref={panelRef}>
                             <button
                                 type="button"
                                 className="flex min-h-10 items-center gap-2 rounded-full border border-line bg-card px-4 py-1.5 text-sm font-medium transition hover:border-ink"
@@ -649,8 +668,54 @@ export default function Search({
                             </aside>
                         </div>
 
+                        {terms.length > 0 && (
+                            <nav className="min-w-0 flex-1" aria-label={t('search.terms_heading')}>
+                                <ul className="-mr-4 flex gap-2 overflow-x-auto pr-4 [scrollbar-width:none] sm:mr-0 sm:max-h-10 sm:flex-wrap sm:overflow-hidden sm:pr-0">
+                                    {/*
+                                      Buttons, not links, and that is the point.
+
+                                      Each pill narrows the search by *adding* its word to the
+                                      query. As anchors that was a combinatorial supply of
+                                      crawlable URLs, each one logged as a new term in
+                                      `search_log`, the table these pills are drawn from. A
+                                      button navigates for a visitor and does not exist for a
+                                      crawler. The URL is the server's own
+                                      (`SearchContext::narrowUrl()`). See docs/features/seo.md.
+                                    */}
+                                    {terms.map((item) => (
+                                        <li key={item.term} className="shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.get(
+                                                        item.url,
+                                                        {},
+                                                        {
+                                                            preserveScroll: true,
+                                                            preserveState: true,
+                                                            onStart: () => setSearching(true),
+                                                            onFinish: () => setSearching(false),
+                                                        },
+                                                    )
+                                                }
+                                                className="inline-flex min-h-10 items-center rounded-full border border-line bg-card px-3 text-sm whitespace-nowrap text-ink-soft transition hover:border-ink hover:text-ink"
+                                            >
+                                                <span aria-hidden className="mr-1 text-ink-soft">+</span>
+                                                {item.term}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </nav>
+                        )}
+
+                        {/*
+                          On a phone the Amazon hand-off moves under the first
+                          products, as a line of text (see the grid below); from
+                          `sm` up the row has room for it.
+                        */}
                         {amazonSearch && !results.empty && (
-                            <div className="min-w-0 max-w-full sm:ml-auto">
+                            <div className="hidden max-w-full min-w-0 shrink-0 sm:ml-auto sm:block">
                                 <AmazonSearchCta link={amazonSearch} label={amazonLabel} compact />
                             </div>
                         )}
@@ -769,72 +834,6 @@ export default function Search({
                         </div>
                     )}
 
-                    {/*
-                      No heading over the suggestions. The pills are
-                      self-explanatory next to a search box, and a line of label
-                      above them was one more thing between the query and the
-                      products.
-                    */}
-                    {terms.length > 0 && (
-                        <nav className="mb-5" aria-label={t('search.terms_heading')}>
-                            {/*
-                              One row, whatever the width.
-
-                              `ResultTerms` returns as many as it finds worth
-                              offering and a narrow window wrapped them into
-                              three or four lines, which pushed the products
-                              down the page to make room for suggestions
-                              about them. Clipped rather than capped at a
-                              number, because how many fit is a question
-                              about the window: `flex-wrap` puts whole pills
-                              on the next line and the overflow hides it.
-                            */}
-                            <ul className="flex max-h-9 flex-wrap gap-2 overflow-hidden">
-                                {/*
-                                  Buttons, not links, and that is the point.
-
-                                  Each chip narrows the search by *adding* its word to the
-                                  query — `watch`, then `watch Smartwatch`, then `watch
-                                  Smartwatch 44mm`. As anchors that was a combinatorial
-                                  supply of crawlable URLs, and each one a crawler followed
-                                  logged a brand-new term in `search_log` — the table the
-                                  related-search chips are drawn from by trigram scan. The
-                                  links fed the query that renders them. They were indexable
-                                  as well: no filter, page 1, default sort, so `seo()` marked
-                                  every combination `index, follow`.
-
-                                  A button navigates for a visitor and does not exist for a
-                                  crawler. Narrowing behaviour is unchanged. The URL is the
-                                  server's own, not rebuilt here: the rule for joining a word
-                                  onto a query lives in `SearchContext::narrowUrl()`, and a
-                                  second copy of it would drift. See docs/features/seo.md.
-                                */}
-                                {terms.map((item) => (
-                                    <li key={item.term}>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.get(
-                                                    item.url,
-                                                    {},
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: true,
-                                                        onStart: () => setSearching(true),
-                                                        onFinish: () => setSearching(false),
-                                                    },
-                                                )
-                                            }
-                                            className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-ink-soft transition hover:border-ink hover:text-ink"
-                                        >
-                                            <span aria-hidden className="mr-1 text-ink-soft">+</span>
-                                            {item.term}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
-                    )}
 
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                         {/*
@@ -1154,12 +1153,25 @@ export default function Search({
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                            {results.items.map((g) => (
-                                <ProductCard
-                                    key={g.id}
-                                    group={g}
-                                    brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null}
-                                />
+                            {results.items.map((g, i) => (
+                                <Fragment key={g.id}>
+                                    <ProductCard group={g} brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null} />
+                                    {/*
+                                      The Amazon hand-off on a phone: the same
+                                      button as in the toolbar, with Amazon's
+                                      logo, after the first four products (two
+                                      rows), or after the last if there are fewer
+                                      (owner, 2026-10-05). It is an alternative to
+                                      the page, so it comes after the page has had
+                                      its say rather than above it. A short label,
+                                      so it is one row on any phone.
+                                    */}
+                                    {amazonSearch && i === Math.min(3, results.items.length - 1) && (
+                                        <div className="col-span-full sm:hidden">
+                                            <AmazonSearchCta link={amazonSearch} label={t('search.amazon_more_link')} compact />
+                                        </div>
+                                    )}
+                                </Fragment>
                             ))}
                         </div>
                     )}
