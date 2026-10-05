@@ -2509,6 +2509,7 @@ return [
         'source_you' => 'Ingevuld door jou',
         'source_self' => 'Ingevuld door :name zelf',
         'source_self_tip' => 'Hun smaak vulde :name zelf in, via hun profiellink. Hun leeftijd is van jou en pas je hier aan.',
+        'source_account_tip' => ':name houdt hun smaak zelf bij in Mijn smaak op GiftCoves. Die telt boven wat jij noteerde, en Cadeau vinden gebruikt hem ook.',
         'taste_is_theirs' => ':name vulde hun smaak zelf in, dus die pas je hier niet aan: hun antwoord telt boven een gok. Hun leeftijd blijft van jou.',
         'field_birthday' => 'Verjaardag',
         'field_interests' => 'Interesses',

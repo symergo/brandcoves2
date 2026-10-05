@@ -324,6 +324,23 @@ same day at nine tenths of its size, so it matches the clipboard and the two fig
 side by side at text size. The My Coves section headings now carry the same icons.
 
 
+## Popups are full screen on a phone (2026-10-06, the standard from here on)
+
+The owner, looking at the person page's "Over" popup: "Make it a rule that popups on mobile need
+to be full screen." A card floating over a dimmed page on a phone leaves a strip of page showing on
+each side, crowds what is in it, and the label column of "Over" left its chips a sliver.
+
+- **`Modal` does it**, so no caller has to remember: below `sm` the popup takes the whole screen
+  (`h-dvh w-screen`, square, no border); from `sm` up it is the card in the middle as before. Every
+  popup built on `Modal` follows, and a new popup should be a `Modal`.
+- **`SignInDialog`** is its own `<dialog>` (it opens from a global event) and carries the same
+  classes. The scanner (`ScanButton`) was already full screen on a phone.
+- **The exception: "are you sure?"** (`ConfirmDialog`, `role="alertdialog"`) stays a small card. One
+  question and two buttons over the whole screen read as a new page rather than a question about
+  this one, and the page behind is what the question is about.
+- Inside a full-screen popup, a label and its values stack (label above) on a phone rather than
+  sitting in a fixed label column.
+
 ## Nothing beside it: full width (2026-09-26, re-checked page by page 2026-09-27)
 
 The owner's rule: when a right column would be empty, the content takes the full width. A block

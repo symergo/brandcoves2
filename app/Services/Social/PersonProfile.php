@@ -12,6 +12,7 @@ use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Services\Gift\OwnTaste;
 use App\Support\CurrentMarket;
 use App\Support\DayAndMonth;
 use Illuminate\Support\Collection;
@@ -98,19 +99,40 @@ class PersonProfile
      */
     private function about(Recipient $person): array
     {
-        $interests = array_values(array_filter((array) $person->interests, fn ($v) => is_string($v) && trim($v) !== ''));
+        $taste = [
+            'interests' => (array) $person->interests,
+            'preferences' => (array) $person->preferences,
+            'avoid' => (array) $person->avoid,
+            'age_band' => $person->age_band,
+            'gender' => $person->gender,
+        ];
+
+        /*
+         * A friend with a taste of their own ("Mijn smaak") is shown with it,
+         * laid over your notes exactly as every search for them reads it
+         * (TasteBrief::fromRecipient). Until 2026-10-06 About showed only your
+         * notes, so a friend who had filled in their taste looked empty here
+         * while the search used their answer (owner: "contains no tastes").
+         */
+        $own = app(OwnTaste::class)->sharedWith($person);
+
+        if ($own !== null) {
+            $taste = OwnTaste::overlay($taste, $own);
+        }
+
+        $interests = array_values(array_filter($taste['interests'], fn ($v) => is_string($v) && trim($v) !== ''));
 
         return [
             'interests' => array_map(fn (string $value) => [
                 'value' => $value,
                 'label' => Interest::tryFrom($value)?->label() ?? $value,
             ], $interests),
-            'ageBand' => $person->age_band,
-            'gender' => $person->gender,
+            'ageBand' => $taste['age_band'],
+            'gender' => $taste['gender'],
             // The taste pairs (Handig|Design, Modern|Vintage...), the sides chosen;
             // shown in About since 2026-10-05 (owner: "and the vibes?").
-            'preferences' => array_values(array_filter((array) $person->preferences, 'is_string')),
-            'avoid' => array_values((array) $person->avoid),
+            'preferences' => array_values(array_filter($taste['preferences'], 'is_string')),
+            'avoid' => array_values($taste['avoid']),
             /*
              * Who last described their taste. Two values only, and "guessed
              * from This or that" is not one of them: a game you played for
@@ -118,7 +140,8 @@ class PersonProfile
              * like typing it. So the page can say "from you" or "from them",
              * and nothing finer without a new column.
              */
-            'tasteSource' => $person->taste_source instanceof TasteSource ? $person->taste_source->value : null,
+            // `account`: from their own "Mijn smaak", which goes over your notes.
+            'tasteSource' => $own !== null ? 'account' : ($person->taste_source instanceof TasteSource ? $person->taste_source->value : null),
         ];
     }
 

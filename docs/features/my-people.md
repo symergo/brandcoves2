@@ -112,6 +112,12 @@ width, because there is nothing for a side column):
    as chips: the birthday first (moved here from under the name; unknown, it is the way to add it),
    interests, the taste pairs (Handig|Design and the rest; `about.preferences`), age, man or woman,
    what to avoid. No budget: that is a list's since 2026-10-05 ([list-budget.md](list-budget.md)).
+   For a friend with their own **Mijn smaak** the popup shows that taste laid over your notes,
+   exactly as every search for them reads it (`OwnTaste::overlay`, `tasteSource: account`), with
+   "Ingevuld door {naam} zelf" and an (i) saying so. Until 2026-10-06 it showed only your notes, so
+   such a friend looked empty here while the search used their answer (owner: "contains no
+   tastes"). Full screen on a phone, labels above their chips, like every popup
+   ([design-system.md](design-system.md)).
    Under the chips, **Aanpassen** edits them in place with Find a gift's own vocabularies
    (`GiftController::options()`), saved through `PATCH /recipients/{id}`, and **Vraag {naam} om
    aan te passen** opens their `/for/{token}` link to send. That link is offered always, also once

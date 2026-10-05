@@ -10,6 +10,7 @@ use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Models\Recipient;
 use App\Models\User;
+use App\Models\UserTaste;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Social\Friends;
@@ -354,6 +355,32 @@ class PersonProfileTest extends TestCase
     }
 
     /** @param array<string, mixed> $attributes */
+    #[Test]
+    public function a_friends_own_taste_shows_in_about_as_the_search_reads_it(): void
+    {
+        // "Over" looked empty for a friend who kept their taste in Mijn smaak,
+        // while every search for them used it (owner, 2026-10-06).
+        $sam = User::factory()->create();
+        app(Friends::class)->link($this->me, $sam);
+        UserTaste::query()->create(['user_id' => $sam->id, 'interests' => ['coffee'], 'preferences' => ['vintage']]);
+        $saved = $this->saved('Sammy', ['user_id' => $sam->id, 'status' => RecipientStatus::Linked, 'interests' => ['gardening']]);
+
+        $this->actingAs($this->me)->get("/be-nl/people/{$saved->id}")
+            ->assertInertia(fn ($page) => $page
+                ->where('profile.about.interests.0.value', 'coffee')
+                ->has('profile.about.interests', 1)
+                ->where('profile.about.preferences', ['vintage'])
+                ->where('profile.about.tasteSource', 'account'));
+
+        // No longer friends: only your notes again.
+        app(Friends::class)->unlink($this->me, $sam->id);
+
+        $this->actingAs($this->me)->get("/be-nl/people/{$saved->id}")
+            ->assertInertia(fn ($page) => $page
+                ->where('profile.about.interests.0.value', 'gardening')
+                ->where('profile.about.preferences', []));
+    }
+
     private function saved(string $name, array $attributes = []): Recipient
     {
         return Recipient::create(['owner_user_id' => $this->me->id, 'name' => $name, ...$attributes]);

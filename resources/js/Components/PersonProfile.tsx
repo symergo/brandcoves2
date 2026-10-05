@@ -49,7 +49,8 @@ export interface Profile {
         preferences?: string[]
         avoid: string[]
         /** `self`: they said it themselves, through their own link. `suggested`: you did. */
-        tasteSource: 'self' | 'suggested' | null
+        /** `account`: their own "Mijn smaak", as a friend; it goes over your notes. */
+        tasteSource: 'self' | 'account' | 'suggested' | null
     }
     theirLists: ProfileList[]
     /** Your lists for them, as rows of Mijn Coves (`ListSummaryRow`). */
@@ -169,6 +170,10 @@ export default function PersonProfile({
 
     const secondary = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink sm:min-h-0'
     const textButton = 'text-sm text-accent-dark underline underline-offset-2 hover:text-ink'
+    // A fact in "Over": its label above the chips on a phone, where a fixed
+    // label column left the chips a sliver (2026-10-06), beside them from sm up.
+    const factRow = 'sm:flex sm:items-baseline sm:gap-3'
+    const factLabel = 'mb-1 text-xs font-medium text-ink-soft sm:mb-0 sm:w-32 sm:shrink-0'
 
     // The link that lets them fill in their own taste, shown inside "Over"
     // because that is what it fills (owner's review, 2026-09-27).
@@ -380,8 +385,9 @@ export default function PersonProfile({
                 {/* Who filled it in; the tip only when they did it themselves (2026-10-05). */}
                 {facts.length > 0 && panel !== 'about' && about.tasteSource !== null && (
                     <p className="mb-3 flex flex-wrap items-center text-xs text-ink-soft">
-                        {about.tasteSource === 'self' ? t('people.source_self', { name: person.name }) : t('people.source_you')}
+                        {about.tasteSource === 'suggested' ? t('people.source_you') : t('people.source_self', { name: person.name })}
                         {about.tasteSource === 'self' && <InfoTip>{t('people.source_self_tip', { name: person.name })}</InfoTip>}
+                        {about.tasteSource === 'account' && <InfoTip>{t('people.source_account_tip', { name: person.name })}</InfoTip>}
                     </p>
                 )}
                 {panel === 'about' ? (
@@ -415,14 +421,14 @@ export default function PersonProfile({
                     </>
                 ) : (
                     <>
-                        <dl className="space-y-2">
+                        <dl className="space-y-3 sm:space-y-2">
                             {/*
                               The birthday first (owner, 2026-10-05: it moved
                               here from under the name). Unknown, it is the way
                               to add it; the form is "Naam en verjaardag".
                             */}
-                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                <dt className="w-32 shrink-0 text-xs font-medium text-ink-soft">{t('people.field_birthday')}</dt>
+                            <div className={factRow}>
+                                <dt className={factLabel}>{t('people.field_birthday')}</dt>
                                 <dd className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                                     {profile.birthday !== null ? (
                                         <span className="inline-flex items-center rounded-full bg-line/40 px-2.5 py-0.5 text-sm">
@@ -430,7 +436,7 @@ export default function PersonProfile({
                                             {formatDay(profile.birthday, market)}
                                         </span>
                                     ) : (
-                                        <button type="button" onClick={editDetails} className={`${textButton} inline-flex items-center`}>
+                                        <button type="button" onClick={editDetails} className={`${textButton} inline-flex items-center whitespace-nowrap`}>
                                             <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
                                             {t('friends.add_birthday')}
                                         </button>
@@ -438,8 +444,8 @@ export default function PersonProfile({
                                 </dd>
                             </div>
                             {facts.map((fact) => (
-                                <div key={fact.label} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                    <dt className="w-32 shrink-0 text-xs font-medium text-ink-soft">{fact.label}</dt>
+                                <div key={fact.label} className={factRow}>
+                                    <dt className={factLabel}>{fact.label}</dt>
                                     <dd className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                                         {fact.items.map((item) => (
                                             <span key={item} className="rounded-full bg-line/40 px-2.5 py-0.5 text-sm">
@@ -739,7 +745,7 @@ function AboutForm({
 }) {
     const { t } = useTranslations()
     const about = profile.about
-    const theirs = about.tasteSource === 'self'
+    const theirs = about.tasteSource === 'self' || about.tasteSource === 'account'
     const [interests, setInterests] = useState<string[]>(about.interests.map((i) => i.value))
     const [ageBand, setAgeBand] = useState<string | null>(about.ageBand)
     const [gender, setGender] = useState<string | null>(about.gender ?? null)

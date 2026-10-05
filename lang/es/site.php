@@ -2494,6 +2494,7 @@ return [
         'source_you' => 'Rellenado por ti',
         'source_self' => 'Rellenado por :name',
         'source_self_tip' => ':name rellenó sus gustos por sí misma, con su enlace de perfil. La edad es tuya, y la cambias aquí.',
+        'source_account_tip' => ':name mantiene sus gustos en Mis gustos en GiftCoves. Cuentan más que lo que anotaste, y Buscar un regalo también los usa.',
         'taste_is_theirs' => ':name rellenó sus gustos por sí misma, así que aquí no los cambias: su respuesta cuenta más que una suposición. La edad sigue siendo tuya.',
         'field_birthday' => 'Cumpleaños',
         'field_interests' => 'Intereses',

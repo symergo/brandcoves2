@@ -2765,6 +2765,7 @@ return [
         'source_you' => 'Filled in by you',
         'source_self' => 'Filled in by :name',
         'source_self_tip' => ':name filled in their taste themselves, through their profile link. Their age is yours, and you change it here.',
+        'source_account_tip' => ':name keeps their own taste in My taste on GiftCoves. It counts above what you noted, and Find a gift uses it too.',
         'taste_is_theirs' => ':name filled in their taste themselves, so you do not change it here: their answer counts above a guess. Their age stays yours.',
         'field_birthday' => 'Birthday',
         'field_interests' => 'Interests',

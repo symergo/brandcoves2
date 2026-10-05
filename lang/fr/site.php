@@ -2496,6 +2496,7 @@ return [
         'source_you' => 'Rempli par vous',
         'source_self' => 'Rempli par :name',
         'source_self_tip' => ':name a rempli ses goûts elle-même, via son lien de profil. L\'âge est à vous, et vous le modifiez ici.',
+        'source_account_tip' => ':name tient ses goûts à jour dans Mes goûts sur GiftCoves. Ils passent avant ce que vous avez noté, et Trouver un cadeau les utilise aussi.',
         'taste_is_theirs' => ':name a rempli ses goûts elle-même, vous ne les modifiez donc pas ici : sa réponse passe avant une supposition. L\'âge reste à vous.',
         'field_birthday' => 'Anniversaire',
         'field_interests' => 'Centres d\'intérêt',

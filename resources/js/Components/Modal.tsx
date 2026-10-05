@@ -18,6 +18,15 @@ import { useTranslations } from '../useTranslations'
  *
  * Mounted means open: a caller renders it when it should show and removes it
  * to close it, which is how every existing popup here already worked.
+ *
+ * ## Full screen on a phone (owner's rule, 2026-10-06)
+ *
+ * "Popups on mobile need to be full screen." Below `sm` a popup takes the
+ * whole screen, square, with no backdrop showing round it; from `sm` up it is
+ * the card in the middle it always was. The rule is here, in the one popup,
+ * so no caller has to remember it. A short "are you sure?" (`alertdialog`)
+ * stays a card: a full screen for one question and two buttons reads as a
+ * new page, not a question about this one.
  */
 export default function Modal({
     title,
@@ -53,6 +62,16 @@ export default function Modal({
         md: 'w-[min(32rem,calc(100vw-2rem))]',
         lg: 'w-[min(36rem,calc(100vw-2rem))]',
     }
+    const atSm = {
+        sm: 'sm:w-[min(26rem,calc(100vw-2rem))]',
+        md: 'sm:w-[min(32rem,calc(100vw-2rem))]',
+        lg: 'sm:w-[min(36rem,calc(100vw-2rem))]',
+    }
+
+    const shape =
+        role === 'alertdialog'
+            ? `m-auto max-h-[calc(100dvh-2rem)] ${widths[width]} rounded-card border border-line`
+            : `m-0 h-dvh max-h-none w-screen max-w-none sm:m-auto sm:h-auto sm:max-h-[calc(100dvh-2rem)] ${atSm[width]} sm:rounded-card sm:border sm:border-line`
 
     return (
         <dialog
@@ -66,7 +85,7 @@ export default function Modal({
                 }
             }}
             aria-label={label ?? (typeof title === 'string' ? title : undefined)}
-            className={`m-auto max-h-[calc(100dvh-2rem)] ${widths[width]} overflow-y-auto rounded-card border border-line bg-card p-6 text-ink backdrop:bg-ink/40`}
+            className={`${shape} overflow-y-auto bg-card p-6 text-ink backdrop:bg-ink/40`}
         >
             {title !== undefined && (
                 <div className="flex items-start justify-between gap-3">
