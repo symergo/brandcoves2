@@ -2,7 +2,7 @@
   <title>GiftCoves</title>
 
   <!-- Whole tile: nothing folded back, this one is finished -->
-  <rect x="0" y="0" width="64" height="64" rx="14" fill="#1C1412"/>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#7A1414"/>
 
   <!-- The cove: a headland wrapping a sheltered bay -->
   <path d="M40.6,19.71 A15,15 0 1 0 40.6,44.29"

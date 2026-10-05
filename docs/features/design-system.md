@@ -206,7 +206,7 @@ behind the logo, and the footer in the same red as the hero.
   with `accent-dark` type): a red button disappears into a red band.
 - **The footer** is `bg-hero` with white type and underlined links on hover, so a page opens and
   closes on the brand's colour.
-- **The logo tile** in `public/icons/giftcoves.svg` is `#1c1412`, nearly black, with the white cove
+- **The logo tile** in `public/icons/giftcoves.svg` is `#7a1414`, a dark red (first nearly black, `#1c1412`; the owner asked for dark red), with the white cove
   and the amber buoy. Still teal in `giftcoves-512.png`, `favicon.ico` and the social cards.
 - **Left as it is, worth a look:** the site's accent *washes* (`bg-accent/10`, `/5`: the "Cove van
   vandaag" pill, the icon tiles on the help page, some cards) are now pink-ish, because they are
