@@ -835,8 +835,10 @@ class SearchController extends Controller
     {
         $summary = app(SearchSignals::class)->summary($query);
 
-        return $summary === null ? null : trans_choice('site.search.kept_summary', $summary['products'], [
-            'count' => $summary['products'],
+        // How many lists the term is on (owner, 2026-10-05), not how many
+        // products: "stoomreiniger staat op 2 lijsten".
+        return $summary === null ? null : trans_choice('site.search.kept_summary', $summary['lists'], [
+            'count' => $summary['lists'],
             'term' => $query->term,
         ]);
     }

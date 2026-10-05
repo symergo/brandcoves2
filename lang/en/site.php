@@ -302,7 +302,7 @@ return [
         'coves_heading' => 'Coves about this',
         'card_kept' => 'On :count person\'s list|On :count people\'s lists',
         'card_in_coves' => 'In :count Cove|In :count Coves',
-        'kept_summary' => 'People keep :count product matching ":term" on their lists|People keep :count products matching ":term" on their lists',
+        'kept_summary' => '":term" is on :count list|":term" is on :count lists',
         'kept_info' => 'Counted in different people, never who, and never what was bought. Shown only once enough people keep these.',
         'chip_with_out_of_stock' => 'Out of stock too',
         'chip_min' => 'From :price',

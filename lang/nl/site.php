@@ -229,7 +229,7 @@ return [
         'coves_heading' => 'Coves hierover',
         'card_kept' => 'Op de lijst van :count persoon|Op de lijsten van :count mensen',
         'card_in_coves' => 'In :count Cove|In :count Coves',
-        'kept_summary' => 'Mensen hebben :count product met ":term" op hun lijsten|Mensen hebben :count producten met ":term" op hun lijsten',
+        'kept_summary' => '":term" staat op :count lijst|":term" staat op :count lijsten',
         'kept_info' => 'Geteld in verschillende mensen, nooit wie, en nooit wat al gekocht is. Alleen getoond als genoeg mensen dit bewaren.',
         'chip_with_out_of_stock' => 'Ook niet op voorraad',
         'chip_min' => 'Vanaf :price',

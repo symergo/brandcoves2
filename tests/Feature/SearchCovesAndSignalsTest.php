@@ -119,7 +119,7 @@ class SearchCovesAndSignalsTest extends TestCase
     }
 
     #[Test]
-    public function the_summary_counts_products_and_people_for_the_term_past_the_threshold(): void
+    public function the_summary_counts_lists_and_people_for_the_term_past_the_threshold(): void
     {
         $a = $this->product('Koffiemolen handmatig');
         $b = $this->product('Koffiemolen elektrisch');
@@ -139,7 +139,8 @@ class SearchCovesAndSignalsTest extends TestCase
         $claimed->forceFill(['claimed_by_hash' => str_repeat('c', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
 
         $props = $this->props(['q' => 'koffiemolen']);
-        $this->assertSame('Mensen hebben 2 producten met "koffiemolen" op hun lijsten', $props['keptSummary']);
+        // Three lists hold a coffee grinder: the first two of them, and the claimed one.
+        $this->assertSame('"koffiemolen" staat op 3 lijsten', $props['keptSummary']);
 
         // Counts only: no claim, no name, no list reaches the page.
         $json = (string) json_encode([$props['keptSummary'], $props['results'], $props['coves']]);

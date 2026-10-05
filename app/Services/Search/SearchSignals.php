@@ -30,7 +30,13 @@ class SearchSignals
 
     public function __construct(private readonly SearchService $search) {}
 
-    /** @return array{products: int, people: int}|null */
+    /**
+     * `lists` since 2026-10-05: the line now says how many lists the term is on
+     * (owner: '"stoomreiniger" staat op 2 lijsten'), and `products` counted
+     * something else, so it could not stand in for it.
+     *
+     * @return array{products: int, lists: int, people: int}|null
+     */
     public function summary(SearchQuery $query): ?array
     {
         if (! $query->hasTerm()) {
@@ -38,7 +44,8 @@ class SearchSignals
         }
 
         $counts = Cache::remember(
-            'search-signals:'.$query->market->value.':'.md5(mb_strtolower(trim($query->term))),
+            // v2: the cached array gained `lists`; an old entry would lack it.
+            'search-signals-v2:'.$query->market->value.':'.md5(mb_strtolower(trim($query->term))),
             self::TTL,
             function () use ($query): array {
                 $row = DB::table('wishlist_items')
@@ -46,10 +53,15 @@ class SearchSignals
                     ->whereNotNull('wishlist_items.accepted_at')
                     ->whereIn('wishlist_items.group_id', $this->search->termMatches($query))
                     ->selectRaw('count(DISTINCT wishlist_items.group_id) AS products')
+                    ->selectRaw('count(DISTINCT wishlist_items.wishlist_id) AS lists')
                     ->selectRaw("count(DISTINCT COALESCE('u' || wishlists.owner_user_id::text, 'a' || wishlists.owner_anon_id::text)) AS people")
                     ->first();
 
-                return ['products' => (int) ($row->products ?? 0), 'people' => (int) ($row->people ?? 0)];
+                return [
+                    'products' => (int) ($row->products ?? 0),
+                    'lists' => (int) ($row->lists ?? 0),
+                    'people' => (int) ($row->people ?? 0),
+                ];
             },
         );
 

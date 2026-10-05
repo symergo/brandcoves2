@@ -230,7 +230,7 @@ return [
         'coves_heading' => 'Coves sur ce sujet',
         'card_kept' => 'Sur la liste de :count personne|Sur les listes de :count personnes',
         'card_in_coves' => 'Dans :count Cove|Dans :count Coves',
-        'kept_summary' => 'Des gens gardent :count produit avec « :term » sur leurs listes|Des gens gardent :count produits avec « :term » sur leurs listes',
+        'kept_summary' => '« :term » figure sur :count liste|« :term » figure sur :count listes',
         'kept_info' => 'Compté en personnes différentes, jamais qui, et jamais ce qui a été acheté. Affiché seulement quand assez de personnes les gardent.',
         'chip_with_out_of_stock' => 'Aussi en rupture de stock',
         'chip_min' => 'À partir de :price',
