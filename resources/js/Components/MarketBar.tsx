@@ -115,9 +115,12 @@ export default function MarketBar() {
     }
 
     return (
+        // The page's own colour, like the Denk mee bar (owner, 2026-10-05:
+        // the bars on top should not jump out). It was white, a strip that
+        // stood out once the page itself became a soft orange.
         <aside
             aria-label={t('market_bar.label')}
-            className="border-b border-line bg-card text-sm"
+            className="border-b border-line bg-cream text-sm"
         >
             <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3">
                 <p className="flex min-w-0 items-center gap-2 text-ink-soft">

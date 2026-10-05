@@ -208,8 +208,14 @@ coloured present on gold and cream circles.
   On orange the type is `ink` and the primary button is the red `primary`, which stands out there.
   The hero was red with white type and a `light` button (white, red type) first; the `light`
   variant stays in `Button` for a red surface.
-- **The footer** is `bg-accent` with white type and underlined links on hover. It was `bg-hero`
-  while the hero was red, and went orange with it, white on orange at 2.4:1; it names the red now.
+- **The footer has no colour of its own** (owner, after a day of it in red): a hairline on top and
+  `ink-soft` type, as before the palette work.
+- **The bars on top take the page's colour** (`bg-cream`, also the browser bar's): the Denk mee bar
+  was an accent wash, a pink strip across every page with a pure red, and the country bar was
+  white, which stood out on the orange page (owner: "less pronounced, so it does not jump out").
+- **The last call to action is a red card** ("Begin je eerste Cove."): white type, a larger
+  heading, the `light` button with an arrow and the present on a cream circle (owner: "more
+  captivating"). It was a faint accent wash, which came out pink and quiet.
 - **The present** (`HeroGift`) is filled: a red box, a darker red lid, a cream ribbon and bow, on a
   gold and a cream circle (owner: "a colour fill", "gold or a light colour" for the circles).
 - **The logo tile** in `public/icons/giftcoves.svg` is `#7a1414`, a dark red (first nearly black, `#1c1412`; the owner asked for dark red), with the white cove

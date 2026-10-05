@@ -71,7 +71,13 @@ export default function ContributeBar() {
     }
 
     return (
-        <aside aria-label={t('contribute.bar_label')} className="border-b border-accent/20 bg-accent/10 text-sm">
+        /*
+          The page's own colour, which is also the browser bar's (owner,
+          2026-10-05: "less pronounced, so it does not jump out"). It was a
+          wash of the accent, which with a pure red read as a pink strip
+          across the top of every page.
+        */
+        <aside aria-label={t('contribute.bar_label')} className="border-b border-line bg-cream text-sm">
             <div className="mx-auto flex max-w-6xl items-center gap-2 py-1 pr-1 pl-4 sm:pr-3">
                 {/*
                   The whole row is the link, not only "Denk mee" (owner,
@@ -80,7 +86,7 @@ export default function ContributeBar() {
                 */}
                 <Link
                     href={`/${market.key}/contribute`}
-                    className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 text-ink hover:text-ink"
+                    className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 text-ink-soft hover:text-ink"
                 >
                     <span className="shrink-0 text-accent-dark">
                         <ToolIcon name="suggestions" className="h-4 w-4" />

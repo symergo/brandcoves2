@@ -336,14 +336,33 @@ export default function Home({ today }: Props) {
                     </Link>
                 </section>
 
-                {/* 7. The last thing on the page is the first thing it asked. */}
-                <section className="flex flex-col rounded-card bg-accent/5 p-6 sm:p-8" aria-labelledby="final-heading">
-                    <h2 id="final-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
-                        {t('home.final_title')}
-                    </h2>
-                    <p className="mt-2 text-ink-soft">{t('home.final_body')}</p>
-                    <Link href={createCove} className={`mt-auto self-start pt-0 ${buttonClasses('primary', 'lg')}`}>
-                        {t('home.cta_create')}
+                {/*
+                  7. The last thing on the page is the first thing it asked.
+
+                  A red card with the present on a cream circle (owner,
+                  2026-10-05: "more captivating"). It was a faint wash of the
+                  accent, which with a pure red came out pink and quiet. White
+                  on the red is 5.0:1; the button is `light`, because a red
+                  button vanishes into a red card.
+                */}
+                <section
+                    className="relative flex flex-col overflow-hidden rounded-card bg-accent p-6 text-white sm:p-8"
+                    aria-labelledby="final-heading"
+                >
+                    <div className="flex items-start gap-5">
+                        <div className="min-w-0 flex-1">
+                            <h2 id="final-heading" className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+                                {t('home.final_title')}
+                            </h2>
+                            <p className="mt-2 text-white">{t('home.final_body')}</p>
+                        </div>
+                        <div aria-hidden="true" className="relative hidden aspect-square w-24 shrink-0 sm:block">
+                            <span className="absolute inset-0 rounded-full bg-peach" />
+                            <HeroGift className="absolute top-[18%] left-[12%] h-auto w-[76%]" />
+                        </div>
+                    </div>
+                    <Link href={createCove} className={`mt-6 self-start ${buttonClasses('light', 'lg')}`}>
+                        {t('home.cta_create')} <span aria-hidden="true">→</span>
                     </Link>
                 </section>
             </div>
