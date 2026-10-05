@@ -29,7 +29,7 @@ class PageCacheRoutesTest extends TestCase
      */
     private const OPTED_IN = [
         'home', 'search-help', 'popular-searches', 'help', 'product', 'lists-help', 'lists-help.topic',
-        'gift-cove.manual', 'daily', 'daily.dated', 'daily.edition', 'gift-ideas', 'gift-ideas.landing',
+        'gift-cove.manual', 'daily', 'daily.archive', 'daily.dated', 'daily.edition', 'gift-ideas', 'gift-ideas.landing',
         'gift-ideas.persona', 'gift-ideas.occasion', 'coves', 'community', 'community.show', 'guides', 'guides.show', 'legal',
         'shops', 'shops.show', 'brands', 'brand',
     ];

@@ -263,7 +263,9 @@ class CoveSubscriptionTest extends TestCase
                 '<a href="'.url("/be-nl/p/{$first}/bordspel-0").'">spel voor vier</a>',
                 $mail->digest['body'][1],
             );
-            $this->assertStringContainsString('Meer spellen.', $mail->digest['body'][1]);
+            // The closing line in the owner's 2026-10-05 form (CoveMarkup::moreLine); a
+            // search outside the allowlist still degrades to its label.
+            $this->assertStringContainsString('Meer spellen vergelijken.', $mail->digest['body'][1]);
             $this->assertStringNotContainsString('[[', $mail->digest['body'][1]);
 
             return true;

@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\Schema;
  * budgets, and she is one person.
  *
  * Expand: the list gains the columns, and every list about a saved person
- * takes that person's budget, so nothing anybody set is lost. The person's
- * columns stay, read only as a fallback by ListBudget until a later release
- * drops them (contract). Cents, like every amount here (invariant 7).
+ * takes that person's budget. A person with a budget and no list keeps none:
+ * there is nowhere to put it (docs/features/list-budget.md). The person's
+ * columns stay, read by nothing, until a later release drops them (contract).
+ * Cents, like every amount here (invariant 7).
  */
 return new class extends Migration
 {
