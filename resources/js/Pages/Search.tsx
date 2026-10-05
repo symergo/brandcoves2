@@ -8,7 +8,7 @@ import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
 import InfoTip from '../Components/InfoTip'
-import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
+import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
@@ -709,16 +709,7 @@ export default function Search({
                             </nav>
                         )}
 
-                        {/*
-                          On a phone the Amazon hand-off moves under the first
-                          products, as a line of text (see the grid below); from
-                          `sm` up the row has room for it.
-                        */}
-                        {amazonSearch && !results.empty && (
-                            <div className="hidden max-w-full min-w-0 shrink-0 sm:ml-auto sm:block">
-                                <AmazonSearchCta link={amazonSearch} label={amazonLabel} compact />
-                            </div>
-                        )}
+                        {/* The Amazon hand-off is a card in the grid since 2026-10-05; see below. */}
                     </div>
 
                     {/*
@@ -1157,20 +1148,18 @@ export default function Search({
                                 <Fragment key={g.id}>
                                     <ProductCard group={g} brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null} />
                                     {/*
-                                      The Amazon hand-off on a phone: the same
-                                      button as in the toolbar, with Amazon's
-                                      logo, after the first four products (two
-                                      rows), or after the last if there are fewer
-                                      (owner, 2026-10-05). It is an alternative to
-                                      the page, so it comes after the page has had
-                                      its say rather than above it. A short label,
-                                      so it is one row on any phone, on a button
-                                      as wide as the screen.
+                                      The Amazon hand-off as a card, after the
+                                      first four products or after the last if
+                                      there are fewer (owner, 2026-10-05). It is
+                                      an alternative to the page, so it comes
+                                      after the page has had its say; as a card it
+                                      reads as one more place to look. The only
+                                      Amazon link on the page: it replaced the
+                                      toolbar button and, on a phone, a button
+                                      under the products.
                                     */}
                                     {amazonSearch && i === Math.min(3, results.items.length - 1) && (
-                                        <div className="col-span-full sm:hidden">
-                                            <AmazonSearchCta link={amazonSearch} label={t('search.amazon_more_link')} compact wide />
-                                        </div>
+                                        <AmazonSearchCard link={amazonSearch} label={amazonLabel} />
                                     )}
                                 </Fragment>
                             ))}

@@ -54,7 +54,6 @@ export default function AmazonSearchCta({
     label,
     detail = null,
     compact = false,
-    wide = false,
 }: {
     link: AmazonSearch | null
     /** Already translated — the two pages ask the question differently. */
@@ -67,12 +66,6 @@ export default function AmazonSearchCta({
      * the storefront's host moves into the label's line instead of under it.
      */
     compact?: boolean
-    /**
-     * The compact button as wide as its container, label centred: under the
-     * first products on a phone (owner, 2026-10-05: "a mobile screen wide
-     * button").
-     */
-    wide?: boolean
 }) {
     if (link === null) {
         return null
@@ -84,9 +77,7 @@ export default function AmazonSearchCta({
                 href={link.url}
                 rel="sponsored noopener nofollow"
                 target="_blank"
-                className={`group min-h-10 max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-accent ${
-                    wide ? 'flex w-full justify-center py-2.5 font-medium' : 'inline-flex'
-                }`}
+                className="group inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-accent"
             >
                 <img
                     src={link.icon}
@@ -175,5 +166,56 @@ export default function AmazonSearchCta({
                 →
             </span>
         </a>
+    )
+}
+
+/**
+ * The Amazon hand-off as a card in the search results (owner, 2026-10-05).
+ *
+ * The same size and shape as a product card, after the first four products,
+ * so it reads as one more place to look rather than an advert above the
+ * results. It shows no Amazon product, only the way to search there:
+ * nothing from Amazon enters the catalogue (invariant 6), and this card is a
+ * link, like the button it replaced. Amazon's own favicon in the picture slot,
+ * served by Amazon, as the button had it. Same tagged link and `sponsored`.
+ */
+export function AmazonSearchCard({ link, label }: { link: AmazonSearch | null; label: string }) {
+    if (link === null) {
+        return null
+    }
+
+    return (
+        <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
+            <div className="flex aspect-square items-center justify-center bg-card">
+                <img
+                    src={link.icon}
+                    alt=""
+                    width={64}
+                    height={64}
+                    loading="lazy"
+                    className="h-16 w-16 rounded-lg"
+                    onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                    }}
+                />
+            </div>
+
+            <div className="flex flex-1 flex-col p-4">
+                <div className="text-xs tracking-wide text-ink-soft uppercase">Amazon</div>
+                <h3 className="mt-1 line-clamp-2 text-sm font-medium">
+                    <a href={link.url} rel="sponsored noopener nofollow" target="_blank">
+                        {label}
+                        {/* The stretched link, as on a product card: the whole card is the target. */}
+                        <span className="absolute inset-0 z-10" aria-hidden />
+                    </a>
+                </h3>
+                <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-xs text-ink-soft">
+                    <span className="truncate">{link.host}</span>
+                    <span aria-hidden className="shrink-0 text-base text-ink transition group-hover:translate-x-0.5">
+                        →
+                    </span>
+                </div>
+            </div>
+        </article>
     )
 }

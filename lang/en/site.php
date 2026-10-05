@@ -321,8 +321,6 @@ return [
          * that is already visibly a link.
          */
         'amazon_search' => 'Search :term on Amazon too',
-        // The Amazon button under the first products on a phone (2026-10-05).
-        'amazon_more_link' => 'Search Amazon too',
         // Shown where there is no term to quote: the search page before
         // anything is typed. Not the same sentence with an empty gap in it.
         'previous' => 'Previous',

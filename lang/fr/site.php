@@ -238,8 +238,6 @@ return [
         'chip_comparable' => 'Dans plusieurs boutiques',
         // Voir l'explication de ces clés dans lang/en/site.php.
         'amazon_search' => 'Cherchez aussi :term sur Amazon',
-        // The Amazon button under the first products on a phone (2026-10-05).
-        'amazon_more_link' => 'Chercher aussi sur Amazon',
         'previous' => 'Précédent',
         'next' => 'Suivant',
         'page' => 'Page :current',

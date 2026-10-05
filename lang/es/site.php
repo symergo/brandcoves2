@@ -237,8 +237,6 @@ return [
         'chip_comparable' => 'En varias tiendas',
         // Consulta la explicación de estas claves en lang/en/site.php.
         'amazon_search' => 'Busca :term también en Amazon',
-        // The Amazon button under the first products on a phone (2026-10-05).
-        'amazon_more_link' => 'Buscar también en Amazon',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
         'page' => 'Página :current',

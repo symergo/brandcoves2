@@ -151,3 +151,13 @@ The same change put the watch button as a bell beside the title and Filters and 
 row that scrolls sideways (`Search.tsx`, `WatchSearch` `compact`). The pills' old row was 36px
 high around 40px buttons, which cut every pill off at the bottom on a phone.
 
+## A card in the grid (2026-10-05, later the same day)
+
+The owner then asked for the Amazon search as a product card. `AmazonSearchCard` is the size and
+shape of a product card, Amazon's favicon in the picture slot, "Zoek :term ook op Amazon" as its
+title and the storefront's host under it, the whole card one tagged `sponsored` link. It sits after
+the fourth product, or the last when there are fewer, on every width, and it is the only Amazon link
+on a page with results: the toolbar button and the phone's button under the products both went, so
+Amazon is not offered twice. It shows no Amazon product, only the way to search there (invariant 6).
+The empty-results page keeps its own large Amazon card.
+

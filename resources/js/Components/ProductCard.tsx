@@ -108,8 +108,9 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                     </Badge>
                 )}
 
+                {/* Bottom left since 2026-10-05: the save button took the top right. */}
                 {!group.inStock && (
-                    <span className="absolute top-2 right-2 rounded bg-ink/70 px-2 py-1 text-xs text-white">
+                    <span className="absolute bottom-2 left-2 rounded bg-ink/70 px-2 py-1 text-xs text-white">
                         {t('product.out_of_stock')}
                     </span>
                 )}
@@ -120,11 +121,12 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                   The only Save button used to live on the product page, so the
                   commonest path — search, scan the grid, spot the thing — had no
                   way to keep it without a detour into a page the shopper did not
-                  want. Bottom right of the image: clear of the discount badge at
-                  top left and the stock badge at top right, and never over the
-                  product title.
+                  want. Top right of the image since 2026-10-05 (owner), where a
+                  save or a favourite sits on most shops' cards; the discount
+                  badge keeps the top left and the stock badge moved to the
+                  bottom left. Never over the product title.
                 */}
-                <div className="absolute right-2 bottom-2">
+                <div className="absolute top-2 right-2">
                     <SaveToList groupId={group.id} compact />
                 </div>
             </div>
