@@ -373,17 +373,11 @@ export default function PersonProfile({
                         : t('people.source_you_tip', { name: person.name })
                 }
                 aside={
-                    facts.length > 0 && panel !== 'about' ? (
-                        <>
-                            {about.tasteSource !== null && (
-                                <span className="text-xs text-ink-soft">
-                                    {about.tasteSource === 'self' ? t('people.source_self', { name: person.name }) : t('people.source_you')}
-                                </span>
-                            )}
-                            <button type="button" onClick={() => setPanel('about')} className={textButton}>
-                                {t('people.edit')}
-                            </button>
-                        </>
+                    /* Who filled it in, beside the title; the actions are at the bottom (2026-10-05). */
+                    facts.length > 0 && panel !== 'about' && about.tasteSource !== null ? (
+                        <span className="text-xs text-ink-soft">
+                            {about.tasteSource === 'self' ? t('people.source_self', { name: person.name }) : t('people.source_you')}
+                        </span>
                     ) : undefined
                 }
             >
@@ -428,13 +422,24 @@ export default function PersonProfile({
                                 </div>
                             ))}
                         </dl>
-                        {/* They have not said it themselves yet: offer the link that lets them. */}
-                        {urls.selfDescribe !== null && about.tasteSource !== 'self' && (
-                            <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={`${textButton} mt-4 inline-flex items-center gap-1`}>
-                                <ToolIcon name="link" className="h-4 w-4" />
-                                {t('people.let_them_add', { name: person.name })}
+                        {/*
+                          What you can do with it, under it (owner, 2026-10-05):
+                          "Aanpassen" was beside the title, away from the
+                          link that asks them, which sat here alone.
+                        */}
+                        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+                            <button type="button" onClick={() => setPanel('about')} className={`${textButton} inline-flex items-center gap-1`}>
+                                <ToolIcon name="edit" className="h-4 w-4" />
+                                {t('people.edit')}
                             </button>
-                        )}
+                            {/* They have not said it themselves yet: offer the link that lets them. */}
+                            {urls.selfDescribe !== null && about.tasteSource !== 'self' && (
+                                <button type="button" aria-expanded={panel === 'link'} onClick={() => toggle('link')} className={`${textButton} inline-flex items-center gap-1`}>
+                                    <ToolIcon name="link" className="h-4 w-4" />
+                                    {t('people.let_them_add', { name: person.name })}
+                                </button>
+                            )}
+                        </div>
                         {linkPanel}
                     </>
                 )}
