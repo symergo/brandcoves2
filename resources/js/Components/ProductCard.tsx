@@ -73,7 +73,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
 
     return (
         <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
-            <div className="relative aspect-square overflow-hidden bg-card">
+            <div className="photo-tile relative aspect-square overflow-hidden">
                 {group.image && !broken ? (
                     <img
                         {...pictureAttributes(group.image, group.imageToken, proxyFailed, 320, CARD_SIZES, [160, 320, 480])}

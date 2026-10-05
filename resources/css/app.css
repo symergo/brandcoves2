@@ -105,7 +105,12 @@
  * both faster and more coherent.
  */
 @theme {
-    --color-cream: #ffffff;
+    /*
+     * Nearly white rather than white (2026-10-05): the site uses `cream` for
+     * the quiet fills inside white cards (fields, neutral pills, the scan
+     * button), and on #ffffff those vanished into the card.
+     */
+    --color-cream: #fff8f6;
     --color-ink: #2a1213;
     --color-ink-soft: #6a4e50;
     --color-accent: #b8473a;
@@ -117,6 +122,9 @@
 
     /* The homepage hero's band (Koraal, 2026-10-04). Text on it is `ink`. */
     --color-hero: #ee8a7a;
+    /* Behind product photos (`photo-tile`) and the hero's shapes. */
+    --color-tint: #fce6df;
+    --color-peach: #f6c9a8;
 
     /*
      * Something went wrong, in its own colour.
@@ -231,6 +239,22 @@
     --color-ink-soft: #a89d93;
     --color-line: #2f2822;
     --color-card: #1f1a15;
+}
+
+/*
+ * A product photo on a blush tile (Koraal, 2026-10-05).
+ *
+ * Feed photos almost all arrive on white. `multiply` turns that white into the
+ * tile's blush and leaves the product itself as it was, so every picture sits
+ * on the same soft ground the palette was chosen with, instead of a white
+ * square in a white card.
+ */
+@utility photo-tile {
+    background-color: var(--color-tint);
+
+    & img {
+        mix-blend-mode: multiply;
+    }
 }
 
 @layer base {

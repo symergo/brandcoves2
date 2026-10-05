@@ -208,8 +208,29 @@ The tokens, every text pair checked for AA before they went in:
 - **`danger` moved off the brand.** It was `#b42318`, practically the new accent. An error and the
   button beside it in one colour is the mistake recorded under "What the review found", so errors
   are now a crimson that leans to pink where the accent leans to orange.
-- **The page is white, not cream.** Cards still separate by their border (`line`), which is how the
-  proposal looked when it was chosen.
+- **The page is nearly white** (`cream` `#fff8f6`). Pure white was tried first and the quiet fills
+  inside white cards (fields, neutral pills, the scan button) disappeared into them.
+
+**Second pass, the same day: "it does not look like the example."** The first commit changed the
+tokens and left the layout, and the chosen proposal was as much layout as colour. Five things were
+brought over:
+
+- **The hero band runs edge to edge** under the header. The colour is painted outward with a
+  shadow and clipped to the band's height (`shadow-[0_0_0_100vmax_…] [clip-path:inset(0_-100vmax)]`),
+  so the content stays on the page grid and no `100vw` width adds a sideways scrollbar on a desktop
+  with a visible one. Checked: the page is exactly as wide as the window at 390 and 1280px.
+- **The search card overlaps the band's lower edge**, with a soft shadow.
+- **The drawing sits on two soft circles**, blush (`tint`) and peach (`peach`). The owner's line
+  drawing stays; the proposal's gift box was a placeholder.
+- **Product photos sit on a blush tile** (`photo-tile`, a utility in app.css): the tile is `tint`
+  and the photo is `mix-blend-mode: multiply`, so the white most feed photos arrive on becomes blush
+  and the product itself is unchanged. On `ProductCard` and the home page's Cove picks.
+- **The mark's tile is brick red** in `public/icons/giftcoves.svg` (the header and the favicon),
+  with a white cove and the amber buoy. `giftcoves-512.png`, `favicon.ico` and the social cards still
+  have the teal tile.
+
+The discount badge stays solid green, against the proposal's peach: a discount is good news, and the
+reason it left the accent colour (2026-09-07, `Badge.tsx`) still holds.
 - The same values went into the mail theme, the Inertia progress bar, the browser theme colour and
   an admin placeholder thumbnail, the places the palette is written out instead of read. The
   dormant dark theme is unchanged. The logo and the social cards keep the mark's own teal and buoy

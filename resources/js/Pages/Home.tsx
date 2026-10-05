@@ -82,7 +82,16 @@ export default function Home({ today }: Props) {
                   to about 3:1 on coral, and the brick-red button would vanish
                   into it, so the primary button is the `dark` variant here.
                 */}
-                <div className="grid items-center gap-8 rounded-card bg-hero px-5 py-8 sm:px-10 sm:py-12 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
+                {/*
+                  Edge to edge (2026-10-05), as in the chosen proposal. The
+                  colour is painted outward by a shadow and clipped to the
+                  band's own height, so the band spans the window while its
+                  content stays on the page's grid, and no 100vw width can add
+                  a sideways scrollbar on a desktop with a visible one. The
+                  negative top margin meets the header; the deep bottom padding
+                  is room for the search card, which overlaps the band.
+                */}
+                <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-20 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-24 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
                         <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
                         <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
@@ -102,7 +111,15 @@ export default function Home({ today }: Props) {
                         </div>
                     </div>
 
-                    <SharedCoveIllustration className="h-auto w-full max-w-[16rem] justify-self-center text-ink md:max-w-xs" />
+                    {/*
+                      The drawing on two soft shapes, blush and peach, as in
+                      the chosen proposal (2026-10-05). Decoration only.
+                    */}
+                    <div className="relative w-full max-w-[16rem] justify-self-center md:max-w-xs">
+                        <span aria-hidden="true" className="absolute -top-8 -left-6 aspect-square w-3/4 rounded-full bg-tint/70" />
+                        <span aria-hidden="true" className="absolute -right-6 -bottom-6 aspect-square w-1/2 rounded-full bg-peach/80" />
+                        <SharedCoveIllustration className="relative h-auto w-full text-ink" />
+                    </div>
                 </div>
                 {/* "Zoek · Verzamel · Deel" stood here until the owner removed it (2026-09-27). */}
             </section>
@@ -113,7 +130,8 @@ export default function Home({ today }: Props) {
               Somebody who arrives knowing what they want should not have to
               find the header's search first.
             */}
-            <SearchCard className="mt-10" />
+            {/* Overlapping the hero band's lower edge (2026-10-05). */}
+            <SearchCard className="relative -mt-12 shadow-[0_8px_24px_rgb(42_18_19/0.08)] sm:-mt-14" />
 
             {/* 2. One way in per audience. */}
             <section className="mt-14 sm:mt-20" aria-label={t('home.entries_label')}>
@@ -183,7 +201,7 @@ export default function Home({ today }: Props) {
                                             <SaveToList groupId={find.id} compact />
                                         </div>
                                         <Link href={find.url} className="group block">
-                                            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
+                                            <div className="photo-tile aspect-square overflow-hidden rounded-lg">
                                                 {find.image && (
                                                     <img
                                                         src={find.image}
