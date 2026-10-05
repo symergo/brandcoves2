@@ -122,7 +122,7 @@
 
     /* The homepage hero's band (Koraal, 2026-10-04). Text on it is `ink`. */
     --color-hero: #ee8a7a;
-    /* Behind product photos (`photo-tile`) and the hero's shapes. */
+    /* The hero's soft circles and the bow of its present. */
     --color-tint: #fce6df;
     --color-peach: #f6c9a8;
 
@@ -239,22 +239,6 @@
     --color-ink-soft: #a89d93;
     --color-line: #2f2822;
     --color-card: #1f1a15;
-}
-
-/*
- * A product photo on a blush tile (Koraal, 2026-10-05).
- *
- * Feed photos almost all arrive on white. `multiply` turns that white into the
- * tile's blush and leaves the product itself as it was, so every picture sits
- * on the same soft ground the palette was chosen with, instead of a white
- * square in a white card.
- */
-@utility photo-tile {
-    background-color: var(--color-tint);
-
-    & img {
-        mix-blend-mode: multiply;
-    }
 }
 
 @layer base {

@@ -87,7 +87,12 @@ still to do, with the owner's wording.
 
 ### The drawing
 
-`Components/SharedCoveIllustration.tsx`, chosen by the owner from five sketches on 2026-09-26 (the
+**Since 2026-10-05 the hero shows a wrapped present** (`Components/HeroGift.tsx`): a white box, a
+brick-red lid and a peach bow on blush and peach circles, on the coral band, as in the Koraal
+proposal the owner chose (see design-system.md, Koraal). The owner asked for it in place of the
+line drawing below, which was removed. What follows is that drawing's history.
+
+`Components/SharedCoveIllustration.tsx` (removed 2026-10-05), chosen by the owner from five sketches on 2026-09-26 (the
 approval page: https://claude.ai/artifact/LAztQwdixhgaG8qLbBxSuK). A web shop, something handmade
 and the shop round the corner drift into one cove, become a gift, and go out the back to two
 people: from anywhere, into a Cove, to the people who matter. Same language as every drawing on
@@ -448,7 +453,7 @@ production-shaped data, check it against production.
 ## Files
 
 - `resources/js/Pages/Home.tsx`
-- `resources/js/Components/SharedCoveIllustration.tsx` — the hero drawing
+- `resources/js/Components/HeroGift.tsx` — the hero drawing (a wrapped present, since 2026-10-05)
 - `app/Http/Controllers/HomeController.php`
 - `lang/*/site.php` — the `home.*` block
 

@@ -220,11 +220,11 @@ brought over:
   so the content stays on the page grid and no `100vw` width adds a sideways scrollbar on a desktop
   with a visible one. Checked: the page is exactly as wide as the window at 390 and 1280px.
 - **The search card overlaps the band's lower edge**, with a soft shadow.
-- **The drawing sits on two soft circles**, blush (`tint`) and peach (`peach`). The owner's line
-  drawing stays; the proposal's gift box was a placeholder.
-- **Product photos sit on a blush tile** (`photo-tile`, a utility in app.css): the tile is `tint`
-  and the photo is `mix-blend-mode: multiply`, so the white most feed photos arrive on becomes blush
-  and the product itself is unchanged. On `ProductCard` and the home page's Cove picks.
+- **The drawing is the proposal's wrapped present** (`HeroGift`), on blush and peach circles. At
+  first the line drawing of shops, a cove and two people (`SharedCoveIllustration`) was kept on the
+  circles; the owner asked for the present instead, and the old component was removed.
+- **Product photos keep no background.** A blush tile behind them (`photo-tile`, the white of a
+  feed photo multiplied into blush) was tried and taken out on the owner's word the same day.
 - **The mark's tile is brick red** in `public/icons/giftcoves.svg` (the header and the favicon),
   with a white cove and the amber buoy. `giftcoves-512.png`, `favicon.ico` and the social cards still
   have the teal tile.

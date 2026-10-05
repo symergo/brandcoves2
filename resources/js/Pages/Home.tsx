@@ -3,7 +3,7 @@ import CoveSubscribe from '../Components/CoveSubscribe'
 import SaveToList from '../Components/SaveToList'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import SearchCard from '../Components/SearchCard'
-import SharedCoveIllustration from '../Components/SharedCoveIllustration'
+import HeroGift from '../Components/HeroGift'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import { buttonClasses } from '../Components/Button'
 import { formatPrice, type SharedProps } from '../types'
@@ -112,13 +112,16 @@ export default function Home({ today }: Props) {
                     </div>
 
                     {/*
-                      The drawing on two soft shapes, blush and peach, as in
-                      the chosen proposal (2026-10-05). Decoration only.
+                      A wrapped present on two soft circles, blush and peach,
+                      as in the chosen proposal (owner, 2026-10-05). It
+                      replaced the line drawing of shops, a cove and two
+                      people. Decoration only.
                     */}
-                    <div className="relative w-full max-w-[16rem] justify-self-center md:max-w-xs">
-                        <span aria-hidden="true" className="absolute -top-8 -left-6 aspect-square w-3/4 rounded-full bg-tint/70" />
-                        <span aria-hidden="true" className="absolute -right-6 -bottom-6 aspect-square w-1/2 rounded-full bg-peach/80" />
-                        <SharedCoveIllustration className="relative h-auto w-full text-ink" />
+                    <div className="relative aspect-[5/4] w-full max-w-[18rem] justify-self-center md:max-w-sm">
+                        <span aria-hidden="true" className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
+                        <span aria-hidden="true" className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
+                        <span aria-hidden="true" className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
+                        <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
                     </div>
                 </div>
                 {/* "Zoek · Verzamel · Deel" stood here until the owner removed it (2026-09-27). */}
@@ -201,7 +204,7 @@ export default function Home({ today }: Props) {
                                             <SaveToList groupId={find.id} compact />
                                         </div>
                                         <Link href={find.url} className="group block">
-                                            <div className="photo-tile aspect-square overflow-hidden rounded-lg">
+                                            <div className="aspect-square overflow-hidden rounded-lg">
                                                 {find.image && (
                                                     <img
                                                         src={find.image}
