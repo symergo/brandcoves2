@@ -355,11 +355,8 @@ export default function PersonProfile({
             */}
             <Section
                 title={t('people.about', { name: person.name })}
-                tip={
-                    about.tasteSource === 'self'
-                        ? t('people.source_self_tip', { name: person.name })
-                        : t('people.source_you_tip', { name: person.name })
-                }
+                /* Only when they filled it in themselves; "what you filled in" went (owner, 2026-10-05). */
+                tip={about.tasteSource === 'self' ? t('people.source_self_tip', { name: person.name }) : undefined}
                 aside={
                     /* Who filled it in, beside the title; the actions are at the bottom (2026-10-05). */
                     facts.length > 0 && panel !== 'about' && about.tasteSource !== null ? (
