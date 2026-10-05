@@ -38,3 +38,13 @@ Two small decisions inside those:
 - **The mark is the seed of the social card**, not the card itself: [social-cards.md](social-cards.md)
   renders the cove and the palette into a 1200×630 image per page.
 
+## The raster icons follow the SVG (2026-10-05)
+
+The tile in `public/icons/giftcoves.svg` went dark red (`#7a1414`) with the new palette, and the
+favicon in some tabs stayed teal: `favicon.ico` and `giftcoves-512.png` are separate files that
+nobody had redrawn, and Chrome on a phone is one of the browsers that takes the .ico. They are now
+drawn from the SVG by `node scripts/favicons.mjs` (each size drawn at its own size, so the 16px one
+is sharp), plus a new `giftcoves-192.png`, the size Chrome on Android picks for its tab and home
+screen, declared in the page head. The icon links carry `?v=2`: browsers keep a favicon far longer
+than its headers say, so the version is raised whenever the mark changes. The default social card
+draws `giftcoves-512.png`, so it shows the dark red tile on its teal ground too.

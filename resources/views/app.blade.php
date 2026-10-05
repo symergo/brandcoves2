@@ -164,9 +164,14 @@
     {{-- Icons. The SVG is what modern browsers take, and it is the one that
          stays sharp on a high-density tab strip; the .ico is the fallback every
          browser asks for by name whether or not it is declared. --}}
-    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('icons/giftcoves.svg') }}">
-    <link rel="apple-touch-icon" href="{{ asset('icons/giftcoves-512.png') }}">
+    {{-- All drawn from icons/giftcoves.svg by scripts/favicons.mjs. `?v=` because
+         browsers keep a favicon far longer than its headers say, Chrome on a
+         phone above all: raise it whenever the mark changes (2: the dark red
+         tile, 2026-10-05). The 192px PNG is the one Chrome on Android picks. --}}
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v=2" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('icons/giftcoves.svg') }}?v=2">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/giftcoves-192.png') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('icons/giftcoves-512.png') }}?v=2">
 
     {{-- The cream the page actually paints. It said #12232B, a dark teal that
          appears nowhere in the palette, so the browser chrome on Android and the
