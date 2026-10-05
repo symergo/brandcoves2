@@ -134,6 +134,18 @@ export default function PersonProfile({
     // destructive action since 2026-09-27; it was a red box under the header.
     // A refused delete comes back with the popup open, so the reason is seen.
     const [deleting, setDeleting] = useState(Boolean(errors?.person))
+    // "Over :name" is a popup from the … menu since 2026-10-05 (owner), not a
+    // section on the page.
+    const [aboutOpen, setAboutOpen] = useState(false)
+    const closeAbout = () => {
+        setAboutOpen(false)
+        setPanel((p) => (p === 'about' || p === 'link' ? null : p))
+    }
+    // Name and birthday is a form under the name; leave the popup to show it.
+    const editDetails = () => {
+        closeAbout()
+        setPanel('details')
+    }
     const [confirm, confirmDialog] = useConfirm()
 
     const about = profile.about
@@ -181,7 +193,8 @@ export default function PersonProfile({
               - ways to an idea: the row under the name (Cadeau vinden filled);
               - reaching them: "Niet op GiftCoves · Nodig uit" beside the name,
                 where "op GiftCoves" stands for a friend;
-              - their taste and the link to let them fill it in: "Over";
+              - their taste and the link to let them fill it in: "Over", a popup
+                from the ⋯ menu since 2026-10-05;
               - housekeeping (name, birthday, delete): the ⋯ menu, so the red
                 button is not the fourth thing a visitor reads.
             */}
@@ -223,6 +236,15 @@ export default function PersonProfile({
                                     {t('people.ask')}
                                 </MenuItem>
                                 <MenuSeparator />
+                                <MenuItem
+                                    onSelect={() => {
+                                        close()
+                                        setAboutOpen(true)
+                                    }}
+                                    icon={<ToolIcon name="info" className="h-4 w-4" />}
+                                >
+                                    {t('people.about', { name: person.name })}
+                                </MenuItem>
                                 <MenuItem
                                     onSelect={() => {
                                         close()
@@ -348,24 +370,20 @@ export default function PersonProfile({
             {confirmDialog}
 
             {/*
-              What you know. Always drawn: with nothing in it, it is not an
-              empty box but the question the page exists for, with the two ways
-              to answer it (fill it in yourself, or let them). Until the owner's
-              review this was a lone button floating under the actions.
+              What you know, in a popup from the … menu (owner, 2026-10-05:
+              "Over …" off the page, into the menu). With nothing in it, it is
+              the question it exists for, with the ways to answer it (fill it in
+              yourself, or let them).
             */}
-            <Section
-                title={t('people.about', { name: person.name })}
-                /* Only when they filled it in themselves; "what you filled in" went (owner, 2026-10-05). */
-                tip={about.tasteSource === 'self' ? t('people.source_self_tip', { name: person.name }) : undefined}
-                aside={
-                    /* Who filled it in, beside the title; the actions are at the bottom (2026-10-05). */
-                    facts.length > 0 && panel !== 'about' && about.tasteSource !== null ? (
-                        <span className="text-xs text-ink-soft">
-                            {about.tasteSource === 'self' ? t('people.source_self', { name: person.name }) : t('people.source_you')}
-                        </span>
-                    ) : undefined
-                }
-            >
+            {aboutOpen && (
+            <Modal title={t('people.about', { name: person.name })} onClose={closeAbout}>
+                {/* Who filled it in; the tip only when they did it themselves (2026-10-05). */}
+                {facts.length > 0 && panel !== 'about' && about.tasteSource !== null && (
+                    <p className="mb-3 flex flex-wrap items-center text-xs text-ink-soft">
+                        {about.tasteSource === 'self' ? t('people.source_self', { name: person.name }) : t('people.source_you')}
+                        {about.tasteSource === 'self' && <InfoTip>{t('people.source_self_tip', { name: person.name })}</InfoTip>}
+                    </p>
+                )}
                 {panel === 'about' ? (
                     <AboutForm person={person} profile={profile} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
                 ) : facts.length === 0 && profile.birthday === null ? (
@@ -378,7 +396,7 @@ export default function PersonProfile({
                                         <ToolIcon name="edit" className="h-4 w-4" />
                                         {t('people.fill_in_yourself')}
                                     </button>
-                                    <button type="button" onClick={() => toggle('details')} className={secondary}>
+                                    <button type="button" onClick={editDetails} className={secondary}>
                                         <ToolIcon name="cake" className="h-4 w-4" />
                                         {t('friends.add_birthday')}
                                     </button>
@@ -412,7 +430,7 @@ export default function PersonProfile({
                                             {formatDay(profile.birthday, market)}
                                         </span>
                                     ) : (
-                                        <button type="button" onClick={() => toggle('details')} className={`${textButton} inline-flex items-center`}>
+                                        <button type="button" onClick={editDetails} className={`${textButton} inline-flex items-center`}>
                                             <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />
                                             {t('friends.add_birthday')}
                                         </button>
@@ -457,7 +475,8 @@ export default function PersonProfile({
                         {linkPanel}
                     </>
                 )}
-            </Section>
+            </Modal>
+            )}
 
             {profile.theirLists.length > 0 && (
                 <Section title={t('people.their_wishlists', { name: person.name })} tip={t('people.their_wishlists_tip', { name: person.name })}>
