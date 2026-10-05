@@ -116,8 +116,6 @@ return [
         'trust_link' => 'Cómo funciona GiftCoves',
         'final_title' => 'Empieza tu primera Cove.',
         'final_body' => 'Añade algo que quieras, algo que busques o algo que valga la pena compartir.',
-        'search_placeholder' => 'Busca un regalo o escanea un código de barras',
-        'search_placeholder_plain' => 'Busca un regalo',
         'recently_viewed' => 'Has visto',
         'today_badge' => 'La Cove de hoy',
         'today_cta' => 'Ver los hallazgos de hoy',
@@ -2269,7 +2267,8 @@ return [
     // The search card: on the home page where "Recently searched" was, and
     // at the top of Find a gift. The field's placeholder is home.search_placeholder.
     'search_card' => [
-        'title' => 'Busca un regalo',
+        // The field's placeholder and the card's name; no heading above it (owner, 2026-10-05).
+        'placeholder' => '¿Qué buscas?',
     ],
 
     'og' => [

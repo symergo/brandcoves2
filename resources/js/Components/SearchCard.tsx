@@ -1,5 +1,4 @@
 import { router, usePage } from '@inertiajs/react'
-import { useEffect, useState } from 'react'
 import ScanButton from './ScanButton'
 import ToolIcon from './ToolIcon'
 import { isCleanTerm, searchHref } from '../searchUrl'
@@ -7,7 +6,7 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 /**
- * A search, as a card: a heading, one line, the field, the camera, the button.
+ * A search, as a card: the field, the camera, the button.
  *
  * The same card on the home page (where "Recently searched" was) and at the
  * top of Find a gift, at the owner's request (2026-09-13). One component so
@@ -22,52 +21,23 @@ import { useTranslations } from '../useTranslations'
  * same page and names /zoek/term as canonical.
  *
  * The camera sits beside the field because somebody standing in a shop with
- * the product in their hand has the highest intent this site ever sees, and
- * a scan button is not something a search box normally has — the field's
- * placeholder is the one place allowed to promise it. The wasm decoder is
- * fetched inside the click handler, so a page nobody scans from loads
- * nothing extra.
+ * the product in their hand has the highest intent this site ever sees. The
+ * wasm decoder is fetched inside the click handler, so a page nobody scans
+ * from loads nothing extra.
  *
- * **And it only promises it where the button is.** `ScanButton` is `md:hidden`
- * — a laptop webcam pointed at a shelf is a party trick — so on a desktop the
- * placeholder was offering a scanner with no button anywhere on the page
- * (owner's report, 2026-09-14). The plain wording is the default, including
- * in SSR and with no JavaScript, and the offer is added after mount on a
- * viewport narrow enough to show the button. That way the promise and the
- * control appear together or not at all.
+ * No heading, and one placeholder everywhere: "Wat zoek je?" (owner,
+ * 2026-10-05). It replaced the heading "Zoek een cadeau" and a placeholder
+ * that, on a phone only, added "or scan a barcode": the card is the field,
+ * and the scan button beside it on a phone says the rest.
  */
 export default function SearchCard({ className = '' }: { className?: string }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
-
-    // The same breakpoint ScanButton hides itself at, read once and then on
-    // change: a phone held sideways loses the button, and a placeholder that
-    // kept promising a scan would be the same lie in miniature.
-    const [canScan, setCanScan] = useState(false)
-
-    useEffect(() => {
-        const narrow = window.matchMedia('(max-width: 767.98px)')
-        const sync = () => setCanScan(narrow.matches)
-
-        sync()
-        narrow.addEventListener('change', sync)
-
-        return () => narrow.removeEventListener('change', sync)
-    }, [])
-
-    const placeholder = canScan ? t('home.search_placeholder') : t('home.search_placeholder_plain')
+    const placeholder = t('search_card.placeholder')
 
     return (
-        <section
-            aria-labelledby="search-card-heading"
-            className={`rounded-card border border-line bg-card p-5 sm:p-6 ${className}`}
-        >
-            <h2 id="search-card-heading" className="text-lg font-medium">
-                {t('search_card.title')}
-            </h2>
-            {/* No line under the title (owner, 2026-09-29); the placeholder says what to type. */}
-
+        <section aria-label={placeholder} className={`rounded-card border border-line bg-card p-4 sm:p-5 ${className}`}>
             <form
                 action={`${base}/search`}
                 method="get"
@@ -78,7 +48,7 @@ export default function SearchCard({ className = '' }: { className?: string }) {
                     e.preventDefault()
                     router.get(searchHref(market.key, q))
                 }}
-                className="mt-4 flex gap-2"
+                className="flex gap-2"
             >
                 <input
                     type="search"

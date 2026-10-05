@@ -185,8 +185,6 @@ return [
         // search box normally has. Only the two fields that actually sit next
         // to a `ScanButton` — this one and `search.placeholder` — may promise
         // it; the same line in a modal with no camera is a broken promise.
-        'search_placeholder' => 'Search for a gift or scan a barcode',
-        'search_placeholder_plain' => 'Search for a gift',
         'recently_viewed' => 'You looked at',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",
@@ -2536,7 +2534,8 @@ return [
     // The search card: on the home page where "Recently searched" was, and
     // at the top of Find a gift. The field's placeholder is home.search_placeholder.
     'search_card' => [
-        'title' => 'Search for a gift',
+        // The field's placeholder and the card's name; no heading above it (owner, 2026-10-05).
+        'placeholder' => 'What are you looking for?',
     ],
 
     'og' => [

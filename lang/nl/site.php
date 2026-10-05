@@ -116,8 +116,6 @@ return [
         'trust_link' => 'Hoe GiftCoves werkt',
         'final_title' => 'Begin je eerste Cove.',
         'final_body' => 'Zet er iets op dat je wilt, iets waar je naar zoekt, of iets dat het delen waard is.',
-        'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
-        'search_placeholder_plain' => 'Zoek een cadeau',
         'recently_viewed' => 'Je bekeek',
         'today_badge' => 'Cove van vandaag',
         'today_cta' => 'Bekijk de vondsten van vandaag',
@@ -2284,7 +2282,8 @@ return [
     // The search card: on the home page where "Recently searched" was, and
     // at the top of Find a gift. The field's placeholder is home.search_placeholder.
     'search_card' => [
-        'title' => 'Zoek een cadeau',
+        // The field's placeholder and the card's name; no heading above it (owner, 2026-10-05).
+        'placeholder' => 'Wat zoek je?',
     ],
 
     'og' => [
