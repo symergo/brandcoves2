@@ -93,15 +93,16 @@
  * Rood + oranje since 2026-10-05, chosen by the owner from some sixty palettes
  * rendered side by side (the brief over many rounds: livelier, not "Claude",
  * no electric or fluorescent colours, real reds that are not pink, then red
- * with oranges). Koraal ran for a day before it. A true red (`accent`) is both
- * the buttons and the homepage hero band (`hero`), with white type on it;
- * orange (`orange`) for the soft band behind the Dagelijkse Cove (`band`) and
- * the shapes in the hero. The footer has no colour of its own (owner). No
- * blush or pink tints anywhere: a soft tint of red is pink, which the owner
- * ruled out. Contrast checked for every pair before it went in: white on
- * `accent` 5.0:1, `accent-dark` 6.4:1 and `ink-soft` 6.8:1 on the page,
- * `accent-dark` 5.9:1 on `band`. `danger` stays a crimson, leaning to pink
- * where the accent is a pure red, so an error is not the button's colour.
+ * with oranges). Koraal ran for a day before it. A true red (`accent`) for
+ * the buttons, links and the footer; orange for the homepage hero band
+ * (`hero`, dark type on it) and a soft orange for the page itself (`cream`)
+ * and, a step deeper, the band behind the Dagelijkse Cove (`band`). No blush
+ * or pink tints anywhere: a soft tint of red is pink, which the owner ruled
+ * out. Contrast checked for every pair before it went in: white on `accent`
+ * 5.0:1, `ink` on `hero` 7.1:1, `accent-dark` 6.0:1 and `ink-soft` 6.4:1 on
+ * the page, `accent-dark` 5.4:1 on `band`. `danger` stays a crimson, leaning
+ * to pink where the accent is a pure red, so an error is not the button's
+ * colour.
  *
  * Inter throughout. v1 replaced a three-font stack with one and the pages got
  * both faster and more coherent.
@@ -112,7 +113,7 @@
      * the quiet fills inside white cards (fields, neutral pills, the scan
      * button), and on #ffffff those vanished into the card.
      */
-    --color-cream: #fcf9f7;
+    --color-cream: #fff1e4;
     --color-ink: #24170f;
     --color-ink-soft: #62564c;
     --color-accent: #d32f2f;
@@ -122,13 +123,13 @@
     --color-line: #eee4da;
     --color-card: #ffffff;
 
-    /* The homepage hero's band (Rood + oranje, 2026-10-05). Text on it is white. */
-    --color-hero: #d32f2f;
-    /* The hero's shapes and the bow of its present. */
-    --color-tint: #b02525;
-    --color-peach: #f28c28;
+    /* The homepage hero's band: orange (owner, 2026-10-05). Text on it is `ink`, 7.1:1; white is 2.4:1. */
+    --color-hero: #f28c28;
+    /* The hero's circles (gold and a light cream) and the ribbon and bow of its present. */
+    --color-tint: #e8c468;
+    --color-peach: #fff3dc;
     /* The soft orange band behind the Dagelijkse Cove on the homepage. */
-    --color-band: #ffeedf;
+    --color-band: #ffe2c7;
 
     /*
      * Something went wrong, in its own colour.

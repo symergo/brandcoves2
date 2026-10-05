@@ -184,28 +184,34 @@ surfaces and takes the accent as is: 4.0:1 on its ground, the same as before.
 
 Koraal ran for a day. The owner kept going through palettes (some sixty by the end, on one page that
 paints the same homepage in each) and steered: real reds, not pink; then red with oranges, soft
-yellows or gold. The choice is **Rood + oranje**, with two changes of the owner's: a very dark tile
-behind the logo, and the footer in the same red as the hero.
+yellows or gold. The choice is **Rood + oranje**, adjusted by the owner the same day: a dark-red
+tile behind the logo, the footer in the red, then an orange hero and a soft orange page, and a
+coloured present on gold and cream circles.
 
 | Token | Value | Checked |
 |---|---|---|
-| `cream` (the page) | `#fcf9f7` | a near-white with no pink in it |
+| `cream` (the page) | `#fff1e4` | a soft orange; white cards stand out on it |
 | `ink` | `#24170f` | |
-| `ink-soft` | `#62564c` | 6.8:1 on the page |
-| `accent` (buttons) and `hero` (the band) | `#d32f2f` | white on it 5.0:1 |
-| `accent-dark` (links) | `#b02525` | 6.4:1 on the page, 6.7:1 on white, 5.9:1 on `band` |
+| `ink-soft` | `#62564c` | 6.4:1 on the page |
+| `accent` (buttons, the footer) | `#d32f2f` | white on it 5.0:1 |
+| `hero` (the homepage band) | `#f28c28` | `ink` on it 7.1:1; white would be 2.4:1 |
+| `accent-dark` (links) | `#b02525` | 6.0:1 on the page, 6.7:1 on white, 5.4:1 on `band` |
 | `amber` (a list about somebody) | `#f5a35b` | an orange |
 | `line` | `#eee4da` | |
-| `tint`, `peach` (the hero's two circles) | `#b02525`, `#f28c28` | a deeper red and an orange |
-| `band` (behind the Dagelijkse Cove) | `#ffeedf` | a soft orange |
+| `tint`, `peach` (the hero's circles; `peach` also the ribbon and bow) | `#e8c468`, `#fff3dc` | gold and a light cream |
+| `band` (behind the Dagelijkse Cove) | `#ffe2c7` | one step deeper than the page, so it still shows |
 | `danger` | `#a3123a` | unchanged: a crimson, apart from the pure red |
 
 - **Why no soft red anywhere.** A light tint of red is pink, which the owner ruled out. So the red is
-  used at full strength, as a band with white type, and the soft colour beside it is orange.
-- **On the red band** everything is white, and the primary button is the new `light` variant (white
-  with `accent-dark` type): a red button disappears into a red band.
-- **The footer** is `bg-hero` with white type and underlined links on hover, so a page opens and
-  closes on the brand's colour.
+  used at full strength (buttons, links, the footer) and every soft colour is an orange.
+- **The hero went from red to orange** the same day (owner: "background orange, theme and hero").
+  On orange the type is `ink` and the primary button is the red `primary`, which stands out there.
+  The hero was red with white type and a `light` button (white, red type) first; the `light`
+  variant stays in `Button` for a red surface.
+- **The footer** is `bg-accent` with white type and underlined links on hover. It was `bg-hero`
+  while the hero was red, and went orange with it, white on orange at 2.4:1; it names the red now.
+- **The present** (`HeroGift`) is filled: a red box, a darker red lid, a cream ribbon and bow, on a
+  gold and a cream circle (owner: "a colour fill", "gold or a light colour" for the circles).
 - **The logo tile** in `public/icons/giftcoves.svg` is `#7a1414`, a dark red (first nearly black, `#1c1412`; the owner asked for dark red), with the white cove
   and the amber buoy. Still teal in `giftcoves-512.png`, `favicon.ico` and the social cards.
 - **Left as it is, worth a look:** the site's accent *washes* (`bg-accent/10`, `/5`: the "Cove van

@@ -21,7 +21,7 @@ body *:not(html):not(style):not(br):not(tr):not(code) {
 
 body {
     -webkit-text-size-adjust: none;
-    background-color: #fcf9f7;
+    background-color: #fff1e4;
     color: #3d3631;
     height: 100%;
     line-height: 1.4;
@@ -124,7 +124,7 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    background-color: #fcf9f7;
+    background-color: #fff1e4;
     margin: 0;
     padding: 0;
     width: 100%;
@@ -177,9 +177,9 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    background-color: #fcf9f7;
-    border-bottom: 1px solid #fcf9f7;
-    border-top: 1px solid #fcf9f7;
+    background-color: #fff1e4;
+    border-bottom: 1px solid #fff1e4;
+    border-top: 1px solid #fff1e4;
     margin: 0;
     padding: 0;
     width: 100%;
@@ -252,7 +252,7 @@ hr {
 }
 
 .table th {
-    background-color: #fcf9f7;
+    background-color: #fff1e4;
     border-bottom: 1px solid #eee4da;
     color: #62564c;
     font-size: 12px;
@@ -345,7 +345,7 @@ hr {
 }
 
 .panel-content {
-    background-color: #fcf9f7;
+    background-color: #fff1e4;
     color: #3d3631;
     padding: 16px;
 }

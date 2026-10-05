@@ -93,15 +93,15 @@ export default function Home({ today }: Props) {
                 */}
                 <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-20 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-24 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
                     <div>
-                        <p className="text-sm font-semibold tracking-wide text-white uppercase">{t('home.hero_kicker')}</p>
-                        <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-white sm:text-4xl">
+                        <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
+                        <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
                             {t('home.hero_title')}
                         </h1>
                         {/* The owner's combination of three proposals (2026-10-03). */}
-                        <p className="mt-4 max-w-xl text-lg text-white">{t('home.hero_subtitle')}</p>
+                        <p className="mt-4 max-w-xl text-lg text-ink">{t('home.hero_subtitle')}</p>
 
                         <div className="mt-7 flex flex-wrap gap-3">
-                            <Link href={createCove} className={buttonClasses('light', 'lg')}>
+                            <Link href={createCove} className={buttonClasses('primary', 'lg')}>
                                 {t('home.cta_create')}
                             </Link>
                             {/* "Zoek cadeaus" to Find a gift, where "Ontdek Coves" to /coves stood (owner, 2026-09-28). */}

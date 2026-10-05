@@ -742,7 +742,7 @@ function Chrome({ children }: PropsWithChildren) {
             {/* Fixed to the viewport, so it is mounted once and outside the flow. */}
             <SaveToast />
 
-            <footer className="bg-hero text-white">
+            <footer className="bg-accent text-white">
                 {/*
                   Two short rows and a small print line, in the smaller size.
 
@@ -757,9 +757,11 @@ function Chrome({ children }: PropsWithChildren) {
                   which is the one place on the site the name is written
                   without being the header.
 
-                  The same red as the homepage hero, white type (Rood + oranje,
-                  owner, 2026-10-05): the page opens and closes on the brand's
-                  colour. White on the red is 5.0:1.
+                  The red of the buttons, white type (owner, 2026-10-05). It
+                  was `bg-hero` while the hero was that red; when the hero
+                  went orange the same day it took the footer with it, white
+                  on orange at 2.4:1, so it names the red itself now. White on
+                  the red is 5.0:1.
 
                   The brand and Cove indexes live here rather than in the nav,
                   not because they matter less but because their job is
