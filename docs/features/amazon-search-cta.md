@@ -155,9 +155,12 @@ high around 40px buttons, which cut every pill off at the bottom on a phone.
 
 The owner then asked for the Amazon search as a product card. `AmazonSearchCard` is the size and
 shape of a product card, Amazon's favicon in the picture slot, "Zoek :term ook op Amazon" as its
-title and the storefront's host under it, the whole card one tagged `sponsored` link. It sits after
-the fourth product, or the last when there are fewer, on every width, and it is the only Amazon link
-on a page with results: the toolbar button and the phone's button under the products both went, so
+title and the storefront's host under it, the whole card one tagged `sponsored` link. It takes the
+3rd, 4th, 5th or 6th tile (owner: "randomly"), or follows the last product when there are fewer, on
+every width. The tile is drawn from the term, not from `Math.random()`: the page renders on the
+server and again in the browser, and two draws would move the card as the page wakes up, so it
+differs between searches and holds still within one. It is the only Amazon link on a page with
+results: the toolbar button and the phone's button under the products both went, so
 Amazon is not offered twice. It shows no Amazon product, only the way to search there (invariant 6).
 The empty-results page keeps its own large Amazon card.
 

@@ -247,6 +247,18 @@ export default function Search({
     const amazonLabel = t('search.amazon_search', { term: q })
 
     /*
+     * Which tile the Amazon card takes: the 3rd, 4th, 5th or 6th (owner,
+     * 2026-10-05: "randomly"). Drawn from the term rather than from
+     * Math.random(): the page is rendered on the server and again in the
+     * browser, and two different draws would move the card under the
+     * visitor's eyes as the page wakes up. So it differs between searches and
+     * holds still within one. The index is the product it follows.
+     */
+    let termHash = 0
+    for (const char of q) termHash = (termHash * 31 + char.charCodeAt(0)) >>> 0
+    const amazonAfter = Math.min(1 + (termHash % 4), results.items.length - 1)
+
+    /*
      * Every filter that is on, as a chip with its own way off.
      *
      * Their number is the count on the Filters button, so a closed panel
@@ -1148,17 +1160,15 @@ export default function Search({
                                 <Fragment key={g.id}>
                                     <ProductCard group={g} brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null} />
                                     {/*
-                                      The Amazon hand-off as a card, after the
-                                      first four products or after the last if
-                                      there are fewer (owner, 2026-10-05). It is
-                                      an alternative to the page, so it comes
-                                      after the page has had its say; as a card it
-                                      reads as one more place to look. The only
-                                      Amazon link on the page: it replaced the
-                                      toolbar button and, on a phone, a button
-                                      under the products.
+                                      The Amazon hand-off as a card, in the 3rd
+                                      to 6th tile (see `amazonAfter`), or after
+                                      the last product if there are fewer (owner,
+                                      2026-10-05). As a card it reads as one more
+                                      place to look. The only Amazon link on the
+                                      page: it replaced the toolbar button and,
+                                      on a phone, a button under the products.
                                     */}
-                                    {amazonSearch && i === Math.min(3, results.items.length - 1) && (
+                                    {amazonSearch && i === amazonAfter && (
                                         <AmazonSearchCard link={amazonSearch} label={amazonLabel} />
                                     )}
                                 </Fragment>
