@@ -124,8 +124,8 @@ export function ListThumb({ covers = [], kind = null }: { covers?: string[]; kin
     }
 
     return (
-        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-            <ToolIcon name={kindIcons[(kind as ListKind) ?? 'mine'] ?? 'list'} className="h-5 w-5" />
+        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-accent">
+            <ToolIcon name={kindIcons[(kind as ListKind) ?? 'mine'] ?? 'list'} className="h-7 w-7" duo />
         </span>
     )
 }

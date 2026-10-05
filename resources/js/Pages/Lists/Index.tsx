@@ -361,8 +361,8 @@ function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
                     cove.image ? (
                         <img src={cove.image} alt="" loading="lazy" className={pictureBox} />
                     ) : (
-                        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                            <ToolIcon name="gift" className="h-5 w-5" />
+                        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-accent">
+                            <ToolIcon name="gift" className="h-7 w-7" duo />
                         </span>
                     )
                 }

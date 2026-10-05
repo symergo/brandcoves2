@@ -41,9 +41,9 @@ export default function EmptyState({
             {icon && (
                 <span
                     aria-hidden
-                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent ${quiet ? '' : 'mx-auto'}`}
+                    className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full text-accent ${quiet ? '' : 'mx-auto'}`}
                 >
-                    <ToolIcon name={icon} className="h-5 w-5" />
+                    <ToolIcon name={icon} className="h-7 w-7" duo />
                 </span>
             )}
             {title && <p className="font-medium">{title}</p>}

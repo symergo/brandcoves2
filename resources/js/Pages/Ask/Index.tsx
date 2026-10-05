@@ -325,8 +325,8 @@ export default function AskIndex({
                   something recognisable.
                 */}
                 <div className="flex items-center gap-3">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                        <CoveIcon name="ask" className="h-7 w-7" />
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-accent">
+                        <CoveIcon name="ask" className="h-9 w-9" duo />
                     </span>
                     <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{t('ask.title')}</h1>
                 </div>

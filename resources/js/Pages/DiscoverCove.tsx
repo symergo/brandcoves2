@@ -297,8 +297,8 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
             <Band id="ask" title={t('ask.title')} more={{ href: urls.ask, label: t('ask.all') }}>
                 <div className="flex flex-col gap-4 rounded-card border border-accent/30 bg-accent/5 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                            <CoveIcon name="ask" className="h-5 w-5" />
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-accent">
+                            <CoveIcon name="ask" className="h-7 w-7" duo />
                         </span>
                         <p className="max-w-xl text-ink">{t('ask.invite')}</p>
                     </div>

@@ -128,6 +128,8 @@
     /* The hero's circles (gold and a light cream) and the ribbon and bow of its present. */
     --color-tint: #e8c468;
     --color-peach: #fff3dc;
+    /* The second colour of a duotone icon, beside `tint` (gold). See ToolIcon. */
+    --color-apricot: #ffd9a8;
     /* The soft orange band behind the Dagelijkse Cove on the homepage. */
     --color-band: #ffe2c7;
 

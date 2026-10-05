@@ -64,8 +64,8 @@ export default function HowItWorks({ backUrl }: { backUrl: string }) {
                               reader who followed the link that the entry they
                               are reading belongs to the card they pressed.
                             */}
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                                <ToolIcon name={tool} className="h-5 w-5" />
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                                <ToolIcon name={tool} className="h-7 w-7" duo />
                             </span>
                             <h2 className="font-medium">{t(`gift_cove.${tool}_title`)}</h2>
                         </div>

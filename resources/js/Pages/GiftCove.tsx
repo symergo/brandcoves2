@@ -273,11 +273,11 @@ export default function GiftCove({
                                             className="group flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
                                         >
                                             <div className="flex items-start justify-between gap-3">
-                                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
+                                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-accent transition group-hover:text-accent-dark">
                                                     {'tool' in card.icon ? (
-                                                        <ToolIcon name={card.icon.tool} className="h-5 w-5" />
+                                                        <ToolIcon name={card.icon.tool} className="h-7 w-7" duo />
                                                     ) : (
-                                                        <CoveIcon name={card.icon.cove} className="h-5 w-5" />
+                                                        <CoveIcon name={card.icon.cove} className="h-7 w-7" duo />
                                                     )}
                                                 </span>
                                                 {/*

@@ -224,6 +224,16 @@ coloured present on gold and cream circles.
   vandaag" pill, the icon tiles on the help page, some cards) are now pink-ish, because they are
   this red at 5 to 10%. Moving them to an orange or neutral wash is a sweep over many components.
 
+**Icons are duotone where they stand alone** (owner, 2026-10-05, chosen from five styles on a
+proposal page: one colour, filled with a line, duotone, coloured tiles, two line colours). `ToolIcon`
+and `CoveIcon` take `duo`: a soft copy of the drawing sits just behind the line, offset 1.4 units
+down and right, in gold (`tint`) or apricot (`apricot`), picked from the icon's name so the same icon
+is the same colour everywhere. Used on the large icons only: the homepage cards, the help and how-it-
+works lists, the empty states, the Gift Cove and search-landing tool cards, the Find a gift ways, the
+list rows. Those used to sit on a `bg-accent/10` tile, which with a pure red was a pink square; the
+tile is gone and the icon is drawn larger in its place, so nothing moves. The small icons (menu,
+buttons, beside a list's name) stay one colour: at 16 to 20px the second colour is a smudge.
+
 *(Koraal, below, is what this replaced.)*
 
 ## Koraal: brick red on white, a coral hero (2026-10-04)

@@ -377,7 +377,7 @@ function Entry({ icon, title, body, cta, href }: { icon: ToolKey; title: string;
                 href={href}
                 className="group flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
             >
-                <ToolIcon name={icon} className="h-7 w-7 text-accent" />
+                <ToolIcon name={icon} className="h-8 w-8 text-accent" duo />
                 <span className="mt-4 text-lg font-semibold">{title}</span>
                 <span className="mt-1 flex-1 text-ink-soft">{body}</span>
                 <span className="mt-4 font-medium text-accent-dark group-hover:text-ink">{cta} →</span>
@@ -395,7 +395,7 @@ function OpenWay({ icon, text, href }: { icon: ToolKey; text: string; href: stri
     return (
         <li>
             <Link href={href} className="group flex items-start gap-3 hover:text-ink">
-                <ToolIcon name={icon} className="mt-0.5 h-6 w-6 shrink-0 text-ink" />
+                <ToolIcon name={icon} className="mt-0.5 h-7 w-7 shrink-0 text-accent" duo />
                 <span className="underline decoration-line underline-offset-4 group-hover:decoration-ink">{text}</span>
             </Link>
         </li>

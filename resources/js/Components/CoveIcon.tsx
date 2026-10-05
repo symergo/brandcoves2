@@ -1,3 +1,4 @@
+import { DuoLayer } from './ToolIcon'
 import type { ReactNode } from 'react'
 
 export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'occasion' | 'brand' | 'shop' | 'all' | 'ask' | 'dial' | 'compass'
@@ -154,7 +155,8 @@ const paths: Record<CoveKey, ReactNode> = {
     ),
 }
 
-export default function CoveIcon({ name, className }: { name: CoveKey; className?: string }) {
+/** `duo`: the duotone layer behind the line, as on `ToolIcon` (2026-10-05). */
+export default function CoveIcon({ name, className, duo = false }: { name: CoveKey; className?: string; duo?: boolean }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -167,6 +169,7 @@ export default function CoveIcon({ name, className }: { name: CoveKey; className
             focusable="false"
             className={className ?? 'h-6 w-6'}
         >
+            {duo && <DuoLayer name={name}>{paths[name]}</DuoLayer>}
             {paths[name]}
         </svg>
     )

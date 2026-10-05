@@ -187,8 +187,8 @@ function Topic({ id, title, items }: { id: string; title: string; items: { icon:
             <ul className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 {items.map((item) => (
                     <li key={item.text} className="flex gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                            <ToolIcon name={item.icon} className="h-5 w-5" />
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                            <ToolIcon name={item.icon} className="h-7 w-7" duo />
                         </span>
                         <span className="text-ink-soft">{item.text}</span>
                     </li>

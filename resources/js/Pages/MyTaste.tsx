@@ -145,8 +145,8 @@ export default function MyTaste({ taste, options, urls }: Props) {
 
             <PageHeader
                 icon={
-                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                        <ToolIcon name="taste" className="h-6 w-6" />
+                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-accent">
+                        <ToolIcon name="taste" className="h-8 w-8" duo />
                     </span>
                 }
                 title={t('my_taste.title')}
@@ -329,8 +329,8 @@ function Way({ href, icon, title, hint, cta }: { href: string; icon: 'swipe' | '
     return (
         <Link href={href} className="group flex flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink">
             <span className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    <ToolIcon name={icon} className="h-5 w-5" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                    <ToolIcon name={icon} className="h-7 w-7" duo />
                 </span>
                 <span className="font-medium">{title}</span>
             </span>

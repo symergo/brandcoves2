@@ -72,8 +72,8 @@ export default function PlayDialog({
                 style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
                 <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                        <ToolIcon name={icon} className="h-5 w-5" />
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                        <ToolIcon name={icon} className="h-7 w-7" duo />
                     </span>
                     <div className="min-w-0 flex-1">
                         <h1 id="play-dialog-title" className="truncate text-base font-semibold">

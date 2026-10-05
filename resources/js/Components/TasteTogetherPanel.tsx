@@ -85,8 +85,8 @@ export default function TasteTogetherPanel({
     return (
         <section className={`rounded-card border border-line bg-card p-4 sm:p-5 ${className}`}>
             <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    <ToolIcon name="taste" className="h-5 w-5" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                    <ToolIcon name="taste" className="h-7 w-7" duo />
                 </span>
                 <div className="min-w-0">
                     <h2 className="font-medium">{t('gift.together.panel_title', { name })}</h2>

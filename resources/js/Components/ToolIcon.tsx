@@ -530,7 +530,31 @@ const paths: Record<ToolKey, ReactNode> = {
     ),
 }
 
-export default function ToolIcon({ name, className = 'h-5 w-5' }: { name: ToolKey; className?: string }) {
+/**
+ * Duotone (owner, 2026-10-05, chosen from five styles on a proposal page): a
+ * soft copy of the drawing just behind the line, offset down and right, in
+ * gold or apricot. The line keeps its own colour.
+ *
+ * For the large icons only, the ones that stand alone in a card or a tile.
+ * The small ones in the menu, on buttons and beside a list's name stay one
+ * colour: at 16 to 20px the second colour reads as a smudge, and a row of
+ * two-colour menu icons competes with the words beside them.
+ *
+ * Which of the two colours an icon gets comes from its name, so the same icon
+ * is the same colour everywhere instead of alternating with its neighbours.
+ */
+export function DuoLayer({ name, children }: { name: string; children: ReactNode }) {
+    let sum = 0
+    for (const char of name) sum += char.charCodeAt(0)
+
+    return (
+        <g transform="translate(1.4 1.4)" stroke="none" className={sum % 2 ? 'fill-apricot' : 'fill-tint'}>
+            {children}
+        </g>
+    )
+}
+
+export default function ToolIcon({ name, className = 'h-5 w-5', duo = false }: { name: ToolKey; className?: string; duo?: boolean }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -542,6 +566,7 @@ export default function ToolIcon({ name, className = 'h-5 w-5' }: { name: ToolKe
             strokeLinejoin="round"
             aria-hidden
         >
+            {duo && <DuoLayer name={name}>{paths[name]}</DuoLayer>}
             {paths[name]}
         </svg>
     )

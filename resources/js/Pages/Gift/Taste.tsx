@@ -119,8 +119,8 @@ export default function Taste(props: Props) {
             <PageHeader
                 className="max-w-2xl"
                 icon={
-                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                        <ToolIcon name="taste" className="h-6 w-6" />
+                    <span className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-accent">
+                        <ToolIcon name="taste" className="h-8 w-8" duo />
                     </span>
                 }
                 title={t('gift.taste.title')}

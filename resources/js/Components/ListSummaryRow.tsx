@@ -295,8 +295,8 @@ function AddToListDialog({ list, onClose }: { list: ListSummary; onClose: () => 
                 href={swipe}
                 className="mt-4 flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
             >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    <ToolIcon name="swipe" className="h-5 w-5" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                    <ToolIcon name="swipe" className="h-7 w-7" duo />
                 </span>
                 <span className="min-w-0 font-medium">{t('lists.add_swipe')}</span>
                 <span className="ml-auto shrink-0 text-accent-dark" aria-hidden>

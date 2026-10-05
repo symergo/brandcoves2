@@ -140,7 +140,7 @@ const wayCard = 'group flex flex-col rounded-card border border-line bg-card p-5
 function WayHead({ icon, title }: { icon: ReactNode; title: string }) {
     return (
         <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">{icon}</span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">{icon}</span>
             <span className="font-medium text-ink">{title}</span>
         </span>
     )
@@ -219,7 +219,7 @@ function SearchToListCard({
 
     return (
         <div className={`${wayCard} mt-4 hover:border-line`}>
-            <WayHead icon={<ToolIcon name="search" className="h-5 w-5" />} title={t('gift.way_search')} />
+            <WayHead icon={<ToolIcon name="search" className="h-7 w-7" duo />} title={t('gift.way_search')} />
             {recipient !== null ? (
                 <>
                     <span className="mt-1 text-sm text-ink-soft">{t('gift.way_search_hint', { name: recipient.name })}</span>
@@ -904,10 +904,11 @@ export default function GiftWizard(props: Props) {
                     >
                         <span
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                forMe ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'
+                                forMe ? 'bg-white/20 text-white' : 'text-accent'
                             }`}
                         >
-                            <ToolIcon name="wishlist" className="h-5 w-5" />
+                            {/* Duotone while it is a choice; plain white once chosen, on the red. */}
+                            <ToolIcon name="wishlist" className={forMe ? 'h-5 w-5' : 'h-7 w-7'} duo={!forMe} />
                         </span>
                         {t('gift.who_me')}
                     </button>
@@ -970,7 +971,7 @@ export default function GiftWizard(props: Props) {
                       straight on the list.
                     */}
                     <Link href={swipeHref} className={`${wayCard} mt-4`}>
-                        <WayHead icon={<ToolIcon name="swipe" className="h-5 w-5" />} title={t('gift.way_swipe')} />
+                        <WayHead icon={<ToolIcon name="swipe" className="h-7 w-7" duo />} title={t('gift.way_swipe')} />
                         <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_swipe_hint'))}</span>
                         <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_swipe_cta')} →</span>
                     </Link>
@@ -994,20 +995,20 @@ export default function GiftWizard(props: Props) {
                             }}
                             className={wayCard}
                         >
-                            <WayHead icon={<ToolIcon name="suggestions" className="h-5 w-5" />} title={t('gift.way_questions')} />
+                            <WayHead icon={<ToolIcon name="suggestions" className="h-7 w-7" duo />} title={t('gift.way_questions')} />
                             <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_questions_hint'))}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_questions_cta')} →</span>
                         </button>
 
                         <Link href={tasteHref} className={wayCard}>
-                            <WayHead icon={<ToolIcon name="taste" className="h-5 w-5" />} title={t('gift.way_taste')} />
+                            <WayHead icon={<ToolIcon name="taste" className="h-7 w-7" duo />} title={t('gift.way_taste')} />
                             <span className="mt-1 text-sm text-ink-soft">{t(own('gift.way_taste_hint'))}</span>
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_taste_cta')} →</span>
                         </Link>
 
                         {types.length > 0 && (
                             <div className={`${wayCard} sm:col-span-2 lg:col-span-1`}>
-                                <WayHead icon={<ToolIcon name="people" className="h-5 w-5" />} title={t('gift.way_types')} />
+                                <WayHead icon={<ToolIcon name="people" className="h-7 w-7" duo />} title={t('gift.way_types')} />
                                 <span className="mt-1 text-sm text-ink-soft">{t('gift.personas_hint')}</span>
                                 {/* A list to pick from: the persona Coves for this kind of person first. */}
                                 <label className="mt-auto block pt-4">
@@ -1049,7 +1050,7 @@ export default function GiftWizard(props: Props) {
                           for a saved person, because it may make that list.
                         */}
                         <div className={wayCard}>
-                            <WayHead icon={<CoveIcon name="ask" className="h-5 w-5" />} title={t('gift.way_ask')} />
+                            <WayHead icon={<CoveIcon name="ask" className="h-7 w-7" duo />} title={t('gift.way_ask')} />
                             <span className="mt-1 text-sm text-ink-soft">{t('gift.way_ask_hint')}</span>
                             <span className="mt-auto flex flex-col items-start gap-2 pt-4 text-sm font-medium text-accent-dark">
                                 <Link href={askHref} onClick={stashForAsk} className="hover:text-ink">

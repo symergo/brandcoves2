@@ -28,28 +28,28 @@ export default function SearchLanding({ landing }: { landing: Landing }) {
         {
             key: 'ask',
             href: `${base}/ask`,
-            icon: <CoveIcon name="ask" className="h-5 w-5" />,
+            icon: <CoveIcon name="ask" className="h-7 w-7" duo />,
             title: t('ask.title'),
             body: t('nav.hint_ask'),
         },
         {
             key: 'suggest',
             href: `${base}/lists?new=mine`,
-            icon: <ToolIcon name="suggestions" className="h-5 w-5" />,
+            icon: <ToolIcon name="suggestions" className="h-7 w-7" duo />,
             title: t('search.landing_suggest_title'),
             body: t('search.landing_suggest_body'),
         },
         {
             key: 'giftlist',
             href: `${base}/lists?new=for_someone`,
-            icon: <ToolIcon name="giftlist" className="h-5 w-5" />,
+            icon: <ToolIcon name="giftlist" className="h-7 w-7" duo />,
             title: t('search.landing_giftlist_title'),
             body: t('search.landing_giftlist_body'),
         },
         {
             key: 'tips',
             href: `${base}/search-help`,
-            icon: <ToolIcon name="help" className="h-5 w-5" />,
+            icon: <ToolIcon name="help" className="h-7 w-7" duo />,
             title: t('search_help.title'),
             body: t('search_help.intro'),
         },
@@ -121,7 +121,7 @@ export default function SearchLanding({ landing }: { landing: Landing }) {
                                 href={tool.href}
                                 className="group flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
                             >
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-accent transition group-hover:text-accent-dark">
                                     {tool.icon}
                                 </span>
                                 <span className="mt-4 font-medium">{tool.title}</span>
