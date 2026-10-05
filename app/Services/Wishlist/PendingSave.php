@@ -179,6 +179,12 @@ class PendingSave
                 $saver->saveGroup($list, $group, $current);
             }
 
+            // To the list they are now on, not back to where the button was:
+            // that was the swipe page, which starts a new round, so signing
+            // in looked like starting over (owner, 2026-10-05). As a Cove
+            // made into a list does, below.
+            $this->session->put('url.intended', $current->url("lists/{$list->id}"));
+
             return ['title' => $list->displayTitle($market->language()), 'kind' => $list->kind->value, 'language' => $market->language()];
         }
 

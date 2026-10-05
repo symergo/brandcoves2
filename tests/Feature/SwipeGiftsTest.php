@@ -226,5 +226,9 @@ class SwipeGiftsTest extends TestCase
         $saved = WishlistItem::query()->pluck('group_id')->sort()->values()->all();
         $this->assertSame($chosen->pluck('id')->sort()->values()->all(), $saved);
         $this->assertSame([$user->id], WishlistItem::query()->with('wishlist')->get()->pluck('wishlist.owner_user_id')->unique()->values()->all());
+
+        // And on to that list, not back to the swipe page, which starts a new round.
+        $list = WishlistItem::query()->firstOrFail()->wishlist;
+        $this->assertSame('/be-nl/lists/'.$list->id, session('url.intended'));
     }
 }
