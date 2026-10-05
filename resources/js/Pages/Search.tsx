@@ -7,7 +7,6 @@ import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
-import InfoTip from '../Components/InfoTip'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
@@ -874,17 +873,35 @@ export default function Search({
 
 
                     {/*
-                      What people keep for this term, in one line: counted over
-                      different products and different people, and sent only
-                      past the privacy threshold (SearchSignals). The how and
-                      the why sit behind the info icon, the site's rule for
-                      explanations.
+                      One row above the results: what people keep for this
+                      term on the left, the Amazon price comparison on the
+                      right (it drops under on a narrow phone).
+
+                      The summary counts the lists the term is on, sent only
+                      past the privacy threshold (SearchSignals). Its info
+                      icon went on the owner's word (2026-10-05). The Amazon
+                      link came back here the same day, "as before", as the
+                      button with Amazon's logo, beside the card in the grid.
                     */}
-                    {keptSummary && (
-                        <p className="mb-4 flex items-center gap-1.5 text-sm text-ink-soft">
-                            <span>{keptSummary}</span>
-                            <InfoTip>{t('search.kept_info')}</InfoTip>
-                        </p>
+                    {(keptSummary || (amazonSearch && !results.empty)) && (
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                            {keptSummary && <p className="text-sm text-ink-soft">{keptSummary}</p>}
+                            {/*
+                              The term only from `sm` up: on a phone the full
+                              sentence was cut off mid-word, and the term is the
+                              title right above it anyway.
+                            */}
+                            {amazonSearch && !results.empty && (
+                                <div className="max-w-full min-w-0 sm:ml-auto">
+                                    <span className="sm:hidden">
+                                        <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare_short')} compact />
+                                    </span>
+                                    <span className="hidden sm:inline">
+                                        <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare', { term: q })} compact />
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     )}
 
 

@@ -303,7 +303,9 @@ return [
         'card_kept' => 'On :count person\'s list|On :count people\'s lists',
         'card_in_coves' => 'In :count Cove|In :count Coves',
         'kept_summary' => '":term" is on :count list|":term" is on :count lists',
-        'kept_info' => 'Counted in different people, never who, and never what was bought. Shown only once enough people keep these.',
+        // Above the results, with Amazon's logo (2026-10-05).
+        'amazon_compare' => 'Compare :term prices on Amazon',
+        'amazon_compare_short' => 'Compare prices on Amazon',
         'chip_with_out_of_stock' => 'Out of stock too',
         'chip_min' => 'From :price',
         'chip_max' => 'Up to :price',

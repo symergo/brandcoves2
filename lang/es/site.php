@@ -230,7 +230,9 @@ return [
         'card_kept' => 'En la lista de :count persona|En las listas de :count personas',
         'card_in_coves' => 'En :count Cove|En :count Coves',
         'kept_summary' => '«:term» está en :count lista|«:term» está en :count listas',
-        'kept_info' => 'Contado en personas distintas, nunca quién, y nunca lo que ya se compró. Solo se muestra cuando lo guardan suficientes personas.',
+        // Above the results, with Amazon's logo (2026-10-05).
+        'amazon_compare' => 'Compara precios de :term en Amazon',
+        'amazon_compare_short' => 'Compara precios en Amazon',
         'chip_with_out_of_stock' => 'También sin stock',
         'chip_min' => 'Desde :price',
         'chip_max' => 'Hasta :price',

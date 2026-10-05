@@ -164,3 +164,12 @@ results: the toolbar button and the phone's button under the products both went,
 Amazon is not offered twice. It shows no Amazon product, only the way to search there (invariant 6).
 The empty-results page keeps its own large Amazon card.
 
+## And the button above the results again (2026-10-05)
+
+The owner then asked for the button back "as before", beside the card: "Vergelijk prijzen voor :term
+op Amazon" with Amazon's logo, on the row above the results that also carries ""term" staat op 2
+lijsten" (left) when there is one. On a phone the label drops the term ("Vergelijk prijzen op
+Amazon"): the full sentence was cut off mid-word, and the term is the title right above. So a page
+with results now has the button above them and the card in the grid. The same change removed the
+info icon beside the lists line.
+
