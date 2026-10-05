@@ -110,7 +110,6 @@ return [
         'open_photo' => 'Hors ligne ? Prenez une photo et ajoutez-la.',
         'open_sources' => 'Grandes boutiques en ligne · Créateurs indépendants · Le magasin du coin',
         'open_cta' => 'Ajouter quelque chose à GiftCoves',
-        'daily_title' => 'Quelque chose d’intéressant chaque jour : une nouvelle Cove de produits et d’idées.',
         'trust_title' => 'Ouvert. Utile. Transparent.',
         'trust_sources' => 'Les produits viennent de boutiques, de marques, de créateurs indépendants et des personnes qui utilisent GiftCoves.',
         'trust_commission' => 'Certains liens rapportent une commission à GiftCoves. Cela ne change rien à ce que vous payez.',

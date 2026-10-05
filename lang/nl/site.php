@@ -109,7 +109,6 @@ return [
         'open_photo' => 'Offline? Neem een foto en voeg het toe.',
         'open_sources' => 'Grote webwinkels · Zelfstandige makers · De winkel om de hoek',
         'open_cta' => 'Voeg iets toe aan GiftCoves',
-        'daily_title' => 'Elke dag iets interessants: een nieuwe Cove vol producten en ideeën.',
         'trust_title' => 'Open. Nuttig. Transparant.',
         'trust_sources' => 'Producten komen van winkels, merken, zelfstandige makers en de mensen die GiftCoves gebruiken.',
         'trust_commission' => 'Sommige links leveren GiftCoves een commissie op. Dat verandert niets aan wat jij betaalt.',

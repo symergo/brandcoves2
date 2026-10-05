@@ -171,7 +171,6 @@ return [
         // Generic on purpose: never other companies' names (owner, 2026-09-26).
         'open_sources' => 'Big online shops · Independent makers · The shop round the corner',
         'open_cta' => 'Add something to GiftCoves',
-        'daily_title' => 'Something interesting every day: a new Cove of products and ideas.',
         'trust_title' => 'Open. Useful. Transparent.',
         'trust_sources' => 'Products come from retailers, brands, independent sellers and the people who use GiftCoves.',
         'trust_commission' => "Some links earn GiftCoves a commission. That doesn't change what you pay.",

@@ -109,7 +109,6 @@ return [
         'open_photo' => '¿No está en línea? Hazle una foto y añádelo.',
         'open_sources' => 'Grandes tiendas online · Creadores independientes · La tienda de la esquina',
         'open_cta' => 'Añadir algo a GiftCoves',
-        'daily_title' => 'Algo interesante cada día: una Cove nueva de productos e ideas.',
         'trust_title' => 'Abierto. Útil. Transparente.',
         'trust_sources' => 'Los productos vienen de tiendas, marcas, creadores independientes y de las personas que usan GiftCoves.',
         'trust_commission' => 'Algunos enlaces le reportan una comisión a GiftCoves. Eso no cambia lo que pagas.',

@@ -179,8 +179,8 @@ export default function Home({ today }: Props) {
                     className="mt-14 bg-band py-10 shadow-[0_0_0_100vmax_var(--color-band)] [clip-path:inset(0_-100vmax)] sm:mt-20 sm:py-14"
                     aria-labelledby="today-heading"
                 >
-                    <p className="text-sm font-medium text-accent-dark">{t('home.daily_title')}</p>
-                    <div className="mt-3 rounded-card border border-line bg-card p-5 sm:p-8">
+                    {/* No line above the card (owner, 2026-10-05): its own badge and title say what it is. */}
+                    <div className="rounded-card border border-line bg-card p-5 sm:p-8">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
                                 {t('home.today_badge')}
