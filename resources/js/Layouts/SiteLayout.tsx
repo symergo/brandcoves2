@@ -387,12 +387,20 @@ function Chrome({ children }: PropsWithChildren) {
             */}
             <ContributeBar />
 
-            <header className="border-b border-line">
+            {/*
+              Sticky, and 56px tall (owner, 2026-10-05: "sticky menu bar, not
+              too high"). It was 16px of padding above and below, about 68px,
+              and scrolled away. The height is `--header-h` in app.css, which
+              everything else that sticks to the top reads, so nothing slides
+              under the bar. Solid: a see-through bar let the text scrolling
+              underneath show through the logo on a phone.
+            */}
+            <header className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b border-line bg-cream">
                 {/* Tighter from xl (2026-09-26): gap-4 here rather than
                     gap-6. The row is the page column (1152px) at 1280 and
                     1440 alike, and every language has to fit in it with a
                     search field (docs/features/navigation.md). */}
-                <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4 xl:gap-4">
+                <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 xl:gap-4">
                     {/*
                       The name at the mark's height. It was 18px beside a 28px
                       mark, which made the mark the logo and the word its

@@ -270,7 +270,7 @@ export default function Persona({
                     )}
                 </div>
 
-                <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">
+                <aside className="mt-10 space-y-6 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:mt-0">
                     <CoveRail rail={rail} />
                 </aside>
             </div>

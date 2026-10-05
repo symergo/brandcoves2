@@ -159,7 +159,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
 
             <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                 {/* The quicker ways to fill it: first on a phone, beside the form from `lg`. */}
-                <aside className="space-y-3 lg:sticky lg:top-6 lg:order-last">
+                <aside className="space-y-3 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:order-last">
                     <h2 className="font-medium">{t('my_taste.learn_title')}</h2>
                     <Way href={urls.swipe} icon="swipe" title={t('gift.way_swipe')} hint={t('my_taste.swipe_hint')} cta={t('gift.way_swipe_cta')} />
                     <Way href={urls.learn} icon="taste" title={t('gift.way_taste')} hint={t('my_taste.taste_hint')} cta={t('gift.way_taste_cta')} />

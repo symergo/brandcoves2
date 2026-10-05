@@ -971,7 +971,7 @@ export default function SharedList({
                 </div>
 
                 {board !== null && (
-                    <aside className="mt-10 lg:sticky lg:top-6 lg:mt-0">
+                    <aside className="mt-10 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:mt-0">
                         <ListBoard board={board} action={`${base}/l/${token}/messages`} />
                     </aside>
                 )}

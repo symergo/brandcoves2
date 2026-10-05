@@ -145,7 +145,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                     <EntityRails rails={below} />
                 </div>
 
-                <aside className="lg:sticky lg:top-6 lg:self-start" aria-labelledby="entity-sidebar">
+                <aside className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:self-start" aria-labelledby="entity-sidebar">
                     <h2 id="entity-sidebar" className="sr-only">
                         {t('entity_rails.sidebar_heading')}
                     </h2>

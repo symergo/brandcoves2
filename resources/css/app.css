@@ -246,9 +246,23 @@
     --color-card: #1f1a15;
 }
 
+/*
+ * The sticky header's height (2026-10-05, owner: "sticky menu bar, not too
+ * high"). One number, read by the header itself and by everything else that
+ * sticks to the top (the adding-to bar, the brand letters, the sidebars), so
+ * none of them slides under it. Plus the safe-area inset on a phone with a
+ * notch, which is where the header sticks.
+ */
+:root {
+    --header-h: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
+
+        /* A link to #something scrolls the heading clear of the sticky header. */
+        scroll-padding-top: calc(var(--header-h) + 0.75rem);
 
         /*
          * The page is light, whatever the OS says. Without this a dark-OS

@@ -73,7 +73,7 @@ export default function Brands({ brands }: Props) {
                     */}
                     <nav
                         aria-label={t('brand.index_title')}
-                        className="sticky top-0 z-10 -mx-4 mt-6 flex flex-wrap gap-1.5 bg-cream px-4 py-2 text-sm"
+                        className="sticky top-[var(--header-h)] z-10 -mx-4 mt-6 flex flex-wrap gap-1.5 bg-cream px-4 py-2 text-sm"
                     >
                         {letters.map((letter) => (
                             <a

@@ -31,7 +31,7 @@ export default function AddingToBar() {
     if (!savingTo) return null
 
     return (
-        <div className="sticky top-0 z-40 border-b border-sage/40 bg-sage/10">
+        <div className="sticky top-[var(--header-h)] z-30 border-b border-sage/40 bg-sage/10">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate">
                     {tRich('lists.adding_to', { list: <ListName name={savingTo.title} kind={savingTo.kind} /> })}

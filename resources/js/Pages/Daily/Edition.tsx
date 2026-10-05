@@ -438,7 +438,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                     {guideCard}
                 </div>
 
-                <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">{sidebar}</aside>
+                <aside className="mt-10 space-y-6 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:mt-0">{sidebar}</aside>
             </div>
 
             {/*

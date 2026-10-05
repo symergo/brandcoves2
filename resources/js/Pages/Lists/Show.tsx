@@ -612,7 +612,7 @@ export default function ListShow({
             </div>
 
             {hasBoard && (
-                <aside className="mt-10 lg:sticky lg:top-6 lg:mt-6">
+                <aside className="mt-10 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:mt-6">
                     <ListBoard board={board!} action={`${list.shareUrl}/messages`} />
                 </aside>
             )}

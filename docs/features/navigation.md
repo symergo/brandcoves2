@@ -722,3 +722,14 @@ and `?view=group` URLs still work: they scroll My Coves to that section.
 
 Later the same day Friends gave its place to **My people** (`/people`), which lists friends and
 saved people together; the account menus today are described at the top of this document.
+
+## The header sticks, 56px tall (2026-10-05)
+
+Owner: "sticky menu bar, not too high". The header row was 16px of padding above and below, about
+68px, and scrolled away with the page. It is now `sticky` at the top (`z-40`, solid page colour,
+below the phone's safe-area inset) and a fixed `h-14`. The height lives once, as `--header-h` in
+app.css, and everything else that sticks to the top reads it so nothing slides under the bar: the
+"adding to" bar, the brand index's letter bar, and the sidebars on the Daily, persona, guide,
+entity, shared-list, list and taste pages. `scroll-padding-top` uses it too, so a link to
+`#something` lands with the heading clear of the bar. Solid rather than see-through: with a
+translucent bar the text scrolling under it showed through the logo on a phone.
