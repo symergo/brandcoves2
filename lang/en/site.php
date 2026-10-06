@@ -1422,8 +1422,8 @@ return [
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
     'gift_history' => [
-        'next_title' => 'The next step',
-        'next_hint' => 'Ideas that follow on from what :name already has: things people keep on their lists together, things that go with it or get used up, and more from the same brand.',
+        'next_title' => 'Suggestions',
+        'next_hint' => 'Ideas inspired by things people keep on their lists, things that go with them, and more from the same brand or category.',
         'reason_often_together' => 'Often on lists with :after',
         'reason_goes_with' => 'Goes with :after',
         'reason_same_brand' => 'Same brand as :after',

@@ -1219,8 +1219,8 @@ return [
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
     'gift_history' => [
-        'next_title' => 'L’étape suivante',
-        'next_hint' => 'Des idées qui prolongent ce que :name a déjà : des choses que les gens gardent ensemble sur leurs listes, des choses qui vont avec ou qui s’épuisent, et d’autres de la même marque.',
+        'next_title' => 'Suggestions',
+        'next_hint' => 'Des idées inspirées de ce que les gens gardent sur leurs listes, de ce qui va avec, et d’autres articles de la même marque ou catégorie.',
         'reason_often_together' => 'Souvent sur les listes avec :after',
         'reason_goes_with' => 'Va avec :after',
         'reason_same_brand' => 'Même marque que :after',

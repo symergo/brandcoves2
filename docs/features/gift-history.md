@@ -21,7 +21,7 @@ props, and the copy that described them.
 the same marked as bought) on lists about the person, read live by the giver's own claim hash.
 They still keep those products (and their merged twins) out of Find a gift, This or that, the
 swipe deck and the reminder ideas for that person (`GiftHistory::excludedGroupIds()`), and they
-are what **"De volgende stap"** follows on from. The page just no longer lists them.
+are what **"Suggesties"** (called "De volgende stap" until 2026-10-06, renamed by the owner) follows on from. The page just no longer lists them.
 
 **The `recipient_gifts` table stays, unread**, until a later release drops it (expand/contract:
 a rollback must not meet a schema it cannot read). Nothing writes it and nothing reads it;
