@@ -152,7 +152,7 @@ export default function SignInDialog({
                 <>
                     <a
                         href={`${base}/auth/google`}
-                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-cream px-5 py-3 font-medium transition hover:border-ink"
+                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
                     >
                         {t('auth.google')}
                     </a>

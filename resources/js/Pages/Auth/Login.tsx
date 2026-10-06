@@ -65,7 +65,7 @@ export default function Login({ googleEnabled, email }: Props) {
                     <>
                         <a
                             href={`${base}/auth/google`}
-                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card px-5 py-3 font-medium transition hover:border-ink"
+                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
                         >
                             {t('auth.google')}
                         </a>
