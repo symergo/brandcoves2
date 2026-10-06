@@ -339,14 +339,14 @@ export default function Home({ today }: Props) {
                 {/*
                   7. The last thing on the page is the first thing it asked.
 
-                  A red card with the present on a cream circle (owner,
-                  2026-10-05: "more captivating"). It was a faint wash of the
-                  accent, which with a pure red came out pink and quiet. White
-                  on the red is 5.0:1; the button is `light`, because a red
-                  button vanishes into a red card.
+                  A card in the hero's own orange, with the present on a cream
+                  circle: the page ends the way it began (owner, 2026-10-06:
+                  "the same background as the hero"; it was red, and before
+                  that a faint wash). Dark text and the red button, exactly as
+                  in the hero.
                 */}
                 <section
-                    className="relative flex flex-col overflow-hidden rounded-card bg-accent p-6 text-white sm:p-8"
+                    className="relative flex flex-col overflow-hidden rounded-card bg-hero p-6 text-ink sm:p-8"
                     aria-labelledby="final-heading"
                 >
                     <div className="flex items-start gap-5">
@@ -354,14 +354,14 @@ export default function Home({ today }: Props) {
                             <h2 id="final-heading" className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
                                 {t('home.final_title')}
                             </h2>
-                            <p className="mt-2 text-white">{t('home.final_body')}</p>
+                            <p className="mt-2 text-ink">{t('home.final_body')}</p>
                         </div>
                         <div aria-hidden="true" className="relative hidden aspect-square w-24 shrink-0 sm:block">
                             <span className="absolute inset-0 rounded-full bg-peach" />
                             <HeroGift className="absolute top-[18%] left-[12%] h-auto w-[76%]" />
                         </div>
                     </div>
-                    <Link href={createCove} className={`mt-6 self-start ${buttonClasses('light', 'lg')}`}>
+                    <Link href={createCove} className={`mt-6 self-start ${buttonClasses('primary', 'lg')}`}>
                         {t('home.cta_create')} <span aria-hidden="true">→</span>
                     </Link>
                 </section>
