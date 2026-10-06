@@ -1428,7 +1428,7 @@ return [
         'reason_goes_with' => 'Goes with :after',
         'reason_same_brand' => 'Same brand as :after',
         'from_email' => 'The idea from your reminder',
-        'link' => 'Go to :name',
+        'link' => 'All about :name',
     ],
 
     'alerts' => [

@@ -1225,7 +1225,7 @@ return [
         'reason_goes_with' => 'Va avec :after',
         'reason_same_brand' => 'Même marque que :after',
         'from_email' => 'L’idée de votre rappel',
-        'link' => 'Voir :name',
+        'link' => 'Tout sur :name',
     ],
 
     'alerts' => [

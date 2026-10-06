@@ -1230,7 +1230,7 @@ return [
         'reason_goes_with' => 'Hoort bij :after',
         'reason_same_brand' => 'Zelfde merk als :after',
         'from_email' => 'Het idee uit je herinnering',
-        'link' => 'Naar :name',
+        'link' => 'Alles over :name',
     ],
 
     'alerts' => [
