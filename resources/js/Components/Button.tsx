@@ -96,6 +96,30 @@ export function rowActionClasses(className = ''): string {
 }
 
 /**
+ * A button in a page's header beside the title: "Delen", "⋯ Meer". A pill
+ * with its word, on a phone too.
+ *
+ * Until 2026-10-06 the list page drew its own pills and the person page used
+ * a row's square ⋯ in the same place, so the one menu of a page looked like
+ * two kinds of control (owner: "check consistency ... menu buttons on
+ * mobile"). Rows and cards keep `rowActionClasses`: the word is the header's.
+ *
+ * `open`: its popup or menu is showing. `on`: what it controls is switched on
+ * (a list with a live link), in sage, the colour for a live, benign state.
+ */
+export function headerActionClasses(state: 'idle' | 'open' | 'on' = 'idle', className = ''): string {
+    const tone = {
+        idle: 'border-line bg-card hover:border-ink',
+        open: 'border-accent bg-accent/10 text-accent',
+        on: 'border-sage/60 bg-sage/10 text-sage hover:border-sage',
+    }[state]
+
+    return ['inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition', tone, className]
+        .filter(Boolean)
+        .join(' ')
+}
+
+/**
  * A text field, select or textarea in a form: the one input recipe the
  * people, person and Santa forms repeated by hand (2026-09-27). `block
  * w-full` is the default because almost every field fills its label;

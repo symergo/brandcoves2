@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import Badge from './Badge'
-import Button, { fieldClasses, rowActionClasses } from './Button'
+import Button, { fieldClasses, headerActionClasses } from './Button'
 import EmptyState from './EmptyState'
 import InfoTip from './InfoTip'
 import ListKindBadge, { kindIcons, type ListKind } from './ListKindBadge'
@@ -224,8 +224,8 @@ export default function PersonProfile({
                 actions={
                     <Menu
                         label={t('people.more_label', { name: person.name })}
-                        button={<MoreButtonContent word={t('people.more')} />}
-                        buttonClassName={rowActionClasses()}
+                        button={<MoreButtonContent word={t('people.more')} wordOnPhone />}
+                        buttonClassName={headerActionClasses()}
                     >
                         {(close) => (
                             <>
@@ -285,7 +285,7 @@ export default function PersonProfile({
                                                 router.delete(`/${market.key}/friends/${profile.friendId}`, { preserveScroll: true })
                                             }
                                         }}
-                                        icon={<ToolIcon name="friends" className="h-4 w-4" />}
+                                        icon={<ToolIcon name="unfriend" className="h-4 w-4" />}
                                     >
                                         {t('friends.unfriend')}
                                     </MenuItem>

@@ -23,13 +23,15 @@ export type ShareIconKey = 'share' | 'copy' | 'whatsapp' | 'facebook' | 'telegra
  * information.
  */
 const paths: Record<ShareIconKey, ReactNode> = {
-    // The standard share glyph: three nodes and the lines between them.
+    // The standard share glyph: three nodes and the lines between them. The
+    // same points as ToolIcon's `shared` (2026-10-06): two drawings of one
+    // mark, a pixel apart, sat on the same pages.
     share: (
         <>
-            <circle cx="18" cy="5" r="2.5" />
             <circle cx="6" cy="12" r="2.5" />
-            <circle cx="18" cy="19" r="2.5" />
-            <path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4" />
+            <circle cx="17.5" cy="6" r="2.5" />
+            <circle cx="17.5" cy="18" r="2.5" />
+            <path d="m8.2 10.8 7.1-3.6M8.2 13.2l7.1 3.6" />
         </>
     ),
 

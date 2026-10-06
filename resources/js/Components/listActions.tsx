@@ -25,6 +25,9 @@ export interface ListActionTarget {
  * the list page shows only while that list has one, which a row does not
  * know.
  *
+ * In the list page's order (2026-10-06): settings, ask them, the quiz, ask
+ * others, their page, delete. The two lists had the same items in two orders.
+ *
  * `onPersonPage`: the row is on the page of the person the list is about, so
  * "Wat je :name gaf" (a link to that same page) is left out.
  *
@@ -49,9 +52,17 @@ export function listActionItems({
 
     return (
         <>
+            <MenuItem href={`${list.url}?panel=settings`} icon={icon('settings')}>
+                {t('lists.settings')}
+            </MenuItem>
             {aboutSomebody && list.recipient && (
                 <MenuItem href={`${list.url}?panel=ask`} icon={icon('suggestions')}>
                     {t('lists.ask_tab', { name: list.recipient.name })}
+                </MenuItem>
+            )}
+            {list.kind === 'mine' && list.shared && (
+                <MenuItem href={`${list.url}?panel=quiz`} icon={icon('quiz')}>
+                    {t('quiz.badge')}
                 </MenuItem>
             )}
             {aboutSomebody && (
@@ -64,14 +75,6 @@ export function listActionItems({
                     {t('gift_history.link', { name: list.recipient.name })}
                 </MenuItem>
             )}
-            {list.kind === 'mine' && list.shared && (
-                <MenuItem href={`${list.url}?panel=quiz`} icon={icon('quiz')}>
-                    {t('quiz.badge')}
-                </MenuItem>
-            )}
-            <MenuItem href={`${list.url}?panel=settings`} icon={icon('settings')}>
-                {t('lists.settings')}
-            </MenuItem>
             <MenuSeparator />
             <MenuItem danger icon={icon('trash')} onSelect={onDelete}>
                 {t('lists.delete')}

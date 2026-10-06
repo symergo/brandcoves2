@@ -521,7 +521,7 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                                         </MenuItem>
                                     )}
                                     {person.urls.together !== null && (
-                                        <MenuItem href={person.urls.together} icon={<ToolIcon name="taste" className="h-4 w-4" />}>
+                                        <MenuItem href={person.urls.together} icon={<ToolIcon name="collab" className="h-4 w-4" />}>
                                             {t('people.together')}
                                         </MenuItem>
                                     )}
@@ -585,7 +585,7 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                                                         router.delete(`${base}/friends/${friend.id}`, { preserveScroll: true })
                                                     }
                                                 }}
-                                                icon={<ToolIcon name="friends" className="h-4 w-4" />}
+                                                icon={<ToolIcon name="unfriend" className="h-4 w-4" />}
                                             >
                                                 {t('friends.unfriend')}
                                             </MenuItem>

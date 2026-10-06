@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
+import { headerActionClasses } from './Button'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
@@ -1300,13 +1301,7 @@ export function ListToolsBar({
                 onClick={() => onPanel(open === 'share' ? null : 'share')}
                 aria-expanded={open === 'share'}
                 aria-controls="list-tools-panel"
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition ${
-                    open === 'share'
-                        ? 'border-accent bg-accent/10 text-accent'
-                        : shareOn
-                          ? 'border-sage/60 bg-sage/10 text-sage hover:border-sage'
-                          : 'border-line bg-card hover:border-ink'
-                }`}
+                className={headerActionClasses(open === 'share' ? 'open' : shareOn ? 'on' : 'idle')}
             >
                 <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
                 {t('lists.share')}
@@ -1317,11 +1312,7 @@ export function ListToolsBar({
                 label={t('lists.more_tools_label')}
                 width={280}
                 button={<MoreButtonContent word={t('lists.more_tools')} wordOnPhone />}
-                buttonClassName={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm whitespace-nowrap transition ${
-                    open !== null && open !== 'share'
-                        ? 'border-accent bg-accent/10 text-accent'
-                        : 'border-line bg-card hover:border-ink'
-                }`}
+                buttonClassName={headerActionClasses(open !== null && open !== 'share' ? 'open' : 'idle')}
             >
                 {(close) => (
                     <>

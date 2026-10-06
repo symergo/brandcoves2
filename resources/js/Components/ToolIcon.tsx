@@ -50,6 +50,7 @@ export type ToolKey =
     | 'heart'
     | 'mailAccount'
     | 'click'
+    | 'unfriend'
 
 /*
  * Two drawings with two names each, drawn once so the pairs cannot drift
@@ -403,6 +404,16 @@ const paths: Record<ToolKey, ReactNode> = {
             <circle cx="9.5" cy="8" r="3.5" />
             <path d="M3 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20" />
             <path d="M19 8v6M16 11h6" />
+        </>
+    ),
+
+    // The friend with a minus where the invite has a plus: "Verwijder als vriend"
+    // wore the invite's own mark until 2026-10-06.
+    unfriend: (
+        <>
+            <circle cx="9.5" cy="8" r="3.5" />
+            <path d="M3 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20" />
+            <path d="M16 11h6" />
         </>
     ),
 
