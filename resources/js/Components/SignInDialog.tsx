@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { SharedProps } from '../types'
+import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
 import { Honeypot, useFormClock } from './BotTrap'
 import ToolIcon from './ToolIcon'
@@ -48,6 +49,9 @@ export default function SignInDialog({
 
     const form = useForm({ email: '', name: '', website: '' })
     const elapsed = useFormClock(open)
+
+    // Back closes it, like every popup (useBackCloses, 2026-10-06).
+    useBackCloses(onClose, open)
 
     // "Check your inbox", shown inside the dialog. See submit() for why the
     // layout's banner is not enough.

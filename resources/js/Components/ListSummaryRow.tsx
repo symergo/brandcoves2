@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AddProduct from './AddProduct'
 import Badge from './Badge'
 import { rowActionClasses } from './Button'
@@ -231,13 +231,23 @@ export default function ListSummaryRow({
  * shared, the link to copy or send, and what the link allows. The switches are
  * the list page's own (`ShareSettings`), so the popup and the list page's
  * share panel say the same thing. Who gets the link by name, publishing and
- * handing a list over stay on the list page's share panel. Each switch is the
- * list page's PATCH; the page's props come back with the new state and the
- * popup stays open over them.
+ * handing a list over stay on the list page's share popup, one link away at
+ * the foot (2026-10-06: the row's popup was a smaller one with no way on).
+ * Each switch is the list page's PATCH; the page's props come back with the
+ * new state and the popup stays open over them, saying "Bewaard" as the list
+ * page's does.
  */
 function ShareListDialog({ list, friends, onClose }: { list: ListSummary; friends?: { name: string }[]; onClose: () => void }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
+    const [saved, setSaved] = useState(0)
+
+    useEffect(() => {
+        if (saved === 0) return
+        const timer = setTimeout(() => setSaved(0), 2500)
+
+        return () => clearTimeout(timer)
+    }, [saved])
 
     const shareable: ShareableList = {
         title: list.title,
@@ -255,15 +265,21 @@ function ShareListDialog({ list, friends, onClose }: { list: ListSummary; friend
                 <ShareSettings
                     list={shareable}
                     friends={friends}
+                    saved={saved !== 0}
                     onSetting={(data, done) =>
                         router.patch(`/${market.key}/lists/${list.id}`, data, {
                             preserveScroll: true,
                             preserveState: true,
+                            onSuccess: () => setSaved(Date.now()),
                             onFinish: done,
                         })
                     }
                 />
             </div>
+            <Link href={`${list.url}?panel=share`} className="mt-5 inline-flex items-center gap-1.5 text-sm text-accent-dark underline underline-offset-2 hover:text-ink">
+                <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
+                {t('lists.share_more')}
+            </Link>
         </Modal>
     )
 }

@@ -343,6 +343,52 @@ each side, crowds what is in it, and the label column of "Over" left its chips a
 - Inside a full-screen popup, a label and its values stack (label above) on a phone rather than
   sitting in a fixed label column.
 
+## Popup or inline, share and menu buttons (2026-10-06, the standard from here on)
+
+The owner asked for a consistency check of popups against inline panels, share buttons and menu
+buttons on a phone, and approved four rules. The inventory found the same share settings as a
+popup from a list's row and as a panel in the list page, four shapes of share button, and the same
+⋯ as a pill on one page and a square on the next.
+
+**1. Popup or inline.** What opens from a button or a menu item and holds a form or settings is a
+popup (`Modal`, full screen on a phone). Inline stays only for what the page itself is for and for
+what you do while looking at the page: the search box that adds products on a list page, pending
+suggestions (a message behind a button is a message missed). So the list page's share, settings,
+quiz, Secret Santa, "ask them" and "find out together" are popups; so are the person page's name
+and birthday and its invite (`InvitePerson` is a popup wherever it opens), and on My people adding
+or inviting somebody, a friend's birthday and "your lists they see". No card inside a popup: the
+form sits straight in it. Why popups: on a phone an inline panel pushed the list off the screen and
+its × was a scroll away; a full-screen popup has one way out and puts you back where you were, and
+a row cannot fold a panel open, so inline made one feature two.
+
+**Back closes the popup on top** (`useBackCloses`, used by `Modal`, `SignInDialog` and
+`ScanButton`). Opening a popup adds a history entry; back pops it and closes the popup; closing it
+otherwise takes the entry off again. Its listener runs before Inertia's and stops the event,
+because Inertia answers `popstate` by mounting the page afresh (`preserveState: false`), which would
+lose what was typed and reopen a `?panel=` popup. Known leftover: a popup closed by navigating away,
+or by a save Inertia answers with a replaced entry, leaves one extra step back to the same page.
+
+**The row's share popup stays a popup** on My Coves, as the owner asked on 2026-09-27 (no trip to
+the list page), with the same switches, "Bewaard" after each, and a link to the list page's share
+popup for sharing by name, publishing and handing over.
+
+**2. Share.** One share mark (`ShareIcon`'s `share` has ToolIcon `shared`'s points). Every link
+comes with its field and "Link kopiëren" (`ShareRow`), never a lone share button. Every share
+button has the mark. "Delen" opens your share settings for what you own (a list, a question) and
+the phone's share sheet for public pages (a product, a Cove).
+
+**3. Menu buttons.** In a page's header: `headerActionClasses`, a pill with its word on a phone too
+("Delen", "⋯ Meer"; the list page, the person page, the question page). In rows and cards:
+`rowActionClasses`, a square ⋯ without the word on a phone. The same list's ⋯ lists its items in
+one order on the row and the page (`listActions`). One mark per action: "Verwijder als vriend" has
+`unfriend`, not the invite's `friends`; "Dit of dat samen" has `collab`.
+
+**4. Small ones.** Deleting a person asks through `ConfirmDialog` like every delete. A ⋯ with one
+item is a button: a saved Cove's remove, which now asks first.
+
+Still the old way, candidates for the next pass: the new-list wizard on My Coves, Secret Friend's
+create form and editing an own item on a list open inline.
+
 ## Nothing beside it: full width (2026-09-26, re-checked page by page 2026-09-27)
 
 The owner's rule: when a right column would be empty, the content takes the full width. A block

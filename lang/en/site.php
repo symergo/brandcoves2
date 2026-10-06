@@ -955,6 +955,7 @@ return [
         'sharing_on' => 'Anyone with the link can see this list.',
         'share_hint' => 'This list is private. Share it and anyone with the link can see it.',
         'disable_sharing' => 'Stop sharing',
+        'share_more' => 'Share with friends by name, make public or hand over',
         'disable_sharing_confirm' => 'Stop sharing? Every link you have sent stops working, and sharing again makes a new one.',
         'anyone_can_add' => 'Anyone can add gifts',
         'anyone_can_add_hint' => 'Suggesting gifts is always possible.',

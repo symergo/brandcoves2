@@ -9,7 +9,7 @@ import TasteTogetherPanel, { type TasteTogetherState } from './TasteTogetherPane
 import { invalidate } from '../savedItems'
 import ToolIcon, { type ToolKey } from './ToolIcon'
 import InfoTip from './InfoTip'
-import { useConfirm } from './Modal'
+import Modal, { useConfirm } from './Modal'
 import Option from './Option'
 import ShareSettings from './ShareSettings'
 import type { Wish } from './TheirWishes'
@@ -145,6 +145,11 @@ export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa' | 'together'
  * where the person who opened it is asking the question they answer. One panel
  * is open at a time, because these are alternatives rather than a checklist.
  *
+ * A popup since 2026-10-06 (owner's consistency rule: what opens from a button
+ * or a menu item and holds a form or settings is a popup, full screen on a
+ * phone). They opened under the header until then, while the same share
+ * settings were a popup from a list's row; now the row opens this one.
+ *
  * Suggestions are the exception and stay visible: a pending suggestion is a
  * message somebody sent, and a message behind a button is a message missed.
  */
@@ -248,19 +253,15 @@ export default function ListTools({
         return null
     }
 
-    // Closing a panel was pressing its chip again. The chips are a menu now,
-    // so each panel carries its own way out.
-    const closeButton = (
-        <button
-            type="button"
-            onClick={() => onPanel(null)}
-            aria-label={t('nav.close')}
-            title={t('nav.close')}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-line/40 hover:text-ink"
-        >
-            <ToolIcon name="close" className="h-4 w-4" />
-        </button>
-    )
+    // The popup's heading per tool; its own × closes it.
+    const titles: Record<Panel, string> = {
+        share: t('lists.share'),
+        ask: target !== null ? t('lists.ask_tab', { name: target.name }) : t('lists.ask_chip'),
+        settings: t('lists.settings'),
+        quiz: t('quiz.own_title'),
+        santa: t('santa.title'),
+        together: list.recipient !== null ? t('gift.together.panel_title', { name: list.recipient.name }) : '',
+    }
 
     /*
       Pending suggestions stay in the open. Everything else is a thing
@@ -345,10 +346,11 @@ export default function ListTools({
     if (open === 'together' && tasteTogether !== null && list.recipient !== null) {
         return (
             <div>
-                <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="relative mt-4 outline-none">
-                    <div className="absolute top-3 right-3">{closeButton}</div>
-                    <TasteTogetherPanel name={list.recipient.name} state={tasteTogether} className="pr-12" />
-                </div>
+                <Modal title={titles.together} onClose={() => onPanel(null)} width="lg">
+                    <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="mt-3 outline-none">
+                        <TasteTogetherPanel name={list.recipient.name} state={tasteTogether} className="" />
+                    </div>
+                </Modal>
                 {suggestionsBlock}
             </div>
         )
@@ -357,13 +359,8 @@ export default function ListTools({
     return (
         <div>
             {open !== null && (
-                <div
-                    ref={panelRef}
-                    tabIndex={-1}
-                    id="list-tools-panel"
-                    className="mt-4 rounded-card border border-line bg-card p-4 outline-none"
-                >
-                    <div className="-mt-2 -mr-2 mb-1 flex justify-end">{closeButton}</div>
+                <Modal title={titles[open]} onClose={() => onPanel(null)} width="lg">
+                <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="mt-3 outline-none">
                     {open === 'share' && (
                         /*
                           Sections, most with a heading, a gap between them and
@@ -601,7 +598,6 @@ export default function ListTools({
                           half sat empty.
                         */
                         <div>
-                            <h3 className="text-sm font-medium">{t('lists.ask_tab', { name: target.name })}</h3>
                             {!target.isLinked ? (
                                 <>
                                     {target.askUrl && (
@@ -667,9 +663,8 @@ export default function ListTools({
                           is what it is.
                         */
                         <div>
-                            <h3 className="text-sm font-medium">{t('lists.settings')}</h3>
                             <form
-                                className="mt-3 grid gap-3 sm:max-w-xl"
+                                className="grid gap-3"
                                 onSubmit={(e) => {
                                     e.preventDefault()
                                     const saveList = () =>
@@ -1020,7 +1015,6 @@ export default function ListTools({
 
                     {open === 'quiz' && (
                         <div>
-                            <h3 className="text-sm font-medium">{t('quiz.own_title')}</h3>
 
                             {quizUrl ? (
                                 <>
@@ -1134,6 +1128,7 @@ export default function ListTools({
                         </div>
                     )}
                 </div>
+                </Modal>
             )}
 
             {suggestionsBlock}

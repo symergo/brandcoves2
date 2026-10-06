@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
 import BarcodeScanner from './BarcodeScanner'
 
@@ -96,6 +97,9 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
     const [open, setOpen] = useState(false)
     const trigger = useRef<HTMLButtonElement | null>(null)
     const closer = useRef<HTMLButtonElement | null>(null)
+
+    // Back closes the camera, like every popup (useBackCloses, 2026-10-06).
+    useBackCloses(() => setOpen(false), open)
 
     /*
      * What a native <dialog> would do for free, done by hand because this one

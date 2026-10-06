@@ -791,6 +791,7 @@ return [
         'sharing_on' => 'Cualquiera con el enlace puede ver esta lista.',
         'share_hint' => 'Esta lista es privada. Compártela y cualquiera con el enlace podrá verla.',
         'disable_sharing' => 'Dejar de compartir',
+        'share_more' => 'Compartir con amigos por nombre, hacer pública o traspasar',
         'disable_sharing_confirm' => '¿Dejar de compartir? Todos los enlaces que hayas enviado dejarán de funcionar, y volver a compartir creará uno nuevo.',
         'anyone_can_add' => 'Cualquiera puede añadir regalos',
         'anyone_can_add_hint' => 'Sugerir regalos siempre es posible.',

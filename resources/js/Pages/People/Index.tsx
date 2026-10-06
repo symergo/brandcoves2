@@ -7,7 +7,7 @@ import type { ListKind } from '../../Components/ListKindBadge'
 import ListName from '../../Components/ListName'
 import EmptyState from '../../Components/EmptyState'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from '../../Components/Menu'
-import { useConfirm } from '../../Components/Modal'
+import Modal, { useConfirm } from '../../Components/Modal'
 import PageHeader from '../../Components/PageHeader'
 import { DayMonth, InvitePerson, monthDay } from '../../Components/PersonParts'
 import SignInLink from '../../Components/SignInLink'
@@ -180,7 +180,18 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                       2026-09-27, after "Mijn Coves": somebody only you see, or
                       somebody on GiftCoves. Their forms open here.
                     */}
+                    {/* Popups since 2026-10-06: forms opened from a header button. */}
                     {adding === 'person' && (
+                        <Modal
+                            title={
+                                <span className="inline-flex flex-wrap items-center">
+                                    {t('people.add_person')}
+                                    <InfoTip>{t('people.add_person_tip')}</InfoTip>
+                                </span>
+                            }
+                            label={t('people.add_person')}
+                            onClose={() => setAdding(null)}
+                        >
                         <form
                             id="people-add"
                             onSubmit={(e) => {
@@ -205,13 +216,9 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     },
                                 })
                             }}
-                            className="mt-4 grid gap-4 rounded-card border border-line bg-card p-5 sm:grid-cols-3"
+                            className="mt-4 grid gap-4 sm:grid-cols-3"
                         >
-                            <p className="flex flex-wrap items-center text-sm font-medium sm:col-span-3">
-                                {t('people.add_person')}
-                                <InfoTip>{t('people.add_person_tip')}</InfoTip>
-                            </p>
-                            <label className="block text-xs font-medium">
+                            <label className="block text-sm font-medium">
                                 {t('people.name')}
                                 <input
                                     required
@@ -221,7 +228,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     className={field}
                                 />
                             </label>
-                            <label className="block text-xs font-medium">
+                            <label className="block text-sm font-medium">
                                 {t('people.relationship')}
                                 <select
                                     value={person.data.relationship}
@@ -236,7 +243,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     ))}
                                 </select>
                             </label>
-                            <label className="block text-xs font-medium">
+                            <label className="block text-sm font-medium">
                                 {t('people.birthday_optional')}
                                 <DayMonth
                                     day={person.data.day}
@@ -256,9 +263,20 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 )}
                             </div>
                         </form>
+                        </Modal>
                     )}
 
                     {adding === 'invite' && (
+                        <Modal
+                            title={
+                                <span className="inline-flex flex-wrap items-center">
+                                    {t('people.invite')}
+                                    <InfoTip>{t('people.invite_tip')}</InfoTip>
+                                </span>
+                            }
+                            label={t('people.invite')}
+                            onClose={() => setAdding(null)}
+                        >
                         <form
                             id="people-add"
                             onSubmit={(e) => {
@@ -278,13 +296,9 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     },
                                 })
                             }}
-                            className="mt-4 grid gap-4 rounded-card border border-line bg-card p-5 sm:grid-cols-3"
+                            className="mt-4 grid gap-4 sm:grid-cols-3"
                         >
-                            <p className="flex flex-wrap items-center text-sm font-medium sm:col-span-3">
-                                {t('people.invite')}
-                                <InfoTip>{t('people.invite_tip')}</InfoTip>
-                            </p>
-                            <label className="block text-xs font-medium sm:col-span-2">
+                            <label className="block text-sm font-medium sm:col-span-2">
                                 {t('friends.email')}
                                 <input
                                     type="email"
@@ -294,7 +308,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     className={field}
                                 />
                             </label>
-                            <label className="block text-xs font-medium">
+                            <label className="block text-sm font-medium">
                                 {t('friends.their_birthday_optional')}
                                 <DayMonth
                                     day={invite.data.day}
@@ -314,6 +328,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 )}
                             </div>
                         </form>
+                        </Modal>
                     )}
 
                     {people.length === 0 ? (
@@ -624,15 +639,13 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
             </div>
 
             {invitable && inviting && person.personId !== null && (
-                <div className="sm:ml-13">
-                    <InvitePerson
-                        url={`${base}/friends`}
-                        personId={person.personId}
-                        name={person.name}
-                        birthday={person.birthday}
-                        onDone={() => setInviting(false)}
-                    />
-                </div>
+                <InvitePerson
+                    url={`${base}/friends`}
+                    personId={person.personId}
+                    name={person.name}
+                    birthday={person.birthday}
+                    onDone={() => setInviting(false)}
+                />
             )}
 
             {friend !== null && friend.lists.length > 0 && (
@@ -652,23 +665,13 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
             )}
 
             {friend !== null && open === 'theySee' && friend.theySee.length > 0 && (
-                <div className="mt-4 border-t border-line pt-4 sm:ml-13">
+                // A popup since 2026-10-06, opened from the row's menu.
+                <Modal title={t('friends.they_see', { name: person.name })} onClose={() => setOpen(null)}>
                     {/*
                       Drawn like their lists above (2026-09-27): a list name is
                       a ListName wherever it appears.
                     */}
-                    <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-ink-soft">{t('friends.they_see', { name: person.name })}</p>
-                        <button
-                            type="button"
-                            onClick={() => setOpen(null)}
-                            aria-label={t('nav.close')}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-ink-soft hover:bg-line/40 hover:text-ink"
-                        >
-                            <ToolIcon name="close" className="h-4 w-4" />
-                        </button>
-                    </div>
-                    <ul className="mt-1.5 flex flex-wrap gap-2">
+                    <ul className="mt-4 flex flex-wrap gap-2">
                         {friend.theySee.map((list) => (
                             <li key={list.url}>
                                 <a href={list.url} className={link}>
@@ -677,10 +680,11 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                             </li>
                         ))}
                     </ul>
-                </div>
+                </Modal>
             )}
 
             {friend !== null && open === 'birthday' && (
+                <Modal title={t('friends.their_birthday')} onClose={() => setOpen(null)} width="sm">
                 <form
                     onSubmit={(e) => {
                         e.preventDefault()
@@ -690,13 +694,12 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                             { preserveScroll: true, onSuccess: () => setOpen(null) },
                         )
                     }}
-                    className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4 sm:ml-13"
+                    className="mt-4 flex flex-wrap items-end gap-2"
                 >
-                    <label className="text-xs font-medium">
-                        {t('friends.their_birthday')}
+                    <label className="text-sm font-medium">
                         {/* Whose date it is: theirs as they show it, or your own note. */}
                         {friend.birthday !== null && friend.birthdayIsMine && (
-                            <span className="ml-1 font-normal text-ink-soft">({t('friends.your_note')})</span>
+                            <span className="block font-normal text-ink-soft">{t('friends.your_note')}</span>
                         )}
                         <DayMonth
                             day={note.day}
@@ -710,6 +713,7 @@ function PersonRow({ person, base }: { person: Person; base: string }) {
                         {t('people.cancel')}
                     </Button>
                 </form>
+                </Modal>
             )}
             {confirmDialog}
         </li>

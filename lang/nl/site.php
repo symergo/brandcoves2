@@ -797,6 +797,7 @@ return [
         'sharing_on' => 'Iedereen met de link kan deze lijst zien.',
         'share_hint' => 'Deze lijst is privé. Deel hem en iedereen met de link kan hem zien.',
         'disable_sharing' => 'Stop met delen',
+        'share_more' => 'Met vrienden op naam delen, openbaar maken of doorgeven',
         'disable_sharing_confirm' => 'Stoppen met delen? Elke link die je hebt gestuurd werkt dan niet meer, en opnieuw delen maakt een nieuwe.',
         'anyone_can_add' => 'Iedereen kan cadeaus toevoegen',
         'anyone_can_add_hint' => 'Cadeaus voorstellen kan altijd.',

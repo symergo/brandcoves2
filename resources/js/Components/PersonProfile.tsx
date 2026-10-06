@@ -359,8 +359,11 @@ export default function PersonProfile({
                     />
                 )}
 
+                {/* A popup like Over (2026-10-06): a form opened from the menu. */}
                 {panel === 'details' && (
-                    <DetailsForm person={person} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
+                    <Modal title={t('people.edit_details')} onClose={() => setPanel(null)}>
+                        <DetailsForm person={person} options={options} url={urls.recipient} onDone={() => setPanel(null)} />
+                    </Modal>
                 )}
             </PageHeader>
 
@@ -688,9 +691,9 @@ function DetailsForm({ person, options, url, onDone }: { person: ProfilePerson; 
                     { preserveScroll: true, onSuccess: onDone, onFinish: () => setBusy(false) },
                 )
             }}
-            className="mt-4 grid gap-4 rounded-card border border-line bg-card p-4 sm:grid-cols-3"
+            className="mt-4 grid gap-4 sm:grid-cols-3"
         >
-            <label className="block text-xs font-medium">
+            <label className="block text-sm font-medium">
                 {t('people.name')}
                 <input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} className={field} />
             </label>

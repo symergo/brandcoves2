@@ -792,6 +792,7 @@ return [
         'sharing_on' => 'Toute personne ayant le lien peut voir cette liste.',
         'share_hint' => 'Cette liste est privée. Partagez-la et toute personne ayant le lien pourra la voir.',
         'disable_sharing' => 'Arrêter le partage',
+        'share_more' => 'Partager avec des amis par leur nom, rendre public ou transmettre',
         'disable_sharing_confirm' => 'Arrêter le partage ? Tous les liens que vous avez envoyés cesseront de fonctionner, et partager à nouveau en créera un nouveau.',
         'anyone_can_add' => 'Tout le monde peut ajouter des cadeaux',
         'anyone_can_add_hint' => 'Proposer des cadeaux reste toujours possible.',

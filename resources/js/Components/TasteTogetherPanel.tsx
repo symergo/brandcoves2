@@ -2,7 +2,6 @@ import { router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import Button from './Button'
 import ShareRow from './ShareRow'
-import ToolIcon from './ToolIcon'
 import { formatBudget, type Cents, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -83,16 +82,9 @@ export default function TasteTogetherPanel({
               : t('gift.together.players_many', { count: state.players })
 
     return (
-        <section className={`rounded-card border border-line bg-card p-4 sm:p-5 ${className}`}>
-            <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
-                    <ToolIcon name="taste" className="h-7 w-7" duo />
-                </span>
-                <div className="min-w-0">
-                    <h2 className="font-medium">{t('gift.together.panel_title', { name })}</h2>
-                    <p className="mt-1 text-sm text-ink-soft">{t('gift.together.panel_hint', { name })}</p>
-                </div>
-            </div>
+        // In the list's popup since 2026-10-06, whose title is the heading.
+        <section className={className}>
+            <p className="text-sm text-ink-soft">{t('gift.together.panel_hint', { name })}</p>
 
             {state.open && state.url ? (
                 <div className="mt-4">

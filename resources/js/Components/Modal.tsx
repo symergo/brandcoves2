@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import Button from './Button'
 import ToolIcon from './ToolIcon'
+import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -28,6 +29,11 @@ import { useTranslations } from '../useTranslations'
  * so no caller has to remember it. A short "are you sure?" (`alertdialog`)
  * stays a card: a full screen for one question and two buttons reads as a
  * new page, not a question about this one.
+ *
+ * ## Back closes it (owner, 2026-10-06)
+ *
+ * The phone's back button closes the popup on top rather than leaving the
+ * page (`useBackCloses`, which says how and why Inertia is kept out of it).
  */
 export default function Modal({
     title,
@@ -49,6 +55,8 @@ export default function Modal({
 }) {
     const { t } = useTranslations()
     const ref = useRef<HTMLDialogElement>(null)
+
+    useBackCloses(onClose)
 
     useEffect(() => {
         const el = ref.current

@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react'
 import Button, { fieldClasses } from './Button'
 import InfoTip from './InfoTip'
+import Modal from './Modal'
 import type { Cents, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -97,6 +98,9 @@ export function budgetLabel(min: Cents | null, max: Cents | null, t: Translate, 
  * answer is the same sentence whether or not the address has an account.
  *
  * The birthday starts as the one you saved for them, so it is not typed twice.
+ *
+ * A popup of its own since 2026-10-06 (owner's rule: a form opened from a
+ * button or a menu item is a popup); it opened in the page until then.
  */
 export function InvitePerson({
     url,
@@ -121,6 +125,16 @@ export function InvitePerson({
     })
 
     return (
+        <Modal
+            title={
+                <span className="inline-flex flex-wrap items-center">
+                    {t('people.invite')}
+                    <InfoTip>{t('people.invite_person_tip', { name })}</InfoTip>
+                </span>
+            }
+            label={t('people.invite')}
+            onClose={onDone}
+        >
         <form
             onSubmit={(e) => {
                 e.preventDefault()
@@ -131,13 +145,9 @@ export function InvitePerson({
                 }))
                 form.post(url, { preserveScroll: true, onSuccess: onDone })
             }}
-            className="mt-4 grid gap-4 rounded-card border border-line bg-card p-4 sm:grid-cols-3"
+            className="mt-4 grid gap-4 sm:grid-cols-3"
         >
-            <p className="flex flex-wrap items-center text-sm font-medium sm:col-span-3">
-                {t('people.invite')}
-                <InfoTip>{t('people.invite_person_tip', { name })}</InfoTip>
-            </p>
-            <label className="block text-xs font-medium sm:col-span-2">
+            <label className="block text-sm font-medium sm:col-span-2">
                 {t('friends.email')}
                 <input
                     type="email"
@@ -147,7 +157,7 @@ export function InvitePerson({
                     className={fieldClasses()}
                 />
             </label>
-            <label className="block text-xs font-medium">
+            <label className="block text-sm font-medium">
                 {t('friends.their_birthday_optional')}
                 <DayMonth
                     day={form.data.day}
@@ -167,5 +177,6 @@ export function InvitePerson({
                 )}
             </div>
         </form>
+        </Modal>
     )
 }
