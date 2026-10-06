@@ -18,7 +18,7 @@ import { useHiddenItems } from '../../pendingRemovals'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import OwnItemMenu from '../../Components/OwnItemMenu'
 import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
-import ShareMenu from '../../Components/ShareMenu'
+import ShareRow from '../../Components/ShareRow'
 import TheirWishes, { type Wish } from '../../Components/TheirWishes'
 import { useTranslations } from '../../useTranslations'
 import { budgetLabel } from '../../Components/PersonParts'
@@ -406,28 +406,27 @@ export default function ListShow({
                 <div className="mt-6 space-y-4 rounded-card border border-accent/40 bg-accent/5 p-4 sm:p-5">
                     <p className="font-medium">{t('wizard.ask_card_title')}</p>
 
+                    {/*
+                      Each link with its field and "Link kopiëren" (ShareRow), as
+                      every link on the site: a lone "Stuur naar" button had
+                      neither (consistency review, 2026-10-06).
+                    */}
                     {askForIdeas.includes('recipient') && target?.askUrl && (
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="max-w-md text-sm text-ink-soft">
-                                {t('wizard.ask_card_recipient', { name: target.name })}
-                            </p>
-                            <ShareMenu
-                                url={target.askUrl}
-                                text={t('wizard.ask_message_recipient')}
-                                label={t('wizard.ask_card_send', { name: target.name })}
-                            />
-                        </div>
+                        <ShareRow
+                            url={target.askUrl}
+                            text={t('wizard.ask_message_recipient')}
+                            label={t('wizard.ask_card_send', { name: target.name })}
+                            hint={t('wizard.ask_card_recipient', { name: target.name })}
+                        />
                     )}
 
                     {askForIdeas.includes('others') && list.shareUrl && (
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="max-w-md text-sm text-ink-soft">{t('wizard.ask_card_others')}</p>
-                            <ShareMenu
-                                url={list.shareUrl}
-                                text={t('wizard.ask_message_others', { title: list.title })}
-                                label={t('wizard.ask_card_share')}
-                            />
-                        </div>
+                        <ShareRow
+                            url={list.shareUrl}
+                            text={t('wizard.ask_message_others', { title: list.title })}
+                            label={t('wizard.ask_card_share')}
+                            hint={t('wizard.ask_card_others')}
+                        />
                     )}
                 </div>
             )}

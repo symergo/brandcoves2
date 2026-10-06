@@ -6,6 +6,7 @@ import { formatBudget, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
+import { headerActionClasses } from '../../Components/Button'
 import ToolIcon from '../../Components/ToolIcon'
 import InfoTip from '../../Components/InfoTip'
 import PageHeader from '../../Components/PageHeader'
@@ -140,14 +141,10 @@ export default function AskShow({
                 title={question.title}
                 actions={
                     question.shareUrl ? (
-                        <button
-                            type="button"
-                            onClick={() => setSharing(true)}
-                            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
-                        >
-                            <ToolIcon name="shared" className="h-4 w-4" />
-                            <span className="hidden sm:inline">{t('ask.share')}</span>
-                            <span className="sr-only sm:hidden">{t('ask.share')}</span>
+                        // A page header's Delen, with its word, as on a list (2026-10-06).
+                        <button type="button" onClick={() => setSharing(true)} className={headerActionClasses(sharing ? 'open' : 'idle', 'shrink-0')}>
+                            <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
+                            {t('ask.share')}
                         </button>
                     ) : undefined
                 }

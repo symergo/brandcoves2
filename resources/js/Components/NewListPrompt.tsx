@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Panel } from './ListTools'
+import ToolIcon from './ToolIcon'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -35,20 +36,24 @@ export default function NewListPrompt({
         onPanel(panel)
     }
 
-    const chip = 'rounded-full border border-line bg-card px-3 py-1 text-sm hover:border-ink'
+    // Each with its tool's mark, as in the list's Meer menu (2026-10-06).
+    const chip = 'inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-sm hover:border-ink'
 
     return (
         <div className="mt-4 rounded-card border border-line bg-card p-4">
             <p className="text-sm text-ink-soft">{t('wizard.next_title')}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button type="button" className={chip} onClick={() => open('settings')}>
+                    <ToolIcon name="settings" className="h-4 w-4 shrink-0" />
                     {t('wizard.next_occasion')}
                 </button>
                 <button type="button" className={chip} onClick={() => open('share')}>
+                    <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
                     {t(kind === 'mine' ? 'wizard.next_share' : 'wizard.next_share_others')}
                 </button>
                 {askName !== null && (
                     <button type="button" className={chip} onClick={() => open('ask')}>
+                        <ToolIcon name="suggestions" className="h-4 w-4 shrink-0" />
                         {t('wizard.next_ask', { name: askName })}
                     </button>
                 )}
