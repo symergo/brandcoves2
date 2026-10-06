@@ -600,6 +600,7 @@ return [
     'saved_coves' => [
         'copy' => 'Hacerla mi lista',
         'unsave' => 'Quitar de Mis Coves',
+        'unsave_confirm' => '¿Quitar :title de Mis Coves?',
         'copied' => ':list ya es una de tus listas. Cámbiala como quieras.',
         'saved_flash' => ':list está guardada en Mis Coves.',
         'sign_in_hint' => 'Inicia sesión para guardar esta Cove en Mis Coves.',

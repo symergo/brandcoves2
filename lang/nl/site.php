@@ -606,6 +606,7 @@ return [
     'saved_coves' => [
         'copy' => 'Maak er mijn lijst van',
         'unsave' => 'Niet meer bewaren',
+        'unsave_confirm' => ':title niet meer bewaren?',
         'copied' => ':list staat nu bij je lijsten. Pas hem aan zoals je wilt.',
         'saved_flash' => ':list is bewaard in Mijn Coves.',
         'sign_in_hint' => 'Log in om deze Cove te bewaren in Mijn Coves.',

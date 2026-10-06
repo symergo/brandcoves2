@@ -12,7 +12,7 @@ import { buttonClasses, rowActionClasses } from '../../Components/Button'
 import EmptyState from '../../Components/EmptyState'
 import ListRow, { ListRowMeta, ListRowTitle, pictureBox } from '../../Components/ListRow'
 import ListSummaryRow, { type ListSummary as RowSummary } from '../../Components/ListSummaryRow'
-import Menu, { MenuItem, MoreButtonContent } from '../../Components/Menu'
+import { useConfirm } from '../../Components/Modal'
 import PageHeader from '../../Components/PageHeader'
 
 /**
@@ -351,9 +351,11 @@ function SavedCoves({ coves }: { coves: SavedCoveRow[] }) {
 function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
     const { t } = useTranslations()
     const rowAction = rowActionClasses()
+    const [confirm, confirmDialog] = useConfirm()
 
     return (
         <>
+            {confirmDialog}
             <ListRow
                 href={cove.url}
                 slots={2}
@@ -378,25 +380,25 @@ function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
                             <ToolIcon name="copy" className="h-4 w-4 shrink-0" />
                             <span className="hidden sm:inline">{t('saved_coves.copy')}</span>
                         </button>
-                        <Menu
-                            label={t('people.list_actions', { name: cove.title })}
-                            button={<MoreButtonContent word={t('people.more')} />}
-                            buttonClassName={rowAction}
+                        {/*
+                          A button of its own, not a ⋯ with one item in it, and it
+                          asks first like every other removal (2026-10-06). Once
+                          gone from here, the Cove has to be found again to save it.
+                        */}
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (await confirm({ message: t('saved_coves.unsave_confirm', { title: cove.title }), confirmLabel: t('saved_coves.unsave'), danger: true })) {
+                                    router.delete(cove.saveUrl, { preserveScroll: true })
+                                }
+                            }}
+                            aria-label={t('saved_coves.unsave')}
+                            title={t('saved_coves.unsave')}
+                            className={rowAction}
                         >
-                            {(close) => (
-                                <MenuItem
-                                    danger
-                                    icon={<ToolIcon name="trash" className="h-4 w-4" />}
-                                    onSelect={() => {
-                                        // No "are you sure": saving it again is one press on the Cove.
-                                        close()
-                                        router.delete(cove.saveUrl, { preserveScroll: true })
-                                    }}
-                                >
-                                    {t('saved_coves.unsave')}
-                                </MenuItem>
-                            )}
-                        </Menu>
+                            <ToolIcon name="trash" className="h-4 w-4 shrink-0" />
+                            <span className="hidden sm:inline">{t('saved_coves.unsave')}</span>
+                        </button>
                     </>
                 }
             >

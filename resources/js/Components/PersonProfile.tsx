@@ -292,9 +292,26 @@ export default function PersonProfile({
                                 )}
                                 <MenuItem
                                     danger
-                                    onSelect={() => {
+                                    onSelect={async () => {
                                         close()
-                                        setDeleting(true)
+
+                                        // Refused while a group gift is about them: say why instead.
+                                        if (groupLists > 0) {
+                                            setDeleting(true)
+
+                                            return
+                                        }
+
+                                        // The site's one "are you sure?" (2026-10-06; it had a popup of its own).
+                                        if (
+                                            await confirm({
+                                                message: t('people.delete_confirm', { name: person.name }),
+                                                confirmLabel: t('people.delete_yes'),
+                                                danger: true,
+                                            })
+                                        ) {
+                                            router.delete(urls.recipient, { data: { then: 'people' } })
+                                        }
                                     }}
                                     icon={<ToolIcon name="trash" className="h-4 w-4" />}
                                 >
@@ -348,33 +365,21 @@ export default function PersonProfile({
             </PageHeader>
 
             {/*
-              Deleting the person. Refused while a group gift is about them
+              Why deleting the person is refused: a group gift is about them
               (the server says so again if it gets the request anyway, and the
-              page comes back with the popup open on its reason).
+              page comes back with this open on its reason). The question
+              itself is the site's ConfirmDialog, from the menu item.
             */}
-            {deleting &&
-                (groupLists > 0 || errors?.person ? (
-                    <Modal label={t('people.delete')} onClose={() => setDeleting(false)} width="sm" role="alertdialog">
-                        <p className="text-sm">{errors?.person ?? t('people.delete_has_group', { name: person.name })}</p>
-                        <div className="mt-5 flex justify-end">
-                            <Button variant="secondary" onClick={() => setDeleting(false)} autoFocus>
-                                {t('nav.close')}
-                            </Button>
-                        </div>
-                    </Modal>
-                ) : (
-                    <Modal label={t('people.delete')} onClose={() => setDeleting(false)} width="sm" role="alertdialog">
-                        <p className="text-sm">{t('people.delete_confirm', { name: person.name })}</p>
-                        <div className="mt-5 flex flex-wrap justify-end gap-2">
-                            <Button variant="secondary" onClick={() => setDeleting(false)} autoFocus>
-                                {t('people.cancel')}
-                            </Button>
-                            <Button variant="destructive" onClick={() => router.delete(urls.recipient, { data: { then: 'people' } })}>
-                                {t('people.delete_yes')}
-                            </Button>
-                        </div>
-                    </Modal>
-                ))}
+            {deleting && (groupLists > 0 || errors?.person) && (
+                <Modal label={t('people.delete')} onClose={() => setDeleting(false)} width="sm" role="alertdialog">
+                    <p className="text-sm">{errors?.person ?? t('people.delete_has_group', { name: person.name })}</p>
+                    <div className="mt-5 flex justify-end">
+                        <Button variant="secondary" onClick={() => setDeleting(false)} autoFocus>
+                            {t('nav.close')}
+                        </Button>
+                    </div>
+                </Modal>
+            )}
             {confirmDialog}
 
             {/*

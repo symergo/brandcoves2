@@ -601,6 +601,7 @@ return [
     'saved_coves' => [
         'copy' => 'En faire ma liste',
         'unsave' => 'Retirer de Mes Coves',
+        'unsave_confirm' => 'Retirer :title de Mes Coves ?',
         'copied' => ':list fait maintenant partie de vos listes. Modifiez-la comme vous voulez.',
         'saved_flash' => ':list est enregistrée dans Mes Coves.',
         'sign_in_hint' => 'Connectez-vous pour garder cette Cove dans Mes Coves.',

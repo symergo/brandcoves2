@@ -749,6 +749,7 @@ return [
     'saved_coves' => [
         'copy' => 'Make it my list',
         'unsave' => 'Remove from My Coves',
+        'unsave_confirm' => 'Remove :title from My Coves?',
         'copied' => ':list is now one of your lists. Change it as you like.',
         'saved_flash' => ':list is saved in My Coves.',
         'sign_in_hint' => 'Sign in to keep this Cove in My Coves.',
