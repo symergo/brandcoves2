@@ -104,7 +104,7 @@ export default function Modal({
                 }
             }}
             aria-label={label ?? (typeof title === 'string' ? title : undefined)}
-            className={`${shape} overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40 ${sectionTitles}`}
+            className={`${shape} overflow-x-hidden overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40 ${sectionTitles}`}
         >
             {title !== undefined && (
                 <div className="flex items-start justify-between gap-3">

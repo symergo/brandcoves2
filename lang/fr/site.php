@@ -785,6 +785,8 @@ return [
         'recipient_label' => 'Pour qui',
         'description_label' => 'Description',
         'budget_label' => 'Budget',
+        'settings_about' => 'À propos de la liste',
+        'settings_prices' => 'Suivi des prix',
         'delete_confirm' => 'Supprimer cette liste et tout son contenu ?',
         'share' => 'Partager',
         'sharing_off' => 'Vous seul voyez cette liste.',

@@ -948,6 +948,8 @@ return [
         'recipient_label' => 'For whom',
         'description_label' => 'Description',
         'budget_label' => 'Budget',
+        'settings_about' => 'About the list',
+        'settings_prices' => 'Price alerts',
         'delete_confirm' => 'Delete this list and everything in it?',
         'share' => 'Share',
         'sharing_off' => 'Only you can see this list.',

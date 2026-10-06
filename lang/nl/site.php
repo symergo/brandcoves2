@@ -790,6 +790,8 @@ return [
         'recipient_label' => 'Voor wie',
         'description_label' => 'Omschrijving',
         'budget_label' => 'Budget',
+        'settings_about' => 'Over de lijst',
+        'settings_prices' => 'Prijzen volgen',
         'delete_confirm' => 'Deze lijst en alles erin verwijderen?',
         'share' => 'Delen',
         'sharing_off' => 'Alleen jij ziet deze lijst.',

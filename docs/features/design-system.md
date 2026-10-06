@@ -356,8 +356,12 @@ what you do while looking at the page: the search box that adds products on a li
 suggestions (a message behind a button is a message missed). So the list page's share, settings,
 quiz, Secret Santa, "ask them" and "find out together" are popups; so are the person page's name
 and birthday and its invite (`InvitePerson` is a popup wherever it opens), and on My people adding
-or inviting somebody, a friend's birthday and "your lists they see". No card inside a popup: the
-form sits straight in it. Why popups: on a phone an inline panel pushed the list off the screen and
+or inviting somebody, a friend's birthday and "your lists they see". No card around a popup's one
+form: it sits straight in it. Cards only to keep **different kinds** of settings apart, as in a list's
+Settings (owner, 2026-10-06: "clearly separate the different kind of settings (cards?)"). A popup
+of settings has no Save button: what was typed is saved as it closes, by ×, Escape or back; switches
+save the moment they are pressed. Nothing in a popup may be wider than the screen (`overflow-x-hidden`
+on `Modal`; a phone's date field once slid the whole popup sideways). Why popups: on a phone an inline panel pushed the list off the screen and
 its × was a scroll away; a full-screen popup has one way out and puts you back where you were, and
 a row cannot fold a panel open, so inline made one feature two.
 

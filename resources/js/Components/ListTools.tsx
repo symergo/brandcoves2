@@ -185,6 +185,10 @@ export default function ListTools({
     // And who it is for, on a list about somebody else. Lives on the recipient,
     // not the list, so it is saved through its own endpoint first.
     const [personName, setPersonName] = useState(list.recipient?.name ?? '')
+    // What it is for, and (a registry only) where parcels go.
+    const [eventType, setEventType] = useState(list.eventType ?? '')
+    const [eventDate, setEventDate] = useState(list.eventDate ?? '')
+    const [address, setAddress] = useState(deliveryAddress ?? '')
 
     /*
      * Every sharing setting saves the moment it is pressed, and says so.
@@ -224,6 +228,75 @@ export default function ListTools({
     // Only a wish list of your own is a registry; every kind may carry an
     // occasion. The delivery address is the half that stays behind this.
     const isRegistry = list.kind === 'mine'
+
+    // Each kind of setting in its own card (2026-10-06).
+    const settingsCard = 'rounded-card border border-line bg-card p-4'
+
+    /*
+     * What was typed in Settings, saved as the popup closes (owner, 2026-10-06:
+     * "save automatically when hitting close"); there are no Save buttons. Only
+     * what changed is sent: an unchanged occasion is not sent again, so its
+     * birthday side effect (a birthday date given here is the person's birthday
+     * too) runs only when somebody set one. A budget typed the wrong way round
+     * is turned round rather than refused, since the popup is gone by the time
+     * a refusal would arrive. `preserveState`: the page stays as it is, and a
+     * `?panel=settings` address does not open the popup again.
+     */
+    const euros = (cents: number | null | undefined) => (cents == null ? '' : String(cents / 100))
+
+    function saveSettings(): void {
+        const data: Record<string, string | number | null> = {}
+        const typedTitle = title.trim() === '' ? list.title : title.trim()
+        const typedNote = note.trim()
+
+        if (typedTitle !== list.title) data.title = typedTitle
+        if (typedNote !== (list.description ?? '')) data.description = typedNote === '' ? null : typedNote
+
+        if (budgetMin.trim() !== euros(list.budgetMin) || budgetMax.trim() !== euros(list.budgetMax)) {
+            let low = budgetMin.trim() === '' ? null : Number(budgetMin)
+            let high = budgetMax.trim() === '' ? null : Number(budgetMax)
+
+            if (low !== null && high !== null && low > high) {
+                ;[low, high] = [high, low]
+            }
+
+            data.budget_min = low
+            data.budget_max = high
+        }
+
+        if (eventType !== (list.eventType ?? '') || eventDate !== (list.eventDate ?? '')) {
+            data.event_type = eventType
+            data.event_date = eventDate
+        }
+
+        if (isRegistry && address !== (deliveryAddress ?? '')) data.delivery_address = address
+
+        const saveList = () => {
+            if (Object.keys(data).length > 0) {
+                router.patch(`${base}/lists/${list.id}`, data, { preserveScroll: true, preserveState: true })
+            }
+        }
+        const renamed = personName.trim()
+
+        // The person's name is a fact about the recipient, not the list: it goes
+        // to the recipient endpoint, and the list follows once that has landed.
+        if (list.kind !== 'mine' && list.recipient !== null && renamed !== '' && renamed !== list.recipient.name) {
+            router.patch(
+                `${base}/recipients/${list.recipient.id}`,
+                { name: renamed },
+                { preserveScroll: true, preserveState: true, onSuccess: saveList },
+            )
+
+            return
+        }
+
+        saveList()
+    }
+
+    const closePanel = () => {
+        if (open === 'settings') saveSettings()
+        onPanel(null)
+    }
 
 
 
@@ -357,7 +430,7 @@ export default function ListTools({
     return (
         <div>
             {open !== null && (
-                <Modal title={titles[open]} onClose={() => onPanel(null)} width="lg">
+                <Modal title={titles[open]} onClose={closePanel} width="lg">
                 <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="mt-3 outline-none">
                     {open === 'share' && (
                         /*
@@ -652,108 +725,74 @@ export default function ListTools({
 
                     {open === 'settings' && (
                         /*
-                          The list's own facts, in one place: what it is called,
-                          the note under the name, whether its prices are watched
-                          and, below, what it is for. The name and the note were
-                          edited in the page header and the price switch sat among
-                          the sharing options, so changing something about the
-                          list meant three places. Sharing is who may see it; this
-                          is what it is.
+                          The list's own facts, in one place: who it is for,
+                          what it is called, the note, the budget, how big a
+                          price drop counts, how a group gift collects and what
+                          it is for. Sharing is who may see it; this is what it is.
+
+                          Since 2026-10-06 (owner, with a screenshot): each kind
+                          of setting in a card of its own, and no Save buttons.
+                          What was typed is saved when the popup closes, by its
+                          ×, Escape or the back button (`saveSettings`). The
+                          switches and choices save the moment they are pressed,
+                          as before.
                         */
-                        <div>
-                            <form
-                                className="grid gap-3"
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    const saveList = () =>
-                                        setting({
-                                            title: title.trim() === '' ? list.title : title.trim(),
-                                            // Empty is no note, not an empty one: the column
-                                            // is nullable and a blank string would render as
-                                            // a gap under the title.
-                                            description: note.trim() === '' ? null : note.trim(),
-                                            // Euros; the server stores cents. Empty clears it.
-                                            budget_min: budgetMin.trim() === '' ? null : Number(budgetMin),
-                                            budget_max: budgetMax.trim() === '' ? null : Number(budgetMax),
-                                        })
-                                    const renamed = personName.trim()
-
-                                    // The person's name is a fact about the recipient,
-                                    // not the list: it goes to the recipient endpoint,
-                                    // and the list follows once that has landed so one
-                                    // Save means one outcome.
-                                    if (list.kind !== 'mine' && list.recipient !== null && renamed !== '' && renamed !== list.recipient.name) {
-                                        router.patch(
-                                            `${base}/recipients/${list.recipient.id}`,
-                                            { name: renamed },
-                                            { preserveScroll: true, onSuccess: saveList },
-                                        )
-
-                                        return
-                                    }
-
-                                    saveList()
-                                }}
-                            >
-                                {/*
-                                  Who it is for, when it is about somebody. The
-                                  name appeared nowhere on the page once the
-                                  "Ask :name" chip lost its label, and a list
-                                  about a person whose page never says the
-                                  person is a list with its title missing.
-                                  First, above the list's own name: the person
-                                  is what the list is about, the title is what
-                                  it is called.
-
-                                  Never on a wish list of your own: there the
-                                  recipient is you, and `mine` lists carry no
-                                  recipient at all, so the kind check is belt
-                                  to the null check's braces.
-                                */}
-                                {list.kind !== 'mine' && list.recipient !== null && (
+                        <div className="space-y-4">
+                            <section className={settingsCard}>
+                                <h3>{t('lists.settings_about')}</h3>
+                                <div className="mt-3 grid gap-3">
+                                    {/*
+                                      Who it is for, when it is about somebody,
+                                      first: the person is what the list is
+                                      about, the title is what it is called.
+                                      Never on a wish list of your own.
+                                    */}
+                                    {list.kind !== 'mine' && list.recipient !== null && (
+                                        <label className="block text-sm">
+                                            <span className="text-ink-soft">{t('lists.recipient_label')}</span>
+                                            <input
+                                                type="text"
+                                                value={personName}
+                                                onChange={(e) => setPersonName(e.target.value)}
+                                                maxLength={80}
+                                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            />
+                                        </label>
+                                    )}
                                     <label className="block text-sm">
-                                        <span className="text-ink-soft">{t('lists.recipient_label')}</span>
+                                        <span className="text-ink-soft">{t('lists.title_label')}</span>
                                         <input
                                             type="text"
-                                            value={personName}
-                                            onChange={(e) => setPersonName(e.target.value)}
-                                            maxLength={80}
-                                            required
+                                            value={title}
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            maxLength={120}
                                             className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
                                         />
                                     </label>
-                                )}
-                                <label className="block text-sm">
-                                    <span className="text-ink-soft">{t('lists.title_label')}</span>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        maxLength={120}
-                                        required
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                    />
-                                </label>
-                                <label className="block text-sm">
-                                    <span className="text-ink-soft">{t('lists.description_label')}</span>
-                                    <textarea
-                                        value={note}
-                                        onChange={(e) => setNote(e.target.value)}
-                                        rows={3}
-                                        maxLength={2000}
-                                        placeholder={t('lists.note_placeholder')}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream p-3 text-sm"
-                                    />
-                                </label>
-                                {/*
-                                  The budget, a fact about the list rather than
-                                  the person since 2026-10-05: two lists for
-                                  Mama can have two budgets. Find a gift and
-                                  swiping for this person start from it.
-                                */}
-                                <fieldset className="grid max-w-sm grid-cols-2 gap-3">
-                                    <legend className="col-span-2 text-sm text-ink-soft">{t('lists.budget_label')}</legend>
-                                    <label className="block text-xs text-ink-soft">
+                                    <label className="block text-sm">
+                                        <span className="text-ink-soft">{t('lists.description_label')}</span>
+                                        <textarea
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            rows={3}
+                                            maxLength={2000}
+                                            placeholder={t('lists.note_placeholder')}
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream p-3 text-sm"
+                                        />
+                                    </label>
+                                </div>
+                            </section>
+
+                            {/*
+                              The budget, a fact about the list rather than the
+                              person since 2026-10-05: two lists for Mama can
+                              have two budgets. Find a gift and swiping for this
+                              person start from it.
+                            */}
+                            <section className={settingsCard}>
+                                <h3>{t('lists.budget_label')}</h3>
+                                <div className="mt-3 grid grid-cols-2 gap-3">
+                                    <label className="block min-w-0 text-sm text-ink-soft">
                                         {t('people.budget_min')}
                                         <input
                                             type="number"
@@ -763,10 +802,10 @@ export default function ListTools({
                                             inputMode="numeric"
                                             value={budgetMin}
                                             onChange={(e) => setBudgetMin(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink"
                                         />
                                     </label>
-                                    <label className="block text-xs text-ink-soft">
+                                    <label className="block min-w-0 text-sm text-ink-soft">
                                         {t('people.budget_max')}
                                         <input
                                             type="number"
@@ -776,76 +815,50 @@ export default function ListTools({
                                             inputMode="numeric"
                                             value={budgetMax}
                                             onChange={(e) => setBudgetMax(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink"
                                         />
                                     </label>
-                                </fieldset>
-                                <div className="flex items-center gap-3">
-                                    <button type="submit" className="rounded-lg bg-ink px-3 py-1.5 text-sm text-cream">
-                                        {t('lists.save')}
-                                    </button>
-                                    <span className="text-xs text-sage" aria-live="polite">
-                                        {saved !== 0 && t('lists.saved')}
-                                    </span>
                                 </div>
-                            </form>
-                            <div className="mt-6 space-y-2">
-                                        {/*
-                                          Watch the prices on this list.
+                            </section>
 
-                                          bstore's wishlist mail, brought over:
-                                          one switch for the whole list and a
-                                          percentage, instead of a button on
-                                          every product. Off is null, like its
-                                          neighbours; on starts at 10%, which
-                                          is a real drop on anything and not a
-                                          rounding error. The choices are the
-                                          server's short list, and it refuses
-                                          anything outside it.
-                                        */}
-                                        {/*
-                                          On and off is the header's "Volgen" since
-                                          2026-10-06 (owner: "a separate button
-                                          instead of hidden in settings"); how big
-                                          a drop counts stays here, while it is on.
-                                        */}
-                                        {list.priceWatchPercent !== null && (
-                                            <label className="flex flex-wrap items-center gap-2 text-sm">
-                                                <span>{t('lists.price_watch_threshold')}</span>
-                                                <select
-                                                    value={list.priceWatchPercent}
-                                                    onChange={(e) =>
-                                                        setting({
-                                                            price_watch_percent: Number(e.target.value),
-                                                        })
-                                                    }
-                                                    className="rounded-lg border border-line px-2 py-1 text-sm"
-                                                >
-                                                    {[5, 10, 15, 20, 30].map((p) => (
-                                                        <option key={p} value={p}>
-                                                            {p}%
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                        )}
-                            </div>
+                            {/*
+                              How big a drop counts, while the list is followed.
+                              On and off is the header's "Volgen" (2026-10-06).
+                              The choices are the server's short list, and it
+                              refuses anything outside it.
+                            */}
+                            {list.priceWatchPercent !== null && (
+                                <section className={settingsCard}>
+                                    <h3>{t('lists.settings_prices')}</h3>
+                                    <label className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                                        <span>{t('lists.price_watch_threshold')}</span>
+                                        <select
+                                            value={list.priceWatchPercent}
+                                            onChange={(e) => setting({ price_watch_percent: Number(e.target.value) })}
+                                            className="rounded-lg border border-line bg-cream px-2 py-1 text-sm"
+                                        >
+                                            {[5, 10, 15, 20, 30].map((p) => (
+                                                <option key={p} value={p}>
+                                                    {p}%
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </section>
+                            )}
+
                             {/*
                               How a group gift collects: a choice, not a switch
                               with a field hanging off it, because "each names
-                              their own" and "everyone puts in the same" are
-                              two collections rather than one with an option.
-                              Under Settings, not Sharing (owner, 2026-09-27):
-                              how the money is collected is what the list is,
-                              not who may see it.
-                              The amount appears under the option it belongs to
-                              and nowhere else, and is written on blur: this
-                              posts, and "€1, €12, €120" typed into a live field
-                              is three settings saved and two of them wrong.
+                              their own" and "everyone puts in the same" are two
+                              collections rather than one with an option. The
+                              amount is written on blur: this posts, and "€1, €12,
+                              €120" typed into a live field is three settings
+                              saved and two of them wrong.
                             */}
                             {access.isOwner && list.kind === 'group' && (
-                                <section className="mt-6">
-                                    <h3 className="text-sm font-medium">{t('lists.pledge_mode')}</h3>
+                                <section className={settingsCard}>
+                                    <h3>{t('lists.pledge_mode')}</h3>
                                     <div className="mt-3 space-y-2">
                                         <Option
                                             type="radio"
@@ -900,108 +913,68 @@ export default function ListTools({
                                     </div>
                                 </section>
                             )}
-                        </div>
-                    )}
-                    {open === 'settings' && (
-                        <div className="mt-8 border-t border-line pt-6">
-                            {/* What the occasion is for, behind the (i) (2026-09-27). */}
-                            <h3 className="flex flex-wrap items-center text-sm font-medium">
-                                {t('registry.badge')}
-                                <InfoTip>{t('registry.hint')}</InfoTip>
-                            </h3>
 
-                            <form
-                                className="mt-3 grid gap-3 sm:grid-cols-2"
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    const data = new FormData(e.currentTarget)
-                                    router.patch(
-                                        `${base}/lists/${list.id}`,
-                                        {
-                                            event_type: String(data.get('event_type') || ''),
-                                            event_date: String(data.get('event_date') || ''),
-                                            /*
-                                             * Only when the field is on screen.
-                                             *
-                                             * `FormData.get` returns null for an
-                                             * absent input, which becomes '' and
-                                             * would *clear* a stored address every
-                                             * time somebody edited the occasion on
-                                             * a list that does not show the field.
-                                             * Harmless today, since only a `mine`
-                                             * list can have one — and exactly the
-                                             * kind of thing that stops being
-                                             * harmless the moment that changes.
-                                             */
-                                            ...(isRegistry
-                                                ? {
-                                                      delivery_address: String(
-                                                          data.get('delivery_address') || '',
-                                                      ),
-                                                  }
-                                                : {}),
-                                        },
-                                        { preserveScroll: true },
-                                    )
-                                }}
-                            >
-                                <label className="block text-sm">
-                                    {t('registry.occasion')}
-                                    <select
-                                        name="event_type"
-                                        defaultValue={list.eventType ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    >
-                                        <option value="">{t('registry.none')}</option>
-                                        {registryOptions.map((o) => (
-                                            <option key={o.value} value={o.value}>
-                                                {o.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
+                            {/* What the list is for; why, behind the (i) (2026-09-27). */}
+                            <section className={settingsCard}>
+                                <h3 className="flex flex-wrap items-center">
+                                    {t('registry.badge')}
+                                    <InfoTip>{t('registry.hint')}</InfoTip>
+                                </h3>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                    <label className="block min-w-0 text-sm">
+                                        {t('registry.occasion')}
+                                        <select
+                                            value={eventType}
+                                            onChange={(e) => setEventType(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        >
+                                            <option value="">{t('registry.none')}</option>
+                                            {registryOptions.map((o) => (
+                                                <option key={o.value} value={o.value}>
+                                                    {o.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
 
-                                <label className="block text-sm">
-                                    {t('registry.date')}
-                                    <input
-                                        type="date"
-                                        name="event_date"
-                                        defaultValue={list.eventDate ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    />
-                                </label>
+                                    {/*
+                                      `min-w-0 max-w-full appearance-none`: a
+                                      phone draws a date field at its own
+                                      width, wider than the popup, and the
+                                      whole popup then slid sideways (owner,
+                                      2026-10-06).
+                                    */}
+                                    <label className="block min-w-0 text-sm">
+                                        {t('registry.date')}
+                                        <input
+                                            type="date"
+                                            value={eventDate}
+                                            onChange={(e) => setEventDate(e.target.value)}
+                                            className="mt-1 block w-full max-w-full min-w-0 appearance-none rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        />
+                                    </label>
 
-                                {/*
-                                  A registry, and only a registry.
-
-                                  This is the owner's home address, and it is only
-                                  ever appropriate on a list belonging to the person
-                                  the parcel is for. A gift list about somebody else
-                                  may carry an occasion and must never carry an
-                                  address — which is why `Wishlist::isRegistry()`
-                                  and `hasOccasion()` are two questions rather than
-                                  one.
-                                */}
-                                {isRegistry && (
-                                <label className="block text-sm sm:col-span-2">
-                                    {t('registry.address')}
-                                    <InfoTip>{t('registry.address_hint')}</InfoTip>
-                                    <textarea
-                                        name="delivery_address"
-                                        rows={2}
-                                        defaultValue={deliveryAddress ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    />
-                                </label>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
-                                >
-                                    {t('lists.save')}
-                                </button>
-                            </form>
+                                    {/*
+                                      A registry, and only a registry: this is
+                                      the owner's home address, only ever right
+                                      on a list belonging to the person the
+                                      parcel is for. `isRegistry()` and
+                                      `hasOccasion()` are two questions.
+                                    */}
+                                    {isRegistry && (
+                                        <label className="block text-sm sm:col-span-2">
+                                            {t('registry.address')}
+                                            <InfoTip>{t('registry.address_hint')}</InfoTip>
+                                            <textarea
+                                                rows={2}
+                                                value={address}
+                                                onChange={(e) => setAddress(e.target.value)}
+                                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+                            </section>
                         </div>
                     )}
 
