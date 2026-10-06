@@ -240,11 +240,9 @@ export default function ListTools({
     useEffect(() => {
         if (open === null) return
 
+        // In a popup since 2026-10-06: focus only. Scrolling it into view made
+        // the popup open half-way down, its title out of sight.
         panelRef.current?.focus({ preventScroll: true })
-        panelRef.current?.scrollIntoView({
-            block: 'nearest',
-            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        })
     }, [open])
 
     const pending = access.isOwner && suggestions.length > 0

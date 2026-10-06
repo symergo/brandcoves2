@@ -77,6 +77,16 @@ export default function Modal({
         lg: 'sm:w-[min(36rem,calc(100vw-2rem))]',
     }
 
+    /*
+     * A section's title inside a popup (an h3, a fieldset's legend) reads as a
+     * title: larger and bold, in ink. They were the body's size and weight, so
+     * a popup of several parts read as one run of text (owner, 2026-10-06:
+     * "make the section titles in the popups more clear"). Set here, once, so
+     * every popup's sections follow without each form restyling its own.
+     */
+    const sectionTitles =
+        '[&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-ink [&_legend]:text-base [&_legend]:font-semibold [&_legend]:text-ink'
+
     const shape =
         role === 'alertdialog'
             ? `m-auto max-h-[calc(100dvh-2rem)] ${widths[width]} rounded-card border border-line`
@@ -94,7 +104,7 @@ export default function Modal({
                 }
             }}
             aria-label={label ?? (typeof title === 'string' ? title : undefined)}
-            className={`${shape} overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40`}
+            className={`${shape} overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40 ${sectionTitles}`}
         >
             {title !== undefined && (
                 <div className="flex items-start justify-between gap-3">
