@@ -949,7 +949,7 @@ function AboutForm({
             )}
 
             {/* Save in reach under a long form: a bar across the foot of the popup. */}
-            <div className="sticky -bottom-6 -mx-6 -mb-6 flex flex-wrap gap-2 border-t border-line bg-card px-6 py-4">
+            <div className="sticky -bottom-6 -mx-6 -mb-6 flex flex-wrap gap-2 border-t border-line bg-cream px-6 sm:bg-card py-4">
                 <Button type="submit" busy={busy}>
                     {t('people.save')}
                 </Button>

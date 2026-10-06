@@ -128,7 +128,7 @@ export default function SignInDialog({
               simply overflow off-screen rather than scroll.
             */
             // Full screen on a phone, like every popup (owner, 2026-10-06; see Modal).
-            className="m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto bg-card p-6 backdrop:bg-ink/40 sm:m-auto sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-card sm:border sm:border-line"
+            className="m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto bg-cream p-6 sm:bg-card backdrop:bg-ink/40 sm:m-auto sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-card sm:border sm:border-line"
         >
             <h2 className="text-lg font-semibold">{t('auth.title')}</h2>
             <p className="mt-2 text-sm text-ink-soft">{hint ?? t('auth.intro')}</p>

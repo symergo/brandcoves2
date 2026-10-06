@@ -22,8 +22,9 @@ import { useTranslations } from '../useTranslations'
  * ## Full screen on a phone (owner's rule, 2026-10-06)
  *
  * "Popups on mobile need to be full screen." Below `sm` a popup takes the
- * whole screen, square, with no backdrop showing round it; from `sm` up it is
- * the card in the middle it always was. The rule is here, in the one popup,
+ * whole screen, square, with no backdrop showing round it, in the page's own
+ * cream (2026-10-06: a white full screen read as a different site); from `sm`
+ * up it is the white card in the middle it always was. The rule is here, in the one popup,
  * so no caller has to remember it. A short "are you sure?" (`alertdialog`)
  * stays a card: a full screen for one question and two buttons reads as a
  * new page, not a question about this one.
@@ -85,7 +86,7 @@ export default function Modal({
                 }
             }}
             aria-label={label ?? (typeof title === 'string' ? title : undefined)}
-            className={`${shape} overflow-y-auto bg-card p-6 text-ink backdrop:bg-ink/40`}
+            className={`${shape} overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40`}
         >
             {title !== undefined && (
                 <div className="flex items-start justify-between gap-3">

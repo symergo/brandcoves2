@@ -331,7 +331,9 @@ to be full screen." A card floating over a dimmed page on a phone leaves a strip
 each side, crowds what is in it, and the label column of "Over" left its chips a sliver.
 
 - **`Modal` does it**, so no caller has to remember: below `sm` the popup takes the whole screen
-  (`h-dvh w-screen`, square, no border); from `sm` up it is the card in the middle as before. Every
+  (`h-dvh w-screen`, square, no border) in the page's cream (`bg-cream`), since full screen it
+  reads as a page and a white page looked like another site; from `sm` up it is the white card in
+  the middle as before. Every
   popup built on `Modal` follows, and a new popup should be a `Modal`.
 - **`SignInDialog`** is its own `<dialog>` (it opens from a global event) and carries the same
   classes. The scanner (`ScanButton`) was already full screen on a phone.
