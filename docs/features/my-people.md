@@ -119,7 +119,9 @@ width, because there is nothing for a side column):
    tastes"). Full screen on a phone, labels above their chips, like every popup
    ([design-system.md](design-system.md)).
    Under the chips, **Aanpassen** edits them in place with Find a gift's own vocabularies
-   (`GiftController::options()`), saved through `PATCH /recipients/{id}`, and **Vraag {naam} om
+   (`GiftController::options()`; the taste pairs too since 2026-10-06, owner: "I don't see the
+   vibes when editing"), saved through `PATCH /recipients/{id}`. The form sits straight in the
+   popup like its other forms, with Opslaan in a bar along the foot, and **Vraag {naam} om
    aan te passen** opens their `/for/{token}` link to send. That link is offered always, also once
    they answered themselves or have an account: it was hidden in both cases until 2026-10-05, and
    the owner found it missing. The link page already handles a linked person. With nothing known

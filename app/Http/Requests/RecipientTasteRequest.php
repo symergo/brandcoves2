@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Gender;
 use App\Enums\Interest;
+use App\Enums\Preference;
 use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,7 +34,7 @@ class RecipientTasteRequest extends FormRequest
      */
     private const TASTE = [];
 
-    private const TASTE_LISTS = ['interests', 'avoid'];
+    private const TASTE_LISTS = ['interests', 'preferences', 'avoid'];
 
     public function authorize(): bool
     {
@@ -63,6 +64,12 @@ class RecipientTasteRequest extends FormRequest
              */
             'interests' => ['sometimes', 'array', 'max:8'],
             'interests.*' => ['string', 'max:40'],
+
+            // The taste pairs (Handig|Design...), the sides chosen; the same
+            // bounds as Find a gift and My taste. Editable on the person page
+            // since 2026-10-06 (owner: "I don't see the vibes when editing").
+            'preferences' => ['sometimes', 'array', 'max:3'],
+            'preferences.*' => ['string', Rule::in(Preference::values())],
 
             'avoid' => ['sometimes', 'array', 'max:10'],
             'avoid.*' => ['string', 'max:40'],

@@ -184,6 +184,8 @@ class PersonProfileTest extends TestCase
             ->from("/be-nl/people/{$mum->id}")
             ->patch("/be-nl/recipients/{$mum->id}", [
                 'interests' => ['cooking', 'wielrennen'],
+                // The taste pairs, editable here since 2026-10-06.
+                'preferences' => ['design', 'vintage'],
                 // No longer a question: sent by an old page, it is ignored.
                 'vibe' => 'practical',
                 'avoid' => ['parfum'],
@@ -193,7 +195,14 @@ class PersonProfileTest extends TestCase
 
         $mum->refresh();
         $this->assertSame(['cooking', 'wielrennen'], $mum->interests);
+        $this->assertSame(['design', 'vintage'], $mum->preferences);
         $this->assertNull($mum->vibe);
+
+        // Only the poles on offer, and the form has them to show.
+        $this->actingAs($this->me)->patch("/be-nl/recipients/{$mum->id}", ['preferences' => ['edgy']])
+            ->assertSessionHasErrors('preferences.0');
+        $this->actingAs($this->me)->get("/be-nl/people/{$mum->id}")
+            ->assertInertia(fn ($page) => $page->has('options.preferences.0.poles', 2));
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
     }
 

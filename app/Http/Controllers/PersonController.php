@@ -81,7 +81,7 @@ class PersonController extends Controller
             // the "Over" form crashed on opening (found 2026-09-27).
             'options' => array_intersect_key(
                 app(GiftController::class)->options(),
-                array_flip(['interests', 'ages', 'relationships']),
+                array_flip(['interests', 'preferences', 'ages', 'relationships']),
             ),
             /*
              * Deleting fails at the database while a group gift is about

@@ -13,6 +13,7 @@ import Modal, { useConfirm } from './Modal'
 import PageHeader from './PageHeader'
 import { DayMonth, InvitePerson, monthDay } from './PersonParts'
 import ShareRow from './ShareRow'
+import TastePairs from './TastePairs'
 import ToolIcon from './ToolIcon'
 import type { Cents, SharedProps } from '../types'
 import { formatBudget, formatDay } from '../types'
@@ -68,6 +69,8 @@ export interface Profile {
 
 export interface ProfileOptions {
     interests: Option[]
+    /** The taste pairs, as axes of two poles (GiftController::options()). */
+    preferences: { axis: string; poles: Option[] }[]
     ages: Option[]
     relationships: Option[]
 }
@@ -747,6 +750,7 @@ function AboutForm({
     const about = profile.about
     const theirs = about.tasteSource === 'self' || about.tasteSource === 'account'
     const [interests, setInterests] = useState<string[]>(about.interests.map((i) => i.value))
+    const [preferences, setPreferences] = useState<string[]>(about.preferences ?? [])
     const [ageBand, setAgeBand] = useState<string | null>(about.ageBand)
     const [gender, setGender] = useState<string | null>(about.gender ?? null)
     const [avoid, setAvoid] = useState<string[]>(about.avoid)
@@ -787,12 +791,13 @@ function AboutForm({
                     {
                         age_band: ageBand,
                         gender,
-                        ...(theirs ? {} : { interests, avoid }),
+                        ...(theirs ? {} : { interests, preferences, avoid }),
                     },
                     { preserveScroll: true, onSuccess: onDone, onFinish: () => setBusy(false) },
                 )
             }}
-            className="space-y-5 rounded-card border border-line bg-card p-4"
+            // In the popup as its other forms are: no card inside it (owner, 2026-10-06).
+            className="mt-4 space-y-6"
         >
             {theirs && (
                 <p className="flex flex-wrap items-center text-sm text-ink-soft">
@@ -803,7 +808,7 @@ function AboutForm({
 
             {!theirs && (
                 <fieldset>
-                    <legend className="text-xs font-medium">{t('people.field_interests')}</legend>
+                    <legend className="text-sm font-medium">{t('people.field_interests')}</legend>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                         {options.interests.map((option) => {
                             const on = interests.includes(option.value)
@@ -835,7 +840,7 @@ function AboutForm({
                             </button>
                         ))}
                     </div>
-                    <div className="mt-2 flex max-w-sm gap-2">
+                    <div className="mt-2 flex gap-2">
                         <input
                             value={ownWord}
                             maxLength={40}
@@ -858,8 +863,18 @@ function AboutForm({
                 </fieldset>
             )}
 
+            {/* The taste pairs, as in Find a gift and My taste (owner, 2026-10-06). */}
+            {!theirs && (
+                <fieldset>
+                    <legend className="text-sm font-medium">{t('people.field_vibe')}</legend>
+                    <div className="mt-2">
+                        <TastePairs axes={options.preferences} selected={preferences} onChange={setPreferences} />
+                    </div>
+                </fieldset>
+            )}
+
             <fieldset>
-                <legend className="text-xs font-medium">{t('people.field_age')}</legend>
+                <legend className="text-sm font-medium">{t('people.field_age')}</legend>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                     {options.ages.map((option) => (
                         <button
@@ -876,7 +891,7 @@ function AboutForm({
             </fieldset>
 
             <fieldset>
-                <legend className="text-xs font-medium">{t('people.field_gender')}</legend>
+                <legend className="text-sm font-medium">{t('people.field_gender')}</legend>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                     {(['male', 'female', 'unsaid'] as const).map((value) => (
                         <button
@@ -894,7 +909,7 @@ function AboutForm({
 
             {!theirs && (
                 <fieldset>
-                    <legend className="text-xs font-medium">{t('people.field_avoid')}</legend>
+                    <legend className="text-sm font-medium">{t('people.field_avoid')}</legend>
                     {avoid.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {avoid.map((word) => (
@@ -911,7 +926,7 @@ function AboutForm({
                             ))}
                         </div>
                     )}
-                    <div className="mt-2 flex max-w-sm gap-2">
+                    <div className="mt-2 flex gap-2">
                         <input
                             value={avoidWord}
                             maxLength={40}
@@ -933,7 +948,8 @@ function AboutForm({
                 </fieldset>
             )}
 
-            <div className="flex flex-wrap gap-2">
+            {/* Save in reach under a long form: a bar across the foot of the popup. */}
+            <div className="sticky -bottom-6 -mx-6 -mb-6 flex flex-wrap gap-2 border-t border-line bg-card px-6 py-4">
                 <Button type="submit" busy={busy}>
                     {t('people.save')}
                 </Button>
