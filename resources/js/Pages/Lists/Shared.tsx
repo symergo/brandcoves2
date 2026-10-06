@@ -758,7 +758,12 @@ export default function SharedList({
                             <p className="mt-1 text-sm text-ink-soft">{t('lists.like_this_hint')}</p>
                             <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
                                 {likeThis.map((idea) => (
-                                    <li key={idea.id}>
+                                    // Saveable like every product card: the bookmark top right,
+                                    // outside the link so a press saves rather than opens (2026-10-06).
+                                    <li key={idea.id} className="relative">
+                                        <div className="absolute top-2 right-2 z-10">
+                                            <SaveToList groupId={idea.id} compact />
+                                        </div>
                                         <Link href={idea.url} className="group block">
                                             <div className="aspect-square overflow-hidden rounded-lg bg-card">
                                                 {idea.image && (
