@@ -805,7 +805,7 @@ return [
         'voting_enabled' => 'Deelnemers kunnen stemmen op de cadeaus',
         'voting_enabled_hint' => 'De lijst sorteert zich op het aantal stemmen. Zet het uit als het cadeau al vaststaat.',
         'follow' => 'Volgen',
-        'follow_on' => 'Je volgt de prijzen op deze lijst. Zakt er iets, dan krijg je een mail.',
+        'follow_on' => 'Je krijgt een bericht bij een prijsdaling van :percent%.',
         'follow_off' => 'Je volgt de prijzen op deze lijst niet meer.',
         'price_watch' => 'Volg de prijzen op deze lijst',
         'price_watch_hint' => 'Eén mail per ochtend wanneer iets op de lijst goedkoper wordt of weer op voorraad is.',

@@ -171,7 +171,7 @@ class ListPriceWatchTest extends TestCase
         $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'price_watch_percent' => null]);
 
         $this->actingAs($user)->patch('/be-nl/lists/'.$list->id, ['price_watch_percent' => 10])
-            ->assertSessionHas('success', __('site.lists.follow_on'));
+            ->assertSessionHas('success', 'Je krijgt een bericht bij een prijsdaling van 10%.');
 
         $this->actingAs($user)->patch('/be-nl/lists/'.$list->id, ['price_watch_percent' => 20])
             ->assertSessionMissing('success');

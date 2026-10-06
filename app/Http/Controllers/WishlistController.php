@@ -1234,7 +1234,10 @@ class WishlistController extends Controller
         }
 
         if ($followFlipped ?? false) {
-            return back()->with('success', __($validated['price_watch_percent'] === null ? 'site.lists.follow_off' : 'site.lists.follow_on'));
+            // The drop that counts, in the words of the owner (2026-10-06).
+            return back()->with('success', $validated['price_watch_percent'] === null
+                ? __('site.lists.follow_off')
+                : __('site.lists.follow_on', ['percent' => $validated['price_watch_percent']]));
         }
 
         return back();

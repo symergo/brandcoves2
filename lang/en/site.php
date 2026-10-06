@@ -963,7 +963,7 @@ return [
         'voting_enabled' => 'Everyone can vote on the presents',
         'voting_enabled_hint' => 'The shortlist sorts itself by the tally. Turn it off if the present is already decided.',
         'follow' => 'Follow',
-        'follow_on' => 'You follow the prices on this list. If something drops, you get an email.',
+        'follow_on' => 'You get a message when a price drops by :percent%.',
         'follow_off' => 'You no longer follow the prices on this list.',
         'price_watch' => 'Watch the prices on this list',
         'price_watch_hint' => 'One mail a morning when something on the list gets cheaper or is back in stock.',

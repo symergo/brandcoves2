@@ -86,18 +86,18 @@ export function buttonClasses(
  * in a row's corner beside the name, and the row itself is the larger target.
  */
 export function rowActionClasses(className = ''): string {
-    return [
-        'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-card px-2 text-sm text-ink transition',
-        'hover:border-ink sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5',
-        className,
-    ]
-        .filter(Boolean)
-        .join(' ')
+    return [ACTION_SHAPE, 'border-line bg-card text-ink hover:border-ink', className].filter(Boolean).join(' ')
 }
+
+/** The shape a row's action and a header's button share; only the colour differs. */
+const ACTION_SHAPE =
+    'inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg border px-2 text-sm whitespace-nowrap transition sm:h-auto sm:min-w-0 sm:px-3 sm:py-1.5'
 
 /**
  * A button in a page's header beside the title: "Delen", "Volgen", "⋯ Meer".
- * On a phone a round icon button; from `sm` up a pill with its word.
+ * The row action's own shape (ACTION_SHAPE: a square icon on a phone, its
+ * word beside it from `sm` up), with a colour for its state. It was a round
+ * pill of its own until the owner said "use same css" (2026-10-06).
  *
  * Until 2026-10-06 the list page drew its own pills and the person page used
  * a row's square ⋯ in the same place, so the one menu of a page looked like
@@ -112,18 +112,12 @@ export function rowActionClasses(className = ''): string {
  */
 export function headerActionClasses(state: 'idle' | 'open' | 'on' = 'idle', className = ''): string {
     const tone = {
-        idle: 'border-line bg-card hover:border-ink',
+        idle: 'border-line bg-card text-ink hover:border-ink',
         open: 'border-accent bg-accent/10 text-accent',
         on: 'border-sage/60 bg-sage/10 text-sage hover:border-sage',
     }[state]
 
-    return [
-        'inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border px-2 text-sm font-medium whitespace-nowrap transition sm:h-auto sm:min-w-0 sm:px-3.5 sm:py-2',
-        tone,
-        className,
-    ]
-        .filter(Boolean)
-        .join(' ')
+    return [ACTION_SHAPE, tone, className].filter(Boolean).join(' ')
 }
 
 /**

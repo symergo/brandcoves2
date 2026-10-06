@@ -377,12 +377,13 @@ comes with its field and "Link kopiëren" (`ShareRow`), never a lone share butto
 button has the mark. "Delen" opens your share settings for what you own (a list, a question) and
 the phone's share sheet for public pages (a product, a Cove).
 
-**3. Menu buttons.** In a page's header: `headerActionClasses`, a round icon button on a phone and a
-pill with its word from `sm` up ("Delen", "Volgen", "⋯ Meer"; the list page, the person page, the
+**3. Menu buttons.** In a page's header: `headerActionClasses`, the very shape of a row's action
+(`ACTION_SHAPE`, owner: "use same css"; it was a round pill of its own for a day): a square icon on
+a phone and its word beside it from `sm` up, coloured by state ("Delen", "Volgen", "⋯ Meer"; the list page, the person page, the
 question page). The word was on a phone too for a day, until three buttons squeezed a list's title
 onto two lines and the owner asked why the icons carried words there. The full name stays in each
 button's `aria-label`; where the bare icon is ambiguous the action says what it did (Volgen flashes
-"Je volgt de prijzen op deze lijst"). In rows and cards: `rowActionClasses`, a square ⋯ without the
+"Je krijgt een bericht bij een prijsdaling van 10%"). In rows and cards: `rowActionClasses`, a square ⋯ without the
 word on a phone. The same list's ⋯ lists its items in
 one order on the row and the page (`listActions`). One mark per action: "Verwijder als vriend" has
 `unfriend`, not the invite's `friends`; "Dit of dat samen" has `collab`.
