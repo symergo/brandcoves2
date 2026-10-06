@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\UserTaste;
+use App\Models\Wishlist;
 use App\Services\Ai\AiClient;
 use App\Services\Gift\TasteBrief;
 use App\Services\Social\Friends;
@@ -123,6 +124,8 @@ class MyTasteTest extends TestCase
     {
         [$giver, $friend, $saved] = $this->friendSavedBy(friends: true);
         UserTaste::query()->create(['user_id' => $friend->id, 'interests' => ['music'], 'avoid' => ['wol'], 'preferences' => ['vintage']]);
+        // The giver's budget, on their list for Sam since 2026-10-05.
+        Wishlist::factory()->forSomeone($saved)->create(['owner_user_id' => $giver->id, 'budget_max' => 5000]);
 
         $brief = TasteBrief::fromRecipient($saved->fresh(), Market::BeNl);
 
@@ -156,6 +159,8 @@ class MyTasteTest extends TestCase
     {
         [$giver, $friend, $saved] = $this->friendSavedBy(friends: true);
         UserTaste::query()->create(['user_id' => $friend->id, 'interests' => ['music']]);
+        // The budget is the giver's, on their list for Sam (2026-10-05), not Sam's.
+        Wishlist::factory()->forSomeone($saved)->create(['owner_user_id' => $giver->id, 'budget_max' => 5000]);
 
         $this->actingAs($giver)
             ->get('/be-nl/gift')
@@ -292,7 +297,6 @@ class MyTasteTest extends TestCase
             'name' => 'Sam',
             'interests' => ['cooking'],
             'avoid' => ['parfum'],
-            'budget_max' => 5000,
         ]);
 
         return [$giver, $friend, $saved];
