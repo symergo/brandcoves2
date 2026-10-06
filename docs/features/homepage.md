@@ -646,3 +646,23 @@ gift results use, with "Alle Community Coves →". It is drawn only when a marke
 per the owner's no-empty-blocks rule. The "Gewoon rondkijken?" card now says "Ontdek Coves vol
 ideeën, en wat anderen verzamelen." (`HomeController` sends `collected` from
 `CommunityCoves::newest()`.)
+
+## An Amazon sales event under the hero (2026-10-06)
+
+The owner: "zet de Amazon Prime Days in de kijker onder de hero (met affiliate links)", on the
+Dutch and Belgian markets, French included. Under the search card, while the event runs, a card
+with Amazon's own banner and a short text links to the event page with the market's Associates
+tag, marked sponsored (`rel="sponsored nofollow"` and the words "Gesponsorde link").
+
+Configured, not coded (`giftcoves.amazon_events`, read by `App\Services\Search\AmazonEvent`): a
+window in Belgian time and, per market, the event page's path and banner. The storefront and tag
+are `amazon_search`'s, so a market without a tag (`en`, `es`) shows nothing rather than an
+untracked link. The path is the event page itself (`/primebigdealdays` on amazon.nl,
+`/joursprime?language=nl_BE|fr_BE` on amazon.com.be): Amazon forwards `/deals` there during the
+event, and that forward drops the tag. Amazon published an NL and an FR banner and no Belgian one;
+neither carries a date or web address, so they serve Belgium too.
+
+Invariant 6 holds: a link and Amazon's own image, loaded from Amazon; nothing about an Amazon
+product is stored. The home page is page-cached for 10 minutes, so the card can outlive the
+event's end by that much. For the next event, add an entry to the config and its texts under
+`site.home.{key}`.

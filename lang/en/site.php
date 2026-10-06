@@ -175,6 +175,13 @@ return [
         'trust_sources' => 'Products come from retailers, brands, independent sellers and the people who use GiftCoves.',
         'trust_commission' => "Some links earn GiftCoves a commission. That doesn't change what you pay.",
         'trust_link' => 'How GiftCoves works',
+        'sponsored' => 'Sponsored link',
+        // The Amazon sales event under the hero (config giftcoves.amazon_events).
+        'prime_days_2026' => [
+            'title' => 'Prime Big Deal Days on Amazon',
+            'body' => 'Until 7 October: two days of deals for Prime members. A good moment to get ahead on holiday gifts.',
+            'cta' => 'See the deals on Amazon',
+        ],
         'final_title' => 'Start your first Cove.',
         'final_body' => 'Add something you want, something you are looking for, or something worth sharing.',
         // Names the second way in, not a third example. The examples this

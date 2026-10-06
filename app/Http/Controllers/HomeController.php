@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Services\Search\AmazonEvent;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Inertia\Inertia;
@@ -51,6 +52,9 @@ class HomeController extends Controller
              * sees a search box learns it is a search engine.
              */
             'today' => $this->today($current),
+
+            // An Amazon sales event under the hero while it runs (AmazonEvent).
+            'amazonEvent' => AmazonEvent::current($current->get()),
 
             /*
              * No list wizard since the 2026-09-26 redesign. It was mounted here

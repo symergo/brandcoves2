@@ -113,6 +113,13 @@ return [
         'trust_sources' => 'Los productos vienen de tiendas, marcas, creadores independientes y de las personas que usan GiftCoves.',
         'trust_commission' => 'Algunos enlaces le reportan una comisión a GiftCoves. Eso no cambia lo que pagas.',
         'trust_link' => 'Cómo funciona GiftCoves',
+        'sponsored' => 'Enlace patrocinado',
+        // The Amazon sales event under the hero (config giftcoves.amazon_events).
+        'prime_days_2026' => [
+            'title' => 'Los Prime Days en Amazon',
+            'body' => 'Hasta el 7 de octubre: dos días de ofertas para miembros Prime. Un buen momento para adelantar los regalos de las fiestas.',
+            'cta' => 'Ver las ofertas en Amazon',
+        ],
         'final_title' => 'Empieza tu primera Cove.',
         'final_body' => 'Añade algo que quieras, algo que busques o algo que valga la pena compartir.',
         'recently_viewed' => 'Has visto',

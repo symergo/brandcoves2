@@ -10,6 +10,8 @@ import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
+    /** An Amazon sales event while it runs, on the NL and BE markets (AmazonEvent). */
+    amazonEvent?: { key: string; url: string; image: string; title: string; body: string; cta: string } | null
     today: {
         theme: string
         blurb: string | null
@@ -42,7 +44,7 @@ interface Props {
  * visitor's convenience, not an answer to the three questions). The search
  * card left too and came back under the hero later the same day; see below.
  */
-export default function Home({ today }: Props) {
+export default function Home({ today, amazonEvent = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -135,6 +137,29 @@ export default function Home({ today }: Props) {
             */}
             {/* Overlapping the hero band's lower edge (2026-10-05). */}
             <SearchCard className="relative -mt-12 shadow-[0_8px_24px_rgb(42_18_19/0.08)] sm:-mt-14" />
+
+            {/*
+              An Amazon sales event, under the hero while it runs (owner,
+              2026-10-06: the Prime days, with affiliate links). Amazon's own
+              banner, loaded from Amazon; the link is tagged and marked
+              sponsored, in words too, since it is an advertisement.
+            */}
+            {amazonEvent !== null && (
+                <a
+                    href={amazonEvent.url}
+                    target="_blank"
+                    rel="sponsored nofollow noopener"
+                    className="group mt-8 grid overflow-hidden rounded-card border border-line bg-card transition hover:border-ink sm:mt-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+                >
+                    <img src={amazonEvent.image} alt={amazonEvent.title} width={900} height={400} className="aspect-[9/4] w-full object-cover" />
+                    <span className="flex flex-col justify-center p-5 sm:p-6">
+                        <span className="text-xs text-ink-soft">{t('home.sponsored')}</span>
+                        <span className="mt-1 text-xl font-semibold">{amazonEvent.title}</span>
+                        <span className="mt-2 text-ink-soft">{amazonEvent.body}</span>
+                        <span className="mt-4 font-medium text-accent-dark group-hover:text-ink">{amazonEvent.cta} →</span>
+                    </span>
+                </a>
+            )}
 
             {/* 2. One way in per audience. */}
             <section className="mt-14 sm:mt-20" aria-label={t('home.entries_label')}>

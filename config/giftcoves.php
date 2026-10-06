@@ -455,6 +455,29 @@ return [
     | untagged Amazon link is the failure that looks exactly like a working one.
     |
     */
+    /*
+     * Amazon sales events shown under the home page's hero while they run
+     * (App\Services\Search\AmazonEvent). Window in Belgian time; per market
+     * the event page's path (never /deals: Amazon's forward from there drops
+     * the tag) and Amazon's own banner. A market not listed, or without a tag
+     * in amazon_search below, shows nothing. Texts: site.home.{key}.*.
+     *
+     * Prime Big Deal Days 2026 (owner, 2026-10-06): NL and BE, French
+     * included. Amazon publishes an NL and an FR banner and no BE one; both
+     * carry no date or web address, so they serve Belgium too.
+     */
+    'amazon_events' => [
+        'prime_days_2026' => [
+            'from' => '2026-10-06 00:00:00',
+            'until' => '2026-10-07 23:59:59',
+            'markets' => [
+                'nl-nl' => ['path' => '/primebigdealdays', 'image' => 'https://m.media-amazon.com/images/G/02/Creators/Outbound/PBDD26/NL_Live.gif'],
+                'be-nl' => ['path' => '/joursprime?language=nl_BE', 'image' => 'https://m.media-amazon.com/images/G/02/Creators/Outbound/PBDD26/NL_Live.gif'],
+                'be-fr' => ['path' => '/joursprime?language=fr_BE', 'image' => 'https://m.media-amazon.com/images/G/02/Creators/Outbound/PBDD26/FR_Live.gif'],
+            ],
+        ],
+    ],
+
     'amazon_search' => [
         /*
          * market => [storefront host, Associates tag].
