@@ -359,8 +359,10 @@ and birthday and its invite (`InvitePerson` is a popup wherever it opens), and o
 or inviting somebody, a friend's birthday and "your lists they see". No card around a popup's one
 form: it sits straight in it. Cards only to keep **different kinds** of settings apart, as in a list's
 Settings (owner, 2026-10-06: "clearly separate the different kind of settings (cards?)"). A popup
-of settings has no Save button: what was typed is saved as it closes, by ×, Escape or back; switches
-save the moment they are pressed. Nothing in a popup may be wider than the screen (`overflow-x-hidden`
+of settings saves what was typed with one Opslaan in a bar along its foot (sticky), next to
+Annuleren; × closes without saving, like every popup. Saving on close was tried first and dropped
+the same day (owner: "closing button does not work? put a sticky save button at the bottom
+instead"). Switches save the moment they are pressed. Nothing in a popup may be wider than the screen (`overflow-x-hidden`
 on `Modal`; a phone's date field once slid the whole popup sideways). Why popups: on a phone an inline panel pushed the list off the screen and
 its × was a scroll away; a full-screen popup has one way out and puts you back where you were, and
 a row cannot fold a panel open, so inline made one feature two.

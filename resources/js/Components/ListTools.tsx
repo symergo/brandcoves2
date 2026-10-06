@@ -1,7 +1,7 @@
 import { router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
-import { headerActionClasses } from './Button'
+import Button, { headerActionClasses } from './Button'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
@@ -233,9 +233,12 @@ export default function ListTools({
     const settingsCard = 'rounded-card border border-line bg-card p-4'
 
     /*
-     * What was typed in Settings, saved as the popup closes (owner, 2026-10-06:
-     * "save automatically when hitting close"); there are no Save buttons. Only
-     * what changed is sent: an unchanged occasion is not sent again, so its
+     * What was typed in Settings, saved by the Opslaan in the bar along the
+     * popup's foot. Saving on close came first (owner, 2026-10-06: "save
+     * automatically when hitting close") and the same day the owner found the
+     * × not working with it and asked for "a sticky save button at the bottom
+     * instead"; × now closes without saving, like every popup. Only what
+     * changed is sent: an unchanged occasion is not sent again, so its
      * birthday side effect (a birthday date given here is the person's birthday
      * too) runs only when somebody set one. A budget typed the wrong way round
      * is turned round rather than refused, since the popup is gone by the time
@@ -293,10 +296,6 @@ export default function ListTools({
         saveList()
     }
 
-    const closePanel = () => {
-        if (open === 'settings') saveSettings()
-        onPanel(null)
-    }
 
 
 
@@ -430,7 +429,7 @@ export default function ListTools({
     return (
         <div>
             {open !== null && (
-                <Modal title={titles[open]} onClose={closePanel} width="lg">
+                <Modal title={titles[open]} onClose={() => onPanel(null)} width="lg">
                 <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="mt-3 outline-none">
                     {open === 'share' && (
                         /*
@@ -731,11 +730,10 @@ export default function ListTools({
                           it is for. Sharing is who may see it; this is what it is.
 
                           Since 2026-10-06 (owner, with a screenshot): each kind
-                          of setting in a card of its own, and no Save buttons.
-                          What was typed is saved when the popup closes, by its
-                          ×, Escape or the back button (`saveSettings`). The
-                          switches and choices save the moment they are pressed,
-                          as before.
+                          of setting in a card of its own, and one Opslaan in a
+                          bar along the foot for what was typed
+                          (`saveSettings`). The switches and choices save the
+                          moment they are pressed, as before.
                         */
                         <div className="space-y-4">
                             <section className={settingsCard}>
@@ -975,6 +973,22 @@ export default function ListTools({
                                     )}
                                 </div>
                             </section>
+
+                            {/* Opslaan in reach under a long popup: a bar across its foot (2026-10-06). */}
+                            <div className="sticky -bottom-6 -mx-6 -mb-6 flex flex-wrap gap-2 border-t border-line bg-cream px-6 py-4 sm:bg-card">
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        saveSettings()
+                                        onPanel(null)
+                                    }}
+                                >
+                                    {t('people.save')}
+                                </Button>
+                                <Button type="button" variant="secondary" onClick={() => onPanel(null)}>
+                                    {t('people.cancel')}
+                                </Button>
+                            </div>
                         </div>
                     )}
 
