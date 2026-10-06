@@ -1488,7 +1488,6 @@ class WishlistController extends Controller
             // before pressing: "For a dad · Birthday".
             'about' => $coves->describe($list),
             'itemCount' => $coves->publicItems($list)->count(),
-            'minItems' => CommunityCoves::MIN_ITEMS,
         ];
     }
 

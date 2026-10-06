@@ -226,16 +226,16 @@ class CommunityCoveTest extends TestCase
     }
 
     #[Test]
-    public function a_list_with_too_few_things_cannot_be_published(): void
+    public function a_list_with_few_things_can_be_published(): void
     {
-        // One product and the hand-written item: two, under the minimum of three.
+        // One product and the hand-written item: no minimum since 2026-10-06 (owner).
         $list = $this->list(products: 1);
 
         $this->actingAs($this->owner)
             ->post("/be-nl/lists/{$list->id}/publish", ['title' => 'Two things'])
-            ->assertSessionHasErrors('title');
+            ->assertSessionHasNoErrors();
 
-        $this->assertNull($list->refresh()->published_at);
+        $this->assertNotNull($list->refresh()->published_at);
     }
 
     #[Test]

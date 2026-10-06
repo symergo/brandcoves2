@@ -40,8 +40,10 @@ use Illuminate\Support\Str;
 class CommunityCoves
 {
     /**
-     * Fewer than three things is a thought, not a Cove, and a page with one
-     * product on it is the thinnest page this site could publish.
+     * Fewer than three things is a thought, not a Cove: below this a Community
+     * Cove is published but not offered in search or under Find a gift's
+     * results. Publishing itself has no minimum since 2026-10-06 (owner:
+     * "remove the requirement of 3 items for the public list setting").
      */
     public const MIN_ITEMS = 3;
 
@@ -89,10 +91,6 @@ class CommunityCoves
 
         if ($this->namesRecipient($list, $title)) {
             return 'problem_name';
-        }
-
-        if ($this->publicItems($list)->count() < self::MIN_ITEMS) {
-            return 'problem_items';
         }
 
         return null;

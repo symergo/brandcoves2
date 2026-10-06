@@ -123,7 +123,7 @@ return [
                 ],
                 [
                     'title' => 'When the price drops',
-                    'body' => 'A saved product remembers the price at that moment. When it drops, the card shows the new price with the old one struck through. There is nothing to set up. More under [Keeping an eye on prices and stock](lists-help/alerts).',
+                    'body' => 'A saved product remembers the price at that moment. When it drops, the card shows the new price with the old one struck through. There is nothing to set up. More under [Keeping an eye on prices and stock](lists-help/alerts). Want an email when something on the list gets cheaper? Tap Follow at the top of the list; how big a drop counts is under Settings.',
                     'shot' => 'drop',
                     'alt' => 'An item on a list whose price dropped, with the new price and the old one struck through.',
                 ],

@@ -682,7 +682,6 @@ return [
         'problem_title' => 'Dale un título de 80 caracteres como máximo.',
         'problem_screen' => 'Un título público no puede contener enlaces, direcciones de correo ni números de teléfono, ni estar en mayúsculas.',
         'problem_name' => 'Deja fuera del título público el nombre de la persona a la que va dirigida.',
-        'problem_items' => 'Una lista necesita al menos :count cosas para publicarse.',
     ],
 
     'lists' => [
@@ -799,6 +798,7 @@ return [
         'pledgers_visible_hint' => 'Solo los nombres. Cuánto pone cada persona sigue siendo solo para ti.',
         'voting_enabled' => 'Todos pueden votar los regalos',
         'voting_enabled_hint' => 'La lista se ordena por los votos. Desactívalo si el regalo ya está decidido.',
+        'follow' => 'Seguir',
         'price_watch' => 'Seguir los precios de esta lista',
         'price_watch_hint' => 'Un correo por la mañana cuando algo de la lista baje de precio o vuelva a estar disponible.',
         'price_watch_threshold' => 'Avísame con bajadas de al menos',
@@ -1246,7 +1246,7 @@ return [
         'back_heading' => 'Disponible de nuevo',
         'mail_button' => 'Abrir tu lista',
         'mail_button_lists' => 'Abrir tus listas',
-        'mail_why' => 'Esta lista sigue los precios; viene activado por defecto. Puedes desactivarlo en las opciones de la lista.',
+        'mail_why' => 'Esta lista sigue los precios; viene activado por defecto. Puedes desactivarlo con el botón Seguir arriba de la lista.',
     ],
 
     'notifications' => [

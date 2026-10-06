@@ -69,8 +69,11 @@ Why each of the less obvious rows:
   claims, notes, names, the share token and the list id are all absent from the page's props.
 
 Amazon items (which must be fetched live, invariant 6) and items whose product has gone are left out.
-A list needs **three** things a stranger may see before it can be published: fewer is a thought, not
-a Cove, and the thinnest page the site could publish.
+Publishing has **no minimum** number of things since 2026-10-06 (owner: "remove the requirement of
+3 items for the public list setting"; the sentence saying so went from the popup too). It was three,
+on the grounds that fewer is a thought, not a Cove. That reasoning still holds where the site
+*offers* a Community Cove to others: search and Find a gift's suggestions skip one with fewer than
+three visible things (`CommunityCoves::MIN_ITEMS`), and indexing still wants eight.
 
 ## Which lists may be published
 

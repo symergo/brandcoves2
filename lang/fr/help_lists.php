@@ -123,7 +123,7 @@ return [
                 ],
                 [
                     'title' => 'Quand le prix baisse',
-                    'body' => 'Un produit enregistré retient le prix du moment. S’il baisse, la fiche montre le nouveau prix avec l’ancien barré. Il n’y a rien à régler. Plus sous [Garder un œil sur les prix et le stock](lists-help/alerts).',
+                    'body' => 'Un produit enregistré retient le prix du moment. S’il baisse, la fiche montre le nouveau prix avec l’ancien barré. Il n’y a rien à régler. Plus sous [Garder un œil sur les prix et le stock](lists-help/alerts). Vous voulez un e-mail quand quelque chose sur la liste baisse de prix ? Touchez Suivre en haut de la liste ; l’ampleur de la baisse se règle dans Réglages.',
                     'shot' => 'drop',
                     'alt' => 'Un article d’une liste dont le prix a baissé, avec le nouveau prix et l’ancien barré.',
                 ],

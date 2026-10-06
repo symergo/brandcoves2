@@ -688,7 +688,6 @@ return [
         'problem_title' => 'Geef hem een titel van hoogstens 80 tekens.',
         'problem_screen' => 'Een openbare titel mag geen link, e-mailadres of telefoonnummer bevatten en niet in hoofdletters staan.',
         'problem_name' => 'Laat de naam van de persoon voor wie hij is uit de openbare titel.',
-        'problem_items' => 'Een lijst heeft minstens :count dingen nodig om openbaar te worden.',
     ],
 
     'lists' => [
@@ -805,6 +804,7 @@ return [
         'pledgers_visible_hint' => 'Alleen de namen. Wie hoeveel bijdraagt zie alleen jij.',
         'voting_enabled' => 'Deelnemers kunnen stemmen op de cadeaus',
         'voting_enabled_hint' => 'De lijst sorteert zich op het aantal stemmen. Zet het uit als het cadeau al vaststaat.',
+        'follow' => 'Volgen',
         'price_watch' => 'Volg de prijzen op deze lijst',
         'price_watch_hint' => 'Eén mail per ochtend wanneer iets op de lijst goedkoper wordt of weer op voorraad is.',
         'price_watch_threshold' => 'Laat het weten bij een daling van minstens',
@@ -1252,7 +1252,7 @@ return [
         'back_heading' => 'Weer beschikbaar',
         'mail_button' => 'Open je lijst',
         'mail_button_lists' => 'Open je lijsten',
-        'mail_why' => 'Deze lijst volgt de prijzen; dat staat standaard aan. Uitzetten kan bij de opties van de lijst.',
+        'mail_why' => 'Deze lijst volgt de prijzen; dat staat standaard aan. Uitzetten kan met de knop Volgen bovenaan de lijst.',
     ],
 
     'notifications' => [

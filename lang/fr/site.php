@@ -683,7 +683,6 @@ return [
         'problem_title' => 'Donnez-lui un titre de 80 caractères au plus.',
         'problem_screen' => 'Un titre public ne peut contenir ni lien, ni adresse e-mail, ni numéro de téléphone, ni être écrit en majuscules.',
         'problem_name' => 'Laissez le nom de la personne à qui elle est destinée hors du titre public.',
-        'problem_items' => 'Une liste doit contenir au moins :count articles pour être publiée.',
     ],
 
     'lists' => [
@@ -800,6 +799,7 @@ return [
         'pledgers_visible_hint' => 'Les noms seulement. Qui a mis combien reste pour vous seul.',
         'voting_enabled' => 'Tout le monde peut voter pour les cadeaux',
         'voting_enabled_hint' => 'La liste se trie selon les votes. Désactivez-le si le cadeau est déjà choisi.',
+        'follow' => 'Suivre',
         'price_watch' => 'Suivre les prix de cette liste',
         'price_watch_hint' => 'Un e-mail le matin quand un article de la liste baisse de prix ou est de nouveau en stock.',
         'price_watch_threshold' => 'Prévenez-moi à partir d’une baisse de',
@@ -1247,7 +1247,7 @@ return [
         'back_heading' => 'De nouveau disponible',
         'mail_button' => 'Ouvrir votre liste',
         'mail_button_lists' => 'Ouvrir vos listes',
-        'mail_why' => 'Cette liste suit les prix ; c’est activé par défaut. Vous pouvez le désactiver dans les options de la liste.',
+        'mail_why' => 'Cette liste suit les prix ; c’est activé par défaut. Vous pouvez le désactiver avec le bouton Suivre en haut de la liste.',
     ],
 
     'notifications' => [

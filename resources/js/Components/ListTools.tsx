@@ -803,20 +803,14 @@ export default function ListTools({
                                           server's short list, and it refuses
                                           anything outside it.
                                         */}
-                                        <Option
-                                            type="checkbox"
-                                            checked={list.priceWatchPercent !== null}
-                                            onChange={() =>
-                                                setting({
-                                                    price_watch_percent:
-                                                        list.priceWatchPercent === null ? 10 : null,
-                                                })
-                                            }
-                                            label={t('lists.price_watch')}
-                                            tip={t('lists.price_watch_hint')}
-                                        />
+                                        {/*
+                                          On and off is the header's "Volgen" since
+                                          2026-10-06 (owner: "a separate button
+                                          instead of hidden in settings"); how big
+                                          a drop counts stays here, while it is on.
+                                        */}
                                         {list.priceWatchPercent !== null && (
-                                            <label className="flex items-center gap-2 pl-3 text-sm">
+                                            <label className="flex flex-wrap items-center gap-2 text-sm">
                                                 <span>{t('lists.price_watch_threshold')}</span>
                                                 <select
                                                     value={list.priceWatchPercent}
@@ -1197,7 +1191,7 @@ export function ListToolsBar({
             icon: 'settings',
             label: t('lists.settings'),
             show: access.isOwner,
-            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate) || list.budgetMax != null || list.budgetMin != null,
+            set: Boolean(list.eventType) || Boolean(list.eventDate) || list.budgetMax != null || list.budgetMin != null,
         },
         /*
          * Ask the recipient for suggestions, on a list about somebody else.
@@ -1273,6 +1267,7 @@ export function ListToolsBar({
     // Lit when anybody else can see the list: by its link, or as one of the
     // owner's people.
     const shareOn = (shared && Boolean(list.shareUrl)) || Boolean(list.visibleToFriends)
+    const watching = list.priceWatchPercent !== null
 
     const [confirm, confirmDialog] = useConfirm()
 
@@ -1299,6 +1294,30 @@ export function ListToolsBar({
                 <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
                 {t('lists.share')}
                 {shareOn && <span className="sr-only"> — {t('lists.tool_on')}</span>}
+            </button>
+
+            {/*
+              Follow the prices on this list: its own button since 2026-10-06
+              (owner), it was a checkbox inside Settings. One press turns it on
+              at 10% (a real drop on anything, not a rounding error) or off;
+              the percentage is in Settings. Sage while on, like Delen.
+            */}
+            <button
+                type="button"
+                aria-pressed={watching}
+                title={t('lists.price_watch_hint')}
+                aria-label={t('lists.price_watch')}
+                onClick={() =>
+                    router.patch(
+                        `${base}/lists/${list.id}`,
+                        { price_watch_percent: watching ? null : 10 },
+                        { preserveScroll: true, preserveState: true },
+                    )
+                }
+                className={headerActionClasses(watching ? 'on' : 'idle')}
+            >
+                <ToolIcon name="bell" className="h-4 w-4 shrink-0" />
+                {t('lists.follow')}
             </button>
 
             <Menu

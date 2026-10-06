@@ -836,7 +836,6 @@ return [
         'problem_title' => 'Give it a title of at most 80 characters.',
         'problem_screen' => 'A public title cannot hold a link, an email address or a phone number, or be written in capitals.',
         'problem_name' => 'Leave the name of the person it is for out of the public title.',
-        'problem_items' => 'A list needs at least :count things on it to be published.',
     ],
 
     'lists' => [
@@ -963,6 +962,7 @@ return [
         'pledgers_visible_hint' => 'Names only. What each person put in stays yours alone.',
         'voting_enabled' => 'Everyone can vote on the presents',
         'voting_enabled_hint' => 'The shortlist sorts itself by the tally. Turn it off if the present is already decided.',
+        'follow' => 'Follow',
         'price_watch' => 'Watch the prices on this list',
         'price_watch_hint' => 'One mail a morning when something on the list gets cheaper or is back in stock.',
         'price_watch_threshold' => 'Tell me about drops of at least',
@@ -1450,7 +1450,7 @@ return [
         'back_heading' => 'Available again',
         'mail_button' => 'Open your list',
         'mail_button_lists' => 'Open your lists',
-        'mail_why' => 'This list watches its prices; new lists do unless you switch it off. Switch it off in the list’s options.',
+        'mail_why' => 'This list watches its prices; new lists do unless you switch it off. Switch it off with the Follow button at the top of the list.',
     ],
 
     'notifications' => [

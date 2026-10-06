@@ -24,6 +24,10 @@ this much since you last told me", one mail per person.
   `ListPriceWatch::PERCENTAGES` (5, 10, 15, 20, 30): a short list rather than a free number, because
   1% is noise on a €30 item and the server is the only place that can refuse it. Set from the list's
   Settings panel (`ListTools.tsx`), through the same `PATCH /lists/{id}` every other switch uses.
+  **Since 2026-10-06 the switch is its own button, "Volgen" with a bell, in the list's header**
+  beside Delen and Meer (owner: "a separate button instead of hidden in settings"). Sage while on;
+  one press turns it on at 10% or off. The percentage stays in Settings, shown while it is on. The
+  mail's footer and the lists help say where the button is.
 - **`wishlist_items.watch_reference_price`** (cents) and **`watch_seeded_at`**. The reference is
   what a drop is measured against. It is taken when the switch goes on, when an item is saved onto a
   list that is already watching (`ItemSaver::saveGroup()`), and, defensively, by the job for

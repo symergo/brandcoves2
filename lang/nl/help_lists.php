@@ -138,7 +138,7 @@ return [
                 ],
                 [
                     'title' => 'Als de prijs zakt',
-                    'body' => 'Een bewaard product onthoudt de prijs van dat moment. Zakt hij, dan staat op de kaart de nieuwe prijs met de oude doorgestreept. Je hoeft er niets voor in te stellen. Meer bij [Prijzen en voorraad in de gaten houden](lists-help/alerts).',
+                    'body' => 'Een bewaard product onthoudt de prijs van dat moment. Zakt hij, dan staat op de kaart de nieuwe prijs met de oude doorgestreept. Je hoeft er niets voor in te stellen. Meer bij [Prijzen en voorraad in de gaten houden](lists-help/alerts). Wil je een mail als iets op de lijst goedkoper wordt? Tik bovenaan de lijst op Volgen; hoeveel het moet zakken kies je bij Instellingen.',
                     'shot' => 'drop',
                     'alt' => 'Een item op een lijst waarvan de prijs zakte, met de nieuwe prijs en de oude doorgestreept.',
                 ],

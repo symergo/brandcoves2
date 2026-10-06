@@ -123,7 +123,7 @@ return [
                 ],
                 [
                     'title' => 'Cuando baja el precio',
-                    'body' => 'Un producto guardado recuerda el precio de ese momento. Si baja, la ficha muestra el nuevo precio con el antiguo tachado. No hay nada que configurar. Más en [Vigilar precios y stock](lists-help/alerts).',
+                    'body' => 'Un producto guardado recuerda el precio de ese momento. Si baja, la ficha muestra el nuevo precio con el antiguo tachado. No hay nada que configurar. Más en [Vigilar precios y stock](lists-help/alerts). ¿Quieres un correo cuando algo de la lista baje de precio? Toca Seguir arriba de la lista; cuánto debe bajar lo eliges en Ajustes.',
                     'shot' => 'drop',
                     'alt' => 'Un artículo de una lista cuyo precio bajó, con el precio nuevo y el antiguo tachado.',
                 ],

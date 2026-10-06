@@ -19,7 +19,6 @@ export interface Publication {
     /** What the page will say about who it is for: "For a dad", "Birthday". */
     about: string[]
     itemCount: number
-    minItems: number
 }
 
 /**
@@ -41,7 +40,6 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
     const [busy, setBusy] = useState(false)
     // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
     const [confirm, confirmDialog] = useConfirm()
-    const tooFew = state.itemCount < state.minItems
 
     function publish(): void {
         setBusy(true)
@@ -101,15 +99,11 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
                         <p className="mt-3 text-xs text-ink-soft">{t('community.anonymous_no_name')}</p>
                     )}
 
-                    {tooFew && !state.published && (
-                        <p className="mt-3 text-xs text-ink-soft">{t('community.problem_items', { count: state.minItems })}</p>
-                    )}
-
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                         <button
                             type="button"
                             onClick={publish}
-                            disabled={busy || (tooFew && !state.published) || title.trim() === ''}
+                            disabled={busy || title.trim() === ''}
                             className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
                         >
                             {state.published ? t('community.update') : t('community.publish')}
