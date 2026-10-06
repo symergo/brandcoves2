@@ -14,12 +14,17 @@ namespace App\Services\Gift;
  *
  * A third, `noted` (written down on the person's page, or "I gave this"
  * beside a list item), went with "Wat je gaf" on 2026-09-29.
+ *
+ * `listed`: something on a list for this person, bought or not. What
+ * "Geïnspireerd op hun lijsten" starts from since 2026-10-06 (NextSteps).
  */
 final readonly class PastGift
 {
     public const CLAIMED = 'claimed';
 
     public const SENT = 'sent';
+
+    public const LISTED = 'listed';
 
     public function __construct(
         public string $source,

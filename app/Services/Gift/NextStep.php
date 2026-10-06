@@ -22,6 +22,9 @@ final readonly class NextStep
     /** The same brand, something else from its range. */
     public const SAME_BRAND = 'same_brand';
 
+    /** The same kind of thing, from another maker or range (2026-10-06). */
+    public const SAME_CATEGORY = 'same_category';
+
     public function __construct(
         public int $groupId,
         public float $score,

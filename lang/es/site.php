@@ -1223,6 +1223,7 @@ return [
         'reason_often_together' => 'A menudo en listas con :after',
         'reason_goes_with' => 'Va con :after',
         'reason_same_brand' => 'Misma marca que :after',
+        'reason_same_category' => 'Mismo tipo que :after',
         'from_email' => 'La idea de tu recordatorio',
         'link' => 'Todo sobre :name',
     ],

@@ -13,7 +13,7 @@ export interface NextStepCard {
     price: Cents | null
     url: string
     /** Why it follows on: `often_together`, `goes_with` or `same_brand`. */
-    reason: 'often_together' | 'goes_with' | 'same_brand'
+    reason: 'often_together' | 'goes_with' | 'same_brand' | 'same_category'
     /** The title of the past gift it follows. */
     after: string
 }

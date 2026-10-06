@@ -16,15 +16,23 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * "The next step": products that follow on from what a person was given.
+ * "Geïnspireerd op hun lijsten" (until 2026-10-06 "De volgende stap"): ideas
+ * inspired by what is on the lists for this person, things that go with it,
+ * and more of the same brand or category (the owner's words, 2026-10-06).
+ *
+ * It starts from **everything on the lists for this person**, newest first,
+ * bought or not (`listed()`). Until 2026-10-06 it started only from what the
+ * giver had claimed ("Ik koop dit"), so a person with a full list and nothing
+ * bought yet got nothing. What was given is still never suggested again.
  *
  * Fetches the candidates, and leaves every judgement to {@see NextStepScorer}.
- * Three ways in, one per reason the scorer knows:
+ * Four ways in, one per reason the scorer knows:
  *
- * - `product_links`: products people keep on the same lists as a past gift;
- * - the same brand as a past gift;
+ * - `product_links`: products people keep on the same lists as a listed item;
  * - the complement word lists (resources/content/gift-complements.php) for
- *   the families a past gift's title belongs to.
+ *   the families a listed item's title belongs to;
+ * - the same brand as a listed item;
+ * - the same category as a listed item.
  *
  * Retrieval and arithmetic only, a handful of indexed queries; no AI, so it
  * can run on a page view (the person's page, Find a gift) and in the
@@ -32,8 +40,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class NextSteps
 {
-    /** The past gifts looked at: the most recent ones say the most. */
-    private const ANCHORS = 6;
+    /** The list items looked at: the most recently added say the most. */
+    private const ANCHORS = 8;
 
     /** Candidates fetched per way in, before scoring. */
     private const PER_SOURCE = 40;
@@ -53,18 +61,16 @@ final class NextSteps
      */
     public function forRecipient(Recipient $recipient, Market $market, int $limit = 4, ?array $past = null, array $alsoExclude = []): array
     {
-        // "Geïnspireerd op hun lijsten" (owner, 2026-10-06): nothing to show,
-        // and the section hidden, while nobody has a list for this person.
-        if (! $recipient->wishlists()->exists()) {
-            return [];
-        }
-
-        $past ??= $this->history->for($recipient);
-        $anchors = array_slice($past, 0, self::ANCHORS);
+        // What is on their lists. None (no list, or empty lists): nothing to
+        // show, and the section stays hidden (owner, 2026-10-06).
+        $anchors = $this->listed($recipient);
 
         if ($anchors === []) {
             return [];
         }
+
+        // What was given, so it is never suggested again.
+        $past ??= $this->history->for($recipient);
 
         $exclude = [
             ...$this->history->excludedGroupIds($recipient, $past),
@@ -151,8 +157,9 @@ final class NextSteps
 
         $ids = [
             ...array_keys($links),
-            ...$this->sameBrand($anchors, $market, $budget),
             ...$this->complements($anchors, $families, $market, $budget),
+            ...$this->sameBrand($anchors, $market, $budget),
+            ...$this->sameCategory($anchors, $market, $budget),
         ];
 
         $ids = array_values(array_diff(array_unique($ids), $exclude));
@@ -290,6 +297,66 @@ final class NextSteps
             ->limit(self::PER_SOURCE)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * The same kind of thing as a listed item: its category, from any maker.
+     *
+     * @param  list<PastGift>  $anchors
+     * @return list<int>
+     */
+    private function sameCategory(array $anchors, Market $market, ?int $budget): array
+    {
+        $categories = array_values(array_unique(array_filter(array_map(
+            fn (PastGift $g) => $g->category === null || trim($g->category) === '' ? null : $g->category,
+            $anchors,
+        ))));
+
+        if ($categories === []) {
+            return [];
+        }
+
+        return $this->shown($market)
+            ->whereIn('category', $categories)
+            ->when($budget !== null, fn ($q) => $q->where('min_price', '<=', $budget))
+            ->orderByDesc('merchant_count')
+            ->orderBy('id')
+            ->limit(self::PER_SOURCE)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * What is on the lists for this person, newest first: what the row starts
+     * from (2026-10-06). Every item, bought or not, a product or written by
+     * hand; a hand-written one has no product to link from but its title still
+     * finds what goes with it.
+     *
+     * @return list<PastGift>
+     */
+    private function listed(Recipient $recipient): array
+    {
+        return WishlistItem::query()
+            ->whereIn('wishlist_id', $recipient->wishlists()->select('id'))
+            ->with('group')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(self::ANCHORS)
+            ->get()
+            ->map(fn (WishlistItem $item) => new PastGift(
+                source: PastGift::LISTED,
+                title: $item->displayTitle(),
+                groupId: $item->group_id === null ? null : (int) $item->group_id,
+                year: $item->created_at?->year,
+                brand: $item->group?->brand,
+                category: $item->group?->category,
+                image: $item->group?->image_url ?? $item->snapshot_image_url,
+                url: $item->productPath(),
+                itemId: (int) $item->id,
+            ))
+            ->values()
             ->all();
     }
 

@@ -348,6 +348,35 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
+    public function the_ideas_start_from_what_is_on_her_lists_bought_or_not(): void
+    {
+        // "Geïnspireerd op hun lijsten" (owner, 2026-10-06): a list with
+        // nothing bought yet is enough; the same category counts too.
+        $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti', 'category' => 'Koffiezetters']);
+        WishlistItem::factory()->of($moka)->create(['wishlist_id' => $this->listFor($this->mum)->id]);
+
+        $sameBrand = ProductGroup::factory()->priced(2000)->create(['title' => 'Melkopschuimer', 'brand' => 'Bialetti', 'category' => 'Keuken']);
+        $sameKind = ProductGroup::factory()->priced(4000)->create(['title' => 'Pulcina zesKops', 'brand' => 'Alessi', 'category' => 'Koffiezetters']);
+
+        $steps = $this->actingAs($this->giver)->get("/be-nl/people/{$this->mum->id}")
+            ->viewData('page')['props']['nextSteps'];
+
+        $this->assertContains($sameBrand->id, array_column($steps, 'id'));
+        $this->assertContains($sameKind->id, array_column($steps, 'id'));
+        // What is on the list is not suggested back.
+        $this->assertNotContains($moka->id, array_column($steps, 'id'));
+    }
+
+    #[Test]
+    public function without_a_list_there_are_no_ideas(): void
+    {
+        ProductGroup::factory()->priced(2000)->create(['title' => 'Melkopschuimer', 'brand' => 'Bialetti']);
+
+        $this->assertSame([], $this->actingAs($this->giver)->get("/be-nl/people/{$this->mum->id}")
+            ->viewData('page')['props']['nextSteps']);
+    }
+
+    #[Test]
     public function the_next_step_keeps_to_her_budget(): void
     {
         $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);

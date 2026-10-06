@@ -1427,6 +1427,7 @@ return [
         'reason_often_together' => 'Often on lists with :after',
         'reason_goes_with' => 'Goes with :after',
         'reason_same_brand' => 'Same brand as :after',
+        'reason_same_category' => 'Same kind as :after',
         'from_email' => 'The idea from your reminder',
         'link' => 'All about :name',
     ],

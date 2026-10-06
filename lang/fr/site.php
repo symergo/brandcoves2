@@ -1224,6 +1224,7 @@ return [
         'reason_often_together' => 'Souvent sur les listes avec :after',
         'reason_goes_with' => 'Va avec :after',
         'reason_same_brand' => 'Même marque que :after',
+        'reason_same_category' => 'Même genre que :after',
         'from_email' => 'L’idée de votre rappel',
         'link' => 'Tout sur :name',
     ],

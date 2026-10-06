@@ -117,7 +117,24 @@ class NextStepScorerTest extends TestCase
         $this->assertSame([31, 30], array_map(fn (NextStep $s) => $s->groupId, $steps));
         $this->assertSame(NextStep::SAME_BRAND, $steps[0]->reason);
         $this->assertEqualsWithDelta(0.6, $steps[0]->score, 0.0001);
-        $this->assertEqualsWithDelta(0.4, $steps[1]->score, 0.0001);
+        // Same brand and same kind: the category (0.45) leads since 2026-10-06,
+        // the brand adds a quarter of its 0.4. Still under another kind.
+        $this->assertSame(NextStep::SAME_CATEGORY, $steps[1]->reason);
+        $this->assertEqualsWithDelta(0.55, $steps[1]->score, 0.0001);
+    }
+
+    #[Test]
+    public function the_same_category_from_another_maker_is_an_idea_but_the_weakest(): void
+    {
+        // "More of the same brand or category" (owner, 2026-10-06).
+        $steps = $this->rank([$this->moka()], [
+            new NextStepCandidate(40, 'Alessi Pulcina 6 kops', 'Alessi', 'Koffiezetters', 4000),
+            new NextStepCandidate(1, 'Lavazza Koffiebonen 1 kg', 'Lavazza', 'Koffie', 1500),
+        ]);
+
+        $this->assertSame([1, 40], array_map(fn (NextStep $s) => $s->groupId, $steps));
+        $this->assertSame(NextStep::SAME_CATEGORY, $steps[1]->reason);
+        $this->assertEqualsWithDelta(0.45, $steps[1]->score, 0.0001);
     }
 
     #[Test]

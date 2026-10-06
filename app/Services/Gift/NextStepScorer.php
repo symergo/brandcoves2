@@ -13,13 +13,21 @@ use Illuminate\Support\Str;
  * why. Pure arithmetic over values handed in: no database, no clock, no AI.
  * {@see NextSteps} does the fetching. See docs/features/gift-history.md.
  *
- * ## Three reasons a product follows on
+ * ## Four reasons a product follows on
  *
  * | reason | evidence | weight |
  * |---|---|---|
  * | often together | five or more people keep both on their lists (`product_links`) | 0.5 to 1.0, by how many people |
  * | goes with | it is used with, or used up by, the past gift (the complement word lists) | 0.8 |
  * | same brand | the same maker's range | 0.6 for another kind of thing, 0.4 for the same kind |
+ * | same category | the same kind of thing, from elsewhere | 0.45 |
+ *
+ * The owner's own description of the row (2026-10-06): "ideas inspired by
+ * what people have on their lists, things that go with them, and more of the
+ * same brand or category". The category is the weakest: it says only that
+ * the candidate is the same sort of thing, which is why it sits just above a
+ * same-brand same-kind match and below everything that says *why*. Another
+ * of exactly the same thing is still dropped (below).
  *
  * People's lists are the strongest evidence and can pass the word lists, but
  * only when many people agree: at the five-person floor a link weighs 0.625,
@@ -58,6 +66,8 @@ final class NextStepScorer
     private const SAME_BRAND_OTHER_KIND = 0.6;
 
     private const SAME_BRAND_SAME_KIND = 0.4;
+
+    private const SAME_CATEGORY = 0.45;
 
     /** How much a second and third reason add to the strongest one. */
     private const EXTRA_REASON = 0.25;
@@ -202,6 +212,10 @@ final class NextStepScorer
                 $signals[NextStep::SAME_BRAND] = $this->sameKind($gift->category, $candidate->category)
                     ? self::SAME_BRAND_SAME_KIND
                     : self::SAME_BRAND_OTHER_KIND;
+            }
+
+            if ($this->sameKind($gift->category, $candidate->category)) {
+                $signals[NextStep::SAME_CATEGORY] = self::SAME_CATEGORY;
             }
 
             if ($signals === []) {

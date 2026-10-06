@@ -1229,6 +1229,7 @@ return [
         'reason_often_together' => 'Vaak op lijsten met :after',
         'reason_goes_with' => 'Hoort bij :after',
         'reason_same_brand' => 'Zelfde merk als :after',
+        'reason_same_category' => 'Zelfde soort als :after',
         'from_email' => 'Het idee uit je herinnering',
         'link' => 'Alles over :name',
     ],

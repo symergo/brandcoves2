@@ -51,8 +51,14 @@ A "saved person" is a `recipients` row: somebody a user buys for (see
 `/{market}/people/{id}`, the owner's only (behind sign-in, owner-scoped, 404 for anybody else,
 `noindex`). Since 2026-09-27 it is titled with the person's name and opens with a profile (what
 you know about them, their wish lists, your lists for them; see
-[my-people.md](my-people.md#the-persons-page)). Below that it shows **the next step**: up to
-four products that follow on from what they were given (your own claims on lists for them).
+[my-people.md](my-people.md#the-persons-page)). Below that it shows **Geïnspireerd op hun
+lijsten** ("De volgende stap" until 2026-10-06): up to four ideas inspired by what is on the lists
+for them, things that go with it, and more of the same brand or category (the owner's words).
+Since 2026-10-06 it starts from **every item on those lists, bought or not**, the newest eight
+(`NextSteps::listed()`); it started from your own claims only, so a full list with nothing bought
+yet gave nothing. A fourth reason joined the three: **same category** (0.45, the weakest, card text
+"Zelfde soort als …"). What was given and what is on the lists is never suggested. No lists, or
+empty ones: the section is hidden.
 
 Until 2026-09-29 it also showed **What you gave** (newest first, with a remove button on the lines
 you wrote) and **"I gave this"** (a line typed by hand, or a button beside each item on your own
