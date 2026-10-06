@@ -1289,11 +1289,11 @@ export function ListToolsBar({
                 onClick={() => onPanel(open === 'share' ? null : 'share')}
                 aria-expanded={open === 'share'}
                 aria-controls="list-tools-panel"
+                aria-label={shareOn ? `${t('lists.share')} — ${t('lists.tool_on')}` : t('lists.share')}
                 className={headerActionClasses(open === 'share' ? 'open' : shareOn ? 'on' : 'idle')}
             >
                 <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
-                {t('lists.share')}
-                {shareOn && <span className="sr-only"> — {t('lists.tool_on')}</span>}
+                <span className="hidden sm:inline">{t('lists.share')}</span>
             </button>
 
             {/*
@@ -1317,13 +1317,13 @@ export function ListToolsBar({
                 className={headerActionClasses(watching ? 'on' : 'idle')}
             >
                 <ToolIcon name="bell" className="h-4 w-4 shrink-0" />
-                {t('lists.follow')}
+                <span className="hidden sm:inline">{t('lists.follow')}</span>
             </button>
 
             <Menu
                 label={t('lists.more_tools_label')}
                 width={280}
-                button={<MoreButtonContent word={t('lists.more_tools')} wordOnPhone />}
+                button={<MoreButtonContent word={t('lists.more_tools')} />}
                 buttonClassName={headerActionClasses(open !== null && open !== 'share' ? 'open' : 'idle')}
             >
                 {(close) => (

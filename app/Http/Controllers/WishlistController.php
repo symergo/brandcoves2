@@ -1043,6 +1043,8 @@ class WishlistController extends Controller
             throw new NotFoundHttpException;
         }
 
+        $wasWatching = $wishlist->price_watch_percent !== null;
+
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:120'],
             /*
@@ -1198,6 +1200,9 @@ class WishlistController extends Controller
          */
         if (array_key_exists('price_watch_percent', $validated)) {
             $watch = app(ListPriceWatch::class);
+            // Turned on or off (not a new percentage): the header's Volgen,
+            // a bare bell on a phone, says what it did (2026-10-06).
+            $followFlipped = ($validated['price_watch_percent'] !== null) !== $wasWatching;
 
             $validated['price_watch_percent'] === null
                 ? $watch->forget($wishlist)
@@ -1226,6 +1231,10 @@ class WishlistController extends Controller
                 ->whereKey($wishlist->recipient_id)
                 ->whereNull('birthday')
                 ->update(['birthday' => Recipient::birthdayFrom($date->day, $date->month)]);
+        }
+
+        if ($followFlipped ?? false) {
+            return back()->with('success', __($validated['price_watch_percent'] === null ? 'site.lists.follow_off' : 'site.lists.follow_on'));
         }
 
         return back();

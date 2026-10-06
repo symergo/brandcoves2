@@ -799,6 +799,8 @@ return [
         'voting_enabled' => 'Todos pueden votar los regalos',
         'voting_enabled_hint' => 'La lista se ordena por los votos. Desactívalo si el regalo ya está decidido.',
         'follow' => 'Seguir',
+        'follow_on' => 'Sigues los precios de esta lista. Si algo baja, recibes un correo.',
+        'follow_off' => 'Ya no sigues los precios de esta lista.',
         'price_watch' => 'Seguir los precios de esta lista',
         'price_watch_hint' => 'Un correo por la mañana cuando algo de la lista baje de precio o vuelva a estar disponible.',
         'price_watch_threshold' => 'Avísame con bajadas de al menos',

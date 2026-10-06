@@ -142,9 +142,15 @@ export default function AskShow({
                 actions={
                     question.shareUrl ? (
                         // A page header's Delen, with its word, as on a list (2026-10-06).
-                        <button type="button" onClick={() => setSharing(true)} className={headerActionClasses(sharing ? 'open' : 'idle', 'shrink-0')}>
+                        <button
+                            type="button"
+                            onClick={() => setSharing(true)}
+                            aria-label={t('ask.share')}
+                            title={t('ask.share')}
+                            className={headerActionClasses(sharing ? 'open' : 'idle', 'shrink-0')}
+                        >
                             <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
-                            {t('ask.share')}
+                            <span className="hidden sm:inline">{t('ask.share')}</span>
                         </button>
                     ) : undefined
                 }

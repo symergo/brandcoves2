@@ -800,6 +800,8 @@ return [
         'voting_enabled' => 'Tout le monde peut voter pour les cadeaux',
         'voting_enabled_hint' => 'La liste se trie selon les votes. Désactivez-le si le cadeau est déjà choisi.',
         'follow' => 'Suivre',
+        'follow_on' => 'Vous suivez les prix de cette liste. Si quelque chose baisse, vous recevez un e-mail.',
+        'follow_off' => 'Vous ne suivez plus les prix de cette liste.',
         'price_watch' => 'Suivre les prix de cette liste',
         'price_watch_hint' => 'Un e-mail le matin quand un article de la liste baisse de prix ou est de nouveau en stock.',
         'price_watch_threshold' => 'Prévenez-moi à partir d’une baisse de',

@@ -96,13 +96,16 @@ export function rowActionClasses(className = ''): string {
 }
 
 /**
- * A button in a page's header beside the title: "Delen", "⋯ Meer". A pill
- * with its word, on a phone too.
+ * A button in a page's header beside the title: "Delen", "Volgen", "⋯ Meer".
+ * On a phone a round icon button; from `sm` up a pill with its word.
  *
  * Until 2026-10-06 the list page drew its own pills and the person page used
  * a row's square ⋯ in the same place, so the one menu of a page looked like
  * two kinds of control (owner: "check consistency ... menu buttons on
- * mobile"). Rows and cards keep `rowActionClasses`: the word is the header's.
+ * mobile"). The word was shown on a phone too until the same day, when three
+ * buttons squeezed a list's title onto two lines and the owner asked why the
+ * icons carried words there. So the caller puts its word in a
+ * `hidden sm:inline` span and gives the button an `aria-label`.
  *
  * `open`: its popup or menu is showing. `on`: what it controls is switched on
  * (a list with a live link), in sage, the colour for a live, benign state.
@@ -114,7 +117,11 @@ export function headerActionClasses(state: 'idle' | 'open' | 'on' = 'idle', clas
         on: 'border-sage/60 bg-sage/10 text-sage hover:border-sage',
     }[state]
 
-    return ['inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition', tone, className]
+    return [
+        'inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border px-2 text-sm font-medium whitespace-nowrap transition sm:h-auto sm:min-w-0 sm:px-3.5 sm:py-2',
+        tone,
+        className,
+    ]
         .filter(Boolean)
         .join(' ')
 }

@@ -224,7 +224,7 @@ export default function PersonProfile({
                 actions={
                     <Menu
                         label={t('people.more_label', { name: person.name })}
-                        button={<MoreButtonContent word={t('people.more')} wordOnPhone />}
+                        button={<MoreButtonContent word={t('people.more')} />}
                         buttonClassName={headerActionClasses()}
                     >
                         {(close) => (

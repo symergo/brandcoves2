@@ -163,6 +163,24 @@ class ListPriceWatchTest extends TestCase
     }
 
     #[Test]
+    public function volgen_says_what_it_did_and_a_new_percentage_says_nothing(): void
+    {
+        // On a phone the header's Volgen is a bare bell (2026-10-06), so turning
+        // it on or off is confirmed in words; changing the percentage is not.
+        $user = $this->user();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'price_watch_percent' => null]);
+
+        $this->actingAs($user)->patch('/be-nl/lists/'.$list->id, ['price_watch_percent' => 10])
+            ->assertSessionHas('success', __('site.lists.follow_on'));
+
+        $this->actingAs($user)->patch('/be-nl/lists/'.$list->id, ['price_watch_percent' => 20])
+            ->assertSessionMissing('success');
+
+        $this->actingAs($user)->patch('/be-nl/lists/'.$list->id, ['price_watch_percent' => null])
+            ->assertSessionHas('success', __('site.lists.follow_off'));
+    }
+
+    #[Test]
     public function a_stranger_cannot_switch_it_on(): void
     {
         $list = Wishlist::factory()->create(['owner_user_id' => $this->user()->id]);
