@@ -53,6 +53,12 @@ final class NextSteps
      */
     public function forRecipient(Recipient $recipient, Market $market, int $limit = 4, ?array $past = null, array $alsoExclude = []): array
     {
+        // "Geïnspireerd op hun lijsten" (owner, 2026-10-06): nothing to show,
+        // and the section hidden, while nobody has a list for this person.
+        if (! $recipient->wishlists()->exists()) {
+            return [];
+        }
+
         $past ??= $this->history->for($recipient);
         $anchors = array_slice($past, 0, self::ANCHORS);
 

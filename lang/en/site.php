@@ -1422,7 +1422,7 @@ return [
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
     'gift_history' => [
-        'next_title' => 'Suggestions',
+        'next_title' => 'Inspired by their lists',
         'next_hint' => 'Ideas inspired by things people keep on their lists, things that go with them, and more from the same brand or category.',
         'reason_often_together' => 'Often on lists with :after',
         'reason_goes_with' => 'Goes with :after',

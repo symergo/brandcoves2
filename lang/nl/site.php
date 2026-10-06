@@ -1224,7 +1224,7 @@ return [
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
     'gift_history' => [
-        'next_title' => 'Suggesties',
+        'next_title' => 'Geïnspireerd op hun lijsten',
         'next_hint' => 'Ideeën die geïnspireerd zijn op dingen die mensen op hun lijst hebben staan, dingen die erbij horen, en meer van hetzelfde merk of categorie.',
         'reason_often_together' => 'Vaak op lijsten met :after',
         'reason_goes_with' => 'Hoort bij :after',

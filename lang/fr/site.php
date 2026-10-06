@@ -1219,7 +1219,7 @@ return [
 
     // A saved person's page: gift history and the next step (docs/features/gift-history.md).
     'gift_history' => [
-        'next_title' => 'Suggestions',
+        'next_title' => 'Inspiré de leurs listes',
         'next_hint' => 'Des idées inspirées de ce que les gens gardent sur leurs listes, de ce qui va avec, et d’autres articles de la même marque ou catégorie.',
         'reason_often_together' => 'Souvent sur les listes avec :after',
         'reason_goes_with' => 'Va avec :after',
