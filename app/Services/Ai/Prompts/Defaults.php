@@ -238,7 +238,8 @@ class Defaults
         The passage is the point. Each gift's card is rendered directly under
         the paragraph that names it, so a paragraph is not an introduction to a
         grid further down - it is the writing that gift gets, and the only
-        writing it gets.
+        writing it gets. Say in it why the gift is a good pick for this kind of
+        person.
 
         The reader is buying a present for somebody else. They already know who
         that person is; what they lack is an idea. So write about the *recipient*
@@ -607,9 +608,11 @@ class Defaults
      * describes a brand and points nowhere leaves the page a leaf.
      */
     /*
-     * Five parts, in this order, at the owner's request (2026-09-27): where the
-     * brand comes from, what it says it stands for, its reputation, its
-     * sub-brands, and examples of what it makes. Until then this prompt banned
+     * A short intro, then four parts (the owner's admin copy of 2026-09-27,
+     * made the default on 2026-10-06): where the brand comes from, what it says
+     * it stands for, its reputation, and its products (sub-brands, ranges and
+     * examples together, the longest part). It was five parts with sub-brands
+     * and examples apart until the owner merged them. Until 2026-09-27 this prompt banned
      * history and individual products outright. History is now asked for, but
      * only what is well established: a founding year and founders are facts a
      * reader can check, and a wrong one on a page about the brand is worse than
@@ -629,8 +632,8 @@ class Defaults
         recommending it. We earn a commission on what people buy, so a piece
         that reads as an advertisement is worse than no piece at all.
 
-        Write five short paragraphs, in this order, each opening with its label
-        in bold, for example **Origins.**:
+        Write a short intro about the brand. Then write four sections, in this
+        order, each opening with its label in bold, for example **Origins.**:
         1. Origins: who founded it, where, when, and what it made first. The
            turning points that explain what it is today, and who owns it now
            where that is not obvious from the name.
@@ -640,10 +643,11 @@ class Defaults
         3. Reputation: what it is known for, and the criticism it is known for
            too, stated as fact without heat. Say plainly what this brand is not
            for. A piece that finds nothing to qualify is not describing a brand.
-        4. Sub-brands and ranges: the names under the brand, what each covers,
-           and who each suits.
-        5. Examples: the product families that show the brand best, each named
-           the way a shopper would say it, next to a search link on its category.
+        4. Products: the names under the brand (its sub-brands and ranges), what
+           each covers, and who each suits. Give examples of the product
+           families that show the brand best, each named the way a shopper would
+           say it, next to a search link on its category. Include product cards.
+           This section is the longest.
 
         Rules:
         - Only facts that are well established and checkable. A founding year,
@@ -656,13 +660,14 @@ class Defaults
         - Never claim the brand is best, cheapest or most reliable. Nothing on
           this page can back that up. What others say of it is reputation; say
           whose view it is when it matters.
-        - Where products are listed below, each one gets its own paragraph after
-          the five above, naming it with its product token, saying which range it
-          belongs to and who it suits. Its card appears under that paragraph.
-          Where none are listed, name example product families in the fifth
-          paragraph in plain words, never as a token.
-        - Do link the categories and sub-ranges you name, with search tokens, so
-          a reader can go straight to them. That is what this piece is for.
+        - Where products are listed below, each one gets its own paragraph in
+          the Products section, naming it with its product token, saying which
+          range it belongs to and who it suits. Its card appears under that
+          paragraph. Where none are listed, name example product families in
+          the Products section in plain words, never as a token.
+        - Do link the sub-brands, categories and sub-ranges you name, with
+          search tokens, so a reader can go straight to them. That is what this
+          piece is for.
         - No em dashes. Where a sentence needs a break, use a comma, a colon,
           or a spaced hyphen - like this one.
         TXT;
