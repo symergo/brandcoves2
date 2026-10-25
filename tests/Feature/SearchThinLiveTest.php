@@ -12,12 +12,14 @@ use App\Jobs\PullLiveSearch;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Models\SearchLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -84,6 +86,22 @@ class SearchThinLiveTest extends TestCase
         return $this->asked;
     }
 
+    /**
+     * The request the browser makes right after a thin search's page: an
+     * Inertia partial reload for the deferred `live` prop.
+     */
+    private function followUp(string $url): TestResponse
+    {
+        $version = $this->get($url)->viewData('page')['version'];
+
+        return $this->get($url, [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) $version,
+            'X-Inertia-Partial-Component' => 'Search',
+            'X-Inertia-Partial-Data' => 'live',
+        ])->assertOk();
+    }
+
     /** A product as the catalogue holds one: a group and an active offer in it. */
     private function storedProduct(string $title): ProductGroup
     {
@@ -106,15 +124,31 @@ class SearchThinLiveTest extends TestCase
         return $group;
     }
 
+    /**
+     * A person no longer waits for bol (2026-10-25): the page comes at once
+     * with what is stored and names the shop it is asking, and the deferred
+     * `live` prop, which the browser requests straight after, brings bol's
+     * products and says how many were added.
+     */
     #[Test]
-    public function a_term_with_nothing_stored_shows_bols_products_on_the_first_view(): void
+    public function a_term_with_nothing_stored_shows_bols_products_right_after_the_first_view(): void
     {
         $this->fakeBol([$this->bolProduct()]);
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('results.items', 1));
+            ->assertInertia(fn ($page) => $page
+                ->has('results.items', 0)
+                ->where('liveShops', ['bol.com'])
+                ->missing('live'));
 
+        $this->assertSame(0, $this->searches(), 'The first response must not wait for bol.');
+
+        $live = $this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live');
+
+        $this->assertCount(1, $live['results']['items']);
+        $this->assertSame(1, $live['added']);
+        $this->assertSame('1 product van bol.com toegevoegd', $live['notice']);
         $this->assertSame(1, $this->searches());
 
         // Asked for the words the visitor typed.
@@ -155,7 +189,7 @@ class SearchThinLiveTest extends TestCase
         $this->fakeBol([$this->bolProduct()]);
         $this->storedProduct('Tuinkabauter met hengel');
 
-        $titles = array_column($this->get('/be-nl/search?q=tuinkabouter')->assertOk()->viewData('page')['props']['results']['items'], 'title');
+        $titles = array_column($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.results.items'), 'title');
 
         $this->assertContains('Zeldzame tuinkabouter met lantaarn', $titles);
         $this->assertNotContains('Tuinkabauter met hengel', $titles);
@@ -167,7 +201,7 @@ class SearchThinLiveTest extends TestCase
         $this->fakeBol([]);
         $this->storedProduct('Tuinkabauter met hengel');
 
-        $titles = array_column($this->get('/be-nl/search?q=tuinkabouter')->assertOk()->viewData('page')['props']['results']['items'], 'title');
+        $titles = array_column($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.results.items'), 'title');
 
         $this->assertSame(['Tuinkabauter met hengel'], $titles);
     }
@@ -213,12 +247,28 @@ class SearchThinLiveTest extends TestCase
 
         ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => 'Tuinkabouter met hengel']);
 
-        $this->get('/be-nl/search?q=tuinkabouter')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('results.items', 1));
+        $live = $this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live');
+
+        // The stored product is still there, nothing was added.
+        $this->assertCount(1, $live['results']['items']);
+        $this->assertSame(0, $live['added']);
+        $this->assertNull($live['notice']);
 
         // Asked once: no retry on this path.
         $this->assertSame(1, $this->searches());
         Queue::assertPushed(PullLiveSearch::class, 1);
+    }
+
+    /** The follow-up runs the search again; it must not count the person twice. */
+    #[Test]
+    public function the_follow_up_request_is_not_logged_a_second_time(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+
+        // A person: the log wants the session cookie a crawler never carries.
+        $this->withCookie((string) config('session.cookie'), 'a-visitor');
+        $this->followUp('/be-nl/search?q=tuinkabouter');
+
+        $this->assertSame(1, (int) SearchLog::query()->where('query', 'tuinkabouter')->sum('search_count'));
     }
 }

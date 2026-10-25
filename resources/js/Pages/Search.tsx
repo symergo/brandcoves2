@@ -1,10 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { preferred as preferredView, remember as rememberView } from '../viewPreference'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import { PLACEHOLDER_AFTER, SkeletonGrid, useElapsed, WaitLine } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
@@ -21,6 +22,18 @@ import { searchHref, searchTarget } from '../searchUrl'
 interface Facets {
     brands: { value: string }[]
     merchants: { id: number; name: string; logo: string | null }[]
+}
+
+/**
+ * One page and whether another follows. No total and no last page (owner's
+ * decision, 2026-09-27): nothing counts the matches, so the page shows
+ * neither a number nor a word standing in for one.
+ */
+interface SearchResults {
+    empty: boolean
+    currentPage: number
+    hasMore: boolean
+    items: GroupCard[]
 }
 
 /** One filter that is on, drawn as a chip above the results. */
@@ -46,12 +59,15 @@ interface Props {
      * (owner's decision, 2026-09-27): nothing counts the matches, so the
      * page shows neither a number nor a word standing in for one.
      */
-    results: {
-        empty: boolean
-        currentPage: number
-        hasMore: boolean
-        items: GroupCard[]
-    }
+    results: SearchResults
+    /**
+     * The live shops being asked after the page was shown (a thin search,
+     * 2026-10-25), by name; empty when nothing is pending. `live` arrives
+     * from that follow-up request as a deferred prop: undefined until then,
+     * null when there was nothing to ask.
+     */
+    liveShops: string[]
+    live?: { results: SearchResults; added: number; notice: string | null } | null
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
     emptyBecauseOfFilters: boolean
     /**
@@ -168,7 +184,9 @@ export default function Search({
     sort,
     view,
     facets,
-    results,
+    results: storedResults,
+    liveShops = [],
+    live,
     lanes,
     emptyBecauseOfFilters,
     intent,
@@ -192,6 +210,23 @@ export default function Search({
     const [filtersOpen, setFiltersOpen] = useState(false)
 
     /*
+     * The shops' products join the page after it is shown (2026-10-25). The
+     * products already on screen keep their places and the added ones come
+     * after them, so nothing the visitor is looking at moves; the page and
+     * "more" come from the shops' answer.
+     */
+    const livePending = liveShops.length > 0 && live === undefined
+    const results = useMemo<SearchResults>(() => {
+        if (!live) {
+            return storedResults
+        }
+        const shown = new Set(storedResults.items.map((g) => g.id))
+        const items = [...storedResults.items, ...live.results.items.filter((g) => !shown.has(g.id))]
+
+        return { ...live.results, items, empty: items.length === 0 }
+    }, [storedResults, live])
+
+    /*
      * The box follows the query, not only the first one.
      *
      * Every visit made by `go()` keeps this component mounted, so the state
@@ -204,6 +239,13 @@ export default function Search({
         setTerm(q)
     }, [q])
     const [searching, setSearching] = useState(false)
+    // How long the current wait has lasted: a search loading, or the shops
+    // being asked after the page was shown. Drives SearchWait's stages.
+    const elapsed = useElapsed(searching || livePending)
+    // Placeholders instead of the old results once a search takes longer
+    // than a blink, and instead of "nothing found" while the shops may still
+    // fill an empty page.
+    const placeholders = (searching && elapsed >= PLACEHOLDER_AFTER) || (livePending && storedResults.empty)
     const base = `/${market.key}/search`
 
     /*
@@ -932,7 +974,12 @@ export default function Search({
                         </div>
                     )}
 
-                    {results.empty ? (
+                    {placeholders ? (
+                        <>
+                            <WaitLine elapsed={elapsed} shops={searching ? [] : liveShops} />
+                            <SkeletonGrid />
+                        </>
+                    ) : results.empty ? (
                         <div className="rounded-card border border-line bg-card p-8 text-center">
                             {/*
                               "No results" and "no results with these filters" are
@@ -1182,6 +1229,19 @@ export default function Search({
                                 </Fragment>
                             ))}
                         </div>
+                    )}
+
+                    {/*
+                      Under the grid, so neither the line nor its outcome
+                      moves a product the visitor is looking at: who else is
+                      being asked while they are, then how many products their
+                      answer added.
+                    */}
+                    {!placeholders && livePending && <WaitLine elapsed={elapsed} shops={liveShops} />}
+                    {!placeholders && live?.notice && (
+                        <p role="status" className="my-4 text-sm text-ink-soft">
+                            {live.notice}
+                        </p>
                     )}
 
                     {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (

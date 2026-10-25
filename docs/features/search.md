@@ -240,6 +240,32 @@ For every live source a market has (`ConnectorRegistry::liveFor()`), not bol by 
 
 Covered by `SearchThinLiveTest` (rules 1 and 3) and `SearchLiveQueueTest` (rule 2).
 
+### While a search waits (owner, 2026-10-25)
+
+**A person no longer waits for the live shops.** On a thin search the request used to ask the shops
+itself (up to `inline_live_timeout`, 3 s) before the page rendered. Now `search(deferThin: true)`
+returns the stored results at once with `SearchResult::deferredShops` set (the shop names; the marker
+is not taken), and the controller adds `live` as an Inertia **deferred prop**. The browser requests
+it straight after the page is shown; that follow-up request runs the ordinary thin path (takes the
+marker, asks the shops, folds, skips the fuzzy match if they answered) and returns the results, how
+many products were added, and a worded notice (`search.live_added`, plural on the server).
+- **Nothing on screen moves.** `Search.tsx` keeps the products already shown in their places and
+  appends the added ones; the "we are also looking at bol.com" line and then the notice sit under the
+  grid. An empty first page shows placeholder cards instead of "nothing found" while the shops are
+  asked.
+- **A search engine gets the whole page in one response** (`deferThin` is false for Google and
+  Bing): what it sees is what it indexes, and the SSR HTML holds everything.
+- **Logged once.** The follow-up runs the search again; it uses `SearchQuery::unlogged()`.
+- A term asked within the window (`live_cache_ttl`) defers nothing: its answer is already stored.
+
+**While the page itself loads** (`Components/SearchWait.tsx`): after 300 ms placeholder cards
+replace the old results, with "Even zoeken…"; after 2.5 s "Nog even, we zoeken in alle winkels
+tegelijk…" (true: the catalogue is all shops at once; the live shops are no longer waited for here);
+from 3.5 s a tip, changing every 5 s (`search.wait_tip_1`–`4`). The tips are not announced to
+screen readers; the status line is.
+
+Covered by `SearchThinLiveTest`.
+
 ### The shop filter means two different things, and the by-store view needs both
 
 **Fixed 2026-08-30.** Selecting a shop left the other shops' lanes on screen.

@@ -28,7 +28,22 @@ final class SearchResult
         public readonly array $liveOffers = [],
         /** Whether the search found nothing at all; null reads it off this page. */
         private readonly ?bool $empty = null,
+        /**
+         * The live shops still have to be asked for this thin search, and the
+         * page will ask them in a follow-up request instead of making the
+         * visitor wait (`deferThin`, 2026-10-25). Their names, for "we are
+         * also looking at bol.com"; empty when nothing is deferred.
+         *
+         * @var list<string>
+         */
+        public readonly array $deferredShops = [],
     ) {}
+
+    /** Whether the live shops are left to a follow-up request. */
+    public function liveDeferred(): bool
+    {
+        return $this->deferredShops !== [];
+    }
 
     /**
      * No search was made: the landing before a term (2026-09-13). An empty

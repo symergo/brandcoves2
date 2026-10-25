@@ -331,6 +331,36 @@ final readonly class SearchQuery
     }
 
     /**
+     * The same search, not written to `search_log`.
+     *
+     * For the search page's follow-up request that asks the live shops
+     * (2026-10-25): the visit already logged the search once, and the
+     * follow-up runs it again; two rows would count one person twice.
+     */
+    public function unlogged(): self
+    {
+        return new self(
+            market: $this->market,
+            term: $this->term,
+            minPrice: $this->minPrice,
+            maxPrice: $this->maxPrice,
+            merchantIds: $this->merchantIds,
+            brands: $this->brands,
+            inStockOnly: $this->inStockOnly,
+            discountedOnly: $this->discountedOnly,
+            comparableOnly: $this->comparableOnly,
+            sort: $this->sort,
+            page: $this->page,
+            view: $this->view,
+            logged: false,
+            liveTerm: $this->liveTerm,
+            recipients: $this->recipients,
+            interests: $this->interests,
+            occasions: $this->occasions,
+        );
+    }
+
+    /**
      * The same search with a price range, in cents.
      *
      * Used when the words themselves carried a budget ("koptelefoon onder

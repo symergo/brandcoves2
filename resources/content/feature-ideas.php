@@ -385,4 +385,24 @@ return [
             'body' => 'Arriba de cada Cove del día, y bajo la de hoy en la página de inicio, ahora está Todas las Coves del día: el archivo de cada Cove del día publicada, por mes y las más recientes primero.',
         ],
     ],
+    'search-shows-stored-results-at-once' => [
+        'status' => 'done',
+        'sort' => 99,
+        'nl' => [
+            'title' => 'Zoeken zonder wachten',
+            'body' => 'Een zoekopdracht toont meteen wat we al kennen. Vinden we weinig, dan kijken we daarna ook bij de winkels zelf, en hun producten komen er onderaan bij. Duurt het even, dan zie je waar de producten komen en een tip.',
+        ],
+        'en' => [
+            'title' => 'Search without waiting',
+            'body' => 'A search shows what we already know at once. When we find little, we then also look at the shops themselves, and their products are added at the bottom. If it takes a moment, you see where the products will appear, and a tip.',
+        ],
+        'fr' => [
+            'title' => 'Chercher sans attendre',
+            'body' => "Une recherche montre tout de suite ce que nous connaissons déjà. Si nous trouvons peu, nous regardons ensuite aussi chez les boutiques elles-mêmes, et leurs produits s'ajoutent en bas. Si cela prend un instant, vous voyez où les produits vont apparaître, et une astuce.",
+        ],
+        'es' => [
+            'title' => 'Buscar sin esperar',
+            'body' => 'Una búsqueda muestra al momento lo que ya conocemos. Si encontramos poco, miramos después también en las propias tiendas, y sus productos se añaden abajo. Si tarda un poco, ves dónde aparecerán los productos, y un consejo.',
+        ],
+    ],
 ];

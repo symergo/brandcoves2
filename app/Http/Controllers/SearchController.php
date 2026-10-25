@@ -157,9 +157,24 @@ class SearchController extends Controller
             app(GiftSearchDemand::class)->record($intent, $current->get());
         }
 
-        // A crawler other than a search engine sees what is stored (Crawlers::mayAskShops()).
+        /*
+         * A crawler other than a search engine sees what is stored
+         * (Crawlers::mayAskShops()).
+         *
+         * A person on a thin search no longer waits for the live shops
+         * (owner, 2026-10-25): the page renders what is stored at once and
+         * asks for the shops' answer as a deferred prop, `live`, which
+         * Inertia requests right after the page is shown. A search engine
+         * gets the whole page in one response, because what it sees is what
+         * it indexes. The follow-up request runs this method again; its
+         * search is not logged a second time.
+         */
+        $askShops = Crawlers::mayAskShops($request->userAgent());
+        $followUp = in_array('live', explode(',', (string) $request->header('X-Inertia-Partial-Data')), true);
+        $searchQuery = $followUp ? $query->unlogged() : $query;
+
         $result = $landing === null && $gift === null
-            ? $search->search($query, askShops: Crawlers::mayAskShops($request->userAgent()))
+            ? $search->search($searchQuery, askShops: $askShops, deferThin: $askShops && ! Crawlers::isSearchEngine($request->userAgent()))
             : SearchResult::none($query);
 
         $this->seo($query, $result, $current);
@@ -176,6 +191,18 @@ class SearchController extends Controller
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
             'results' => $results,
+
+            /*
+             * The live shops' answer for a thin search, after the page is
+             * shown (see above). `liveShops` names who is being asked, for
+             * the line under the grid; `live` is deferred and arrives as the
+             * results with the shops' products, and a worded notice of how
+             * many were added. Null when nothing was deferred.
+             */
+            'liveShops' => $result->deferredShops,
+            'live' => $result->liveDeferred()
+                ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search, $current))
+                : null,
 
             /*
              * The Coves this term matches, as a row of small cards above the
@@ -796,6 +823,36 @@ class SearchController extends Controller
             // has no translated name yet; its value, made readable, stands in.
             ...array_map(fn (string $v) => $chip('occasion', $v, EventType::tryFrom($v)?->label($market->language())
                 ?? Str::ucfirst(str_replace('_', ' ', $v))), $query->occasions),
+        ];
+    }
+
+    /**
+     * The deferred `live` prop: the search again, this time asking the live
+     * shops while this follow-up request waits (pullLiveResults()' thin path),
+     * and how many products their answer added to what the page showed.
+     *
+     * The count is worded here because the client's t() has no plurals.
+     * Products already on the page stay where they are in the browser; the
+     * added ones go after them (Search.tsx), so nothing the visitor is looking
+     * at moves.
+     *
+     * @return array{results: array<string, mixed>, added: int, notice: string|null}
+     */
+    private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search, CurrentMarket $current): array
+    {
+        $result = $search->search($query->unlogged());
+        $results = $this->withSignals($this->present($result), $current);
+
+        $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());
+        $added = count(array_diff(array_map(fn (array $card) => (int) $card['id'], $results['items']), $before));
+
+        return [
+            'results' => $results,
+            'added' => $added,
+            'notice' => $added === 0 ? null : trans_choice('site.search.live_added', $added, [
+                'count' => $added,
+                'shops' => implode(', ', $shown->deferredShops),
+            ]),
         ];
     }
 

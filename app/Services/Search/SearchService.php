@@ -61,13 +61,24 @@ class SearchService
      *                          a crawler walking new terms all day cost a live
      *                          API call and a queued job per page, for nobody.
      *                          It sees what is stored.
+     * @param  bool  $deferThin  when the search is thin and the shops would be
+     *                           asked while the visitor waits, do not ask them:
+     *                           return the stored results now, with
+     *                           `deferredShops` set, and let the page ask in a
+     *                           follow-up request (2026-10-25, see
+     *                           SearchController). The search page passes it for
+     *                           a person; a search engine gets the whole page.
      */
-    public function search(SearchQuery $query, bool $waitForLive = false, bool $askShops = true): SearchResult
+    public function search(SearchQuery $query, bool $waitForLive = false, bool $askShops = true, bool $deferThin = false): SearchResult
     {
         // The live half is driven by `liveTerm()`, not by the term. A brand page
         // has no search term and still has something to ask bol: the brand's
         // name, because it takes no brand filter.
-        $live = $askShops && $query->hasLiveTerm()
+        $deferred = $askShops && $deferThin && ! $waitForLive && $query->hasLiveTerm()
+            ? $this->shopsToDefer($query)
+            : [];
+
+        $live = $askShops && $deferred === [] && $query->hasLiveTerm()
             ? $this->pullLiveResults($query, $waitForLive)
             : ['written' => 0, 'unstored' => []];
 
@@ -90,7 +101,32 @@ class SearchService
             facets: fn (): array => $this->facets($query),
             liveOffers: $live['unstored'],
             empty: $ids === [],
+            deferredShops: $deferred,
         );
+    }
+
+    /**
+     * The shops a visitor would wait for on this search, by name, or none.
+     *
+     * Only the case pullLiveResults() would answer inline: shops whose offers
+     * may be stored, nobody asked them about this term within the window
+     * (the marker is not set), and the search is thin. The marker is not
+     * taken here: the follow-up request takes it, through the ordinary path.
+     *
+     * @return list<string>
+     */
+    private function shopsToDefer(SearchQuery $query): array
+    {
+        $mirrorable = array_values(array_filter(
+            $this->registry->liveFor($query->market),
+            fn (LiveConnector $c) => $c->source()->allowsCatalogueStorage(),
+        ));
+
+        if ($mirrorable === [] || Cache::has($query->liveCacheKey()) || ! $this->isThin($query)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(fn (LiveConnector $c) => $c->source()->label(), $mirrorable)));
     }
 
     /**
