@@ -2504,6 +2504,7 @@ return [
         'ask_to_update' => 'Pedir a :name que lo cambie',
         'not_on_giftcoves' => 'No está en GiftCoves',
         'invite_short' => 'Invitar',
+        'invite_signed_out' => 'Inicia sesión para invitar a alguien',
         'source_you' => 'Rellenado por ti',
         'source_self' => 'Rellenado por :name',
         'source_self_tip' => ':name rellenó sus gustos por sí misma, con su enlace de perfil. La edad es tuya, y la cambias aquí.',

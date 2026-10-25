@@ -140,21 +140,28 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                         <span className="hidden sm:inline">{t('people.add_person')}</span>
                                     </span>
                                 </Button>
-                                <Button
-                                    variant="secondary"
-                                    aria-expanded={adding === 'invite'}
-                                    aria-controls="people-add"
-                                    aria-label={t('people.invite')}
-                                    title={t('people.invite')}
-                                    onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
-                                >
-                                    <span className="inline-flex items-center gap-2">
-                                        <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
-                                        <span className="hidden sm:inline">{t('people.invite')}</span>
-                                    </span>
-                                </Button>
                             </>
                         )}
+                        {/*
+                          "Nodig uit" for everybody (owner, 2026-10-25), greyed
+                          out for a guest: inviting needs an account, and the
+                          button says so on hover rather than hiding what the
+                          page is for.
+                        */}
+                        <Button
+                            variant="secondary"
+                            disabled={!isSignedIn}
+                            aria-expanded={isSignedIn ? adding === 'invite' : undefined}
+                            aria-controls={isSignedIn ? 'people-add' : undefined}
+                            aria-label={isSignedIn ? t('people.invite_short') : t('people.invite_signed_out')}
+                            title={isSignedIn ? t('people.invite') : t('people.invite_signed_out')}
+                            onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
+                        >
+                            <span className="inline-flex items-center gap-2">
+                                <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">{t('people.invite_short')}</span>
+                            </span>
+                        </Button>
                     </>
                 }
             >

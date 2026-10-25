@@ -2519,6 +2519,7 @@ return [
         'ask_to_update' => 'Vraag :name om aan te passen',
         'not_on_giftcoves' => 'Niet op GiftCoves',
         'invite_short' => 'Nodig uit',
+        'invite_signed_out' => 'Log in om iemand uit te nodigen',
         'source_you' => 'Ingevuld door jou',
         'source_self' => 'Ingevuld door :name zelf',
         'source_self_tip' => 'Hun smaak vulde :name zelf in, via hun profiellink. Hun leeftijd is van jou en pas je hier aan.',

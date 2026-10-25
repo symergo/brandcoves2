@@ -40,6 +40,12 @@ Cove" (`NewListButton`) became the filled `Button` that "Iemand toevoegen" is, o
 form is open, each with a line icon (+, and the invite figure for "Nodig uit"), and both titles
 are the same size.
 
+**"Nodig uit" for everybody, greyed out for a guest** (owner, 2026-10-25). The invite button's label
+is the short `people.invite_short` ("Nodig uit"); the full "Nodig uit op GiftCoves" stays its hover
+text and the popup's title. A guest sees the button too, disabled, with "Log in om iemand uit te
+nodigen" on hover (`people.invite_signed_out`): the page shows what it is for before you sign in,
+and the sign-in link below says how. "Iemand toevoegen" stays hidden from guests.
+
 ## What a row shows
 
 - the name (your own name for them when you saved them), and the relationship in the reader's
@@ -343,7 +349,8 @@ requests, that is a change to how friendships are made, not to this page.
 - No claim state (invariant 4). No list items are loaded; nothing counts, orders or labels by what
   has been claimed. A list's occasion date is shown, which the list's page already shows anybody
   who may open it.
-- Guests get the explanation and a sign-in link, and no data. The page is `noindex`.
+- Guests get the explanation and a sign-in link, and no data, plus the greyed-out "Nodig uit"
+  button (2026-10-25). The page is `noindex`.
 
 ## Where it is
 

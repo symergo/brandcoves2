@@ -2775,6 +2775,7 @@ return [
         'ask_to_update' => 'Ask :name to update it',
         'not_on_giftcoves' => 'Not on GiftCoves',
         'invite_short' => 'Invite',
+        'invite_signed_out' => 'Sign in to invite somebody',
         'source_you' => 'Filled in by you',
         'source_self' => 'Filled in by :name',
         'source_self_tip' => ':name filled in their taste themselves, through their profile link. Their age is yours, and you change it here.',
