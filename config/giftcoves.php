@@ -173,6 +173,16 @@ return [
         // set and a fresh clone cannot silently run on Postgres' 0.6 default.
         'trigram_threshold' => 0.45,
 
+        // The fuzzy title match runs only when the word match finds fewer
+        // products than this: one page. Measured on production 2026-10-25,
+        // 1.6M be-nl groups: the word match 8-110ms, the fuzzy one 1.7-3.3s,
+        // because the trigram index hands back ~27,000 candidates for a
+        // two-word term and every one is re-checked. A typo finds (almost)
+        // nothing by words, so it still gets the fuzzy match; a correctly
+        // spelled term already has a page and gains only a weak tail that
+        // ranks last anyway. See SearchService::applyTextMatch().
+        'fuzzy_below' => 24,
+
         // What `<%` meant before the threshold above became global: Postgres'
         // own default.
         //

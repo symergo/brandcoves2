@@ -17,6 +17,7 @@ use App\Services\Identity\Gtin;
 use App\Services\Ingestion\IncomingGrouper;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Pagination\Paginator;
@@ -40,6 +41,9 @@ class SearchService
         private readonly BrandAttribution $attribution,
         private readonly IncomingGrouper $grouper,
     ) {}
+
+    /** @var array<string, bool> needsFuzzy() per market and term, for this request */
+    private array $fuzzy = [];
 
     /**
      * @param  bool  $waitForLive  ask the live shops inside this call and fold
@@ -436,7 +440,42 @@ class SearchService
             ->whereNotNull('display_title')
             ->whereRaw('? <% display_title', [$term]);
 
-        $groups->whereIn('product_groups.id', $byText->union($byTitle)->union($byDisplayText)->union($byDisplayTitle));
+        $match = (clone $byText)->union($byDisplayText)->union($byDisplayTitle);
+
+        if ($this->needsFuzzy($query, $match)) {
+            $match->union($byTitle);
+        }
+
+        $groups->whereIn('product_groups.id', $match);
+    }
+
+    /**
+     * Whether the fuzzy title match (`$byTitle`) joins the union: only when
+     * the other branches find less than a page (`search.fuzzy_below`).
+     *
+     * The fuzzy match is the typo net, and the most expensive thing a search
+     * does: 1.7-3.3s on production against 8-110ms for the word match
+     * (2026-10-25), and it ran twice per new term, for the results and for
+     * the filter counts. A typo finds next to nothing by words, so it still
+     * gets the net; a term spelled right already fills a page.
+     *
+     * Asked with a LIMIT, so the answer costs no more than the word match,
+     * and remembered per term for the rest of the request, so the results
+     * and the filter counts agree on which rows they counted.
+     */
+    private function needsFuzzy(SearchQuery $query, QueryBuilder $match): bool
+    {
+        $key = $query->market->value."\0".$query->term;
+
+        if (! array_key_exists($key, $this->fuzzy)) {
+            $below = (int) config('giftcoves.search.fuzzy_below', 24);
+
+            $found = DB::query()->fromSub((clone $match)->limit($below), 'm')->count();
+
+            $this->fuzzy[$key] = $found < $below;
+        }
+
+        return $this->fuzzy[$key];
     }
 
     /** @param Builder<ProductGroup> $groups */

@@ -17,6 +17,7 @@ use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
@@ -115,6 +116,37 @@ class SearchTest extends TestCase
         $this->search(['q' => 'kopltelefon'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('results.items', 1));
+    }
+
+    /**
+     * The fuzzy match is the typo net, and it runs only when the words find
+     * less than `search.fuzzy_below` products (2026-10-25: 1.7-3.3s of a
+     * search on production, against 8-110ms for the words).
+     *
+     * "Gizmi" is one letter off "gizmo": word_similarity 0.5, above the 0.45
+     * threshold, and no stemmer turns one into the other, so only the fuzzy
+     * match can find it.
+     */
+    #[Test]
+    public function the_fuzzy_match_joins_only_when_the_words_find_too_little(): void
+    {
+        $this->productsSharingAWord();
+        $this->describedProduct('gizmi', 'Gizmi bureaulamp', 'Een lamp.');
+
+        $titles = fn (): array => array_column(
+            $this->search(['q' => 'gizmo'])->assertOk()->viewData('page')['props']['results']['items'],
+            'title',
+        );
+
+        // Three products by their words, a page of two: no fuzzy match.
+        config(['giftcoves.search.fuzzy_below' => 2]);
+        $this->assertNotContains('Gizmi bureaulamp', $titles());
+        $this->assertCount(3, $titles());
+
+        // Three is under a page of 24: the fuzzy match finds the near miss.
+        Cache::flush();
+        config(['giftcoves.search.fuzzy_below' => 24]);
+        $this->assertContains('Gizmi bureaulamp', $titles());
     }
 
     /**

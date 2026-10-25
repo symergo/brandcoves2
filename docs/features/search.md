@@ -97,6 +97,18 @@ the real catalogue.
 pg_trgm.word_similarity_threshold` on every Postgres connection, because `<%` compares against that
 GUC and nothing the query can say. See the section below for why that matters more than it looks.
 
+**Only when the words find less than a page (2026-10-25).** On production, with 1.6 million be-nl
+groups, the fuzzy title match took 1.7–3.3 s per term, against 8–110 ms for the word match. The
+trigram index hands back about 27,000 candidates for a two-word term like "handschoenen leer", and
+Postgres re-checks every one. It ran twice per new term, for the results and the filter counts,
+so it was most of a search's time. Now `SearchService::needsFuzzy()` first asks the word branches
+for up to `search.fuzzy_below` (24, one page) ids, and the fuzzy title branch joins the union only
+when they find fewer. A typo finds next to nothing by words and still gets the net
+(`kopltelefon` above); a correctly spelled term already fills a page and loses only a weak tail that
+ranked last anyway. The fuzzy match on the *written* title (`display_title`) always runs: it covers
+few rows and costs ~30 ms. Guarded by
+`SearchTest::the_fuzzy_match_joins_only_when_the_words_find_too_little`.
+
 ## Why the text predicate is shaped the way it is
 
 **Rewritten 2026-08-16.** Search on staging measured **13–21s per query**; it is now well under a
