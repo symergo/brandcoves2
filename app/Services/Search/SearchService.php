@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Jobs\PullLiveSearch;
+use App\Jobs\RefreshSearchCache;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
@@ -80,9 +81,19 @@ class SearchService
 
         $live = $askShops && $deferred === [] && $query->hasLiveTerm()
             ? $this->pullLiveResults($query, $waitForLive)
-            : ['written' => 0, 'unstored' => []];
+            : ['written' => 0, 'unstored' => [], 'folded' => false];
 
-        $ids = $this->resultIds($query);
+        /*
+         * Stale while revalidate (2026-10-25): an outdated list is shown and
+         * recomputed in the background, never while somebody waits. Two
+         * exceptions: a list that does not exist yet (nothing to show), and
+         * this request having just stored the shops' products, which is the
+         * reason it exists (`folded`: the thin follow-up, the admin). Only a
+         * request that may ask the shops (a person, a search engine) starts a
+         * refresh; another crawler is shown the old list for nothing.
+         */
+        $fresh = $live['folded'];
+        $ids = $this->resultIds($query, fresh: $fresh, refresh: $askShops);
 
         if ($query->logged && $query->hasTerm() && $query->page === 1) {
             // Logged with the size of the list, because zero-result queries are
@@ -98,7 +109,7 @@ class SearchService
             liveOffersAdded: $live['written'],
             // Deferred: only the pages with a filter rail read these. See
             // SearchResult::facets().
-            facets: fn (): array => $this->facets($query),
+            facets: fn (): array => $this->facets($query, refresh: $askShops),
             liveOffers: $live['unstored'],
             empty: $ids === [],
             deferredShops: $deferred,
@@ -201,18 +212,32 @@ class SearchService
      * moment the offers exist, and not two minutes later.
      *
      * A plain list of ints, because the cache store rebuilds no objects.
+     * Cached through staleWhileRevalidate(): an outdated list is shown and
+     * recomputed in the background.
      *
      * @return list<int>
      */
-    private function resultIds(SearchQuery $query): array
+    private function resultIds(SearchQuery $query, bool $fresh = false, bool $refresh = true): array
     {
-        $key = $query->resultsCacheKey();
-        $hit = Cache::get($key);
+        $ids = $this->staleWhileRevalidate(
+            $query->resultsCacheSlot(),
+            $query->resultsGeneration(),
+            (int) config('giftcoves.search.results_cache_ttl'),
+            fn (): array => $this->computeResultIds($query),
+            $refresh ? fn () => RefreshSearchCache::dispatch($query) : null,
+            $fresh,
+        );
 
-        if (is_array($hit) && array_is_list($hit)) {
-            return $hit;
-        }
+        return is_array($ids) && array_is_list($ids) ? $ids : $this->computeResultIds($query);
+    }
 
+    /**
+     * The result ids, computed now. See resultIds().
+     *
+     * @return list<int>
+     */
+    private function computeResultIds(SearchQuery $query): array
+    {
         $perShop = max(1, (int) config('giftcoves.search.results_per_shop', 25));
 
         $rows = $this->storedQuery($query)
@@ -247,9 +272,68 @@ class SearchService
             $ids[] = (int) $row->id;
         }
 
-        Cache::put($key, $ids, (int) config('giftcoves.search.results_cache_ttl'));
-
         return $ids;
+    }
+
+    /**
+     * How long an outdated list or count is kept to be shown while its
+     * replacement is computed: long past `results_cache_ttl`, so a term
+     * searched once a week still opens at once.
+     */
+    private const KEEP_STALE = 14 * 86400;
+
+    /**
+     * Stale while revalidate (owner, 2026-10-25: "never computed while
+     * somebody waits, always after showing the outdated one").
+     *
+     * The entry lives at a fixed slot with the generation it was computed
+     * at and when. Current (same generation, younger than `$freshFor`): it
+     * is returned. Outdated (the catalogue moved on: the twice-daily update,
+     * a merge, a shop's answer; or simply older): it is returned all the same
+     * and `$onStale` queues its recomputation (RefreshSearchCache, unique per
+     * slot). Missing: computed now, because there is nothing to show; the
+     * one case a visitor waits for. `$fresh` computes now regardless, for the
+     * request that has just stored the shops' products and exists to show
+     * them.
+     *
+     * Why a queue and not after the response in the same PHP worker (what
+     * `Cache::flexible()` does): after the catalogue update every visited term
+     * is outdated at once, and a queue works them off one by one rather than
+     * in as many parallel searches as there are visitors, which is what took
+     * the site down on the morning of 2026-10-25.
+     *
+     * Safe to show old: an entry is ids or counts. The cards are read fresh
+     * on every view, so prices, stock and discounts are always current; a
+     * product merged away or removed since is simply left out.
+     */
+    private function staleWhileRevalidate(string $slot, string $generation, int $freshFor, \Closure $compute, ?\Closure $onStale, bool $fresh): mixed
+    {
+        $hit = $fresh ? null : Cache::get($slot);
+
+        if (is_array($hit) && array_key_exists('value', $hit)) {
+            $outdated = ($hit['gen'] ?? null) !== $generation || (int) ($hit['at'] ?? 0) < time() - $freshFor;
+
+            if ($outdated && $onStale !== null) {
+                $onStale();
+            }
+
+            return $hit['value'];
+        }
+
+        $value = $compute();
+        Cache::put($slot, ['value' => $value, 'gen' => $generation, 'at' => time()], self::KEEP_STALE);
+
+        return $value;
+    }
+
+    /**
+     * Recompute this search's result ids and filter counts and store them as
+     * current. RefreshSearchCache's work.
+     */
+    public function refreshCache(SearchQuery $query): void
+    {
+        $this->resultIds($query, fresh: true, refresh: false);
+        $this->facets($query, fresh: true, refresh: false);
     }
 
     /**
@@ -680,19 +764,25 @@ class SearchService
      * still asked here, in the request, because rendering it fresh is the
      * condition of showing it at all and a job would leave nothing behind.
      *
-     * @return array{written: int, unstored: list<Offer>}
+     * `folded` is true when the shops' products were stored inside this
+     * call (the admin's wait, a thin search's follow-up): the request then
+     * computes its list fresh instead of showing the outdated one, because
+     * showing those products is what it is for.
+     *
+     * @return array{written: int, unstored: list<Offer>, folded: bool}
      */
     private function pullLiveResults(SearchQuery $query, bool $waitForLive): array
     {
         $connectors = $this->registry->liveFor($query->market);
         if ($connectors === []) {
-            return ['written' => 0, 'unstored' => []];
+            return ['written' => 0, 'unstored' => [], 'folded' => false];
         }
 
         $mirrorable = array_filter($connectors, fn (LiveConnector $c) => $c->source()->allowsCatalogueStorage());
         $renderOnly = array_filter($connectors, fn (LiveConnector $c) => ! $c->source()->allowsCatalogueStorage());
 
         $written = 0;
+        $folded = false;
 
         if ($mirrorable !== [] && Cache::add(
             $query->liveCacheKey(),
@@ -704,6 +794,7 @@ class SearchService
                 $written = $this->fold($query, $offers);
                 $this->rememberShopsAnswered($query, $offers);
                 $this->retire($query);
+                $folded = true;
             } elseif ($this->isThin($query)) {
                 /*
                  * Thin: fewer stored results than one page, the case where
@@ -721,6 +812,7 @@ class SearchService
                 $written = $this->fold($query, $asked['offers']);
                 $this->rememberShopsAnswered($query, $asked['offers']);
                 $this->retire($query);
+                $folded = true;
 
                 // A shop that timed out or failed gets its second chance in
                 // the background, so the next view has what it would have said.
@@ -741,6 +833,7 @@ class SearchService
         return [
             'written' => $written,
             'unstored' => $unstored,
+            'folded' => $folded,
         ];
     }
 
@@ -918,8 +1011,8 @@ class SearchService
     /** @param  list<Offer>  $offers */
     private function mergeIntoCachedResults(SearchQuery $plain, array $offers): void
     {
-        $key = $plain->resultsCacheKey();
-        $cached = Cache::get($key);
+        $entry = Cache::get($plain->resultsCacheSlot());
+        $cached = is_array($entry) ? ($entry['value'] ?? null) : null;
 
         if ($offers === [] || ! is_array($cached) || ! array_is_list($cached)) {
             return;
@@ -960,21 +1053,25 @@ class SearchService
 
         /*
          * Something new: retire the term, so its sorted and filtered variants
-         * recompute with it on their next view, and then put the plain list,
-         * merged, and the filter counts it had straight under the new
-         * generation, so the page nearly every visitor lands on is not
-         * recomputed at all. The counts lack the new products' brands and
-         * shops until they expire (`facet_cache_ttl`); a filter list a few
-         * entries short is the price of not counting the term again.
+         * are recomputed in the background on their next view (they show
+         * their old list meanwhile), and mark the plain list, merged, and the
+         * filter counts it had as current at the new generation, so the page
+         * nearly every visitor lands on is not recomputed at all. The counts
+         * lack the new products' brands and shops until they expire
+         * (`facet_cache_ttl`); a filter list a few entries short is the price
+         * of not counting the term again.
          */
-        $facets = Cache::get($plain->facetCacheKey());
-
         SearchGenerations::bumpTerm($plain->market, $plain->term);
 
-        Cache::put($plain->resultsCacheKey(), [...$cached, ...$shown], (int) config('giftcoves.search.results_cache_ttl'));
+        Cache::put($plain->resultsCacheSlot(), [
+            'value' => [...$cached, ...$shown],
+            'gen' => $plain->resultsGeneration(),
+            'at' => time(),
+        ], self::KEEP_STALE);
 
-        if (is_array($facets)) {
-            Cache::put($plain->facetCacheKey(), $facets, (int) config('giftcoves.search.facet_cache_ttl'));
+        $facets = Cache::get($plain->facetCacheSlot());
+        if (is_array($facets) && array_key_exists('value', $facets)) {
+            Cache::put($plain->facetCacheSlot(), [...$facets, 'gen' => $plain->facetGeneration()], self::KEEP_STALE);
         }
     }
 
@@ -1113,13 +1210,18 @@ class SearchService
      *
      * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
      */
-    private function facets(SearchQuery $query): array
+    private function facets(SearchQuery $query, bool $fresh = false, bool $refresh = true): array
     {
-        return Cache::remember(
-            $query->facetCacheKey(),
+        $facets = $this->staleWhileRevalidate(
+            $query->facetCacheSlot(),
+            $query->facetGeneration(),
             (int) config('giftcoves.search.facet_cache_ttl'),
             fn (): array => $this->countFacets($query),
+            $refresh ? fn () => RefreshSearchCache::dispatch($query) : null,
+            $fresh,
         );
+
+        return is_array($facets) ? $facets : $this->countFacets($query);
     }
 
     /**

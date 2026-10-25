@@ -456,6 +456,18 @@ final readonly class SearchQuery
 
     public function facetCacheKey(): string
     {
+        return $this->facetCacheSlot().':'.$this->facetGeneration();
+    }
+
+    /** The catalogue state the filter counts must have been computed at to be current. */
+    public function facetGeneration(): string
+    {
+        return $this->generations(withBrands: $this->isBrandScope());
+    }
+
+    /** Where this search's filter counts live, whatever the catalogue's state. See resultsCacheSlot(). */
+    public function facetCacheSlot(): string
+    {
         // On a brand page the counts are scoped to the brand
         // (SearchService::countFacets()), so the brands are part of the key and
         // of the generations that retire it. Anywhere else they are not: a
@@ -468,8 +480,7 @@ final readonly class SearchQuery
 
         return 'bc:search:facets:'.$this->market->value
             .':'.($this->inStockOnly ? '1' : '0')
-            .':'.sha1(mb_strtolower($this->term).($brands === [] ? '' : "\0".implode("\0", $brands)))
-            .':'.$this->generations(withBrands: $brands !== []);
+            .':'.sha1(mb_strtolower($this->term).($brands === [] ? '' : "\0".implode("\0", $brands)));
     }
 
     /**
@@ -524,6 +535,18 @@ final readonly class SearchQuery
      */
     public function resultsCacheKey(): string
     {
+        return $this->resultsCacheSlot().':'.$this->resultsGeneration();
+    }
+
+    /**
+     * Where this search's result ids live, whatever the catalogue's state:
+     * the key without the generations (2026-10-25). The entry carries the
+     * generation it was computed at, so an outdated list can still be shown
+     * while a new one is computed in the background (SearchService, "Stale
+     * while revalidate").
+     */
+    public function resultsCacheSlot(): string
+    {
         $brands = $this->brands;
         sort($brands);
         $merchants = $this->merchantIds;
@@ -545,7 +568,13 @@ final readonly class SearchQuery
             $this->comparableOnly,
             $this->sort,
             $tags,
-        ], JSON_THROW_ON_ERROR)).':'.$this->generations();
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    /** The catalogue state a result list must have been computed at to be current. */
+    public function resultsGeneration(): string
+    {
+        return $this->generations();
     }
 
     /** @return array<string, mixed> Query string for building filter links. */

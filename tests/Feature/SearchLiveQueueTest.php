@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Enums\Source;
 use App\Jobs\GroupProducts;
 use App\Jobs\PullLiveSearch;
+use App\Jobs\RefreshSearchCache;
 use App\Models\ProductGroup;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\LiveConnector;
@@ -232,7 +233,14 @@ class SearchLiveQueueTest extends TestCase
 
         Queue::pushed(PullLiveSearch::class)->sole()->handle($search);
 
+        // The plain list was merged: the shop's product is there at once.
         $this->assertCount(1, $search->search($plain)->groups->items());
+
+        // The sorted variant shows its old list and queues its recomputation
+        // (stale while revalidate, 2026-10-25), which then has the product.
+        $this->assertCount(0, $search->search($cheapest)->groups->items());
+        Queue::assertPushed(RefreshSearchCache::class, fn (RefreshSearchCache $job) => $job->query->sort === 'price_asc');
+        (new RefreshSearchCache($cheapest))->handle($search);
         $this->assertCount(1, $search->search($cheapest)->groups->items());
 
         DB::flushQueryLog();
@@ -272,6 +280,41 @@ class SearchLiveQueueTest extends TestCase
         DB::flushQueryLog();
         $this->assertCount(1, $search->search($plain)->groups->items());
         $this->assertSame([], $this->searchQueries(), 'An answer that adds nothing should leave the cache alone.');
+    }
+
+    /**
+     * Stale while revalidate (owner, 2026-10-25): after the catalogue moved on,
+     * the outdated list is shown without searching, and its recomputation is
+     * queued. Only a list that does not exist yet is computed while somebody
+     * waits.
+     */
+    #[Test]
+    public function an_outdated_list_is_shown_and_recomputed_in_the_background(): void
+    {
+        Queue::fake();
+        $this->koptelefoons(2);
+
+        $search = app(SearchService::class);
+        $query = new SearchQuery(market: Market::BeNl, term: 'koptelefoon', logged: false, liveTerm: '');
+
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->assertCount(2, $search->search($query)->groups->items());
+        $this->assertCount(1, $this->searchQueries(), 'A list nobody has yet is computed.');
+
+        // The twice-daily catalogue update.
+        SearchGenerations::bumpMarket(Market::BeNl);
+
+        DB::flushQueryLog();
+        $this->assertCount(2, $search->search($query)->groups->items());
+        $this->assertSame([], $this->searchQueries(), 'The outdated list is shown, not recomputed.');
+        Queue::assertPushed(RefreshSearchCache::class, 1);
+
+        // The job recomputes it; after that it is current, and no job is queued.
+        Queue::pushed(RefreshSearchCache::class)->sole()->handle($search);
+        $before = count(Queue::pushed(RefreshSearchCache::class));
+        $search->search($query);
+        $this->assertCount($before, Queue::pushed(RefreshSearchCache::class));
     }
 
     #[Test]

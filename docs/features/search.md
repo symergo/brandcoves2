@@ -1082,3 +1082,30 @@ whenever a live fetch had retired the page's cache.
   filter list drawn from the whole catalogue says nothing and cost close to a minute.
 - With a term nothing changes: the counts still ignore the filters, as `facets_do_not_erase_their_
   own_options` checks (now with a term). Guarded by `the_filter_counts_never_cover_the_whole_market`.
+
+## Stale while revalidate (owner, 2026-10-25)
+
+"The cache should never be refreshed live, always after showing the stale one." The result ids and
+the filter counts used to live under keys that carried the generations: a catalogue update (twice a
+day), a merge or a shop's answer changed the key, and the next visitor found nothing and paid for
+the whole search, seconds with the fuzzy match.
+
+Now each entry lives at a fixed slot (`SearchQuery::resultsCacheSlot()`, `facetCacheSlot()`) as
+`{value, gen, at}`, kept 14 days (`SearchService::KEEP_STALE`).
+`SearchService::staleWhileRevalidate()`:
+- **current** (same generation, younger than `results_cache_ttl` / `facet_cache_ttl`): returned;
+- **outdated**: returned all the same, and `RefreshSearchCache` (unique per slot) recomputes it on
+  the queue;
+- **missing**: computed now, the one case somebody waits (nothing to show);
+- **`fresh`**: computed now regardless, only for the request that has just stored the shops'
+  products and exists to show them (the thin follow-up, the admin's `waitForLive`).
+
+Only a request that may ask the shops (a person, Google, Bing) queues a refresh; another crawler
+gets the old list for nothing. **A queue, not `Cache::flexible()`** (which recomputes after the
+response in the same PHP worker): after a catalogue update every visited term is outdated at once,
+and the queue works them off one at a time instead of as many parallel searches as visitors, which
+is what took the site down that morning. Showing an old list is safe: it is ids, and the cards are
+read fresh on every view, so price, stock and discount are always current; a product merged away
+is simply left out. The background job's merge (`mergeIntoCachedResults()`) writes the merged plain
+list as current at the new generation; its variants show their old list and refresh in the
+background. Guarded by `SearchLiveQueueTest::an_outdated_list_is_shown_and_recomputed_in_the_background`.
