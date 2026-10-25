@@ -15,6 +15,8 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
+use App\Services\Search\SearchQuery;
+use App\Services\Search\SearchService;
 use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -361,12 +363,34 @@ class SearchTest extends TestCase
     public function facets_do_not_erase_their_own_options(): void
     {
         // Selecting a brand must not make every other brand vanish from the
-        // list, or the filter panel becomes a one-way door.
-        $response = $this->search(['brand' => ['Sony']])->assertOk();
+        // list, or the filter panel becomes a one-way door. With a term:
+        // without one the counts would cover the whole catalogue, and are not
+        // made at all (2026-10-25, see the next test).
+        $response = $this->search(['q' => 'sony or philips', 'brand' => ['Sony']])->assertOk();
         $brands = array_column($response->viewData('page')['props']['facets']['brands'], 'value');
 
         $this->assertContains('Sony', $brands);
         $this->assertContains('Philips', $brands, 'other brands must remain selectable');
+    }
+
+    /**
+     * Never counted over a whole market (2026-10-25): without a term the
+     * counts ran over every product of the market, 38-55 s for a small
+     * brand's page on production. A brand page counts its brand's products;
+     * a search with neither a term nor a brand page gets no counts.
+     */
+    #[Test]
+    public function the_filter_counts_never_cover_the_whole_market(): void
+    {
+        $search = app(SearchService::class);
+
+        $brandPage = (new SearchQuery(market: Market::BeNl, logged: false))->withBrands(['Philips'], liveTerm: 'Philips');
+        $this->assertTrue($brandPage->isBrandScope());
+        $this->assertSame(['Philips'], array_column($search->search($brandPage, askShops: false)->facets()['brands'], 'value'));
+
+        $noTerm = new SearchQuery(market: Market::BeNl, brands: ['Sony'], sort: 'price_asc', logged: false);
+        $this->assertFalse($noTerm->isBrandScope());
+        $this->assertSame(['brands' => [], 'merchants' => []], $search->search($noTerm, askShops: false)->facets());
     }
 
     #[Test]

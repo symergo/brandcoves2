@@ -444,12 +444,32 @@ final readonly class SearchQuery
      * Carries the market and term generations (generations()), like the
      * result ids, so the sidebar and the grid are retired at the same moments.
      */
+    /**
+     * A brand page: no term, and the brands are the page's scope rather than
+     * a filter someone chose (the page asks the live shops for the brand's
+     * name, `liveTerm`). A brand chosen in the Filters menu has no live term.
+     */
+    public function isBrandScope(): bool
+    {
+        return trim($this->term) === '' && $this->brands !== [] && $this->liveTerm !== null;
+    }
+
     public function facetCacheKey(): string
     {
+        // On a brand page the counts are scoped to the brand
+        // (SearchService::countFacets()), so the brands are part of the key and
+        // of the generations that retire it. Anywhere else they are not: a
+        // brand filter must not change the counts it is chosen from.
+        $brands = [];
+        if ($this->isBrandScope()) {
+            $brands = array_map('mb_strtolower', $this->brands);
+            sort($brands);
+        }
+
         return 'bc:search:facets:'.$this->market->value
             .':'.($this->inStockOnly ? '1' : '0')
-            .':'.sha1(mb_strtolower($this->term))
-            .':'.$this->generations(withBrands: false);
+            .':'.sha1(mb_strtolower($this->term).($brands === [] ? '' : "\0".implode("\0", $brands)))
+            .':'.$this->generations(withBrands: $brands !== []);
     }
 
     /**

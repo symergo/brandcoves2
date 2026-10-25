@@ -1065,3 +1065,20 @@ Owner's requests, the same day:
 - **The green pills of the words narrowing a search are gone** (`activeTerms`, prop and server
   code). The search box holds the words; the pills that add a word stay. The brand page keeps its
   own row. `SearchPillsTest` now guards that the prop is gone.
+
+## The filter counts never cover a whole market (2026-10-25)
+
+Profiling brand pages on production: Samsung 1.4 s on a first view (0.07 s cached), but
+anker-solix **38.8 s** and even-realities **55.0 s**, almost all of it the filter counts. A brand
+page has no term, and the counts ignore the filters (so a chosen brand does not erase its
+neighbours), the brand included: they ran over every product of the market, 1.6 million on be-nl,
+whenever a live fetch had retired the page's cache.
+
+- **A brand page counts its brand's products** (`SearchQuery::isBrandScope()`: no term, brands
+  set, and a live term, which only a brand page has; a brand chosen in the Filters menu has none).
+  The brands are part of the facet cache key and of its generations then. Measured on production:
+  20 ms for even-realities (index `product_groups_market_brand_idx`).
+- **No term and no brand page: no counts** (a sorted catalogue, a brand filter without a term). A
+  filter list drawn from the whole catalogue says nothing and cost close to a minute.
+- With a term nothing changes: the counts still ignore the filters, as `facets_do_not_erase_their_
+  own_options` checks (now with a term). Guarded by `the_filter_counts_never_cover_the_whole_market`.

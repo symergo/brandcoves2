@@ -1142,6 +1142,20 @@ class SearchService
      */
     private function countFacets(SearchQuery $query): array
     {
+        /*
+         * Never over a whole market (2026-10-25). Without a term the counts
+         * used to run over every product in the market, 1.6 million on be-nl:
+         * 38-55 s for a small brand's page on production, each time a live
+         * fetch had retired its cache. A brand page (no term, the brand as its
+         * scope) now counts that brand's products; a search with neither a
+         * term nor a brand page's scope gets no counts (a sorted catalogue, a
+         * brand chosen in the Filters menu without a term): a filter list
+         * drawn from the whole catalogue says nothing, and costs that minute.
+         */
+        if (! $query->hasTerm() && ! $query->isBrandScope()) {
+            return ['brands' => [], 'merchants' => []];
+        }
+
         $base = ProductGroup::query()
             ->forMarket($query->market)
             ->whereNotNull('min_price')
@@ -1150,6 +1164,8 @@ class SearchService
 
         if ($query->hasTerm()) {
             $this->applyTextMatch($base, $query);
+        } else {
+            $base->whereIn('brand', $query->brands);
         }
         if ($query->inStockOnly) {
             $base->where('in_stock', true);
