@@ -254,8 +254,10 @@ it straight after the page is shown; that follow-up request runs the ordinary th
 marker, asks the shops, folds, skips the fuzzy match if they answered) and returns the results, how
 many products were added, and a worded notice (`search.live_added`, plural on the server).
 - **Found online, shown first** (owner, the same day; first built at the bottom). `Search.tsx` puts
-  the added products above the ones already shown, and the "we are also looking at bol.com" line and
-  then the notice sit above the grid. That pushes the shown cards down once, a layout shift the owner
+  the added products above the ones already shown. "We kijken ook bij bol.com…" and then "20
+  producten van bol.com, eBay toegevoegd" are said in the one line under the search bar (the same
+  `SearchStatus` that says "Even zoeken…"), laid over the margin so nothing moves, and the notice
+  goes after six seconds (owner, the same evening; first a line above the grid). That pushes the shown cards down once, a layout shift the owner
   accepted: it only happens on a thin search, with few cards to push. An empty first page shows
   placeholder cards instead of "nothing found" while the shops are asked.
 - **The by-store view too.** Its lanes come from their own query (`storeLanes()`), not from the

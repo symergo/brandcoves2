@@ -5,7 +5,7 @@ import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
-import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed, WaitLine } from '../Components/SearchWait'
+import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
@@ -526,7 +526,7 @@ export default function Search({
                 className="relative flex gap-2"
                 role="search"
             >
-                <SearchStatus elapsed={elapsed} shops={waitShops} />
+                <SearchStatus elapsed={elapsed} shops={waitShops} liveShops={livePending ? liveShops : []} notice={live?.notice ?? null} />
                 {/*
                   A scanner beam sweeping the bottom edge of the field, inside
                   the border, rather than a bar above or below the row.
@@ -977,19 +977,6 @@ export default function Search({
                                 {t('search.intent_as_words')}
                             </Link>
                         </div>
-                    )}
-
-                    {/*
-                      Above the grid, with the products the shops add there:
-                      who else is being asked while they are, then how many
-                      products their answer added. The notice takes the line's
-                      place, so that swap moves nothing.
-                    */}
-                    {!searching && livePending && <WaitLine shops={liveShops} />}
-                    {!searching && live?.notice && (
-                        <p role="status" className="my-4 text-sm text-ink-soft">
-                            {live.notice}
-                        </p>
                     )}
 
                     {placeholders ? (

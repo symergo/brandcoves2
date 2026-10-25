@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -83,31 +83,49 @@ function Pulse() {
     )
 }
 
+/** How long "20 producten van bol.com toegevoegd" stays before it goes. */
+const NOTICE_FOR = 6000
+
 /**
- * The line under the search bar while a search loads (owner, 2026-10-25):
- * "Even zoeken…", then funny lines about how the search is going, naming
- * the shops it looks through ("Even rondneuzen bij Coolblue…"), changing
- * every few seconds. One line, never two.
+ * The one line under the search bar (owner, 2026-10-25). In order of what
+ * it says:
  *
- * Lines and shops are shuffled for every search, so each starts somewhere
- * else and no line repeats before all have been shown. `shops` are the
- * market's biggest shops (WaitShops on the server); with none, only
- * "Even zoeken…", and with one, only the lines that name one shop.
+ * 1. While a search loads: "Even zoeken…", then funny lines about how the
+ *    search is going, naming the shops it looks through ("Even rondneuzen bij
+ *    Coolblue…"), changing every few seconds. Lines and shops are shuffled
+ *    for every search, so each starts somewhere else and no line repeats
+ *    before all have been shown. `shops` are the market's biggest shops
+ *    (WaitShops on the server); with none, only "Even zoeken…", and with one,
+ *    only the lines that name one shop.
+ * 2. While the live shops are asked after the page was shown: "We kijken
+ *    ook bij bol.com…" (`liveShops`).
+ * 3. When they answered: how many products they added ("20 producten van
+ *    bol.com, eBay toegevoegd", `notice`), for six seconds, then nothing.
  *
  * Laid over the margin under the bar (`absolute`), so it takes no room: it
- * appears and disappears without moving anything on the page. The parent
- * must be `relative`. One line, truncated, so it cannot spill onto what is
- * below. Only "Even zoeken…" is for screen readers; a line read aloud every
- * few seconds is noise, so the rest is `aria-hidden`.
+ * appears, changes and disappears without moving anything on the page. The
+ * parent must be `relative`. One line, truncated, so it cannot spill onto
+ * what is below. The funny lines are `aria-hidden` (a line read aloud every
+ * few seconds is noise); the rest is announced.
  */
-export function SearchStatus({ elapsed, shops = [] }: { elapsed: number; shops?: string[] }) {
+export function SearchStatus({
+    elapsed,
+    shops = [],
+    liveShops = [],
+    notice = null,
+}: {
+    elapsed: number
+    shops?: string[]
+    liveShops?: string[]
+    notice?: string | null
+}) {
     const { t } = useTranslations()
     const lineOrder = useRef<string[]>(LINES)
     const shopOrder = useRef<string[]>(shops)
     const idle = elapsed === 0
 
     // Shuffled while no search runs, ready for the next one. Never during
-    // server rendering: the line is only drawn while a search runs.
+    // server rendering: the funny lines are only drawn while a search runs.
     useEffect(() => {
         if (idle) {
             lineOrder.current = shuffled(LINES)
@@ -115,41 +133,59 @@ export function SearchStatus({ elapsed, shops = [] }: { elapsed: number; shops?:
         }
     }, [idle, shops])
 
-    if (elapsed < PLACEHOLDER_AFTER) {
-        return null
-    }
+    // The notice shows for NOTICE_FOR, from the moment it arrives.
+    const [noticeShown, setNoticeShown] = useState<string | null>(null)
+    useEffect(() => {
+        if (!notice) {
+            setNoticeShown(null)
+            return
+        }
+        setNoticeShown(notice)
+        const id = window.setTimeout(() => setNoticeShown(null), NOTICE_FOR)
 
-    const names = shopOrder.current.length > 0 ? shopOrder.current : shops
-    const lines = names.length > 1 ? lineOrder.current : lineOrder.current.filter((key) => !t(key).includes(':other'))
-    const step = Math.floor((elapsed - LINES_AFTER) / LINE_EVERY)
-    const key = names.length > 0 && elapsed >= LINES_AFTER && lines.length > 0 ? lines[step % lines.length] : null
+        return () => window.clearTimeout(id)
+    }, [notice])
 
-    return (
+    const line = (content: ReactNode, pulse = true) => (
         <p className="pointer-events-none absolute inset-x-0 top-full mt-1.5 flex items-center gap-2 text-xs text-ink-soft sm:text-sm">
-            <Pulse />
-            {key ? (
+            {pulse && <Pulse />}
+            {content}
+        </p>
+    )
+
+    if (elapsed >= PLACEHOLDER_AFTER) {
+        const names = shopOrder.current.length > 0 ? shopOrder.current : shops
+        const lines = names.length > 1 ? lineOrder.current : lineOrder.current.filter((key) => !t(key).includes(':other'))
+        const step = Math.floor((elapsed - LINES_AFTER) / LINE_EVERY)
+        const key = names.length > 0 && elapsed >= LINES_AFTER && lines.length > 0 ? lines[step % lines.length] : null
+
+        return line(
+            key ? (
                 <span key={key} className="truncate" aria-hidden>
                     {t(key, { shop: names[step % names.length], other: names[(step + 1) % names.length] })}
                 </span>
             ) : (
                 <span className="truncate">{t('search.wait_searching')}</span>
-            )}
-        </p>
-    )
-}
+            ),
+        )
+    }
 
-/**
- * The line under the grid while the live shops are asked after the page was
- * shown: "We kijken ook bij bol.com…". Under the grid, so neither it nor the
- * notice that replaces it moves a product the visitor is looking at.
- */
-export function WaitLine({ shops }: { shops: string[] }) {
-    const { t } = useTranslations()
+    if (elapsed === 0 && liveShops.length > 0) {
+        return line(
+            <span role="status" className="truncate">
+                {t('search.live_looking', { shops: liveShops.join(', ') })}
+            </span>,
+        )
+    }
 
-    return (
-        <p role="status" className="my-4 flex items-center gap-2 text-sm text-ink-soft">
-            <Pulse />
-            {t('search.live_looking', { shops: shops.join(', ') })}
-        </p>
-    )
+    if (elapsed === 0 && noticeShown) {
+        return line(
+            <span role="status" className="truncate">
+                {noticeShown}
+            </span>,
+            false,
+        )
+    }
+
+    return null
 }
