@@ -166,6 +166,10 @@ export default function SignInDialog({
             )}
 
             <form onSubmit={submit} className="relative space-y-3">
+                {/* How easy the email way is, at the email way itself (owner,
+                    2026-10-25): the intro above can be a page's own hint, so
+                    this is the one line every sign-in shows. */}
+                <p className="text-sm text-ink">{t('auth.email_easy')}</p>
                 <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
                 {/* Optional, and only used when the account is created. A magic
                     link is the whole of registration here, so this is the one

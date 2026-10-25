@@ -578,6 +578,7 @@ return [
 
     'auth' => [
         'title' => 'Iniciar sesión',
+        'email_easy' => 'Iniciar sesión en GiftCoves por correo es muy fácil: te enviamos un enlace y solo tienes que hacer clic en él.',
         'intro' => 'Escribe tu correo y te enviaremos un enlace. Sin contraseñas que recordar.',
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',

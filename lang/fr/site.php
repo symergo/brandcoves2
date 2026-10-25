@@ -579,6 +579,7 @@ return [
 
     'auth' => [
         'title' => 'Se connecter',
+        'email_easy' => 'Se connecter à GiftCoves par e-mail, c’est très simple : nous vous envoyons un lien de connexion, il vous suffit de cliquer dessus.',
         'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',

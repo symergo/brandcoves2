@@ -727,6 +727,7 @@ return [
 
     'auth' => [
         'title' => 'Sign in',
+        'email_easy' => 'Signing in to GiftCoves by email is very easy: we send you a sign-in link and all you do is click it.',
         'intro' => 'Enter your email and we will send you a link. No password to remember.',
         'email' => 'Email address',
         'send' => 'Send me a link',

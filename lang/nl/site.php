@@ -582,6 +582,7 @@ return [
 
     'auth' => [
         'title' => 'Inloggen',
+        'email_easy' => 'Via e-mail aanmelden op GiftCoves is heel gemakkelijk: we sturen je een aanmeldlink en jij hoeft er alleen op te klikken.',
         'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',

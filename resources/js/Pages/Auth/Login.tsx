@@ -79,6 +79,8 @@ export default function Login({ googleEnabled, email }: Props) {
                 )}
 
                 <form onSubmit={submit} className="relative space-y-3">
+                    {/* The same line as the sign-in popup (owner, 2026-10-25). */}
+                    <p className="text-sm text-ink">{t('auth.email_easy')}</p>
                     <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
                     {/*
                       Optional, and only used when the account is created.
