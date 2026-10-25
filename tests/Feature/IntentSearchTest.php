@@ -40,9 +40,8 @@ class IntentSearchTest extends TestCase
                 ->where('intent.budget.max', 5000)
                 // Within the budget only: the €89 set is out.
                 ->where('results.items', fn ($items) => collect($items)->pluck('id')->all() === [$gloves->id])
-                // A sentence gets no word pills, no Amazon search of the
+                // A sentence gets no Amazon search of the
                 // sentence, and no offer to watch it.
-                ->where('activeTerms', [])
                 ->where('amazonSearch', null)
                 ->where('watch', null));
     }

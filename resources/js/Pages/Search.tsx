@@ -36,6 +36,9 @@ interface SearchResults {
     items: GroupCard[]
 }
 
+/** Where this browser keeps the shops hidden in the by-store view. */
+const HIDDEN_SHOPS_KEY = 'bc:search:hidden-shops'
+
 /** One shop's row in the by-store view. */
 interface Lane {
     shop: string
@@ -112,7 +115,6 @@ interface Props {
     watch: WatchState | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
     terms: { term: string; url: string }[]
-    activeTerms: { term: string; url: string }[]
     /** Lowercase brand name → brand page URL, for brands that have one. */
     brandLinks: Record<string, string>
     /** Long-form copy below the grid. Null on pages that are noindex anyway. */
@@ -208,7 +210,6 @@ export default function Search({
     watch,
     pastedLink,
     terms,
-    activeTerms,
     brandLinks,
     narrative,
     intro,
@@ -267,6 +268,36 @@ export default function Search({
         setTerm(q)
     }, [q])
     const [searching, setSearching] = useState(false)
+
+    /*
+     * Shops hidden in the by-store view (owner, 2026-10-25), by name. A
+     * per-visitor preference, so it lives in this browser and carries over to
+     * the next search: a shop you hid once stays out of the way. Read after
+     * mounting (storage does not exist on the SSR container) and inside
+     * try/catch, since storage can be blocked or missing.
+     */
+    const [hiddenShops, setHiddenShops] = useState<string[]>([])
+    useEffect(() => {
+        try {
+            const stored: unknown = JSON.parse(window.localStorage.getItem(HIDDEN_SHOPS_KEY) ?? '[]')
+            if (Array.isArray(stored)) {
+                setHiddenShops(stored.filter((name): name is string => typeof name === 'string'))
+            }
+        } catch {
+            // No storage: nothing hidden.
+        }
+    }, [])
+    const keepHiddenShops = (next: string[]) => {
+        setHiddenShops(next)
+        try {
+            window.localStorage.setItem(HIDDEN_SHOPS_KEY, JSON.stringify(next))
+        } catch {
+            // Hidden for this page only.
+        }
+    }
+    const hideShop = (shop: string) => keepHiddenShops([...hiddenShops.filter((name) => name !== shop), shop])
+    const showShop = (shop: string) => keepHiddenShops(hiddenShops.filter((name) => name !== shop))
+    const showAllShops = () => keepHiddenShops([])
     // How long the search has been loading: drives the line under the search
     // bar ("Even zoeken…", then the tips) and the placeholders.
     const elapsed = useElapsed(searching)
@@ -737,13 +768,26 @@ export default function Search({
 
                                 <ResultControls sort={sort} view={view} go={go} />
 
-                                {/* In the by-store view the chips above the lanes own the shops. */}
+                                {/*
+                                  In the by-store view the shops are columns,
+                                  and the menu shows or hides them instead of
+                                  filtering the search by shop.
+                                */}
                                 <FilterPanel
                                     facets={facets}
                                     filters={filters}
                                     brandLinks={brandLinks}
                                     go={go}
                                     showShops={view !== 'store'}
+                                    shopVisibility={
+                                        view === 'store' && lanes
+                                            ? {
+                                                  shops: lanes.map((lane) => lane.shop),
+                                                  hidden: hiddenShops,
+                                                  setVisible: (shop, visible) => (visible ? showShop(shop) : hideShop(shop)),
+                                              }
+                                            : undefined
+                                    }
                                 />
                             </aside>
                         </div>
@@ -845,64 +889,6 @@ export default function Search({
                                 </li>
                             )}
                         </ul>
-                    )}
-
-                    {view === 'store' && (
-                        /*
-                          The shops are the control.
-
-                          In the by-store view the chip and the column it
-                          governs are the same object, carry the same mark and
-                          sit a few pixels apart, so "drop this shop" is one
-                          click on the thing you want rid of.
-                        */
-                        <div className="mb-4">
-                            <ShopChips
-                                shops={facets.merchants}
-                                selected={([] as string[])
-                                    .concat((filters.merchant as string[]) ?? [])
-                                    .map(String)}
-                                onChange={(next) => go({ merchant: next.length > 0 ? next : null })}
-                            />
-                        </div>
-                    )}
-
-
-                    {/*
-                      What is already narrowing this search, and the way off it.
-
-                      The same row the brand page has carried since it gained
-                      sub-search, down to the label: it is one control, and two
-                      spellings of it would read as two features.
-                    */}
-                    {activeTerms.length > 0 && (
-                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                            {activeTerms.map((item) => (
-                                <button
-                                    key={item.term}
-                                    type="button"
-                                    onClick={() =>
-                                        router.get(
-                                            item.url,
-                                            {},
-                                            {
-                                                preserveScroll: true,
-                                                preserveState: true,
-                                                onStart: () => setSearching(true),
-                                                onFinish: () => setSearching(false),
-                                            },
-                                        )
-                                    }
-                                    // Green, so a chosen word is distinguishable from a
-                                    // suggestion at a glance rather than by reading it.
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-sage bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-sage transition hover:border-accent hover:text-accent"
-                                >
-                                    <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
-                                    {item.term}
-                                    <span className="sr-only">{t('search.remove_term', { term: item.term })}</span>
-                                </button>
-                            ))}
-                        </div>
                     )}
 
 
@@ -1072,8 +1058,26 @@ export default function Search({
                          * and the column width is fixed so the scroll is
                          * legible rather than a squeeze.
                          */
+                        <>
+                        {/*
+                          Hidden columns, and the way back (owner, 2026-10-25:
+                          hide a shop on its column instead of the chip row
+                          that used to sit above them).
+                        */}
+                        {lanes.some((lane) => hiddenShops.includes(lane.shop)) && (
+                            <p className="mb-3 text-sm text-ink-soft">
+                                {(() => {
+                                    const count = lanes.filter((lane) => hiddenShops.includes(lane.shop)).length
+                                    return count === 1 ? t('search.hidden_shops_one') : t('search.hidden_shops', { count })
+                                })()}
+                                {' · '}
+                                <button type="button" onClick={() => showAllShops()} className="text-accent-dark underline hover:text-ink">
+                                    {t('search.show_all_shops')}
+                                </button>
+                            </p>
+                        )}
                         <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3">
-                            {lanes.map(({ shop, logo, items }) => (
+                            {lanes.filter((lane) => !hiddenShops.includes(lane.shop)).map(({ shop, logo, items }) => (
                                 /*
                                   Each shop is a card, not a stretch of column.
 
@@ -1120,7 +1124,8 @@ export default function Search({
                                       would have a screen reader say the shop
                                       twice.
                                     */}
-                                    <h2 className="flex items-center gap-2 border-b border-line bg-cream px-3 py-2.5 font-medium">
+                                    <div className="flex items-center gap-2 border-b border-line bg-cream py-1.5 pr-1.5 pl-3">
+                                    <h2 className="flex min-w-0 flex-1 items-center gap-2 py-1 font-medium">
                                         {logo && (
                                             <img
                                                 src={logo}
@@ -1136,6 +1141,17 @@ export default function Search({
                                         )}
                                         <span className="truncate">{shop}</span>
                                     </h2>
+                                    {/* Hide this shop's column; the line above the columns brings it back. */}
+                                    <button
+                                        type="button"
+                                        onClick={() => hideShop(shop)}
+                                        aria-label={t('search.hide_shop', { shop })}
+                                        title={t('search.hide_shop', { shop })}
+                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/50 hover:text-ink"
+                                    >
+                                        <ToolIcon name="close" className="h-3.5 w-3.5" />
+                                    </button>
+                                    </div>
 
                                     {/*
                                       Rows divided by a hairline rather than
@@ -1240,6 +1256,7 @@ export default function Search({
                                 </section>
                             ))}
                         </div>
+                        </>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                             {results.items.map((g, i) => (
@@ -1323,17 +1340,38 @@ function FilterPanel({
     brandLinks,
     go,
     showShops,
+    shopVisibility,
 }: {
     facets: Facets
     filters: Record<string, unknown>
     brandLinks: Record<string, string>
     go: (next: Record<string, unknown>) => void
     showShops: boolean
+    /**
+     * The by-store view's columns, each one ticked while it is shown (owner,
+     * 2026-10-25). Not a filter on the search: it only hides columns, in this
+     * browser, like the × on a column.
+     */
+    shopVisibility?: { shops: string[]; hidden: string[]; setVisible: (shop: string, visible: boolean) => void }
 }) {
     const { t } = useTranslations()
 
     return (
         <>
+            {/* First in the by-store view: there the shops are what the page is laid out by. */}
+            {shopVisibility && shopVisibility.shops.length > 0 && (
+                <Facet
+                    title={t('search.shops_shown')}
+                    collapsible={false}
+                    items={shopVisibility.shops.map((shop) => ({
+                        key: shop,
+                        label: shop,
+                        active: !shopVisibility.hidden.includes(shop),
+                    }))}
+                    onToggle={(shop, active) => shopVisibility.setVisible(shop, !active)}
+                />
+            )}
+
             {facets.brands.length > 0 && (
                 <Facet
                     title={t('search.brand')}
@@ -1394,126 +1432,6 @@ function FilterPanel({
                 onChange={(v) => go({ in_stock: v ? null : '0' })}
             />
         </>
-    )
-}
-
-/**
- * The shop filter for the by-store view, as the shops themselves.
- *
- * ## Why "no selection" draws every chip as active
- *
- * The underlying filter is a multi-select that means *nothing* when empty, and
- * an empty filter shows every shop. Drawn literally that gives a row of hollow
- * chips above a strip of visible columns, which reads as "none of these are
- * on" directly above the evidence that all of them are. So the chips render
- * what is *true of the page* — every shop shown — rather than what is in the
- * query string.
- *
- * That makes the first click ambiguous, and it is resolved the way the row
- * reads: clicking a shop while everything is shown means "only this one", not
- * "all except this one". The alternative would have to write every other shop
- * into the URL, which also silently excludes any shop that appears later.
- * Deselecting the last one returns to all, so there is no state in which the
- * lanes are empty because of this control alone.
- *
- * `All shops` is a chip rather than a "clear" link because it is the same kind
- * of thing as its neighbours: one of the row's mutually reachable states.
- */
-function ShopChips({
-    shops,
-    selected,
-    onChange,
-}: {
-    shops: { id: number; name: string; logo: string | null }[]
-    selected: string[]
-    onChange: (next: string[]) => void
-}) {
-    const { t } = useTranslations()
-
-    if (shops.length === 0) {
-        return null
-    }
-
-    const filtering = selected.length > 0
-
-    /*
-     * Three states, not two.
-     *
-     * "Shown because nothing is filtered" and "shown because you picked it" are
-     * both true of the column, but they are not the same claim, and drawing
-     * them the same way made the resting page a row of seven solid pills — a
-     * lot of ink to say "no filter is applied", and it left `All shops` with no
-     * way to look like the state it is. So only a deliberate choice gets the
-     * solid treatment: at rest the shops sit quiet and readable, and `All
-     * shops` is the one filled chip.
-     */
-    const chip = (state: 'on' | 'off' | 'resting') =>
-        `flex min-h-10 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition sm:min-h-0 ${
-            {
-                on: 'border-ink bg-ink text-cream',
-                resting: 'border-line bg-card text-ink hover:border-ink',
-                off: 'border-line bg-transparent text-ink-soft hover:border-ink hover:text-ink',
-            }[state]
-        }`
-
-    return (
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('search.shop')}>
-            <button
-                type="button"
-                className={chip(filtering ? 'off' : 'on')}
-                onClick={() => onChange([])}
-            >
-                {t('search.all_shops')}
-            </button>
-
-            {shops.map((shop) => {
-                const id = String(shop.id)
-                const active = !filtering || selected.includes(id)
-
-                return (
-                    <button
-                        key={id}
-                        type="button"
-                        aria-pressed={active}
-                        className={chip(!filtering ? 'resting' : active ? 'on' : 'off')}
-                        /*
-                          The label says what the click does, because the chip
-                          itself only says which shop it is. Without it a screen
-                          reader hears "Coolblue, pressed" and has to guess.
-                        */
-                        aria-label={
-                            active && filtering
-                                ? t('search.hide_shop', { shop: shop.name })
-                                : t('search.only_shop', { shop: shop.name })
-                        }
-                        onClick={() =>
-                            onChange(
-                                !filtering
-                                    ? [id]
-                                    : selected.includes(id)
-                                      ? selected.filter((s) => s !== id)
-                                      : [...selected, id],
-                            )
-                        }
-                    >
-                        {shop.logo && (
-                            <img
-                                src={shop.logo}
-                                alt=""
-                                loading="lazy"
-                                width={16}
-                                height={16}
-                                className="h-4 w-4 shrink-0 rounded-sm object-contain"
-                                onError={(e) => {
-                                    e.currentTarget.hidden = true
-                                }}
-                            />
-                        )}
-                        <span>{shop.name}</span>
-                    </button>
-                )
-            })}
-        </div>
     )
 }
 

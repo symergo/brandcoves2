@@ -253,8 +253,11 @@ return [
         'brand' => 'Marca',
         'shop' => 'Tienda',
         'all_shops' => 'Todas las tiendas',
-        'only_shop' => 'Mostrar solo :shop',
         'hide_shop' => 'Dejar de mostrar :shop',
+        'hidden_shops_one' => '1 tienda oculta',
+        'hidden_shops' => ':count tiendas ocultas',
+        'show_all_shops' => 'Mostrar todas las tiendas',
+        'shops_shown' => 'Tiendas visibles',
         'in_stock_only' => 'Solo disponibles',
         'discounted_only' => 'Solo con descuento',
         // La página de búsqueda desde 2026-09-26 (docs/features/search.md): las

@@ -253,8 +253,11 @@ return [
         'brand' => 'Merk',
         'shop' => 'Winkel',
         'all_shops' => 'Alle winkels',
-        'only_shop' => 'Alleen :shop tonen',
         'hide_shop' => ':shop niet meer tonen',
+        'hidden_shops_one' => '1 winkel verborgen',
+        'hidden_shops' => ':count winkels verborgen',
+        'show_all_shops' => 'Alle winkels tonen',
+        'shops_shown' => 'Zichtbare winkels',
         'in_stock_only' => 'Alleen op voorraad',
         'discounted_only' => 'Alleen met korting',
         // De zoekpagina sinds 2026-09-26 (docs/features/search.md): de Coves bij

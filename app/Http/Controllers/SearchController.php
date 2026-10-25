@@ -254,10 +254,6 @@ class SearchController extends Controller
              * own. What used to sit here was four paragraphs of statistics.
              */
             'terms' => $this->terms($query, $result, $current),
-            // Not for a gift search: its words are a sentence, and pills to
-            // drop "voor" or "mijn" one at a time are noise. Its chips do that
-            // job, piece by piece.
-            'activeTerms' => $gift === null ? $this->activeTerms($query, $current) : [],
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
 
             /*
@@ -676,47 +672,6 @@ class SearchController extends Controller
      *
      * @return list<array{term: string, url: string}>
      */
-    /**
-     * The words currently narrowing this search, each with the URL that drops it.
-     *
-     * ## Why a pill has to come off
-     *
-     * Clicking a suggestion adds its word to the query, and the suggestion then
-     * disappears - `ResultTerms::extract()` excludes whatever is already being
-     * searched for, correctly, because re-adding it would do nothing. The effect
-     * was a one-way door: three clicks narrowed "koptelefoon" to "koptelefoon
-     * Tune draadloos" and the only way back was the browser's back button or
-     * retyping the query.
-     *
-     * So the words in play are shown too, in the same row, marked as chosen. The
-     * URL each one carries is the query without it, built through `withTerm()`
-     * exactly as the adding link is, so filters, sort and view survive a removal
-     * the same way they survive an addition.
-     *
-     * Empty when there is nothing to remove, which on a search page means the
-     * visitor typed one word and has not narrowed yet.
-     *
-     * @return list<array{term: string, url: string}>
-     */
-    private function activeTerms(SearchQuery $query, CurrentMarket $current): array
-    {
-        $words = array_values(array_filter(preg_split('/\s+/u', trim($query->term)) ?: []));
-
-        if (count($words) < 2) {
-            return [];
-        }
-
-        return array_map(function (string $word, int $index) use ($query, $current, $words): array {
-            // The same search without this word, under its readable address.
-            $without = $query->withTerm(implode(' ', array_values(array_diff_key($words, [$index => null]))));
-
-            return [
-                'term' => $word,
-                'url' => SearchUrl::for($current->get(), $without->term, $without->toArray()),
-            ];
-        }, $words, array_keys($words));
-    }
-
     private function terms(SearchQuery $query, SearchResult $result, CurrentMarket $current): array
     {
         // The same rule as the copy, said once rather than three times.

@@ -326,8 +326,11 @@ return [
         // The chip row above the by-store lanes: the reset, and the label a
         // screen reader hears on a chip that is currently narrowing the view.
         'all_shops' => 'All shops',
-        'only_shop' => 'Show only :shop',
         'hide_shop' => 'Stop showing :shop',
+        'hidden_shops_one' => '1 shop hidden',
+        'hidden_shops' => ':count shops hidden',
+        'show_all_shops' => 'Show all shops',
+        'shops_shown' => 'Shops shown',
         'in_stock_only' => 'In stock only',
         'discounted_only' => 'Discounted only',
         // The search page since 2026-09-26 (docs/features/search.md): the Coves a

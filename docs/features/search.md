@@ -1043,3 +1043,19 @@ request in `/list-search`).
 ## See also
 
 - [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill
+
+## The by-store view: hide shops, no chip row; no active-word pills (2026-10-25)
+
+Owner's requests, the same day:
+
+- **No shop chip row above the columns.** It filtered the search by shop through the URL. Instead a
+  shop is **hidden**: with the × on its column header, or by unticking it under "Zichtbare winkels",
+  first in the Filters menu in this view. "1 winkel verborgen · Alle winkels tonen" above the columns
+  brings them back. Hiding is not a search filter: the search, its URL and the grid view are
+  unchanged; the columns are left out in the browser. The hidden shops (by name) are kept in this
+  browser's `localStorage` (`bc:search:hidden-shops`), read after mounting and inside try/catch, so
+  a shop hidden once stays out of the way on the next search, and a blocked storage only means
+  nothing stays hidden.
+- **The green pills of the words narrowing a search are gone** (`activeTerms`, prop and server
+  code). The search box holds the words; the pills that add a word stay. The brand page keeps its
+  own row. `SearchPillsTest` now guards that the prop is gone.
