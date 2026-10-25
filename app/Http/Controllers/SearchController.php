@@ -157,9 +157,9 @@ class SearchController extends Controller
             app(GiftSearchDemand::class)->record($intent, $current->get());
         }
 
-        // A crawler sees what is stored: no live shop is asked for it (2026-10-25).
+        // A crawler other than a search engine sees what is stored (Crawlers::mayAskShops()).
         $result = $landing === null && $gift === null
-            ? $search->search($query, askShops: ! Crawlers::looksLikeOne($request->userAgent()))
+            ? $search->search($query, askShops: Crawlers::mayAskShops($request->userAgent()))
             : SearchResult::none($query);
 
         $this->seo($query, $result, $current);

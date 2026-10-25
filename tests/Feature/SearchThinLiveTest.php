@@ -172,18 +172,38 @@ class SearchThinLiveTest extends TestCase
         $this->assertSame(['Tuinkabauter met hengel'], $titles);
     }
 
-    /** A crawler sees what is stored and costs no live call (owner, 2026-10-25). */
+    /**
+     * A crawler sees what is stored and costs no live call (owner,
+     * 2026-10-25), except a search engine: see the next test.
+     */
     #[Test]
     public function a_crawler_is_not_sent_to_the_live_shops(): void
     {
         $this->fakeBol([$this->bolProduct()]);
 
-        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
+        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('results.items', 0));
 
         $this->assertSame(0, $this->searches());
         Queue::assertNotPushed(PullLiveSearch::class);
+    }
+
+    /**
+     * Google and Bing still get the shops' products, in the page itself: what
+     * they see is what they index, and a person would see them. Otherwise a
+     * thin term is an indexable empty page for them alone.
+     */
+    #[Test]
+    public function a_search_engine_sees_the_shops_products_like_a_person(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+
+        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('results.items', 1));
+
+        $this->assertSame(1, $this->searches());
     }
 
     #[Test]

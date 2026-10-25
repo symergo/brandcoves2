@@ -24,11 +24,44 @@ final class Crawlers
 {
     private const PATTERN = '/bot|crawl|spider|slurp|fetch|preview|scan|monitor|archiver|headless|lighthouse|pingdom|curl\/|wget\/|python-requests|go-http-client|okhttp|facebookexternalhit|embedly|quora link|bitlybot|semrush|ahrefs|mj12|dotbot|petalbot|bytespider|gptbot|claudebot|ccbot|applebot|yandex|baidu|duckduck|bingpreview|ia_archiver/i';
 
+    /**
+     * The search engines whose index the site wants to be in: Google's and
+     * Bing's crawlers (Bing's index also feeds DuckDuckGo, Ecosia and others).
+     */
+    private const SEARCH_ENGINES = '/googlebot|google-inspectiontool|bingbot/i';
+
     public static function looksLikeOne(?string $userAgent): bool
     {
         $ua = trim((string) $userAgent);
 
         // No user agent at all is a script, not a browser.
         return $ua === '' || preg_match(self::PATTERN, $ua) === 1;
+    }
+
+    /**
+     * Whether a page should ask the live shops for this request: a person, or
+     * a search engine indexing the page (owner, 2026-10-25).
+     *
+     * Other crawlers (AI crawlers, SEO tools, scrapers) see what is stored: a
+     * crawler walking new search terms cost a live API call and a queued job
+     * per page, for nobody. A search engine is the exception because what it
+     * sees is what it indexes. On a term little is stored for, it would see an
+     * empty page where a person sees the shop's products: an indexable "soft
+     * 404", and a page shown differently to the engine than to people. It
+     * visits far less often than the scrapers, so most of the saving stays.
+     *
+     * A name match like `looksLikeOne()`: something calling itself Googlebot
+     * gets the shops too. Cloudflare challenges the data-centre networks such
+     * fakes come from, and the cost of a fake passing is one live call.
+     */
+    public static function mayAskShops(?string $userAgent): bool
+    {
+        return ! self::looksLikeOne($userAgent) || self::isSearchEngine($userAgent);
+    }
+
+    /** Google or Bing, by name. */
+    public static function isSearchEngine(?string $userAgent): bool
+    {
+        return preg_match(self::SEARCH_ENGINES, (string) $userAgent) === 1;
     }
 }

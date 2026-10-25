@@ -150,8 +150,8 @@ class BrandController extends Controller
         $query = SearchQuery::fromRequest($request, $market);
         $query = $query->withBrands($stat->brandSpellings(), liveTerm: $this->liveTerm($stat, $query));
 
-        // A crawler sees what is stored: no live shop is asked for it (2026-10-25).
-        $result = $search->search($query, askShops: ! Crawlers::looksLikeOne($request->userAgent()));
+        // A crawler other than a search engine sees what is stored (Crawlers::mayAskShops()).
+        $result = $search->search($query, askShops: Crawlers::mayAskShops($request->userAgent()));
 
         $cove = $this->cove($stat, $current);
 

@@ -229,11 +229,14 @@ For every live source a market has (`ConnectorRegistry::liveFor()`), not bol by 
    and the plain list, with the new products appended, plus the old filter counts, are written
    straight under the new generation, so the plain page is not recomputed. A brand page's job still
    retires as before.
-3. **No live call for a crawler.** The search and brand pages pass `askShops: false` when
-   `Crawlers::looksLikeOne()` matches the user agent. A crawler walking new terms cost a live API
-   call and a queued job per page, for nobody; it now sees what is stored. The session-cookie half of
-   the search-log test is deliberately not used here: a person arriving from Google has no cookie on
-   their first request and must still get the shop's products.
+3. **No live call for a crawler, except a search engine.** The search and brand pages pass
+   `askShops: Crawlers::mayAskShops(user agent)`. A crawler walking new terms cost a live API call
+   and a queued job per page, for nobody; it now sees what is stored. Google and Bing are the
+   exception (owner, the same day, after asking about SEO): what they see is what they index, and on
+   a term little is stored for they would see an indexable empty page (a "soft 404") where a person
+   sees the shop's products. The session-cookie half of the search-log test is deliberately not used:
+   a person arriving from Google has no cookie on their first request and must still get the shop's
+   products.
 
 Covered by `SearchThinLiveTest` (rules 1 and 3) and `SearchLiveQueueTest` (rule 2).
 
