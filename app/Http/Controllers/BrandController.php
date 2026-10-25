@@ -15,6 +15,7 @@ use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
 use App\Services\Images\ImageProxy;
+use App\Services\Images\ShopImageSizes;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\EntityCoveContext;
@@ -995,6 +996,9 @@ class BrandController extends Controller
             'brand' => $group->brand,
             'image' => $group->image_url,
             'imageToken' => app(ImageProxy::class)->token($group->image_url),
+            // The shop's own picture per width, for the srcset while the proxy is
+            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
+            'imageSizes' => ShopImageSizes::for($group->image_url),
             'minPrice' => $group->min_price,
             'maxPrice' => $group->max_price,
             'offerCount' => $group->offer_count,

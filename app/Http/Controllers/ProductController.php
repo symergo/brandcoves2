@@ -17,6 +17,7 @@ use App\Services\Catalogue\ProductDescription;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Catalogue\ProductTitle;
 use App\Services\Images\ImageProxy;
+use App\Services\Images\ShopImageSizes;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
 use App\Services\Seo\BrandLinker;
@@ -103,6 +104,9 @@ class ProductController extends Controller
                 // The resized WebP copies (srcset) of the same picture, or null
                 // for the shop's URL as it is. docs/features/image-proxy.md.
                 'imageToken' => app(ImageProxy::class)->token($productGroup->image_url),
+                // The shop's own picture per width, for the srcset while the proxy is
+                // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
+                'imageSizes' => ShopImageSizes::for($productGroup->image_url),
                 'category' => $productGroup->category,
                 'minPrice' => $productGroup->min_price,
                 'maxPrice' => $productGroup->max_price,

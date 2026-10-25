@@ -12,6 +12,7 @@ use App\Services\Gift\CarriedWho;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\SwipeDeck;
 use App\Services\Images\ImageProxy;
+use App\Services\Images\ShopImageSizes;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
@@ -150,6 +151,9 @@ class SwipeController extends Controller
             'image' => $group->image_url,
             // The picture fills a phone screen here, so the proxy's larger copies (image-proxy.md).
             'imageToken' => app(ImageProxy::class)->token($group->image_url),
+            // The shop's own picture per width, for the srcset while the proxy is
+            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
+            'imageSizes' => ShopImageSizes::for($group->image_url),
             'price' => $group->min_price,
         ], $groups);
     }

@@ -1,11 +1,45 @@
 ---
 name: Image proxy (resized WebP product pictures)
 area: Frontend / Catalogue / Operations
-status: Active — search cards, brand page cards and the product page's main picture; switch off with IMAGE_PROXY_ENABLED=false
+status: Switched off on 2026-10-25 (IMAGE_PROXY_ENABLED=false); pictures come from the shops' own servers at the size the slot needs (ShopImageSizes). The code stays, so switching it back on is the env var alone.
 date_added: 2026-09-27
 ---
 
 # Image proxy
+
+## Switched off (2026-10-25)
+
+The owner asked whether the proxy was worth its cost, and measured on production it was not:
+
+| Last hour on production | |
+|---|---|
+| `/img/` requests | 2,999 of 9,416, a third of all requests to the app |
+| Time per request | median 0.09 s, p90 0.24 s, max 4.9 s; 480 s of PHP a hour, ~13% of a core |
+| Copies on disk | 19.4 GB in 2.5 million files, on a disk at 88% (which also kept the build cache pruned) |
+
+Most copies were made for crawlers: every search page they walked asked for 24 pictures at several
+widths. And the gain was concentrated: bol's pictures are 250 px thumbnails (20.7 KB, 14.8 KB as
+WebP), so the 640 and 960 copies of them were the same 250 px picture stored twice more. The real
+saving was Coolblue's 174 KB PNG on a phone card, and Coolblue's server (Bynder), eBay's and Awin's
+productserve all take a size in the URL.
+
+So `App\Services\Images\ShopImageSizes` gives, per width, the shop's own address for that size
+(both smaller and larger, unlike `SourceVariants`, which only ever asked for larger because the proxy
+shrank afterwards). The five places that hand out `imageToken` also hand out `imageSizes`, and
+`pictureAttributes()` builds the srcset from them when there is no token. Any other host, bol
+included, gets null and the plain URL. A resized address that fails falls back to the plain URL on
+`onError`, as a failed proxy copy did.
+
+Checked against real catalogue pictures on 2026-10-25: Coolblue at 160 = 12 KB, 320 = 35 KB (the
+original box of 800 is 111 KB); eBay `s-l225` = 12 KB, `s-l400` = 29 KB. Somewhat more than the
+WebP copies (4.5–11 KB), for no server work at all.
+
+Lost with it: the shops see the visitor's address for these pictures again (as list pages always
+did), and pictures are no longer WebP. The stored copies were deleted once the switch was live:
+with the proxy off, an `/img/` address still in a browser or cached page is answered with a redirect
+to the shop's URL and nothing is read from disk (see "Switching it off" below).
+
+Everything below describes the proxy as it was built, for if it is ever switched back on.
 
 Product pictures used to be hot-linked from the shops' own servers, at whatever size the feed
 carried. The product page drew bol's 250×200 thumbnail 512 pixels wide, and a search card on a

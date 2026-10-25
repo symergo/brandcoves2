@@ -9,7 +9,7 @@ import PageHeader from '../../Components/PageHeader'
 import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
 import PlayDialog from '../../Components/PlayDialog'
 import { send } from '../../http'
-import { pictureAttributes } from '../../imageUrl'
+import { pictureAttributes, type ShopSizes } from '../../imageUrl'
 import { formatBudget, formatPrice, type Cents, type SavingTo, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -20,6 +20,8 @@ interface Card {
     image: string | null
     /** Signed by the server for the image proxy's larger copies; null when it may not serve this one. */
     imageToken?: string | null
+    /** The shop's own picture per width, where its server takes a size (ShopImageSizes). */
+    imageSizes?: ShopSizes
     price: Cents | null
 }
 
@@ -433,7 +435,7 @@ function CardFace({ card, market }: { card: Card; market: SharedProps['market'] 
             <span className="flex min-h-0 flex-1 items-center justify-center">
                 {card.image && (
                     <img
-                        {...pictureAttributes(card.image, card.imageToken, proxyFailed, 480, '(min-width: 640px) 360px, 100vw', [320, 480, 640, 960])}
+                        {...pictureAttributes(card.image, card.imageToken, proxyFailed, 480, '(min-width: 640px) 360px, 100vw', [320, 480, 640, 960], card.imageSizes)}
                         onError={() => setProxyFailed(true)}
                         alt=""
                         draggable={false}

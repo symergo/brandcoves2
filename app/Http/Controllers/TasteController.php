@@ -27,6 +27,7 @@ use App\Services\Gift\TasteProfile;
 use App\Services\Gift\TasteProfiler;
 use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Images\ImageProxy;
+use App\Services\Images\ShopImageSizes;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\MyPeople;
 use App\Services\Wishlist\ListBudget;
@@ -560,6 +561,9 @@ class TasteController extends Controller
             'image' => $group->image_url,
             // The pair fills a phone screen in the popup, so the proxy's larger copies.
             'imageToken' => app(ImageProxy::class)->token($group->image_url),
+            // The shop's own picture per width, for the srcset while the proxy is
+            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
+            'imageSizes' => ShopImageSizes::for($group->image_url),
             'price' => $group->min_price,
         ], $round), $rounds);
     }

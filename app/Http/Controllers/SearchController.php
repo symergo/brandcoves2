@@ -18,6 +18,7 @@ use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Images\ImageProxy;
+use App\Services\Images\ShopImageSizes;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
@@ -882,6 +883,9 @@ class SearchController extends Controller
             // The same picture on our own address at the card's size, or null
             // when it keeps the shop's URL (docs/features/image-proxy.md).
             'imageToken' => app(ImageProxy::class)->token($group->image_url),
+            // The shop's own picture per width, for the srcset while the proxy is
+            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
+            'imageSizes' => ShopImageSizes::for($group->image_url),
             // Cents cross the wire exactly as stored; the client formats them
             // for the market, so a float never enters the pipeline.
             'minPrice' => $group->min_price,

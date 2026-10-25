@@ -2,7 +2,7 @@ import { Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import Badge from './Badge'
 import ImagePlaceholder from './ImagePlaceholder'
-import { pictureAttributes } from '../imageUrl'
+import { hasResized, pictureAttributes, type ShopSizes } from '../imageUrl'
 import SaveToList from './SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -16,6 +16,8 @@ export interface GroupCard {
     image: string | null
     /** Signed address of our resized WebP copies; null keeps `image` as it is. */
     imageToken?: string | null
+    /** The shop's own picture per width, where its server takes a size (ShopImageSizes). */
+    imageSizes?: ShopSizes
     minPrice: number | null
     maxPrice: number | null
     offerCount: number
@@ -65,8 +67,8 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [broken, setBroken] = useState(false)
-    // First failure: the proxied copies, so fall back to the shop's URL. Second:
-    // the shop's URL too, so the placeholder.
+    // First failure: a resized address (proxy or the shop's own size), so fall
+    // back to the shop's plain URL. Second: that too, so the placeholder.
     const [proxyFailed, setProxyFailed] = useState(false)
 
     const comparable = group.merchantCount > 1
@@ -76,7 +78,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
             <div className="relative aspect-square overflow-hidden bg-card">
                 {group.image && !broken ? (
                     <img
-                        {...pictureAttributes(group.image, group.imageToken, proxyFailed, 320, CARD_SIZES, [160, 320, 480])}
+                        {...pictureAttributes(group.image, group.imageToken, proxyFailed, 320, CARD_SIZES, [160, 320, 480], group.imageSizes)}
                         alt=""
                         loading="lazy"
                         /*
@@ -93,7 +95,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                         // than the blank square this used to leave, which read
                         // as a card that failed to load rather than a product
                         // with no picture.
-                        onError={() => (group.imageToken && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
+                        onError={() => (hasResized(group.imageToken, group.imageSizes) && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
                     />
                 ) : (
                     <ImagePlaceholder />

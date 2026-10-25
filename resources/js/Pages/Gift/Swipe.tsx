@@ -8,7 +8,7 @@ import type { ListKind } from '../../Components/ListKindBadge'
 import ToolIcon from '../../Components/ToolIcon'
 import { send } from '../../http'
 import { useSignIn } from '../../signIn'
-import { pictureAttributes } from '../../imageUrl'
+import { pictureAttributes, type ShopSizes } from '../../imageUrl'
 import { listFrom, show as showToast } from '../../saveToast'
 import { markSaved } from '../../savedItems'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
@@ -21,6 +21,8 @@ interface Card {
     image: string | null
     /** Signed by the server for the image proxy's larger copies; null when it may not serve this one. */
     imageToken?: string | null
+    /** The shop's own picture per width, where its server takes a size (ShopImageSizes). */
+    imageSizes?: ShopSizes
     price: Cents | null
 }
 
@@ -393,8 +395,9 @@ export default function Swipe({ carried, cards: first, into = null, urls }: Prop
 }
 
 /**
- * The picture, as large as the card allows: the image proxy's copies up to
- * 960 wide when the server signed one, the shop's own picture otherwise.
+ * The picture, as large as the card allows: up to 960 wide from the shop's own
+ * server where it takes a size (or the image proxy's copies, were it on), the
+ * shop's plain picture otherwise.
  */
 function CardPicture({ card }: { card: Card }) {
     const [proxyFailed, setProxyFailed] = useState(false)
@@ -406,7 +409,7 @@ function CardPicture({ card }: { card: Card }) {
     return (
         <span className="flex min-h-0 flex-1 items-center justify-center">
             <img
-                {...pictureAttributes(card.image, card.imageToken, proxyFailed, 640, '(min-width: 640px) 448px, 100vw', [480, 640, 960])}
+                {...pictureAttributes(card.image, card.imageToken, proxyFailed, 640, '(min-width: 640px) 448px, 100vw', [480, 640, 960], card.imageSizes)}
                 onError={() => setProxyFailed(true)}
                 alt=""
                 draggable={false}

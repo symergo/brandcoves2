@@ -14,7 +14,7 @@ import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
 import ToolIcon from '../Components/ToolIcon'
 import CoveIcon from '../Components/CoveIcon'
-import { pictureAttributes } from '../imageUrl'
+import { hasResized, pictureAttributes, type ShopSizes } from '../imageUrl'
 
 interface Offer {
     id: number
@@ -43,6 +43,8 @@ interface Props {
         image: string | null
         /** Signed address of our resized WebP copies; null keeps `image` as it is. */
         imageToken?: string | null
+        /** The shop's own picture per width, where its server takes a size (ShopImageSizes). */
+        imageSizes?: ShopSizes
         category: string | null
         minPrice: number | null
         maxPrice: number | null
@@ -114,11 +116,11 @@ function reportClick(offer: Offer): void {
 export default function Product({ product, offers, giftTags, alert, amazonSearch, description, signals }: Props) {
     const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
-    // Which token failed, not a flag: Inertia keeps this component mounted from
-    // one product page to the next, and a flag would carry one product's
-    // failure over to the next product's picture.
-    const [failedToken, setFailedToken] = useState<string | null>(null)
-    const proxyFailed = !!product.imageToken && failedToken === product.imageToken
+    // Which picture's resized address failed, not a flag: Inertia keeps this
+    // component mounted from one product page to the next, and a flag would
+    // carry one product's failure over to the next product's picture.
+    const [failedImage, setFailedImage] = useState<string | null>(null)
+    const resizedFailed = hasResized(product.imageToken, product.imageSizes) && failedImage === product.image
 
     // Remembered on this device, for the "you looked at" band. After mount,
     // because storage does not exist on the SSR container.
@@ -149,21 +151,22 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                     {product.image && (
                         <img
                             /*
-                              Our own WebP copies when the server signed one
-                              (docs/features/image-proxy.md): 640 wide on a 1x
-                              screen, 960 on a 2x one, instead of whatever
-                              size the feed carried. If the copies cannot be
-                              reached the shop's URL takes over.
+                              The shop's own picture at 640 wide on a 1x screen
+                              and 960 on a 2x one, where its server takes a size
+                              (ShopImageSizes); our proxy's copies if it is ever
+                              switched back on. If the resized address fails,
+                              the shop's plain URL takes over.
                             */
                             {...pictureAttributes(
                                 product.image,
                                 product.imageToken,
-                                proxyFailed,
+                                resizedFailed,
                                 640,
                                 '(min-width: 1024px) 512px, calc(100vw - 6rem)',
                                 [320, 480, 640, 960],
+                                product.imageSizes,
                             )}
-                            onError={() => setFailedToken(product.imageToken ?? null)}
+                            onError={() => setFailedImage(product.image)}
                             alt={product.title}
                             /*
                               The largest thing on the page and the first the

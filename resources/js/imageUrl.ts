@@ -32,24 +32,62 @@ export function imageSrcSet(token: string, widths: readonly ImageWidth[] = IMAGE
 }
 
 /**
- * The attributes for one picture: the proxied copies when there is a token and
- * they have not failed, the shop's own URL otherwise.
+ * The shop's own picture per width (`ShopImageSizes` on the server), for the
+ * image servers that take a size in the URL. Null for any other.
+ */
+export type ShopSizes = Partial<Record<ImageWidth, string>> | null | undefined
+
+/**
+ * The attributes for one picture, best first:
  *
- * `proxyFailed` is the caller's state, set from `onError`: the proxy already
- * redirects to the original when it cannot make a copy, so this is the second
- * net, for the proxy route itself being unreachable.
+ * 1. the proxied copies, when there is a token (the proxy is switched off since
+ *    2026-10-25, so in practice never; kept so switching it on needs no code);
+ * 2. the shop's own sizes, when its image server takes one;
+ * 3. the shop's URL as it is.
+ *
+ * `failed` is the caller's state, set from `onError`: when a resized address
+ * fails (a proxy that is unreachable, a shop rule that stopped matching), the
+ * picture falls back to the plain URL, and only a second failure is broken.
  */
 export function pictureAttributes(
     src: string,
     token: string | null | undefined,
-    proxyFailed: boolean,
+    failed: boolean,
     fallbackWidth: ImageWidth,
     sizes: string,
     widths: readonly ImageWidth[] = IMAGE_WIDTHS,
+    shopSizes: ShopSizes = null,
 ): { src: string; srcSet?: string; sizes?: string } {
-    if (!token || proxyFailed) {
+    if (failed) {
         return { src }
     }
 
-    return { src: imageUrl(token, fallbackWidth), srcSet: imageSrcSet(token, widths), sizes }
+    if (token) {
+        return { src: imageUrl(token, fallbackWidth), srcSet: imageSrcSet(token, widths), sizes }
+    }
+
+    if (shopSizes) {
+        // eBay answers fixed sizes only, so two widths can name the same
+        // address; the browser needs each once.
+        const seen = new Set<string>()
+        const entries = widths.flatMap((w) => {
+            const url = shopSizes[w]
+            if (!url || seen.has(url)) {
+                return []
+            }
+            seen.add(url)
+            return [`${url} ${w}w`]
+        })
+
+        if (entries.length > 0) {
+            return { src: shopSizes[fallbackWidth] ?? src, srcSet: entries.join(', '), sizes }
+        }
+    }
+
+    return { src }
+}
+
+/** Whether a picture has a resized address that can fail before the plain one. */
+export function hasResized(token: string | null | undefined, shopSizes: ShopSizes): boolean {
+    return !!token || !!shopSizes
 }
