@@ -180,12 +180,30 @@ class SearchThinLiveTest extends TestCase
 
     /**
      * When a live shop answers for the term, the fuzzy title match is skipped
-     * (owner, 2026-10-25): its near misses are not worth 2-3 s once the shop
-     * supplied real products. "Tuinkabauter" is a stored title only the fuzzy
-     * match finds for "tuinkabouter".
+     * once the words find at least 6 products (owner, 2026-10-25): its near
+     * misses are not worth 2-3 s then. Below 6 it still fills the page, see
+     * the next test. "Tuinkabauter" is a stored title only the fuzzy match
+     * finds for "tuinkabouter".
      */
     #[Test]
-    public function when_a_live_shop_answers_the_fuzzy_match_is_skipped(): void
+    public function when_a_live_shop_answers_and_the_words_find_six_the_fuzzy_match_is_skipped(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+        $this->storedProduct('Tuinkabauter met hengel');
+        // Five stored by their words, and bol's sixth.
+        foreach (range(1, 5) as $i) {
+            $this->storedProduct("Tuinkabouter model {$i}");
+        }
+
+        $titles = array_column($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.results.items'), 'title');
+
+        $this->assertContains('Zeldzame tuinkabouter met lantaarn', $titles);
+        $this->assertNotContains('Tuinkabauter met hengel', $titles);
+    }
+
+    /** Fewer than 6 by their words after the shop answered: the fuzzy match still fills the page. */
+    #[Test]
+    public function when_a_live_shop_answers_but_the_words_find_fewer_than_six_the_fuzzy_match_runs(): void
     {
         $this->fakeBol([$this->bolProduct()]);
         $this->storedProduct('Tuinkabauter met hengel');
@@ -193,7 +211,7 @@ class SearchThinLiveTest extends TestCase
         $titles = array_column($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.results.items'), 'title');
 
         $this->assertContains('Zeldzame tuinkabouter met lantaarn', $titles);
-        $this->assertNotContains('Tuinkabauter met hengel', $titles);
+        $this->assertContains('Tuinkabauter met hengel', $titles);
     }
 
     /**

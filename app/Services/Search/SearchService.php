@@ -43,6 +43,13 @@ class SearchService
         private readonly IncomingGrouper $grouper,
     ) {}
 
+    /**
+     * Once the live shops answered for a term, the fuzzy match still runs
+     * when the words find fewer products than this (owner, 2026-10-25). See
+     * needsFuzzy().
+     */
+    private const FUZZY_AFTER_SHOPS_BELOW = 6;
+
     /** @var array<string, bool> needsFuzzy() per market and term, for this request */
     private array $fuzzy = [];
 
@@ -615,13 +622,15 @@ class SearchService
      * (2026-10-25). Two rules decide it:
      *
      * 1. Once the live shops answered for this term (owner, 2026-10-25, for
-     *    any live source, not only bol), only when the words find nothing at
-     *    all. What the fuzzy match adds are near misses, and the shops have
-     *    just supplied real products. But a shop's own search returns
-     *    products whose titles need not contain the word, so its answer can
-     *    leave the word match empty: on production "kabouterlamp" went from
-     *    24 fuzzy results to none, cached for 12 hours, until this "at all"
-     *    was added. Counted after the shops' products were stored
+     *    any live source, not only bol), only when the words find fewer than
+     *    FUZZY_AFTER_SHOPS_BELOW (6) products. What the fuzzy match adds are
+     *    near misses, and the shops have just supplied real products. But a
+     *    shop's own search returns products whose titles need not contain
+     *    the word, so its answer can leave the word match empty or nearly:
+     *    on production "kabouterlamp" went from 24 fuzzy results to none,
+     *    cached for 12 hours, and "houten tolletje" to 4. The owner chose 6:
+     *    below it the fuzzy match fills the page, from it the shops' answer
+     *    stands. Counted after the shops' products were stored
      *    (rememberShopsAnswered() forgets the earlier count).
      * 2. Otherwise only when the words find less than a page
      *    (`search.fuzzy_below`). A typo finds next to nothing by words and
@@ -637,7 +646,7 @@ class SearchService
         $below = (int) config('giftcoves.search.fuzzy_below', 24);
 
         return $this->fuzzy[$key] ??= Cache::has(self::shopsAnsweredKey($query))
-            ? $this->wordMatchCount($query, 1) === 0
+            ? $this->wordMatchCount($query, self::FUZZY_AFTER_SHOPS_BELOW) < self::FUZZY_AFTER_SHOPS_BELOW
             : $this->wordMatchCount($query, $below) < $below;
     }
 
