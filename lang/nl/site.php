@@ -236,7 +236,6 @@ return [
         'coves_heading' => 'Coves hierover',
         'card_kept' => 'Op de lijst van :count persoon|Op de lijsten van :count mensen',
         'card_in_coves' => 'In :count Cove|In :count Coves',
-        'kept_summary' => '":term" staat op :count lijst|":term" staat op :count lijsten',
         // Above the results, with Amazon's logo (2026-10-05).
         'amazon_compare' => 'Vergelijk prijzen voor :term op Amazon',
         'amazon_compare_short' => 'Vergelijk prijzen op Amazon',

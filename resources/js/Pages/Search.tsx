@@ -21,7 +21,6 @@ import { searchHref, searchTarget } from '../searchUrl'
 interface Facets {
     brands: { value: string }[]
     merchants: { id: number; name: string; logo: string | null }[]
-    price: { min: number | null; max: number | null }
 }
 
 /** One filter that is on, drawn as a chip above the results. */
@@ -97,8 +96,6 @@ interface Props {
     coves: SearchCove[]
     /** Where "All Coves" goes: /{market}/coves. */
     covesUrl: string
-    /** "People keep 38 products matching …", or null below the privacy threshold. See SearchSignals. */
-    keptSummary: string | null
 }
 
 /**
@@ -188,7 +185,6 @@ export default function Search({
     emptyCopy,
     coves,
     covesUrl,
-    keptSummary,
 }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -873,34 +869,29 @@ export default function Search({
 
 
                     {/*
-                      One row above the results: what people keep for this
-                      term on the left, the Amazon price comparison on the
-                      right (it drops under on a narrow phone).
-
-                      The summary counts the lists the term is on, sent only
-                      past the privacy threshold (SearchSignals). Its info
-                      icon went on the owner's word (2026-10-05). The Amazon
-                      link came back here the same day, "as before", as the
-                      button with Amazon's logo, beside the card in the grid.
+                      One row above the results: the Amazon price comparison,
+                      on the right. It came back here on 2026-10-05, "as
+                      before", as the button with Amazon's logo, beside the
+                      card in the grid. The line on its left that counted the
+                      lists a term is on went on 2026-10-25: it cost a query
+                      over every matching product on each new term, and
+                      crawlers ask for a new term every two seconds.
                     */}
-                    {(keptSummary || (amazonSearch && !results.empty)) && (
+                    {amazonSearch && !results.empty && (
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                            {keptSummary && <p className="text-sm text-ink-soft">{keptSummary}</p>}
                             {/*
                               The term only from `sm` up: on a phone the full
                               sentence was cut off mid-word, and the term is the
                               title right above it anyway.
                             */}
-                            {amazonSearch && !results.empty && (
-                                <div className="max-w-full min-w-0 sm:ml-auto">
-                                    <span className="sm:hidden">
-                                        <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare_short')} compact />
-                                    </span>
-                                    <span className="hidden sm:inline">
-                                        <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare', { term: q })} compact />
-                                    </span>
-                                </div>
-                            )}
+                            <div className="max-w-full min-w-0 sm:ml-auto">
+                                <span className="sm:hidden">
+                                    <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare_short')} compact />
+                                </span>
+                                <span className="hidden sm:inline">
+                                    <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare', { term: q })} compact />
+                                </span>
+                            </div>
                         </div>
                     )}
 

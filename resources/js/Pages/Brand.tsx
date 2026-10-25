@@ -31,7 +31,6 @@ interface Props {
     facets: {
         brands: { value: string }[]
         merchants: { id: number; name: string }[]
-        price: { min: number | null; max: number | null }
     }
     /**
      * One page and whether another follows. No total and no last page

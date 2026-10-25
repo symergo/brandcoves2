@@ -239,26 +239,6 @@ class SearchService
             ->all();
     }
 
-    /**
-     * The ids of every product in this market whose words match the term,
-     * whatever the filters: the same full-text and trigram union a search
-     * runs, as a subquery.
-     *
-     * For the line above the results that counts what people keep
-     * (SearchSignals): that line is about the words, not about this
-     * particular filtered page.
-     *
-     * @return Builder<ProductGroup>
-     */
-    public function termMatches(SearchQuery $query): Builder
-    {
-        $groups = ProductGroup::query()->forMarket($query->market)->select('product_groups.id');
-
-        $this->applyTextMatch($groups, $query);
-
-        return $groups;
-    }
-
     /** @return Builder<ProductGroup> */
     private function storedQuery(SearchQuery $query): Builder
     {
@@ -853,11 +833,11 @@ class SearchService
      * a filter UI that erases its own options is unusable.
      *
      * Cached, because that independence from the filters is exactly what makes
-     * the three aggregates below repeat work: every filter, sort and page
-     * variant of one term produces the same sidebar. See `facetCacheKey()` for
-     * the key and `facet_cache_ttl` for what the staleness costs.
+     * the aggregates below repeat work: every filter, sort and page variant of
+     * one term produces the same sidebar. See `facetCacheKey()` for the key and
+     * `facet_cache_ttl` for what the staleness costs.
      *
-     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>, price: array{min: int|null, max: int|null}}
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
      */
     private function facets(SearchQuery $query): array
     {
@@ -869,16 +849,30 @@ class SearchService
     }
 
     /**
-     * The three aggregates behind `facets()`, uncached.
+     * The brand and shop counts behind `facets()`, uncached.
      *
-     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, count: int}>, price: array{min: int|null, max: int|null}}
+     * ## One statement, the match found once (2026-10-25)
+     *
+     * Brands and shops were two queries, and each ran the full-text and
+     * trigram match over the catalogue again: about 0.55 s and 0.6 s on
+     * production, on top of the result list's own match. Crawlers walking
+     * `/{market}/zoek/{term}` ask for a new term every two seconds, so neither
+     * cache ever helped them, and the repeated matching kept Postgres busy
+     * enough that the app missed its health check and dropped out. Now the
+     * match is a `MATERIALIZED` CTE that both counts read: evaluated once, held
+     * for the statement, and the two aggregates come back as one UNION ALL.
+     *
+     * The price range went the same day: no page drew it.
+     *
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
      */
     private function countFacets(SearchQuery $query): array
     {
         $base = ProductGroup::query()
             ->forMarket($query->market)
             ->whereNotNull('min_price')
-            ->whereNotNull('image_url');
+            ->whereNotNull('image_url')
+            ->select('product_groups.id', 'product_groups.brand');
 
         if ($query->hasTerm()) {
             $this->applyTextMatch($base, $query);
@@ -887,25 +881,29 @@ class SearchService
             $base->where('in_stock', true);
         }
 
-        $brands = (clone $base)
-            ->select('brand', DB::raw('count(*) as total'))
-            ->whereNotNull('brand')
-            ->groupBy('brand')
-            ->orderByDesc('total')
-            ->limit(15)
-            ->get()
-            ->map(fn ($r) => ['value' => (string) $r->brand, 'count' => (int) $r->total])
+        $matches = $base->toBase();
+
+        $rows = collect(DB::select(
+            "WITH m AS MATERIALIZED ({$matches->toSql()})
+            (SELECT 'brand' AS facet, NULL::bigint AS id, m.brand AS name, count(*) AS total
+                FROM m WHERE m.brand IS NOT NULL
+                GROUP BY m.brand ORDER BY total DESC LIMIT 15)
+            UNION ALL
+            (SELECT 'shop', merchants.id, merchants.name, count(DISTINCT p.group_id)
+                FROM products p
+                JOIN m ON m.id = p.group_id
+                JOIN merchants ON merchants.id = p.merchant_id
+                WHERE p.status = 'active'
+                GROUP BY merchants.id, merchants.name ORDER BY 4 DESC LIMIT 15)",
+            $matches->getBindings(),
+        ));
+
+        $brands = $rows->where('facet', 'brand')
+            ->map(fn ($r) => ['value' => (string) $r->name, 'count' => (int) $r->total])
+            ->values()
             ->all();
 
-        $counted = DB::table('products')
-            ->join('merchants', 'merchants.id', '=', 'products.merchant_id')
-            ->joinSub((clone $base)->select('product_groups.id'), 'g', 'g.id', '=', 'products.group_id')
-            ->where('products.status', 'active')
-            ->select('merchants.id', 'merchants.name', DB::raw('count(DISTINCT products.group_id) as total'))
-            ->groupBy('merchants.id', 'merchants.name')
-            ->orderByDesc('total')
-            ->limit(15)
-            ->get();
+        $counted = $rows->where('facet', 'shop')->values();
 
         /*
          * The shop's mark travels with the facet, for the chip row above the
@@ -935,12 +933,9 @@ class SearchService
             ])
             ->all();
 
-        $price = (clone $base)->selectRaw('min(min_price) as lo, max(min_price) as hi')->first();
-
         return [
             'brands' => $brands,
             'merchants' => $merchants,
-            'price' => ['min' => $price?->lo === null ? null : (int) $price->lo, 'max' => $price?->hi === null ? null : (int) $price->hi],
         ];
     }
 

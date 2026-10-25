@@ -309,7 +309,6 @@ return [
         'coves_heading' => 'Coves about this',
         'card_kept' => 'On :count person\'s list|On :count people\'s lists',
         'card_in_coves' => 'In :count Cove|In :count Coves',
-        'kept_summary' => '":term" is on :count list|":term" is on :count lists',
         // Above the results, with Amazon's logo (2026-10-05).
         'amazon_compare' => 'Compare :term prices on Amazon',
         'amazon_compare_short' => 'Compare prices on Amazon',

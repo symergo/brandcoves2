@@ -98,8 +98,6 @@ final class SearchResult
                 fn (array $f) => ['id' => $f['id'], 'name' => $f['name'], 'logo' => $f['logo'] ?? null],
                 $facets['merchants'] ?? [],
             ),
-            // The price range is a filter bound, not a count of anything.
-            'price' => $facets['price'] ?? ['min' => null, 'max' => null],
         ];
     }
 

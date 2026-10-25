@@ -20,8 +20,9 @@ use Tests\TestCase;
 
 /**
  * The search page since 2026-09-26: the Coves a term matches above the
- * products, what other people keep under each card and in one line above the
- * results, and the props the Filters button and its chips are drawn from.
+ * products, what other people keep under each card, and the props the Filters
+ * button and its chips are drawn from. (The line above the results that
+ * counted lists for the term went on 2026-10-25.)
  * See docs/features/search.md.
  *
  * The privacy rules held here: counts of different people, never lists;
@@ -119,33 +120,11 @@ class SearchCovesAndSignalsTest extends TestCase
     }
 
     #[Test]
-    public function the_summary_counts_lists_and_people_for_the_term_past_the_threshold(): void
+    public function the_line_counting_lists_for_the_term_is_gone(): void
     {
-        $a = $this->product('Koffiemolen handmatig');
-        $b = $this->product('Koffiemolen elektrisch');
-        $other = $this->product('Theepot porselein');
-
-        $first = $this->listOf(User::factory()->create());
-        $this->save($a, $first);
-        $this->save($b, $first);
-        $this->save($a, $this->listOf(User::factory()->create()));
-        // Somebody else's tea is not about coffee.
-        $this->save($other, $this->listOf(User::factory()->create()));
-
-        $this->assertNull($this->props(['q' => 'koffiemolen'])['keptSummary'], 'Two people is under the threshold.');
-
-        Cache::flush();
-        $claimed = $this->save($b, $this->listOf(User::factory()->create()));
-        $claimed->forceFill(['claimed_by_hash' => str_repeat('c', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
-
-        $props = $this->props(['q' => 'koffiemolen']);
-        // Three lists hold a coffee grinder: the first two of them, and the claimed one.
-        $this->assertSame('"koffiemolen" staat op 3 lijsten', $props['keptSummary']);
-
-        // Counts only: no claim, no name, no list reaches the page.
-        $json = (string) json_encode([$props['keptSummary'], $props['results'], $props['coves']]);
-        $this->assertStringNotContainsString('Bob', $json);
-        $this->assertStringNotContainsString('claimed', $json);
+        // Removed 2026-10-25 for what it cost on every new term. See
+        // docs/features/search.md, "What other people keep".
+        $this->assertArrayNotHasKey('keptSummary', $this->props(['q' => 'koffiemolen']));
     }
 
     #[Test]

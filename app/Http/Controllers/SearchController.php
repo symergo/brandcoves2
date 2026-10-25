@@ -30,7 +30,6 @@ use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
-use App\Services\Search\SearchSignals;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
@@ -184,14 +183,6 @@ class SearchController extends Controller
                 ? app(CoveMatches::class)->for($current->get(), $query->term)
                 : [],
             'covesUrl' => $current->url('coves'),
-
-            /*
-             * "People keep 38 products matching “koffie” on their lists": one
-             * line above the results, only past the privacy threshold
-             * (SearchSignals). Worded here because the client's t() has no
-             * plurals.
-             */
-            'keptSummary' => $landing === null && $gift === null ? $this->keptSummary($query) : null,
 
             // The reading of a gift search, shown above its results. Null for
             // every ordinary search.
@@ -829,18 +820,6 @@ class SearchController extends Controller
         }, $results['items']);
 
         return $results;
-    }
-
-    private function keptSummary(SearchQuery $query): ?string
-    {
-        $summary = app(SearchSignals::class)->summary($query);
-
-        // How many lists the term is on (owner, 2026-10-05), not how many
-        // products: "stoomreiniger staat op 2 lijsten".
-        return $summary === null ? null : trans_choice('site.search.kept_summary', $summary['lists'], [
-            'count' => $summary['lists'],
-            'term' => $query->term,
-        ]);
     }
 
     /**

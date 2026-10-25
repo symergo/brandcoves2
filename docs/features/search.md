@@ -618,6 +618,24 @@ readers. Two indexes were added for the sorts under a market filter, `product_gr
 (market, min_price)` and `(market, first_seen_at)`; see
 `2026_09_06_000700_indexes_for_the_hot_paths`.
 
+## Two facet queries instead of four, and no list-count line (2026-10-25)
+
+On 2026-10-25 production kept dropping out ("no available server") because pages took 40–60 s and
+missed the health check. The load was crawlers walking `/{market}/zoek/{term}`: about 1,800
+search pages an hour, nearly every one a term nobody had asked for before, so the id and facet
+caches never hit. `pg_stat_statements` showed each fresh term costing about 3 s of Postgres:
+result ids 0.73 s, shop counts 0.63 s, brand counts 0.55 s, price range 0.51 s, and the list-count
+line above the results 0.48 s, all but the first re-running the full-text and trigram match.
+
+- **The price range is gone.** No page drew it; `facets.price` was dead weight.
+- **The line "“koffie” staat op 3 lijsten" is gone**, with `SearchSignals` (owner, 2026-10-25). The
+  per-card line ("Op de lijsten van 14 mensen") stays: it reads the page's ids, not the catalogue.
+- **Brands and shops are one statement.** `countFacets()` puts the match in a `MATERIALIZED` CTE that
+  both counts read, so it runs once, and returns both as one `UNION ALL`.
+
+From five heavy queries per fresh term to two. Keeping the crawlers off these pages is the other
+half of the fix: Cloudflare in front of giftcoves.com (docs/deployment.md).
+
 ## Filters are a sheet on a phone (2026-09-06)
 
 > Since 2026-09-26 neither view has a rail: the filters sit behind one Filters button in both, as they
@@ -734,7 +752,8 @@ sentence, whose words are a brief rather than a subject. No AI.
 because the client's `t()` has no plurals: "Op de lijstjes van 14 mensen · In 3 Coves".
 `ProductSignals::forResults()` answers it for the whole page in **two queries** (people per product,
 Coves per product). Above the results, one line about the term: "Mensen hebben 38 producten met
-"koffie" op hun lijstjes" (`App\Services\Search\SearchSignals`), counted over distinct products and
+"koffie" op hun lijstjes" (`App\Services\Search\SearchSignals`; **removed 2026-10-25**, see "Two facet
+queries instead of four"), counted over distinct products and
 distinct people across every product whose words match the term in this market, whatever filters
 are on (the line is about the words, not the filtered page), cached ten minutes per term. The how
 sits behind an info icon.
