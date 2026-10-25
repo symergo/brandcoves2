@@ -310,11 +310,11 @@ Chacun joue une fois.',
                     'title' => 'Tous ceux pour qui vous achetez, sur une page',
                     'body' => "[Mes proches](people) montre tous ceux pour qui vous achetez. Certains, vous les avez enregistrés vous-même et vous seul les voyez. D’autres sont des amis sur GiftCoves, marqués « sur GiftCoves ». Pour ajouter quelqu’un que vous seul voyez, touchez « Ajouter quelqu'un » : un nom, et si vous voulez qui c’est pour vous et son anniversaire.",
                     'shot' => 'friends',
-                    'alt' => 'La page Mes proches, avec les boutons pour ajouter quelqu’un et pour inviter un ami.',
+                    'alt' => 'La page Mes proches, avec le bouton pour ajouter quelqu’un.',
                 ],
                 [
                     'title' => 'Devenir amis',
-                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes amis. Pour inviter quelqu’un vous-même :\n\n1. Allez sur [Mes proches](people).\n2. Touchez « Inviter » (ou « Ajouter quelqu'un ») en haut et indiquez un nom et son adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Ajouter et inviter ». Ce bouton ne fonctionne qu’avec une adresse e-mail.\n\nNous lui envoyons un e-mail avec votre invitation. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
+                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes amis. Pour inviter quelqu’un vous-même :\n\n1. Allez sur [Mes proches](people).\n2. Touchez « Ajouter quelqu'un » en haut et indiquez un nom et son adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Ajouter et inviter ». Ce bouton ne fonctionne qu’avec une adresse e-mail.\n\nNous lui envoyons un e-mail avec votre invitation. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
                 ],
                 [
                     'title' => 'Ce qu’un ami voit',

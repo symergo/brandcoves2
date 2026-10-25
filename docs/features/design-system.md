@@ -342,6 +342,11 @@ each side, crowds what is in it, and the label column of "Over" left its chips a
   this one, and the page behind is what the question is about.
 - Inside a full-screen popup, a label and its values stack (label above) on a phone rather than
   sitting in a fixed label column.
+- **From `sm` up a popup is as tall as its content (2026-10-25).** It was `sm:h-auto`, and a modal
+  `<dialog>` is pinned to the top and bottom of the screen, so `height: auto` stretched every popup on
+  a desktop to the full height: a short form over a tall white sheet. `sm:h-fit` (the browser's own
+  default for a dialog) in `Modal` and `SignInDialog`; the max-height still caps a long popup, which
+  scrolls.
 
 ## Popup or inline, share and menu buttons (2026-10-06, the standard from here on)
 

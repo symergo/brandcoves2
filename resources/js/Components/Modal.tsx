@@ -87,10 +87,17 @@ export default function Modal({
     const sectionTitles =
         '[&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-ink [&_legend]:text-base [&_legend]:font-semibold [&_legend]:text-ink'
 
+    /*
+     * `sm:h-fit`, not `sm:h-auto` (2026-10-25). A modal dialog is pinned top
+     * and bottom (inset 0), so `height: auto` stretched every popup on a
+     * desktop to the full screen, a short form over a tall white sheet.
+     * `fit-content` is the browser's own default for a dialog; the max-height
+     * still caps a long one, which then scrolls.
+     */
     const shape =
         role === 'alertdialog'
             ? `m-auto max-h-[calc(100dvh-2rem)] ${widths[width]} rounded-card border border-line`
-            : `m-0 h-dvh max-h-none w-screen max-w-none sm:m-auto sm:h-auto sm:max-h-[calc(100dvh-2rem)] ${atSm[width]} sm:rounded-card sm:border sm:border-line`
+            : `m-0 h-dvh max-h-none w-screen max-w-none sm:m-auto sm:h-fit sm:max-h-[calc(100dvh-2rem)] ${atSm[width]} sm:rounded-card sm:border sm:border-line`
 
     return (
         <dialog

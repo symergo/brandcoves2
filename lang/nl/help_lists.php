@@ -325,11 +325,11 @@ Iedereen speelt één keer.',
                     'title' => 'Iedereen voor wie je koopt, op één pagina',
                     'body' => '[Mijn mensen](people) toont iedereen voor wie je koopt. Sommigen bewaarde je zelf en ziet alleen jij. Anderen zijn vrienden op GiftCoves, met “op GiftCoves” erbij. Iemand toevoegen die alleen jij ziet: tik op “Iemand toevoegen” en vul een naam in, en als je wilt wie het voor je is en de verjaardag.',
                     'shot' => 'friends',
-                    'alt' => 'De pagina Mijn mensen, met de knoppen om iemand toe te voegen en om een vriend uit te nodigen.',
+                    'alt' => 'De pagina Mijn mensen, met de knop om iemand toe te voegen.',
                 ],
                 [
                     'title' => 'Vrienden worden',
-                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie vrienden. Iemand zelf uitnodigen gaat zo:\n\n1. Ga naar [Mijn mensen](people).\n2. Tik bovenaan op “Nodig uit” (of “Iemand toevoegen”) en vul een naam en het e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Toevoegen en uitnodigen”. Die knop werkt pas als er een e-mailadres staat.\n\nWe sturen die persoon een e-mail met je uitnodiging. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
+                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie vrienden. Iemand zelf uitnodigen gaat zo:\n\n1. Ga naar [Mijn mensen](people).\n2. Tik bovenaan op “Iemand toevoegen” en vul een naam en het e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Toevoegen en uitnodigen”. Die knop werkt pas als er een e-mailadres staat.\n\nWe sturen die persoon een e-mail met je uitnodiging. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
                 ],
                 [
                     'title' => 'Wat een vriend ziet',

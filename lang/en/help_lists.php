@@ -310,11 +310,11 @@ Everyone plays once.',
                     'title' => 'Everybody you buy for, on one page',
                     'body' => '[My people](people) lists everybody you buy for. Some you saved yourself and only you see. Others are friends on GiftCoves, marked “on GiftCoves”. To add someone only you see, tap “Add someone”: a name, and who they are to you and their birthday if you like.',
                     'shot' => 'friends',
-                    'alt' => 'The My people page, with the buttons to add someone and to invite a friend.',
+                    'alt' => 'The My people page, with the button to add someone.',
                 ],
                 [
                     'title' => 'Becoming friends',
-                    'body' => "When someone opens your share link while signed in, you are friends. To invite someone yourself:\n\n1. Go to [My people](people).\n2. Tap “Invite” (or “Add someone”) at the top and fill in a name and their email address, and the birthday if you like.\n3. Tap “Add and invite”. That button only works once there is an email address.\n\nWe email them your invitation. If they already have an account you are connected at once; otherwise as soon as they sign in.",
+                    'body' => "When someone opens your share link while signed in, you are friends. To invite someone yourself:\n\n1. Go to [My people](people).\n2. Tap “Add someone” at the top and fill in a name and their email address, and the birthday if you like.\n3. Tap “Add and invite”. That button only works once there is an email address.\n\nWe email them your invitation. If they already have an account you are connected at once; otherwise as soon as they sign in.",
                 ],
                 [
                     'title' => 'What a friend sees',

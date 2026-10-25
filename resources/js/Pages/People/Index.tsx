@@ -94,21 +94,14 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
 
     /*
      * One form since 2026-10-25 (owner): "Iemand toevoegen" and "Nodig uit"
-     * were two popups, and now open the same one. The address is optional;
-     * with one, "Toevoegen en uitnodigen" saves the person and invites them,
-     * linked, so they stay one person once they join. "Nodig uit" opens it
-     * with the address field focused.
+     * were two popups. The address is optional; with one, "Toevoegen en
+     * uitnodigen" saves the person and invites them, linked, so they stay one
+     * person once they join.
      */
     const [adding, setAdding] = useState(false)
-    const [focusEmail, setFocusEmail] = useState(false)
     const [inviting, setInviting] = useState(false)
 
     const person = useForm({ name: '', relationship: '', day: '', month: '', email: '' })
-
-    const open = (email: boolean) => {
-        setFocusEmail(email)
-        setAdding(true)
-    }
 
     const addPerson = (invite: boolean) => {
         setInviting(invite)
@@ -161,42 +154,25 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                             <ToolIcon name="wishlist" className="h-4 w-4" />
                             <span className="hidden sm:inline">{t('lists.title')}</span>
                         </Link>
-                        {isSignedIn && (
-                            <>
-                                <Button
-                                    variant={adding ? 'secondary' : 'primary'}
-                                    aria-expanded={adding}
-                                    aria-controls="people-add"
-                                    aria-label={t('people.add_person')}
-                                    title={t('people.add_person')}
-                                    onClick={() => open(false)}
-                                >
-                                    <span className="inline-flex items-center gap-2">
-                                        <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
-                                        <span className="hidden sm:inline">{t('people.add_person')}</span>
-                                    </span>
-                                </Button>
-                            </>
-                        )}
                         {/*
-                          "Nodig uit" for everybody (owner, 2026-10-25), greyed
-                          out for a guest: inviting needs an account, and the
-                          button says so on hover rather than hiding what the
-                          page is for. Since the forms merged it opens the
-                          "Iemand toevoegen" popup at the address field.
+                          One button since 2026-10-25 (owner): "Nodig uit" went
+                          once adding and inviting became one form. Shown to a
+                          guest too, greyed out, as "Nodig uit" was: adding
+                          somebody needs an account, and the button says so on
+                          hover rather than hiding what the page is for.
                         */}
                         <Button
-                            variant="secondary"
+                            variant={adding ? 'secondary' : 'primary'}
                             disabled={!isSignedIn}
                             aria-expanded={isSignedIn ? adding : undefined}
                             aria-controls={isSignedIn ? 'people-add' : undefined}
-                            aria-label={isSignedIn ? t('people.invite_short') : t('people.invite_signed_out')}
-                            title={isSignedIn ? t('people.invite') : t('people.invite_signed_out')}
-                            onClick={() => open(true)}
+                            aria-label={isSignedIn ? t('people.add_person') : t('people.add_signed_out')}
+                            title={isSignedIn ? t('people.add_person') : t('people.add_signed_out')}
+                            onClick={() => setAdding(true)}
                         >
                             <span className="inline-flex items-center gap-2">
-                                <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
-                                <span className="hidden sm:inline">{t('people.invite_short')}</span>
+                                <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">{t('people.add_person')}</span>
                             </span>
                         </Button>
                     </>
@@ -221,7 +197,11 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                 <>
                     {/*
                       Adding somebody, and optionally inviting them, in one
-                      popup (2026-10-25). Opened from either header button.
+                      popup (2026-10-25). One field per row (owner, the same
+                      day): three side by side squeezed the birthday's two
+                      selects and read as one long line. The invite part sits
+                      under a rule of its own, because it is the one optional
+                      step that reaches somebody else.
                     */}
                     {adding && (
                         <Modal
@@ -232,23 +212,24 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 </span>
                             }
                             label={t('people.add_person')}
+                            width="sm"
                             onClose={() => setAdding(false)}
                         >
                         <form
                             id="people-add"
                             onSubmit={(e) => {
                                 e.preventDefault()
-                                // Enter means the plain "Toevoegen", the first
-                                // button: inviting somebody is never a side effect
-                                // of a key press.
+                                // Enter means the plain "Toevoegen": inviting
+                                // somebody is never a side effect of a key press.
                                 addPerson(false)
                             }}
-                            className="mt-4 grid gap-4 sm:grid-cols-3"
+                            className="mt-4 flex flex-col gap-4"
                         >
                             <label className="block text-sm font-medium">
                                 {t('people.name')}
                                 <input
                                     required
+                                    autoFocus
                                     maxLength={80}
                                     value={person.data.name}
                                     onChange={(e) => person.setData('name', e.target.value)}
@@ -279,7 +260,7 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     onMonth={(v) => person.setData('month', v)}
                                 />
                             </label>
-                            <label className="block text-sm font-medium sm:col-span-3">
+                            <label className="block border-t border-line pt-4 text-sm font-medium">
                                 <span className="inline-flex flex-wrap items-center">
                                     {t('people.email_optional')}
                                     <InfoTip>{t('people.email_optional_tip')}</InfoTip>
@@ -287,16 +268,22 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 <input
                                     type="email"
                                     maxLength={255}
-                                    autoFocus={focusEmail}
                                     value={person.data.email}
                                     onChange={(e) => person.setData('email', e.target.value)}
                                     className={field}
                                 />
                             </label>
-                            <div className="flex flex-wrap gap-2 sm:col-span-3">
-                                <Button type="submit" busy={person.processing && !inviting}>
-                                    {t('people.add')}
-                                </Button>
+                            {(person.errors.name || person.errors.email) && (
+                                <p className="text-sm text-danger" role="alert">
+                                    {person.errors.name ?? person.errors.email}
+                                </p>
+                            )}
+                            {/*
+                              The buttons at the foot, full width and stacked
+                              on a phone, side by side from `sm` with the plain
+                              "Toevoegen" last, where the eye ends.
+                            */}
+                            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                                 {/*
                                   Greyed out until there is an address to send
                                   to (owner, 2026-10-25). Saves the person and
@@ -312,12 +299,10 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 >
                                     {t('people.add_and_invite')}
                                 </Button>
+                                <Button type="submit" busy={person.processing && !inviting}>
+                                    {t('people.add')}
+                                </Button>
                             </div>
-                            {(person.errors.name || person.errors.email) && (
-                                <p className="text-sm text-danger sm:col-span-3" role="alert">
-                                    {person.errors.name ?? person.errors.email}
-                                </p>
-                            )}
                         </form>
                         </Modal>
                     )}

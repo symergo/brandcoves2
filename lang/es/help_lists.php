@@ -310,11 +310,11 @@ Cada uno juega una vez.',
                     'title' => 'Todas las personas a las que compras, en una página',
                     'body' => '[Mi gente](people) muestra a todas las personas a las que compras. A algunas las guardaste tú y solo tú las ves. Otras son amigos en GiftCoves, marcados «en GiftCoves». Para añadir a alguien que solo ves tú, toca «Añadir a alguien»: un nombre y, si quieres, quién es para ti y su cumpleaños.',
                     'shot' => 'friends',
-                    'alt' => 'La página Mi gente, con los botones para añadir a alguien e invitar a un amigo.',
+                    'alt' => 'La página Mi gente, con el botón para añadir a alguien.',
                 ],
                 [
                     'title' => 'Hacerse amigos',
-                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois amigos. Para invitar a alguien tú mismo:\n\n1. Ve a [Mi gente](people).\n2. Toca «Invitar» (o «Añadir a alguien») arriba y escribe un nombre y su correo, y el cumpleaños si quieres.\n3. Toca «Añadir e invitar». Ese botón solo funciona cuando hay un correo.\n\nLe enviamos un correo con tu invitación. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
+                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois amigos. Para invitar a alguien tú mismo:\n\n1. Ve a [Mi gente](people).\n2. Toca «Añadir a alguien» arriba y escribe un nombre y su correo, y el cumpleaños si quieres.\n3. Toca «Añadir e invitar». Ese botón solo funciona cuando hay un correo.\n\nLe enviamos un correo con tu invitación. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
                 ],
                 [
                     'title' => 'Qué ve un amigo',

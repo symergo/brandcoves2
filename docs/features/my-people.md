@@ -40,16 +40,17 @@ Cove" (`NewListButton`) became the filled `Button` that "Iemand toevoegen" is, o
 form is open, each with a line icon (+, and the invite figure for "Nodig uit"), and both titles
 are the same size.
 
-**"Nodig uit" for everybody, greyed out for a guest** (owner, 2026-10-25). The invite button's label
-is the short `people.invite_short` ("Nodig uit"); the full "Nodig uit op GiftCoves" stays its hover
-text and the popup's title. A guest sees the button too, disabled, with "Log in om iemand uit te
-nodigen" on hover (`people.invite_signed_out`): the page shows what it is for before you sign in,
-and the sign-in link below says how. "Iemand toevoegen" stays hidden from guests.
+**One button, "Iemand toevoegen", greyed out for a guest** (owner, 2026-10-25). The header had
+"Iemand toevoegen" and "Nodig uit op GiftCoves" side by side. Once adding and inviting became one
+form (below), the owner kept only "Iemand toevoegen". A guest sees it too, disabled, with "Log in
+om iemand toe te voegen" on hover (`people.add_signed_out`): the page shows what it is for before
+you sign in, and the sign-in link below says how. (For a few hours that day it was a greyed-out
+"Nodig uit" button instead.)
 
-**One form for adding and inviting** (owner, the same day). The "Iemand toevoegen" and "Nodig uit
-op GiftCoves" popups were two forms for one job; now both header buttons open the same popup
-("Nodig uit" with the address field focused). Name, relationship and birthday as before, plus an
-optional email address, and two buttons:
+**One form for adding and inviting** (owner, the same day). The two popups were two forms for one
+job. Now there is one, a single column (one field per row: three side by side squeezed the
+birthday's two selects): name, relationship, birthday, then under a rule an optional email address,
+and two buttons at the foot, stacked full width on a phone:
 
 - **Toevoegen** saves the person and nothing else. The address is not even sent: it is never stored
   on a person, and Enter means this button, so nobody is invited by a key press.
