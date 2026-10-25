@@ -327,6 +327,26 @@ offer rows", which an out-of-stock row satisfies. It is indexable now, like ever
 since 2026-09-18 no product is in the sitemap at all, so the rule that listed only in-stock, priced
 products with an image has no URLs left to filter.
 
+**Five public pages and the frequently searched terms were added on 2026-10-25** (owner: "list the
+normal pages, the Coves, including the daily ones, and the frequently searched items"). Comparing the
+public routes with the file found five indexable pages in no sitemap: `/coves/community`,
+`/gift-cove/how-it-works`, `/santa`, `/gift/swipe`, `/gift/taste`. The personal and tool pages
+(lists, people, scanner, login, notifications) stay out on purpose. Every Cove kind was already
+listed (guides, seasonal and advice under `/guides`, Shop Coves, personas, occasions, the dailies,
+Brand Coves through the brand pages, published lists); the 400-daily cap is far above the ~50 a
+market has.
+
+The search terms are exactly the ones the popular-searches page lists (`SearchTermStats::for()`),
+at their canonical `/{market}/zoek/{term}`: searched by at least `min_volume` people (the privacy
+floor), with results, past the length and stop-term rules. Google warns against submitting internal
+search results wholesale; a short list of terms people really look for, each with copy and a
+canonical, behaves like category pages. `PopularSearchesTest::the_sitemap_lists_the_frequently_
+searched_terms_and_only_those` pins that a one-visitor term and a term without results stay out.
+
+**How the files are refreshed.** Built on request and cached an hour per file (`bc:sitemap:*`);
+`PlanGiftLandingPages` drops the market's file when it changes the gift pages. `robots.txt` names
+`/sitemap.xml`, the index; Google re-reads it at its own pace (Search Console shows when).
+
 ## Guardrails
 
 `SeoTest` pins the behaviour, including four tests that exist because the

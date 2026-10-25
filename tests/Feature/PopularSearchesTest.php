@@ -60,6 +60,25 @@ class PopularSearchesTest extends TestCase
         ]);
     }
 
+    /**
+     * The sitemap submits the frequently searched terms (owner, 2026-10-25):
+     * the ones this page lists, so the privacy floor holds there too. A term
+     * one visitor typed, or one that found nothing, is not submitted.
+     */
+    #[Test]
+    public function the_sitemap_lists_the_frequently_searched_terms_and_only_those(): void
+    {
+        $this->log('koptelefoon', 12);
+        $this->log('jan peeters', 1);
+        $this->log('nergensvindbaar', 12, results: 0);
+
+        $xml = $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+
+        $this->assertStringContainsString('/be-nl/zoek/koptelefoon</loc>', $xml);
+        $this->assertStringNotContainsString('jan-peeters', $xml);
+        $this->assertStringNotContainsString('nergensvindbaar', $xml);
+    }
+
     #[Test]
     public function it_renders_in_every_market(): void
     {

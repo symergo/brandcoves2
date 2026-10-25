@@ -13,6 +13,7 @@ use App\Models\GiftLanding;
 use App\Models\Wishlist;
 use App\Services\Cove\CommunityCoves;
 use App\Services\Gift\GiftLandingLinks;
+use App\Services\Search\SearchTermStats;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
@@ -155,6 +156,20 @@ class SitemapController extends Controller
                      */
                     ['loc' => url("/{$resolved->value}/ask"), 'priority' => '0.6', 'changefreq' => 'daily'],
                     ['loc' => url("/{$resolved->value}/popular-searches"), 'priority' => '0.5', 'changefreq' => 'weekly'],
+                    /*
+                     * Indexable public pages that were in no sitemap (found
+                     * 2026-10-25, comparing the public routes with this file):
+                     * the published lists' index, the gift Cove's how-it-works,
+                     * Secret Santa and two ways into the gift finder. Each
+                     * answers 200 with `index, follow`. The personal and tool
+                     * pages (lists, people, scanner, login, notifications) are
+                     * left out on purpose: they are about one visitor.
+                     */
+                    ['loc' => url("/{$resolved->value}/coves/community"), 'priority' => '0.5', 'changefreq' => 'daily'],
+                    ['loc' => url("/{$resolved->value}/gift-cove/how-it-works"), 'priority' => '0.4', 'changefreq' => 'monthly'],
+                    ['loc' => url("/{$resolved->value}/santa"), 'priority' => '0.5', 'changefreq' => 'monthly'],
+                    ['loc' => url("/{$resolved->value}/gift/swipe"), 'priority' => '0.5', 'changefreq' => 'weekly'],
+                    ['loc' => url("/{$resolved->value}/gift/taste"), 'priority' => '0.5', 'changefreq' => 'weekly'],
                     ['loc' => url("/{$resolved->value}/lists-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
                     // The eight topics under it, since 2026-09-08. "How do I
                     // share a wish list" is a query, and the index alone would
@@ -387,6 +402,32 @@ class SitemapController extends Controller
                             // A past edition never changes. Saying so stops a
                             // crawler re-fetching ninety static pages a day.
                             'changefreq' => 'never',
+                        ];
+                    });
+
+                /*
+                 * The frequently searched terms (owner, 2026-10-25), at their
+                 * canonical /{market}/zoek/{term} address: exactly the terms the
+                 * public popular-searches page lists (SearchTermStats::for()),
+                 * so the same rules hold. A term must have been searched by
+                 * at least `min_volume` people (a privacy floor: never one
+                 * visitor's words), must have found products when searched
+                 * (no empty page submitted), and passes the length and
+                 * stop-term rules. Search pages are the kind Google warns
+                 * against indexing wholesale; a short list of terms people
+                 * really look for, each with its own copy and a canonical,
+                 * is the kind that ranks like a category page.
+                 */
+                $stats = app(SearchTermStats::class)->for($resolved);
+                collect([...$stats['months'], ['terms' => $stats['trending']], ['terms' => $stats['latest']]])
+                    ->flatMap(fn (array $column) => array_column($column['terms'] ?? [], 'url'))
+                    ->filter()
+                    ->unique()
+                    ->each(function (string $path) use (&$urls): void {
+                        $urls[] = [
+                            'loc' => url($path),
+                            'priority' => '0.5',
+                            'changefreq' => 'weekly',
                         ];
                     });
             }
