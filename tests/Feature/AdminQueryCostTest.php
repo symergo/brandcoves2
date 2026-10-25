@@ -13,6 +13,7 @@ use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Jobs\RefreshTopicQueue;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\ProductGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +37,9 @@ class AdminQueryCostTest extends TestCase
         /*
          * Filament's default search wrote `lower(title) like '%x%'`, which no
          * index serves: a full read of the offers table per keystroke, 668 ms
-         * on production. `ilike` on the bare column is served by
-         * products_title_trgm_idx.
+         * on production. `ilike` on the bare column is served by a trigram
+         * index: product_groups' for a grouped offer, and for an ungrouped
+         * one (these are) a filter over the thousand or so without a group.
          */
         $shop = Merchant::create([
             'source' => Source::Awin->value,
@@ -68,6 +70,40 @@ class AdminQueryCostTest extends TestCase
             ->test(ListProducts::class)
             ->searchTable('100%')
             ->assertCanSeeTableRecords([$grinder])
+            ->assertCanNotSeeTableRecords([$kettle]);
+    }
+
+    #[Test]
+    public function a_grouped_offer_is_found_by_its_products_title(): void
+    {
+        /*
+         * Since 2026-10-25 a grouped offer is found through the product's
+         * title (product_groups_title_trgm_idx), so the 1 GB trigram index on
+         * products.title could go. Its own title is not searched any more.
+         */
+        $shop = Merchant::create([
+            'source' => Source::Awin->value,
+            'external_id' => 'shop',
+            'name' => 'Koffiehuis',
+            'domain' => 'koffiehuis.be',
+        ]);
+
+        $group = ProductGroup::create([
+            'market' => Market::BeNl,
+            'identity_key' => 'k'.bin2hex(random_bytes(4)),
+            'identity_kind' => 'ean',
+            'title' => 'Sage Barista Express',
+            'slug' => 'sage-barista-express',
+        ]);
+
+        $machine = $this->offer($shop, 'SES875BSS espresso');
+        $machine->update(['group_id' => $group->id]);
+        $kettle = $this->offer($shop, 'Waterkoker');
+
+        Livewire::actingAs($this->admin())
+            ->test(ListProducts::class)
+            ->searchTable('barista')
+            ->assertCanSeeTableRecords([$machine])
             ->assertCanNotSeeTableRecords([$kettle]);
     }
 

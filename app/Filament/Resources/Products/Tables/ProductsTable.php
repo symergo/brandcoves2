@@ -41,18 +41,40 @@ class ProductsTable
                     )),
 
                 /*
-                 * `ilike` on the bare column, not Filament's default search.
+                 * Searched through the product's title, not the offer's.
                  *
-                 * The default writes `lower(title) like '%x%'`, which no index
-                 * serves, so every keystroke read the whole offers table (668 ms
-                 * on production). `products_title_trgm_idx` is a trigram index
-                 * on `title` itself, and Postgres uses it for `ilike`. The `%`,
-                 * `_` and `\` a person types are escaped so they match
-                 * themselves rather than acting as wildcards.
+                 * Filament's default writes `lower(title) like '%x%'`, which no
+                 * index serves, so every keystroke read the whole offers table
+                 * (668 ms on production). Until 2026-10-25 this was `ilike` on
+                 * the offer title, served by a trigram index on
+                 * `products.title` that had grown to 1 GB for this one box.
+                 * Now the products whose title matches are found through
+                 * `product_groups_title_trgm_idx`, which search keeps anyway,
+                 * and their offers through `group_id`. Offers not grouped yet
+                 * (the "Ungrouped only" filter) are matched on their own
+                 * title: about a thousand of them once eBay's were deleted,
+                 * found through the `(group_id, price)` index. A union, not
+                 * an OR, so each half keeps its index. The `%`, `_` and `\` a
+                 * person types are escaped so they match themselves rather
+                 * than acting as wildcards.
                  */
                 TextColumn::make('title')
-                    ->searchable(query: fn (Builder $query, string $search): Builder => $query
-                        ->where('title', 'ilike', '%'.addcslashes($search, '%_\\').'%'))
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        $like = '%'.addcslashes($search, '%_\\').'%';
+
+                        return $query->whereIn('products.id', fn ($ids) => $ids
+                            ->select('id')
+                            ->from('products')
+                            ->whereIn('group_id', fn ($groups) => $groups
+                                ->select('id')
+                                ->from('product_groups')
+                                ->where('title', 'ilike', $like))
+                            ->unionAll(fn ($ungrouped) => $ungrouped
+                                ->select('id')
+                                ->from('products')
+                                ->whereNull('group_id')
+                                ->where('title', 'ilike', $like)));
+                    })
                     ->limit(60)
                     ->description(fn (Product $r) => $r->brand),
 

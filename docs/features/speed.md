@@ -245,7 +245,7 @@ fallback runs it once; the directory and the count run once and not at all on th
 
 | Screen | Was | Now |
 |---|---|---|
-| Products, search box | `lower(title) like '%x%'`, which no index serves: every keystroke read the whole offers table (668 ms on production; 173 ms locally on 175k offers) | `title ilike '%x%'`, served by `products_title_trgm_idx` (27 ms locally). Typed `%` and `_` are escaped. The shop name is no longer searched: that joined every offer to its merchant per keystroke, and the shop filter answers the same question |
+| Products, search box | `lower(title) like '%x%'`, which no index serves: every keystroke read the whole offers table (668 ms on production; 173 ms locally on 175k offers) | `title ilike '%x%'`, served by `products_title_trgm_idx` (27 ms locally; since 2026-10-25 through the product's title instead, see "products_title_trgm_idx" below). Typed `%` and `_` are escaped. The shop name is no longer searched: that joined every offer to its merchant per keystroke, and the shop filter answers the same question |
 | Market supply badge, in the sidebar of every admin page | built every row, including a `count(distinct group_id)` over every offer (339 ms), cached only a minute | reads the small `feeds` table and the connector config only. Whether a market is dark depends on its sources, never on how many products it holds; the catalogue counts are cached separately and only the page itself asks for them |
 | Market trends | the rank-history join ran four times per render (risers, new entries, fallers, active categories are four filters over one result), and the market tabs came from a `DISTINCT market` over the whole rank history | `MarketTrends::moves()` is remembered for the life of the object and the page holds one per request; the tabs ask one `EXISTS` per market, each stopping at its first row |
 | Guide topics, "Refresh queue" | mined the search log and seeded the seasonal topics for all five markets inside the web request | queues one `RefreshTopicQueue` job per market and says so; the list is the report once they have run |
@@ -1240,7 +1240,11 @@ they read a catalogue a few hours old, as they did before whenever grouping fail
   possible reader is a hand-called editorial endpoint) and `products_merchant_id_index` (superseded
   by `(merchant_id, market, status)`, dropped only when that one is valid).
   **`products_title_trgm_idx` is kept**, although the audit listed it: the admin offer search uses it
-  since wave 1.
+  since wave 1. *Dropped on 2026-10-25* (1,075 MB by then): the admin search now finds products
+  by title through `product_groups_title_trgm_idx` and their offers by `group_id`, plus the ~1,000
+  ungrouped offers by their own title, as a union so each half keeps its index. On production a
+  common word ("koptelefoon", 5,700 offers) counts in 0.27 s and shows its first page in 1.9 s
+  cold. An `OR` instead of the union made the count a 17.5 s full scan.
 
 ### Migrations in this wave
 
