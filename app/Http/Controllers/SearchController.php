@@ -906,7 +906,12 @@ class SearchController extends Controller
      * browser puts the added products above the ones already shown
      * (Search.tsx, owner's choice), with the notice above the grid.
      *
-     * @return array{results: array<string, mixed>, added: int, notice: string|null}
+     * In the by-store view the lanes are drawn from their own query
+     * (storeLanes()), not from the results, so they are sent again too:
+     * without them the shops' products never reached that view, and one that
+     * started empty stayed empty.
+     *
+     * @return array{results: array<string, mixed>, lanes: array<int, mixed>|null, added: int, notice: string|null}
      */
     private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search, CurrentMarket $current): array
     {
@@ -918,6 +923,7 @@ class SearchController extends Controller
 
         return [
             'results' => $results,
+            'lanes' => $query->view === 'store' ? $this->presentLanes($search->storeLanes($query)) : null,
             'added' => $added,
             'notice' => $added === 0 ? null : trans_choice('site.search.live_added', $added, [
                 'count' => $added,

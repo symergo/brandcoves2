@@ -259,6 +259,32 @@ class SearchThinLiveTest extends TestCase
         Queue::assertPushed(PullLiveSearch::class, 1);
     }
 
+    /**
+     * The by-store view is drawn from lanes, not from the results, so the
+     * follow-up sends them again; before that the shops' products never
+     * reached it, and a store view that started empty stayed empty.
+     */
+    #[Test]
+    public function the_store_view_gets_the_shops_products_too(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+
+        $live = $this->followUp('/be-nl/search?q=tuinkabouter&view=store')->json('props.live');
+
+        $this->assertNotNull($live['lanes']);
+        $titles = collect($live['lanes'])->flatMap(fn (array $lane) => array_column($lane['items'], 'title'))->all();
+        $this->assertContains('Zeldzame tuinkabouter met lantaarn', $titles);
+    }
+
+    /** In the grid view nothing extra is computed for lanes. */
+    #[Test]
+    public function the_grid_view_gets_no_lanes(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+
+        $this->assertNull($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.lanes'));
+    }
+
     /** The follow-up runs the search again; it must not count the person twice. */
     #[Test]
     public function the_follow_up_request_is_not_logged_a_second_time(): void

@@ -36,6 +36,13 @@ interface SearchResults {
     items: GroupCard[]
 }
 
+/** One shop's row in the by-store view. */
+interface Lane {
+    shop: string
+    logo: string | null
+    items: GroupCard[]
+}
+
 /** One filter that is on, drawn as a chip above the results. */
 interface FilterChip {
     key: string
@@ -69,8 +76,8 @@ interface Props {
     liveShops: string[]
     /** The market's biggest shops, named in the line under the search bar while a search loads. */
     waitShops: string[]
-    live?: { results: SearchResults; added: number; notice: string | null } | null
-    lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
+    live?: { results: SearchResults; lanes: Lane[] | null; added: number; notice: string | null } | null
+    lanes: Lane[] | null
     emptyBecauseOfFilters: boolean
     /**
      * A gift search, read (roadmap step 4): what was understood, each piece
@@ -192,7 +199,7 @@ export default function Search({
     liveShops = [],
     waitShops = [],
     live,
-    lanes,
+    lanes: storedLanes,
     emptyBecauseOfFilters,
     intent,
     tagFilters = [],
@@ -231,6 +238,21 @@ export default function Search({
 
         return { ...live.results, items, empty: items.length === 0 }
     }, [storedResults, live])
+
+    /*
+     * The by-store view, after the shops answered: the lanes the follow-up
+     * computed again, the shops with products found online first, as in the
+     * grid. Before that, the lanes the page came with.
+     */
+    const lanes = useMemo<Lane[] | null>(() => {
+        if (!live?.lanes) {
+            return storedLanes
+        }
+        const shown = new Set(storedResults.items.map((g) => g.id))
+        const hasNew = (lane: Lane) => lane.items.some((g) => !shown.has(g.id))
+
+        return [...live.lanes.filter(hasNew), ...live.lanes.filter((lane) => !hasNew(lane))]
+    }, [storedLanes, storedResults, live])
 
     /*
      * The box follows the query, not only the first one.

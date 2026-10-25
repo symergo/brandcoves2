@@ -254,6 +254,10 @@ many products were added, and a worded notice (`search.live_added`, plural on th
   then the notice sit above the grid. That pushes the shown cards down once, a layout shift the owner
   accepted: it only happens on a thin search, with few cards to push. An empty first page shows
   placeholder cards instead of "nothing found" while the shops are asked.
+- **The by-store view too.** Its lanes come from their own query (`storeLanes()`), not from the
+  results, so at first the shops' products never reached it and a store view that started empty
+  stayed empty (found by the owner). The follow-up now sends the lanes again when the view is
+  `store`, and the page puts the shops with products found online first, as in the grid.
 - **A search engine gets the whole page in one response** (`deferThin` is false for Google and
   Bing): what it sees is what it indexes, and the SSR HTML holds everything.
 - **Logged once.** The follow-up runs the search again; it uses `SearchQuery::unlogged()`.
