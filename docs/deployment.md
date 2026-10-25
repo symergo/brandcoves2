@@ -522,10 +522,37 @@ scheduled task at `pg_dump`.
   containers. A backup script that greps for `postgres-<app uuid>` finds nothing after the move.
   See "Getting production data onto the laptop" above for the container naming.
 
-## Proposal: Cloudflare in front (optional, needs the owner's DNS)
+## Cloudflare in front (set up 2026-10-25)
 
-*Written 2026-09-27. Not set up. It needs `giftcoves.com`'s DNS moved to Cloudflare (the account
-already holds the bstore zones).*
+**Why it happened:** on 2026-10-25 crawlers fetched about 1,800 search pages an hour, each a new
+term, so no cache helped. Pages took 40–60 s, the app missed its health check and Traefik answered
+"no available server". The app could not limit them: every request reached it from Traefik's
+10.0.2.2 with no X-Forwarded-For, so every `throttle:` was one bucket for the whole world.
+
+**What is set up** (zone `cb638e7cab59a9729716902602a8da26`, same account and token as the bstore
+zones, `.claude/cloudflare_api.api`; nameservers `alan.ns.cloudflare.com`, `ines.ns.cloudflare.com`):
+
+- **DNS**, copied record by record from what OVH served. Proxied: `giftcoves.com`, `www`,
+  `staging`. DNS only: the `*` wildcard, the mail host names, OVH's MX, SPF, DMARC and two DKIM
+  CNAMEs, the verification TXTs. Mail is untouched: it never goes through Cloudflare.
+- **SSL Full (strict)**, Always Use HTTPS, TLS 1.2 minimum.
+- **Custom rules:** (1) skip the rest for the VPS's own address, `/api/*`, `/webhooks/*` and
+  `/health`, because a program cannot solve a challenge and the editorial API is called with curl;
+  (2) the bstore.be rule of 2026-10-01: managed challenge for the data-centre networks and the
+  scraping-tool user agents, with verified bots (Google, Bing) let through. **No country rule**,
+  unlike bstore.be: giftcoves.com serves the English and Spanish markets too.
+- **Rate limit:** paths containing `/zoek`, `/search`, `/recherche` or `/buscar`, 15 requests per
+  10 s per address, then blocked for 10 s. Verified bots are exempt.
+- **No cache rules yet.** Cloudflare's default caches static files by extension and honours the
+  origin's headers; HTML is not cached. The page-cache plan below still applies.
+- **The visitor's address:** `App\Http\Middleware\UseCloudflareClientIp` reads `CF-Connecting-IP`.
+  The origin is still reachable directly, so a caller can claim any address that way; firewalling
+  the VPS to Cloudflare's ranges would close it, and would need `staging.brandcoves.com` and
+  `brandcoves.com` (another zone, not on Cloudflare) behind it first.
+
+The notes below were the plan as written on 2026-09-27, kept for the caching steps not yet taken.
+
+### The plan of 2026-09-27
 
 What it would add: a cache near the visitor for everything we already mark cacheable, absorbing
 crawler bursts before they reach the VPS, and HTTP/3. With the orange cloud on, Traefik keeps

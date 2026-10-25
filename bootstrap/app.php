@@ -12,6 +12,7 @@ use App\Http\Middleware\RedirectLegacyHost;
 use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
+use App\Http\Middleware\UseCloudflareClientIp;
 use App\Services\Seo\LegacyRedirects;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
@@ -42,6 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // ports and is reachable only through Traefik, so a forged
         // X-Forwarded-* header cannot originate outside the Docker network.
         $middleware->trustProxies(at: '*');
+
+        // The visitor's address from Cloudflare's header, before anything
+        // reads it. See the class for why it is trusted as is.
+        $middleware->prepend(UseCloudflareClientIp::class);
 
         /*
          * Global, so the old domain is answered on every route — the API and
