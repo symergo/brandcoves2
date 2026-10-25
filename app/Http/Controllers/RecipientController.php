@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\InviteOutcome;
 use App\Enums\ListKind;
 use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
@@ -12,10 +13,14 @@ use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Services\Social\FriendInvites;
+use App\Services\Social\InviteRefused;
 use App\Support\CurrentMarket;
+use App\Support\DayAndMonth;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -31,13 +36,22 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class RecipientController extends Controller
 {
-    public function store(RecipientTasteRequest $request, CurrentMarket $current): RedirectResponse
+    public function store(RecipientTasteRequest $request, CurrentMarket $current, FriendInvites $invites): RedirectResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:80'],
+            /*
+             * "Toevoegen en uitnodigen" (owner, 2026-10-25): one form on Mijn
+             * mensen adds somebody and, when an address is given and that
+             * button pressed, invites them too, linked to the person just
+             * saved, as "Nodig uit" does from their own page. The address is
+             * never stored on the person; it goes to FriendInvites only.
+             */
+            'email' => ['nullable', 'required_if_accepted:invite', 'email', 'max:255'],
+            'invite' => ['sometimes', 'boolean'],
             /*
              * "This person is one of my friends."
              *
@@ -62,22 +76,86 @@ class RecipientController extends Controller
          */
         $friend = $this->friendOf($owner, $validated['friend_id'] ?? null);
 
-        $recipient = Recipient::create([
-            ...$owner->attributes(),
-            ...$request->context(),
-            ...$friend === null ? [] : [
-                'user_id' => $friend->id,
-                // Linked, not a stub: there is a person behind this one, and
-                // `RecipientStatus` is what the taste engine reads to know
-                // whose answers to prefer.
-                'status' => RecipientStatus::Linked,
-            ],
-        ]);
+        // Inviting is between two accounts, so a guest cannot; the page only
+        // offers the button to somebody signed in.
+        $inviting = $request->boolean('invite');
+        abort_if($inviting && $owner->user === null, 403);
 
-        // Anything the creator already knows is a guess, however confident.
-        $recipient->describeTaste($request->taste(), TasteSource::Suggested);
+        /*
+         * The person and the invitation together, or neither.
+         *
+         * A refused invitation (your own address, today's limit) writes and
+         * sends nothing (FriendInvites::invite() returns before both), so
+         * rolling the person back leaves the form as it was. Keeping the
+         * person would make pressing the button again save them twice.
+         */
+        try {
+            $outcome = $this->saveAndInvite($owner, $request, $friend, $inviting ? (string) $validated['email'] : null, $invites, $current);
+        } catch (InviteRefused $refused) {
+            $outcome = $refused->outcome;
+        }
 
-        return back()->with('success', __('site.lists.recipient_added'));
+        // Each answer is about the member's own actions, worded as on the
+        // plain invite form (FriendController::store).
+        return match ($outcome) {
+            null => back()->with('success', __('site.lists.recipient_added')),
+            InviteOutcome::Sent => back()->with('success', __('site.people.added_and_invited')),
+            InviteOutcome::AlreadyInvited => back()->with('success', __('site.people.invite_again', [
+                'days' => (int) config('giftcoves.invites.repeat_days', 30),
+            ])),
+            InviteOutcome::DailyLimit => back()->withErrors(['email' => __('site.people.invite_limit', [
+                'count' => (int) config('giftcoves.invites.daily_limit', 20),
+            ])]),
+            InviteOutcome::OwnAddress => back()->withErrors(['email' => __('site.people.invite_self')]),
+        };
+    }
+
+    /**
+     * Save the person and, given an address, invite them, in one transaction.
+     * A refused invitation throws, which rolls the person back.
+     */
+    private function saveAndInvite(
+        Owner $owner,
+        RecipientTasteRequest $request,
+        ?User $friend,
+        ?string $email,
+        FriendInvites $invites,
+        CurrentMarket $current,
+    ): ?InviteOutcome {
+        return DB::transaction(function () use ($owner, $request, $friend, $email, $invites, $current): ?InviteOutcome {
+            $recipient = Recipient::create([
+                ...$owner->attributes(),
+                ...$request->context(),
+                ...$friend === null ? [] : [
+                    'user_id' => $friend->id,
+                    // Linked, not a stub: there is a person behind this one, and
+                    // `RecipientStatus` is what the taste engine reads to know
+                    // whose answers to prefer.
+                    'status' => RecipientStatus::Linked,
+                ],
+            ]);
+
+            // Anything the creator already knows is a guess, however confident.
+            $recipient->describeTaste($request->taste(), TasteSource::Suggested);
+
+            if ($email === null) {
+                return null;
+            }
+
+            $outcome = $invites->invite(
+                $owner->user,
+                $email,
+                DayAndMonth::fromDate($recipient->birthday),
+                $current->get(),
+                $recipient,
+            );
+
+            if (in_array($outcome, [InviteOutcome::OwnAddress, InviteOutcome::DailyLimit], true)) {
+                throw new InviteRefused($outcome);
+            }
+
+            return $outcome;
+        });
     }
 
     /**

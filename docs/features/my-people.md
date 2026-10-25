@@ -46,6 +46,24 @@ text and the popup's title. A guest sees the button too, disabled, with "Log in 
 nodigen" on hover (`people.invite_signed_out`): the page shows what it is for before you sign in,
 and the sign-in link below says how. "Iemand toevoegen" stays hidden from guests.
 
+**One form for adding and inviting** (owner, the same day). The "Iemand toevoegen" and "Nodig uit
+op GiftCoves" popups were two forms for one job; now both header buttons open the same popup
+("Nodig uit" with the address field focused). Name, relationship and birthday as before, plus an
+optional email address, and two buttons:
+
+- **Toevoegen** saves the person and nothing else. The address is not even sent: it is never stored
+  on a person, and Enter means this button, so nobody is invited by a key press.
+- **Toevoegen en uitnodigen**, greyed out until an address is typed, posts `invite=1` with it to
+  the same `POST /recipients`. `RecipientController::store()` saves the person and calls
+  `FriendInvites::invite()` with that person, exactly as "Nodig uit" on a saved person's page does,
+  so the invitation is linked and they stay one person when they join.
+- **Both or neither.** A refused invitation (your own address, today's limit) writes and sends
+  nothing, so it throws `InviteRefused` inside the transaction and the person rolls back. Keeping
+  them would make pressing the button again save them twice. "Already invited this month" is not a
+  refusal: the person is saved, nothing is mailed, as on the old form.
+
+Covered by `AddAndInvitePersonTest`. `POST /friends` stays, for inviting from elsewhere.
+
 ## What a row shows
 
 - the name (your own name for them when you saved them), and the relationship in the reader's

@@ -92,12 +92,48 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
     const { t } = useTranslations()
     const base = `/${market.key}`
 
-    // Which of the two "add" forms is open. One at a time: two forms open at
-    // once is a page of fields for a job that takes one.
-    const [adding, setAdding] = useState<'person' | 'invite' | null>(null)
+    /*
+     * One form since 2026-10-25 (owner): "Iemand toevoegen" and "Nodig uit"
+     * were two popups, and now open the same one. The address is optional;
+     * with one, "Toevoegen en uitnodigen" saves the person and invites them,
+     * linked, so they stay one person once they join. "Nodig uit" opens it
+     * with the address field focused.
+     */
+    const [adding, setAdding] = useState(false)
+    const [focusEmail, setFocusEmail] = useState(false)
+    const [inviting, setInviting] = useState(false)
 
-    const person = useForm({ name: '', relationship: '', day: '', month: '' })
-    const invite = useForm({ email: '', day: '', month: '' })
+    const person = useForm({ name: '', relationship: '', day: '', month: '', email: '' })
+
+    const open = (email: boolean) => {
+        setFocusEmail(email)
+        setAdding(true)
+    }
+
+    const addPerson = (invite: boolean) => {
+        setInviting(invite)
+        // The same endpoint and rules as every other place a person is saved.
+        // A birthday is stored under the placeholder year 2000
+        // (Recipient::BIRTHDAY_YEAR). The address only travels with "invite":
+        // plain "Toevoegen" never sends it, so it is never stored or mailed.
+        person.transform((data) => {
+            const md = monthDay(data.month, data.day)
+
+            return {
+                name: data.name.trim(),
+                relationship: data.relationship === '' ? null : data.relationship,
+                ...(md === null ? {} : { birthday: `2000-${md}` }),
+                ...(invite ? { invite: true, email: data.email.trim() } : {}),
+            }
+        })
+        person.post(`${base}/recipients`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                person.reset()
+                setAdding(false)
+            },
+        })
+    }
 
     const field = fieldClasses()
 
@@ -128,12 +164,12 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                         {isSignedIn && (
                             <>
                                 <Button
-                                    variant={adding === 'person' ? 'secondary' : 'primary'}
-                                    aria-expanded={adding === 'person'}
+                                    variant={adding ? 'secondary' : 'primary'}
+                                    aria-expanded={adding}
                                     aria-controls="people-add"
                                     aria-label={t('people.add_person')}
                                     title={t('people.add_person')}
-                                    onClick={() => setAdding(adding === 'person' ? null : 'person')}
+                                    onClick={() => open(false)}
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <ToolIcon name="plus" className="h-4 w-4 shrink-0" />
@@ -146,16 +182,17 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                           "Nodig uit" for everybody (owner, 2026-10-25), greyed
                           out for a guest: inviting needs an account, and the
                           button says so on hover rather than hiding what the
-                          page is for.
+                          page is for. Since the forms merged it opens the
+                          "Iemand toevoegen" popup at the address field.
                         */}
                         <Button
                             variant="secondary"
                             disabled={!isSignedIn}
-                            aria-expanded={isSignedIn ? adding === 'invite' : undefined}
+                            aria-expanded={isSignedIn ? adding : undefined}
                             aria-controls={isSignedIn ? 'people-add' : undefined}
                             aria-label={isSignedIn ? t('people.invite_short') : t('people.invite_signed_out')}
                             title={isSignedIn ? t('people.invite') : t('people.invite_signed_out')}
-                            onClick={() => setAdding(adding === 'invite' ? null : 'invite')}
+                            onClick={() => open(true)}
                         >
                             <span className="inline-flex items-center gap-2">
                                 <ToolIcon name="friends" className="h-4 w-4 shrink-0" />
@@ -183,12 +220,10 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
             ) : (
                 <>
                     {/*
-                      The two ways to add somebody sit in the header since
-                      2026-09-27, after "Mijn Coves": somebody only you see, or
-                      somebody on GiftCoves. Their forms open here.
+                      Adding somebody, and optionally inviting them, in one
+                      popup (2026-10-25). Opened from either header button.
                     */}
-                    {/* Popups since 2026-10-06: forms opened from a header button. */}
-                    {adding === 'person' && (
+                    {adding && (
                         <Modal
                             title={
                                 <span className="inline-flex flex-wrap items-center">
@@ -197,31 +232,16 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                 </span>
                             }
                             label={t('people.add_person')}
-                            onClose={() => setAdding(null)}
+                            onClose={() => setAdding(false)}
                         >
                         <form
                             id="people-add"
                             onSubmit={(e) => {
                                 e.preventDefault()
-                                // The same endpoint and rules as every other place a
-                                // person is saved. A birthday is stored under the
-                                // placeholder year 2000 (Recipient::BIRTHDAY_YEAR).
-                                person.transform((data) => {
-                                    const md = monthDay(data.month, data.day)
-
-                                    return {
-                                        name: data.name.trim(),
-                                        relationship: data.relationship === '' ? null : data.relationship,
-                                        ...(md === null ? {} : { birthday: `2000-${md}` }),
-                                    }
-                                })
-                                person.post(`${base}/recipients`, {
-                                    preserveScroll: true,
-                                    onSuccess: () => {
-                                        person.reset()
-                                        setAdding(null)
-                                    },
-                                })
+                                // Enter means the plain "Toevoegen", the first
+                                // button: inviting somebody is never a side effect
+                                // of a key press.
+                                addPerson(false)
                             }}
                             className="mt-4 grid gap-4 sm:grid-cols-3"
                         >
@@ -259,81 +279,45 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                                     onMonth={(v) => person.setData('month', v)}
                                 />
                             </label>
-                            <div className="sm:col-span-3">
-                                <Button type="submit" busy={person.processing}>
-                                    {t('people.add')}
-                                </Button>
-                                {person.errors.name && (
-                                    <p className="mt-2 text-sm text-danger" role="alert">
-                                        {person.errors.name}
-                                    </p>
-                                )}
-                            </div>
-                        </form>
-                        </Modal>
-                    )}
-
-                    {adding === 'invite' && (
-                        <Modal
-                            title={
+                            <label className="block text-sm font-medium sm:col-span-3">
                                 <span className="inline-flex flex-wrap items-center">
-                                    {t('people.invite')}
-                                    <InfoTip>{t('people.invite_tip')}</InfoTip>
+                                    {t('people.email_optional')}
+                                    <InfoTip>{t('people.email_optional_tip')}</InfoTip>
                                 </span>
-                            }
-                            label={t('people.invite')}
-                            onClose={() => setAdding(null)}
-                        >
-                        <form
-                            id="people-add"
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                // The friends' own endpoint: it answers the same
-                                // whether or not the address has an account, see
-                                // App\Services\Social\FriendInvites.
-                                invite.transform((data) => ({
-                                    email: data.email,
-                                    birthday: monthDay(data.month, data.day),
-                                }))
-                                invite.post(`${base}/friends`, {
-                                    preserveScroll: true,
-                                    onSuccess: () => {
-                                        invite.reset()
-                                        setAdding(null)
-                                    },
-                                })
-                            }}
-                            className="mt-4 grid gap-4 sm:grid-cols-3"
-                        >
-                            <label className="block text-sm font-medium sm:col-span-2">
-                                {t('friends.email')}
                                 <input
                                     type="email"
-                                    required
-                                    value={invite.data.email}
-                                    onChange={(e) => invite.setData('email', e.target.value)}
+                                    maxLength={255}
+                                    autoFocus={focusEmail}
+                                    value={person.data.email}
+                                    onChange={(e) => person.setData('email', e.target.value)}
                                     className={field}
                                 />
                             </label>
-                            <label className="block text-sm font-medium">
-                                {t('friends.their_birthday_optional')}
-                                <DayMonth
-                                    day={invite.data.day}
-                                    month={invite.data.month}
-                                    onDay={(v) => invite.setData('day', v)}
-                                    onMonth={(v) => invite.setData('month', v)}
-                                />
-                            </label>
-                            <div className="sm:col-span-3">
-                                <Button type="submit" busy={invite.processing}>
-                                    {t('people.invite_button')}
+                            <div className="flex flex-wrap gap-2 sm:col-span-3">
+                                <Button type="submit" busy={person.processing && !inviting}>
+                                    {t('people.add')}
                                 </Button>
-                                {invite.errors.email && (
-                                    <p className="mt-2 text-sm text-danger" role="alert">
-                                        {invite.errors.email}
-                                    </p>
-                                )}
+                                {/*
+                                  Greyed out until there is an address to send
+                                  to (owner, 2026-10-25). Saves the person and
+                                  invites them in one go, linked, so they stay
+                                  one person once they join.
+                                */}
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    disabled={person.data.email.trim() === '' || person.processing}
+                                    busy={person.processing && inviting}
+                                    onClick={() => addPerson(true)}
+                                >
+                                    {t('people.add_and_invite')}
+                                </Button>
                             </div>
+                            {(person.errors.name || person.errors.email) && (
+                                <p className="text-sm text-danger sm:col-span-3" role="alert">
+                                    {person.errors.name ?? person.errors.email}
+                                </p>
+                            )}
                         </form>
                         </Modal>
                     )}
