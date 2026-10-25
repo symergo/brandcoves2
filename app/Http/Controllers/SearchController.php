@@ -902,10 +902,9 @@ class SearchController extends Controller
      * shops while this follow-up request waits (pullLiveResults()' thin path),
      * and how many products their answer added to what the page showed.
      *
-     * The count is worded here because the client's t() has no plurals.
-     * Products already on the page stay where they are in the browser; the
-     * added ones go after them (Search.tsx), so nothing the visitor is looking
-     * at moves.
+     * The count is worded here because the client's t() has no plurals. The
+     * browser puts the added products above the ones already shown
+     * (Search.tsx, owner's choice), with the notice above the grid.
      *
      * @return array{results: array<string, mixed>, added: int, notice: string|null}
      */

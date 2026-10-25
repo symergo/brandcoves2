@@ -215,10 +215,11 @@ export default function Search({
     const [filtersOpen, setFiltersOpen] = useState(false)
 
     /*
-     * The shops' products join the page after it is shown (2026-10-25). The
-     * products already on screen keep their places and the added ones come
-     * after them, so nothing the visitor is looking at moves; the page and
-     * "more" come from the shops' answer.
+     * The shops' products join the page after it is shown (2026-10-25), at
+     * the top (owner, the same day: what was found online first). That
+     * pushes the cards already shown down once, a layout shift the owner
+     * accepted; it only happens on a thin search, where there are few cards
+     * to push. The page and "more" come from the shops' answer.
      */
     const livePending = liveShops.length > 0 && live === undefined
     const results = useMemo<SearchResults>(() => {
@@ -226,7 +227,7 @@ export default function Search({
             return storedResults
         }
         const shown = new Set(storedResults.items.map((g) => g.id))
-        const items = [...storedResults.items, ...live.results.items.filter((g) => !shown.has(g.id))]
+        const items = [...live.results.items.filter((g) => !shown.has(g.id)), ...storedResults.items]
 
         return { ...live.results, items, empty: items.length === 0 }
     }, [storedResults, live])
@@ -970,9 +971,21 @@ export default function Search({
                         </div>
                     )}
 
+                    {/*
+                      Above the grid, with the products the shops add there:
+                      who else is being asked while they are, then how many
+                      products their answer added. The notice takes the line's
+                      place, so that swap moves nothing.
+                    */}
+                    {!searching && livePending && <WaitLine shops={liveShops} />}
+                    {!searching && live?.notice && (
+                        <p role="status" className="my-4 text-sm text-ink-soft">
+                            {live.notice}
+                        </p>
+                    )}
+
                     {placeholders ? (
                         <>
-                            {!searching && livePending && <WaitLine shops={liveShops} />}
                             <SkeletonGrid />
                         </>
                     ) : results.empty ? (
@@ -1225,19 +1238,6 @@ export default function Search({
                                 </Fragment>
                             ))}
                         </div>
-                    )}
-
-                    {/*
-                      Under the grid, so neither the line nor its outcome
-                      moves a product the visitor is looking at: who else is
-                      being asked while they are, then how many products their
-                      answer added.
-                    */}
-                    {!placeholders && livePending && <WaitLine shops={liveShops} />}
-                    {!placeholders && live?.notice && (
-                        <p role="status" className="my-4 text-sm text-ink-soft">
-                            {live.notice}
-                        </p>
                     )}
 
                     {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (

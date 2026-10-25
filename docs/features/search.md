@@ -249,10 +249,11 @@ is not taken), and the controller adds `live` as an Inertia **deferred prop**. T
 it straight after the page is shown; that follow-up request runs the ordinary thin path (takes the
 marker, asks the shops, folds, skips the fuzzy match if they answered) and returns the results, how
 many products were added, and a worded notice (`search.live_added`, plural on the server).
-- **Nothing on screen moves.** `Search.tsx` keeps the products already shown in their places and
-  appends the added ones; the "we are also looking at bol.com" line and then the notice sit under the
-  grid. An empty first page shows placeholder cards instead of "nothing found" while the shops are
-  asked.
+- **Found online, shown first** (owner, the same day; first built at the bottom). `Search.tsx` puts
+  the added products above the ones already shown, and the "we are also looking at bol.com" line and
+  then the notice sit above the grid. That pushes the shown cards down once, a layout shift the owner
+  accepted: it only happens on a thin search, with few cards to push. An empty first page shows
+  placeholder cards instead of "nothing found" while the shops are asked.
 - **A search engine gets the whole page in one response** (`deferThin` is false for Google and
   Bing): what it sees is what it indexes, and the SSR HTML holds everything.
 - **Logged once.** The follow-up runs the search again; it uses `SearchQuery::unlogged()`.
