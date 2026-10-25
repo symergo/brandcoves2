@@ -357,12 +357,18 @@ services:
     # measured. 1GB of buffers per database leaves the rest to the OS cache,
     # which effective_cache_size tells the planner about (it allocates
     # nothing). work_mem is per sort or hash, per query, so it stays modest.
+    #
+    # Raised to 2.5GB / 6GB on 2026-10-25. Production had grown to 21GB, and
+    # only 71% of table reads were found in the buffers. The box then had
+    # 6.7GB available with production already holding its 1GB. Staging's
+    # database is 1.7GB, so it can never fill more than that of its own
+    # buffers, and the shared file stays safe for both.
     command:
       - postgres
       - -c
-      - shared_buffers=1GB
+      - shared_buffers=2560MB
       - -c
-      - effective_cache_size=5GB
+      - effective_cache_size=6GB
       - -c
       - work_mem=16MB
       - -c
