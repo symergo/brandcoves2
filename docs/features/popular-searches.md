@@ -256,3 +256,24 @@ morning says the same thing that night.
 ## See also
 
 - [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill
+
+## Built in the background, never in a request (2026-10-25)
+
+Deployed with the chart top-up, the page took 74-118 s on production and the sitemap answered 500,
+because it reads the same lists. Two causes, measured:
+
+1. **The chart check.** `findsEnough()` asked "does this name find at least 8 products?" with
+   `DISTINCT ... LIMIT 8`, which makes Postgres collect and deduplicate every match first: up to
+   24 s for one broad category name, up to ~60 names a build. Now the first `8 × 5` offers are taken
+   and their products counted: 0.13 s for the same name. (The search-log aggregations were never
+   the problem: 4,333 rows, 13 ms each.)
+2. **`Cache::flexible()`** builds the first value in the request. The build ran past PHP's 30 s
+   limit, was never stored, and every visit (and every sitemap request) started it again.
+
+Now `App\Support\BackgroundCache`, the general mechanism for slow pages: a cached value is shown
+(and, when older than `cache_ttl`, rebuilt by `RefreshCachedValue` on the queue, unique per key); a
+missing one shows empty columns while the queue builds it. Nothing is built while somebody waits.
+The scheduler warms the lists nightly at 05:50 (`warm-popular-searches`), so the page and the
+sitemap always have a value, also after a deploy. On a synchronous queue (the tests) the value is
+there at once. Measured over the six hours before: no other page type was slow (search pages have
+their own stale-while-revalidate), so nothing else was converted; a slow page later gets one call.

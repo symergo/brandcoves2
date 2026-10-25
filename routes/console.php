@@ -10,6 +10,7 @@ use App\Jobs\CountOfflineIdeas;
 use App\Jobs\PlanPersonasFromDemand;
 use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
+use App\Jobs\RefreshCachedValue;
 use App\Jobs\RefreshPersonaTopLists;
 use App\Jobs\RefreshRecentSearches;
 use App\Jobs\RunEditorialAutomation;
@@ -18,6 +19,7 @@ use App\Jobs\SendListPriceDigests;
 use App\Jobs\SendOccasionReminders;
 use App\Jobs\WidenGiftAngles;
 use App\Services\Ingestion\CatalogueRun;
+use App\Services\Search\SearchTermStats;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -79,6 +81,19 @@ Schedule::call(fn () => CatalogueRun::start(Market::cases(), morning: false))
 Schedule::job(new CountListSignals)
     ->name('count-list-signals')
     ->dailyAt('03:50')
+    ->onOneServer();
+
+// The popular-searches lists, rebuilt on the queue every night so the page and
+// the sitemap (which reads them) always have a value to show, also right after
+// a deploy. A visit to an older value queues the same job (BackgroundCache);
+// this only makes sure there is one. See docs/features/popular-searches.md.
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        RefreshCachedValue::dispatch(SearchTermStats::cacheKey($market), [SearchTermStats::class, 'build'], [$market]);
+    }
+})
+    ->name('warm-popular-searches')
+    ->dailyAt('05:50')
     ->onOneServer();
 
 // Offline items people typed by hand, proposed as gift ideas for others once

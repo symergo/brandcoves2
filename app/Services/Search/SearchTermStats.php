@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Enums\Market;
+use App\Support\BackgroundCache;
 use App\Support\SearchUrl;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
@@ -62,21 +63,42 @@ class SearchTermStats
      */
     public function for(Market $market): array
     {
-        $ttl = (int) config('giftcoves.search.popular.cache_ttl');
-
-        // Stale while revalidate (owner, 2026-10-25: never rebuilt while
-        // somebody waits): a day fresh, then served for a week more while the
-        // rebuild runs after the response. Only a market's very first build is
-        // made in the request.
-        return Cache::flexible(
-            'bc:search-stats:'.$market->value,
-            [$ttl, $ttl * 8],
-            fn (): array => [
-                'months' => $this->periods($market),
-                'trending' => $this->trending($market),
-                'latest' => $this->latest($market),
-            ],
+        /*
+         * Never built while somebody waits (owner, 2026-10-25). The build ran
+         * past PHP's 30 s limit on production with `Cache::flexible()`, which
+         * builds the first value in the request: it was never stored, and
+         * every visit started it again. Now an old value is shown while the
+         * queue rebuilds it, and a missing one shows empty columns while the
+         * queue builds it (BackgroundCache). The scheduler warms it daily, so
+         * missing only happens after a fresh deploy of a new key.
+         */
+        return BackgroundCache::remember(
+            self::cacheKey($market),
+            (int) config('giftcoves.search.popular.cache_ttl'),
+            [self::class, 'build'],
+            [$market],
+            missing: ['months' => [], 'trending' => [], 'latest' => []],
         );
+    }
+
+    public static function cacheKey(Market $market): string
+    {
+        return 'bc:search-stats:v2:'.$market->value;
+    }
+
+    /**
+     * The lists, built now. Only from the queue (RefreshCachedValue) or the
+     * scheduler's warm-up, never in a request.
+     *
+     * @return array{months: list<array<string, mixed>>, trending: list<array<string, mixed>>, latest: list<array<string, mixed>>}
+     */
+    public function build(Market $market): array
+    {
+        return [
+            'months' => $this->periods($market),
+            'trending' => $this->trending($market),
+            'latest' => $this->latest($market),
+        ];
     }
 
     /**
@@ -233,6 +255,11 @@ class SearchTermStats
         $min = (int) config('giftcoves.search.popular.chart_min_results', 8);
         $key = $market->value."\0".mb_strtolower($words);
 
+        // DISTINCT inside the LIMIT made Postgres collect every match before
+        // deduplicating: 24 s for one broad chart name on production
+        // (2026-10-25). The first offers, limited, then their groups counted:
+        // stops early, 0.13 s for the same name. Five offers per product is
+        // room enough for the products several shops sell.
         return $this->found[$key] ??= DB::query()->fromSub(
             DB::table('products')
                 ->select('group_id')
@@ -240,10 +267,9 @@ class SearchTermStats
                 ->where('status', 'active')
                 ->whereNotNull('group_id')
                 ->whereRaw('search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)', [$market->value, $words])
-                ->distinct()
-                ->limit($min),
+                ->limit($min * 5),
             'm',
-        )->count() >= $min;
+        )->distinct()->count('group_id') >= $min;
     }
 
     /** @var array<string, bool> findsEnough() per market and words, for one build */
