@@ -150,10 +150,37 @@ class BrandController extends Controller
         $query = SearchQuery::fromRequest($request, $market);
         $query = $query->withBrands($stat->brandSpellings(), liveTerm: $this->liveTerm($stat, $query));
 
-        // A crawler other than a search engine sees what is stored (Crawlers::mayAskShops()).
-        $result = $search->search($query, askShops: Crawlers::mayAskShops($request->userAgent()));
-
         $cove = $this->cove($stat, $current);
+
+        /*
+         * The live shops, as on the search page (2026-10-25). A crawler other
+         * than a search engine sees what is stored (Crawlers::mayAskShops()).
+         * A person on a thin brand page no longer waits for them: the page
+         * renders what is stored at once and asks for their answer as the
+         * deferred prop `live`, which Inertia requests right after. A search
+         * engine gets the whole page in one response. Only on the grid: a page
+         * that is a Brand Cove (the fork below) shows its products in a
+         * sidebar beside the writing, and asks the shops as before.
+         */
+        $askShops = Crawlers::mayAskShops($request->userAgent());
+        $grid = $cove === null || $this->isThin($query);
+        $followUp = in_array('live', explode(',', (string) $request->header('X-Inertia-Partial-Data')), true);
+        $searchQuery = $followUp ? $query->unlogged() : $query;
+
+        $result = $search->search(
+            $searchQuery,
+            askShops: $askShops,
+            deferThin: $grid && $askShops && ! Crawlers::isSearchEngine($request->userAgent()),
+        );
+
+        // The follow-up wants `live` and nothing else; see SearchController.
+        if ($followUp) {
+            return Inertia::render('Brand', [
+                'live' => $result->liveDeferred()
+                    ? fn (): array => $this->liveUpdate($searchQuery, $result, $search)
+                    : null,
+            ]);
+        }
 
         /*
          * The fork the entity design turns on.
@@ -214,6 +241,13 @@ class BrandController extends Controller
              * from this request's own fetch and are gone when it ends.
              */
             'liveOffers' => array_map(LiveOfferCard::present(...), $result->liveOffers),
+
+            // The live shops' answer for a thin brand page, after it is shown
+            // (see above): who is asked, then their products and a notice.
+            'liveShops' => $result->deferredShops,
+            'live' => $result->liveDeferred()
+                ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search))
+                : null,
 
             /*
              * "Search this brand on Amazon too".
@@ -986,6 +1020,38 @@ class BrandController extends Controller
                 $stat->brand,
                 url($current->url("brand/{$stat->slug}")),
             ));
+    }
+
+    /**
+     * The deferred `live` prop: the brand page's search again, this time
+     * asking the live shops while this follow-up request waits, and how many
+     * products their answer added to what the page showed. The same as
+     * SearchController::liveUpdate(), with this page's cards; the browser
+     * puts the added products first (Brand.tsx).
+     *
+     * @return array{results: array<string, mixed>, added: int, notice: string|null}
+     */
+    private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search): array
+    {
+        $result = $search->search($query->unlogged());
+        $items = array_map($this->card(...), $result->groups->items());
+
+        $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());
+        $added = count(array_diff(array_map(fn (array $card) => (int) $card['id'], $items), $before));
+
+        return [
+            'results' => [
+                'empty' => $result->isEmpty(),
+                'currentPage' => $result->groups->currentPage(),
+                'hasMore' => $result->groups->hasMorePages(),
+                'items' => $items,
+            ],
+            'added' => $added,
+            'notice' => $added === 0 ? null : trans_choice('site.search.live_added', $added, [
+                'count' => $added,
+                'shops' => implode(', ', $shown->deferredShops),
+            ]),
+        ];
     }
 
     /** @return array<string, mixed> */

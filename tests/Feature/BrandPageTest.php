@@ -34,6 +34,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -78,6 +79,27 @@ class BrandPageTest extends TestCase
      * the thing under test and a fixture that happens to satisfy it tests
      * nothing.
      */
+    /**
+     * A visit as a browser makes it: the page, and when it names shops still
+     * to be asked (a thin brand page since 2026-10-25), the follow-up request
+     * for the deferred `live` prop. Returns the last response.
+     */
+    private function visit(string $url): TestResponse
+    {
+        $page = $this->get($url)->assertOk()->viewData('page');
+
+        if (($page['props']['liveShops'] ?? []) === []) {
+            return $this->get($url)->assertOk();
+        }
+
+        return $this->get($url, [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) $page['version'],
+            'X-Inertia-Partial-Component' => 'Brand',
+            'X-Inertia-Partial-Data' => 'live',
+        ])->assertOk();
+    }
+
     private function seedBrand(string $brand, int $count = 4, array $overrides = [], int $offset = 0): void
     {
         // A group with no offers behind it is not searchable — `products` is what
@@ -878,7 +900,7 @@ class BrandPageTest extends TestCase
         $this->seedBrand('Aurex');
         $this->fakeBol([]);
 
-        $this->get('/be-nl/brand/aurex')->assertOk();
+        $this->visit('/be-nl/brand/aurex');
 
         // The stored half of the page is an exact brand filter. The live half
         // cannot be: bol's catalogue API takes a search term and nothing else,
@@ -964,14 +986,13 @@ class BrandPageTest extends TestCase
         $this->seedBrand('Aurex');
         $this->fakeBol([$this->bolProduct()]);
 
-        $this->get('/be-nl/brand/aurex')
-            ->assertOk()
-            // Five, not four: bol's listing is a product no Awin advertiser
-            // carries, and it appears because the brand was attributed to it.
-            // Left null it would be stored, grouped, and then hidden by the
-            // page's own `whereIn('brand', ...)` — a request paid for and
-            // thrown away.
-            ->assertInertia(fn ($page) => $page->has('results.items', 5));
+        // Five, not four: bol's listing is a product no Awin advertiser
+        // carries, and it appears because the brand was attributed to it.
+        // Left null it would be stored, grouped, and then hidden by the
+        // page's own `whereIn('brand', ...)` — a request paid for and
+        // thrown away. Since 2026-10-25 it arrives in the follow-up
+        // request the page makes right after it is shown.
+        $this->assertCount(5, $this->visit('/be-nl/brand/aurex')->json('props.live.results.items'));
 
         $this->assertSame('Aurex', Product::query()
             ->where('source', Source::Bol->value)
@@ -1019,7 +1040,7 @@ class BrandPageTest extends TestCase
             'title' => 'Draadloze koptelefoon XR9 van Aurex',
         ])]);
 
-        $this->get('/be-nl/brand/aurex')->assertOk();
+        $this->visit('/be-nl/brand/aurex');
 
         // A lookup, not an inference: an EAN is a physical product, and a feed
         // has already said which brand that product is.
@@ -1028,14 +1049,51 @@ class BrandPageTest extends TestCase
             ->value('brand'));
     }
 
+    /**
+     * A person no longer waits for bol on a thin brand page (2026-10-25): the
+     * page comes with what is stored and names bol, and only the follow-up
+     * request asks it.
+     */
+    #[Test]
+    public function a_person_gets_the_page_before_bol_is_asked(): void
+    {
+        $this->seedBrand('Aurex');
+        $this->fakeBol([$this->bolProduct()]);
+
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('results.items', 4)
+                ->where('liveShops', ['bol.com'])
+                ->missing('live'));
+
+        Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/products/search'));
+
+        $live = $this->visit('/be-nl/brand/aurex')->json('props.live');
+        $this->assertSame(1, $live['added']);
+        $this->assertSame('1 product van bol.com toegevoegd', $live['notice']);
+    }
+
+    /** A search engine indexes what it sees, so it gets bol's products in the page itself. */
+    #[Test]
+    public function a_search_engine_gets_the_whole_brand_page_at_once(): void
+    {
+        $this->seedBrand('Aurex');
+        $this->fakeBol([$this->bolProduct()]);
+
+        $this->get('/be-nl/brand/aurex', ['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('results.items', 5)->where('liveShops', []));
+    }
+
     #[Test]
     public function the_fold_runs_once_per_cache_window(): void
     {
         $this->seedBrand('Aurex');
         $this->fakeBol([$this->bolProduct()]);
 
-        $this->get('/be-nl/brand/aurex')->assertOk();
-        $this->get('/be-nl/brand/aurex')->assertOk();
+        $this->visit('/be-nl/brand/aurex');
+        $this->visit('/be-nl/brand/aurex');
 
         // One search request, not two. Folding is a write, brand pages are the
         // crawl target for the whole site, and the offers stay folded in the

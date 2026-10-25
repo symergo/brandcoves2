@@ -1,15 +1,23 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import LiveOfferCard, { type LiveOffer } from '../Components/LiveOfferCard'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import { LiveStatus, SkeletonGrid } from '../Components/SearchWait'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import ToolIcon from '../Components/ToolIcon'
+
+interface BrandResults {
+    empty: boolean
+    currentPage: number
+    hasMore: boolean
+    items: GroupCard[]
+}
 
 interface Props {
     brand: {
@@ -37,12 +45,15 @@ interface Props {
      * (owner's decision, 2026-09-27): nothing counts the matches, so the
      * page shows neither a number nor a word standing in for one.
      */
-    results: {
-        empty: boolean
-        currentPage: number
-        hasMore: boolean
-        items: GroupCard[]
-    }
+    results: BrandResults
+    /**
+     * The live shops being asked after the page was shown (a thin brand page,
+     * 2026-10-25), by name; empty when nothing is pending. `live` arrives
+     * from that follow-up request as a deferred prop: undefined until then,
+     * null when there was nothing to ask.
+     */
+    liveShops: string[]
+    live?: { results: BrandResults; added: number; notice: string | null } | null
     /**
      * Offers from a source we may show but not store — Amazon.
      *
@@ -93,7 +104,9 @@ export default function Brand({
     filters,
     sort,
     facets,
-    results,
+    results: storedResults,
+    liveShops = [],
+    live,
     liveOffers,
     amazonSearch,
     coves,
@@ -106,6 +119,23 @@ export default function Brand({
     const { t, n } = useTranslations()
     const [filtersOpen, setFiltersOpen] = useState(false)
     const base = `/${market.key}/brand/${brand.slug}`
+
+    /*
+     * The shops' products join the page after it is shown (2026-10-25), first,
+     * as on the search page: the cards already shown move down once, on a
+     * thin page only. Until they arrive, an empty page shows placeholders
+     * rather than "nothing found".
+     */
+    const livePending = liveShops.length > 0 && live === undefined
+    const results = useMemo<BrandResults>(() => {
+        if (!live) {
+            return storedResults
+        }
+        const shown = new Set(storedResults.items.map((g) => g.id))
+        const items = [...live.results.items.filter((g) => !shown.has(g.id)), ...storedResults.items]
+
+        return { ...live.results, items, empty: items.length === 0 }
+    }, [storedResults, live])
 
     // The words currently narrowing this page. `q` on a brand page is not a
     // search box — there is none here — it is the accumulated result of clicking
@@ -440,6 +470,13 @@ export default function Brand({
                             {t('brand.products_heading', { brand: brand.name })}
                         </h2>
 
+                        {/*
+                          Who else is being asked, then how many products they
+                          added: in this row, whose height the sort menu sets,
+                          so it appears and goes without moving anything.
+                        */}
+                        <LiveStatus liveShops={livePending ? liveShops : []} notice={live?.notice ?? null} />
+
                         <div className="ml-auto">
                             <label className="sr-only" htmlFor="brand-sort">
                                 {t('search.sort')}
@@ -459,7 +496,9 @@ export default function Brand({
                         </div>
                     </div>
 
-                    {results.empty ? (
+                    {livePending && storedResults.empty ? (
+                        <SkeletonGrid count={8} />
+                    ) : results.empty ? (
                         <div className="rounded-card border border-line bg-card p-8 text-center">
                             <p className="font-medium">{t('brand.empty', { brand: brand.name })}</p>
 

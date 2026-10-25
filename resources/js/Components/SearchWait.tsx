@@ -189,3 +189,42 @@ export function SearchStatus({
 
     return null
 }
+
+/**
+ * The same two messages as SearchStatus's last two, for a page without a
+ * search bar (the brand page, 2026-10-25): "We kijken ook bij bol.com…"
+ * while the live shops are asked after the page was shown, then how many
+ * products they added, for six seconds. Inline, one truncated line, for a row
+ * whose height something else already sets (the brand page's heading row,
+ * beside the sort menu), so it moves nothing.
+ */
+export function LiveStatus({ liveShops, notice }: { liveShops: string[]; notice: string | null }) {
+    const { t } = useTranslations()
+    const [noticeShown, setNoticeShown] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!notice) {
+            setNoticeShown(null)
+            return
+        }
+        setNoticeShown(notice)
+        const id = window.setTimeout(() => setNoticeShown(null), NOTICE_FOR)
+
+        return () => window.clearTimeout(id)
+    }, [notice])
+
+    if (liveShops.length > 0) {
+        return (
+            <span role="status" className="flex min-w-0 items-center gap-2 text-sm text-ink-soft">
+                <Pulse />
+                <span className="truncate">{t('search.live_looking', { shops: liveShops.join(', ') })}</span>
+            </span>
+        )
+    }
+
+    return noticeShown ? (
+        <span role="status" className="min-w-0 truncate text-sm text-ink-soft">
+            {noticeShown}
+        </span>
+    ) : null
+}

@@ -616,3 +616,22 @@ the tie-breaks (lowest merchant id, then category name) are stable between runs.
 and brand; related brands and the `/brands` index half an hour, since `brand_stats` is rebuilt
 nightly. A written Brand Cove's prose is rendered at build and stored. See [speed.md](speed.md),
 "Cove pages".
+
+## The live shops after the page, as on search (2026-10-25)
+
+A thin brand page used to ask bol (and any other live shop) inside the request, up to 3 s, before
+rendering. Now it works like the search page (docs/features/search.md, "While a search waits"):
+- A person gets the page with what is stored at once, and `liveShops` names who is being asked.
+  The deferred prop `live` is requested right after; that follow-up runs the ordinary thin path and
+  returns the results, how many were added and a worded notice. It returns before anything else of
+  the page is computed.
+- The products found online go first; the "We kijken ook bij bol.com…" line and then the notice
+  (gone after six seconds) sit in the heading row beside the sort menu (`LiveStatus`), whose height
+  the menu sets, so nothing moves. An empty page shows placeholder cards while bol is asked.
+- A search engine gets the whole page in one response; other crawlers ask no shop.
+- Only on the grid. A brand page that is a Brand Cove (writing with products in a sidebar) asks the
+  shops inside the request as before.
+
+Tests read the follow-up through `BrandPageTest::visit()`, which requests the page as a browser
+does. And the filter counts of a brand page now count only its brand: see search.md, "The filter
+counts never cover a whole market" (38-55 s before, 20 ms after, on production).
