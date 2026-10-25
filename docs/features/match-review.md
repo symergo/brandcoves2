@@ -41,8 +41,9 @@ Run in order of how often they are right, so the most precise rule claims a pair
    (`products.mpn`, kept from Awin since this step). A model number shared by more than six products
    of one brand (`identity.matching.model_bucket_max`) names a series, not a product, and is skipped.
 3. **Similar title**: same brand, trigram similarity of the titles at least 0.6
-   (`identity.matching.title_similarity`), at most three partners per product, found through the
-   trigram index search already has on `product_groups.title`.
+   (`identity.matching.title_similarity`), at most three partners per product. The brand is found
+   first, through an index on `(market, bc_brand_key(brand))`, and similarity is worked out only
+   against that brand's products (a median of 46, Samsung's 6,031 at most). See "Speed" below.
 
 Guards on every rule: same market (invariant 2); both products live (not merged, with offers);
 **never two barcode products**, because two valid barcodes are two products (very often two colours
@@ -69,6 +70,22 @@ against every product. The first run on an environment is by hand:
 php artisan bc:find-matches --full --sync          # every market, every product
 php artisan bc:find-matches --market=be-nl --sync  # one market, incremental
 ```
+
+## Speed (2026-10-25)
+
+Until then rule 3 found partners through the trigram index on `product_groups.title`. That index
+covers every market and brand, so Postgres collected every similar title on the site and then
+dropped those of another brand. On production it averaged **24.5 minutes a run** (267 runs, 109
+hours of database time) for about 3,000 lookups. The job's 900 s timeout killed the PHP side while
+the query kept running in Postgres, once for 2 h 23 min.
+
+Now the brand comes first (`product_groups_market_brand_key_idx`, partial on live products with
+offers; `bc_brand_key()` is the brand fold as an IMMUTABLE function, so it can be indexed). On a copy
+of production, 300 lookups went from 14.8 s to 0.48 s with the same pairs, and a full be-nl pass
+(105,000 products) took 55 s. A GIN index of market, brand and trigrams together (`btree_gin`) was
+tried first and only reached 5 s: the trigram lists of common words are long whatever the brand.
+The query also carries a 600 s `statement_timeout`, below the job's timeout, so it can no longer
+outlive its job.
 
 ## The queue (`/admin/match-review`)
 

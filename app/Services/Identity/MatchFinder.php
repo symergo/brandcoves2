@@ -49,9 +49,18 @@ class MatchFinder
      * The brand fold, in SQL: accents off, lower case, letters and digits only.
      * PHP's IdentityResolver folds the same way in spirit; here it only has to
      * put the same brand from two feeds side by side, and both sides of every
-     * comparison go through this one expression.
+     * comparison go through this one expression. A function since 2026-10-25,
+     * so the title rule can find a brand through an index on it.
      */
-    private const BRAND_KEY = "regexp_replace(lower(unaccent(coalesce(%s, ''))), '[^a-z0-9]+', '', 'g')";
+    private const BRAND_KEY = 'bc_brand_key(%s)';
+
+    /**
+     * The longest the similar-title query may run. Below the job's 900 s
+     * timeout on purpose: when the job was killed, the query kept running in
+     * Postgres with nobody waiting for it, up to 2 h 23 min. A night that hits
+     * this finds no title pairs, and the next night looks again.
+     */
+    private const TITLE_QUERY_TIMEOUT = '600s';
 
     /** @return array{barcode: int, model: int, title: int} */
     public function run(Market $market, bool $full = false): array
@@ -231,9 +240,11 @@ class MatchFinder
     /**
      * For each product, its closest few titles within the brand.
      *
-     * `%` with `pg_trgm.similarity_threshold` set for this transaction only, so
-     * the GIN trigram index on `product_groups.title` does the finding; search
-     * sets its own thresholds and is not touched.
+     * The brand is found first, through `product_groups_market_brand_key_idx`,
+     * and similarity is worked out against that brand's products only (a
+     * median of 46). Until 2026-10-25 this used `%` and the trigram index on
+     * the title, which searched every brand and market and averaged 24.5
+     * minutes a run; the measurements are in the migration that adds the index.
      *
      * Nightly, only products first seen in the last few days are looked up
      * from (against every product); a full pass over a whole market is minutes
@@ -252,32 +263,37 @@ class MatchFinder
         // reaches every allowed pair. Nightly, any new product starts, and the
         // pair guard inside keeps two barcode products apart.
         $scope = $full ? "AND a.identity_kind <> 'ean'" : 'AND a.first_seen_at >= ?';
-        $bindings = $full ? [$partners * 4, $market->value] : [$partners * 4, $market->value, $since];
+        $bindings = $full ? [$threshold, $partners * 4, $market->value] : [$threshold, $partners * 4, $market->value, $since];
 
-        $rows = DB::transaction(function () use ($threshold, $brandA, $brandB, $scope, $bindings): array {
-            // SET cannot take a bound parameter; the value is a float from config.
-            DB::statement('SET LOCAL pg_trgm.similarity_threshold = '.number_format($threshold, 3, '.', ''));
+        $rows = DB::transaction(function () use ($brandA, $brandB, $scope, $bindings): array {
+            DB::statement("SET LOCAL statement_timeout = '".self::TITLE_QUERY_TIMEOUT."'");
 
+            // The conditions on b are written as the index's own expression
+            // and predicate, or the planner cannot use it.
             return DB::select(<<<SQL
                 SELECT a.id AS aid, c.id AS cid, c.s AS score, a.title AS title_a, c.title AS title_b
                 FROM product_groups a
                 CROSS JOIN LATERAL (
-                    SELECT b.id, b.title, similarity(a.title, b.title) AS s
+                    SELECT b.id, b.title, s.s
                     FROM product_groups b
-                    WHERE b.title % a.title
-                      AND b.market = a.market
-                      AND b.id <> a.id
+                    CROSS JOIN LATERAL (SELECT similarity(a.title, b.title) AS s) s
+                    WHERE b.market = a.market
+                      AND {$brandB} = {$brandA}
                       AND b.merged_into_id IS NULL
                       AND b.offer_count > 0
+                      AND b.id <> a.id
                       AND (a.identity_kind <> 'ean' OR b.identity_kind <> 'ean')
-                      AND {$brandB} = {$brandA}
-                    ORDER BY s DESC, b.id
+                      AND s.s >= ?
+                    ORDER BY s.s DESC, b.id
                     LIMIT ?
                 ) c
                 WHERE a.market = ?
                   AND a.merged_into_id IS NULL
                   AND a.offer_count > 0
                   AND a.brand IS NOT NULL
+                  -- A brand of only punctuation folds to '', the key every
+                  -- brandless product has (190,000 of them).
+                  AND {$brandA} <> ''
                   {$scope}
                 ORDER BY a.id, c.s DESC, c.id
             SQL, $bindings);
