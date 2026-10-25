@@ -261,6 +261,12 @@ many products were added, and a worded notice (`search.live_added`, plural on th
 - **A search engine gets the whole page in one response** (`deferThin` is false for Google and
   Bing): what it sees is what it indexes, and the SSR HTML holds everything.
 - **Logged once.** The follow-up runs the search again; it uses `SearchQuery::unlogged()`.
+- **The follow-up computes only `live`.** It returns right after the stored search (which says what
+  the page showed, from the id cache the first request filled), before the Coves row, the related
+  words, the filter counts, the signals per card and the page copy: Inertia merges `live` into the
+  page on screen, so the rest would be computed and thrown away. Guarded by
+  `the_follow_up_computes_only_the_live_answer` (a CoveMatches fake that must not be called; a query
+  count would not do, the extras are partly cached by then).
 - A term asked within the window (`live_cache_ttl`) defers nothing: its answer is already stored.
 
 **While the page itself loads** (`Components/SearchWait.tsx`): after 300 ms placeholder cards

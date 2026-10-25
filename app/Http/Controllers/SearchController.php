@@ -179,6 +179,23 @@ class SearchController extends Controller
             ? $search->search($searchQuery, askShops: $askShops, deferThin: $askShops && ! Crawlers::isSearchEngine($request->userAgent()))
             : SearchResult::none($query);
 
+        /*
+         * The follow-up wants `live` and nothing else: Inertia merges it into
+         * the page already on screen. So it stops here, before the Coves row,
+         * the related words, the filter counts, the signals per card and the
+         * page copy, which the full render below computes and the follow-up
+         * would only throw away. The stored search above stays: it says which
+         * products the page showed (served from the id cache the first
+         * request filled) and whether the shops are still to be asked.
+         */
+        if ($followUp) {
+            return Inertia::render('Search', [
+                'live' => $result->liveDeferred()
+                    ? fn (): array => $this->liveUpdate($searchQuery, $result, $search, $current)
+                    : null,
+            ]);
+        }
+
         $this->seo($query, $result, $current);
 
         $results = $this->withSignals($gift ?? $this->present($result), $current);
