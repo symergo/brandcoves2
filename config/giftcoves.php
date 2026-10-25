@@ -294,17 +294,6 @@ return [
             'min_hours' => 2,
 
             /*
-             * Topping a weekly column up from bol's bestseller charts when
-             * fewer searches pass the floor than `limit` (2026-10-25): the
-             * chart categories' names ("Kerstverlichting", "Beddengoed"),
-             * ranked by how many of that week's chart products the catalogue
-             * holds. A name is used only when a search for it finds at least
-             * this many products, so no listed link leads to a thin page.
-             * Nobody typed these, so they carry no privacy question.
-             */
-            'chart_min_results' => 8,
-
-            /*
              * Twenty per column.
              *
              * It was 100 in one list for a day. A hundred rows is a keyword dump

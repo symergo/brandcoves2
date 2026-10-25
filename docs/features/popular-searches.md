@@ -277,3 +277,14 @@ The scheduler warms the lists nightly at 05:50 (`warm-popular-searches`), so the
 sitemap always have a value, also after a deploy. On a synchronous queue (the tests) the value is
 there at once. Measured over the six hours before: no other page type was slow (search pages have
 their own stale-while-revalidate), so nothing else was converted; a slow page later gets one call.
+
+## The chart top-up removed again (the same evening)
+
+On production the top-up's product check stayed slow even rewritten: with `LIMIT 40` Postgres chose
+to read the products table front to back, fine for a common name, minutes for a rarer one; forced
+onto the search index it counted every match, up to 3.8 s for "Deuren" (29,257 offers), around half
+a minute a build. The owner: "Is there not an easier way? Just compare the top searches." The page
+now does only that: the most searched terms per week, side by side, about 13 ms per aggregation.
+Columns stay sparser (be-nl had 13 terms over three weeks), and everything on the page was really
+searched. If the chart names come back, the cheap form is the count of chart products the
+catalogue holds per category, which the chart query computes anyway, rather than a search per name.

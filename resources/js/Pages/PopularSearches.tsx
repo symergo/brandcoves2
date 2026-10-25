@@ -8,8 +8,6 @@ interface Term {
     term: string
     movement?: Movement
     url: string
-    /** A bestseller-chart category that topped a short week up, not a searched term (2026-10-25). */
-    fromCharts?: boolean
 }
 
 /**

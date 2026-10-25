@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\Market;
-use App\Enums\ProductStatus;
 use App\Enums\Source;
-use App\Models\ChartCategory;
-use App\Models\Merchant;
-use App\Models\PopularRank;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Search\SearchTermStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -113,75 +106,6 @@ class PopularSearchesTest extends TestCase
         $terms = array_column(app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'], 'term');
 
         $this->assertSame(['twee bezoeken'], $terms);
-    }
-
-    /**
-     * A short week is topped up from bol's bestseller charts (2026-10-25):
-     * the chart categories' names, only when a search for one finds enough
-     * products, marked `fromCharts`, after the searched terms.
-     */
-    #[Test]
-    public function a_short_week_is_topped_up_from_the_bestseller_charts(): void
-    {
-        config()->set('giftcoves.search.popular.chart_min_results', 2);
-
-        $this->log('koptelefoon', 4);
-        $this->chart('kerst', 'Kerstverlichting', ['Kerstverlichting buiten 10 m', 'Kerstverlichting snoer warm wit']);
-        // A chart whose name our catalogue cannot answer: never a link to an empty page.
-        $this->chart('niks', 'Nergensdingen', []);
-
-        $terms = app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'];
-
-        $this->assertSame(['koptelefoon', 'Kerstverlichting'], array_column($terms, 'term'));
-        $this->assertArrayNotHasKey('fromCharts', $terms[0]);
-        $this->assertTrue($terms[1]['fromCharts']);
-        $this->assertSame('/be-nl/zoek/kerstverlichting', $terms[1]['url']);
-    }
-
-    /**
-     * One bol chart category with its products ranked this week, each product
-     * stored in the catalogue so a search for its words finds it.
-     *
-     * @param  list<string>  $titles
-     */
-    private function chart(string $id, string $name, array $titles): void
-    {
-        ChartCategory::create([
-            'source' => Source::Bol->value,
-            'market' => Market::BeNl->value,
-            'external_id' => $id,
-            'name' => $name,
-            'slug' => $id,
-            'enabled' => true,
-        ]);
-
-        $merchant = Merchant::firstOrCreate(['source' => Source::Awin->value, 'external_id' => 'chartshop'], ['name' => 'Chartshop BE']);
-
-        foreach ($titles as $i => $title) {
-            $group = ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => $title]);
-            Product::create([
-                'source' => Source::Awin->value,
-                'external_id' => "{$id}-{$i}",
-                'market' => Market::BeNl->value,
-                'merchant_id' => $merchant->id,
-                'group_id' => $group->id,
-                'title' => $title,
-                'price' => 1999,
-                'affiliate_url' => "https://example.test/{$id}-{$i}",
-                'availability' => Availability::InStock->value,
-                'status' => ProductStatus::Active->value,
-            ]);
-            PopularRank::create([
-                'source' => Source::Bol->value,
-                'market' => Market::BeNl->value,
-                'category_external_id' => $id,
-                'external_id' => "bol-{$id}-{$i}",
-                'rank' => $i + 1,
-                'captured_on' => now()->toDateString(),
-                'captured_at' => now(),
-                'group_id' => $group->id,
-            ]);
-        }
     }
 
     #[Test]
