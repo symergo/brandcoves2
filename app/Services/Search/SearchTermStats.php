@@ -62,9 +62,15 @@ class SearchTermStats
      */
     public function for(Market $market): array
     {
-        return Cache::remember(
+        $ttl = (int) config('giftcoves.search.popular.cache_ttl');
+
+        // Stale while revalidate (owner, 2026-10-25: never rebuilt while
+        // somebody waits): a day fresh, then served for a week more while the
+        // rebuild runs after the response. Only a market's very first build is
+        // made in the request.
+        return Cache::flexible(
             'bc:search-stats:'.$market->value,
-            (int) config('giftcoves.search.popular.cache_ttl'),
+            [$ttl, $ttl * 8],
             fn (): array => [
                 'months' => $this->periods($market),
                 'trending' => $this->trending($market),
@@ -120,6 +126,8 @@ class SearchTermStats
                 ];
             }
 
+            $terms = [...$terms, ...$this->chartTopUp($market, $start, $end, $terms)];
+
             $out[] = [
                 'label' => $this->label($market, $start, $end),
                 'terms' => $terms,
@@ -128,6 +136,118 @@ class SearchTermStats
 
         return $out;
     }
+
+    /**
+     * What bol's bestseller charts say was bought that week, to fill a column
+     * the searches leave short (owner, 2026-10-25).
+     *
+     * ## Category names, not product titles
+     *
+     * The charts (`bc:pull-charts`) rank products per bol category. A product
+     * title ("Philips Hue White Ambiance Starterkit E27 - 3 lampen") is no
+     * search term; the category's name ("Verlichting", "Kerstverlichting") is
+     * exactly one. Ranked by how many of that week's chart products the
+     * catalogue holds, so a column reads as that week's demand.
+     *
+     * ## The same rules as a searched term, bar the privacy floor
+     *
+     * Nobody typed these, so the floor has nothing to protect. The rest holds:
+     * length, the spec pattern, the stop terms, and results. A name is kept
+     * only when a search for it finds at least `chart_min_results` products
+     * (the word match, 10-110 ms), so no listed link leads to a thin or empty
+     * page. A name a searched term already covers is not repeated. No movement
+     * arrow: a chart category has no search rank to compare against.
+     * `fromCharts` marks them for the page.
+     *
+     * @param  list<array<string, mixed>>  $taken  the searched terms already in the column
+     * @return list<array<string, mixed>>
+     */
+    private function chartTopUp(Market $market, Carbon $start, Carbon $end, array $taken): array
+    {
+        $room = (int) config('giftcoves.search.popular.limit') - count($taken);
+
+        if ($room <= 0) {
+            return [];
+        }
+
+        $seen = array_map(fn (array $t) => mb_strtolower((string) $t['term']), $taken);
+        $stop = array_map(
+            mb_strtolower(...),
+            (array) config('giftcoves.search.popular.stop_terms.'.$market->language(), []),
+        );
+        $minLength = (int) config('giftcoves.search.popular.min_length');
+        $spec = '/'.str_replace('/', '\/', (string) config('giftcoves.search.popular.spec_pattern')).'/i';
+
+        $names = DB::table('popular_ranks as r')
+            ->join('chart_categories as c', fn ($join) => $join
+                ->on('c.external_id', '=', 'r.category_external_id')
+                ->on('c.market', '=', 'r.market')
+                ->on('c.source', '=', 'r.source'))
+            ->where('r.market', $market->value)
+            ->where('r.captured_on', '>=', $start->toDateString())
+            ->where('r.captured_on', '<', $end->toDateString())
+            ->whereNotNull('r.group_id')
+            ->where('c.enabled', true)
+            ->groupBy('c.name')
+            ->orderByRaw('count(distinct r.group_id) desc')
+            ->orderBy('c.name')
+            // A few times the room: some names fail the checks below.
+            ->limit($room * 3)
+            ->pluck('c.name');
+
+        $out = [];
+
+        foreach ($names as $name) {
+            $name = trim((string) $name);
+            $key = mb_strtolower($name);
+
+            if (in_array($key, $seen, true) || in_array($key, $stop, true)
+                || mb_strlen($name) < $minLength || preg_match($spec, $name) === 1
+                || ! $this->findsEnough($market, $name)) {
+                continue;
+            }
+
+            $seen[] = $key;
+            $out[] = [
+                'term' => $name,
+                'movement' => null,
+                'url' => $this->url($market, $name),
+                'fromCharts' => true,
+            ];
+
+            if (count($out) >= $room) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Whether a search for these words finds at least `chart_min_results`
+     * products: the word match on the offers, capped, as SearchService's own
+     * thin check counts. Remembered for the build.
+     */
+    private function findsEnough(Market $market, string $words): bool
+    {
+        $min = (int) config('giftcoves.search.popular.chart_min_results', 8);
+        $key = $market->value."\0".mb_strtolower($words);
+
+        return $this->found[$key] ??= DB::query()->fromSub(
+            DB::table('products')
+                ->select('group_id')
+                ->where('market', $market->value)
+                ->where('status', 'active')
+                ->whereNotNull('group_id')
+                ->whereRaw('search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)', [$market->value, $words])
+                ->distinct()
+                ->limit($min),
+            'm',
+        )->count() >= $min;
+    }
+
+    /** @var array<string, bool> findsEnough() per market and words, for one build */
+    private array $found = [];
 
     /**
      * The `$back`th period back, as [start, end). End is exclusive.
@@ -261,7 +381,7 @@ class SearchTermStats
             ->where('hour_bucket', '>=', $start)
             ->where('hour_bucket', '<', $end)
             ->groupBy('query')
-            ->havingRaw('sum(search_count) >= ?', [$this->floor()])
+            ->havingRaw('sum(search_count) >= ? and count(distinct hour_bucket) >= ?', [$this->floor(), $this->minHours()])
             ->select('query', DB::raw('sum(search_count)::int as volume'))
             ->orderByDesc('volume')
             // Then by term, so equal volumes do not shuffle between requests and
@@ -366,7 +486,7 @@ class SearchTermStats
         $totals = $this->scoped($market)
             ->where('hour_bucket', '>=', now()->subDays($this->days()))
             ->groupBy('query')
-            ->havingRaw('sum(search_count) >= ?', [$this->floor()])
+            ->havingRaw('sum(search_count) >= ? and count(distinct hour_bucket) >= ?', [$this->floor(), $this->minHours()])
             ->select('query', DB::raw('sum(search_count)::int as volume'))
             ->pluck('volume', 'query');
 
@@ -426,7 +546,7 @@ class SearchTermStats
         return $this->scoped($market)
             ->where('hour_bucket', '>=', now()->subDays($this->days()))
             ->groupBy('query')
-            ->havingRaw('sum(search_count) >= ?', [$this->floor()])
+            ->havingRaw('sum(search_count) >= ? and count(distinct hour_bucket) >= ?', [$this->floor(), $this->minHours()])
             ->select(
                 'query',
                 DB::raw('sum(search_count)::int as volume'),
@@ -451,6 +571,12 @@ class SearchTermStats
     private function floor(): int
     {
         return (int) config('giftcoves.search.popular.min_volume');
+    }
+
+    /** In how many different hours a term must have been searched: see `min_hours`. */
+    private function minHours(): int
+    {
+        return (int) config('giftcoves.search.popular.min_hours', 2);
     }
 
     private function url(Market $market, string $term): string

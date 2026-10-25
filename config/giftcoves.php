@@ -272,16 +272,37 @@ return [
             'window_days' => 90,
 
             /*
-             * A term must have been searched this many times to be listed.
+             * A term must have been searched this many times, in at least
+             * `min_hours` different hours, to be listed.
              *
              * A privacy floor, not a tuning knob. The log carries no identity,
-             * which is what makes it non-personal — but one unusual query on a
+             * which is what makes it non-personal, but one unusual query on a
              * public page can still be about one identifiable person, and
              * somebody who typed a name into a gift site did not publish it.
-             * Raise it freely; never lower it to where a listed term could be a
-             * single visitor.
+             * So one search is never published.
+             *
+             * It was 5 searches until 2026-10-25, which left the page nearly
+             * empty (be-nl listed 5 terms over 90 days, en none). The owner
+             * chose two searches in two different hours instead: the log is
+             * kept per hour, so two separate hours means two separate visits,
+             * not one person pressing Enter twice. It is still not proof of two
+             * people (one visitor can come back the next day), which is why the
+             * other rules stay: results, length, stop terms. Never lower either
+             * number to where a listed term could be a single search.
              */
-            'min_volume' => 5,
+            'min_volume' => 2,
+            'min_hours' => 2,
+
+            /*
+             * Topping a weekly column up from bol's bestseller charts when
+             * fewer searches pass the floor than `limit` (2026-10-25): the
+             * chart categories' names ("Kerstverlichting", "Beddengoed"),
+             * ranked by how many of that week's chart products the catalogue
+             * holds. A name is used only when a search for it finds at least
+             * this many products, so no listed link leads to a thin page.
+             * Nobody typed these, so they carry no privacy question.
+             */
+            'chart_min_results' => 8,
 
             /*
              * Twenty per column.

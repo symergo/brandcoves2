@@ -4,7 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Availability;
 use App\Enums\Market;
+use App\Enums\ProductStatus;
+use App\Enums\Source;
+use App\Models\ChartCategory;
+use App\Models\Merchant;
+use App\Models\PopularRank;
+use App\Models\Product;
+use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Search\SearchTermStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,21 +51,32 @@ class PopularSearchesTest extends TestCase
         Cache::flush();
     }
 
-    private function log(string $query, int $count, int $results = 8, ?string $market = null, int $daysAgo = 0): void
+    /**
+     * A term searched `$count` times. Two or more are spread over two hours
+     * (all but one in this hour, one in the hour before), because a term must
+     * be searched in at least two different hours to be listed (2026-10-25);
+     * `$oneHour` keeps them in one, to test exactly that.
+     */
+    private function log(string $query, int $count, int $results = 8, ?string $market = null, int $daysAgo = 0, bool $oneHour = false): void
     {
         $bucket = now()->subDays($daysAgo)->startOfHour();
+        $rows = $count >= 2 && ! $oneHour
+            ? [[$bucket, $count - 1], [$bucket->copy()->subHour(), 1]]
+            : [[$bucket, $count]];
 
-        SearchLog::create([
-            'query' => $query,
-            // The bucket is part of the key, so the same term can be logged in
-            // two windows without colliding — which is the whole setup trending
-            // needs.
-            'query_hash' => hash('sha256', $query.($market ?? Market::BeNl->value).$daysAgo),
-            'market' => $market ?? Market::BeNl->value,
-            'hour_bucket' => $bucket,
-            'search_count' => $count,
-            'result_count' => $results,
-        ]);
+        foreach ($rows as $i => [$hour, $searches]) {
+            SearchLog::create([
+                'query' => $query,
+                // The bucket is part of the key, so the same term can be logged in
+                // two windows without colliding — which is the whole setup trending
+                // needs.
+                'query_hash' => hash('sha256', $query.($market ?? Market::BeNl->value).$daysAgo.':'.$i),
+                'market' => $market ?? Market::BeNl->value,
+                'hour_bucket' => $hour,
+                'search_count' => $searches,
+                'result_count' => $results,
+            ]);
+        }
     }
 
     /**
@@ -77,6 +96,92 @@ class PopularSearchesTest extends TestCase
         $this->assertStringContainsString('/be-nl/zoek/koptelefoon</loc>', $xml);
         $this->assertStringNotContainsString('jan-peeters', $xml);
         $this->assertStringNotContainsString('nergensvindbaar', $xml);
+    }
+
+    /**
+     * The floor since 2026-10-25: two searches in two different hours (two
+     * visits). Twice in the same hour may be one person pressing Enter twice,
+     * and is not published.
+     */
+    #[Test]
+    public function a_term_needs_two_searches_in_two_different_hours(): void
+    {
+        $this->log('twee bezoeken', 2);
+        $this->log('een bezoek twee keer', 2, oneHour: true);
+        $this->log('maar een keer', 1);
+
+        $terms = array_column(app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'], 'term');
+
+        $this->assertSame(['twee bezoeken'], $terms);
+    }
+
+    /**
+     * A short week is topped up from bol's bestseller charts (2026-10-25):
+     * the chart categories' names, only when a search for one finds enough
+     * products, marked `fromCharts`, after the searched terms.
+     */
+    #[Test]
+    public function a_short_week_is_topped_up_from_the_bestseller_charts(): void
+    {
+        config()->set('giftcoves.search.popular.chart_min_results', 2);
+
+        $this->log('koptelefoon', 4);
+        $this->chart('kerst', 'Kerstverlichting', ['Kerstverlichting buiten 10 m', 'Kerstverlichting snoer warm wit']);
+        // A chart whose name our catalogue cannot answer: never a link to an empty page.
+        $this->chart('niks', 'Nergensdingen', []);
+
+        $terms = app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'];
+
+        $this->assertSame(['koptelefoon', 'Kerstverlichting'], array_column($terms, 'term'));
+        $this->assertArrayNotHasKey('fromCharts', $terms[0]);
+        $this->assertTrue($terms[1]['fromCharts']);
+        $this->assertSame('/be-nl/zoek/kerstverlichting', $terms[1]['url']);
+    }
+
+    /**
+     * One bol chart category with its products ranked this week, each product
+     * stored in the catalogue so a search for its words finds it.
+     *
+     * @param  list<string>  $titles
+     */
+    private function chart(string $id, string $name, array $titles): void
+    {
+        ChartCategory::create([
+            'source' => Source::Bol->value,
+            'market' => Market::BeNl->value,
+            'external_id' => $id,
+            'name' => $name,
+            'slug' => $id,
+            'enabled' => true,
+        ]);
+
+        $merchant = Merchant::firstOrCreate(['source' => Source::Awin->value, 'external_id' => 'chartshop'], ['name' => 'Chartshop BE']);
+
+        foreach ($titles as $i => $title) {
+            $group = ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => $title]);
+            Product::create([
+                'source' => Source::Awin->value,
+                'external_id' => "{$id}-{$i}",
+                'market' => Market::BeNl->value,
+                'merchant_id' => $merchant->id,
+                'group_id' => $group->id,
+                'title' => $title,
+                'price' => 1999,
+                'affiliate_url' => "https://example.test/{$id}-{$i}",
+                'availability' => Availability::InStock->value,
+                'status' => ProductStatus::Active->value,
+            ]);
+            PopularRank::create([
+                'source' => Source::Bol->value,
+                'market' => Market::BeNl->value,
+                'category_external_id' => $id,
+                'external_id' => "bol-{$id}-{$i}",
+                'rank' => $i + 1,
+                'captured_on' => now()->toDateString(),
+                'captured_at' => now(),
+                'group_id' => $group->id,
+            ]);
+        }
     }
 
     #[Test]

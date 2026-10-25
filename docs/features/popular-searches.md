@@ -146,8 +146,9 @@ computed against a ranking still full of unpublishable terms would report a term
 as risen because the junk above it was filtered out of one and not the other.
 
 
-**A term must have been searched `min_volume` times to appear in any published
-list.** This is a privacy floor, not a tuning knob. `search_log` carries no
+**A term must have been searched `min_volume` times, in at least `min_hours` different hours, to
+appear in any published list.** Two and two since 2026-10-25 (it was five searches): see "The floor
+lowered, and the charts" below. This is a privacy floor, not a tuning knob. `search_log` carries no
 identity, which is what makes it non-personal — but a single unusual query
 published on a public page can still be about one identifiable person, and
 somebody who typed a name into a gift site did not publish it. The threshold is
@@ -173,6 +174,35 @@ something to print, and length is the right kind of blunt filter for it.
 *Since 2026-09-08 the log itself refuses long terms and crawler searches* — the four layers are in
 [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md). The read-time rule above stays as
 a second net.
+
+## The floor lowered, and the charts (owner, 2026-10-25)
+
+With five searches the page was nearly empty: over 90 days be-nl had 5 publishable terms, nl-nl 1,
+en and be-fr none. The owner first asked to drop the floor altogether, and was advised against it:
+one search on a public page can be one person's words ("cadeau voor Jan Peeters"), anyone could put
+anything on the page by searching once, and every listed term is a followed link to an indexable
+search page, so one-off typos would mean links to thin or empty pages. The owner chose instead:
+
+- **(a) Two searches in two different hours.** `search_log` is kept per hour, so two hours means two
+  separate visits, not one person pressing Enter twice. It is not proof of two people (somebody can
+  come back the next day), which is why every other rule stays: results, length, spec pattern, stop
+  terms. One search is never published. Measured on production (90 days, results and length only,
+  before stop terms): be-nl 5 → 13 terms, nl-nl 1 → 4, en 0 → 16, be-fr 0 → 1.
+- **(b) A short week is topped up from bol's bestseller charts** (`chartTopUp()`). The charts
+  (`bc:pull-charts`, `popular_ranks` per `chart_categories`) rank products per bol category; product
+  titles make poor search terms, the category names ("Kerstverlichting", "Beddengoed") are exactly
+  that. Ranked by how many of that week's chart products the catalogue holds, so each column is that
+  week's demand. Kept only when a search for the name finds at least `chart_min_results` (8)
+  products, so no link leads to a thin page; a name a searched term already covers is not repeated;
+  the length, spec and stop-term rules apply; no movement arrow (no search rank to compare). Marked
+  `fromCharts`; the page draws them like any term. Only the weekly columns: "rising" and "searched
+  recently" stay searched terms only, because a chart category is neither.
+
+**The page's data is now stale while revalidate** (`Cache::flexible`, a day fresh and a week more
+stale), per the owner's rule that nothing is rebuilt while somebody waits. A build now also runs the
+chart checks (one capped word match per candidate name, 10-110 ms each with the market bound); a
+market's very first build is the only one in a request. The sitemap reads the same lists
+(`SitemapController`), so it follows both changes.
 
 ## Indexable, and its links are followed
 
@@ -210,7 +240,7 @@ morning says the same thing that night.
 ## Knobs
 
 `config/giftcoves.php` → `search.popular`: `columns` (3), `period` (`week`),
-`limit` (20 per column), `min_volume` (5), `stop_terms` (per language),
+`limit` (20 per column), `min_volume` (2), `min_hours` (2), `chart_min_results` (8), `stop_terms` (per language),
 `spec_pattern`, `min_length` (3), `window_days` (90, for the two lists),
 `short_list` (20), `trending_days` (7), `cache_ttl` (86400 — a day).
 
