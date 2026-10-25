@@ -135,7 +135,10 @@ export default function SignInDialog({
             className="m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto bg-cream p-6 sm:bg-card backdrop:bg-ink/40 sm:m-auto sm:h-fit sm:max-h-[calc(100dvh-2rem)] sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-card sm:border sm:border-line"
         >
             <h2 className="text-lg font-semibold">{t('auth.title')}</h2>
-            <p className="mt-2 text-sm text-ink-soft">{hint ?? t('auth.intro')}</p>
+            {/* A page's own reason to sign in, when it gave one. The general
+                line ("we send you a link") went on 2026-10-25 (owner): the
+                email form says it now, where it applies. */}
+            {hint && <p className="mt-2 text-sm text-ink-soft">{hint}</p>}
 
             {/*
               Google first (owner's call, 2026-09-14). See Auth/Login.tsx: an
@@ -166,9 +169,8 @@ export default function SignInDialog({
             )}
 
             <form onSubmit={submit} className="relative space-y-3">
-                {/* How easy the email way is, at the email way itself (owner,
-                    2026-10-25): the intro above can be a page's own hint, so
-                    this is the one line every sign-in shows. */}
+                {/* How the email way works, at the email way itself (owner,
+                    2026-10-25). */}
                 <p className="text-sm text-ink">{t('auth.email_easy')}</p>
                 <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
                 {/* Optional, and only used when the account is created. A magic

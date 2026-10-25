@@ -578,8 +578,7 @@ return [
 
     'auth' => [
         'title' => 'Iniciar sesión',
-        'email_easy' => 'Iniciar sesión en GiftCoves por correo es muy fácil: te enviamos un enlace y solo tienes que hacer clic en él.',
-        'intro' => 'Escribe tu correo y te enviaremos un enlace. Sin contraseñas que recordar.',
+        'email_easy' => 'Escribe tu correo y te enviaremos un enlace para iniciar sesión. Sin contraseñas que recordar.',
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',
         'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',
@@ -590,7 +589,7 @@ return [
         'confirm_new_link' => 'Pedir un enlace nuevo',
         'too_many' => 'Demasiadas solicitudes. Inténtalo de nuevo en :seconds segundos.',
         'or' => 'o',
-        'google' => 'Continuar con Google',
+        'google' => 'Iniciar sesión con Google',
         'mail_subject' => 'Tu enlace de acceso a GiftCoves',
         'mail_heading' => 'Inicia sesión en GiftCoves',
         'mail_body' => 'Pulsa el botón de abajo para entrar. El enlace funciona una sola vez y solo desde este correo.',

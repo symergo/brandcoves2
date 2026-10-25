@@ -727,8 +727,7 @@ return [
 
     'auth' => [
         'title' => 'Sign in',
-        'email_easy' => 'Signing in to GiftCoves by email is very easy: we send you a sign-in link and all you do is click it.',
-        'intro' => 'Enter your email and we will send you a link. No password to remember.',
+        'email_easy' => 'Enter your email address and we will send you a sign-in link. No password to remember.',
         'email' => 'Email address',
         'send' => 'Send me a link',
         'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',
@@ -739,7 +738,7 @@ return [
         'confirm_new_link' => 'Request a new link',
         'too_many' => 'Too many requests. Try again in :seconds seconds.',
         'or' => 'or',
-        'google' => 'Continue with Google',
+        'google' => 'Sign in with Google',
         'mail_subject' => 'Your GiftCoves sign-in link',
         'mail_heading' => 'Sign in to GiftCoves',
         'mail_body' => 'Tap the button below to sign in. The link works once and only from this email.',

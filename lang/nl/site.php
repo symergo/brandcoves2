@@ -582,8 +582,7 @@ return [
 
     'auth' => [
         'title' => 'Inloggen',
-        'email_easy' => 'Via e-mail aanmelden op GiftCoves is heel gemakkelijk: we sturen je een aanmeldlink en jij hoeft er alleen op te klikken.',
-        'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
+        'email_easy' => 'Vul je e-mailadres in en we sturen je een aanmeldlink. Geen wachtwoord om te onthouden.',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
         'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten.',
@@ -596,7 +595,7 @@ return [
         'confirm_new_link' => 'Nieuwe link aanvragen',
         'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',
         'or' => 'of',
-        'google' => 'Doorgaan met Google',
+        'google' => 'Aanmelden met Google',
         'mail_subject' => 'Je inloglink voor GiftCoves',
         'mail_heading' => 'Inloggen bij GiftCoves',
         'mail_body' => 'Tik op de knop hieronder om in te loggen. De link werkt één keer en alleen vanuit deze e-mail.',

@@ -579,8 +579,7 @@ return [
 
     'auth' => [
         'title' => 'Se connecter',
-        'email_easy' => 'Se connecter à GiftCoves par e-mail, c’est très simple : nous vous envoyons un lien de connexion, il vous suffit de cliquer dessus.',
-        'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
+        'email_easy' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien de connexion. Aucun mot de passe à retenir.',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
         'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes.',
@@ -591,7 +590,7 @@ return [
         'confirm_new_link' => 'Demander un nouveau lien',
         'too_many' => 'Trop de demandes. Réessayez dans :seconds secondes.',
         'or' => 'ou',
-        'google' => 'Continuer avec Google',
+        'google' => 'Se connecter avec Google',
         'mail_subject' => 'Votre lien de connexion GiftCoves',
         'mail_heading' => 'Connexion à GiftCoves',
         'mail_body' => 'Appuyez sur le bouton ci-dessous pour vous connecter. Le lien fonctionne une seule fois et uniquement depuis cet e-mail.',

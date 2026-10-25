@@ -58,9 +58,15 @@ it. The alternative — a `useState` and a dialog per caller — is nine copies 
 the header, the mobile menu, the price-alert button, the save picker and four pages, each with its
 own chance to get it subtly wrong. There is only ever one sign-in happening.
 
-`hint` is what replaces the dialog's generic intro with the reason *this* caller asked: "watch the
-price", "sign in to ask", "keep your lists". The words are already written at each call site, because
-each one had a sentence explaining why an account was needed.
+`hint` is the reason *this* caller asked: "watch the price", "sign in to ask", "keep your lists". The
+words are already written at each call site, because each one had a sentence explaining why an
+account was needed.
+
+**The popup's wording since 2026-10-25 (owner).** The generic intro above the Google button ("Vul je
+e-mailadres in en we sturen je een link…") is gone; a caller's `hint` still shows there. The Google
+button says "Aanmelden met Google" (was "Doorgaan met Google"), and the email form opens with its
+own line, `auth.email_easy`: "Vul je e-mailadres in en we sturen je een aanmeldlink. Geen wachtwoord
+om te onthouden." The sign-in page (`Auth/Login.tsx`) follows the same wording.
 
 **`SignInLink` renders an anchor, not a button.** It points at the real `/{market}/login` and
 intercepts only an unmodified primary click — the same rule Inertia's own `<Link>` applies. That
