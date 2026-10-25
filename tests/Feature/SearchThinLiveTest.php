@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Availability;
 use App\Enums\Market;
+use App\Enums\ProductStatus;
+use App\Enums\Source;
 use App\Jobs\PullLiveSearch;
+use App\Models\Merchant;
+use App\Models\Product;
 use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -79,6 +84,28 @@ class SearchThinLiveTest extends TestCase
         return $this->asked;
     }
 
+    /** A product as the catalogue holds one: a group and an active offer in it. */
+    private function storedProduct(string $title): ProductGroup
+    {
+        $group = ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => $title]);
+        $merchant = Merchant::firstOrCreate(['source' => Source::Awin->value, 'external_id' => 'thinshop'], ['name' => 'Thinshop BE']);
+
+        Product::create([
+            'source' => Source::Awin->value,
+            'external_id' => 'thin-'.$group->id,
+            'market' => Market::BeNl->value,
+            'merchant_id' => $merchant->id,
+            'group_id' => $group->id,
+            'title' => $title,
+            'price' => 2499,
+            'affiliate_url' => 'https://example.test/thin-'.$group->id,
+            'availability' => Availability::InStock->value,
+            'status' => ProductStatus::Active->value,
+        ]);
+
+        return $group;
+    }
+
     #[Test]
     public function a_term_with_nothing_stored_shows_bols_products_on_the_first_view(): void
     {
@@ -102,8 +129,10 @@ class SearchThinLiveTest extends TestCase
     {
         $this->fakeBol([$this->bolProduct()]);
 
+        // With an offer each: since 2026-10-25 "thin" is decided by the word
+        // match, which reads the offers' text, as every stored product has.
         for ($i = 0; $i < 24; $i++) {
-            ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => "Tuinkabouter model {$i}"]);
+            $this->storedProduct("Tuinkabouter model {$i}");
         }
 
         $this->get('/be-nl/search?q=tuinkabouter')
@@ -112,6 +141,49 @@ class SearchThinLiveTest extends TestCase
 
         $this->assertSame(0, $this->searches());
         Queue::assertPushed(PullLiveSearch::class, 1);
+    }
+
+    /**
+     * When a live shop answers for the term, the fuzzy title match is skipped
+     * (owner, 2026-10-25): its near misses are not worth 2-3 s once the shop
+     * supplied real products. "Tuinkabauter" is a stored title only the fuzzy
+     * match finds for "tuinkabouter".
+     */
+    #[Test]
+    public function when_a_live_shop_answers_the_fuzzy_match_is_skipped(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+        $this->storedProduct('Tuinkabauter met hengel');
+
+        $titles = array_column($this->get('/be-nl/search?q=tuinkabouter')->assertOk()->viewData('page')['props']['results']['items'], 'title');
+
+        $this->assertContains('Zeldzame tuinkabouter met lantaarn', $titles);
+        $this->assertNotContains('Tuinkabauter met hengel', $titles);
+    }
+
+    #[Test]
+    public function when_the_live_shop_finds_nothing_the_fuzzy_match_still_runs(): void
+    {
+        $this->fakeBol([]);
+        $this->storedProduct('Tuinkabauter met hengel');
+
+        $titles = array_column($this->get('/be-nl/search?q=tuinkabouter')->assertOk()->viewData('page')['props']['results']['items'], 'title');
+
+        $this->assertSame(['Tuinkabauter met hengel'], $titles);
+    }
+
+    /** A crawler sees what is stored and costs no live call (owner, 2026-10-25). */
+    #[Test]
+    public function a_crawler_is_not_sent_to_the_live_shops(): void
+    {
+        $this->fakeBol([$this->bolProduct()]);
+
+        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('results.items', 0));
+
+        $this->assertSame(0, $this->searches());
+        Queue::assertNotPushed(PullLiveSearch::class);
     }
 
     #[Test]

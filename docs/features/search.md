@@ -210,6 +210,33 @@ Built in Phase 2:
 - `store_lane_cap` = 8 per merchant in the "by store" view, so one recently-ingested merchant with a
   huge feed cannot monopolise every slot.
 
+### Live shops: three rules for speed (owner, 2026-10-25)
+
+For every live source a market has (`ConnectorRegistry::liveFor()`), not bol by name:
+
+1. **No fuzzy match once a live shop answered.** `needsFuzzy()` returns false while
+   `bc:search:shops-answered:{market}:{term}` is set (for `live_cache_ttl`, only when the shops
+   answered with something, stored or shown live). A thin term used to pay for both the shop wait
+   (up to 3 s) and the fuzzy match (2–3 s); the fuzzy match's near misses are not worth it once the
+   shop supplied real products. If the shops find nothing, the fuzzy match runs as before, so a typo
+   still finds its product. "Thin" itself is now the capped word-match count (`isThin()`), not the
+   id list, so a thin term's search is computed once per request instead of before and after the
+   shop's answer. With filters on, the id list still decides.
+2. **The queued fetch merges instead of retiring** (`foldLiveIntoResults()`). It used to retire the
+   term's cached results every time, so the next visitor recomputed the whole search, also when the
+   shop added nothing (a term took 0.5 s on its first view and 4.4 s on its second). Now: nothing new
+   → nothing retired. Something new → the term is retired (so sorted and filtered views pick it up)
+   and the plain list, with the new products appended, plus the old filter counts, are written
+   straight under the new generation, so the plain page is not recomputed. A brand page's job still
+   retires as before.
+3. **No live call for a crawler.** The search and brand pages pass `askShops: false` when
+   `Crawlers::looksLikeOne()` matches the user agent. A crawler walking new terms cost a live API
+   call and a queued job per page, for nobody; it now sees what is stored. The session-cookie half of
+   the search-log test is deliberately not used here: a person arriving from Google has no cookie on
+   their first request and must still get the shop's products.
+
+Covered by `SearchThinLiveTest` (rules 1 and 3) and `SearchLiveQueueTest` (rule 2).
+
 ### The shop filter means two different things, and the by-store view needs both
 
 **Fixed 2026-08-30.** Selecting a shop left the other shops' lanes on screen.

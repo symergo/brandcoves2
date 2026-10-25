@@ -30,6 +30,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
+use App\Support\Crawlers;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -149,7 +150,8 @@ class BrandController extends Controller
         $query = SearchQuery::fromRequest($request, $market);
         $query = $query->withBrands($stat->brandSpellings(), liveTerm: $this->liveTerm($stat, $query));
 
-        $result = $search->search($query);
+        // A crawler sees what is stored: no live shop is asked for it (2026-10-25).
+        $result = $search->search($query, askShops: ! Crawlers::looksLikeOne($request->userAgent()));
 
         $cove = $this->cove($stat, $current);
 

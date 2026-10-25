@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Attributes\Queue;
+use Throwable;
 
 /**
  * Ask the live shops (bol, eBay, Tradedoubler) about a search, and store what
@@ -65,18 +66,24 @@ class PullLiveSearch implements ShouldBeUnique, ShouldQueue
     public function handle(SearchService $search): void
     {
         try {
-            $search->foldLive($this->query());
-        } finally {
             /*
-             * Retire every cached result of this term, every filter and sort
-             * of it, and of this brand's page and its sub-searches, whether
-             * the shops answered anything or not. The results cached while the
-             * job was queued lack exactly what it just stored; the next view
-             * reads afresh and has it. Also on failure: a half-finished fold
-             * may still have written offers.
+             * What the shops brought is added to the term's cached results
+             * rather than the results being retired (2026-10-25): retiring
+             * made the next visitor pay for the whole search again, also when
+             * the shops added nothing. See SearchService::foldLiveIntoResults().
+             */
+            $search->foldLiveIntoResults($this->query());
+        } catch (Throwable $e) {
+            /*
+             * A half-finished fold may still have written offers the cached
+             * results lack, so on failure retire them all, every filter and
+             * sort of this term and of this brand's page, as this job always
+             * did before the merge.
              */
             SearchGenerations::bumpTerm($this->market, $this->liveTerm);
             SearchGenerations::bumpBrands($this->market, $this->brands);
+
+            throw $e;
         }
     }
 

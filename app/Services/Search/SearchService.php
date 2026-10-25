@@ -45,6 +45,9 @@ class SearchService
     /** @var array<string, bool> needsFuzzy() per market and term, for this request */
     private array $fuzzy = [];
 
+    /** @var array<string, int> wordMatchCount() per market, term and cap, for this request */
+    private array $wordCounts = [];
+
     /**
      * @param  bool  $waitForLive  ask the live shops inside this call and fold
      *                             their offers before the query runs, instead of queueing
@@ -52,13 +55,19 @@ class SearchService
      *                             this answer and the volume is tiny: an editor curating
      *                             in the admin and an author on the editorial API. Every
      *                             visitor-facing page leaves it false. See pullLiveResults().
+     * @param  bool  $askShops  whether the live shops may be asked at all. The
+     *                          search and brand pages pass false for a request
+     *                          that names itself a crawler (owner, 2026-10-25):
+     *                          a crawler walking new terms all day cost a live
+     *                          API call and a queued job per page, for nobody.
+     *                          It sees what is stored.
      */
-    public function search(SearchQuery $query, bool $waitForLive = false): SearchResult
+    public function search(SearchQuery $query, bool $waitForLive = false, bool $askShops = true): SearchResult
     {
         // The live half is driven by `liveTerm()`, not by the term. A brand page
         // has no search term and still has something to ask bol: the brand's
         // name, because it takes no brand filter.
-        $live = $query->hasLiveTerm()
+        $live = $askShops && $query->hasLiveTerm()
             ? $this->pullLiveResults($query, $waitForLive)
             : ['written' => 0, 'unstored' => []];
 
@@ -385,6 +394,37 @@ class SearchService
 
         $market = $query->market->value;
 
+        // `<%` is word_similarity, NOT `%`. `%` compares whole strings, so a
+        // typo against a long product title scores below the 0.3 default and
+        // finds nothing at all. See docs/features/search.md.
+        //
+        // Market-filtered even though the outer query filters it too: measured,
+        // narrowing here is faster than letting the trigram index return every
+        // market's matches for the semi-join to discard (115ms against 159ms).
+        $byTitle = DB::table('product_groups')
+            ->select('id')
+            ->where('market', $market)
+            ->whereRaw('? <% title', [$term]);
+
+        $match = $this->wordMatch($query);
+
+        if ($this->needsFuzzy($query)) {
+            $match->union($byTitle);
+        }
+
+        $groups->whereIn('product_groups.id', $match);
+    }
+
+    /**
+     * The ids the term matches by its words: full text on the offers, and the
+     * written title both ways. Everything `applyTextMatch()` unions except the
+     * fuzzy title match. A fresh builder on every call.
+     */
+    private function wordMatch(SearchQuery $query): QueryBuilder
+    {
+        $term = $query->term;
+        $market = $query->market->value;
+
         // websearch_to_tsquery handles quoted phrases and OR from user input
         // without throwing on syntax a person would reasonably type — plainto_
         // and to_tsquery both blow up on a stray colon or bracket.
@@ -403,18 +443,6 @@ class SearchService
                 'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
                 [$market, $term],
             );
-
-        // `<%` is word_similarity, NOT `%`. `%` compares whole strings, so a
-        // typo against a long product title scores below the 0.3 default and
-        // finds nothing at all. See docs/features/search.md.
-        //
-        // Market-filtered even though the outer query filters it too: measured,
-        // narrowing here is faster than letting the trigram index return every
-        // market's matches for the semi-join to discard (115ms against 159ms).
-        $byTitle = DB::table('product_groups')
-            ->select('id')
-            ->where('market', $market)
-            ->whereRaw('? <% title', [$term]);
 
         /*
          * The written title, both ways (2026-09-14).
@@ -440,42 +468,69 @@ class SearchService
             ->whereNotNull('display_title')
             ->whereRaw('? <% display_title', [$term]);
 
-        $match = (clone $byText)->union($byDisplayText)->union($byDisplayTitle);
-
-        if ($this->needsFuzzy($query, $match)) {
-            $match->union($byTitle);
-        }
-
-        $groups->whereIn('product_groups.id', $match);
+        return $byText->union($byDisplayText)->union($byDisplayTitle);
     }
 
     /**
-     * Whether the fuzzy title match (`$byTitle`) joins the union: only when
-     * the other branches find less than a page (`search.fuzzy_below`).
+     * How many products the term finds by its words, counted up to `$cap`.
+     *
+     * Asked with a LIMIT, so it costs no more than the word match itself, and
+     * remembered for the request: the fuzzy decision and the "is this term
+     * thin?" decision before asking the live shops both read it.
+     */
+    private function wordMatchCount(SearchQuery $query, int $cap): int
+    {
+        $key = $query->market->value."\0".$query->term."\0".$cap;
+
+        return $this->wordCounts[$key] ??= DB::query()
+            ->fromSub($this->wordMatch($query)->limit($cap), 'm')
+            ->count();
+    }
+
+    /**
+     * Whether the fuzzy title match joins the union.
      *
      * The fuzzy match is the typo net, and the most expensive thing a search
      * does: 1.7-3.3s on production against 8-110ms for the word match
-     * (2026-10-25), and it ran twice per new term, for the results and for
-     * the filter counts. A typo finds next to nothing by words, so it still
-     * gets the net; a term spelled right already fills a page.
+     * (2026-10-25). Two rules decide it:
      *
-     * Asked with a LIMIT, so the answer costs no more than the word match,
-     * and remembered per term for the rest of the request, so the results
-     * and the filter counts agree on which rows they counted.
+     * 1. Never once the live shops answered for this term (owner, 2026-10-25,
+     *    for any live source, not only bol): what the fuzzy match would add
+     *    are near misses, and the shops' own search has just supplied real
+     *    products for the term, including for many a typo.
+     * 2. Otherwise only when the words find less than a page
+     *    (`search.fuzzy_below`). A typo finds next to nothing by words and
+     *    gets the net; a term spelled right already fills a page.
+     *
+     * Remembered per term for the request, so the results and the filter
+     * counts agree on which rows they counted.
      */
-    private function needsFuzzy(SearchQuery $query, QueryBuilder $match): bool
+    private function needsFuzzy(SearchQuery $query): bool
     {
         $key = $query->market->value."\0".$query->term;
 
-        if (! array_key_exists($key, $this->fuzzy)) {
-            $below = (int) config('giftcoves.search.fuzzy_below', 24);
+        return $this->fuzzy[$key] ??= ! Cache::has(self::shopsAnsweredKey($query))
+            && $this->wordMatchCount($query, (int) config('giftcoves.search.fuzzy_below', 24))
+                < (int) config('giftcoves.search.fuzzy_below', 24);
+    }
 
-            $found = DB::query()->fromSub((clone $match)->limit($below), 'm')->count();
+    /**
+     * Set while the live shops' answer for a term is fresh: as long as the
+     * one-fetch-per-window marker (`live_cache_ttl`), and only when they
+     * answered with something. Read by needsFuzzy().
+     */
+    private static function shopsAnsweredKey(SearchQuery $query): string
+    {
+        return 'bc:search:shops-answered:'.$query->market->value.':'.sha1(mb_strtolower($query->liveTerm()));
+    }
 
-            $this->fuzzy[$key] = $found < $below;
+    /** @param  list<Offer>  $offers */
+    private function rememberShopsAnswered(SearchQuery $query, array $offers): void
+    {
+        if ($offers !== []) {
+            Cache::put(self::shopsAnsweredKey($query), true, (int) config('giftcoves.search.live_cache_ttl'));
+            unset($this->fuzzy[$query->market->value."\0".$query->term]);
         }
-
-        return $this->fuzzy[$key];
     }
 
     /** @param Builder<ProductGroup> $groups */
@@ -594,19 +649,26 @@ class SearchService
             (int) config('giftcoves.search.live_cache_ttl'),
         )) {
             if ($waitForLive) {
-                $written = $this->foldFrom($query, array_values($mirrorable));
+                $offers = $this->ask($query, array_values($mirrorable));
+                $written = $this->fold($query, $offers);
+                $this->rememberShopsAnswered($query, $offers);
                 $this->retire($query);
-            } elseif (count($this->resultIds($query)) < (int) config('giftcoves.search.inline_live_below', 24)) {
+            } elseif ($this->isThin($query)) {
                 /*
                  * Thin: fewer stored results than one page, the case where
                  * the shops are most of the answer (owner's decision,
                  * 2026-09-27: a term only bol knows must show bol's products
-                 * on the first view). Asked now, in parallel, bounded. The
-                 * count is the id list page() reads next anyway, cached, so
-                 * deciding costs no extra query.
+                 * on the first view). Asked now, in parallel, bounded.
+                 *
+                 * When they answer, the fuzzy match is skipped for the term
+                 * (needsFuzzy()), so a thin search no longer pays for both.
+                 * The id list is computed once, after this: isThin() reads the
+                 * word count, not the ids, so nothing cached has to be retired
+                 * and recomputed within the same request.
                  */
                 $asked = $this->askNow($query, array_values($mirrorable));
                 $written = $this->fold($query, $asked['offers']);
+                $this->rememberShopsAnswered($query, $asked['offers']);
                 $this->retire($query);
 
                 // A shop that timed out or failed gets its second chance in
@@ -621,15 +683,43 @@ class SearchService
             }
         }
 
+        $unstored = $this->liveOnly($query, $this->ask($query, array_values($renderOnly)));
+        // A shop shown live counts as an answer too: any live source, stored or not.
+        $this->rememberShopsAnswered($query, $unstored);
+
         return [
             'written' => $written,
-            'unstored' => $this->liveOnly($query, $this->ask($query, array_values($renderOnly))),
+            'unstored' => $unstored,
         ];
     }
 
     /**
-     * What the queued job does when it finishes: retire this term's (and this
-     * brand's) cached results, so the ids read next include what was folded.
+     * Fewer than a page (`inline_live_below`) for this search, so the shops
+     * are asked while the visitor waits.
+     *
+     * For a term, the word-match count (the same capped count the fuzzy
+     * decision reads, so one query answers both). It used to be the id list
+     * itself, which ran the full search, fuzzy match included, before the
+     * shops were asked, and then again after their answer retired it.
+     * Without a term (a brand page), for a barcode, or with filters on (which
+     * can thin a page the words alone would fill), the id list as before.
+     */
+    private function isThin(SearchQuery $query): bool
+    {
+        $below = (int) config('giftcoves.search.inline_live_below', 24);
+
+        if ($query->hasTerm() && ! $query->hasFilters() && Gtin::normalise($query->term) === null) {
+            return $this->wordMatchCount($query, $below) < $below;
+        }
+
+        return count($this->resultIds($query)) < $below;
+    }
+
+    /**
+     * Retire this term's (and this brand's) cached results, so the ids read
+     * next include what was folded. The request's own path (a thin term,
+     * `waitForLive`) and a brand page's job; a term's job merges instead,
+     * see foldLiveIntoResults().
      */
     private function retire(SearchQuery $query): void
     {
@@ -722,25 +812,119 @@ class SearchService
     }
 
     /**
-     * Ask the live shops whose offers may be stored, and store them.
+     * Ask the live shops whose offers may be stored, store them, and put the
+     * products they brought into the term's cached results.
      *
-     * {@see PullLiveSearch}'s work, and the `waitForLive` path's. Takes no
-     * marker: whoever calls it already won the one in pullLiveResults().
+     * {@see PullLiveSearch}'s work. Takes no marker: whoever dispatched it
+     * already won the one in pullLiveResults().
+     *
+     * ## Merged, not retired (owner, 2026-10-25)
+     *
+     * This used to retire the term's cached results whenever it finished, so
+     * the next visitor paid for the whole search again (a fresh term took
+     * 0.5 s on its first view and 4.4 s on its second), also when the shops
+     * added nothing. Now:
+     *
+     * - The products the answer brought that the cached plain list (no
+     *   filters, relevance: what a visitor lands on) lacks are found through
+     *   the same stored query a fresh computation would apply, so a product
+     *   the page would not show is not added either.
+     * - None: nothing is retired at all. That is the usual case, because the
+     *   shops' answer is mostly products already stored.
+     * - Some: the term is retired, so its sorted and filtered variants pick
+     *   them up on their next view, and the plain list is written straight
+     *   under the new generation with them appended (ranked last, outside the
+     *   `results_per_shop` cap), so the plain page is not recomputed.
+     * - No list cached yet: nothing to do; the next view computes it fresh.
+     *
+     * A brand page's job still retires, as before: its query is the brand
+     * filter, not words.
      */
-    public function foldLive(SearchQuery $query): int
+    public function foldLiveIntoResults(SearchQuery $query): void
     {
-        $mirrorable = array_filter(
+        $mirrorable = array_values(array_filter(
             $this->registry->liveFor($query->market),
             fn (LiveConnector $c) => $c->source()->allowsCatalogueStorage(),
-        );
+        ));
 
-        return $this->foldFrom($query, array_values($mirrorable));
+        if ($mirrorable === []) {
+            return;
+        }
+
+        $offers = $this->ask($query, $mirrorable);
+        $this->fold($query, $offers);
+        $this->rememberShopsAnswered($query, $offers);
+
+        if ($query->brands !== []) {
+            $this->retire($query);
+
+            return;
+        }
+
+        $this->mergeIntoCachedResults(new SearchQuery(market: $query->market, term: $query->liveTerm()), $offers);
     }
 
-    /** @param  list<LiveConnector>  $connectors */
-    private function foldFrom(SearchQuery $query, array $connectors): int
+    /** @param  list<Offer>  $offers */
+    private function mergeIntoCachedResults(SearchQuery $plain, array $offers): void
     {
-        return $connectors === [] ? 0 : $this->fold($query, $this->ask($query, $connectors));
+        $key = $plain->resultsCacheKey();
+        $cached = Cache::get($key);
+
+        if ($offers === [] || ! is_array($cached) || ! array_is_list($cached)) {
+            return;
+        }
+
+        // The groups these offers joined, by source and the source's own id:
+        // the same pair the upsert keys on.
+        $groups = DB::table('products')
+            ->where('market', $plain->market->value)
+            ->whereNotNull('group_id')
+            ->where(function ($q) use ($offers): void {
+                foreach (collect($offers)->groupBy(fn (Offer $o) => $o->source->value) as $source => $bySource) {
+                    $q->orWhere(fn ($s) => $s
+                        ->where('source', $source)
+                        ->whereIn('external_id', $bySource->map(fn (Offer $o) => $o->externalId)->all()));
+                }
+            })
+            ->distinct()
+            ->pluck('group_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $new = array_values(array_diff($groups, $cached));
+
+        if ($new === []) {
+            return;
+        }
+
+        $shown = $this->storedQuery($plain)
+            ->whereIn('product_groups.id', $new)
+            ->pluck('product_groups.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($shown === []) {
+            return;
+        }
+
+        /*
+         * Something new: retire the term, so its sorted and filtered variants
+         * recompute with it on their next view, and then put the plain list,
+         * merged, and the filter counts it had straight under the new
+         * generation, so the page nearly every visitor lands on is not
+         * recomputed at all. The counts lack the new products' brands and
+         * shops until they expire (`facet_cache_ttl`); a filter list a few
+         * entries short is the price of not counting the term again.
+         */
+        $facets = Cache::get($plain->facetCacheKey());
+
+        SearchGenerations::bumpTerm($plain->market, $plain->term);
+
+        Cache::put($plain->resultsCacheKey(), [...$cached, ...$shown], (int) config('giftcoves.search.results_cache_ttl'));
+
+        if (is_array($facets)) {
+            Cache::put($plain->facetCacheKey(), $facets, (int) config('giftcoves.search.facet_cache_ttl'));
+        }
     }
 
     /**

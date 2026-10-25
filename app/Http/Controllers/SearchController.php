@@ -35,6 +35,7 @@ use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
+use App\Support\Crawlers;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use App\Support\SearchUrl;
@@ -156,7 +157,10 @@ class SearchController extends Controller
             app(GiftSearchDemand::class)->record($intent, $current->get());
         }
 
-        $result = $landing === null && $gift === null ? $search->search($query) : SearchResult::none($query);
+        // A crawler sees what is stored: no live shop is asked for it (2026-10-25).
+        $result = $landing === null && $gift === null
+            ? $search->search($query, askShops: ! Crawlers::looksLikeOne($request->userAgent()))
+            : SearchResult::none($query);
 
         $this->seo($query, $result, $current);
 

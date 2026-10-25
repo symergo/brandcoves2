@@ -241,6 +241,39 @@ class SearchLiveQueueTest extends TestCase
         $this->assertSame([], $this->searchQueries(), 'Another term should stay cached.');
     }
 
+    /**
+     * The job merges rather than retires (2026-10-25): an answer that brings
+     * nothing the cached list lacks leaves every cached result standing, and
+     * the plain list it did extend is served without recomputing.
+     */
+    #[Test]
+    public function a_live_fetch_that_adds_nothing_new_retires_nothing(): void
+    {
+        Queue::fake();
+        $this->registerShop();
+        $this->backgroundOnly();
+
+        $search = app(SearchService::class);
+        $plain = new SearchQuery(market: Market::BeNl, term: 'tuinkabouter', logged: false);
+
+        $this->assertCount(0, $search->search($plain)->groups->items());
+        Queue::pushed(PullLiveSearch::class)->sole()->handle($search);
+
+        // The first answer added the product: the plain list was merged, not
+        // recomputed.
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->assertCount(1, $search->search($plain)->groups->items());
+        $this->assertSame([], $this->searchQueries(), 'The merged plain list should be served from the cache.');
+
+        // The same answer again (the next window): nothing new, nothing retired.
+        (new PullLiveSearch(Market::BeNl, 'tuinkabouter'))->handle($search);
+
+        DB::flushQueryLog();
+        $this->assertCount(1, $search->search($plain)->groups->items());
+        $this->assertSame([], $this->searchQueries(), 'An answer that adds nothing should leave the cache alone.');
+    }
+
     #[Test]
     public function an_inertia_visit_reuses_the_ids_a_full_page_load_cached(): void
     {
