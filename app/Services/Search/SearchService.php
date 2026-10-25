@@ -530,10 +530,15 @@ class SearchService
      * does: 1.7-3.3s on production against 8-110ms for the word match
      * (2026-10-25). Two rules decide it:
      *
-     * 1. Never once the live shops answered for this term (owner, 2026-10-25,
-     *    for any live source, not only bol): what the fuzzy match would add
-     *    are near misses, and the shops' own search has just supplied real
-     *    products for the term, including for many a typo.
+     * 1. Once the live shops answered for this term (owner, 2026-10-25, for
+     *    any live source, not only bol), only when the words find nothing at
+     *    all. What the fuzzy match adds are near misses, and the shops have
+     *    just supplied real products. But a shop's own search returns
+     *    products whose titles need not contain the word, so its answer can
+     *    leave the word match empty: on production "kabouterlamp" went from
+     *    24 fuzzy results to none, cached for 12 hours, until this "at all"
+     *    was added. Counted after the shops' products were stored
+     *    (rememberShopsAnswered() forgets the earlier count).
      * 2. Otherwise only when the words find less than a page
      *    (`search.fuzzy_below`). A typo finds next to nothing by words and
      *    gets the net; a term spelled right already fills a page.
@@ -545,9 +550,11 @@ class SearchService
     {
         $key = $query->market->value."\0".$query->term;
 
-        return $this->fuzzy[$key] ??= ! Cache::has(self::shopsAnsweredKey($query))
-            && $this->wordMatchCount($query, (int) config('giftcoves.search.fuzzy_below', 24))
-                < (int) config('giftcoves.search.fuzzy_below', 24);
+        $below = (int) config('giftcoves.search.fuzzy_below', 24);
+
+        return $this->fuzzy[$key] ??= Cache::has(self::shopsAnsweredKey($query))
+            ? $this->wordMatchCount($query, 1) === 0
+            : $this->wordMatchCount($query, $below) < $below;
     }
 
     /**
@@ -565,7 +572,15 @@ class SearchService
     {
         if ($offers !== []) {
             Cache::put(self::shopsAnsweredKey($query), true, (int) config('giftcoves.search.live_cache_ttl'));
-            unset($this->fuzzy[$query->market->value."\0".$query->term]);
+            // The decision and the counts from before the shops' products
+            // were stored no longer hold.
+            $term = $query->market->value."\0".$query->term;
+            unset($this->fuzzy[$term]);
+            $this->wordCounts = array_filter(
+                $this->wordCounts,
+                fn (string $key): bool => ! str_starts_with($key, $term."\0"),
+                ARRAY_FILTER_USE_KEY,
+            );
         }
     }
 

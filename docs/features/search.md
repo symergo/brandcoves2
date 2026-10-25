@@ -216,10 +216,14 @@ For every live source a market has (`ConnectorRegistry::liveFor()`), not bol by 
 
 1. **No fuzzy match once a live shop answered.** `needsFuzzy()` returns false while
    `bc:search:shops-answered:{market}:{term}` is set (for `live_cache_ttl`, only when the shops
-   answered with something, stored or shown live). A thin term used to pay for both the shop wait
-   (up to 3 s) and the fuzzy match (2–3 s); the fuzzy match's near misses are not worth it once the
-   shop supplied real products. If the shops find nothing, the fuzzy match runs as before, so a typo
-   still finds its product. "Thin" itself is now the capped word-match count (`isThin()`), not the
+   answered with something, stored or shown live) **and the word match finds at least one product**.
+   A thin term used to pay for both the shop wait (up to 3 s) and the fuzzy match (2–3 s); the fuzzy
+   match's near misses are not worth it once the shop supplied real products. If the shops find
+   nothing, the fuzzy match runs as before, so a typo still finds its product. The "at least one"
+   came the same evening, from production: a shop's own search returns products whose titles need
+   not contain the word, so its answer can leave the word match empty, and "kabouterlamp" went from
+   24 fuzzy results to none, cached for 12 hours. The count is redone after the shops' products are
+   stored. Guarded by `when_the_shops_answer_matches_no_words_the_fuzzy_match_still_runs`. "Thin" itself is now the capped word-match count (`isThin()`), not the
    id list, so a thin term's search is computed once per request instead of before and after the
    shop's answer. With filters on, the id list still decides.
 2. **The queued fetch merges instead of retiring** (`foldLiveIntoResults()`). It used to retire the

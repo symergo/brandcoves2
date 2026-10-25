@@ -196,6 +196,23 @@ class SearchThinLiveTest extends TestCase
         $this->assertNotContains('Tuinkabauter met hengel', $titles);
     }
 
+    /**
+     * A shop's own search returns products whose titles need not contain the
+     * word. When its answer leaves the word match empty, the fuzzy match runs
+     * after all: on production "kabouterlamp" went from 24 results to none
+     * (2026-10-25) before this.
+     */
+    #[Test]
+    public function when_the_shops_answer_matches_no_words_the_fuzzy_match_still_runs(): void
+    {
+        $this->fakeBol([[...$this->bolProduct(), 'title' => 'Groot tuinbeeld met lantaarn']]);
+        $this->storedProduct('Tuinkabauter met hengel');
+
+        $titles = array_column($this->followUp('/be-nl/search?q=tuinkabouter')->json('props.live.results.items'), 'title');
+
+        $this->assertContains('Tuinkabauter met hengel', $titles);
+    }
+
     #[Test]
     public function when_the_live_shop_finds_nothing_the_fuzzy_match_still_runs(): void
     {
