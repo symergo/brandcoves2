@@ -259,10 +259,23 @@ many products were added, and a worded notice (`search.live_added`, plural on th
 - A term asked within the window (`live_cache_ttl`) defers nothing: its answer is already stored.
 
 **While the page itself loads** (`Components/SearchWait.tsx`): after 300 ms placeholder cards
-replace the old results, with "Even zoeken…"; after 2.5 s "Nog even, we zoeken in alle winkels
-tegelijk…" (true: the catalogue is all shops at once; the live shops are no longer waited for here);
-from 3.5 s a tip, changing every 5 s (`search.wait_tip_1`–`4`). The tips are not announced to
-screen readers; the status line is.
+replace the old results, and one line appears under the search bar: "Even zoeken…", then from 1 s
+funny lines about how the search is going that name real shops ("Even rondneuzen bij Coolblue…",
+"Zoekkabouters rennen van bol.com naar Krefel…"), every 2.5 s. Owner's choices, the same day:
+- **Under the search bar, moving nothing.** The line is laid over the margin under the bar
+  (`absolute`), so it appears and disappears without shifting the page. One line, truncated; every
+  line was checked to fit a 360 px phone with the real shop names.
+- **Funny, with shops, not tips.** Tips about the page came first and were replaced. The shops are
+  the market's biggest by offers (`WaitShops`: a 1% `TABLESAMPLE`, about 1 s on be-nl, cached a
+  day), so the names are the shops the search really looks through.
+- **Random.** Lines and shops are shuffled for every search; no line repeats before all have
+  been shown. Only "Even zoeken…" is announced to screen readers.
+
+**The gift-search reading is one sentence** (`SearchController::intentSentence()`): "We geven je
+cadeau-ideeën met douchegel voor je partner." instead of "We lezen dit als" over chips. The person
+is the word typed, with "je"; the words go in as typed, because a plural cannot be made reliably for
+any word in four languages. The chips that removed one piece each are gone; "Zoek toch gewoon op
+deze woorden" stays.
 
 Covered by `SearchThinLiveTest`.
 

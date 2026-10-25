@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\AlertState;
 use App\Enums\EventType;
 use App\Enums\Interest;
+use App\Enums\Market;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AmazonProduct;
 use App\Models\Event;
@@ -31,6 +32,7 @@ use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Search\WaitShops;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
@@ -200,6 +202,9 @@ class SearchController extends Controller
              * many were added. Null when nothing was deferred.
              */
             'liveShops' => $result->deferredShops,
+            // The biggest shops of this market, for the line under the search
+            // bar while a search loads (SearchStatus). Cached a day.
+            'waitShops' => WaitShops::for($current->get()),
             'live' => $result->liveDeferred()
                 ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search, $current))
                 : null,
@@ -789,6 +794,7 @@ class SearchController extends Controller
 
         return [
             'chips' => $chips,
+            'sentence' => $this->intentSentence($intent, $market),
             // Formatted on the client, like every other price on the page.
             'budget' => $intent->hasBudget() ? [
                 'min' => $intent->budgetMin,
@@ -798,6 +804,71 @@ class SearchController extends Controller
             'words' => $intent->rest,
             'asWordsUrl' => SearchUrl::for($market, $intent->original, ['as' => 'words']),
         ];
+    }
+
+    /**
+     * The reading as one sentence (owner, 2026-10-25): "We geven je
+     * cadeau-ideeën met douchegel voor je partner." It replaced the label
+     * "We lezen dit als" over a row of chips, which read like a form rather
+     * than an answer.
+     *
+     * Built from parts in the language file, because the order and the small
+     * words differ per language. The person is the gift pages' own name for
+     * them ("je partner", "mama"), the typed words go in as typed: a plural
+     * ("douchegels") cannot be made reliably for any word in four languages.
+     */
+    private function intentSentence(ParsedIntent $intent, Market $market): string
+    {
+        $lang = $market->language();
+        $part = fn (string $key, array $replace = []): string => (string) trans("site.search.intent_s_{$key}", $replace, $lang);
+
+        // The word they typed ("zus" → "voor je zus"), which is what they
+        // meant; the gift pages' name for the group ("je broer of zus") only
+        // when no word was kept.
+        $who = null;
+        $typed = $intent->relationship !== null ? ($intent->phrases['recipient'] ?? null) : null;
+        if ($typed !== null) {
+            $who = $part('who', ['who' => mb_strtolower($typed)]);
+        } elseif ($intent->relationship !== null) {
+            $name = trans("site.gift_landing.recipients.{$intent->relationship}.name", [], $lang);
+            $who = $part('who_named', ['who' => is_string($name) && ! str_starts_with($name, 'site.') ? $name : $intent->relationship]);
+        }
+
+        $sentence = '';
+
+        if ($intent->rest !== '') {
+            $sentence .= $part('words', ['words' => $intent->rest]);
+        }
+
+        if ($who !== null) {
+            $sentence .= $who;
+        }
+
+        if ($intent->hasEverything) {
+            $sentence .= $part($who !== null ? 'everything_who' : 'everything');
+        }
+
+        if ($intent->interests !== []) {
+            $labels = array_map(fn (string $i) => mb_strtolower(Interest::from($i)->label()), $intent->interests);
+            $last = array_pop($labels);
+            $list = $labels === [] ? $last : implode(', ', $labels).$part('and').$last;
+            $sentence .= $part($who !== null || $intent->hasEverything ? 'loves_who' : 'loves', ['interests' => $list]);
+        }
+
+        if ($intent->occasion !== null) {
+            $sentence .= $part('occasion', ['occasion' => EventType::from($intent->occasion)->label($lang)]);
+        }
+
+        if ($intent->hasBudget()) {
+            $euros = fn (?int $cents): string => '€'.number_format(intdiv((int) $cents, 100), 0, ',', '.');
+            $sentence .= match (true) {
+                $intent->budgetMin !== null && $intent->budgetMax !== null => $part('between', ['min' => $euros($intent->budgetMin), 'max' => $euros($intent->budgetMax)]),
+                $intent->budgetMax !== null => $part('under', ['max' => $euros($intent->budgetMax)]),
+                default => $part('from', ['min' => $euros($intent->budgetMin)]),
+            };
+        }
+
+        return $part('start').$sentence.'.';
     }
 
     /**

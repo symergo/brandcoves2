@@ -5,7 +5,7 @@ import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
-import { PLACEHOLDER_AFTER, SkeletonGrid, useElapsed, WaitLine } from '../Components/SearchWait'
+import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed, WaitLine } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
@@ -67,6 +67,8 @@ interface Props {
      * null when there was nothing to ask.
      */
     liveShops: string[]
+    /** The market's biggest shops, named in the line under the search bar while a search loads. */
+    waitShops: string[]
     live?: { results: SearchResults; added: number; notice: string | null } | null
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
     emptyBecauseOfFilters: boolean
@@ -77,6 +79,8 @@ interface Props {
      */
     intent: {
         chips: { label: string; without: string }[]
+        /** The reading as one sentence, worded on the server: "We geven je cadeau-ideeën met … voor je partner." */
+        sentence: string
         budget: { min: number | null; max: number | null; without: string } | null
         words: string
         asWordsUrl: string
@@ -186,6 +190,7 @@ export default function Search({
     facets,
     results: storedResults,
     liveShops = [],
+    waitShops = [],
     live,
     lanes,
     emptyBecauseOfFilters,
@@ -239,9 +244,9 @@ export default function Search({
         setTerm(q)
     }, [q])
     const [searching, setSearching] = useState(false)
-    // How long the current wait has lasted: a search loading, or the shops
-    // being asked after the page was shown. Drives SearchWait's stages.
-    const elapsed = useElapsed(searching || livePending)
+    // How long the search has been loading: drives the line under the search
+    // bar ("Even zoeken…", then the tips) and the placeholders.
+    const elapsed = useElapsed(searching)
     // Placeholders instead of the old results once a search takes longer
     // than a blink, and instead of "nothing found" while the shops may still
     // fill an empty page.
@@ -462,9 +467,12 @@ export default function Search({
                 // search button was a wide bar of text; as an icon it fits
                 // beside the field on a phone without pushing it onto its own
                 // row.
-                className="flex gap-2"
+                // `relative`: the status line under the bar is laid over the
+                // margin below it (SearchStatus), so it moves nothing.
+                className="relative flex gap-2"
                 role="search"
             >
+                <SearchStatus elapsed={elapsed} shops={waitShops} />
                 {/*
                   A scanner beam sweeping the bottom edge of the field, inside
                   the border, rather than a bar above or below the row.
@@ -948,26 +956,14 @@ export default function Search({
                     */}
                     {intent && (
                         <div className="mb-6 rounded-card border border-accent/30 bg-accent/5 p-4">
-                            <p className="text-xs font-medium tracking-wide text-ink-soft uppercase">{t('search.intent_label')}</p>
-                            <ul className="mt-2 flex flex-wrap items-center gap-2">
-                                {intent.chips.map((chip) => (
-                                    <IntentChip key={chip.without + chip.label} label={chip.label} without={chip.without} removeLabel={t('search.intent_remove', { label: chip.label })} />
-                                ))}
-                                {intent.budget && (
-                                    <IntentChip
-                                        label={
-                                            intent.budget.min !== null && intent.budget.max !== null
-                                                ? `${formatBudget(intent.budget.min, market)} – ${formatBudget(intent.budget.max, market)}`
-                                                : t('search.intent_under', { price: formatBudget(intent.budget.max ?? 0, market) })
-                                        }
-                                        without={intent.budget.without}
-                                        removeLabel={t('search.intent_remove', { label: t('search.intent_budget') })}
-                                    />
-                                )}
-                                {intent.words !== '' && (
-                                    <li className="text-sm text-ink-soft">+ “{intent.words}”</li>
-                                )}
-                            </ul>
+                            {/*
+                              One sentence (owner, 2026-10-25): "We geven je
+                              cadeau-ideeën met douchegel voor je partner."
+                              It replaced "We lezen dit als" over a row of
+                              chips. Worded on the server, per language
+                              (SearchController::intentSentence()).
+                            */}
+                            <p className="font-medium">{intent.sentence}</p>
                             <Link href={intent.asWordsUrl} className="mt-3 inline-block text-sm text-accent-dark underline hover:text-ink">
                                 {t('search.intent_as_words')}
                             </Link>
@@ -976,7 +972,7 @@ export default function Search({
 
                     {placeholders ? (
                         <>
-                            <WaitLine elapsed={elapsed} shops={searching ? [] : liveShops} />
+                            {!searching && livePending && <WaitLine shops={liveShops} />}
                             <SkeletonGrid />
                         </>
                     ) : results.empty ? (
@@ -1237,7 +1233,7 @@ export default function Search({
                       being asked while they are, then how many products their
                       answer added.
                     */}
-                    {!placeholders && livePending && <WaitLine elapsed={elapsed} shops={liveShops} />}
+                    {!placeholders && livePending && <WaitLine shops={liveShops} />}
                     {!placeholders && live?.notice && (
                         <p role="status" className="my-4 text-sm text-ink-soft">
                             {live.notice}
@@ -1601,19 +1597,3 @@ function Facet({
     )
 }
 
-/** One understood piece of a gift search, and the way to drop it. */
-function IntentChip({ label, without, removeLabel }: { label: string; without: string; removeLabel: string }) {
-    return (
-        <li className="inline-flex items-center gap-1 rounded-full border border-line bg-card py-1 pr-1 pl-3 text-sm font-medium">
-            {label}
-            <Link
-                href={without}
-                aria-label={removeLabel}
-                title={removeLabel}
-                className="flex h-6 w-6 items-center justify-center rounded-full text-ink-soft hover:bg-line/50 hover:text-ink"
-            >
-                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
-            </Link>
-        </li>
-    )
-}

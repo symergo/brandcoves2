@@ -47,6 +47,23 @@ class IntentSearchTest extends TestCase
                 ->where('watch', null));
     }
 
+    /**
+     * The reading as one sentence (owner, 2026-10-25), instead of "We lezen
+     * dit als" over chips. The person as typed, with "je".
+     */
+    #[Test]
+    public function the_reading_is_one_sentence(): void
+    {
+        $this->giftable('Tuinhandschoenen van leer', 3900, ['interest:gardening']);
+
+        $this->get('/be-nl/search?q='.urlencode(self::GIFT))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'intent.sentence',
+                'We geven je cadeau-ideeën voor je zus, die houdt van tuinieren, tussen €30 en €50.',
+            ));
+    }
+
     #[Test]
     public function each_chip_carries_the_search_without_it(): void
     {
