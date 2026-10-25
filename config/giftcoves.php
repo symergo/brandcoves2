@@ -195,10 +195,15 @@ return [
         // this?" feature needs it back.
         'trigram_threshold_strict' => 0.6,
 
-        // Live connector results are cached this long. Long enough to absorb a
-        // burst of identical searches, short enough that a price on the results
-        // page is not embarrassingly stale.
-        'live_cache_ttl' => 900,
+        // Live connector results are cached this long, and the live shops are
+        // asked at most once per term in it (the marker in pullLiveResults()).
+        // Six hours since 2026-10-25 (owner; it was 15 minutes): a term's bol
+        // and eBay prices are then refreshed at most four times a day, 24 times
+        // fewer API calls and queued jobs. The trade, accepted knowingly: a
+        // price on a card can be up to six hours behind the shop's, while the
+        // click lands on the shop's current one. Feed shops are unaffected
+        // (their prices come with the hourly feeds).
+        'live_cache_ttl' => 21600,
 
         /*
          * When a search is due a live fetch and its stored results are fewer
@@ -217,19 +222,6 @@ return [
          * not answer in time still gets the queued fetch for the next view.
          */
         'inline_live_timeout' => 3,
-
-        // Facet counts are cached this long.
-        //
-        // Facets are computed from market, term and in-stock only — deliberately
-        // ignoring the active filters, so a filter UI does not erase its own
-        // options. That makes them identical across every brand, price, sort and
-        // page variant of one term, and re-running three aggregates per click was
-        // the largest remaining cost on a search page.
-        //
-        // Twelve hours, the same as `results_cache_ttl` and for the same reason:
-        // the key carries the same generations, so the sidebar and the grid are
-        // retired together, the moment the catalogue under them changes.
-        'facet_cache_ttl' => 43200,
 
         /*
          * The ordered result ids of one search, cached this long

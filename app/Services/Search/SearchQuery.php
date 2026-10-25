@@ -454,33 +454,25 @@ final readonly class SearchQuery
         return trim($this->term) === '' && $this->brands !== [] && $this->liveTerm !== null;
     }
 
-    public function facetCacheKey(): string
+    /**
+     * The search the Filters menu's brands and shops are read from
+     * (SearchService::facets()): the same words and stock setting without the
+     * filters, so choosing a brand does not erase the others, in relevance
+     * order. On a brand page the brand is its scope, so it stays. The plain
+     * search a visitor lands on, so its result list is usually cached already.
+     */
+    public function facetBase(): self
     {
-        return $this->facetCacheSlot().':'.$this->facetGeneration();
-    }
+        $brandPage = $this->isBrandScope();
 
-    /** The catalogue state the filter counts must have been computed at to be current. */
-    public function facetGeneration(): string
-    {
-        return $this->generations(withBrands: $this->isBrandScope());
-    }
-
-    /** Where this search's filter counts live, whatever the catalogue's state. See resultsCacheSlot(). */
-    public function facetCacheSlot(): string
-    {
-        // On a brand page the counts are scoped to the brand
-        // (SearchService::countFacets()), so the brands are part of the key and
-        // of the generations that retire it. Anywhere else they are not: a
-        // brand filter must not change the counts it is chosen from.
-        $brands = [];
-        if ($this->isBrandScope()) {
-            $brands = array_map('mb_strtolower', $this->brands);
-            sort($brands);
-        }
-
-        return 'bc:search:facets:'.$this->market->value
-            .':'.($this->inStockOnly ? '1' : '0')
-            .':'.sha1(mb_strtolower($this->term).($brands === [] ? '' : "\0".implode("\0", $brands)));
+        return new self(
+            market: $this->market,
+            term: $this->term,
+            brands: $brandPage ? $this->brands : [],
+            inStockOnly: $this->inStockOnly,
+            logged: false,
+            liveTerm: $brandPage ? $this->liveTerm : null,
+        );
     }
 
     /**

@@ -203,7 +203,7 @@ quietly cover for the trigram branch and pass it for the wrong reason. The older
 
 Built in Phase 2:
 
-- Merges the stored index (Awin, ingested hourly) with a live bol query, Redis-cached 15 min.
+- Merges the stored index (Awin, ingested hourly) with a live bol query, Redis-cached for `live_cache_ttl` (six hours since 2026-10-25, 15 min before).
 - Live results are grouped into the stored graph **on the fly** — an incoming bol offer with a
   matching EAN joins an existing group and immediately becomes comparable.
 - Results render as **group cards**: *"from €X · 3 offers across 2 stores"*.
@@ -914,7 +914,8 @@ request asks the shops itself and renders with their products:
   can only add to a full page.
 
 **What a visitor sees differently.** A thin search waits up to about 3 s on its first view, once per
-fifteen minutes per term, and shows the shops' products straight away. A full one never waits;
+`live_cache_ttl` per term (fifteen minutes then; six hours since 2026-10-25, when the page also
+stopped waiting: see "While a search waits"), and shows the shops' products straight away. A full one never waits;
 anything the shops add shows from the next view.
 
 The details that matter:
@@ -1109,3 +1110,22 @@ read fresh on every view, so price, stock and discount are always current; a pro
 is simply left out. The background job's merge (`mergeIntoCachedResults()`) writes the merged plain
 list as current at the new generation; its variants show their old list and refresh in the
 background. Guarded by `SearchLiveQueueTest::an_outdated_list_is_shown_and_recomputed_in_the_background`.
+
+## The Filters menu's lists come from the result list (owner, 2026-10-25)
+
+The filter "counts" were never shown: `facetsWithoutCounts()` strips them, and they only chose and
+ordered the fifteen brands and shops in the Filters menu. They cost a query of their own over every
+product the term matched, and a cache entry of their own. Now `SearchService::facets()` reads them
+off the cached result list of `SearchQuery::facetBase()`: the same words and stock setting without
+the filters (so a chosen brand does not erase its neighbours), and on a brand page its brand. That
+is the plain search a visitor lands on, so its list is usually cached already; the count is one
+small query over at most `results_scan_limit` ids (`= ANY(?::bigint[])`). `facet_cache_ttl` and the
+facet cache slot are gone; the lists follow the result list's stale-while-revalidate.
+
+The difference: the brands and shops among the products the search shows (at most
+`results_per_shop` per shop), rather than among every match. For a menu of the fifteen most common,
+the same names; and the merged list after a shop's answer now includes its brands at once.
+
+`live_cache_ttl` went from 15 minutes to six hours the same day (owner): a term's bol and eBay prices
+are refreshed at most four times a day, 24 times fewer API calls and jobs, and a card's price can be
+up to six hours behind the shop's (the click lands on the current one).

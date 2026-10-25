@@ -327,13 +327,13 @@ class SearchService
     }
 
     /**
-     * Recompute this search's result ids and filter counts and store them as
-     * current. RefreshSearchCache's work.
+     * Recompute this search's result ids and store them as current.
+     * RefreshSearchCache's work. (The filter lists are read off the result
+     * lists, so they follow.)
      */
     public function refreshCache(SearchQuery $query): void
     {
         $this->resultIds($query, fresh: true, refresh: false);
-        $this->facets($query, fresh: true, refresh: false);
     }
 
     /**
@@ -1054,12 +1054,10 @@ class SearchService
         /*
          * Something new: retire the term, so its sorted and filtered variants
          * are recomputed in the background on their next view (they show
-         * their old list meanwhile), and mark the plain list, merged, and the
-         * filter counts it had as current at the new generation, so the page
-         * nearly every visitor lands on is not recomputed at all. The counts
-         * lack the new products' brands and shops until they expire
-         * (`facet_cache_ttl`); a filter list a few entries short is the price
-         * of not counting the term again.
+         * their old list meanwhile), and mark the plain list, merged, as
+         * current at the new generation, so the page nearly every visitor
+         * lands on is not recomputed at all. The filter lists are read off it,
+         * so they include the new products' brands and shops at once.
          */
         SearchGenerations::bumpTerm($plain->market, $plain->term);
 
@@ -1068,11 +1066,6 @@ class SearchService
             'gen' => $plain->resultsGeneration(),
             'at' => time(),
         ], self::KEEP_STALE);
-
-        $facets = Cache::get($plain->facetCacheSlot());
-        if (is_array($facets) && array_key_exists('value', $facets)) {
-            Cache::put($plain->facetCacheSlot(), [...$facets, 'gen' => $plain->facetGeneration()], self::KEEP_STALE);
-        }
     }
 
     /**
@@ -1197,97 +1190,64 @@ class SearchService
     }
 
     /**
-     * Facet counts for the filter sidebar.
+     * The brands and shops for the Filters menu.
      *
-     * Computed from the term and market only, ignoring the active filters, so
-     * selecting a brand does not make every other brand vanish from the list —
-     * a filter UI that erases its own options is unusable.
+     * Ignoring the active filters, so selecting a brand does not make every
+     * other brand vanish from the list: a filter UI that erases its own
+     * options is unusable.
      *
-     * Cached, because that independence from the filters is exactly what makes
-     * the aggregates below repeat work: every filter, sort and page variant of
-     * one term produces the same sidebar. See `facetCacheKey()` for the key and
-     * `facet_cache_ttl` for what the staleness costs.
+     * ## From the result list, not a count of their own (owner, 2026-10-25)
      *
-     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
-     */
-    private function facets(SearchQuery $query, bool $fresh = false, bool $refresh = true): array
-    {
-        $facets = $this->staleWhileRevalidate(
-            $query->facetCacheSlot(),
-            $query->facetGeneration(),
-            (int) config('giftcoves.search.facet_cache_ttl'),
-            fn (): array => $this->countFacets($query),
-            $refresh ? fn () => RefreshSearchCache::dispatch($query) : null,
-            $fresh,
-        );
-
-        return is_array($facets) ? $facets : $this->countFacets($query);
-    }
-
-    /**
-     * The brand and shop counts behind `facets()`, uncached.
+     * This was a query of its own over every product the term matches, with
+     * a cache entry of its own, for numbers no page shows: the counts only
+     * chose and ordered the fifteen brands and shops (facetsWithoutCounts()).
+     * Now they are read off the unfiltered search's cached result list (the
+     * page nearly every visitor lands on, so usually there already): one
+     * small query over at most `results_scan_limit` ids. The lists then name
+     * the brands and shops among the products the search shows (at most
+     * `results_per_shop` per shop), not among every match; for a menu of the
+     * fifteen most common, the same names.
      *
-     * ## One statement, the match found once (2026-10-25)
-     *
-     * Brands and shops were two queries, and each ran the full-text and
-     * trigram match over the catalogue again: about 0.55 s and 0.6 s on
-     * production, on top of the result list's own match. Crawlers walking
-     * `/{market}/zoek/{term}` ask for a new term every two seconds, so neither
-     * cache ever helped them, and the repeated matching kept Postgres busy
-     * enough that the app missed its health check and dropped out. Now the
-     * match is a `MATERIALIZED` CTE that both counts read: evaluated once, held
-     * for the statement, and the two aggregates come back as one UNION ALL.
-     *
-     * The price range went the same day: no page drew it.
+     * Not counted without a term, except on a brand page: a list drawn from
+     * the whole catalogue says nothing (and, counted, cost a minute).
      *
      * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
      */
-    private function countFacets(SearchQuery $query): array
+    private function facets(SearchQuery $query, bool $refresh = true): array
     {
-        /*
-         * Never over a whole market (2026-10-25). Without a term the counts
-         * used to run over every product in the market, 1.6 million on be-nl:
-         * 38-55 s for a small brand's page on production, each time a live
-         * fetch had retired its cache. A brand page (no term, the brand as its
-         * scope) now counts that brand's products; a search with neither a
-         * term nor a brand page's scope gets no counts (a sorted catalogue, a
-         * brand chosen in the Filters menu without a term): a filter list
-         * drawn from the whole catalogue says nothing, and costs that minute.
-         */
         if (! $query->hasTerm() && ! $query->isBrandScope()) {
             return ['brands' => [], 'merchants' => []];
         }
 
-        $base = ProductGroup::query()
-            ->forMarket($query->market)
-            ->whereNotNull('min_price')
-            ->whereNotNull('image_url')
-            ->select('product_groups.id', 'product_groups.brand');
+        return $this->countFacets($this->resultIds($query->facetBase(), refresh: $refresh));
+    }
 
-        if ($query->hasTerm()) {
-            $this->applyTextMatch($base, $query);
-        } else {
-            $base->whereIn('brand', $query->brands);
-        }
-        if ($query->inStockOnly) {
-            $base->where('in_stock', true);
+    /**
+     * The fifteen most common brands and shops among these groups.
+     *
+     * @param  list<int>  $ids
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>}
+     */
+    private function countFacets(array $ids): array
+    {
+        if ($ids === []) {
+            return ['brands' => [], 'merchants' => []];
         }
 
-        $matches = $base->toBase();
+        // One array parameter rather than thousands of placeholders.
+        $list = '{'.implode(',', $ids).'}';
 
         $rows = collect(DB::select(
-            "WITH m AS MATERIALIZED ({$matches->toSql()})
-            (SELECT 'brand' AS facet, NULL::bigint AS id, m.brand AS name, count(*) AS total
-                FROM m WHERE m.brand IS NOT NULL
-                GROUP BY m.brand ORDER BY total DESC LIMIT 15)
+            "(SELECT 'brand' AS facet, NULL::bigint AS id, g.brand AS name, count(*) AS total
+                FROM product_groups g WHERE g.id = ANY(?::bigint[]) AND g.brand IS NOT NULL
+                GROUP BY g.brand ORDER BY total DESC LIMIT 15)
             UNION ALL
             (SELECT 'shop', merchants.id, merchants.name, count(DISTINCT p.group_id)
                 FROM products p
-                JOIN m ON m.id = p.group_id
                 JOIN merchants ON merchants.id = p.merchant_id
-                WHERE p.status = 'active'
+                WHERE p.group_id = ANY(?::bigint[]) AND p.status = 'active'
                 GROUP BY merchants.id, merchants.name ORDER BY 4 DESC LIMIT 15)",
-            $matches->getBindings(),
+            [$list, $list],
         ));
 
         $brands = $rows->where('facet', 'brand')
@@ -1306,7 +1266,7 @@ class SearchService
          * `Merchant::faviconUrl()`, and the country suffix is trimmed by
          * `Merchant::displayName()`. A second copy of either rule here is a
          * thing that can disagree with the lane headers reading the first one.
-         * One extra query, on a path that is cached for facet_cache_ttl.
+         * One extra query.
          */
         $shops = Merchant::query()
             ->whereIn('id', $counted->pluck('id'))
