@@ -50,8 +50,25 @@ separate change; `/friends` keeps working. The desktop menu is built on `Menu` n
 the arrow keys, Escape (focus back to the button) and Tab like the site's other menus. It also
 shows the unread count beside Notifications, as the phone sheet already did.
 
-**The phone:** logo, search icon, account, ☰. The ☰ panel: Find a gift, Discover with its six entries
+**The phone:** logo, search icon, ☰, account. The ☰ panel: Find a gift, Discover with its six entries
 and All Coves, My Coves, then the country-and-language list, then Help.
+
+**The phone's account button** (owner, 2026-10-26). It was a bare 28px icon between the search icon
+and a bordered ☰, so the ☰ read as *the* menu and the account as decoration. Now it is the strongest
+control in the row:
+
+- on the far right, where people look for their account;
+- signed in: your initial in a 32px accent circle with a ring, plus the unread count as a badge (the
+  wide header already showed it; the phone showed it only inside the sheet);
+- signed out: a person in a bordered circle. The word "Inloggen" was the first choice, but it does not
+  fit beside the logo at 360px in any of the four languages;
+- a ▾ beside it, the usual sign that an avatar opens something, rotated while the sheet is open;
+- the ☰ lost its border, so it no longer outranks the account.
+
+Room for it came from the gap after the logo (24px → 8px below `sm`). At 360px the old row filled
+the width exactly, and at 320px the page scrolled sideways by 23px. Below 360px the name in the logo
+is 24px instead of 28px and the ▾ is left out; measured with Playwright, the row now fits at 320,
+360 and 390px in every language.
 
 **One country-and-language button.** It shows the flag and the language code and opens a list of
 the markets: one row per country, and a heading with a row per language where a country has two

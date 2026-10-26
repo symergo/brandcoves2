@@ -400,15 +400,22 @@ function Chrome({ children }: PropsWithChildren) {
                     gap-6. The row is the page column (1152px) at 1280 and
                     1440 alike, and every language has to fit in it with a
                     search field (docs/features/navigation.md). */}
-                <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 xl:gap-4">
+                {/* gap-2 below `sm` (2026-10-26): at 360px the logo and the
+                    phone buttons filled the row exactly, and at 320px the
+                    page scrolled sideways by 23px. */}
+                <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-6 xl:gap-4">
                     {/*
                       The name at the mark's height. It was 18px beside a 28px
                       mark, which made the mark the logo and the word its
                       caption; the owner wanted the name as big as the icon
                       (2026-09-08). 28px, with the line height pulled in so the
-                      header does not grow.
+                      header does not grow. 24px on screens under 360px, the
+                      only way the row fits there (2026-10-26).
                     */}
-                    <Link href={base} className="flex shrink-0 items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight">
+                    <Link
+                        href={base}
+                        className="flex shrink-0 items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight max-[359px]:text-[1.5rem]"
+                    >
                         {/*
                           Decorative, so it is hidden from screen readers: the
                           word next to it already names the link, and a reader
@@ -475,7 +482,7 @@ function Chrome({ children }: PropsWithChildren) {
                       the stylesheet applies to fields below `sm` applied to
                       nothing here.
                     */}
-                    <div className="ml-auto flex items-center gap-1 xl:hidden">
+                    <div className="ml-auto flex items-center xl:hidden">
                         <Link
                             href={`${base}/search`}
                             aria-label={t('nav.search')}
@@ -484,37 +491,9 @@ function Chrome({ children }: PropsWithChildren) {
                         >
                             <ToolIcon name="search" className="h-5 w-5" />
                         </Link>
-                        {/*
-                          Your own things, behind a person: the initial in
-                          the accent when signed in, the sign-in mark when
-                          not. Its sheet is `AccountSheet`; the hamburger
-                          beside it keeps what the site offers everybody.
-                        */}
                         <button
                             type="button"
                             className="flex h-11 w-11 items-center justify-center rounded-lg text-ink hover:bg-line/40"
-                            aria-expanded={accountOpen}
-                            aria-controls="account-sheet"
-                            onClick={() => {
-                                setMenuOpen(false)
-                                setAccountOpen(!accountOpen)
-                            }}
-                        >
-                            {auth.user ? (
-                                <span
-                                    aria-hidden
-                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white"
-                                >
-                                    {(auth.user.name?.trim() || auth.user.email).slice(0, 1).toUpperCase()}
-                                </span>
-                            ) : (
-                                <ToolIcon name="signin" className="h-5 w-5" />
-                            )}
-                            <span className="sr-only">{t('nav.account')}</span>
-                        </button>
-                        <button
-                            type="button"
-                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-ink"
                             aria-expanded={menuOpen}
                             aria-controls="mobile-menu"
                             onClick={() => {
@@ -524,6 +503,57 @@ function Chrome({ children }: PropsWithChildren) {
                         >
                             <ToolIcon name={menuOpen ? 'close' : 'menu'} className="h-5 w-5" />
                             <span className="sr-only">{t('nav.main')}</span>
+                        </button>
+                        {/*
+                          Your own things, behind a person: the initial in
+                          the accent when signed in, a bordered person when
+                          not. Its sheet is `AccountSheet`; the hamburger
+                          beside it keeps what the site offers everybody.
+
+                          Made the strongest control in the row (owner,
+                          2026-10-26): it was a bare 28px icon beside a
+                          bordered hamburger, so the hamburger read as the
+                          menu and this as decoration. Now on the far right,
+                          where people look for their account, 32px with a
+                          ring, an arrow that says it opens something, and
+                          the unread count the wide header already showed.
+                          The arrow goes below 360px, where the row has no
+                          room for it. "Inloggen" as a word did not fit in
+                          any language at 360px, hence the icon.
+                        */}
+                        <button
+                            type="button"
+                            className="flex h-11 items-center gap-0.5 rounded-lg px-1.5 text-ink hover:bg-line/40"
+                            aria-expanded={accountOpen}
+                            aria-controls="account-sheet"
+                            onClick={() => {
+                                setMenuOpen(false)
+                                setAccountOpen(!accountOpen)
+                            }}
+                        >
+                            <span aria-hidden className="relative">
+                                {auth.user ? (
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white ring-2 ring-accent/25 ring-offset-1 ring-offset-cream">
+                                        {(auth.user.name?.trim() || auth.user.email).slice(0, 1).toUpperCase()}
+                                    </span>
+                                ) : (
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/40">
+                                        <ToolIcon name="signin" className="h-4 w-4" />
+                                    </span>
+                                )}
+                                {auth.user && unreadCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 rounded-full bg-ink px-1 text-2xs leading-4 font-semibold text-white">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </span>
+                            <ToolIcon
+                                name="chevron"
+                                className={`h-3.5 w-3.5 transition-transform max-[359px]:hidden ${accountOpen ? 'rotate-180' : ''}`}
+                            />
+                            <span className="sr-only">
+                                {auth.user && unreadCount > 0 ? `${t('nav.account')} (${t('nav.notifications')}: ${unreadCount})` : t('nav.account')}
+                            </span>
                         </button>
                     </div>
 
