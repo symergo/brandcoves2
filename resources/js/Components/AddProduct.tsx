@@ -15,6 +15,7 @@ import {
     type LiveHit,
 } from './ProductSearch'
 import TheirWishes, { type Wish } from './TheirWishes'
+import SaveButton from './SaveButton'
 
 /** What has been chosen and is about to be added, in whichever shape. */
 type Chosen =
@@ -119,6 +120,20 @@ export default function AddProduct({
      */
     const found = useListSearch(base, (pasted) => addLink(pasted))
     const { term, setTerm, groups, live, link, linkRefused, searching, searched } = found
+
+    /*
+     * How a result is chosen. On the list page the whole row is the press:
+     * the panel sits on the list, so what it adds to is plain. Elsewhere
+     * (Find a gift's "Weet je al wat je zoekt?") the row carries the site's
+     * round save button, as the same search does when nobody is chosen
+     * (owner, 2026-11-07: "I get no save to list icon next to the items").
+     * The press is the same either way: on to the wording step, then onto
+     * this list.
+     */
+    const pick = (onChoose: () => void) =>
+        onListPage
+            ? { onPick: onChoose }
+            : { action: <SaveButton compact saved={false} onClick={onChoose} label={t('save_button.save')} /> }
 
     const [chosen, setChosen] = useState<Chosen | null>(null)
     const [title, setTitle] = useState('')
@@ -371,7 +386,7 @@ export default function AddProduct({
                                     title={g.title}
                                     price={g.price}
                                     badge={groupBadge(g)}
-                                    onPick={() => choose({ kind: 'group', hit: g })}
+                                    {...pick(() => choose({ kind: 'group', hit: g }))}
                                 />
                             ))}
                             {live.map((l) => (
@@ -381,7 +396,7 @@ export default function AddProduct({
                                     title={l.title}
                                     price={l.price}
                                     badge={l.merchant}
-                                    onPick={() => choose({ kind: 'live', hit: l })}
+                                    {...pick(() => choose({ kind: 'live', hit: l }))}
                                 />
                             ))}
                         </HitList>

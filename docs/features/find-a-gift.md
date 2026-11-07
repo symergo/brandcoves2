@@ -316,3 +316,10 @@ again, like Wijzig beside it. Nobody in particular keeps the pill, because nothi
 **"Sla over" beside the question (owner, 2026-11-07).** It sat under "Voor mezelf", the people
 and ten relationship buttons, where it was found last. It is now a red link with an arrow right
 after "Voor wie zoek je een cadeau?", so the way past the question is seen with the question.
+
+**The save button on every result, whoever it is for (owner, 2026-11-07).** With a person or a
+relationship chosen, "Weet je al wat je zoekt?" is the list's own add panel (`AddProduct`), where
+the whole row was the press and nothing showed it. Off the list page (`onListPage={false}`) each
+row now carries the round save button instead, as the same search does when nobody is chosen;
+pressing it goes on to the wording step and onto that person's list, as the row did. On the list
+page itself the row stays the press: the panel sits on the list, so what it adds to is plain.
