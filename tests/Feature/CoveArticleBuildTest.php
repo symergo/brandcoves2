@@ -532,4 +532,81 @@ class CoveArticleBuildTest extends TestCase
 
         return $group;
     }
+
+    /**
+     * The advice article as consumer journalism (owner, 2026-11-07): the
+     * prompt carries the readers, the date, the main keyword, the search
+     * questions and, on a rebuild, the published article to rewrite; the
+     * model's own meta description is stored, and its headings reach the page.
+     */
+    #[Test]
+    public function an_advice_article_is_briefed_with_its_keyword_questions_and_the_article_it_rewrites(): void
+    {
+        $prompts = new ArrayObject;
+        $systems = new ArrayObject;
+
+        $this->mock(AiClient::class, function ($mock) use ($prompts, $systems) {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            $mock->shouldReceive('json')->andReturnUsing(
+                function (string $feature, string $system, string $prompt, array $schemaHint = [], int $maxTokens = 0) use ($prompts, $systems) {
+                    $prompts->append($prompt);
+                    $systems->append([$system, $schemaHint, $maxTokens]);
+
+                    return [
+                        'title' => 'Retourneren: zo werkt het',
+                        'intro' => 'Je hebt 14 dagen bedenktijd bij een online aankoop.',
+                        'meta_description' => 'Hoe lang je hebt om iets terug te sturen en wie de kosten betaalt.',
+                        'how_to_choose' => "## Hoe lang heb je bedenktijd?\n\nVeertien dagen.\n\n- Bewaar de bon\n- Meld het op tijd",
+                        'faq' => [['q' => 'Geldt dit in een winkel?', 'a' => 'Nee.']],
+                        'items' => [],
+                    ];
+                }
+            );
+        });
+
+        $plan = $this->plan();
+        $plan->update([
+            'kind' => CoveKind::Advice->value,
+            'slug' => 'retourneren',
+            'title' => 'Retourneren',
+            'focus_keyphrase' => 'online aankoop retourneren',
+            'search_questions' => ['Hoe lang heb ik om iets terug te sturen?', 'Wie betaalt de retourkosten?'],
+        ]);
+
+        $first = app(EditionBuilder::class)->buildArticle($plan->fresh());
+
+        $this->assertNotNull($first);
+        $prompt = $prompts[0];
+        $this->assertStringContainsString('Readers: consumers in Belgium, Dutch-speaking', $prompt);
+        $this->assertStringContainsString('Today: '.now()->toDateString(), $prompt);
+        $this->assertStringContainsString('Main keyword: online aankoop retourneren', $prompt);
+        $this->assertStringContainsString("- Hoe lang heb ik om iets terug te sturen?\n- Wie betaalt de retourkosten?", $prompt);
+        // Nothing published yet, so nothing to rewrite.
+        $this->assertStringNotContainsString('The existing article', $prompt);
+
+        [$system, $schema, $maxTokens] = $systems[0];
+        $this->assertStringContainsString('consumer journalist', $system);
+        $this->assertStringContainsString('## A heading', $system);
+        // No products, so no "write about EVERY product" contract to invent some for.
+        $this->assertStringNotContainsString('EVERY product', $system);
+        $this->assertArrayHasKey('meta_description', $schema);
+        $this->assertSame(6000, $maxTokens);
+
+        $this->assertSame('Hoe lang je hebt om iets terug te sturen en wie de kosten betaalt.', $first->meta_description);
+        $this->assertStringStartsWith('## Hoe lang heb je bedenktijd?', $first->body);
+
+        // The rebuild hands the published article back to be rewritten.
+        app(EditionBuilder::class)->buildArticle($plan->fresh());
+
+        $this->assertStringContainsString("The existing article, to rewrite:\n\nTitle: Retourneren", $prompts[1]);
+        $this->assertStringContainsString('## Hoe lang heb je bedenktijd?', $prompts[1]);
+        $this->assertStringContainsString("Q: Geldt dit in een winkel?\nA: Nee.", $prompts[1]);
+
+        // The page draws the heading and the list.
+        $this->get('/be-nl/guides/retourneren')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('guide.body.0.heading', 2)
+                ->where('guide.body.2.list.items', ['Bewaar de bon', 'Meld het op tijd']));
+    }
 }

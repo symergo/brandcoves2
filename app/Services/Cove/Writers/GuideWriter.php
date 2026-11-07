@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Cove\Writers;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Models\CovePlan;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
@@ -59,6 +61,7 @@ class GuideWriter
         }
 
         $assembled = $this->promptFor($plan, $finds, $allowed, $brief);
+        $advice = $plan->kind === CoveKind::Advice;
 
         try {
             $response = $this->ai->json(
@@ -68,6 +71,9 @@ class GuideWriter
                 schemaHint: [
                     'title' => '...',
                     'intro' => '...',
+                    // An advice article writes its own (2026-11-07). The other
+                    // kinds keep the description trimmed from the intro.
+                    ...($advice ? ['meta_description' => '...'] : []),
                     'how_to_choose' => '...',
                     'faq' => [['q' => '...', 'a' => '...']],
                     'items' => [['verdict' => 'Best for ...', 'copy' => '...']],
@@ -80,7 +86,13 @@ class GuideWriter
                  * last, so a short budget costs the fallback copy as well as the
                  * writing it was meant to back up.
                  */
-                maxTokens: 3500,
+                /*
+                 * An advice article is 900 to 1300 words since 2026-11-07, plus
+                 * headings, a checklist and an FAQ: about 2,500 tokens of Dutch
+                 * before the JSON around it. 6000 leaves room so the FAQ, which
+                 * comes last, is never the part that is cut.
+                 */
+                maxTokens: $advice ? 6000 : 3500,
             );
         } catch (AiUnavailable $e) {
             Log::info('Guide copy unavailable, using template', ['reason' => $e->getMessage()]);
@@ -103,7 +115,8 @@ class GuideWriter
 
         return new Written(
             title: $this->clean($response['title'] ?? null, 120, prose: false) ?? $fallback->title,
-            intro: $this->clean($response['intro'] ?? null, 400) ?? $fallback->intro,
+            // 500 for advice: its intro is a two- or three-sentence answer.
+            intro: $this->clean($response['intro'] ?? null, $advice ? 500 : 400) ?? $fallback->intro,
             /*
              * 6000, not 3000. The body is the article now: the decisions that
              * matter and then a passage per product, where before it was only
@@ -111,8 +124,9 @@ class GuideWriter
              * takes its link token with it, which loses that product its card
              * as well as its sentences.
              */
-            body: $this->clean($response['how_to_choose'] ?? null, 6000),
+            body: $this->clean($response['how_to_choose'] ?? null, $advice ? self::ADVICE_BODY_LIMIT : 6000),
             faq: $this->faq($response['faq'] ?? null),
+            metaDescription: $advice ? $this->clean($response['meta_description'] ?? null, 155, prose: false) : null,
             items: $items,
             source: 'ai',
         );
@@ -151,9 +165,17 @@ class GuideWriter
     public function promptFor(CovePlan $plan, array $finds, array $allowed = [], array $brief = []): array
     {
         return [
+            /*
+             * The paragraph-per-product contract only when there are products:
+             * handed to an advice article ("write about EVERY product listed
+             * below") above an empty list, it invites the writer to find some.
+             */
             'system' => $this->prompts->system('cove.'.$plan->kind->value)
-                ."\n\n".ProseCards::promptContract()
-                .($allowed === [] ? '' : "\n\n".$this->markup->promptContract($allowed)),
+                .($finds === [] ? '' : "\n\n".ProseCards::promptContract())
+                // Headings, lists and sources only where the page draws them:
+                // the /guides articles (Guides/Show.tsx). A shop or brand page
+                // prints paragraphs, so its writer is not told they exist.
+                .($allowed === [] ? '' : "\n\n".$this->markup->promptContract($allowed, article: $plan->kind->isArticle())),
             'user' => $this->prompt($plan->market, $this->topic($plan), $finds, $brief, $plan),
         ];
     }
@@ -246,11 +268,77 @@ class GuideWriter
             'direction' => filled($plan->build_instructions)
                 ? "The editor's direction for this piece — follow it within the rules above:\n".trim((string) $plan->build_instructions)
                 : null,
+            /*
+             * The advice article's inputs (2026-11-07). Each is a whole line
+             * or paragraph, so an empty one collapses; the other kinds' templates
+             * do not name them, and binding them there changes nothing.
+             */
+            'audience' => 'Readers: '.self::audience($market),
+            'today' => 'Today: '.now()->toDateString(),
+            'keyphrase' => filled($plan->focus_keyphrase) ? 'Main keyword: '.$plan->focus_keyphrase : null,
+            'questions' => filled($plan->search_questions)
+                ? "What people search about this subject (make your headings and FAQ from these):\n- "
+                    .implode("\n- ", array_map('strval', (array) $plan->search_questions))
+                : null,
+            'original' => $plan->kind === CoveKind::Advice ? $this->original($plan) : null,
             'curated' => $curated === [] ? null : "The curated shortlist, in this order:\n".implode("\n", $curated),
             'finds' => $lines === []
                 ? null
                 : ($curated === [] ? "Shortlist:\n".implode("\n", $lines) : "Also on the page:\n".implode("\n", $lines)),
         ]);
+    }
+
+    /**
+     * Ceiling on an advice article's body, in characters. 1300 Dutch words are
+     * about 8,500 with the link tokens; 12,000 leaves the "unless the subject
+     * needs more" of the brief room without letting a runaway answer through.
+     */
+    private const ADVICE_BODY_LIMIT = 12000;
+
+    /**
+     * Who the article is written for, by market. The brief's default: the
+     * consumers of the market it is written for.
+     */
+    private static function audience(Market $market): string
+    {
+        return match ($market) {
+            Market::BeNl => 'consumers in Belgium, Dutch-speaking (Flanders and Brussels). Belgian rules first.',
+            Market::BeFr => 'consumers in Belgium, French-speaking (Wallonia and Brussels). Belgian rules first.',
+            Market::NlNl => 'consumers in the Netherlands. Dutch rules first.',
+            Market::Es => 'consumers in Spain. Spanish rules first.',
+            Market::En => 'English-speaking consumers across the European Union. EU-wide rules first; where a country differs, say which.',
+        };
+    }
+
+    /**
+     * The published article this plan already built, to be rewritten rather
+     * than replaced: "keep what is strong, add what is missing". Null on a
+     * first build.
+     */
+    private function original(CovePlan $plan): ?string
+    {
+        if ($plan->edition_id === null) {
+            return null;
+        }
+
+        $edition = DailyPickSet::query()->find($plan->edition_id, ['theme_title', 'theme_blurb', 'body', 'faq']);
+
+        if ($edition === null || blank($edition->body)) {
+            return null;
+        }
+
+        $faq = array_map(
+            fn (array $pair) => 'Q: '.($pair['q'] ?? '')."\nA: ".($pair['a'] ?? ''),
+            is_array($edition->faq) ? $edition->faq : [],
+        );
+
+        return implode("\n\n", array_filter([
+            'The existing article, to rewrite:',
+            'Title: '.$edition->theme_title,
+            'Intro: '.$edition->theme_blurb,
+            (string) $edition->body,
+            $faq === [] ? null : "FAQ:\n".implode("\n\n", $faq),
+        ]));
     }
 
     /** @param list<ProductGroup> $finds */

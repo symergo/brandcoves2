@@ -201,4 +201,41 @@ De [[product:12|Sony]] is de stille.'
         $this->assertStringContainsString('/be-nl/p/12/', $blocks[0]['table']['rows'][0][1]);
         $this->assertSame([12], $blocks[1]['groupIds']);
     }
+
+    /**
+     * The advice structure (2026-11-07): a "## " line is a heading block and a
+     * paragraph of "- " lines a list block. Neither claims a product: a card
+     * belongs under the paragraph that argues for it.
+     */
+    #[Test]
+    public function headings_and_lists_are_blocks_of_their_own(): void
+    {
+        $blocks = $this->cards()->blocks(
+            "## Hoe lang heb je om terug te sturen?\n\n"
+            ."- Bewaar de bon\n- Meld het binnen **14 dagen**\n- Lees de [[product:12|Sony]] voorwaarden\n\n"
+            ."1. Eerst dit\n2. Dan dat\n\n"
+            ."### Een tussenkop\n\n"
+            ."- Alleen een regel met een streepje.\n\n"
+            .'De [[product:12|Sony]] daarna.'
+        );
+
+        $this->assertSame(2, $blocks[0]['heading']);
+        $this->assertSame('Hoe lang heb je om terug te sturen?', $blocks[0]['html']);
+
+        $this->assertFalse($blocks[1]['list']['ordered']);
+        $this->assertCount(3, $blocks[1]['list']['items']);
+        $this->assertSame('Meld het binnen <strong>14 dagen</strong>', $blocks[1]['list']['items'][1]);
+        $this->assertSame([], $blocks[1]['groupIds']);
+
+        $this->assertTrue($blocks[2]['list']['ordered']);
+        $this->assertSame(['Eerst dit', 'Dan dat'], $blocks[2]['list']['items']);
+
+        $this->assertSame(3, $blocks[3]['heading']);
+
+        // One dash-led line is a sentence, not a list.
+        $this->assertArrayNotHasKey('list', $blocks[4]);
+
+        // The card was not spent in the list, so the paragraph gets it.
+        $this->assertSame([12], $blocks[5]['groupIds']);
+    }
 }

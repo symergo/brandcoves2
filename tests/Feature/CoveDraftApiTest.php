@@ -317,4 +317,46 @@ class CoveDraftApiTest extends TestCase
     {
         return ApiToken::issue('claude', $abilities)['token'];
     }
+
+    /**
+     * Search questions (2026-11-07): the advice writer's headings and FAQ
+     * material. Stored trimmed and once each, read back, changeable alone with
+     * PATCH, and refused on a column, like the keyphrase.
+     */
+    #[Test]
+    public function an_article_takes_search_questions_and_a_column_refuses_them(): void
+    {
+        $key = $this->key([ApiToken::WRITE]);
+
+        $this->withToken($key)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'kind' => CoveKind::Advice->value,
+                'slug' => 'retourneren',
+                'title' => 'Retourneren',
+                'focusKeyphrase' => 'online aankoop retourneren',
+                'searchQuestions' => [' Hoe lang heb ik om iets terug te sturen? ', 'Wie betaalt de retourkosten?', 'Wie betaalt de retourkosten?', ''],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.searchQuestions', ['Hoe lang heb ik om iets terug te sturen?', 'Wie betaalt de retourkosten?']);
+
+        $plan = CovePlan::query()->firstOrFail();
+        $this->assertSame(['Hoe lang heb ik om iets terug te sturen?', 'Wie betaalt de retourkosten?'], $plan->search_questions);
+
+        $this->withToken($key)
+            ->patchJson("/api/editorial/coves/{$plan->id}", ['searchQuestions' => ['Mag een winkel retour weigeren?']])
+            ->assertOk()
+            ->assertJsonPath('data.searchQuestions', ['Mag een winkel retour weigeren?']);
+
+        $this->withToken($key)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'kind' => CoveKind::Persona->value,
+                'slug' => 'de-thuiskok',
+                'title' => 'De thuiskok',
+                'searchQuestions' => ['Wat geef je een thuiskok?'],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('searchQuestions');
+    }
 }

@@ -245,6 +245,13 @@ class CovePlanResource extends Resource
                         ->maxLength(120)
                         ->helperText('The phrase this page is written to answer, and what its products are searched for with. The title is a headline and may be nothing anyone types.'),
 
+                    // 2026-11-07: the advice writer turns these into its
+                    // section headings and FAQ.
+                    TagsInput::make('search_questions')
+                        ->label('Search questions')
+                        ->placeholder('Hoe lang heb ik om iets terug te sturen?')
+                        ->helperText('What people search around this subject, as questions, up to ten. The writer makes its headings and FAQ from them.'),
+
                     TextInput::make('meta_description')
                         ->label('Meta description')
                         ->maxLength(160)

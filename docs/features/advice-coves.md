@@ -34,7 +34,9 @@ What was dropped, and why the dropping is the interesting half:
   it" articles across the sites and every one of them was a price list, so every
   one of them was wrong within a year. This is now a standing rule for the file:
   no prices, fees, delivery times or subscription costs, the same rule
-  [shop-coves.md](shop-coves.md) follows and for the same reason.
+  [shop-coves.md](shop-coves.md) follows and for the same reason. *(Since 2026-11-07 the
+  writer's rule reads "no product prices": an amount or a period set by a law, stated with
+  the rule it comes from, is allowed. See "Consumer journalism" below.)*
 - **Product round-ups.** "Top 20 garden products", "3 mini projectors". Those
   are `guide` Coves — they need a curated shortlist against a live catalogue,
   which is the planner's job and not a content file's.
@@ -234,6 +236,51 @@ both were confirmed to fail against the old key.
 what was published, not an instruction the next build obeys. Without it these
 would be the one kind of page an editor could not open and re-curate. See
 [cove-planner.md](cove-planner.md).
+
+## Consumer journalism: the writer's brief since 2026-11-07
+
+The owner found the "Slim kopen" articles not informative. On production they averaged about
+2,700 characters (some 400 words): a few paragraphs of principle, no rule, period or body named.
+The owner's brief replaced `Defaults::ADVICE_SYSTEM`, nearly whole: an experienced consumer
+journalist and SEO editor, writing so the reader understands the subject, knows the facts and
+rules, and knows what to do.
+
+**The structure, mapped onto the page.**
+
+| The brief | Where it goes |
+|---|---|
+| SEO title (~60 characters) with the main keyword | `title`, the page's only heading. There is no subtitle slot. |
+| Core answer, 2-3 sentences, under the title | `intro` (the blurb), up to 500 characters |
+| Meta description, 155 characters | `meta_description`, the writer's own now. The plan's still wins. |
+| 4-7 sections under questions people search | `## ` headings in the body, which the page draws since this change |
+| Checklist or steps, 5-7 | a list in the body (`- ` or `1. ` lines) |
+| FAQ, 3-5, not already answered | `faq` |
+| 900-1300 words | body up to 12,000 characters, 6,000 output tokens |
+| 2-4 internal links, sources where needed | the link tokens, and `[[source:URL\|label]]` to the domains in `giftcoves.editorial_sources` |
+
+**The inputs.** Main keyword: the plan's `focus_keyphrase`. Search questions: the plan's new
+`search_questions` (admin field and API `searchQuestions`), not `queries`, which are product
+search terms. Readers: the market's consumers, its own country's rules first. Today's date, so
+"be current" has a date to be current to. On a rebuild, the published article (title, intro,
+body, FAQ), with the instruction to keep what is strong and rewrite the rest.
+
+**What changed in the rules.** "No prices" became "no product prices": the brief asks for
+amounts and periods, and a legal limit or a statutory period is a fact about a rule, stated with
+the rule it comes from (the commencement-date rule above still applies). A shop's own policy is
+still never stated as fact. Never a specific product, never an invented test, no absolute legal,
+medical or financial advice.
+
+**Sources.** `[[source:...]]` links out only to the listed domains (governments, regulators,
+ombudsmen, European consumer centres, consumer organisations), https only, in a new tab. A model
+can still invent a path on an allowed domain, so the prompt asks for the home page unless it is
+sure of the page, and an authored article's sources are checked by whoever writes it.
+
+Only the `/guides` articles are told about headings, lists and sources (`promptContract(article:
+true)`); a shop or brand page, and every column, prints paragraphs and is not. Elsewhere a heading
+prints as its words and a list as its items. Tests: `CoveArticleBuildTest::an_advice_article_is_
+briefed_with_its_keyword_questions_and_the_article_it_rewrites`, `CoveMarkupTest`,
+`ProseCardsTest::headings_and_lists_are_blocks_of_their_own`,
+`CoveDraftApiTest::an_article_takes_search_questions_and_a_column_refuses_them`.
 
 ## Deliberately absent
 

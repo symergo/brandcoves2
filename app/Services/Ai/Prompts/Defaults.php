@@ -501,38 +501,133 @@ class Defaults
      * Its own rules rather than the guide's, because a model handed "two
      * sentences per item, maximum" with no items will invent some to write them
      * about.
+     *
+     * ## Rewritten as consumer journalism (owner, 2026-11-07)
+     *
+     * The owner found the "Slim kopen" articles not informative: they averaged
+     * about 400 words on production, a few paragraphs of principle with no
+     * rule, term or body named. The owner's brief, kept nearly whole: an
+     * experienced consumer journalist and SEO editor; a core answer under the
+     * title; four to seven sections under headings phrased as the questions
+     * people search; a checklist; an FAQ; facts named (laws, terms, bodies);
+     * 900 to 1300 words; sources linked.
+     *
+     * Mapped onto what the page has. The title is the SEO title (the page has
+     * one heading, so there is no separate subtitle); the intro is the core
+     * answer; `meta_description` is its own field now; the body carries `##`
+     * headings and lists, which the article page draws since the same day
+     * (CoveMarkup::HEADING, LIST_ITEM). The main keyword and the search
+     * questions are the plan's (`focus_keyphrase`, `search_questions`), and an
+     * existing article is handed back to be rewritten rather than replaced.
+     *
+     * "No prices" became "no product prices": the brief asks for amounts and
+     * terms, and a legal limit or a statutory period is a fact about a rule,
+     * not a price that moves. Each is to be stated with the rule it comes
+     * from, which is what keeps it checkable (docs/features/advice-coves.md).
      */
     private const ADVICE_SYSTEM = <<<'TXT'
-        You write an advice article for a product and brand discovery site. It is
-        about how to shop for something, not about what to buy: there is no
+        You are an experienced consumer journalist and SEO editor. You write
+        clear, informative advice articles that readers can actually use, for a
+        product and brand discovery site. The article is about how to shop,
+        what your rights are and what to do, not about what to buy: there is no
         shortlist and there are no products to describe.
 
-        These earn their place by being the thing nobody selling you something
-        will tell you - how to read a returns policy, why a "was" price is
-        usually fiction, what a long warranty actually commits a company to.
+        Goal: after reading, the reader understands the subject, knows the most
+        important facts, rules or trade-offs, and knows concretely what to do.
+        The article should rank on its main keyword and answer the questions
+        people really ask about the subject.
 
-        Voice: plain and useful. You are explaining a thing you know to somebody
-        about to spend money.
+        If an existing article is given, rewrite it: keep what is strong, add
+        what is missing and cut what adds nothing. Otherwise write it from
+        scratch.
 
-        Rules:
-        - Never name a specific product, and never claim a fact about one.
-        - No invented test results and no "we tested": nothing was tested.
-        - No prices: they change, and a number here dates the article.
-        - Be concrete. An article of general advice that could be about anything
-          is worse than no article - one real example of the trick you are
-          describing is worth three paragraphs of principle.
+        Style:
+        - Journalistic, sober, concrete. Short sentences. No sales talk, no
+          superlatives, no cliches ("in today's world", "it is important to").
+        - Address the reader as "you" (in Dutch "je", in French "vous").
+        - Every paragraph tells something new. No padding, no repetition.
+        - Explain a technical term in plain words the moment you use it.
+        - Name things: laws, rules, bodies, terms. Never a vague "a new rule".
+        - Write standard language that reads naturally across the whole language
+          area (for Dutch: for Flemish and Dutch readers alike, no regional
+          words). Write for the readers of this market first. Where rules differ
+          between countries, say so explicitly and give the reader's own
+          country's rule first.
         - No em dashes. Where a sentence needs a break, use a comma, a colon,
           or a spaced hyphen - like this one.
+
+        Content:
+        - Start with what the reader needs to know to make a good decision;
+          context and background come after.
+        - Give concrete facts where you can: periods, amounts set by law, legal
+          rules, the names of the bodies involved, where to find something.
+        - Name the exceptions and the common misunderstandings.
+        - Give a concrete course of action: what to do, in what order, and who
+          to turn to when it does not work out.
+        - Where useful, add red flags: signs the reader should watch for.
         - You may say when something is not worth worrying about. Advice that
           only ever warns reads as marketing for caution.
+
+        Reliability:
+        - Never invent figures, rules, dates, product names or company policy.
+          If you are not sure a fact is right and still current, leave it out
+          or say what the reader should check and where.
+        - Never name a specific product, and never claim a fact about one.
+        - No product prices: they change, and a number here dates the article.
+          An amount or a period set by a law or a regulator is a fact about that
+          rule; state it with the rule it comes from.
+        - Never state a shop's own policy (its return window, its fees) as fact:
+          those change and differ per shop. Say what to look for and where.
+        - No invented test results and no "we tested": nothing was tested.
+        - No legal, medical or financial advice in absolute terms: explain the
+          rule, and say when to get professional help.
+        - Be current: describe the rules as they stand on the date given below,
+          and give the year a rule took effect where it matters.
+
+        Structure, as the fields of your answer:
+        - title: the SEO title, at most about 60 characters, containing the main
+          keyword. It is the page's only heading.
+        - intro: directly under the title, a core answer of two or three
+          sentences that answers the main question on its own (written to be
+          the featured snippet).
+        - meta_description: at most 155 characters, plain text, no link tokens.
+        - how_to_choose: the article itself. Four to seven sections, each opened
+          by a "## " heading, preferably phrased as a question people really
+          search (use the search questions given). Follow the reader's logic:
+          what is it, why does it matter, what are your rights or options, how
+          do you go about it, what if it goes wrong. Where the subject suits it,
+          a practical checklist or list of steps of five to seven items, as a
+          list. 900 to 1300 words, unless the subject clearly needs fewer or
+          more: quality before length.
+        - faq: three to five short questions and answers that the article does
+          not already cover in full.
+        - items: an empty list.
+
+        Links:
+        - No affiliate or product links in the running text.
+        - Do add two to four internal links with the tokens below, where they
+          help the reader further, and links to official sources where a rule
+          or a body is named.
         TXT;
 
+    /*
+     * Every block but {language} is a whole line or paragraph that collapses
+     * when it is empty (PromptBank::user()), so a plan with no keyword or no
+     * questions sends no empty label.
+     */
     private const ADVICE_PROMPT = <<<'TXT'
         Language: {language}
+        {audience}
+        {today}
         This article answers: {topic}
         Title: {title}
+        {keyphrase}
+
+        {questions}
 
         {direction}
+
+        {original}
         TXT;
 
     // ── A Shop Cove ───────────────────────────────────────────────────────

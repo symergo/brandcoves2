@@ -76,7 +76,7 @@ use App\Support\SearchUrl;
 class CoveMarkup
 {
     /** `[[kind:value]]` or `[[kind:value|label]]` */
-    private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
+    private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon|source):([^\]|]{1,300})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
      * `**emphasis**`, the one piece of Markdown this renderer honours.
@@ -153,6 +153,29 @@ class CoveMarkup
     private const TABLE_LINE = '/^\|.*\|$/u';
 
     private const TABLE_RULE = '/^\|(?:\s*:?-{2,}:?\s*\|)+$/u';
+
+    /**
+     * `## A question people search for?` alone on a paragraph: a heading.
+     *
+     * Added 2026-11-07 with the advice articles' new structure (owner): four
+     * to seven sections under headings phrased as the questions people type.
+     * Two and three hashes only. One would be a second <h1> under the page's
+     * own, and four or more is a depth no article here has.
+     *
+     * Whole paragraph and one line, for the reason tables demand pipes at
+     * both ends: a sentence that happens to open with "#" stays a sentence.
+     */
+    private const HEADING = '/^(#{2,3})[ \t]+(\S.{0,150})$/u';
+
+    /**
+     * A paragraph whose every line opens with "- ", "* " or "1. ": a list.
+     *
+     * Added with headings (2026-11-07): the advice structure ends on a
+     * checklist, and a checklist written as a paragraph is the shape nobody
+     * follows. Every line must carry the marker, so a paragraph with one
+     * dash-led line in it stays prose.
+     */
+    private const LIST_ITEM = '/^(?:([-*])|(\d{1,2})[.)])[ \t]+(\S.*)$/u';
 
     /**
      * Injected rather than resolved inside `render()`.
@@ -294,6 +317,7 @@ class CoveMarkup
                     'guide' => $this->guide($value, $allowed['guides'] ?? [], $base),
                     'page' => $this->page($value, $base),
                     'amazon' => $this->amazon($value, $market),
+                    'source' => self::source($value),
                     default => null,
                 };
 
@@ -315,6 +339,21 @@ class CoveMarkup
                 if ($kind === 'amazon') {
                     return sprintf(
                         '<a href="%s" rel="sponsored nofollow noopener" target="_blank">%s</a>',
+                        e($href),
+                        e($label),
+                    );
+                }
+
+                /*
+                 * A source: a government page, a regulator, a consumer
+                 * organisation. Not ours and not paid for, so `nofollow` is
+                 * not needed to be honest, but it is still a page we did not
+                 * write and cannot keep current: a new tab, so the reader keeps
+                 * the article, and `noopener`.
+                 */
+                if ($kind === 'source') {
+                    return sprintf(
+                        '<a href="%s" rel="noopener" target="_blank">%s</a>',
                         e($href),
                         e($label),
                     );
@@ -431,6 +470,21 @@ class CoveMarkup
                 continue;
             }
 
+            /*
+             * A heading or a list has no shape on these surfaces either, but
+             * unlike a table its words read fine as a paragraph: the heading as
+             * a line of its own, the list as its items one under the other.
+             */
+            $heading = $this->headingFrom($paragraph);
+            if ($heading !== null) {
+                $paragraph = $heading['text'];
+            } else {
+                $list = $this->listFrom($paragraph);
+                if ($list !== null) {
+                    $paragraph = implode("\n", array_map(fn (string $item) => '• '.$item, $list['items']));
+                }
+            }
+
             $result = $this->render($paragraph, $market, $allowed);
             $out[] = $result['html'];
             $links += $result['links'];
@@ -450,6 +504,120 @@ class CoveMarkup
      * Raw, not checked: the caller decides what an unknown key means on its
      * surface. `knownFigure()` answers whether the enum can draw it.
      */
+    /**
+     * The level and words of a paragraph that is a heading, else null. Raw.
+     *
+     * @return array{level: int, text: string}|null
+     */
+    public function headingFrom(string $paragraph): ?array
+    {
+        $paragraph = trim($paragraph);
+
+        if (preg_match('/\R/u', $paragraph) === 1 || preg_match(self::HEADING, $paragraph, $m) !== 1) {
+            return null;
+        }
+
+        // A closing run of hashes ("## Title ##") is Markdown's optional
+        // decoration, not part of the words.
+        return ['level' => strlen($m[1]), 'text' => rtrim($m[2], " \t#")];
+    }
+
+    /**
+     * The items of a paragraph that is a list, else null. Raw, unrendered.
+     *
+     * Ordered when its first line is numbered. Mixed markers are allowed: a
+     * writer who numbers a checklist and then slips into dashes meant one list.
+     *
+     * @return array{ordered: bool, items: list<string>}|null
+     */
+    public function listFrom(string $paragraph): ?array
+    {
+        $items = [];
+        $ordered = null;
+
+        foreach (preg_split('/\R/u', trim($paragraph)) ?: [] as $line) {
+            $line = trim($line);
+
+            if ($line === '') {
+                continue;
+            }
+
+            if (preg_match(self::LIST_ITEM, $line, $m) !== 1) {
+                return null;
+            }
+
+            $ordered ??= $m[2] !== '';
+            $items[] = $m[3];
+        }
+
+        // One line with a dash is a sentence that starts with one.
+        return count($items) < 2 ? null : ['ordered' => (bool) $ordered, 'items' => $items];
+    }
+
+    /**
+     * A list with its items rendered: escaped, tokens resolved, bold honoured.
+     *
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
+     * @return array{ordered: bool, items: list<string>, rejected: list<string>}|null
+     */
+    public function listBlock(string $paragraph, Market $market, array $allowed): ?array
+    {
+        $list = $this->listFrom($paragraph);
+
+        if ($list === null) {
+            return null;
+        }
+
+        $items = [];
+        $rejected = [];
+
+        foreach ($list['items'] as $item) {
+            $rendered = $this->render($item, $market, $allowed);
+            $items[] = $rendered['html'];
+            $rejected = [...$rejected, ...$rendered['rejected']];
+        }
+
+        return ['ordered' => $list['ordered'], 'items' => $items, 'rejected' => $rejected];
+    }
+
+    /**
+     * Where a `[[source:URL|label]]` token may point, or null.
+     *
+     * The one token whose value is a URL, so the one whose allowlist cannot
+     * come from our own rows: it is `giftcoves.editorial_sources`, a list of
+     * domains that publish the rules an advice article explains (governments,
+     * regulators, ombudsmen, consumer organisations). A host must be one of
+     * them or a subdomain of one, the scheme must be https (invariant 5's
+     * rule, for the same reason), and there may be no credentials or port.
+     *
+     * A model can still invent a path on an allowed domain, which is a 404 on
+     * a real site rather than a link to a fake one. The prompt asks for the
+     * organisation's home page unless the writer is sure of the page, and the
+     * authored path is checked by a person before publishing.
+     */
+    public static function source(string $value): ?string
+    {
+        $url = trim($value);
+        $parts = parse_url($url);
+
+        if ($parts === false || ($parts['scheme'] ?? '') !== 'https' || ! isset($parts['host'])
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) {
+            return null;
+        }
+
+        $host = mb_strtolower($parts['host']);
+
+        foreach ((array) config('giftcoves.editorial_sources') as $domain) {
+            $domain = mb_strtolower(trim((string) $domain));
+
+            if ($domain !== '' && ($host === $domain || str_ends_with($host, '.'.$domain))) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
     public function figureKey(string $paragraph): ?string
     {
         return preg_match(self::FIGURE, $paragraph, $m) === 1 ? $m[1] : null;
@@ -778,7 +946,7 @@ class CoveMarkup
      *
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      */
-    public function promptContract(array $allowed): string
+    public function promptContract(array $allowed, bool $article = false): string
     {
         $products = [];
 
@@ -786,15 +954,41 @@ class CoveMarkup
             $products[] = "{$id} = {$product['title']}";
         }
 
+        $sources = array_values(array_filter(array_map('strval', (array) config('giftcoves.editorial_sources'))));
+
         return implode("\n", array_filter([
-            'Link by writing tokens. Never write a URL, a markdown link or an HTML tag.',
+            $article
+                ? 'Link by writing tokens. Never write a markdown link or an HTML tag, and never a URL outside a source token.'
+                : 'Link by writing tokens. Never write a URL, a markdown link or an HTML tag.',
             // Stated here rather than in the editable voice prompt for the same
-            // reason the token syntax is: it is a fact about the renderer. The
-            // one Markdown construct it understands, said out loud so a writer
-            // does not reach for `#`, `_` or a list and get literal characters.
-            'Markdown: **bold** renders. Nothing else does - no headings, no lists, no italics.',
+            // reason the token syntax is: it is a fact about the renderer. Said
+            // out loud so a writer does not reach for `_` or `#` and get
+            // literal characters. An article's page draws headings and lists
+            // (2026-11-07); a column's does not, so a column is not told.
+            $article
+                ? implode("\n", [
+                    'Markdown: **bold** renders, and so do these, each as a paragraph of its own:',
+                    '  ## A heading       (one line; ### for a sub-heading. Never a single #.)',
+                    '  - an item          (a list: every line of the paragraph starts with "- ")',
+                    '  1. a step          (a numbered list: every line starts with "1. ", "2. "...)',
+                    'Nothing else does - no italics, no quotes, no single # heading.',
+                ])
+                : 'Markdown: **bold** renders. Nothing else does - no headings, no lists, no italics.',
             '  [[brand:NAME]]        [[search:PHRASE]]        [[product:ID|label]]',
             '  [[guide:SLUG]]        [[page:KEY]]',
+            /*
+             * Sources, for an article only, and only on the listed domains: the
+             * renderer drops any other (CoveMarkup::source()). The home page
+             * unless the writer is sure of the page, because an invented path on
+             * a real domain is a 404 the reader meets on somebody else's site.
+             */
+            $article && $sources !== []
+                ? implode("\n", [
+                    '  [[source:https://www.example.org/page|label]]  a link to an official source, opening',
+                    '  in a new tab. Only on these domains (any other is deleted): '.implode(', ', $sources).'.',
+                    '  Link to the organisation\'s home page unless you are certain the exact page exists.',
+                ])
+                : null,
             '',
             /*
              * The label on a product token is not optional, and this says so in

@@ -53,6 +53,13 @@ interface Block {
      * built before tables existed.
      */
     table?: { head: string[]; rows: string[][] } | null
+    /**
+     * A heading instead of a paragraph (2026-11-07): its level, 2 or 3, from
+     * a `## ` or `### ` line. `html` holds its words, safe like a paragraph's.
+     */
+    heading?: 2 | 3 | null
+    /** A list instead of a paragraph (2026-11-07). Items are safe HTML. */
+    list?: { ordered: boolean; items: string[] } | null
 }
 
 interface Props {
@@ -177,6 +184,36 @@ function Article({
                                 </tbody>
                             </table>
                         </div>
+                    ) : block.heading === 2 ? (
+                        // The sections of an advice article: the questions people search for.
+                        <h2
+                            className="mt-8 text-xl font-semibold tracking-tight [&_a]:underline"
+                            dangerouslySetInnerHTML={{ __html: block.html }}
+                        />
+                    ) : block.heading === 3 ? (
+                        <h3
+                            className="mt-6 text-lg font-medium [&_a]:underline"
+                            dangerouslySetInnerHTML={{ __html: block.html }}
+                        />
+                    ) : block.list ? (
+                        /*
+                          A checklist or a run of steps. Native list markers,
+                          so a screen reader announces the count and the
+                          numbers on a step list are the reader's own.
+                        */
+                        (() => {
+                            const ListTag = block.list.ordered ? 'ol' : 'ul'
+
+                            return (
+                                <ListTag
+                                    className={`${className} space-y-1.5 pl-6 ${block.list.ordered ? 'list-decimal' : 'list-disc'} [&_a]:underline`}
+                                >
+                                    {block.list.items.map((item, k) => (
+                                        <li key={k} dangerouslySetInnerHTML={{ __html: item }} />
+                                    ))}
+                                </ListTag>
+                            )
+                        })()
                     ) : block.figure ? (
                         /*
                           Drawn, not photographed, like the cover: one hand

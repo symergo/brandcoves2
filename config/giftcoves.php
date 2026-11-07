@@ -1289,6 +1289,51 @@ return [
     ],
 
     /*
+     * Where an article may link out with `[[source:URL|label]]` (2026-11-07):
+     * the bodies that publish the rules an advice article explains. A host
+     * matches its domain or any subdomain of it, https only
+     * (CoveMarkup::source()). Anything else renders as its label.
+     *
+     * Governments, regulators, ombudsmen, the European consumer centres and
+     * the consumer organisations, per market served. Not shops, not brands and
+     * not other publishers: a link here is an "official source" in the prose,
+     * and a shop's returns page is not one. Add a domain when an article needs
+     * it; the list is the whole of the trust.
+     */
+    'editorial_sources' => [
+        // European Union
+        'europa.eu',
+        // Belgium
+        'belgium.be',
+        'economie.fgov.be',
+        'consumentenombudsdienst.be',
+        'mediationconsommateur.be',
+        'eccbelgie.be',
+        'cecbelgique.be',
+        'gegevensbeschermingsautoriteit.be',
+        'autoriteprotectiondonnees.be',
+        'test-aankoop.be',
+        'test-achats.be',
+        'bpost.be',
+        // The Netherlands
+        'rijksoverheid.nl',
+        'overheid.nl',
+        'acm.nl',
+        'consuwijzer.nl',
+        'eccnederland.nl',
+        'autoriteitpersoonsgegevens.nl',
+        'degeschillencommissie.nl',
+        'consumentenbond.nl',
+        'thuiswinkel.org',
+        'postnl.nl',
+        // United Kingdom (en) and Spain (es)
+        'gov.uk',
+        'citizensadvice.org.uk',
+        'consumo.gob.es',
+        'ocu.org',
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Editorial API
     |--------------------------------------------------------------------------

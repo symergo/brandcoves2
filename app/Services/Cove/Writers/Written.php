@@ -41,6 +41,12 @@ readonly class Written
         public string $source = 'none',
         /** A column's prose: two or three paragraphs about the whole edition. */
         public ?string $editorial = null,
+        /**
+         * The article's own `<meta>` description, at most 155 characters. Only
+         * an advice article writes one (2026-11-07); null elsewhere, where the
+         * builder trims it from the intro as before.
+         */
+        public ?string $metaDescription = null,
     ) {}
 
     /** Prose a person wrote, which skips the model entirely. */

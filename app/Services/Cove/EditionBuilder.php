@@ -483,8 +483,11 @@ class EditionBuilder
                     'theme_source' => 'planned',
                     'body' => filled($plan->body) ? $plan->body : $written->body,
                     'faq' => filled($plan->faq) ? $plan->faq : $written->faq,
+                    // The plan's, else the writer's own (advice, 2026-11-07),
+                    // else trimmed from the intro.
                     'meta_description' => $plan->meta_description
-                        ?? Str::limit($this->markup->plain((string) ($plan->blurb ?: $written->intro)), 155, '') ?: null,
+                        ?? $written->metaDescription
+                        ?? (Str::limit($this->markup->plain((string) ($plan->blurb ?: $written->intro)), 155, '') ?: null),
                     'focus_keyphrase' => $plan->focus_keyphrase,
                     // Authored, like the title, so it travels with it. Missing
                     // until 2026-09-12: the persona build copied its drawing

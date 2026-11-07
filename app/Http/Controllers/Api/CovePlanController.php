@@ -143,6 +143,9 @@ class CovePlanController extends Controller
             'queries' => ['nullable', 'array', 'max:12'],
             'queries.*' => ['string', 'max:60'],
             'focusKeyphrase' => ['nullable', 'string', 'max:120'],
+            // The questions people search around the subject (2026-11-07).
+            'searchQuestions' => ['nullable', 'array', 'max:10'],
+            'searchQuestions.*' => ['nullable', 'string', 'max:160'],
             'scene' => ['nullable', Rule::in(CoveScene::values())],
             // Sent as null, it clears the brief; left out, it is untouched.
             'brief' => ['nullable', 'array'],
@@ -172,6 +175,12 @@ class CovePlanController extends Controller
             ]);
         }
 
+        if (isset($data['searchQuestions']) && ! $plan->kind->writesBody()) {
+            throw ValidationException::withMessages([
+                'searchQuestions' => 'A '.$plan->kind->label().' does not carry search questions.',
+            ]);
+        }
+
         $plan->forceFill(array_filter([
             'title' => HouseStyle::plain($data['title'] ?? null),
             'blurb' => HouseStyle::plain($data['blurb'] ?? null),
@@ -183,6 +192,7 @@ class CovePlanController extends Controller
             'writer' => $data['writer'] ?? null,
             'queries' => $data['queries'] ?? null,
             'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+            'search_questions' => isset($data['searchQuestions']) ? self::questions($data['searchQuestions']) : null,
             'scene' => $data['scene'] ?? null,
         ], fn ($v) => $v !== null))->save();
 
@@ -248,6 +258,7 @@ class CovePlanController extends Controller
         if (! $kind->writesBody()) {
             $stray = array_keys(array_filter([
                 'focusKeyphrase' => $data['focusKeyphrase'] ?? null,
+                'searchQuestions' => $data['searchQuestions'] ?? null,
                 'metaDescription' => $data['metaDescription'] ?? null,
                 'body' => $data['body'] ?? null,
                 'faq' => $data['faq'] ?? null,
@@ -436,6 +447,7 @@ class CovePlanController extends Controller
              */
             ...($kind->writesBody() ? [
                 'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+                'search_questions' => isset($data['searchQuestions']) ? self::questions($data['searchQuestions']) : null,
                 'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
                 'body' => HouseStyle::prose($data['body'] ?? null),
                 // Stored as the two-letter shape the page and the schema.org
@@ -684,6 +696,12 @@ class CovePlanController extends Controller
              * overwritten.
              */
             'focusKeyphrase' => ['nullable', 'string', 'max:120'],
+            /*
+             * What people search around the subject, as questions (2026-11-07).
+             * The advice writer makes its section headings and FAQ from them.
+             */
+            'searchQuestions' => ['nullable', 'array', 'max:10'],
+            'searchQuestions.*' => ['nullable', 'string', 'max:160'],
             'metaDescription' => ['nullable', 'string', 'max:160'],
             'body' => ['nullable', 'string', 'max:20000'],
             'faq' => ['nullable', 'array', 'max:10'],
@@ -995,6 +1013,7 @@ class CovePlanController extends Controller
              */
             ...($plan->kind->writesBody() ? [
                 'focusKeyphrase' => $plan->focus_keyphrase,
+                'searchQuestions' => $plan->search_questions ?? [],
                 'metaDescription' => $plan->meta_description,
                 'body' => $plan->body,
                 'faq' => $plan->faq,
@@ -1061,5 +1080,21 @@ class CovePlanController extends Controller
         );
 
         return $observance?->title($plan->market);
+    }
+
+    /**
+     * Search questions as stored: plain text, trimmed, no empties, no repeats.
+     *
+     * @param  list<string|null>  $questions  a blank one arrives as null (ConvertEmptyStringsToNull) and is dropped
+     * @return list<string>|null
+     */
+    private static function questions(array $questions): ?array
+    {
+        $clean = array_values(array_unique(array_filter(array_map(
+            fn (?string $q) => trim((string) HouseStyle::plain($q)),
+            $questions,
+        ))));
+
+        return $clean === [] ? null : $clean;
     }
 }

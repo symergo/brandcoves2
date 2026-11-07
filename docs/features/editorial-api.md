@@ -331,7 +331,7 @@ the planner:
   layout and its product floor at once
 
 The article kinds accept the parts of a piece that are decided before it is written —
-`focusKeyphrase`, `metaDescription`, `body`, `faq`, and `seasonFrom`/`seasonTo` on a seasonal
+`focusKeyphrase`, `searchQuestions` (2026-11-07), `metaDescription`, `body`, `faq`, and `seasonFrom`/`seasonTo` on a seasonal
 guide. A seasonal plan also **reads back** a `series` object (`key`, `part`) and a `date`: a season is
 laid out as a series of dated parts, and "part 2" is a fact about what the writing may assume the
 reader has already seen. Null on a season the catalogue could fill only one subject of — that is a

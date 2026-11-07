@@ -128,7 +128,7 @@ different facts:
 | `cove.persona` | `language` `title` `direction` `curated` `finds` |
 | `cove.guide` | `language` `topic` `title` `direction` `curated` `finds` |
 | `cove.seasonal` | …and `season` |
-| `cove.advice` | `language` `topic` `title` `direction` |
+| `cove.advice` | `language` `audience` `today` `topic` `title` `keyphrase` `questions` `direction` `original` (the five new ones since 2026-11-07, see advice-coves.md) |
 | `cove.shop` | `language` `topic` `title` `direction` |
 | `cove.brand` | `language` `topic` `title` `direction` |
 | `cove.theme` | `language` `finds` `recent` |

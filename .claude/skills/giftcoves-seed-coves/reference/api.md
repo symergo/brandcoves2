@@ -133,6 +133,8 @@ time rather than as a silently skipped pick at build time.
 
   // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere:
   "focusKeyphrase": "…",              // max 120
+  "searchQuestions": ["…?"],            // max 10 × 160: what people search, as questions.
+                                      // The advice writer's headings and FAQ (2026-11-07)
   "metaDescription": "…",             // max 160
   "body": "…",                        // max 20000
   "faq": [{"question": "…", "answer": "…"}],   // max 10, both halves required
@@ -219,7 +221,7 @@ all of these and is authoritative; this is the map.
 | **approve** | `POST /coves/{id}/approve` |
 | **build** | `POST /coves/{id}/build` · read back with `GET /coves/{id}/edition` |
 | **any, in bulk** | `POST /coves/stages/{curate\|approve\|build}` with a selector, `dryRun` supported |
-| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase`, `brief` (`null` clears it; left out, untouched) |
+| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase`, `searchQuestions`, `brief` (`null` clears it; left out, untouched) |
 
 Two things to know before writing anything:
 

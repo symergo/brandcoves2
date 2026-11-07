@@ -137,8 +137,13 @@ class PromptBank
              * that exists only to be inert — an advice article has no products
              * by definition, and the block would render empty on every one.
              */
+            /*
+             * Since 2026-11-07 also who it is for, today's date, the main
+             * keyword, the search questions and the existing article to
+             * rewrite (Defaults::ADVICE_SYSTEM says why).
+             */
             'cove.advice' => [
-                'allowed' => ['language', 'topic', 'title', 'direction'],
+                'allowed' => ['language', 'audience', 'today', 'topic', 'title', 'keyphrase', 'questions', 'direction', 'original'],
                 'required' => ['language'],
             ],
             /*

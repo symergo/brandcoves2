@@ -114,6 +114,37 @@ final class ProseCards
                 continue;
             }
 
+            /*
+             * A heading or a list (2026-11-07, the advice structure). `html`
+             * carries the words as well, so a page that knows only paragraphs
+             * still prints them; Guides/Show.tsx draws the real shape. Neither
+             * claims products, for the reason a table does not: a heading
+             * names a section and a list item is a step, and a card belongs
+             * under the paragraph that argues for the product.
+             */
+            $heading = $this->markup->headingFrom($paragraph);
+            if ($heading !== null) {
+                $rendered = $this->markup->render($heading['text'], $this->market, $this->allowed);
+                $this->rejected = [...$this->rejected, ...$rendered['rejected']];
+                $out[] = ['html' => $rendered['html'], 'groupIds' => [], 'figure' => null, 'table' => null, 'heading' => $heading['level']];
+
+                continue;
+            }
+
+            $list = $this->markup->listBlock($paragraph, $this->market, $this->allowed);
+            if ($list !== null) {
+                $this->rejected = [...$this->rejected, ...$list['rejected']];
+                $out[] = [
+                    'html' => implode('<br>', $list['items']),
+                    'groupIds' => [],
+                    'figure' => null,
+                    'table' => null,
+                    'list' => ['ordered' => $list['ordered'], 'items' => $list['items']],
+                ];
+
+                continue;
+            }
+
             $rendered = $this->markup->render($paragraph, $this->market, $this->allowed);
             $this->rejected = [...$this->rejected, ...$rendered['rejected']];
 

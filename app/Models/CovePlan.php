@@ -96,6 +96,9 @@ class CovePlan extends Model
             // is set; a CHECK constraint keeps the two together.
             'part' => 'integer',
             'queries' => 'array',
+            // Article kinds: what people search around the subject, as
+            // questions (2026-11-07). Headings and FAQ material for the writer.
+            'search_questions' => 'array',
             'pinned_group_ids' => 'array',
             // Article kinds only — a guide's FAQ, decided before it is written
             // rather than invented during. See App\Enums\CoveKind.

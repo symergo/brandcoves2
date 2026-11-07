@@ -605,4 +605,57 @@ Twee.',
         $this->assertMatchesRegularExpression('/^(Compare more|The best) \[\[search:Kettles\|kettles\]\]\.$/', CoveMarkup::moreLine('More [[search:Kettles|kettles]].', Market::En));
         $this->assertMatchesRegularExpression('/^(Comparer plus de|Le meilleur des) \[\[search:Bougies\|bougies\]\]\.$/u', CoveMarkup::moreLine('Plus de [[search:Bougies|bougies]].', Market::BeFr));
     }
+
+    /**
+     * `[[source:URL|label]]` (2026-11-07): out of the site, to an official
+     * source, only on the configured domains and only over https.
+     */
+    #[Test]
+    public function a_source_links_out_only_to_a_listed_domain_over_https(): void
+    {
+        config(['giftcoves.editorial_sources' => ['consuwijzer.nl', 'europa.eu']]);
+
+        $ok = $this->render('Zie [[source:https://www.consuwijzer.nl/retour?a=1&b=2|ConsuWijzer]].');
+        $this->assertStringContainsString('<a href="https://www.consuwijzer.nl/retour?a=1&amp;b=2" rel="noopener" target="_blank">ConsuWijzer</a>', $ok['html']);
+
+        $this->assertStringContainsString('href="https://commission.europa.eu/"', $this->render('[[source:https://commission.europa.eu/|EU]]')['html']);
+
+        foreach ([
+            'https://consuwijzer.nl.evil.com/x',
+            'https://notconsuwijzer.nl/',
+            'http://www.consuwijzer.nl/',
+            'javascript:alert(1)',
+            'https://user:pw@consuwijzer.nl/',
+            'https://consuwijzer.nl:8443/',
+        ] as $url) {
+            $result = $this->render("[[source:{$url}|bron]]");
+            $this->assertStringNotContainsString('<a', $result['html'], $url);
+            $this->assertSame('bron', $result['html']);
+            $this->assertSame(["source:{$url}"], $result['rejected']);
+        }
+    }
+
+    #[Test]
+    public function only_an_article_is_told_about_headings_lists_and_sources(): void
+    {
+        config(['giftcoves.editorial_sources' => ['acm.nl']]);
+
+        $column = $this->markup()->promptContract($this->allowed());
+        $article = $this->markup()->promptContract($this->allowed(), article: true);
+
+        $this->assertStringContainsString('no headings, no lists', $column);
+        $this->assertStringNotContainsString('[[source:', $column);
+
+        $this->assertStringContainsString('## A heading', $article);
+        $this->assertStringContainsString('[[source:', $article);
+        $this->assertStringContainsString('acm.nl', $article);
+    }
+
+    #[Test]
+    public function a_surface_that_prints_paragraphs_still_reads_a_heading_and_a_list(): void
+    {
+        $out = $this->markup()->paragraphs("## Een vraag?\n\n- een\n- twee", Market::BeNl, $this->allowed());
+
+        $this->assertSame(['Een vraag?', "• een\n• twee"], $out['html']);
+    }
 }

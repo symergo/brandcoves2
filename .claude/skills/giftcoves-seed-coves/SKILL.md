@@ -118,7 +118,7 @@ perfectly usable **different product** that every validation the server has will
 | `shop` | `slug` — must name a shop this market compares | none; live rails instead | yes |
 | `brand` | `slug` — must be a `brand_stats` slug | none; live rails instead | yes |
 
-Article fields — `focusKeyphrase`, `metaDescription`, `body`, `faq` — are **refused**
+Article fields — `focusKeyphrase`, `searchQuestions`, `metaDescription`, `body`, `faq` — are **refused**
 on a non-article kind, not dropped. A Daily's or a persona's words go in `editorial`.
 
 One slug namespace covers every kind in a market, so a slug another kind already
@@ -194,7 +194,24 @@ bodies; authored articles only, the builder never writes one). The key is a `Cov
 
     [[figure:coin_jar]]
 
-**Link with tokens, never a URL, markdown or HTML:**
+**An advice article is consumer journalism (owner, 2026-11-07).** Read the `cove.advice`
+prompt from the brief and follow it: an SEO title with the main keyword (`focusKeyphrase`), a
+two- or three-sentence core answer as the blurb, 4-7 sections under `## ` headings phrased as
+the questions people search (`searchQuestions`, set them on the plan), a checklist as a list,
+an FAQ of 3-5 not answered in the text, a `metaDescription` of at most 155 characters,
+900-1300 words. Name laws, periods and bodies; never a product price, never a shop's policy as
+fact. In an article body (guide, seasonal, advice) these render, each a paragraph of its own:
+
+    ## A question people search?        ### A sub-heading
+    - a checklist item                  1. a numbered step
+    (every line of the paragraph starts with the marker)
+
+and a link to an official source, only on the domains in `giftcoves.editorial_sources`
+(https; check the page exists, or link the home page):
+
+    [[source:https://www.consuwijzer.nl/|ConsuWijzer]]
+
+**Otherwise link with tokens, never a URL, markdown or HTML:**
 
     [[product:1234|the odd one]]   [[brand:Sony]]   [[search:draadloze koptelefoon]]
     [[guide:beste-koptelefoons]]   [[page:gift-whisperer]]
