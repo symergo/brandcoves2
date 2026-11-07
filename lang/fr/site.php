@@ -258,6 +258,7 @@ return [
         'all_shops' => 'Toutes les boutiques',
         'hide_shop' => 'Ne plus afficher :shop',
         'hidden_shops_one' => '1 boutique masquée',
+        'links_to' => 'Liens vers :shop',
         'hidden_shops' => ':count boutiques masquées',
         'show_all_shops' => 'Afficher toutes les boutiques',
         'shops_shown' => 'Boutiques affichées',

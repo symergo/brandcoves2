@@ -12,6 +12,7 @@ use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\Merchant;
+use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
 use App\Services\Catalogue\ProductSignals;
@@ -976,10 +977,64 @@ class SearchController extends Controller
             fn (array $lane) => [
                 'shop' => $lane['merchant']->displayName(),
                 'logo' => $lane['merchant']->faviconUrl(),
-                'items' => array_map($this->card(...), $lane['groups']),
+                // Where the column's links go, said once in its header.
+                'domain' => $this->shopDomain($lane['offers'][0] ?? null),
+                'items' => array_values(array_filter(array_map(
+                    fn (ProductGroup $group, Product $offer) => $this->laneCard($group, $offer),
+                    $lane['groups'],
+                    $lane['offers'],
+                ))),
             ],
             $lanes,
         );
+    }
+
+    /** The shop's own address without "www.", from its deep link; null when it has none. */
+    private function shopDomain(?Product $offer): ?string
+    {
+        $domain = $offer?->merchantDomain();
+
+        return $domain === null ? null : (string) preg_replace('/^www\./', '', $domain);
+    }
+
+    /**
+     * A row in a shop's column: the card, plus that shop's offer for it.
+     *
+     * The row opens the shop itself (owner, 2026-11-07: "link the products on
+     * the winkel view directly to the shop (affiliate link)"), so it carries
+     * the shop's own price rather than the cheapest of all shops.
+     *
+     * The shop's own affiliate link, as a plain anchor, never our redirector
+     * (owner, the same day: "don't use clickouts (not allowed by amazon), it
+     * should be clear that a link goes to the store"). So the URL is checked
+     * here, where the redirector would have (invariant 5:
+     * `hasSafeAffiliateUrl()`, https only), and the click is reported by the
+     * browser through the beacon, as Amazon's links on the product page are.
+     * The column's header names the shop's address once (`shopDomain()`): the
+     * affiliate URL itself is a network's tracking address (awin1.com) and
+     * says nothing about the shop. No safe link, no row: an offer with an
+     * unsafe URL is left out rather than drawn dead.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function laneCard(ProductGroup $group, Product $offer): ?array
+    {
+        if (! $offer->hasSafeAffiliateUrl()) {
+            return null;
+        }
+
+        return [
+            ...$this->card($group),
+            'shop' => [
+                'url' => $offer->affiliate_url,
+                'price' => $offer->price,
+                'direct' => true,
+                'beacon' => route('click.beacon', ['market' => $offer->market->value]),
+                'offerId' => $offer->id,
+                // Where the programme asks for it, as on the product page.
+                'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
+            ],
+        ];
     }
 
     /**

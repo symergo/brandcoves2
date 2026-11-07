@@ -40,10 +40,37 @@ interface SearchResults {
 const HIDDEN_SHOPS_KEY = 'bc:search:hidden-shops'
 
 /** One shop's row in the by-store view. */
+/**
+ * That shop's offer for a row in its column (SearchController::laneCard): the
+ * row opens the shop, with the shop's own price (owner, 2026-11-07).
+ */
+interface LaneOffer {
+    /** The shop's own affiliate link, never our redirector (checked on the server). */
+    url: string
+    price: number | null
+    direct: boolean
+    beacon: string | null
+    offerId: number
+    needsPriceTimestamp: boolean
+}
+
 interface Lane {
     shop: string
     logo: string | null
-    items: GroupCard[]
+    /** The shop's address, for "Links naar …" in the header; null when unknown. */
+    domain: string | null
+    items: (GroupCard & { shop: LaneOffer })[]
+}
+
+/** A direct link skips the redirector, so the browser reports the click (as on the product page). */
+function reportLaneClick(offer: LaneOffer): void {
+    if (!offer.direct || !offer.beacon) return
+
+    try {
+        navigator.sendBeacon?.(offer.beacon, new Blob([JSON.stringify({ offer: offer.offerId })], { type: 'application/json' }))
+    } catch {
+        // Analytics must never break an outbound click.
+    }
 }
 
 /** One filter that is on, drawn as a chip above the results. */
@@ -1056,7 +1083,7 @@ export default function Search({
                             </p>
                         )}
                         <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3">
-                            {lanes.filter((lane) => !hiddenShops.includes(lane.shop)).map(({ shop, logo, items }) => (
+                            {lanes.filter((lane) => !hiddenShops.includes(lane.shop)).map(({ shop, logo, domain, items }) => (
                                 /*
                                   Each shop is a card, not a stretch of column.
 
@@ -1118,7 +1145,21 @@ export default function Search({
                                                 }}
                                             />
                                         )}
-                                        <span className="truncate">{shop}</span>
+                                        <span className="min-w-0">
+                                            <span className="block truncate">{shop}</span>
+                                            {/*
+                                              Where every row in this column goes,
+                                              said once (owner, 2026-11-07: "it
+                                              should be clear that a link goes to
+                                              the store", then "don't mention the
+                                              store each time").
+                                            */}
+                                            {domain && (
+                                                <span className="block truncate text-xs font-normal text-ink-soft">
+                                                    {t('search.links_to', { shop: domain })}
+                                                </span>
+                                            )}
+                                        </span>
                                     </h2>
                                     {/* Hide this shop's column; the line above the columns brings it back. */}
                                     <button
@@ -1158,8 +1199,23 @@ export default function Search({
                                                 <div className="absolute top-1.5 right-1.5 z-10">
                                                     <SaveToList groupId={g.id} compact />
                                                 </div>
-                                                <Link
-                                                    href={`/${market.key}/p/${g.id}/${g.slug}`}
+                                                {/*
+                                                  Straight to this shop (owner,
+                                                  2026-11-07): the column is that
+                                                  shop's stock, so the row is its
+                                                  "Naar de winkel". The same link
+                                                  and rel as the product page's
+                                                  button: sponsored, because it
+                                                  is paid; noopener, a third party
+                                                  in a new tab; nofollow, so a
+                                                  page of them does not read as
+                                                  link-selling.
+                                                */}
+                                                <a
+                                                    href={g.shop.url}
+                                                    target="_blank"
+                                                    rel="sponsored noopener nofollow"
+                                                    onMouseDown={() => reportLaneClick(g.shop)}
                                                     className="flex gap-3 p-3 pr-14 transition hover:bg-cream"
                                                 >
                                                     {g.image && (
@@ -1211,12 +1267,18 @@ export default function Search({
                                                           the weight.
                                                         */}
                                                         <span className="mt-1.5 block">
+                                                            {/* Out to the shop: the column's header names it, once (owner, 2026-11-07). */}
+                                                            {/* Drawn, not the ↗ character: Windows renders that as a coloured emoji. */}
+                                                            <svg aria-hidden viewBox="0 0 16 16" className="float-right mt-1.5 h-3.5 w-3.5 text-ink-soft" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M5 11 11 5M6 5h5v5" />
+                                                            </svg>
                                                             <span className="text-base font-semibold text-ink">
-                                                                {g.minPrice === null
+                                                                {g.shop.price === null
                                                                     ? '-'
-                                                                    : formatPrice(g.minPrice, market)}
+                                                                    : formatPrice(g.shop.price, market)}
                                                             </span>
-                                                            {g.discountPercent !== null && (
+                                                            {/* The discount is the cheapest offer's: shown on that price only. */}
+                                                            {g.discountPercent !== null && g.shop.price === g.minPrice && (
                                                                 <span
                                                                     className="ml-1.5 text-sm font-medium text-accent"
                                                                     aria-label={t('product.off', {
@@ -1227,8 +1289,13 @@ export default function Search({
                                                                 </span>
                                                             )}
                                                         </span>
+                                                        {g.shop.needsPriceTimestamp && (
+                                                            <span className="mt-0.5 block text-2xs text-ink-soft">
+                                                                {t('product.price_as_of')}
+                                                            </span>
+                                                        )}
                                                     </span>
-                                                </Link>
+                                                </a>
                                             </li>
                                         ))}
                                     </ul>

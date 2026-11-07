@@ -7,6 +7,7 @@ namespace App\Services\Search;
 use App\Jobs\PullLiveSearch;
 use App\Jobs\RefreshSearchCache;
 use App\Models\Merchant;
+use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Connectors\ConnectorRegistry;
@@ -1314,7 +1315,10 @@ class SearchService
      * header. A name-keyed map could not — and two merchants are allowed to
      * share a display name across sources, which a map would silently merge.
      *
-     * @return list<array{merchant: Merchant, groups: list<ProductGroup>}>
+     * Each group carries the offer it is in that shop's column for (`offers`,
+     * same order): since 2026-11-07 a row opens that shop, not our product page.
+     *
+     * @return list<array{merchant: Merchant, groups: list<ProductGroup>, offers: list<Product>}>
      */
     public function storeLanes(SearchQuery $query): array
     {
@@ -1353,7 +1357,7 @@ class SearchService
         }
 
         $ranked = $offers
-            ->select('p.group_id', 'm.id as merchant_id', 'p.price')
+            ->select('p.id', 'p.group_id', 'm.id as merchant_id', 'p.price')
             ->selectRaw('row_number() OVER (PARTITION BY m.id ORDER BY p.price ASC NULLS LAST, p.id) as rn')
             ->get()
             ->filter(fn ($r) => $r->rn <= $cap)
@@ -1361,6 +1365,7 @@ class SearchService
 
         $groups = ProductGroup::query()->whereIn('id', $ids)->get()->keyBy('id');
         $merchants = Merchant::query()->whereIn('id', $ranked->keys())->get()->keyBy('id');
+        $offerModels = Product::query()->whereIn('id', $ranked->flatten(1)->pluck('id'))->get()->keyBy('id');
 
         $lanes = [];
 
@@ -1371,17 +1376,21 @@ class SearchService
                 continue;
             }
 
-            $laneGroups = $rows
-                ->map(fn ($r) => $groups->get($r->group_id))
-                ->filter()
-                ->values()
-                ->all();
+            // A row needs both its product and the shop's offer for it.
+            $pairs = $rows
+                ->map(fn ($r) => [$groups->get($r->group_id), $offerModels->get($r->id)])
+                ->filter(fn (array $pair) => $pair[0] !== null && $pair[1] !== null)
+                ->values();
 
-            if ($laneGroups === []) {
+            if ($pairs->isEmpty()) {
                 continue;
             }
 
-            $lanes[] = ['merchant' => $merchant, 'groups' => $laneGroups];
+            $lanes[] = [
+                'merchant' => $merchant,
+                'groups' => $pairs->pluck(0)->all(),
+                'offers' => $pairs->pluck(1)->all(),
+            ];
         }
 
         return $lanes;

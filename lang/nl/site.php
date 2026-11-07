@@ -257,6 +257,7 @@ return [
         'all_shops' => 'Alle winkels',
         'hide_shop' => ':shop niet meer tonen',
         'hidden_shops_one' => '1 winkel verborgen',
+        'links_to' => 'Links naar :shop',
         'hidden_shops' => ':count winkels verborgen',
         'show_all_shops' => 'Alle winkels tonen',
         'shops_shown' => 'Zichtbare winkels',

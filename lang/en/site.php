@@ -330,6 +330,7 @@ return [
         'all_shops' => 'All shops',
         'hide_shop' => 'Stop showing :shop',
         'hidden_shops_one' => '1 shop hidden',
+        'links_to' => 'Links to :shop',
         'hidden_shops' => ':count shops hidden',
         'show_all_shops' => 'Show all shops',
         'shops_shown' => 'Shops shown',

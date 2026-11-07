@@ -568,6 +568,20 @@ class SearchTest extends TestCase
 
         $this->assertSame(['Coolblue'], array_column($lanes, 'shop'));
         $this->assertNotEmpty($lanes[0]['items']);
+
+        // Each row opens that shop (owner, 2026-11-07): Coolblue's own offer,
+        // by its own affiliate link, never our redirector, with the click
+        // reported by the beacon.
+        foreach ($lanes[0]['items'] as $row) {
+            $offer = Product::query()->findOrFail($row['shop']['offerId']);
+
+            $this->assertSame($coolblue->id, $offer->merchant_id);
+            $this->assertSame($offer->affiliate_url, $row['shop']['url']);
+            $this->assertStringNotContainsString('/go/', $row['shop']['url']);
+            $this->assertSame($offer->price, $row['shop']['price']);
+            $this->assertTrue($row['shop']['direct']);
+            $this->assertNotNull($row['shop']['beacon']);
+        }
     }
 
     /**

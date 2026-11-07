@@ -1161,3 +1161,27 @@ view is a row of columns, and the other pages are text and cards that read worse
 grow too, since the page alone would only have shown more of the same 256px columns: 240px on a
 phone, 288px from `sm`, 320px from `xl`. At 1680px that is four whole columns and part of a fifth.
 The grid view keeps five cards a row, each wider.
+
+## The shop columns link straight to the shop (owner, 2026-11-07)
+
+"Link the products on the winkel view directly to the shop (affiliate link)", then "don't use
+clickouts (not allowed by amazon), it should be clear that a link goes to the store", then "don't
+mention the store each time".
+
+- **A row opens that shop**, not our product page: its own affiliate URL as a plain anchor, in a new
+  tab, `rel="sponsored noopener nofollow"`, never through our `/go/{offer}` redirector. The URL is
+  checked on the server first (`hasSafeAffiliateUrl()`, https only: invariant 5, which the
+  redirector used to apply), and the click is reported by the browser through the beacon
+  (`click.beacon`), the path Amazon's direct links already used. A row whose URL fails the check is
+  left out (`SearchController::laneCard`).
+- **The shop's own price**, not the cheapest of all shops: the link goes to this shop, so its price is
+  the one that applies. The discount badge shows only when this price is the one it is about.
+- **Where it goes, said once:** the column header reads "Links naar coolblue.be" (the shop's domain
+  from its deep link; the affiliate URL is a network's address, awin1.com, and says nothing). Each
+  row carries only a small drawn ↗, not the ↗ character, which Windows draws as a coloured emoji.
+- **Amazon.** It never has a column (invariant 6), so nothing here links to it. Its one link on the
+  page, "Vergelijk prijzen voor … op Amazon", already met the Associates rules and is unchanged: a
+  direct amazon URL carrying only the term and our tag, no redirect or shortener, no Amazon price,
+  `sponsored nofollow`, and the Associates statement in the footer.
+
+The save button stays on every row.
