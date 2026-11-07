@@ -12,6 +12,7 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Search',
+        'search_placeholder' => 'Search for your gift here',
         'submenu' => 'What is in :section',
         'gift' => 'Find a gift',
         'daily' => 'Daily Cove',

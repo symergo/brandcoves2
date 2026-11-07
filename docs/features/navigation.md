@@ -750,3 +750,15 @@ app.css, and everything else that sticks to the top reads it so nothing slides u
 entity, shared-list, list and taste pages. `scroll-padding-top` uses it too, so a link to
 `#something` lands with the heading clear of the bar. Solid rather than see-through: with a
 translucent bar the text scrolling under it showed through the logo on a phone.
+
+## The header search says what it is for (2026-11-07)
+
+Owner: "make the top search box more clear. placeholder: Zoek hier je cadeau". The field was a
+faint cream pill with the bare verb ("Zoek") as placeholder. It is now white with a firm dark
+border, the magnifier in front, and the sentence `nav.search_placeholder` (four languages). The
+sentence needs about 12rem; where the header leaves less, a container query shows the short word
+instead, because a placeholder cut in half reads as a fault. That is why the placeholder is drawn by
+two spans over the input rather than the `placeholder` attribute, which CSS cannot switch. Under
+7rem the magnifier link stays. Enter submits; the separate submit button went, the magnifier in
+front already says what the box does. Measured at 1280 and 1440: Dutch and French both get the
+full sentence.

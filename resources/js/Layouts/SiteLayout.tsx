@@ -46,6 +46,7 @@ import { useTranslations } from '../useTranslations'
 function HeaderSearch({ marketKey }: { marketKey: string }) {
     const { t } = useTranslations()
     const label = t('nav.search')
+    const placeholder = t('nav.search_placeholder')
 
     return (
         <div className="@container hidden max-w-sm min-w-9 flex-1 xl:block">
@@ -61,29 +62,39 @@ function HeaderSearch({ marketKey }: { marketKey: string }) {
                 }}
                 className="relative hidden @min-[7rem]:block"
             >
-                {/* The short word ("Search", "Rechercher") rather than the
-                    card's sentence: at its narrowest the field is 7rem, and a
-                    placeholder cut in half reads as a fault. */}
+                {/* "Zoek hier je cadeau" (owner, 2026-11-07): a sentence that
+                    says what the box is for, on white with a firm border and
+                    the magnifier in front, so it reads as the site's search at
+                    a glance instead of a faint pill. The sentence needs about
+                    12rem, and the header leaves less in some languages (141px
+                    in Belgian Dutch at 1280, docs/features/navigation.md), so
+                    the placeholder is drawn by two spans and a container
+                    query picks the sentence or the short word: a placeholder
+                    cut in half reads as a fault. Both hide once you type. */}
+                <ToolIcon
+                    name="search"
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink"
+                />
                 <input
                     type="search"
                     name="q"
-                    aria-label={label}
-                    placeholder={label}
-                    className="h-9 w-full rounded-full border border-line bg-cream pr-9 pl-4 text-sm text-ink placeholder:text-ink-soft focus:border-ink"
+                    aria-label={placeholder}
+                    placeholder=" "
+                    className="peer h-10 w-full rounded-full border-2 border-ink/70 bg-white pr-3 pl-9 text-sm text-ink shadow-sm focus:border-ink focus:ring-2 focus:ring-ink/10"
                 />
-                <button
-                    type="submit"
-                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-full text-ink-soft hover:text-ink"
+                <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0 left-9 flex items-center truncate text-sm text-ink/70 peer-[:not(:placeholder-shown)]:hidden"
                 >
-                    <ToolIcon name="search" className="h-4 w-4" />
-                    <span className="sr-only">{label}</span>
-                </button>
+                    <span className="hidden @min-[12rem]:inline">{placeholder}</span>
+                    <span className="@min-[12rem]:hidden">{label}</span>
+                </span>
             </form>
             <Link
                 href={`/${marketKey}/search`}
                 aria-label={label}
                 title={label}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-ink @min-[7rem]:hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink/70 bg-white text-ink hover:border-ink @min-[7rem]:hidden"
             >
                 <ToolIcon name="search" className="h-4 w-4" />
             </Link>

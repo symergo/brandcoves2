@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Buscar',
+        'search_placeholder' => 'Busca aquí tu regalo',
         'submenu' => 'Qué hay en :section',
         'gift' => 'Encontrar un regalo',
         'daily' => 'Cove Diaria',
