@@ -292,19 +292,23 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
               Two columns from `lg` up, one below it.
 
               The same shape the Daily edition and the personas have. The
-              article was already capped at `max-w-3xl` — a line past about
-              seventy characters is harder to read — and the rail uses the space
-              that cap was leaving empty on a wide screen rather than adding
-              any.
+              article fills its column, and the rail grows with the screen
+              (20rem, 26rem from `xl`, 30rem from `2xl`) instead: owner,
+              2026-11-07, "close the gap by both widening the left and right
+              content". The article used to be capped at `max-w-3xl`, and on
+              the 96rem page that left about 340px empty beside it. Widening the
+              rail as well keeps a line of text near 100 characters at 1536px
+              (about 790px of text at 1280) rather than the 140 it would reach
+              if the article alone took the room.
 
               Everything the article is goes in the left column, the shortlist
               and the FAQ included, so it is the taller of the two whatever the
               writing does. An advice article with three short paragraphs would
               otherwise end above a rail that ran on for another screen.
             */}
-            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 <div className="min-w-0">
-                    <article className="max-w-3xl">
+                    <article>
                         {/*
                           The drawing, on an advice article only.
 
@@ -447,7 +451,7 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
                     )}
 
                     {guide.faq && guide.faq.length > 0 && (
-                        <section className="mt-12 max-w-3xl">
+                        <section className="mt-12">
                             <h2 className="text-lg font-medium">{t('guides.faq')}</h2>
                             <dl className="mt-4 space-y-4">
                                 {guide.faq.map((pair, i) => (

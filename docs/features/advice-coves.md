@@ -346,3 +346,11 @@ site's save button, which saves an offline item with that name, picture and link
 with `url`, `title` and `imageUrl`). The server now keeps a picture given with an offline save
 (`WishlistItemController::store`), https only and only when no photo was uploaded; a picture read
 from the page later fills only a missing one.
+## The article fills its column (2026-11-07)
+
+Owner: "close the gap by both widening the left and right content". On the 96rem page the article,
+capped at `max-w-3xl` (768px), left about 340px empty beside it. The cap is gone and the right
+column grows with the screen instead: 20rem, 26rem from `xl`, 30rem from `2xl`. Widening both,
+rather than the article alone, keeps a line of text near 100 characters at 1536px (about 980px of
+text) and about 790px at 1280, instead of the 140 characters a full-width article would reach. The
+FAQ under the article lost the same cap. Applies to every guide page (`Guides/Show.tsx`).
