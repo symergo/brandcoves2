@@ -376,7 +376,10 @@ a row cannot fold a panel open, so inline made one feature two.
 `ScanButton`). Opening a popup adds a history entry; back pops it and closes the popup; closing it
 otherwise takes the entry off again. Its listener runs before Inertia's and stops the event,
 because Inertia answers `popstate` by mounting the page afresh (`preserveState: false`), which would
-lose what was typed and reopen a `?panel=` popup. Known leftover: a popup closed by navigating away,
+lose what was typed and reopen a `?panel=` popup. "Before Inertia's" has to be arranged: on `window`
+listeners run in the order they were added, capture or not, so `installBackCloses()` is called in
+`app.tsx` before `createInertiaApp`. Until 2026-11-07 it was added with the first popup, after
+Inertia's, and the list settings opened from the ⋯ on Mijn Coves would not close. Known leftover: a popup closed by navigating away,
 or by a save Inertia answers with a replaced entry, leaves one extra step back to the same page.
 
 **The row's share popup stays a popup** on My Coves, as the owner asked on 2026-09-27 (no trip to

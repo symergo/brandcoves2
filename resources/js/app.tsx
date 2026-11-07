@@ -5,6 +5,7 @@ import Layout from './Layouts/SiteLayout'
 import { installClickOutConversion, reportPageView, reportSignUp } from './analytics'
 import { ensureCsrfToken } from './http'
 import { rememberLeaving } from './previousPath'
+import { installBackCloses } from './useBackCloses'
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
@@ -25,6 +26,10 @@ http.onRequest(async (config) => {
 
     return config
 })
+
+// Before createInertiaApp: a popup's back must reach our listener before
+// Inertia's, which is added in there (useBackCloses.ts says why).
+installBackCloses()
 
 createInertiaApp({
     /*

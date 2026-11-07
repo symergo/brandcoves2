@@ -19,9 +19,18 @@ import { useEffect, useRef } from 'react'
  * Inertia answers every `popstate` by putting the page from the history entry
  * back, with `preserveState: false` (core's `handlePopstateEvent`): the page
  * would be mounted afresh, losing whatever was typed, and a list page opened
- * with `?panel=share` would open its popup again. A capture listener on
- * `window` runs before Inertia's ordinary one, and `stopImmediatePropagation`
- * keeps Inertia out of a back that only closed a popup.
+ * with `?panel=share` would open its popup again. `stopImmediatePropagation`
+ * keeps Inertia out of a back that only closed a popup, which works only if
+ * our listener runs before Inertia's.
+ *
+ * Capture does not make it run first. `popstate` fires on `window` itself, and
+ * at the target listeners run in the order they were added, capture or not
+ * (measured in Chromium, 2026-11-07). The listener used to be added when the
+ * first popup opened, so after Inertia's, and Inertia rebuilt the page on
+ * every close: Settings opened from the ⋯ on Mijn Coves (`?panel=settings`)
+ * came straight back after ×, Annuleren or Opslaan. `installBackCloses()` is
+ * called in app.tsx before `createInertiaApp`, which is where Inertia adds its
+ * own; the call in the hook stays as a fallback.
  *
  * ## Popups on popups
  *
@@ -58,6 +67,14 @@ function onPopstate(event: PopStateEvent) {
     top.close()
 }
 
+/** Add the one listener. Call before `createInertiaApp`, so it runs before Inertia's. */
+export function installBackCloses(): void {
+    if (listening || typeof window === 'undefined') return
+
+    window.addEventListener('popstate', onPopstate, true)
+    listening = true
+}
+
 /** `active`: for a popup that stays mounted and opens and closes (SignInDialog). */
 export function useBackCloses(onClose: () => void, active = true): void {
     const close = useRef(onClose)
@@ -66,10 +83,7 @@ export function useBackCloses(onClose: () => void, active = true): void {
     useEffect(() => {
         if (!active || typeof window === 'undefined') return
 
-        if (!listening) {
-            window.addEventListener('popstate', onPopstate, true)
-            listening = true
-        }
+        installBackCloses()
 
         const marker = Math.random().toString(36).slice(2)
         const entry = { marker, close: () => close.current() }
