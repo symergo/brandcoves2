@@ -333,3 +333,8 @@ specific product, and never claim a fact about one", from when advice had no sho
 writer had nothing to check a named product against. The owner removed it ("i don't know why it's
 there") for the gift-card guides, which compare named cards. What it guarded stays covered by the
 rule above it: never invent product names, figures or company policy.
+
+**And a shop's policy may be stated (owner, the same day).** "Never state a shop's own policy (its
+return window, its fees) as fact" went too: the gift-card guides are about exactly that, each
+issuer's validity, fees and terms. Inventing a policy is still ruled out ("never invent … company
+policy"); the guides date what they report ("volgens de voorwaarden, november 2026").

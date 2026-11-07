@@ -575,8 +575,6 @@ class Defaults
         - No product prices: they change, and a number here dates the article.
           An amount or a period set by a law or a regulator is a fact about that
           rule; state it with the rule it comes from.
-        - Never state a shop's own policy (its return window, its fees) as fact:
-          those change and differ per shop. Say what to look for and where.
         - No invented test results and no "we tested": nothing was tested.
         - No legal, medical or financial advice in absolute terms: explain the
           rule, and say when to get professional help.
