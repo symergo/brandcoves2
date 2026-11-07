@@ -4,9 +4,9 @@ Owner, 2026-11-07: "allow everywhere to change the name of an item on a list".
 
 ## What it does
 
-Every item on your own list can be renamed from its ⋯ menu. A hand-written item keeps the form it
-always had ("Aanpassen": name, link, price, photo, `EditManualItem`). A product from the catalogue
-gets "Naam wijzigen", one field under the card (`RenameItem`), with "Terug naar de naam van de
+Every item on your own list can be renamed from its ⋯ menu, "Aanpassen". A hand-written item keeps the form it
+always had (name, link, price, photo, `EditManualItem`). A product from the catalogue
+gets its name and a note under the card (`RenameItem`), with "Terug naar de naam van de
 winkel" once it has a name of your own.
 
 The name is shown wherever the item is: the list page, the shared list, Secret Santa, the price
@@ -33,3 +33,7 @@ so "going back" leaves nothing behind.
 
 `ManualItemTest::a_catalogue_item_keeps_the_snapshot_the_feed_gave_it` covers both halves: the
 record untouched, the name yours, and both ways back.
+
+**The note moved here too (the same day).** A product's note was written in the step before adding
+it. When one press began to add a found product as it is (inline-product-search.md), that step
+went, so `RenameItem` holds the note as well and the menu item is "Aanpassen" for every item.

@@ -101,9 +101,9 @@ export default function OwnItemMenu({
                     view === 'main' ? (
                         <>
                             {/*
-                              Every item: a hand-written one opens its whole
-                              form ("Aanpassen"), a product its name alone
-                              ("Naam wijzigen", RenameItem, 2026-11-07).
+                              Every item, "Aanpassen": a hand-written one opens
+                              its whole form, a product its name and note
+                              (RenameItem, 2026-11-07).
                             */}
                             <MenuItem
                                 icon={<ToolIcon name="edit" className="h-4 w-4" />}
@@ -112,7 +112,7 @@ export default function OwnItemMenu({
                                     onEdit()
                                 }}
                             >
-                                {manual ? t('lists.edit_item') : t('lists.rename_item')}
+                                {t('lists.edit_item')}
                             </MenuItem>
                             {/* Nowhere to copy to is no item, not a dead one. */}
                             {targets.length > 0 && (

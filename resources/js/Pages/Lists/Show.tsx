@@ -584,6 +584,7 @@ export default function ListShow({
                                         action={`${base}/list-items/${item.id}`}
                                         title={item.title}
                                         productTitle={item.productTitle}
+                                        note={item.note}
                                         onDone={() => setEditingItem(null)}
                                     />
                                 )}

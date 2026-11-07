@@ -147,6 +147,11 @@ class ManualItemTest extends TestCase
         $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => 'For the train'])->assertRedirect();
         $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => 'Sony WH-1000XM5'])->assertRedirect();
         $this->assertNull($item->refresh()->custom_title);
+
+        // The note goes with it, from the same form: one press adds a product
+        // without the step that used to ask for one.
+        $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => 'Sony WH-1000XM5', 'note' => 'in black'])->assertRedirect();
+        $this->assertSame('in black', $item->refresh()->note);
     }
 
     #[Test]
