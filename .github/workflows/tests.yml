@@ -45,6 +45,21 @@ jobs:
           --health-timeout 5s
           --health-retries 20
 
+      # Some tests reach Redis directly (Predis on 127.0.0.1:6379) even though
+      # phpunit.xml sets the cache to `array`. Without this service about 200
+      # of them errored with "Connection refused", and CI on main was red from
+      # 2026-10-25 to 2026-11-07 while the laptop, which runs Redis in Docker,
+      # stayed green. Redis 7, as in production and docker-compose.yml.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
     steps:
       - uses: actions/checkout@v4
 

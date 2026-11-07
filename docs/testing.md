@@ -147,7 +147,9 @@ the file anyway, recreate it locally, pinned to `DB_DATABASE=brandcoves_test`.
 ## Two gates: the hook and CI
 
 `.github/workflows/tests.yml` runs the suite on GitHub for every push and pull request, against a
-real `postgres:16-alpine` service. **This is the gate.** It cannot be skipped with `--no-verify`,
+real `postgres:16-alpine` service and a `redis:7-alpine` one (since 2026-11-07: some tests reach
+Redis directly, and without it CI was red from 2026-10-25 while the laptop, with Redis in Docker,
+was green). **This is the gate.** It cannot be skipped with `--no-verify`,
 does not depend on anything a clone remembered to configure, and applies to pushes from machines
 nobody has set up at all — a GitHub web edit, a second laptop, a merge performed in the browser.
 
