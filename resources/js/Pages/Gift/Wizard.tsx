@@ -940,9 +940,23 @@ export default function GiftWizard(props: Props) {
                 />
             ) : stage === 'who' ? (
                 <section className="mt-8" aria-labelledby="gift-who">
-                    <h2 id="gift-who" className="text-lg font-medium">
-                        {t('gift.who_title')}
-                    </h2>
+                    {/*
+                      "Sla over" beside the question, not under ten buttons and
+                      a row of people (owner, 2026-11-07): the way past it is
+                      seen at the same moment as the question.
+                    */}
+                    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                        <h2 id="gift-who" className="text-lg font-medium">
+                            {t('gift.who_title')}
+                        </h2>
+                        <button
+                            type="button"
+                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark underline underline-offset-2 hover:text-ink sm:min-h-0"
+                            onClick={() => useKind(null)}
+                        >
+                            {t('gift.who_skip')} →
+                        </button>
+                    </div>
 
                     {/*
                       "Voor mezelf" first and larger than a chip (owner,
@@ -992,10 +1006,6 @@ export default function GiftWizard(props: Props) {
                             </div>
                         </div>
                     )}
-
-                    <button type="button" className="mt-6 text-sm text-ink-soft underline hover:text-ink" onClick={() => useKind(null)}>
-                        {t('gift.who_skip')}
-                    </button>
                 </section>
             ) : stage === 'ways' ? (
                 <section className="mt-8" aria-labelledby="gift-ways">

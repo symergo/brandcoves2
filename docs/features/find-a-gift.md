@@ -312,3 +312,7 @@ pill ("Voor Lea"). It now repeats the choice in the look it had when it was pres
 "Voor mezelf" card, the person's own card from the picker (selected, with its check), or the red
 relationship button (`choiceCard`, the same as the choice row). The person card opens the choice
 again, like Wijzig beside it. Nobody in particular keeps the pill, because nothing was picked.
+
+**"Sla over" beside the question (owner, 2026-11-07).** It sat under "Voor mezelf", the people
+and ten relationship buttons, where it was found last. It is now a red link with an arrow right
+after "Voor wie zoek je een cadeau?", so the way past the question is seen with the question.
