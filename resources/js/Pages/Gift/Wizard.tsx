@@ -759,22 +759,58 @@ export default function GiftWizard(props: Props) {
     const showResults = picks !== null && !editing
 
     /** "For Mum · change", above the ways and the questions. */
+    const changeWho = () => {
+        setEditing(false)
+        setStage('who')
+    }
+
+    /*
+     * Who it is for, drawn as it was chosen (owner, 2026-11-07): the
+     * "Voor mezelf" card, the person's card or the relationship button, each
+     * in its chosen state, so the answer is recognisably the one picked. A
+     * pressed person card leads back to the choice, as Wijzig does. Nobody in
+     * particular stays the small "Voor iemand" pill: nothing was picked.
+     */
+    const chosenPerson: PickablePerson | null =
+        recipient === null
+            ? null
+            : (pickable.find((p) => p.personId === recipient.id) ?? {
+                  key: `p:${recipient.id}`,
+                  name: recipient.name,
+                  relationship: recipient.relationship,
+                  personId: recipient.id,
+                  friend: null,
+              })
+
     const forLine = !card && (
-        <p className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">
-                {whoLabel ? t('gift.for_label', { who: whoLabel }) : t('gift.for_someone')}
-            </span>
-            <button
-                type="button"
-                className="text-accent underline"
-                onClick={() => {
-                    setEditing(false)
-                    setStage('who')
-                }}
-            >
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+            {forMe ? (
+                <span className="flex items-center gap-3 rounded-card border border-accent bg-accent px-5 py-3 text-base font-medium text-white">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/20">
+                        <ToolIcon name="wishlist" className="h-5 w-5" />
+                    </span>
+                    {t('gift.who_me')}
+                </span>
+            ) : chosenPerson !== null ? (
+                // One card: the picker's two- and three-column grid would make it a third as wide.
+                <div className="w-full sm:w-80 [&_ul]:grid-cols-1!">
+                    <PersonPicker
+                        variant="compact"
+                        people={[chosenPerson]}
+                        isChosen={() => true}
+                        onChoose={changeWho}
+                        trailing={() => t('gift.change')}
+                    />
+                </div>
+            ) : kind !== null && whoLabel ? (
+                <span className={choiceCard(true)}>{whoLabel}</span>
+            ) : (
+                <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">{t('gift.for_someone')}</span>
+            )}
+            <button type="button" className="text-accent underline" onClick={changeWho}>
                 {t('gift.change')}
             </button>
-        </p>
+        </div>
     )
 
     return (

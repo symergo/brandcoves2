@@ -304,3 +304,11 @@ the Community Coves are retrieval and arithmetic (invariant 1). `FindAGiftTest` 
 [gift-personas.md](gift-personas.md), [crowd-picks.md](crowd-picks.md),
 [offline-ideas.md](offline-ideas.md), [community-coves.md](community-coves.md),
 [gift-history.md](gift-history.md), [ask-others.md](ask-others.md), [navigation.md](navigation.md).
+
+## Who it is for, drawn as it was chosen (owner, 2026-11-07)
+
+Once "who is it for?" is answered, the line above the next steps used to say it in a small pink
+pill ("Voor Lea"). It now repeats the choice in the look it had when it was pressed: the red
+"Voor mezelf" card, the person's own card from the picker (selected, with its check), or the red
+relationship button (`choiceCard`, the same as the choice row). The person card opens the choice
+again, like Wijzig beside it. Nobody in particular keeps the pill, because nothing was picked.
