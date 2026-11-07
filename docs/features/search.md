@@ -1212,3 +1212,14 @@ cards of their own), owner's design after a short discussion:
 - **Gone from the card, at the owner's word the same day:** "vanaf" before the price, "x
   aanbiedingen · bij x winkels" (the bottom link carries the count) and "Op de lijst van … mensen"
   (the "In … Coves" half of that line stays).
+
+## A slider above the shop columns (owner, 2026-11-07)
+
+"On the store view: make the UX better (maybe add a slider above the columns that facilitates the
+sliding?)". The columns scroll sideways, and the only way along with a mouse was the thin native
+scrollbar under them, a screen down on a long column. `LaneScroller` puts a bar above them: an arrow
+either side that moves one column (the first column's width plus the gap), and between them a range
+input showing where you are among the shops, which moves the columns as it is dragged. A real range
+input, so the keyboard and a screen reader can use it. The arrows grey out at the ends, with an 8px
+margin because snapping leaves the columns 4px off the edge. The bar shows only when the columns do
+not all fit, and the native scrollbar is hidden; a swipe on a phone or trackpad still scrolls.

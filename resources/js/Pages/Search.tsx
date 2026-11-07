@@ -13,6 +13,7 @@ import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import ToolIcon from '../Components/ToolIcon'
+import LaneScroller from '../Components/LaneScroller'
 import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import type { SharedProps } from '../types'
 import { formatBudget, formatPrice } from '../types'
@@ -1082,7 +1083,7 @@ export default function Search({
                                 </button>
                             </p>
                         )}
-                        <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3">
+                        <LaneScroller>
                             {lanes.filter((lane) => !hiddenShops.includes(lane.shop)).map(({ shop, logo, domain, items }) => (
                                 /*
                                   Each shop is a card, not a stretch of column.
@@ -1311,7 +1312,7 @@ export default function Search({
                                     </ul>
                                 </section>
                             ))}
-                        </div>
+                        </LaneScroller>
                         </>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
