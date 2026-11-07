@@ -1331,6 +1331,21 @@ return [
         'citizensadvice.org.uk',
         'consumo.gob.es',
         'ocu.org',
+        // Added 2026-11-07 for the gift-card guides: the Belgian Chamber (bills),
+        // FOD WASO (werk.belgie.be), the RSZ (socialsecurity.be) and the National
+        // Labour Council (cnt-nar.be), which set the ecocheque rules; the Dutch
+        // courts' rulings (rechtspraak.nl). All government bodies.
+        'dekamer.be',
+        'lachambre.be',
+        'belgie.be',
+        'belgique.be',
+        'socialsecurity.be',
+        'cnt-nar.be',
+        'rechtspraak.nl',
+        // The Dutch Government Gazette (laws as published) and the House of
+        // Representatives (answers to parliamentary questions).
+        'officielebekendmakingen.nl',
+        'tweedekamer.nl',
     ],
 
     /*
