@@ -121,13 +121,14 @@ export default function AddProduct({
     const { term, setTerm, groups, live, link, linkRefused, searching, searched } = found
 
     /*
-     * How a result is chosen; the whole row is the press either way. On the
-     * list page it leads to the wording step, then onto the list. Elsewhere
-     * (Find a gift's "Weet je al wat je zoekt?") one press puts it on the list
-     * as it is (owner, 2026-11-07: "make adding to list a one-click step ...
-     * no save to list needed"): the shop's name, no note, renamed later from
-     * the list if wanted. The panel stays open, so several go on in a row, and
-     * each added row shows it.
+     * How a result is chosen: one press on the row puts it on the list as it
+     * is (owner, 2026-11-07: "make adding to list a one-click step ... no
+     * save to list needed", first on Find a gift's "Weet je al wat je
+     * zoekt?", then "the Product toevoegen button on a list should give the
+     * same experience"). The shop's name and no note; a name of your own is
+     * given afterwards from the item's menu (item-names.md). The panel stays
+     * open, so several go on in a row, and each added row says so. Only a
+     * hand-typed item still has a form: without one there is nothing to add.
      */
     const [added, setAdded] = useState<Set<string>>(new Set())
     const [adding, setAdding] = useState<string | null>(null)
@@ -137,7 +138,9 @@ export default function AddProduct({
         setAdding(key)
         router.post(
             `${base}/list-items`,
-            { wishlist_id: listId, note: null, on_list_page: false, ...payload },
+            // `on_list_page`: on the list the server answers with the new row
+            // (tinted where it lands); elsewhere with "Bewaard in …".
+            { wishlist_id: listId, note: null, on_list_page: onListPage, ...payload },
             {
                 preserveScroll: true,
                 preserveState: true,
@@ -148,14 +151,11 @@ export default function AddProduct({
         )
     }
 
-    const pick = (key: string, chosenNext: Chosen, oneClick: Record<string, unknown>) =>
-        onListPage
-            ? { onPick: () => choose(chosenNext) }
-            : {
-                  onPick: () => (added.has(key) || adding !== null ? undefined : addNow(key, oneClick)),
-                  done: added.has(key),
-                  busy: adding === key,
-              }
+    const pick = (key: string, oneClick: Record<string, unknown>) => ({
+        onPick: () => (added.has(key) || adding !== null ? undefined : addNow(key, oneClick)),
+        done: added.has(key),
+        busy: adding === key,
+    })
 
     const [chosen, setChosen] = useState<Chosen | null>(null)
     const [title, setTitle] = useState('')
@@ -408,7 +408,7 @@ export default function AddProduct({
                                     title={g.title}
                                     price={g.price}
                                     badge={groupBadge(g)}
-                                    {...pick(`g${g.id}`, { kind: 'group', hit: g }, { title: g.title, group_id: g.id })}
+                                    {...pick(`g${g.id}`, { title: g.title, group_id: g.id })}
                                 />
                             ))}
                             {live.map((l) => (
@@ -418,7 +418,7 @@ export default function AddProduct({
                                     title={l.title}
                                     price={l.price}
                                     badge={l.merchant}
-                                    {...pick(`l${l.source}-${l.externalId}`, { kind: 'live', hit: l }, {
+                                    {...pick(`l${l.source}-${l.externalId}`, {
                                         title: l.title,
                                         source: l.source,
                                         external_id: l.externalId,

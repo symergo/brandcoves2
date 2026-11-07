@@ -29,9 +29,9 @@ gains a feature; that is how pasted links and the barcode reached some of them a
 - `SearchField`: the field, the barcode (fills the field and searches in place) and the magnifier.
   A form, so Enter searches and a phone shows a Search key; `nested` draws the same thing without a
   form where it sits inside one (the answer on Ask others).
-- `HitList` and `HitRow`: the rows. A row is either one button (`onPick`, the list page, where
-  choosing leads to the wording step) or a row with its own control at the end (`action`) and the
-  title linking to the product.
+- `HitList` and `HitRow`: the rows. A row is either one button (`onPick`: the add panel, where one
+  press puts the product on the list, see below) or a row with its own control at the end (`action`)
+  and the title linking to the product. `done` and `busy` draw a one-press add landing and on its way.
 - `useListSearch(base)`: the request to `/list-search`, on Enter only (the live half costs requests
   to shops), latest answer wins. A refused request (signed out, throttled) is reported as a failure,
   not as "nothing found".
@@ -106,3 +106,16 @@ gains a feature; that is how pasted links and the barcode reached some of them a
 [list-surfaces.md](list-surfaces.md), [find-a-gift.md](find-a-gift.md),
 [gifting-lenses.md](gifting-lenses.md), [pasted-links.md](pasted-links.md),
 [save-button.md](save-button.md), [ask-others.md](ask-others.md).
+
+## One press adds it (owner, 2026-11-07)
+
+"Make adding to list a one-click step ... make the full item clickable", first for Find a gift's
+"Weet je al wat je zoekt?", then "the Product toevoegen button on a list should give the same
+experience", and "add it immediately to the list, don't offer title change". In `AddProduct`, a
+press on a catalogue or live result now posts it straight onto the list (`addNow`) with the shop's
+name and no note; there is no wording step for a found product any more. The results stay open so
+several go on in a row, and each added row is tinted and says "Op de lijst". On the list page the
+new item appears under the panel, tinted where it lands (`on_list_page`); elsewhere the "Bewaard in
+…" message names the list. A name of your own is given afterwards from the item's ⋯ menu
+([item-names.md](item-names.md)); the note likewise. A hand-typed item ("Voeg een offline artikel
+toe") keeps its form, since without one there is nothing to add.
