@@ -41,54 +41,19 @@ class SearchCovesAndSignalsTest extends TestCase
     }
 
     #[Test]
-    public function the_coves_row_holds_published_coves_of_this_market_that_match_the_term(): void
+    public function the_coves_row_above_the_products_is_gone(): void
     {
-        $this->cove('koffie-voor-thuis', 'Koffie voor thuis', CoveKind::Guide);
-        $this->cove('dagelijkse-koffie', 'Vandaag', CoveKind::Daily, blurb: 'Alles voor de beste koffie.');
-        $this->cove('koffie-concept', 'Koffie in ontwerp', CoveKind::Guide, published: false);
-        $this->cove('koffie-nederland', 'Koffie in Nederland', CoveKind::Guide, market: Market::NlNl);
-        $this->cove('thee', 'Thee voor de winter', CoveKind::Persona);
-
-        $coves = $this->props(['q' => 'koffie'])['coves'];
-
-        $this->assertEqualsCanonicalizing(
-            ['/be-nl/guides/koffie-voor-thuis', '/be-nl/tips/dagelijkse-koffie'],
-            array_column($coves, 'url'),
-        );
-        // The title outranks a word in the blurb.
-        $this->assertSame('/be-nl/guides/koffie-voor-thuis', $coves[0]['url']);
-        $this->assertSame('guide', $coves[0]['kind']);
-    }
-
-    #[Test]
-    public function a_community_cove_is_found_by_its_public_title_only_and_only_while_public(): void
-    {
-        $shown = $this->communityCove('Koffie voor een papa', 'papa-koffie-aaaaaa');
-        $this->communityCove('Voor papa', 'papa-bbbbbb', privateTitle: 'Koffie voor Jan');
-        $hidden = $this->communityCove('Koffie hidden', 'koffie-hidden-cccccc');
-        $hidden->forceFill(['public_hidden_at' => now()])->save();
-        $this->communityCove('Koffie, te dun', 'koffie-dun-dddddd', products: 2);
-        $this->communityCove('Koffie in Nederland', 'koffie-nl-eeeeee', market: Market::NlNl);
-
-        $coves = $this->props(['q' => 'koffie'])['coves'];
-
-        $this->assertSame(['/be-nl/coves/community/'.$shown->public_slug], array_column($coves, 'url'));
-        $this->assertSame('community', $coves[0]['kind']);
-        // Nothing private rides along with the card.
-        $this->assertStringNotContainsString('Jan', (string) json_encode($coves));
-    }
-
-    #[Test]
-    public function the_coves_row_is_left_out_past_page_one(): void
-    {
+        // Owner, 2026-11-07: "remove the coves hierover section".
         $this->cove('koffie-voor-thuis', 'Koffie voor thuis', CoveKind::Guide);
 
-        $this->assertSame([], $this->props(['q' => 'koffie', 'page' => 2])['coves']);
-        $this->assertSame('/be-nl/coves', $this->props(['q' => 'koffie'])['covesUrl']);
+        $props = $this->props(['q' => 'koffie']);
+
+        $this->assertArrayNotHasKey('coves', $props);
+        $this->assertArrayNotHasKey('covesUrl', $props);
     }
 
     #[Test]
-    public function each_card_says_how_many_people_keep_it_only_past_the_threshold(): void
+    public function each_card_says_how_many_coves_it_is_in(): void
     {
         $popular = $this->product('Koffiemolen handmatig');
         $rare = $this->product('Koffiemolen elektrisch');
@@ -109,14 +74,15 @@ class SearchCovesAndSignalsTest extends TestCase
 
         $cards = collect($this->props(['q' => 'koffiemolen'])['results']['items'])->keyBy('id');
 
-        $this->assertSame('Op de lijsten van 3 mensen', $cards[$popular->id]['kept']);
-        $this->assertSame('In 1 Cove', $cards[$rare->id]['kept'], 'Two people is under the threshold; the Cove still counts.');
+        // "Op de lijst van … mensen" left the card on 2026-11-07 (owner); the Coves stay.
+        $this->assertNull($cards[$popular->id]['kept']);
+        $this->assertSame('In 1 Cove', $cards[$rare->id]['kept']);
 
         // A claim changes nothing: being bought is not being wanted.
         Cache::flush();
         $claimed->forceFill(['claimed_by_hash' => str_repeat('b', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
         $cards = collect($this->props(['q' => 'koffiemolen'])['results']['items'])->keyBy('id');
-        $this->assertSame('Op de lijsten van 3 mensen', $cards[$popular->id]['kept']);
+        $this->assertNull($cards[$popular->id]['kept']);
     }
 
     #[Test]

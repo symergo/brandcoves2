@@ -27,7 +27,6 @@ use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Search\CheapestOffer;
-use App\Services\Search\CoveMatches;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Search\ParsedIntent;
 use App\Services\Search\SearchLanding;
@@ -196,8 +195,7 @@ class SearchController extends Controller
 
         /*
          * The follow-up wants `live` and nothing else: Inertia merges it into
-         * the page already on screen. So it stops here, before the Coves row,
-         * the related words, the filter counts, the signals per card and the
+         * the page already on screen. So it stops here, before the related words, the filter counts, the signals per card and the
          * page copy, which the full render below computes and the follow-up
          * would only throw away. The stored search above stays: it says which
          * products the page showed (served from the id cache the first
@@ -241,17 +239,7 @@ class SearchController extends Controller
                 ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search, $current))
                 : null,
 
-            /*
-             * The Coves this term matches, as a row of small cards above the
-             * products: ours and the lists people published, this market,
-             * published only (CoveMatches). Page one only, where a reader
-             * starts; not for a gift sentence, whose words are a brief rather
-             * than a subject.
-             */
-            'coves' => $landing === null && $gift === null && $query->page === 1
-                ? app(CoveMatches::class)->for($current->get(), $query->term)
-                : [],
-            'covesUrl' => $current->url('coves'),
+            // No "Coves hierover" row above the products since 2026-11-07 (owner).
 
             // The reading of a gift search, shown above its results. Null for
             // every ordinary search.

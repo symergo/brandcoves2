@@ -13,7 +13,6 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
-use App\Services\Search\CoveMatches;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
@@ -323,10 +322,10 @@ class SearchThinLiveTest extends TestCase
     }
 
     /**
-     * The follow-up returns `live` and computes nothing else of the page.
-     * Checked on the Coves row: after the first request, CoveMatches is
-     * replaced by a fake that must not be called. (A query count would not
-     * do: the full page's extras are partly cached by then.)
+     * The follow-up returns `live` and nothing else of the page: no results,
+     * no filters. (It was checked on the Coves row's lookup, which must not
+     * run; that row went on 2026-11-07, and nothing else is computed only by
+     * the full page.)
      */
     #[Test]
     public function the_follow_up_computes_only_the_live_answer(): void
@@ -335,14 +334,15 @@ class SearchThinLiveTest extends TestCase
         $url = '/be-nl/search?q=tuinkabouter';
         $version = $this->get($url)->viewData('page')['version'];
 
-        $this->mock(CoveMatches::class, fn ($mock) => $mock->shouldNotReceive('for'));
-
         $this->get($url, [
             'X-Inertia' => 'true',
             'X-Inertia-Version' => (string) $version,
             'X-Inertia-Partial-Component' => 'Search',
             'X-Inertia-Partial-Data' => 'live',
-        ])->assertOk()->assertJsonPath('props.live.added', 1);
+        ])->assertOk()
+            ->assertJsonPath('props.live.added', 1)
+            ->assertJsonMissingPath('props.results')
+            ->assertJsonMissingPath('props.facets');
     }
 
     /** The follow-up runs the search again; it must not count the person twice. */

@@ -7,7 +7,6 @@ import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
-import SearchCoves, { type SearchCove } from '../Components/SearchCoves'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
@@ -149,10 +148,6 @@ interface Props {
     narrative: Narrative | null
     intro: BlockPayload[] | null
     emptyCopy: BlockPayload[] | null
-    /** Coves the term matches, for the row above the products. Empty past page one. See CoveMatches. */
-    coves: SearchCove[]
-    /** Where "All Coves" goes: /{market}/coves. */
-    covesUrl: string
 }
 
 /**
@@ -239,8 +234,6 @@ export default function Search({
     narrative,
     intro,
     emptyCopy,
-    coves,
-    covesUrl,
 }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -799,13 +792,6 @@ export default function Search({
                       Google alike.
                     */}
                     <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
-
-                    {/*
-                      The Coves this term matches, before the products: ours and
-                      the lists people published, as one row of small cards.
-                      Chosen by CoveMatches; page one only.
-                    */}
-                    <SearchCoves coves={coves} allUrl={covesUrl} />
 
                     {/*
                       The narrowing pills: a row that scrolls sideways on a

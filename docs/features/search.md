@@ -1226,3 +1226,12 @@ its thumb, with what the range input gave kept: `role="slider"` with its value, 
 Page Up/Down, Home and End. The arrows grey out at the ends, with an 8px
 margin because snapping leaves the columns 4px off the edge. The bar shows only when the columns do
 not all fit, and the native scrollbar is hidden; a swipe on a phone or trackpad still scrolls.
+
+## No "Coves hierover" row (owner, 2026-11-07)
+
+"Remove the coves hierover section." The row of small Cove cards above the products is gone, with
+what fed it: `CoveMatches` (one lookup per first page of every search) and `SearchCoves`, which
+nothing else used. The search page's `coves` and `covesUrl` props went too. The cards keep "In …
+Coves" under the price where a product is in one. `SearchThinLiveTest` used that lookup to prove the
+live follow-up computes nothing else; it now checks the follow-up's answer holds no results and no
+filters.
