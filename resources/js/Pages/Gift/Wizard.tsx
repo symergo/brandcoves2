@@ -28,6 +28,7 @@ import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
 import TastePairs from '../../Components/TastePairs'
+import { choiceCard } from '../../choiceCard'
 
 interface Option {
     value: string
@@ -947,7 +948,7 @@ export default function GiftWizard(props: Props) {
                                         key={option.value}
                                         type="button"
                                         aria-pressed={recipient === null && relationship === option.value}
-                                        className={chip(recipient === null && relationship === option.value)}
+                                        className={choiceCard(recipient === null && relationship === option.value)}
                                         onClick={() => useKind(option.value)}
                                     >
                                         {option.label}

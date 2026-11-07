@@ -5,6 +5,7 @@ import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 import PersonPicker, { type PickablePerson } from './PersonPicker'
+import { choiceCard } from '../choiceCard'
 
 /**
  * The answers to "who is it for?". Three are list kinds; `santa` is a Secret
@@ -46,6 +47,8 @@ export interface WizardOffer {
     occasions: { value: string; label: string; date: string | null }[]
     /** My own lists, about myself: what a Secret Friend group may be pointed at. */
     myLists: { id: string; title: string }[]
+    /** "Who are they to you?": the person page's choices (RecipientType). */
+    relationships?: { value: string; label: string }[]
 }
 
 interface Props extends WizardOffer {
@@ -105,7 +108,7 @@ export function hasListDraft(): boolean {
  * The list page then opens with the add field focused, so the next thing to do
  * is paste or search.
  */
-export default function ListWizard({ signedIn, recipients, friends, myLists, initialKind, onCancel }: Props) {
+export default function ListWizard({ signedIn, recipients, friends, myLists, relationships = [], initialKind, onCancel }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -120,6 +123,7 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
         recipient_id: '',
         new_recipient: '',
         friend_id: '' as string | number,
+        relationship: '',
         together: initialKind === 'group',
         // The Secret Friend group's own fields. `title` is its name there.
         budget_max: '',
@@ -240,6 +244,15 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
     const personName = (person?.name ?? form.data.new_recipient).trim()
 
     /*
+     * "Who are they to you?", optional (owner, 2026-11-07). Asked once there is
+     * somebody, and only when nothing is saved for them yet: a person whose
+     * relationship is known is not asked again here, and the server never
+     * overwrites one either. It is changed on the person's page.
+     */
+    const askRelationship =
+        kind !== 'mine' && kind !== 'santa' && relationships.length > 0 && personName !== '' && !person?.relationship
+
+    /*
      * The name follows the choice until somebody types one: "Wish list",
      * "Gifts for Sara", "Together for Sara". The server writes the same words
      * when the field arrives empty (ListMaker::defaultTitle), so clearing it
@@ -289,6 +302,7 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
             recipient_id: forSomeone ? data.recipient_id || null : null,
             new_recipient: forSomeone && data.recipient_id === '' && data.friend_id === '' ? data.new_recipient : null,
             friend_id: forSomeone && data.friend_id !== '' ? data.friend_id : null,
+            relationship: askRelationship && data.relationship !== '' ? data.relationship : null,
             together: kind === 'group',
         }))
 
@@ -529,6 +543,29 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, ini
                                 className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
                             />
                         </div>
+                    )}
+
+                    {askRelationship && (
+                        <fieldset className="sm:col-span-2">
+                            <legend className="text-sm font-medium">
+                                {t('people.relationship')} <span className="font-normal text-ink-soft">({t('wizard.optional')})</span>
+                            </legend>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {relationships.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={form.data.relationship === option.value}
+                                        className={choiceCard(form.data.relationship === option.value)}
+                                        onClick={() =>
+                                            form.setData('relationship', form.data.relationship === option.value ? '' : option.value)
+                                        }
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </fieldset>
                     )}
 
                     <div className="sm:col-span-2">

@@ -1199,6 +1199,7 @@ return [
     ],
 
     'wizard' => [
+        'optional' => 'optioneel',
         'kind_hint' => 'Dit bepaalt wat de lijst kan. Later niet te veranderen.',
         'kind_mine_body' => 'Wat jij graag wilt. Deel je hem, dan claimen anderen wat ze kopen. Jij ziet nooit wat of wie.',
         'kind_for_someone_body' => 'Deel de lijst, stel hem samen op en zie welke cadeaus al gekocht worden.',
@@ -2445,6 +2446,7 @@ return [
         'find_ask' => 'Vraag het aan anderen: beschrijf voor wie je iets zoekt en anderen stellen iets voor. Kies aan wie je het vraagt: de GiftCoves-gemeenschap, op het openbare bord (we lezen je vraag eerst na), of alleen je mensen: je vrienden op GiftCoves krijgen meteen een melding, en je krijgt een link om te sturen naar wie je wilt. Die vraag staat niet op het bord. Bij Jouw vragen vind je de link van elke vraag terug. Vanuit Cadeau vinden of vanuit een lijst over iemand is je vraag al ingevuld met wat we weten (nooit de naam), en ideeën uit de antwoorden zet je meteen op die lijst. Staat je vraag op het bord, dan horen je vrienden op GiftCoves het; dat uitzetten, of hun vragen niet meer krijgen, kan bij je meldingen.',
         'find_history' => 'Wat jij met "Ik koop dit" aanduidde op lijsten voor iemand, laten we weg uit nieuwe ideeën voor die persoon. Wat anderen aanduidden telt niet mee. Op de pagina van die persoon (open ze vanuit een lijst voor hen of vanuit Cadeau vinden) stellen we de volgende stap voor, zoals koffiebonen na een moka-potje.',
         'find_reminders' => 'Bewaar een verjaardag of een gelegenheid voor iemand en we sturen je een herinnering per e-mail. Zo’n twee weken vooraf brengt die drie ideeën mee die passen bij de persoon, het budget en wat je eerder gaf, met één klik om ze in Cadeau vinden te bekijken of in een lijst voor hen te bewaren. Stoppen kan via de link in elke herinnering.',
+        'find_relationship' => 'Maak je een lijst voor iemand anders, dan kun je meteen kiezen wie die persoon voor je is, zoals mama of een collega. Het hoeft niet, en je past het later aan op de pagina van die persoon, onder Meer: Naam, relatie en verjaardag.',
         'find_taste' => 'Weet je niet goed wat iemand leuk vindt? In Dit of dat kies je een tiental keer tussen twee producten. Zo vinden we hun smaak en een budget, tonen we ideeën, en kun je het resultaat bij een persoon bewaren.',
         'find_taste_together' => 'Weet je niet goed wat iemand leuk vindt, en de anderen ook niet? Maak op de lijst voor die persoon een Dit of dat-link en stuur hem rond. Iedereen speelt over die persoon zonder account, en jij ziet hoeveel mensen speelden en wat ze samen vonden, nooit wie wat koos. Met één druk voeg je het toe aan die persoon.',
         'find_taste_card' => 'Dit of dat voor jezelf gespeeld? Maak een cadeauprofielkaart, zoals "koffie, wandelen, ongeveer €30 tot €60", en stuur de link naar wie een cadeau voor je koopt. Die opent Cadeau vinden met jouw smaak al ingevuld. Geen naam tenzij je er een typt, en je kunt hem altijd verwijderen.',
@@ -2573,7 +2575,7 @@ return [
         'lists_for_none' => 'Nog geen lijst voor :name. Begin er een om ideeën te verzamelen of samen te geven.',
         'new_list' => 'Maak een Cove',
         'list_actions' => 'Acties voor :name',
-        'edit_details' => 'Naam en verjaardag',
+        'edit_details' => 'Naam, relatie en verjaardag',
         'send_profile_link' => 'Stuur hun profiellink',
         'send_profile_link_tip' => 'Via deze link zegt :name zelf wat ze leuk vinden. Ze zien niet wat jij voor hen kiest.',
         'save' => 'Opslaan',

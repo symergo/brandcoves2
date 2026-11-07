@@ -64,6 +64,7 @@ interface Props {
     recipients: { id: string; name: string; birthday: string | null }[]
     friends: { id: number; name: string; recipientId: string | null; birthday: string | null }[]
     occasions: { value: string; label: string; date: string | null }[]
+    relationships: { value: string; label: string }[]
 }
 
 /**
@@ -136,6 +137,7 @@ export default function GiftCove({
     recipients,
     friends,
     occasions,
+    relationships,
 }: Props) {
     const { t, n } = useTranslations()
 
@@ -220,6 +222,7 @@ export default function GiftCove({
                     friends={friends}
                     occasions={occasions}
                     myLists={myLists}
+                    relationships={relationships}
                 />
             </div>
 

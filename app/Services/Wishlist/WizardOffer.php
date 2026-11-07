@@ -42,6 +42,7 @@ final class WizardOffer
      *     recipients: list<array{id: string, name: string, relationship: string|null, birthday: string|null, next: array{date: string, days: int, kind: string, title: null}|null}>,
      *     occasions: list<array{value: string, label: string, date: string|null}>,
      *     myLists: list<array{id: string, title: string}>,
+     *     relationships: list<array{value: string, label: string}>,
      * }
      */
     public function for(Owner $owner, ?User $user, Market $market): array
@@ -165,6 +166,13 @@ final class WizardOffer
                     ->values()
                     ->all()
                 : [],
+
+            /*
+             * "Who are they to you?", optional, on a list for somebody who has
+             * no relationship saved yet (owner, 2026-11-07). The same choices
+             * as the person page, so the two never offer different words.
+             */
+            'relationships' => RecipientType::options(),
         ];
     }
 

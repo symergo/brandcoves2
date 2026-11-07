@@ -9,6 +9,7 @@ use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\RecipientStatus;
+use App\Enums\RecipientType;
 use App\Enums\Source;
 use App\Models\Friendship;
 use App\Models\ListQuiz;
@@ -362,6 +363,14 @@ class WishlistController extends Controller
             'friend_id' => ['nullable', 'integer'],
 
             /*
+             * Who the person is to you, optional (owner, 2026-11-07). Saved on
+             * the person only while they have none, so picking somebody whose
+             * relationship is known never rewrites it from here; the person
+             * page is where it is changed.
+             */
+            'relationship' => ['nullable', 'string', Rule::in(RecipientType::values())],
+
+            /*
              * What the wizard on the Gift Cove asks about, step by step.
              *
              * Every one of these has always been settable, on the list page,
@@ -425,6 +434,10 @@ class WishlistController extends Controller
         );
 
         $this->applyWizardSettings($list, $owner, $validated, $current);
+
+        if (filled($validated['relationship'] ?? null) && $list->recipient !== null && blank($list->recipient->relationship)) {
+            $list->recipient->forceFill(['relationship' => $validated['relationship']])->save();
+        }
 
         $redirect = redirect()->to($current->url("lists/{$list->id}"));
 

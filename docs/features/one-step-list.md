@@ -93,6 +93,15 @@ asking.
   resets the scroll to the top when a visit finishes, so on a phone the cursor sat a screen and a
   half down, out of sight. It now scrolls the field into view (`block: 'nearest'`) a moment after
   mounting; on a desktop screen where it is already visible, nothing moves.
+- **"Wie is het voor jou?", optional (owner, 2026-11-07).** Once a list for somebody else has a
+  person, the relationship choices appear as buttons (the person page's `RecipientType` list, sent by
+  `WizardOffer` as `relationships`); pressing the chosen one again clears it. Only while nothing is
+  saved for that person: a picked person with a relationship is not asked, and the server writes
+  `relationship` only onto a blank (`WishlistController::store`), so this screen never corrects
+  what the person page holds. Changing it is on the person page, under ⋯, whose item is now called
+  "Naam, relatie en verjaardag" (it was "Naam en verjaardag", which hid that the relationship was
+  there). The buttons share `choiceCard()` with the relationship buttons on Find a gift, styled like
+  its "Voor mezelf" (owner, the same day).
 
 ## Files
 

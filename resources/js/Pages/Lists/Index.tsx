@@ -52,7 +52,7 @@ interface Props extends WizardOffer {
     isSignedIn: boolean
 }
 
-export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn, savedCoves }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, relationships, isSignedIn, savedCoves }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -193,6 +193,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                         friends={friends}
                         occasions={occasions}
                         myLists={myLists}
+                        relationships={relationships}
                         initialKind={initialKind}
                         onCancel={() => setCreating(false)}
                     />

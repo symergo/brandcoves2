@@ -1194,6 +1194,7 @@ return [
     ],
 
     'wizard' => [
+        'optional' => 'facultatif',
         'kind_hint' => 'Cela décide ce que la liste peut faire. Impossible à changer ensuite.',
         'kind_mine_body' => 'Ce qui vous ferait plaisir. Partagez-la et chacun réserve ce qu’il offre. Vous ne voyez jamais quoi ni qui.',
         'kind_for_someone_body' => 'Partagez la liste, composez-la ensemble et voyez quels cadeaux sont déjà achetés.',
@@ -2432,6 +2433,7 @@ return [
         'find_ask' => 'Demandez aux autres : décrivez pour qui vous cherchez et d’autres personnes proposent quelque chose. Choisissez à qui vous demandez : la communauté GiftCoves, sur le tableau public (nous lisons d’abord votre question), ou seulement vos proches : vos amis sur GiftCoves reçoivent tout de suite une notification, et vous recevez un lien à envoyer à qui vous voulez. Cette question n’est pas sur le tableau. Sous Vos questions, vous retrouvez le lien de chacune de vos questions.Depuis « Trouver un cadeau » ou depuis une liste pour quelqu’un, la question est déjà remplie avec ce que nous savons (jamais le nom), et les idées des réponses s’ajoutent directement à cette liste. Une fois votre question publiée, vos amis sur GiftCoves en sont informés ; vous pouvez le désactiver, ou ne plus recevoir leurs questions, dans vos notifications.',
         'find_history' => 'Ce que vous avez marqué « Je m’en occupe » sur les listes pour quelqu’un n’apparaît plus dans les nouvelles idées pour cette personne. Ce que d’autres ont marqué ne compte pas. Sur sa page (ouvrez-la depuis une liste pour elle ou depuis « Trouver un cadeau »), nous proposons l’étape suivante, comme du café en grains après une cafetière italienne.',
         'find_reminders' => 'Enregistrez un anniversaire ou une occasion pour quelqu’un et nous vous envoyons un rappel par e-mail. Environ deux semaines avant, le rappel apporte trois idées adaptées à la personne, à son budget et à ce que vous avez déjà offert, avec un clic pour les voir dans « Trouver un cadeau » ou les ajouter à sa liste. Arrêtez les e-mails depuis le lien de n’importe quel rappel.',
+        'find_relationship' => "Quand vous faites une liste pour quelqu'un d'autre, vous pouvez dire tout de suite qui c'est pour vous, comme votre maman ou un collègue. Ce n'est pas obligatoire, et vous le changez plus tard sur sa page, sous Plus : Nom, lien et anniversaire.",
         'find_taste' => 'Vous ne savez pas ce que quelqu’un aime ? Dans Ceci ou cela, vous choisissez une douzaine de fois entre deux produits. Nous en tirons ses goûts et un budget, montrons des idées, et vous pouvez garder le résultat pour une personne.',
         'find_taste_together' => 'Vous ne savez pas ce que quelqu’un aime, et les autres non plus ? Sur la liste pour cette personne, créez un lien Ceci ou cela et faites-le circuler. Chacun joue pour cette personne sans compte, et vous voyez combien ont joué et ce qu’ils ont trouvé ensemble, jamais qui a choisi quoi. Ajoutez-le à la personne d’un seul geste.',
         'find_taste_card' => 'Vous avez joué à Ceci ou cela pour vous-même ? Créez une carte de profil cadeau, comme « café, marche, environ 30 € à 60 € », et envoyez son lien à ceux qui vous offrent des cadeaux. Elle ouvre l’Assistant cadeau avec vos goûts déjà remplis. Aucun nom sauf si vous en tapez un, et vous pouvez la supprimer à tout moment.',
@@ -2560,7 +2562,7 @@ return [
         'lists_for_none' => 'Pas encore de liste pour :name. Commencez-en une pour rassembler des idées ou offrir ensemble.',
         'new_list' => 'Créer une Cove',
         'list_actions' => 'Actions pour :name',
-        'edit_details' => 'Nom et anniversaire',
+        'edit_details' => 'Nom, lien et anniversaire',
         'send_profile_link' => 'Envoyer son lien de profil',
         'send_profile_link_tip' => 'Avec ce lien, :name dit elle-même ce qu\'elle aime. Elle ne voit pas ce que vous choisissez pour elle.',
         'save' => 'Enregistrer',

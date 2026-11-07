@@ -1396,6 +1396,7 @@ return [
     ],
 
     'wizard' => [
+        'optional' => 'optional',
         'kind_hint' => 'This decides what the list can do. It cannot be changed later.',
         'kind_mine_body' => 'What you would like. Share it and people claim what they are getting. You never see what or who.',
         'kind_for_someone_body' => 'Share the list, build it together and see which presents are already being bought.',
@@ -2701,6 +2702,7 @@ return [
         'find_ask' => 'Ask others: describe who you are buying for and other people suggest something. Choose who you ask: the GiftCoves community, on the public board (we read your question first), or only your people: your friends on GiftCoves get a notification straight away, and you get a link to send to anyone you like. That question is not on the board. Under Your questions you find the link to each of your questions again.From Find a gift or from a list about somebody, the question is filled in with what we know (never their name), and ideas from the answers save straight onto that list. Once your question is on the board, your friends on GiftCoves hear about it; switch that off, or stop hearing about theirs, on your notifications page.',
         'find_history' => 'What you marked "I\'ll get this" on lists for someone stays out of new ideas for them. What anybody else marked does not count. On their page (open it from a list for them or from Find a gift) we suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in Find a gift or add them to their list. Stop the emails from the link in any reminder.',
+        'find_relationship' => 'When you make a list for somebody else, you can say straight away who they are to you, such as your mum or a colleague. You do not have to, and you change it later on their page, under More: Name, relationship and birthday.',
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
         'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens Find a gift with your taste filled in. No name unless you type one, and you can remove it any time.',
@@ -2829,7 +2831,7 @@ return [
         'lists_for_none' => 'No list for :name yet. Start one to collect ideas or to give together.',
         'new_list' => 'Make a Cove',
         'list_actions' => 'Actions for :name',
-        'edit_details' => 'Name and birthday',
+        'edit_details' => 'Name, relationship and birthday',
         'send_profile_link' => 'Send their profile link',
         'send_profile_link_tip' => 'Through this link :name says what they like themselves. They do not see what you pick for them.',
         'save' => 'Save',

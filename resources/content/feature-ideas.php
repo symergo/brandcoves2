@@ -405,4 +405,24 @@ return [
             'body' => 'Una búsqueda muestra al momento lo que ya conocemos. Si encontramos poco, miramos después también en las propias tiendas, y sus productos se añaden abajo. Si tarda un poco, ves dónde aparecerán los productos, y un consejo.',
         ],
     ],
+    'relationship-when-making-a-list' => [
+        'status' => 'done',
+        'sort' => 99,
+        'nl' => [
+            'title' => 'Wie is het voor jou?',
+            'body' => 'Maak je een lijst voor iemand anders, dan kun je meteen kiezen wie die persoon voor je is: mama, een vriend, een collega. Dat hoeft niet. Aanpassen kan later op de pagina van die persoon, via Meer en dan Naam, relatie en verjaardag.',
+        ],
+        'en' => [
+            'title' => 'Who are they to you?',
+            'body' => 'When you make a list for somebody else, you can say straight away who they are to you: your mum, a friend, a colleague. You do not have to. You can change it later on their page, under More, then Name, relationship and birthday.',
+        ],
+        'fr' => [
+            'title' => 'Qui est-ce pour vous ?',
+            'body' => "Quand vous faites une liste pour quelqu'un d'autre, vous pouvez dire tout de suite qui c'est pour vous : votre maman, un ami, un collègue. Ce n'est pas obligatoire. Vous pouvez le changer plus tard sur sa page, sous Plus, puis Nom, lien et anniversaire.",
+        ],
+        'es' => [
+            'title' => '¿Quién es para ti?',
+            'body' => 'Cuando haces una lista para otra persona, puedes decir enseguida quién es para ti: tu madre, un amigo, un compañero. No es obligatorio. Puedes cambiarlo después en su página, en Más y luego Nombre, relación y cumpleaños.',
+        ],
+    ],
 ];

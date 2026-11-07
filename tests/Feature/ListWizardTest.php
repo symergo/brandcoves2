@@ -150,6 +150,43 @@ class ListWizardTest extends TestCase
     }
 
     #[Test]
+    public function the_relationship_asked_at_creation_fills_a_blank_and_never_overwrites(): void
+    {
+        // Asked once, optionally, when the list is made (owner, 2026-11-07).
+        // The person page is where a known relationship is changed.
+        $owner = $this->user();
+
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'new_recipient' => 'Lien',
+            'relationship' => 'sibling',
+        ])->assertRedirect();
+
+        $this->assertSame(
+            'sibling',
+            Recipient::query()->where('owner_user_id', $owner->id)->where('name', 'Lien')->value('relationship'),
+        );
+
+        $mama = Recipient::query()->create(['owner_user_id' => $owner->id, 'name' => 'Mama', 'relationship' => 'mother']);
+
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'recipient_id' => $mama->id,
+            'relationship' => 'friend',
+        ])->assertRedirect();
+
+        $this->assertSame('mother', $mama->fresh()?->relationship);
+
+        // Only the person page's choices.
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'new_recipient' => 'Bob',
+            'relationship' => 'nemesis',
+        ])->assertSessionHasErrors('relationship');
+
+        // Offered to the wizard on both pages.
+        $props = $this->actingAs($owner)->get('/be-nl/lists')->assertOk()->viewData('page')['props'];
+        $this->assertContains('sibling', array_column($props['relationships'], 'value'));
+    }
+
+    #[Test]
     public function an_occasion_that_knows_its_own_date_brings_it(): void
     {
         $owner = $this->user();

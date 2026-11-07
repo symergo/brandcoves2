@@ -1193,6 +1193,7 @@ return [
     ],
 
     'wizard' => [
+        'optional' => 'opcional',
         'kind_hint' => 'Esto decide qué puede hacer la lista. No se puede cambiar después.',
         'kind_mine_body' => 'Lo que te gustaría. Compártela y cada persona reserva lo que regala. Nunca ves qué ni quién.',
         'kind_for_someone_body' => 'Comparte la lista, hazla entre todos y ve qué regalos ya se están comprando.',
@@ -2430,6 +2431,7 @@ return [
         'find_ask' => 'Pregunta a los demás: describe para quién buscas y otras personas sugieren algo. Elige a quién preguntas: la comunidad de GiftCoves, en el tablón público (primero leemos tu pregunta), o solo tu gente: tus amigos en GiftCoves reciben un aviso enseguida, y tú recibes un enlace para enviarlo a quien quieras. Esa pregunta no está en el tablón. En Tus preguntas encuentras de nuevo el enlace de cada una de tus preguntas.Desde «Encontrar un regalo» o desde una lista sobre alguien, la pregunta ya viene rellenada con lo que sabemos (nunca el nombre), y las ideas de las respuestas se añaden directamente a esa lista. Cuando tu pregunta está publicada, tus amigos en GiftCoves se enteran; puedes desactivarlo, o dejar de recibir sus preguntas, en tus notificaciones.',
         'find_history' => 'Lo que marcaste con «Yo lo regalo» en listas para alguien queda fuera de las nuevas ideas para esa persona. Lo que marcaron otros no cuenta. En su página (ábrela desde una lista para esa persona o desde «Encontrar un regalo») proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en «Encontrar un regalo» o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',
+        'find_relationship' => 'Cuando haces una lista para otra persona, puedes decir enseguida quién es para ti, como tu madre o un compañero. No es obligatorio, y lo cambias después en su página, en Más: Nombre, relación y cumpleaños.',
         'find_taste' => '¿No sabes qué le gusta a alguien? En Esto o aquello eliges una docena de veces entre dos productos. Averiguamos sus gustos y un presupuesto, te mostramos ideas y puedes guardar el resultado en una persona.',
         'find_taste_together' => '¿No sabes qué le gusta a alguien, y los demás tampoco? En la lista para esa persona, crea un enlace de Esto o aquello y compártelo. Cada uno juega sobre esa persona sin cuenta, y tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué. Añádelo a la persona con un solo clic.',
         'find_taste_card' => '¿Has jugado a Esto o aquello para ti? Crea una tarjeta de perfil de regalo, como «café, senderismo, entre 30 € y 60 €», y envía su enlace a quien te hace regalos. Abre «Encontrar un regalo» con tus gustos ya rellenados. Sin nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',
@@ -2558,7 +2560,7 @@ return [
         'lists_for_none' => 'Aún no hay lista para :name. Empieza una para reunir ideas o regalar en grupo.',
         'new_list' => 'Crear una Cove',
         'list_actions' => 'Acciones para :name',
-        'edit_details' => 'Nombre y cumpleaños',
+        'edit_details' => 'Nombre, relación y cumpleaños',
         'send_profile_link' => 'Enviar su enlace de perfil',
         'send_profile_link_tip' => 'Con este enlace, :name dice por sí misma lo que le gusta. No ve lo que eliges para ella.',
         'save' => 'Guardar',
