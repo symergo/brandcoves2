@@ -164,4 +164,29 @@ class TasteDeckTest extends TestCase
 
         $this->assertSame($ids, array_values(array_unique($ids)));
     }
+
+    /**
+     * The block sample that replaced sorting a whole market at random
+     * (2026-11-07). Figures from production that day: 3.8 million rows in
+     * the table, a first sample finding 1,400 be-nl rows, en finding 4.
+     */
+    #[Test]
+    public function the_sample_share_starts_low_corrects_once_and_gives_way_to_the_sort(): void
+    {
+        // First guess: as if every row counted, so it never reads too much.
+        $first = TasteDeck::samplePercent(5000, 3_800_949, null, null);
+        $this->assertEqualsWithDelta(0.1315, $first, 0.001);
+
+        // Corrected from what it found, with a margin of a half.
+        $this->assertEqualsWithDelta(0.1315 * 1.5 * 5000 / 1400, TasteDeck::samplePercent(5000, 3_800_949, 0.1315, 1400), 0.0001);
+
+        // A small market would need a large part of the table: sort instead.
+        $this->assertNull(TasteDeck::samplePercent(5000, 3_800_949, 0.1315, 4));
+        $this->assertNull(TasteDeck::samplePercent(5000, 3_800_949, 0.1315, 0));
+
+        // A small table (the test database), or one Postgres never measured
+        // (reltuples is -1): sort.
+        $this->assertNull(TasteDeck::samplePercent(5000, 2000, null, null));
+        $this->assertNull(TasteDeck::samplePercent(5000, -1, null, null));
+    }
 }

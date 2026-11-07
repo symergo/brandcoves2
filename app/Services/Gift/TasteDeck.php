@@ -7,8 +7,9 @@ namespace App\Services\Gift;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Models\ProductGroup;
+use App\Support\BackgroundCache;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -82,9 +83,9 @@ final class TasteDeck
     private const PROVEN_CANDIDATES = 200;
 
     /**
-     * How long a market's pool is kept (see pool()). Ten minutes: the same
-     * window as the search caches, and long enough that the random sorts run
-     * a few times an hour instead of on every card batch.
+     * How long a market's pool counts as fresh (see pool()). Ten minutes: the
+     * same window as the search caches. Past it the old pool is still served
+     * while the queue builds the next, so no visitor waits for a rebuild.
      */
     private const POOL_TTL = 600;
 
@@ -508,40 +509,139 @@ final class TasteDeck
      * The work the per-request draw did, the two random sorts and the
      * interest guessing, is paid once per window.
      *
+     * ## Never rebuilt while a visitor waits (2026-11-07)
+     *
+     * Until then this was a `Cache::remember`, so whoever arrived after the
+     * ten minutes ran out paid for the rebuild: about 3 s on a warm database,
+     * and 24.9 s for the owner opening Swipe gifts three minutes after a
+     * deploy. Now an expired pool is still served while RefreshCachedValue
+     * rebuilds it on the queue (BackgroundCache, the popular searches' cache).
+     * Only a pool that is not cached at all is built in the request, because
+     * an empty deck is no page; with the sampling below that costs tens of
+     * milliseconds, not seconds.
+     *
      * @return array{tagged: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>, other: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>}
      */
     private function pool(Market $market): array
     {
-        return Cache::remember('bc:taste-deck:pool:'.$market->value, self::POOL_TTL, function () use ($market): array {
-            $interests = '{'.implode(',', array_map(
-                fn (string $v) => '"'.GiftTags::interest($v).'"',
-                Interest::values(),
-            )).'}';
+        $key = self::POOL_KEY.$market->value;
 
-            /*
-             * The operator `?|` (written `??|` past PDO), which the GIN
-             * indexes on both tag columns serve. The `::text like` it
-             * replaces read every giftable row. See SearchService's tag
-             * filter for the same change.
-             */
-            $tagged = $this->base($market, [])
-                ->where(fn (Builder $q) => $q
-                    ->whereRaw('product_groups.gift_tags ??| ?::text[]', [$interests])
-                    ->orWhereRaw('product_groups.crowd_tags ??| ?::text[]', [$interests]))
-                ->inRandomOrder()
-                ->limit(self::POOL_TAGGED)
-                ->get(self::POOL_COLUMNS);
+        return BackgroundCache::remember($key, self::POOL_TTL, [self::class, 'buildPool'], [$market])
+            ?? BackgroundCache::rebuild($key, [self::class, 'buildPool'], [$market]);
+    }
 
-            $other = $this->base($market, [])
+    /**
+     * Version 2 since 2026-11-07: BackgroundCache stores the value with the
+     * time it was built, which the plain array under the old key did not have.
+     */
+    private const POOL_KEY = 'bc:taste-deck:pool:v2:';
+
+    /**
+     * The pool, built now. Only through BackgroundCache (pool()).
+     *
+     * @return array{tagged: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>, other: list<array{id: int, price: int|null, tags: list<string>, crowd: list<string>, guessed: list<string>}>}
+     */
+    public function buildPool(Market $market): array
+    {
+        $interests = '{'.implode(',', array_map(
+            fn (string $v) => '"'.GiftTags::interest($v).'"',
+            Interest::values(),
+        )).'}';
+
+        /*
+         * The operator `?|` (written `??|` past PDO), which the GIN
+         * indexes on both tag columns serve. The `::text like` it
+         * replaces read every giftable row. See SearchService's tag
+         * filter for the same change. A random sort is fine here: the tags
+         * narrow be-nl to some 18,000 rows, 0.3 s on production.
+         */
+        $tagged = $this->base($market, [])
+            ->where(fn (Builder $q) => $q
+                ->whereRaw('product_groups.gift_tags ??| ?::text[]', [$interests])
+                ->orWhereRaw('product_groups.crowd_tags ??| ?::text[]', [$interests]))
+            ->inRandomOrder()
+            ->limit(self::POOL_TAGGED)
+            ->get(self::POOL_COLUMNS);
+
+        return [
+            'tagged' => $this->worthChoosing($tagged),
+            'other' => $this->worthChoosing($this->drawOther($market)),
+        ];
+    }
+
+    /**
+     * POOL_OTHER random giftable products, without sorting the market.
+     *
+     * `order by random()` over the whole market read and sorted every
+     * giftable row: 1,058,388 in be-nl, 2.7 s on a warm database (measured
+     * 2026-11-07), and the reason the 24.9 s visit happened. A block sample
+     * (`TABLESAMPLE SYSTEM`) reads a small share of the table's pages instead,
+     * and the random sort runs on what it found: 0.5% of the pages gave 5,256
+     * be-nl rows from 236 brands in 13 ms, against 159 brands in the 2,500 the
+     * full sort chose. Rows in one page tend to come from one feed, which is
+     * why the sample takes about twice what it keeps: the sort then picks
+     * across many pages, not a few whole ones.
+     *
+     * The share is guessed from the table size, then corrected once from
+     * what the first sample found, because each market holds a different
+     * share of the table. A market so small that the sample would read a
+     * large part of the table (en: 12,456 giftable rows of 3.8 million) takes
+     * the plain sort, which its index already makes cheap.
+     *
+     * @return Collection<int, ProductGroup>
+     */
+    private function drawOther(Market $market): Collection
+    {
+        $rows = (float) (DB::selectOne("select reltuples from pg_class where relname = 'product_groups'")->reltuples ?? 0);
+        $percent = self::samplePercent(self::POOL_OTHER * 2, $rows, null, null);
+
+        for ($try = 0; $try < 2 && $percent !== null; $try++) {
+            $found = $this->base($market, [])
+                ->fromRaw('product_groups tablesample system ('.number_format($percent, 4, '.', '').')')
                 ->inRandomOrder()
                 ->limit(self::POOL_OTHER)
                 ->get(self::POOL_COLUMNS);
 
-            return [
-                'tagged' => $this->worthChoosing($tagged),
-                'other' => $this->worthChoosing($other),
-            ];
-        });
+            if ($found->count() >= self::POOL_OTHER) {
+                return $found;
+            }
+
+            $percent = self::samplePercent(self::POOL_OTHER * 2, $rows, $percent, $found->count());
+        }
+
+        return $this->base($market, [])
+            ->inRandomOrder()
+            ->limit(self::POOL_OTHER)
+            ->get(self::POOL_COLUMNS);
+    }
+
+    /**
+     * Above this share of the table a sample saves too little: the plain
+     * sort over the market's index is the cheaper read.
+     */
+    private const SAMPLE_MAX_PERCENT = 10.0;
+
+    /**
+     * What share of the table's pages to sample to find `$want` rows, or null
+     * for "don't sample, sort".
+     *
+     * First guess (`$tried` null): as if every row in the table counted,
+     * which is right for none of the markets and too low for all of them,
+     * so it never reads more than needed. Corrected guess: scaled by what
+     * the last sample found, with a margin of a half, because a block sample
+     * varies from run to run.
+     */
+    public static function samplePercent(int $want, float $tableRows, ?float $tried, ?int $found): ?float
+    {
+        if ($tableRows <= 0) {
+            return null;
+        }
+
+        $percent = $tried === null
+            ? 100.0 * $want / $tableRows
+            : ($found > 0 ? $tried * 1.5 * $want / $found : self::SAMPLE_MAX_PERCENT * 2);
+
+        return $percent > self::SAMPLE_MAX_PERCENT ? null : max($percent, 0.01);
     }
 
     /** The columns a pool row is built from: nothing a card prints. */

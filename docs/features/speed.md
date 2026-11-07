@@ -691,6 +691,11 @@ show eight. Now a per-market pool of a few thousand plain rows (id, price, tags,
 is cached for 10 minutes, a request samples from it in PHP with the same shares, and only the shown
 products are loaded. See [taste-discovery.md](taste-discovery.md).
 
+Since 2026-11-07 the pool is rebuilt on the queue, never in the request that finds it expired
+(`BackgroundCache`), and its random half comes from a block sample instead of a random sort over
+the whole market: 13 ms instead of 2.7 s on a warm database, after a 24.9 s Swipe gifts visit
+right after a deploy.
+
 ### Check on staging after the push
 
 - Search for a word the catalogue lacks and bol has: the page answers without the old wait, and a

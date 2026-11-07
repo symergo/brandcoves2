@@ -71,6 +71,23 @@ Nobody gives a quiz more than about a dozen rounds, so each round has to teach s
   products it shows, with the columns a card prints. The tagged read uses the `?|` operator, which
   the tag GIN indexes serve. A product that went out of stock since the pool was drawn is dropped
   with its round. Plain arrays, not models, because the cache refuses to rebuild objects.
+- **The pool is never rebuilt while a visitor waits, and the random draw no longer sorts the
+  market (2026-11-07).** The owner opened Swipe gifts three minutes after a deploy and waited
+  24.9 s: the pool had expired, and the request that found it expired rebuilt it. The random 2,500
+  came from `order by random()` over every giftable product of the market, 1,058,388 rows in be-nl,
+  2.7 s on a warm database and far more on a cold one. Two changes:
+  - The pool is a `BackgroundCache` value (`bc:taste-deck:pool:v2:{market}`), like the popular
+    searches: past its ten minutes it is still served while `RefreshCachedValue` builds the next
+    one on the queue. Only a pool that is not cached at all is built in the request, because an
+    empty deck is no page.
+  - The random 2,500 come from a block sample (`TABLESAMPLE SYSTEM`) that reads a small share of
+    the table's pages and sorts only what it found: 0.5% of the pages gave 5,256 be-nl rows from 236
+    brands in 13 ms, against 159 brands in the 2,500 the full sort chose. `samplePercent()` guesses
+    the share from the table size, corrects it once from what the first sample found, and gives
+    way to the plain sort when it would read over 10% of the table (en, with 12,456 giftable rows,
+    and the test database). The sample takes twice what it keeps because rows in one page tend to
+    come from one feed. The tagged half keeps its random sort: the tag indexes narrow it to some
+    18,000 rows, 0.3 s.
 - **The page asks for the next four rounds while two are still left**, sending the choices so far
   and every id on screen or queued, so the next pair is ready and nothing repeats. The rules above
   are relaxed one at a time when the pool is thin (rival, then price, then shared interest), so a
