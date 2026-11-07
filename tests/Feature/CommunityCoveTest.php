@@ -470,7 +470,5 @@ class CommunityCoveTest extends TestCase
         $html = (string) $this->get("/be-nl/coves/community/{$list->public_slug}")->getContent();
         $this->assertDoesNotMatchRegularExpression('/<meta name="robots" content="noindex/', $html);
 
-        $sitemap = (string) $this->get('/sitemap/be-nl/1.xml')->getContent();
-        $this->assertStringContainsString("/be-nl/coves/community/{$list->public_slug}", $sitemap);
     }
 }

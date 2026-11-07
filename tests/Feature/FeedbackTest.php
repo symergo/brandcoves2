@@ -191,7 +191,7 @@ class FeedbackTest extends TestCase
     }
 
     #[Test]
-    public function the_form_is_reachable_from_the_menu_and_the_sitemap(): void
+    public function the_form_is_reachable_from_the_menu(): void
     {
         /*
          * The menu points at `/help` now, which carries this form under the
@@ -203,10 +203,6 @@ class FeedbackTest extends TestCase
         // And the old address keeps answering: it was in the menu and the
         // footer for months and is in people's history.
         $this->get('/be-nl/feedback')->assertRedirect('/be-nl/help');
-
-        $this->get('/sitemap/be-nl/1.xml')
-            ->assertOk()
-            ->assertSee('/be-nl/help', escape: false);
     }
 
     /**

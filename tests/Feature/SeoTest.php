@@ -538,11 +538,54 @@ class SeoTest extends TestCase
         $this->assertStringNotContainsString("/be-nl/p/{$group->id}/{$group->slug}", $xml);
         $this->assertStringNotContainsString('/p/', $xml);
 
-        // The editorial surfaces are still listed, and still carry hreflang in
-        // the sitemap as well as the head: Google treats the two as independent
-        // signals and picks the sitemap up faster on a new URL.
-        $this->assertStringContainsString('<loc>'.url('/be-nl/search').'</loc>', $xml);
-        $this->assertStringContainsString('hreflang="fr-BE"', $xml);
+        // Nor, since 2026-11-07, any fixed page: the file holds Daily Coves,
+        // personas, guides and the latest searches, and nothing else.
+        foreach (['/be-nl</loc>', '/be-nl/search</loc>', '/be-nl/brands', '/be-nl/brand/', '/be-nl/about', '/be-nl/guides</loc>'] as $gone) {
+            $this->assertStringNotContainsString($gone, $xml);
+        }
+    }
+
+    #[Test]
+    public function the_sitemap_lists_daily_coves_personas_and_guides_with_their_twins(): void
+    {
+        // Owner, 2026-11-07. The latest searches are the fourth kind:
+        // PopularSearchesTest covers them, with their privacy floor.
+        config(['giftcoves.robots_allow' => true]);
+
+        foreach ([[Market::BeNl, 'de-laatste-vakantiedag'], [Market::BeFr, 'dernier-jour-de-vacances']] as [$market, $slug]) {
+            DailyPickSet::create([
+                'market' => $market->value,
+                'kind' => CoveKind::Daily->value,
+                'drop_date' => '2026-08-08',
+                'slug' => $slug,
+                'theme_title' => 'De laatste vakantiedag',
+                'theme_slug' => 'vakantie',
+                'theme_source' => 'theme',
+                'status' => PublishStatus::Published->value,
+                'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
+            ]);
+        }
+
+        foreach ([[CoveKind::Guide, 'koptelefoons', PublishStatus::Published], [CoveKind::Guide, 'nog-niet-klaar', PublishStatus::Draft]] as [$kind, $slug, $status]) {
+            DailyPickSet::create([
+                'market' => Market::BeNl->value,
+                'kind' => $kind->value,
+                'slug' => $slug,
+                'theme_title' => 'De beste koptelefoons',
+                'theme_slug' => $slug,
+                'status' => $status->value,
+                'published_at' => '2026-08-01',
+            ]);
+        }
+
+        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<loc>'.url('/be-nl/tips/de-laatste-vakantiedag').'</loc>', $xml);
+        // hreflang in the sitemap as well as the head: Google treats the two
+        // as independent signals and reads the sitemap first on a new URL.
+        $this->assertStringContainsString('hreflang="fr-BE" href="'.url('/be-fr/tips/dernier-jour-de-vacances').'"', $xml);
+        $this->assertStringContainsString('<loc>'.url('/be-nl/guides/koptelefoons').'</loc>', $xml);
+        $this->assertStringNotContainsString('nog-niet-klaar', $xml);
     }
 
     #[Test]
@@ -701,12 +744,7 @@ class SeoTest extends TestCase
         $second = (string) $this->get('/sitemap/be-nl/2.xml')->assertOk()->getContent();
         $index = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
-        // A market with eight product chunks used to list its editorial URLs
-        // eight times — which a crawler reads as a sitemap it cannot trust.
-        foreach (['/be-nl/search', '/be-nl/ask', '/be-nl/popular-searches', '/be-nl/lists-help', '/be-nl/guides'] as $path) {
-            $this->assertStringContainsString('<loc>'.url($path).'</loc>', $first);
-            $this->assertStringNotContainsString(url($path), $second);
-        }
+        $this->assertStringContainsString('<urlset', $first);
 
         // Since the catalogue left the sitemap there is one file per market,
         // and the index names only that one. A second file still answers,

@@ -323,7 +323,7 @@ Tweede alinea.',
     }
 
     #[Test]
-    public function the_sitemap_pairs_a_shop_cove_across_markets_in_one_pass(): void
+    public function a_shop_cove_is_not_in_the_sitemap(): void
     {
         config(['giftcoves.robots_allow' => true]);
         $this->cove('bol-com', 'Kopen bij bol', market: Market::BeNl);
@@ -332,10 +332,8 @@ Tweede alinea.',
 
         $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
 
-        // Batched through Alternates::forPaths(), so it must say what the
-        // per-page resolver says: the pair for bol, nothing for a lone shop.
-        $this->assertStringContainsString('<loc>'.url('/be-nl/shops/bol-com').'</loc>', $xml);
-        $this->assertStringContainsString('hreflang="fr-BE" href="'.url('/be-fr/shops/bol-com').'"', $xml);
-        $this->assertStringNotContainsString(url('/be-fr/shops/coolblue'), $xml);
+        // Owner, 2026-11-07: Daily Coves, personas, guides and the latest
+        // searches only. The shop page stays indexable.
+        $this->assertStringNotContainsString('/shops/', $xml);
     }
 }

@@ -108,7 +108,7 @@ All from templates (`GiftLandingCopy`), never from a model: the page is a web re
   engine's best 24, the search is every tagged product with sorting and the other filters.
 - **Sideways links only to recorded pages**: the same person's other interests, the same interest
   for other people, and the person's own page. Discover ("Of per persoon") links the person pages,
-  and the sitemap lists them all. The gift ideas shelf (`/gift-ideas`) linked every person's page
+  and (until 2026-11-07) the sitemap listed them all. The gift ideas shelf (`/gift-ideas`) linked every person's page
   too, until the owner took that row off on 2026-09-28: the shelf is for personas.
 
 Products are cached a day per page and budget, keyed on the night's `checked_at`, so the engine
@@ -116,8 +116,8 @@ runs once per page per day, not once per visitor.
 
 ## Search engines
 
-- **Sitemap**: exactly the recorded pages, from the first market file (`SitemapController`). The
-  planner clears that file's cache when it runs.
+- **Sitemap**: not listed since 2026-11-07 (the owner's four-kinds rule, [seo.md](seo.md#sitemaps)).
+  Until then, exactly the recorded pages; the planner still clears that file's cache when it runs.
 - **hreflang only between markets that both have the pair**, paired on (recipient, interest)
   rather than the path, since each market words the path its own way
   (`GiftLandingLinks::alternates()`; `Alternates::persona()` knows the `for` segment too). An

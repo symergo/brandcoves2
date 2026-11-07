@@ -73,12 +73,13 @@ class PopularSearchesTest extends TestCase
     }
 
     /**
-     * The sitemap submits the frequently searched terms (owner, 2026-10-25):
-     * the ones this page lists, so the privacy floor holds there too. A term
-     * one visitor typed, or one that found nothing, is not submitted.
+     * The sitemap submits the latest searches (owner, 2026-11-07; before that
+     * every column, from 2026-10-25): the ones this page lists, so the privacy
+     * floor holds there too. A term one visitor typed, or one that found
+     * nothing, is not submitted.
      */
     #[Test]
-    public function the_sitemap_lists_the_frequently_searched_terms_and_only_those(): void
+    public function the_sitemap_lists_the_latest_searches_and_only_those(): void
     {
         $this->log('koptelefoon', 12);
         $this->log('jan peeters', 1);

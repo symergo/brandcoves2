@@ -113,19 +113,13 @@ class LegalPagesTest extends TestCase
     }
 
     #[Test]
-    public function they_are_indexable_and_in_the_sitemap(): void
+    public function they_are_indexable(): void
     {
         // An about page is a trust signal, and a privacy policy nobody can find
         // is a privacy policy nobody believes.
         $this->get('/be-nl/about')
             ->assertOk()
             ->assertDontSee('content="noindex, follow"', escape: false);
-
-        $this->get('/sitemap/be-nl/1.xml')
-            ->assertOk()
-            ->assertSee('/be-nl/about', escape: false)
-            ->assertSee('/be-nl/privacy', escape: false)
-            ->assertSee('/be-nl/terms', escape: false);
     }
 
     #[Test]

@@ -235,7 +235,7 @@ after posting)." The form now opens on **Aan wie vraag je het?**, two cards:
 
 | | De GiftCoves-gemeenschap (`public`) | Je mensen op GiftCoves (`people`) |
 |---|---|---|
-| Who sees it | everyone, on the board; indexable once answered; in the sitemap | the asker's friends and whoever holds the link; `noindex, nofollow`; on no public list |
+| Who sees it | everyone, on the board; indexable once answered; not in the sitemap since 2026-11-07 | the asker's friends and whoever holds the link; `noindex, nofollow`; on no public list |
 | Address | `/ask/{id}/{slug}` | `/ask/p/{code}`, never the id |
 | Read first | yes, `TriageCommunityPost` | no |
 | The asker's people | told once it is published, if the asker's switch is on | told at once, whatever the asker's switch says |
@@ -336,6 +336,8 @@ thin page made of one stranger's sentence; it becomes indexable the moment it is
 
 The slug is decoration and the id is identity, exactly as on a product page — `/ask/{id}/{slug}`,
 with a stale slug redirecting rather than 404ing, so retitling never strands a shared link.
+
+*(Not since 2026-11-07: the sitemap lists Daily Coves, personas, guides and the latest searches only. See [seo.md](seo.md#sitemaps).)*
 
 **In the sitemap, answered questions only.** `SitemapController` lists the board (`/ask`) and up to
 2,000 published questions that have at least one published answer. That is the same floor as the

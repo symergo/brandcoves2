@@ -574,7 +574,9 @@ Since 2026-09-12 every variant is indexable; the canonical does the consolidatin
 | `/{market}/search?brand[]=Sony` | indexable | the bare term |
 | `/{market}/brands` | indexable | itself |
 
-Brand pages are listed in each market's sitemap, which since 2026-09-18 is a single file: product
+*(Not since 2026-11-07: the sitemap lists Daily Coves, personas, guides and the latest searches only. See [seo.md](seo.md#sitemaps).)*
+
+Brand pages were listed in each market's sitemap, which since 2026-09-18 is a single file: product
 pages left it altogether (see [seo.md](seo.md#sitemaps)), and they were the only reason it was split
 into chunks. The block is still gated on the first file, because the gate is what stops a later one
 repeating it — a URL listed dozens of times reads as a sitemap a crawler cannot trust, which is the

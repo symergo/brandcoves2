@@ -95,7 +95,7 @@ The bar, the footer (next to "How it works"), and a line on `/help` under the re
 menu:** it holds My Coves, My people, My taste and Secret Friend, then Notifications, Help, Admin
 and signing out, and the owner has already trimmed it twice (docs/features/navigation.md). Everything
 in it is about your own things; this page is about the site. Once the bar is closed the footer and
-/help still reach it. It is in the sitemap, like /help.
+/help still reach it. It was in the sitemap, like /help, until 2026-11-07.
 
 `/contribute` in every market, like `/people`: the heading is translated, the path is not. The
 codebase localises a path only where the word is what people search for (the Daily Cove, gift

@@ -84,6 +84,8 @@ the slug a level below it, so the rule above (never a `/coves/{slug}` catch-all)
 
 ## Sitemap
 
+*(Not since 2026-11-07: the sitemap lists Daily Coves, personas, guides and the latest searches only. See [seo.md](seo.md#sitemaps).)*
+
 Listed at priority 0.5 — lower than any index it links to, because it holds no text of its own and a
 crawler that finds the archives through it has found the better page. It is listed for the internal
 links: it is the only node connecting the daily column, the persona shelf and the article archive to

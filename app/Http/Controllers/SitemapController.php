@@ -7,12 +7,6 @@ namespace App\Http\Controllers;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
-use App\Models\BrandStat;
-use App\Models\CommunityQuestion;
-use App\Models\GiftLanding;
-use App\Models\Wishlist;
-use App\Services\Cove\CommunityCoves;
-use App\Services\Gift\GiftLandingLinks;
 use App\Services\Search\SearchTermStats;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
@@ -23,11 +17,18 @@ use Illuminate\Support\Facades\DB;
 /**
  * Sitemaps: an index, plus one file per market.
  *
+ * ## Four kinds of page, and only those (2026-11-07)
+ *
+ * The owner's decision: the Daily Coves, the gift personas (with the occasion
+ * Coves, the same page at its own address), the guides, and the latest
+ * searches. Brand pages, products, shop Coves, gift landing pages, community
+ * Coves, the board's questions and every fixed page (home, hubs, help, legal)
+ * left the file that day. Like the products before them, they stay indexable
+ * and linked; they are only not submitted.
+ *
  * ## Product pages are deliberately not listed (2026-09-18)
  *
- * The owner's decision. Everything a person is meant to land on from a search
- * engine is editorial — the home page, the Coves, the guides, the brand pages,
- * the personas, the answered questions — and those are what this submits.
+ * The owner's decision.
  *
  * A product page is **still indexable and still crawlable**: nothing here is
  * `noindex`, the internal links are followed, and a crawler that arrives from a
@@ -95,123 +96,63 @@ class SitemapController extends Controller
              * than a 404 for something it was told about last week.
              */
             if ($page === 1) {
-                $urls = [
-                    ['loc' => url("/{$resolved->value}"), 'priority' => '1.0', 'changefreq' => 'daily'],
-                    ['loc' => url("/{$resolved->value}/search"), 'priority' => '0.5', 'changefreq' => 'weekly'],
+                /*
+                 * Four kinds of page and nothing else (owner, 2026-11-07): the
+                 * Daily Coves, the gift personas, the guides and the latest
+                 * searches. The home page, the hubs, brand pages, shop Coves,
+                 * gift landing pages, community Coves, the board and the
+                 * help and legal pages all left the file that day. They stay
+                 * indexable and linked; they are simply not submitted.
+                 */
 
-                    /*
-                     * How the box and the camera work. "How do I scan a barcode to
-                     * compare prices" is a real query with real intent, and the
-                     * search page itself cannot answer it — it is a results page
-                     * with nothing on it until somebody types.
-                     */
-                    ['loc' => url("/{$resolved->value}/search-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
-
-                    /*
-                     * Help: the how-to pages gathered, with the report form under
-                     * them. Listed for the reason the feedback form was listed
-                     * before it took this address - a page in the menu that no
-                     * crawler is told about is the shape of a page somebody forgot
-                     * rather than one deliberately kept private. `/feedback` is a
-                     * 301 to here now and is deliberately not listed: a sitemap
-                     * naming a redirect asks a crawler to discover the same page
-                     * twice.
-                     */
-                    ['loc' => url("/{$resolved->value}/help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
-                    // The contribute page, footer-linked and indexable, for the
-                    // same reason (docs/features/contribute.md).
-                    ['loc' => url("/{$resolved->value}/contribute"), 'priority' => '0.3', 'changefreq' => 'weekly'],
-
-                    ['loc' => url($resolved->covePath()), 'priority' => '0.9', 'changefreq' => 'daily'],
-                    // Every edition in one list (2026-10-02): the page that
-                    // links the whole archive, so crawlers reach the old ones.
-                    ['loc' => url($resolved->covePath('archive')), 'priority' => '0.7', 'changefreq' => 'daily'],
-                    ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
-                    ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
-
-                    /*
-                     * The overview across all three. Lower priority than any of the
-                     * indexes it links to — it holds no text of its own, and a
-                     * crawler that finds the archives through it has found the
-                     * better page. It is listed for the internal links: it is the
-                     * only node connecting the daily column, the persona shelf and
-                     * the article archive to each other.
-                     */
-                    ['loc' => url("/{$resolved->value}/coves"), 'priority' => '0.5', 'changefreq' => 'daily'],
-                    ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],
-
-                    /*
-                     * The shop directory. Monthly, because it changes when an
-                     * advertiser is onboarded and not otherwise — the page holds no
-                     * catalogue data at all, which is also why it is cheap enough
-                     * to be worth crawling.
-                     */
-                    ['loc' => url("/{$resolved->value}/shops"), 'priority' => '0.5', 'changefreq' => 'monthly'],
-
-                    /*
-                     * The board, the popular-searches hub and the list help.
-                     * All three are linked from the header or the footer and
-                     * were in no sitemap — the shape of a page somebody forgot,
-                     * which is what the `/help` note above says of itself.
-                     */
-                    ['loc' => url("/{$resolved->value}/ask"), 'priority' => '0.6', 'changefreq' => 'daily'],
-                    ['loc' => url("/{$resolved->value}/popular-searches"), 'priority' => '0.5', 'changefreq' => 'weekly'],
-                    /*
-                     * Indexable public pages that were in no sitemap (found
-                     * 2026-10-25, comparing the public routes with this file):
-                     * the published lists' index, the gift Cove's how-it-works,
-                     * Secret Santa and two ways into the gift finder. Each
-                     * answers 200 with `index, follow`. The personal and tool
-                     * pages (lists, people, scanner, login, notifications) are
-                     * left out on purpose: they are about one visitor.
-                     */
-                    ['loc' => url("/{$resolved->value}/coves/community"), 'priority' => '0.5', 'changefreq' => 'daily'],
-                    ['loc' => url("/{$resolved->value}/gift-cove/how-it-works"), 'priority' => '0.4', 'changefreq' => 'monthly'],
-                    ['loc' => url("/{$resolved->value}/santa"), 'priority' => '0.5', 'changefreq' => 'monthly'],
-                    ['loc' => url("/{$resolved->value}/gift/swipe"), 'priority' => '0.5', 'changefreq' => 'weekly'],
-                    ['loc' => url("/{$resolved->value}/gift/taste"), 'priority' => '0.5', 'changefreq' => 'weekly'],
-                    ['loc' => url("/{$resolved->value}/lists-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
-                    // The eight topics under it, since 2026-09-08. "How do I
-                    // share a wish list" is a query, and the index alone would
-                    // make a search engine guess which page answers it.
-                    ...array_map(fn (string $topic) => [
-                        'loc' => url("/{$resolved->value}/lists-help/{$topic}"),
-                        'priority' => '0.4',
-                        'changefreq' => 'monthly',
-                    ], ListHelpController::TOPICS),
-
-                    /*
-                     * An about page is a trust signal a search engine looks for, and
-                     * a privacy policy nobody can find is a privacy policy nobody
-                     * believes. Low priority, rarely changing, and listed.
-                     */
-                    ['loc' => url("/{$resolved->value}/about"), 'priority' => '0.4', 'changefreq' => 'yearly'],
-                    ['loc' => url("/{$resolved->value}/privacy"), 'priority' => '0.3', 'changefreq' => 'yearly'],
-                    ['loc' => url("/{$resolved->value}/terms"), 'priority' => '0.3', 'changefreq' => 'yearly'],
-                    ['loc' => url("/{$resolved->value}/gift"), 'priority' => '0.8', 'changefreq' => 'weekly'],
-
-                    /*
-                     * The two hubs. Both are top-level nav destinations and neither
-                     * was listed — `/gift-cove` had been missing since it shipped.
-                     *
-                     * They matter to a crawler for the reason they matter to a
-                     * visitor: each is the only page that explains what a whole
-                     * section is for, and each is the densest internal-link node on
-                     * its half of the site. Weekly rather than daily — the tools
-                     * they describe change far less often than the editorial does.
-                     */
-                    ['loc' => url("/{$resolved->value}/gift-cove"), 'priority' => '0.7', 'changefreq' => 'weekly'],
-                    ['loc' => url("/{$resolved->value}/discover-cove"), 'priority' => '0.7', 'changefreq' => 'weekly'],
-                    ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
-                ];
-
-                // Published guides and every past edition. The archive is the point:
-                // a daily page whose history 404s has nothing accumulating.
+                // Every past Daily edition, newest first. A past edition never
+                // changes, and saying so stops a crawler re-fetching ninety
+                // static pages a day.
                 DB::table('daily_pick_sets')
                     ->where('market', $resolved->value)
-                    // The article kinds only. A Daily is listed by date above and a
-                    // persona by slug below; this block is the /guides space.
-                    ->whereIn('kind', ['guide', 'seasonal', 'advice'])
+                    // Dated editions only: a persona's drop_date is null and would
+                    // emit /{market}/tips/ with an empty segment.
+                    ->where('kind', CoveKind::Daily->value)
+                    ->where('status', PublishStatus::Published->value)
+                    ->orderByDesc('drop_date')
+                    ->limit(400)
+                    ->pluck('slug')
+                    ->each(function ($slug) use (&$urls, $resolved): void {
+                        $urls[] = [
+                            'loc' => url($resolved->covePath($slug)),
+                            'priority' => '0.6',
+                            'changefreq' => 'never',
+                        ];
+                    });
+
+                /*
+                 * Gift personas, and occasions with them: an occasion is the
+                 * same page as a persona at its own address
+                 * (docs/features/occasion-coves.md). Undated and rebuilt when
+                 * their products move, so weekly.
+                 */
+                DB::table('daily_pick_sets')
+                    ->where('market', $resolved->value)
+                    ->whereIn('kind', [CoveKind::Persona->value, CoveKind::Occasion->value])
+                    ->where('status', PublishStatus::Published->value)
+                    ->whereNotNull('slug')
+                    ->orderBy('kind')
+                    ->orderBy('slug')
+                    ->limit(400)
+                    ->get(['kind', 'slug', 'updated_at'])
+                    ->each(function ($row) use (&$urls, $resolved): void {
+                        $urls[] = [
+                            'loc' => url("/{$resolved->value}/".CoveKind::from($row->kind)->path($row->slug, $resolved)),
+                            'lastmod' => $row->updated_at ? Carbon::parse($row->updated_at)->toAtomString() : null,
+                            'priority' => '0.7',
+                            'changefreq' => 'weekly',
+                        ];
+                    });
+
+                // The guides: every published article in the /guides space.
+                DB::table('daily_pick_sets')
+                    ->where('market', $resolved->value)
+                    ->whereIn('kind', [CoveKind::Guide->value, CoveKind::Seasonal->value, CoveKind::Advice->value])
                     ->where('status', PublishStatus::Published->value)
                     ->orderBy('id')
                     ->get(['slug', 'updated_at'])
@@ -225,209 +166,24 @@ class SitemapController extends Controller
                     });
 
                 /*
-                 * Shop Coves. Their own block because they are their own URL
-                 * space: the query above is the `/guides` one and deliberately
-                 * lists kinds rather than asking `isArticle()`, so a sixth kind
-                 * outside that space has to say so here.
-                 *
-                 * Weekly like the guides. The text describes a shop rather than a
-                 * price, so it changes when somebody rewrites it and not when the
-                 * catalogue moves.
+                 * The latest searches: the "latest" column of the public
+                 * popular-searches page (SearchTermStats::for()), at their
+                 * canonical /{market}/zoek/{term} address. Same rules as that
+                 * page: searched in at least two different hours (a privacy
+                 * floor, never one visitor's words), found products, and passed
+                 * the length and stop-term rules. Twenty terms, so the file
+                 * never submits search results wholesale, which Google warns
+                 * against. Daily, because the list turns over.
                  */
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    ->where('kind', CoveKind::Shop->value)
-                    ->where('status', PublishStatus::Published->value)
-                    ->orderBy('id')
-                    ->get(['slug', 'updated_at'])
-                    ->each(function ($cove) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/shops/{$cove->slug}"),
-                            'lastmod' => $cove->updated_at ? Carbon::parse($cove->updated_at)->toAtomString() : null,
-                            'priority' => '0.6',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * Community Coves that have earned indexing: a week on the
-                 * site, eight things on them, saved by three people. The SQL
-                 * narrows to the candidates and `isIndexable()` decides, the
-                 * same call the page's robots tag makes, so the sitemap never
-                 * names a page that then says noindex.
-                 * See docs/features/community-coves.md.
-                 */
-                $community = app(CommunityCoves::class);
-
-                Wishlist::query()
-                    ->communityCoves()
-                    ->where('market', $resolved->value)
-                    ->where('published_at', '<=', now()->subDays(CommunityCoves::INDEX_AFTER_DAYS))
-                    ->has('saves', '>=', CommunityCoves::INDEX_MIN_SAVES)
-                    ->withCount('saves')
-                    ->with(['items.group'])
-                    ->orderByDesc('published_at')
-                    ->limit(1000)
-                    ->get()
-                    ->filter(fn (Wishlist $list) => $community->isIndexable($list))
-                    ->each(function (Wishlist $list) use (&$urls, $community): void {
-                        $urls[] = [
-                            'loc' => url($community->url($list)),
-                            'lastmod' => $list->updated_at?->toAtomString(),
-                            'priority' => '0.4',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * Answered questions on the board.
-                 *
-                 * The one URL space here that grows from what visitors write,
-                 * and it had no discovery path at all: the index shows the
-                 * newest twenty and nothing links to the rest. Answered only —
-                 * AskController noindexes a question nobody has answered, and a
-                 * sitemap naming a noindex page asks for a crawl it then
-                 * refuses.
-                 */
-                CommunityQuestion::query()
-                    ->forMarket($resolved)
-                    ->published()
-                    ->where('answers_count', '>', 0)
-                    ->orderByDesc('published_at')
-                    ->limit(2000)
-                    ->get(['id', 'title', 'updated_at'])
-                    ->each(function (CommunityQuestion $question) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/ask/{$question->id}/{$question->slug()}"),
-                            'lastmod' => $question->updated_at?->toAtomString(),
-                            'priority' => '0.5',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * Brand pages.
-                 *
-                 * The block that was gated on the first chunk from the start,
-                 * for the reason now written above `if ($page === 1)`.
-                 *
-                 * `pageworthy` is what keeps this honest: the same three-product
-                 * threshold the controller enforces. Listing a URL that 404s is worse
-                 * than not listing it.
-                 */
-                BrandStat::query()
-                    ->forMarket($resolved)
-                    ->pageworthy()
-                    ->orderByDesc('product_count')
-                    ->limit(2000)
-                    ->get(['slug', 'product_count', 'computed_at'])
-                    ->each(function (BrandStat $brand) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/brand/{$brand->slug}"),
-                            'lastmod' => $brand->computed_at?->toAtomString(),
-                            // A brand carried by a lot of the catalogue is a
-                            // better landing page than one with four products.
-                            'priority' => $brand->product_count >= 25 ? '0.7' : '0.5',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * Gift personas.
-                 *
-                 * Undated and evergreen, so they get a real changefreq — unlike a
-                 * past edition, which never changes again. A persona is rebuilt
-                 * when its products move, and that is a page worth re-crawling.
-                 */
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    // Occasions too (2026-09-28), at their own address.
-                    ->whereIn('kind', [CoveKind::Persona->value, CoveKind::Occasion->value])
-                    ->where('status', PublishStatus::Published->value)
-                    ->whereNotNull('slug')
-                    ->orderBy('kind')
-                    ->orderBy('slug')
-                    ->limit(400)
-                    ->get(['kind', 'slug'])
-                    ->each(function ($row) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/".CoveKind::from($row->kind)->path($row->slug, $resolved)),
-                            'priority' => '0.7',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * Gift landing pages ("gift ideas for dad who loves cooking").
-                 *
-                 * Exactly the recorded ones: the controller 404s every other
-                 * pair, and a sitemap naming a 404 asks for a crawl it then
-                 * refuses. Their hreflang is resolved here, per pair, because
-                 * each market words the path its own way and the batched
-                 * lookup below pairs on the path. See
-                 * docs/features/gift-landing-pages.md.
-                 */
-                $landingAlternates = app(GiftLandingLinks::class)->alternatesFor($resolved);
-
-                GiftLanding::query()
-                    ->forMarket($resolved)
-                    ->orderBy('path')
-                    ->limit(2000)
-                    ->get(['path', 'interest', 'checked_at'])
-                    ->each(function (GiftLanding $landing) use (&$urls, $landingAlternates): void {
-                        $urls[] = [
-                            'loc' => url($landing->path),
-                            'lastmod' => $landing->checked_at?->toAtomString(),
-                            // A recipient's own page gathers the others, so
-                            // it ranks a little above any one of them.
-                            'priority' => $landing->interest === null ? '0.7' : '0.6',
-                            'changefreq' => 'weekly',
-                            'alternates' => $landingAlternates[$landing->path] ?? [],
-                        ];
-                    });
-
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    // Dated editions only: a persona's drop_date is null and would
-                    // emit /{market}/daily/ with an empty segment.
-                    ->where('kind', CoveKind::Daily->value)
-                    ->where('status', PublishStatus::Published->value)
-                    ->orderByDesc('drop_date')
-                    ->limit(400)
-                    ->pluck('slug')
-                    ->each(function ($slug) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url($resolved->covePath($slug)),
-                            'priority' => '0.5',
-                            // A past edition never changes. Saying so stops a
-                            // crawler re-fetching ninety static pages a day.
-                            'changefreq' => 'never',
-                        ];
-                    });
-
-                /*
-                 * The frequently searched terms (owner, 2026-10-25), at their
-                 * canonical /{market}/zoek/{term} address: exactly the terms the
-                 * public popular-searches page lists (SearchTermStats::for()),
-                 * so the same rules hold. A term must have been searched by
-                 * at least `min_volume` people (a privacy floor: never one
-                 * visitor's words), must have found products when searched
-                 * (no empty page submitted), and passes the length and
-                 * stop-term rules. Search pages are the kind Google warns
-                 * against indexing wholesale; a short list of terms people
-                 * really look for, each with its own copy and a canonical,
-                 * is the kind that ranks like a category page.
-                 */
-                $stats = app(SearchTermStats::class)->for($resolved);
-                collect([...$stats['months'], ['terms' => $stats['trending']], ['terms' => $stats['latest']]])
-                    ->flatMap(fn (array $column) => array_column($column['terms'] ?? [], 'url'))
+                collect(app(SearchTermStats::class)->for($resolved)['latest'])
+                    ->pluck('url')
                     ->filter()
                     ->unique()
                     ->each(function (string $path) use (&$urls): void {
                         $urls[] = [
                             'loc' => url($path),
                             'priority' => '0.5',
-                            'changefreq' => 'weekly',
+                            'changefreq' => 'daily',
                         ];
                     });
             }

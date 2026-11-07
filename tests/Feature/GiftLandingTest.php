@@ -150,25 +150,19 @@ class GiftLandingTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_lists_exactly_the_recorded_pages_with_hreflang_where_both_markets_have_one(): void
+    public function a_landing_page_names_its_twin_only_where_both_markets_have_one(): void
     {
         $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);
         $this->products(Market::NlNl, 'Koksmes', 8, ['interest:cooking']);
         PlanGiftLandingPages::dispatchSync(Market::BeNl);
         PlanGiftLandingPages::dispatchSync(Market::NlNl);
 
+        // Not submitted since 2026-11-07 (the sitemap lists Daily Coves,
+        // personas, guides and the latest searches only), still served.
         $xml = $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
-
-        $recorded = GiftLanding::query()->forMarket(Market::BeNl)->pluck('path');
-        preg_match_all('#<loc>[^<]*(/be-nl/gift-ideas/for/[^<]*)</loc>#', $xml, $listed);
-
-        $this->assertEqualsCanonicalizing($recorded->all(), $listed[1]);
-        $this->assertStringNotContainsString('/be-nl/gift-ideas/for/papa/tuinieren', $xml);
+        $this->assertStringNotContainsString('/gift-ideas/for/', $xml);
 
         // be-nl and nl-nl both have dad and cooking; be-fr does not.
-        $this->assertStringContainsString('hreflang="nl-NL" href="'.url('/nl-nl/gift-ideas/for/papa/koken').'"', $xml);
-        $this->assertStringNotContainsString('/be-fr/gift-ideas/for/', $xml);
-
         $this->get('/be-nl/gift-ideas/for/papa/koken')
             ->assertSee('hreflang="nl-NL"', escape: false)
             ->assertDontSee('hreflang="fr-BE"', escape: false);

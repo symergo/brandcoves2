@@ -16,8 +16,8 @@ things to tap. People do not find it; the ones who do find it do not always real
 exist first. So the question arrives as *"how do I use this"* rather than as a question about any one
 control, and there was nowhere to send it.
 
-Linked from underneath `/lists`, from the help hub at `/help`, and, since 2026-09-08, from the
-sitemap for every topic.
+Linked from underneath `/lists`, from the help hub at `/help`, and, from 2026-09-08 to 2026-11-07,
+from the sitemap for every topic.
 
 ## One page became ten (2026-09-08)
 

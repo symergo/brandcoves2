@@ -94,16 +94,12 @@ class SearchHelpPageTest extends TestCase
     }
 
     #[Test]
-    public function it_is_indexable_and_in_the_sitemap(): void
+    public function it_is_indexable(): void
     {
         // "How do I scan a barcode to compare prices" is a real query, and
         // /search cannot answer it — it is empty until somebody types.
         $this->get('/be-nl/search-help')
             ->assertOk()
             ->assertDontSee('content="noindex, follow"', escape: false);
-
-        $this->get('/sitemap/be-nl/1.xml')
-            ->assertOk()
-            ->assertSee('/be-nl/search-help', escape: false);
     }
 }

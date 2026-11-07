@@ -754,15 +754,15 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_lists_brand_pages_and_only_ones_that_resolve(): void
+    public function brand_pages_are_not_in_the_sitemap(): void
     {
+        // Owner, 2026-11-07: the sitemap lists Daily Coves, personas, guides
+        // and the latest searches only. A brand page stays indexable.
         $this->seedBrand('Aurex');
-        $this->seedBrand('Tinybrand', count: 2);
 
         $this->get('/sitemap/be-nl/1.xml')
             ->assertOk()
-            ->assertSee('/be-nl/brand/aurex', escape: false)
-            ->assertDontSee('/be-nl/brand/tinybrand', escape: false);
+            ->assertDontSee('/be-nl/brand/', escape: false);
     }
 
     #[Test]

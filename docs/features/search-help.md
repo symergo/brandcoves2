@@ -94,7 +94,7 @@ two never appear on screen together, and because a footer row is scanned rather 
 applies here too: this is not a *section* of the site, it is documentation of a control, and it
 belongs beside the control. A nav entry would claim a sixth destination that is not one.
 
-Listed in the sitemap at priority 0.4, monthly. "How do I scan a barcode to compare prices" is a real
+Listed in the sitemap at priority 0.4, monthly, until 2026-11-07 (seo.md, Sitemaps). "How do I scan a barcode to compare prices" is a real
 query with real intent, and `/search` itself cannot answer it — a landing of ways in (recent
 searches, the visitor's brands, the site's tools) until somebody types.
 

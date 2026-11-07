@@ -286,6 +286,24 @@ preview tests now switch indexing on.
 
 An index plus one file per market.
 
+**Four kinds of page, and nothing else, since 2026-11-07.** The owner's decision ("don't include
+brands or products; only the latest product searches, the daily Coves, the Cove personas, the
+guides"). Each market's file holds:
+
+- every published Daily Cove edition (up to 400, newest first, `changefreq` never),
+- the gift personas, with the occasion Coves (the same page at its own address),
+- the guides: every published guide, seasonal and advice article under `/guides`,
+- the latest searches: the "latest" column of the popular-searches page (20 terms), under its
+  privacy floor.
+
+Everything else left the file: the home page and every fixed page (hubs, help, legal, tools), brand
+pages, Shop Coves, gift landing pages, community Coves and the board's questions. Like the products
+before them they stay indexable and linked, so a crawler still finds them through internal links;
+they are only not submitted. The two other popular-search columns (by month, trending) left with
+them, since the request named the latest searches. The paragraphs below describe the file before
+this date. Tests: `SeoTest::the_sitemap_lists_daily_coves_personas_and_guides_with_their_twins`, the
+negative checks in `SeoTest::the_sitemap_does_not_list_product_pages`, `PopularSearchesTest`.
+
 **Product pages are not listed, since 2026-09-18.** The owner's decision. What
 is submitted is the editorial surface: the home page, the Coves, the guides, the
 personas, the brand pages, the answered questions, the help and legal pages.

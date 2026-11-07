@@ -241,7 +241,7 @@ class ListHelpPageTest extends TestCase
     }
 
     #[Test]
-    public function they_are_indexable_and_in_the_sitemap(): void
+    public function they_are_indexable(): void
     {
         // The robots tag is "noindex" everywhere the flag is off, which is
         // every environment but production; the flag is what this asserts
@@ -250,12 +250,5 @@ class ListHelpPageTest extends TestCase
 
         $this->get('/be-nl/lists-help')->assertOk()->assertSee('index, follow', escape: false);
         $this->get('/be-nl/lists-help/sharing')->assertOk()->assertSee('index, follow', escape: false);
-
-        $this->get('/sitemap/be-nl/1.xml')
-            ->assertOk()
-            ->assertSee('/be-nl/lists-help<', escape: false)
-            ->assertSee('/be-nl/lists-help/sharing', escape: false)
-            ->assertSee('/be-nl/lists-help/santa', escape: false)
-            ->assertSee('/be-nl/lists-help/quiz', escape: false);
     }
 }

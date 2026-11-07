@@ -153,8 +153,8 @@ on the Ask others board: text strangers wrote is held back until something shows
 search engine's attention. It is `noindex, follow`, never `nofollow`, so crawlers still reach the
 products on it.
 
-The sitemap lists the same set, decided by the same call, so it never names a page that then says
-noindex. The index page `/coves/community` follows the owner's rule and is indexable: it is a
+The sitemap listed the same set, decided by the same call, until 2026-11-07, when community Coves
+left it ([seo.md](seo.md#sitemaps)). The index page `/coves/community` follows the owner's rule and is indexable: it is a
 listing with our own heading and intro, like `/coves`. It is not in the sitemap; `/coves` links to it.
 
 ## Moderation: published at once, with a safety valve
