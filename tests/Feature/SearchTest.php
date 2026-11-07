@@ -584,6 +584,34 @@ class SearchTest extends TestCase
         }
     }
 
+    #[Test]
+    public function a_card_opens_its_cheapest_shop_directly(): void
+    {
+        // Owner, 2026-11-07: the whole card is "Koop bij …", the cheapest
+        // shop's own affiliate link, never our redirector; "Bekijk alle
+        // aanbiedingen" under it is our product page.
+        // The Sony: two shops, the cheapest at 329.99.
+        $items = $this->search(['q' => 'koptelefoon'])->assertOk()->viewData('page')['props']['results']['items'];
+
+        $this->assertNotEmpty($items);
+
+        foreach ($items as $card) {
+            $cheapest = Product::query()
+                ->where('group_id', $card['id'])
+                ->where('status', 'active')
+                ->whereNotNull('price')
+                ->orderBy('price')
+                ->orderBy('id')
+                ->first();
+
+            $this->assertNotNull($card['buy']);
+            $this->assertSame($cheapest->id, $card['buy']['offerId']);
+            $this->assertSame($cheapest->affiliate_url, $card['buy']['url']);
+            $this->assertStringNotContainsString('/go/', $card['buy']['url']);
+            $this->assertSame($cheapest->merchant->displayName(), $card['buy']['shop']);
+        }
+    }
+
     /**
      * Each lane carries its shop's mark.
      *

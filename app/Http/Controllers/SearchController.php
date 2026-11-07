@@ -26,6 +26,7 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\CheapestOffer;
 use App\Services\Search\CoveMatches;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Search\ParsedIntent;
@@ -741,7 +742,7 @@ class SearchController extends Controller
             'empty' => false,
             'currentPage' => 1,
             'hasMore' => false,
-            'items' => array_map(fn (Suggestion $s) => $this->card($s->group), $suggestions),
+            'items' => $this->cards(array_map(fn (Suggestion $s) => $s->group, $suggestions)),
         ];
     }
 
@@ -916,8 +917,8 @@ class SearchController extends Controller
     }
 
     /**
-     * Each card's line about what other people keep: "On 14 people's lists ·
-     * In 3 Coves". One batch for the page (ProductSignals::forResults), two
+     * Each card's line about where else it is kept: "In 3 Coves" (the "On 14
+     * people's lists" half went on 2026-11-07, owner). One batch for the page (ProductSignals::forResults), two
      * queries whatever the number of cards; a card with nothing to say gets
      * null and draws no line.
      *
@@ -932,10 +933,11 @@ class SearchController extends Controller
         $results['items'] = array_map(function (array $card) use ($signals): array {
             $signal = $signals[$card['id']] ?? null;
 
-            $card['kept'] = $signal === null ? null : implode(' · ', array_filter([
-                $signal['savedBy'] === null ? null : trans_choice('site.search.card_kept', $signal['savedBy'], ['count' => $signal['savedBy']]),
-                $signal['coveCount'] === 0 ? null : trans_choice('site.search.card_in_coves', $signal['coveCount'], ['count' => $signal['coveCount']]),
-            ]));
+            // "Op de lijst van … mensen" went (owner, 2026-11-07: "verwijder op
+            // de lijst van ..."); the Coves it is in stay.
+            $card['kept'] = $signal === null || $signal['coveCount'] === 0
+                ? null
+                : trans_choice('site.search.card_in_coves', $signal['coveCount'], ['count' => $signal['coveCount']]);
 
             return $card;
         }, $results['items']);
@@ -955,7 +957,7 @@ class SearchController extends Controller
             'empty' => $result->isEmpty(),
             'currentPage' => $result->groups->currentPage(),
             'hasMore' => $result->groups->hasMorePages(),
-            'items' => array_map($this->card(...), $result->groups->items()),
+            'items' => $this->cards($result->groups->items()),
         ];
     }
 
@@ -1038,6 +1040,21 @@ class SearchController extends Controller
     }
 
     /**
+     * A page of cards, each knowing its cheapest offer (one query for the
+     * page, CheapestOffer): the card's "Koop bij …" opens that shop.
+     *
+     * @param  iterable<ProductGroup>  $groups
+     * @return list<array<string, mixed>>
+     */
+    private function cards(iterable $groups): array
+    {
+        $groups = collect($groups)->values();
+        CheapestOffer::attach($groups);
+
+        return $groups->map(fn (ProductGroup $group) => $this->card($group))->all();
+    }
+
+    /**
      * The offer-comparison card.
      *
      * Everything a shopper needs to decide whether to open the product: what it
@@ -1068,6 +1085,8 @@ class SearchController extends Controller
             'merchantCount' => $group->merchant_count,
             'inStock' => $group->in_stock,
             'discountPercent' => $group->discountPercent(),
+            // The cheapest shop, when CheapestOffer::attach() ran: the card opens it.
+            'buy' => CheapestOffer::present($group),
         ];
     }
 }

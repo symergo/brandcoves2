@@ -1189,3 +1189,24 @@ mention the store each time".
   `sponsored nofollow`, and the Associates statement in the footer.
 
 The save button stays on every row.
+
+## The product card opens the cheapest shop (owner, 2026-11-07)
+
+On the search page and the brand pages (the two that draw `ProductCard`; Coves and gift ideas have
+cards of their own), owner's design after a short discussion:
+
+- **The whole card is "Koop bij …"**: the cheapest offer's own affiliate link as a plain anchor, in a
+  new tab, `sponsored noopener nofollow`, never through `/go/`, the click reported by the beacon.
+  The cheapest, because the card shows the lowest price, so the shop named is the one that price is
+  at. `CheapestOffer::attach()` finds it for a whole page in one query (DISTINCT ON the group, by
+  price then id, https links only, `hasSafeAffiliateUrl()` again on each); a product without a safe
+  link keeps the old card, which opens our product page.
+- **Under the card, a link of its own:** "Bekijk alle aanbiedingen (4)", or "Bekijk het product"
+  with one offer, to our product page. Outside the card's link (a link in a link is invalid and taps
+  unpredictably on a phone), above its stretched area, 44px tall.
+- **The price line:** the price and the shop it is at ("€ 57,49 bol.com"), the same at rest and on
+  hover. A swap to "Koop bij bol.com" on hover was built and taken out the same day ("don't change on
+  hover"); the link's spoken name still says "Koop bij …".
+- **Gone from the card, at the owner's word the same day:** "vanaf" before the price, "x
+  aanbiedingen · bij x winkels" (the bottom link carries the count) and "Op de lijst van … mensen"
+  (the "In … Coves" half of that line stays).

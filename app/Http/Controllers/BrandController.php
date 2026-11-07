@@ -22,6 +22,7 @@ use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\CheapestOffer;
 use App\Services\Search\LiveOfferCard;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
@@ -231,7 +232,7 @@ class BrandController extends Controller
                 'empty' => $result->isEmpty(),
                 'currentPage' => $result->groups->currentPage(),
                 'hasMore' => $result->groups->hasMorePages(),
-                'items' => array_map($this->card(...), $result->groups->items()),
+                'items' => $this->cards($result->groups->items()),
             ],
             /*
              * Live sources that may not be mirrored — Amazon. Everything bol
@@ -1034,7 +1035,7 @@ class BrandController extends Controller
     private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search): array
     {
         $result = $search->search($query->unlogged());
-        $items = array_map($this->card(...), $result->groups->items());
+        $items = $this->cards($result->groups->items());
 
         $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());
         $added = count(array_diff(array_map(fn (array $card) => (int) $card['id'], $items), $before));
@@ -1052,6 +1053,21 @@ class BrandController extends Controller
                 'shops' => implode(', ', $shown->deferredShops),
             ]),
         ];
+    }
+
+    /**
+     * A page of cards, each knowing its cheapest offer (one query for the
+     * page, CheapestOffer): the card's "Koop bij …" opens that shop.
+     *
+     * @param  iterable<ProductGroup>  $groups
+     * @return list<array<string, mixed>>
+     */
+    private function cards(iterable $groups): array
+    {
+        $groups = collect($groups)->values();
+        CheapestOffer::attach($groups);
+
+        return $groups->map(fn (ProductGroup $group) => $this->card($group))->all();
     }
 
     /** @return array<string, mixed> */
@@ -1073,6 +1089,8 @@ class BrandController extends Controller
             'merchantCount' => $group->merchant_count,
             'inStock' => $group->in_stock,
             'discountPercent' => $group->discountPercent(),
+            // The cheapest shop, when CheapestOffer::attach() ran: the card opens it.
+            'buy' => CheapestOffer::present($group),
         ];
     }
 }

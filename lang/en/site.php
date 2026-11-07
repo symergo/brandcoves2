@@ -457,6 +457,9 @@ return [
         'under' => 'Gifts under :price',
         'all_offers' => 'All offers',
         'go_to_shop' => 'Go to shop',
+        'buy_at' => 'Buy at :shop',
+        'all_offers_count' => 'See all offers (:count)',
+        'view_product' => 'See the product',
         'typical_price' => 'Previously :price',
         'barcode' => 'Barcode',
         /*

@@ -346,6 +346,9 @@ return [
         'under' => 'Cadeaux à moins de :price',
         'all_offers' => 'Toutes les offres',
         'go_to_shop' => 'Voir la boutique',
+        'buy_at' => 'Acheter chez :shop',
+        'all_offers_count' => 'Voir toutes les offres (:count)',
+        'view_product' => 'Voir le produit',
         'typical_price' => 'Auparavant :price',
         'barcode' => 'Code-barres',
         // Voir l'explication de ces clés dans lang/en/site.php.

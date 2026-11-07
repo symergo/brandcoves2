@@ -345,6 +345,9 @@ return [
         'under' => 'Regalos por menos de :price',
         'all_offers' => 'Todas las ofertas',
         'go_to_shop' => 'Ir a la tienda',
+        'buy_at' => 'Comprar en :shop',
+        'all_offers_count' => 'Ver todas las ofertas (:count)',
+        'view_product' => 'Ver el producto',
         'typical_price' => 'Antes :price',
         'barcode' => 'Código de barras',
         // Consulta la explicación de estas claves en lang/en/site.php.

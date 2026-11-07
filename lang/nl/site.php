@@ -349,6 +349,9 @@ return [
         'under' => 'Cadeaus onder :price',
         'all_offers' => 'Alle aanbiedingen',
         'go_to_shop' => 'Naar de winkel',
+        'buy_at' => 'Koop bij :shop',
+        'all_offers_count' => 'Bekijk alle aanbiedingen (:count)',
+        'view_product' => 'Bekijk het product',
         'typical_price' => 'Eerder :price',
         'barcode' => 'Streepjescode',
         // Zie de toelichting bij deze sleutels in lang/en/site.php.

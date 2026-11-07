@@ -30,6 +30,21 @@ export interface GroupCard {
      * (ProductSignals::forResults). Never a claim, never who.
      */
     kept?: string | null
+    /**
+     * The cheapest shop's own link (CheapestOffer, owner 2026-11-07): the whole
+     * card opens it, "Bekijk alle aanbiedingen" under it our product page.
+     * Null or absent: the card opens the product page, as before.
+     */
+    buy?: { url: string; shop: string; domain: string | null; beacon: string; offerId: number } | null
+}
+
+/** A direct link skips our redirector, so the browser reports the click. */
+function reportBuy(buy: NonNullable<GroupCard['buy']>): void {
+    try {
+        navigator.sendBeacon?.(buy.beacon, new Blob([JSON.stringify({ offer: buy.offerId })], { type: 'application/json' }))
+    } catch {
+        // Analytics must never break an outbound click.
+    }
 }
 
 /**
@@ -71,7 +86,8 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
     // back to the shop's plain URL. Second: that too, so the placeholder.
     const [proxyFailed, setProxyFailed] = useState(false)
 
-    const comparable = group.merchantCount > 1
+    const buy = group.buy ?? null
+    const productUrl = `/${market.key}/p/${group.id}/${group.slug}`
 
     return (
         <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
@@ -150,42 +166,69 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                 )}
 
                 <h3 className="mt-1 line-clamp-2 text-sm font-medium">
-                    <Link href={`/${market.key}/p/${group.id}/${group.slug}`}>
-                        {group.title}
-                        {/* The stretched link: an empty span covering the card,
-                            so the whole thing is a click target while the anchor
-                            itself still wraps only the title for a screen
-                            reader. */}
-                        <span className="absolute inset-0 z-10" aria-hidden />
-                    </Link>
+                    {/* The stretched link: an empty span covering the card,
+                        so the whole thing is a click target while the anchor
+                        itself still wraps only the title for a screen reader.
+                        Since 2026-11-07 (owner) it opens the cheapest shop when
+                        there is one, as a plain anchor to the shop's own
+                        affiliate link: sponsored, a third party in a new tab,
+                        nofollow, and never our redirector. */}
+                    {buy ? (
+                        <a
+                            href={buy.url}
+                            target="_blank"
+                            rel="sponsored noopener nofollow"
+                            onMouseDown={() => reportBuy(buy)}
+                            aria-label={`${group.title}, ${t('product.buy_at', { shop: buy.shop })}`}
+                        >
+                            {group.title}
+                            <span className="absolute inset-0 z-10" aria-hidden />
+                        </a>
+                    ) : (
+                        <Link href={productUrl}>
+                            {group.title}
+                            <span className="absolute inset-0 z-10" aria-hidden />
+                        </Link>
+                    )}
                 </h3>
 
                 <div className="mt-auto pt-3">
+                    {/*
+                      The price and the shop it is at (owner, 2026-11-07: "show the
+                      merchant of the lowest offer after the price", "remove
+                      vanaf", "remove x aanbiedingen bij x winkels"). It does not
+                      change on hover ("don't change on hover"): the card's link
+                      says "Koop bij …" to a screen reader, and the shop's name
+                      here says where a press goes.
+                    */}
                     {group.minPrice !== null && (
-                        <div className="flex items-baseline gap-1.5">
-                            {/* "from" only when there is a spread worth reading. */}
-                            {comparable && (
-                                <span className="text-xs text-ink-soft">{t('product.from')}</span>
-                            )}
-                            <span className="text-lg font-semibold">
-                                {formatPrice(group.minPrice, market)}
-                            </span>
+                        <div className="flex items-baseline gap-2">
+                            <span className="shrink-0 text-lg font-semibold">{formatPrice(group.minPrice, market)}</span>
+                            {buy && <span className="min-w-0 truncate text-sm text-ink-soft">{buy.shop}</span>}
                         </div>
                     )}
-
-                    <div className={`mt-1 text-xs ${comparable ? 'font-medium text-sage' : 'text-ink-soft'}`}>
-                        {group.offerCount === 1
-                            ? t('product.one_offer')
-                            : t('product.offers', { count: n(group.offerCount) })}
-                        {' · '}
-                        {comparable
-                            ? t('product.across_shops', { count: n(group.merchantCount) })
-                            : t('product.one_shop')}
-                    </div>
 
                     {group.kept && <div className="mt-1 text-xs text-ink-soft">{group.kept}</div>}
                 </div>
             </div>
+
+            {/*
+              Our product page, a link of its own under the card (never inside
+              the card's link), above its stretched area, and tall enough to
+              tap without reaching the shop by mistake. "Alle aanbiedingen"
+              only when there is more than one; one offer is "the product".
+            */}
+            {buy && (
+                <Link
+                    href={productUrl}
+                    className="relative z-20 flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-sm font-medium text-accent-dark transition hover:bg-cream hover:text-ink"
+                >
+                    {group.offerCount > 1
+                        ? t('product.all_offers_count', { count: n(group.offerCount) })
+                        : t('product.view_product')}
+                    <span aria-hidden>→</span>
+                </Link>
+            )}
         </article>
     )
 }
