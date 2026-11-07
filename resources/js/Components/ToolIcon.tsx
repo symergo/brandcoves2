@@ -46,6 +46,7 @@ export type ToolKey =
     | 'check'
     | 'bell'
     | 'package'
+    | 'shop'
     | 'gift'
     | 'heart'
     | 'mailAccount'
@@ -540,6 +541,14 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5l-8.5-4z" />
             <path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9" />
+        </>
+    ),
+
+    // A shopping bag: this goes to the shop to buy it (the by-shop search rows, 2026-11-07).
+    shop: (
+        <>
+            <path d="M5 8h14l-1 12H6z" />
+            <path d="M9 10V7a3 3 0 0 1 6 0v3" />
         </>
     ),
 

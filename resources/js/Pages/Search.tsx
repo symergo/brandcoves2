@@ -1216,7 +1216,7 @@ export default function Search({
                                                     target="_blank"
                                                     rel="sponsored noopener nofollow"
                                                     onMouseDown={() => reportLaneClick(g.shop)}
-                                                    className="flex gap-3 p-3 pr-14 transition hover:bg-cream"
+                                                    className="group flex gap-3 p-3 pr-14 transition hover:bg-cream"
                                                 >
                                                     {g.image && (
                                                         <img
@@ -1266,12 +1266,7 @@ export default function Search({
                                                           thing that should carry
                                                           the weight.
                                                         */}
-                                                        <span className="mt-1.5 block">
-                                                            {/* Out to the shop: the column's header names it, once (owner, 2026-11-07). */}
-                                                            {/* Drawn, not the ↗ character: Windows renders that as a coloured emoji. */}
-                                                            <svg aria-hidden viewBox="0 0 16 16" className="float-right mt-1.5 h-3.5 w-3.5 text-ink-soft" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M5 11 11 5M6 5h5v5" />
-                                                            </svg>
+                                                        <span className="mt-1.5 flex items-center">
                                                             <span className="text-base font-semibold text-ink">
                                                                 {g.shop.price === null
                                                                     ? '-'
@@ -1288,6 +1283,20 @@ export default function Search({
                                                                     −{n(g.discountPercent)}%
                                                                 </span>
                                                             )}
+                                                            {/*
+                                                              To the shop, as a mark rather than
+                                                              words (owner, 2026-11-07: the arrow
+                                                              was too plain, and the shop is named
+                                                              once in the header). A pale bag at
+                                                              the end of the price, filled red
+                                                              when the row is pointed at.
+                                                            */}
+                                                            <span
+                                                                aria-hidden
+                                                                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white"
+                                                            >
+                                                                <ToolIcon name="shop" className="h-4 w-4" />
+                                                            </span>
                                                         </span>
                                                         {g.shop.needsPriceTimestamp && (
                                                             <span className="mt-0.5 block text-2xs text-ink-soft">
