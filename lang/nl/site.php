@@ -274,6 +274,7 @@ return [
         // Above the results, with Amazon's logo (2026-10-05).
         'amazon_compare' => 'Vergelijk prijzen voor :term op Amazon',
         'amazon_compare_short' => 'Vergelijk prijzen op Amazon',
+        'amazon_compare_with' => 'Vergelijk met Amazon',
         'chip_with_out_of_stock' => 'Ook niet op voorraad',
         'chip_min' => 'Vanaf :price',
         'chip_max' => 'Tot :price',

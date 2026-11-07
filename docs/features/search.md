@@ -1258,3 +1258,11 @@ drops out when none match), and `:gift_finder_link` and `:guides_link`. Phrased 
 term is singular or plural ("Bij deze zoekopdracht vind je producten van …", "Prijzen voor …"), and a
 heading now starts with a capital (`BlockSections::flatten()`), since one that opens with the term
 read as "koffie vergelijken".
+
+## "Vergelijk met Amazon" beside the title (owner, 2026-11-07)
+
+The Amazon comparison had a row of its own above the results ("Vergelijk prijzen voor lenovo op
+Amazon · www.amazon.com.be →"). It is now the first of the buttons beside the title, before the view
+switch, in their shape: Amazon's mark on a phone, mark and "Vergelijk met Amazon" from `sm` up
+(`search.amazon_compare_with`). Still a plain anchor to the tagged Amazon search, never through `/go/`,
+`sponsored nofollow`, in a new tab. The card in the grid and the link on an empty result are unchanged.

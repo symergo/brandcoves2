@@ -696,6 +696,35 @@ export default function Search({
                           row under the Coves.
                         */}
                         <div className="flex shrink-0 items-start gap-2">
+                            {/*
+                              Amazon first in the row, before the view switch
+                              (owner, 2026-11-07), the same shape as the buttons
+                              beside it: the shop's mark on a phone, mark and
+                              "Vergelijk met Amazon" from `sm` up. Still a plain
+                              anchor straight to the tagged search, never through
+                              our redirector (Amazon's rule), sponsored and
+                              nofollow, in a new tab.
+                            */}
+                            {amazonSearch && !results.empty && (
+                                <a
+                                    href={amazonSearch.url}
+                                    target="_blank"
+                                    rel="sponsored noopener nofollow"
+                                    className={buttonClasses('secondary', 'sm', 'min-w-11 rounded-full sm:min-w-0')}
+                                >
+                                    <img
+                                        src={amazonSearch.icon}
+                                        alt=""
+                                        width={16}
+                                        height={16}
+                                        className="h-4 w-4 shrink-0 rounded-sm bg-white"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none'
+                                        }}
+                                    />
+                                    <span className="sr-only sm:not-sr-only">{t('search.amazon_compare_with')}</span>
+                                </a>
+                            )}
                             <ViewToggle view={view} go={go} />
 
                             <div className="relative" ref={panelRef}>
@@ -934,32 +963,13 @@ export default function Search({
 
 
                     {/*
-                      One row above the results: the Amazon price comparison,
-                      on the right. It came back here on 2026-10-05, "as
-                      before", as the button with Amazon's logo, beside the
-                      card in the grid. The line on its left that counted the
-                      lists a term is on went on 2026-10-25: it cost a query
-                      over every matching product on each new term, and
-                      crawlers ask for a new term every two seconds.
+                      No row above the results any more: the Amazon comparison
+                      moved into the buttons beside the title on 2026-11-07
+                      (owner). The line that counted the lists a term is on went
+                      on 2026-10-25: it cost a query over every matching product
+                      on each new term, and crawlers ask for a new term every two
+                      seconds.
                     */}
-                    {amazonSearch && !results.empty && (
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                            {/*
-                              The term only from `sm` up: on a phone the full
-                              sentence was cut off mid-word, and the term is the
-                              title right above it anyway.
-                            */}
-                            <div className="max-w-full min-w-0 sm:ml-auto">
-                                <span className="sm:hidden">
-                                    <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare_short')} compact />
-                                </span>
-                                <span className="hidden sm:inline">
-                                    <AmazonSearchCta link={amazonSearch} label={t('search.amazon_compare', { term: q })} compact />
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
 
                     {/*
                       The reading of a gift search, before its results.

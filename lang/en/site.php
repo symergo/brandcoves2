@@ -347,6 +347,7 @@ return [
         // Above the results, with Amazon's logo (2026-10-05).
         'amazon_compare' => 'Compare :term prices on Amazon',
         'amazon_compare_short' => 'Compare prices on Amazon',
+        'amazon_compare_with' => 'Compare with Amazon',
         'chip_with_out_of_stock' => 'Out of stock too',
         'chip_min' => 'From :price',
         'chip_max' => 'Up to :price',
