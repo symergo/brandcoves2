@@ -136,6 +136,7 @@ return [
 
         'coves_heading' => 'Coves om te ontdekken',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
+        'latest_heading' => 'Nieuwste Coves',
         'coves_all' => 'Alle Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Dagelijkse Cove',

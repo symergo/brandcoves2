@@ -699,3 +699,21 @@ somebody else. `HomePageTest::signed_in_the_page_shows_your_own_coves_and_people
 text column, its line under the title and the search field were still capped at 576px
 (`max-w-xl`) and read as narrow. The text column now takes two thirds beside the present (it was
 1.4 to 1), and the line and the search field go to 768px (`max-w-3xl`).
+
+## The newest Coves beside the Daily (2026-11-07)
+
+Owner: "put the latest coves on the frontpage", then "make the daily cove card on homepage smaller
+and put the other latest guides next to it". The orange band under the three ways in now holds two
+columns from `lg` up: the Daily card on the left (smaller: less padding, a smaller title, tighter
+product tiles) with its subscribe box, and **Nieuwste Coves** on the right, the six newest published
+Coves that are not a Daily (guides, advice, gift ideas, shop and brand pages), newest first by
+`published_at`. Each is one row: its first in-stock product's picture, or the drawing an advice
+article carries; its kind with the Discover menu's name and icon; the title and the start of its
+intro, one line each. Either half alone takes the full width, so a market with no Daily still shows
+the newest Coves and the other way round.
+
+This brings a list of Coves back to the front page, which the 2026-09-29 redesign had swapped for one
+card per kind. That list was a random shelf; this one is what changed lately, so a returning visitor
+sees something new, and new pages get a link from the front page the day they go live. Two queries
+(the Coves and their picks), in `HomeController::latest()`. The anonymous page cache still applies,
+so a new Cove can take as long as that cache lives to appear.

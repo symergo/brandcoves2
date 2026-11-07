@@ -136,6 +136,7 @@ return [
 
         'coves_heading' => 'Coves para explorar',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
+        'latest_heading' => 'Últimas Coves',
         'coves_all' => 'Todas las Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Cove del día',

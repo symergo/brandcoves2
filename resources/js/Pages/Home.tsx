@@ -9,6 +9,7 @@ import { buttonClasses } from '../Components/Button'
 import { formatCountdown, formatDay, formatPrice, type SharedProps } from '../types'
 import { ListThumb } from '../Components/ListRow'
 import { useTranslations } from '../useTranslations'
+import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 
 interface Props {
     /** An Amazon sales event while it runs, on the NL and BE markets (AmazonEvent). */
@@ -23,6 +24,18 @@ interface Props {
     } | null
     /** Signed in only: your Coves, last changed first, and your people, nearest date first. */
     mine?: { coves: MyCove[]; people: MyPerson[] } | null
+    /** The newest published Coves other than the Daily, newest first. */
+    latest?: LatestCove[]
+}
+
+interface LatestCove {
+    id: number
+    kind: 'gift' | 'guide' | 'brand'
+    title: string
+    intro: string
+    image: string | null
+    scene: SceneKey | null
+    url: string
 }
 
 interface MyCove {
@@ -65,7 +78,7 @@ interface MyPerson {
  * visitor's convenience, not an answer to the three questions). The search
  * card left too and came back under the hero later the same day; see below.
  */
-export default function Home({ today, amazonEvent = null, mine = null }: Props) {
+export default function Home({ today, amazonEvent = null, mine = null, latest = [] }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -217,17 +230,27 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
               "Gewoon rondkijken?" (owner, 2026-10-02). It stood fifth, after
               the Coves cards, until then.
             */}
-            {today && (
+            {(today || latest.length > 0) && (
                 /*
                   On a soft orange band, edge to edge (Rood + oranje,
                   2026-10-05), painted the same way as the hero band.
+
+                  The Daily on the left, smaller, and the newest Coves beside it
+                  (owner, 2026-11-07: "put the latest coves on the frontpage",
+                  then "make the daily cove card smaller and put the other
+                  latest guides next to it"): what changed today and lately,
+                  side by side, so a returning visitor sees something new
+                  without scrolling. Either one alone takes the full width.
                 */
                 <section
                     className="mt-14 bg-band py-10 shadow-[0_0_0_100vmax_var(--color-band)] [clip-path:inset(0_-100vmax)] sm:mt-20 sm:py-14"
-                    aria-labelledby="today-heading"
+                    aria-labelledby={today ? 'today-heading' : 'latest-heading'}
                 >
+                <div className={`grid gap-8 ${today && latest.length > 0 ? 'lg:grid-cols-2 lg:items-start' : ''}`}>
+                {today && (
+                <div>
                     {/* No line above the card (owner, 2026-10-05): its own badge and title say what it is. */}
-                    <div className="rounded-card border border-line bg-card p-5 sm:p-8">
+                    <div className="rounded-card border border-line bg-card p-5 sm:p-6">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
                                 {t('home.today_badge')}
@@ -237,7 +260,7 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                             </time>
                         </div>
 
-                        <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <h2 id="today-heading" className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
                             <Link href={today.url} className="hover:text-accent">
                                 {today.theme}
                             </Link>
@@ -245,7 +268,7 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                         {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
 
                         {today.finds.length > 0 && (
-                            <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 {today.finds.map((find) => (
                                     <li key={find.id} className="relative">
                                         {/*
@@ -299,6 +322,27 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                     <div className="mt-6">
                         <CoveSubscribe source="home" />
                     </div>
+                </div>
+                )}
+
+                {latest.length > 0 && (
+                    <div>
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h2 id="latest-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
+                                {t('home.latest_heading')}
+                            </h2>
+                            <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                                {t('home.coves_all')} →
+                            </Link>
+                        </div>
+                        <ul className={`mt-4 grid gap-3 ${today ? '' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+                            {latest.map((cove) => (
+                                <LatestCoveCard key={cove.id} cove={cove} />
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                </div>
                 </section>
             )}
 
@@ -555,6 +599,42 @@ function OpenWay({ icon, text, href }: { icon: ToolKey; text: string; href: stri
             <Link href={href} className="group flex items-start gap-3 hover:text-ink">
                 <ToolIcon name={icon} className="mt-0.5 h-7 w-7 shrink-0 text-accent" duo />
                 <span className="underline decoration-line underline-offset-4 group-hover:decoration-ink">{text}</span>
+            </Link>
+        </li>
+    )
+}
+
+/**
+ * One of the newest Coves, one row: a picture, what kind it is, its title and
+ * the start of its intro, the whole row one link. The picture is its first
+ * product, or the drawing an advice article carries.
+ */
+function LatestCoveCard({ cove }: { cove: LatestCove }) {
+    const { t } = useTranslations()
+    const label = { gift: t('nav.gift_ideas'), guide: t('nav.smart'), brand: t('nav.brands_shops') }[cove.kind]
+    const icon: CoveKey = cove.kind === 'gift' ? 'persona' : cove.kind === 'brand' ? 'brand' : 'idea'
+
+    return (
+        <li>
+            <Link
+                href={cove.url}
+                className="group flex h-full items-center gap-4 rounded-card border border-line bg-card p-3 transition hover:border-ink"
+            >
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+                    {cove.image ? (
+                        <img src={cove.image} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
+                    ) : (
+                        <SceneIllustration name={cove.scene} className="h-11 w-auto text-accent" />
+                    )}
+                </div>
+                <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+                        <CoveIcon name={icon} className="h-4 w-4 shrink-0 text-accent" />
+                        {label}
+                    </div>
+                    <div className="mt-0.5 line-clamp-1 font-medium group-hover:text-accent">{cove.title}</div>
+                    {cove.intro && <p className="mt-0.5 line-clamp-1 text-sm text-ink-soft">{cove.intro}</p>}
+                </div>
             </Link>
         </li>
     )

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Wishlist;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Search\AmazonEvent;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\MyPeople;
@@ -20,6 +22,9 @@ class HomeController extends Controller
 {
     /** How many of each the band shows; the rest is one click away on its own page. */
     private const MINE_SHOWN = 6;
+
+    /** Two rows of three on a desktop, the same as the kind cards below them. */
+    private const LATEST_SHOWN = 6;
 
     public function __invoke(Request $request, CurrentMarket $current, MyPeople $people): Response
     {
@@ -59,6 +64,18 @@ class HomeController extends Controller
              * sees a search box learns it is a search engine.
              */
             'today' => $this->today($current),
+
+            /*
+             * The newest Coves we wrote (owner, 2026-11-07: "put the latest
+             * coves on the frontpage"): guides, advice, gift ideas and shop and
+             * brand pages, newest first. Not the Daily, which has its own band
+             * just above. This brings back a list of Coves, which the
+             * 2026-09-29 redesign had swapped for one card per kind; that was
+             * a random shelf, this one is what changed lately, so a returning
+             * visitor sees something new and a crawler finds new pages from
+             * the front page.
+             */
+            'latest' => $this->latest($current),
 
             /*
              * Yours, when you are signed in (owner, 2026-11-07): the Coves you
@@ -129,6 +146,52 @@ class HomeController extends Controller
             'coves' => $coves,
             'people' => array_slice($people->for($user, $current), 0, self::MINE_SHOWN),
         ];
+    }
+
+    /**
+     * The newest published Coves other than the Daily, with a picture each.
+     *
+     * The picture is the first product on the Cove when it has one, else the
+     * drawing (`scene`) an advice article carries, else none and the card shows
+     * its kind's icon. One query for the Coves and one for their first picks.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function latest(CurrentMarket $current): array
+    {
+        $market = $current->get();
+
+        return DailyPickSet::query()
+            ->forMarket($market)
+            ->published()
+            ->where('kind', '!=', CoveKind::Daily->value)
+            ->whereNotNull('slug')
+            ->with(['picks' => fn ($q) => $q->orderBy('rank')->with('group:id,image_url,in_stock')])
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->limit(self::LATEST_SHOWN)
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
+            ->map(function (DailyPickSet $cove) use ($current, $market): array {
+                $image = $cove->picks
+                    ->first(fn (DailyPick $pick) => $pick->group?->image_url !== null && $pick->group->in_stock)
+                    ?->group->image_url;
+
+                return [
+                    'id' => $cove->id,
+                    'kind' => match (true) {
+                        $cove->kind->isGiftColumn() => 'gift',
+                        $cove->kind === CoveKind::Shop, $cove->kind === CoveKind::Brand => 'brand',
+                        default => 'guide',
+                    },
+                    'title' => $cove->theme_title,
+                    'intro' => app(CoveMarkup::class)->plain((string) $cove->theme_blurb),
+                    'image' => $image,
+                    'scene' => $image === null ? $cove->scene?->value : null,
+                    'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /** @return array<string, mixed>|null */

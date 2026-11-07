@@ -205,6 +205,7 @@ return [
 
         'coves_heading' => 'Coves worth exploring',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
+        'latest_heading' => 'Latest Coves',
         'coves_all' => 'All Coves',
         // The shape a Cove takes, named on the front page's Coves band.
         'cove_kind_daily' => 'Daily Cove',
