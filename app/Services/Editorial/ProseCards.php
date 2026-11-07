@@ -6,6 +6,7 @@ namespace App\Services\Editorial;
 
 use App\Enums\Market;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Images\ImageProxy;
 
 /**
  * An article, paragraph by paragraph, each carrying the products it names.
@@ -86,6 +87,35 @@ final class ProseCards
             if ($figure !== null) {
                 if (CoveMarkup::knownFigure($figure)) {
                     $out[] = ['html' => '', 'groupIds' => [], 'figure' => $figure, 'table' => null];
+                }
+
+                continue;
+            }
+
+            /*
+             * A photograph, `[[image:URL|what it shows]]` (2026-11-07, the
+             * gift-card guides). Through our image proxy when its host is one
+             * the proxy serves, so the shop's server is not asked on every
+             * view; otherwise the address as given. A URL that fails
+             * `CoveMarkup::external()` is dropped and reported, like a
+             * figure with an unknown key.
+             */
+            $image = $this->markup->image($paragraph);
+            if ($image !== null) {
+                if ($image['rejected']) {
+                    $this->rejected[] = 'image';
+                } else {
+                    $out[] = [
+                        'html' => '',
+                        'groupIds' => [],
+                        'figure' => null,
+                        'table' => null,
+                        'image' => [
+                            'src' => $image['src'],
+                            'token' => app(ImageProxy::class)->token($image['src']),
+                            'alt' => $image['alt'],
+                        ],
+                    ];
                 }
 
                 continue;

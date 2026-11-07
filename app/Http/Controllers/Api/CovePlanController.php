@@ -703,7 +703,9 @@ class CovePlanController extends Controller
             'searchQuestions' => ['nullable', 'array', 'max:10'],
             'searchQuestions.*' => ['nullable', 'string', 'max:160'],
             'metaDescription' => ['nullable', 'string', 'max:160'],
-            'body' => ['nullable', 'string', 'max:20000'],
+            // 60,000 (was 20,000, owner 2026-11-07: "don't limit yourself to the default
+            // limits if more info is available"); a text column holds it.
+            'body' => ['nullable', 'string', 'max:60000'],
             'faq' => ['nullable', 'array', 'max:10'],
             // Both halves or neither. A question with no answer renders as a
             // broken FAQPage and Google says so out loud.

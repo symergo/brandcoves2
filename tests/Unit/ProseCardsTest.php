@@ -208,6 +208,24 @@ De [[product:12|Sony]] is de stille.'
      * belongs under the paragraph that argues for it.
      */
     #[Test]
+    public function a_photograph_line_is_a_picture_block(): void
+    {
+        // The gift-card guides (2026-11-07): `[[image:URL|alt]]` on its own line.
+        $blocks = $this->cards()->blocks(
+            "[[image:https://www.bongo.be/img/kaart.png|De Bongo-cadeaubon]]\n\n"
+            ."[[image:http://example.com/x.png|onveilig]]\n\n"
+            .'Een zin met [[image:https://www.bongo.be/x.png|binnen]] een beeld.'
+        );
+
+        $this->assertCount(2, $blocks);
+        $this->assertSame('https://www.bongo.be/img/kaart.png', $blocks[0]['image']['src']);
+        $this->assertSame('De Bongo-cadeaubon', $blocks[0]['image']['alt']);
+        $this->assertSame('', $blocks[0]['html']);
+        // Inside a sentence the token goes and the words close up.
+        $this->assertSame('Een zin met een beeld.', $blocks[1]['html']);
+    }
+
+    #[Test]
     public function headings_and_lists_are_blocks_of_their_own(): void
     {
         $blocks = $this->cards()->blocks(

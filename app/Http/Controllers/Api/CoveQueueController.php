@@ -152,7 +152,7 @@ class CoveQueueController extends Controller
             'title' => ['nullable', 'string', 'max:120'],
             'blurb' => ['nullable', 'string', 'max:300'],
             'editorial' => ['nullable', 'string', 'max:'.config('giftcoves.editorial_api.max_editorial_chars')],
-            'body' => ['nullable', 'string', 'max:20000'],
+            'body' => ['nullable', 'string', 'max:60000'],
             'metaDescription' => ['nullable', 'string', 'max:160'],
             'faq' => ['nullable', 'array', 'max:10'],
             'faq.*.question' => ['required', 'string', 'max:200'],

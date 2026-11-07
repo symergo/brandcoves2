@@ -76,7 +76,7 @@ use App\Support\SearchUrl;
 class CoveMarkup
 {
     /** `[[kind:value]]` or `[[kind:value|label]]` */
-    private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon|source):([^\]|]{1,300})(?:\|([^\]]{1,160}))?\]\]/u';
+    private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon|source|shop):([^\]|]{1,600})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
      * `**emphasis**`, the one piece of Markdown this renderer honours.
@@ -116,6 +116,19 @@ class CoveMarkup
     private const FIGURE = '/^\s*\[\[figure:([a-z_]{1,40})\]\]\s*$/u';
 
     private const INLINE_FIGURE = '/ ?\[\[figure:[a-z_]{1,40}\]\]/u';
+
+    /**
+     * `[[image:https://…|what it shows]]` alone on a paragraph: a photograph
+     * between the paragraphs (owner, 2026-11-07, for the gift-card guides:
+     * "include pictures of the gift cards"). Authored articles only; nothing in
+     * the builder's prompt mentions it. The URL must pass `external()`, the
+     * description is the image's alt text and is required, because a picture
+     * of a card with no words is nothing to a screen reader. A token inside a
+     * sentence is removed, as a figure's is.
+     */
+    private const IMAGE = '/^\s*\[\[image:([^\]|\s]{1,600})\|([^\]]{1,200})\]\]\s*$/u';
+
+    private const INLINE_IMAGE = '/ ?\[\[image:[^\]]{1,800}\]\]/u';
 
     /**
      * A block of pipe-separated lines: a table.
@@ -290,7 +303,7 @@ class CoveMarkup
         // markup must stop being markup before we add our own.
         // A figure token inside a sentence is not drawn; see FIGURE. Removed
         // with the space before it so the words on either side close up.
-        $escaped = e(preg_replace(self::INLINE_FIGURE, '', $text) ?? $text);
+        $escaped = e(preg_replace([self::INLINE_FIGURE, self::INLINE_IMAGE], '', $text) ?? $text);
 
         $mergedTo = $this->mergedIn($text, $allowed);
 
@@ -318,6 +331,7 @@ class CoveMarkup
                     'page' => $this->page($value, $base),
                     'amazon' => $this->amazon($value, $market),
                     'source' => self::source($value),
+                    'shop' => self::shop($value, $market),
                     default => null,
                 };
 
@@ -351,6 +365,23 @@ class CoveMarkup
                  * write and cannot keep current: a new tab, so the reader keeps
                  * the article, and `noopener`.
                  */
+                /*
+                 * A shop's own page, where the thing an article describes is
+                 * sold (owner, 2026-11-07: "links to where to buy them"). Not
+                 * ours and not paid for: `nofollow`, because a page of them must
+                 * not read as link-selling, and a new tab, so the reader keeps
+                 * the article.
+                 */
+                if ($kind === 'shop') {
+                    return sprintf(
+                        '<a href="%s" rel="%s" target="_blank">%s</a>',
+                        e($href),
+                        // Amazon's: paid, so `sponsored` too, as every Amazon link here is.
+                        self::isAmazon($href) ? 'sponsored nofollow noopener' : 'nofollow noopener',
+                        e($label),
+                    );
+                }
+
                 if ($kind === 'source') {
                     return sprintf(
                         '<a href="%s" rel="noopener" target="_blank">%s</a>',
@@ -449,6 +480,15 @@ class CoveMarkup
             if ($figure !== null) {
                 if (! self::knownFigure($figure)) {
                     $rejected[] = "figure:{$figure}";
+                }
+
+                continue;
+            }
+
+            // A photograph has nowhere to go on these surfaces either.
+            if (preg_match(self::IMAGE, $paragraph, $im) === 1) {
+                if (self::external($im[1]) === null) {
+                    $rejected[] = "image:{$im[1]}";
                 }
 
                 continue;
@@ -621,6 +661,88 @@ class CoveMarkup
     public function figureKey(string $paragraph): ?string
     {
         return preg_match(self::FIGURE, $paragraph, $m) === 1 ? $m[1] : null;
+    }
+
+    /**
+     * The photograph a paragraph is, else null: `['src', 'alt']`, with a
+     * `src` that passed `external()`. `rejected` is true for a paragraph that
+     * is an image token whose URL did not pass, so the caller can drop it and
+     * report it rather than print the token.
+     *
+     * @return array{src: string|null, alt: string, rejected: bool}|null
+     */
+    public function image(string $paragraph): ?array
+    {
+        if (preg_match(self::IMAGE, $paragraph, $m) !== 1) {
+            return null;
+        }
+
+        $src = self::external($m[1]);
+
+        return ['src' => $src, 'alt' => trim($m[2]), 'rejected' => $src === null];
+    }
+
+    /**
+     * A shop's page for `[[shop:…]]`: any https address that passes
+     * `external()`, Amazon's included (owner, 2026-11-07). An Amazon address on
+     * this market's storefront is given our Associates tag when it has none
+     * (`tagAmazon()`), since an untagged Amazon link earns nothing and looks
+     * exactly like one that does.
+     */
+    public static function shop(string $value, ?Market $market = null): ?string
+    {
+        $url = self::external($value);
+
+        if ($url === null || $market === null || ! self::isAmazon($url)) {
+            return $url;
+        }
+
+        return self::tagAmazon($url, $market);
+    }
+
+    public static function isAmazon(string $url): bool
+    {
+        $host = mb_strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return preg_match('/(^|\.)amazon\.[a-z.]+$/', $host) === 1;
+    }
+
+    /** Add this market's Associates tag to an Amazon address on its own storefront that has none. */
+    private static function tagAmazon(string $url, Market $market): string
+    {
+        $config = (array) config("giftcoves.amazon_search.markets.{$market->value}", []);
+        $host = mb_strtolower(trim((string) ($config['host'] ?? '')));
+        $tag = trim((string) ($config['tag'] ?? ''));
+
+        if ($tag === '' || mb_strtolower((string) parse_url($url, PHP_URL_HOST)) !== $host) {
+            return $url;
+        }
+
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+
+        if (isset($query['tag'])) {
+            return $url;
+        }
+
+        return $url.(str_contains($url, '?') ? '&' : '?').'tag='.rawurlencode($tag);
+    }
+
+    /**
+     * An address outside the site that an article may point at: https (the
+     * rule of invariant 5), a real host, no credentials, no port, no spaces.
+     */
+    public static function external(string $value): ?string
+    {
+        $url = trim($value);
+        $parts = parse_url($url);
+
+        if ($parts === false || ($parts['scheme'] ?? '') !== 'https' || ! isset($parts['host'])
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])
+            || preg_match('/\s/u', $url) === 1 || ! str_contains($parts['host'], '.')) {
+            return null;
+        }
+
+        return $url;
     }
 
     /** Whether `SceneIllustration` has a drawing under this key. */

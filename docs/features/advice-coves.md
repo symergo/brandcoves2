@@ -308,3 +308,23 @@ briefed_with_its_keyword_questions_and_the_article_it_rewrites`, `CoveMarkupTest
 - [shop-coves.md](shop-coves.md) — the sibling, and where the content rules come from
 - [cove-planner.md](cove-planner.md) — how a Cove of any kind is decided
 - [amazon-compliance.md](amazon-compliance.md) — what an Amazon link may be
+
+## Pictures and shop links in an authored article (owner, 2026-11-07)
+
+For the gift-card guides ("include pictures of the gift cards, and links to where to buy them";
+"don't limit to products in database, research broadly online"): two tokens, authored articles
+only, so nothing in the builder's prompt mentions them.
+
+- `[[image:URL|what it shows]]` alone on a paragraph is a photograph (`CoveMarkup::image()`,
+  `ProseCards`, `ArticleImage` on the guide page): through the image proxy when it serves that
+  host, otherwise the address as given; contained on white, at most 320px tall, left out if it
+  will not load. The description is the alt text and is required. Inside a sentence the token is
+  removed, as a figure's is. Plain surfaces (email, meta) skip it.
+- `[[shop:URL|label]]` links to a shop (`CoveMarkup::shop()`), `nofollow noopener`, new tab. Any
+  https shop, Amazon included at the owner's word; an Amazon address on the market's own
+  storefront gets the Associates tag if it has none, and `sponsored`, since an untagged Amazon
+  link earns nothing and looks exactly like one that does.
+
+Both refuse anything but https, credentials and ports (`CoveMarkup::external()`), and a refused
+one is reported like any rejected token. The API's body limit went from 20,000 to 60,000
+characters ("don't limit yourself to the default limits if more info is available").

@@ -1,4 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import { useState } from 'react'
+import { pictureAttributes } from '../../imageUrl'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
@@ -46,6 +48,12 @@ interface Block {
      * cover. Absent on blocks built before figures existed.
      */
     figure?: SceneKey | null
+    /**
+     * A photograph instead of a paragraph (2026-11-07): a `[[image:URL|alt]]`
+     * line. `token` is the image proxy's when it serves that host, else null
+     * and the address is used as given. `alt` is required by the token.
+     */
+    image?: { src: string; token: string | null; alt: string } | null
     /**
      * A table instead of a paragraph, from a block of `| a | b |` lines.
      * `html` is empty then. Cells are safe HTML from CoveMarkup, escaped
@@ -214,6 +222,8 @@ function Article({
                                 </ListTag>
                             )
                         })()
+                    ) : block.image ? (
+                        <ArticleImage image={block.image} />
                     ) : block.figure ? (
                         /*
                           Drawn, not photographed, like the cover: one hand
@@ -480,5 +490,33 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
             <EntityRails rails={rails} />
 
         </>
+    )
+}
+
+/**
+ * A photograph in an article (2026-11-07): a gift card, as its issuer shows
+ * it. Contained rather than cropped, on white, at most 320px tall: a card is
+ * a wide, flat thing and cropping it to a square would cut off its name. A
+ * picture that will not load is left out rather than shown broken; the
+ * proxy's copy is tried first and the original address after it.
+ */
+function ArticleImage({ image }: { image: { src: string; token: string | null; alt: string } }) {
+    const [proxyFailed, setProxyFailed] = useState(false)
+    const [broken, setBroken] = useState(false)
+
+    if (broken) {
+        return null
+    }
+
+    return (
+        <figure className="my-6 flex justify-center">
+            <img
+                {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
+                alt={image.alt}
+                loading="lazy"
+                className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3"
+                onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
+            />
+        </figure>
     )
 }

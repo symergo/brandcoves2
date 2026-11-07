@@ -635,6 +635,31 @@ Twee.',
         }
     }
 
+    /**
+     * `[[shop:URL|label]]` (2026-11-07): where a thing is sold, any https
+     * shop, Amazon included and then given this market's tag.
+     */
+    #[Test]
+    public function a_shop_link_goes_out_over_https_and_amazon_carries_our_tag(): void
+    {
+        config(['giftcoves.amazon_search.markets.be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'gc-21']]);
+
+        $shop = $this->render('Koop hem bij [[shop:https://www.bongo.be/nl/bon?a=1&b=2|Bongo]].');
+        $this->assertStringContainsString('<a href="https://www.bongo.be/nl/bon?a=1&amp;b=2" rel="nofollow noopener" target="_blank">Bongo</a>', $shop['html']);
+
+        $amazon = $this->render('[[shop:https://www.amazon.com.be/dp/B000|Amazon]]');
+        $this->assertStringContainsString('href="https://www.amazon.com.be/dp/B000?tag=gc-21" rel="sponsored nofollow noopener"', $amazon['html']);
+
+        // A tag already there is left alone.
+        $this->assertStringContainsString('tag=other', $this->render('[[shop:https://www.amazon.com.be/dp/B000?tag=other|A]]')['html']);
+
+        foreach (['http://www.bongo.be/', 'javascript:alert(1)', 'https://user:pw@bongo.be/', 'https://bongo.be:8443/'] as $url) {
+            $result = $this->render("[[shop:{$url}|winkel]]");
+            $this->assertSame('winkel', $result['html'], $url);
+            $this->assertSame(["shop:{$url}"], $result['rejected']);
+        }
+    }
+
     #[Test]
     public function only_an_article_is_told_about_headings_lists_and_sources(): void
     {

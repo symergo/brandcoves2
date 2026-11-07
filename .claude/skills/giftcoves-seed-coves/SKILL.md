@@ -211,6 +211,18 @@ and a link to an official source, only on the domains in `giftcoves.editorial_so
 
     [[source:https://www.consuwijzer.nl/|ConsuWijzer]]
 
+**Authored articles only (since 2026-11-07, for the gift-card guides):** a photograph on a line
+of its own, and a link to the shop where something is sold. Both https, no credentials or port.
+The picture's description is its alt text and is required. A shop link may be any shop, Amazon
+included; an Amazon address on the market's own storefront gets our Associates tag added and
+`sponsored`. Check every picture address loads before publishing.
+
+    [[image:https://www.bongo.be/…/kaart.png|De Bongo-cadeaubon]]
+    Koop hem bij [[shop:https://www.bongo.be/nl|Bongo]].
+
+An article body may be 60,000 characters (was 20,000); the advice prompt's 900-1300 words is a
+default, not a cap, when the owner asks for an extensive piece.
+
 **Otherwise link with tokens, never a URL, markdown or HTML:**
 
     [[product:1234|the odd one]]   [[brand:Sony]]   [[search:draadloze koptelefoon]]
