@@ -230,6 +230,22 @@ These are the rules the product depends on. Breaking one is a bug even when test
 
 ---
 
+## Be critical of every request
+
+The owner's standing rule (2026-10-25, widened to UX on 2026-11-07): **judge each request before
+building it, and say so plainly when it is bad for SEO, bad for UX, inefficient or not best
+practice.** Say it first, not after the work is done: what it costs (in numbers where you can, like
+queries, page weight, layout shift, extra clicks, pages Google sees empty or duplicated) and the
+better alternative. Then do what the owner decides, and do not bring it up again once they have.
+
+- SEO: indexable thin or empty pages, crawlable URL explosions, content that differs for crawlers,
+  slow responses, layout shift, broken canonicals or hreflang, links that lose their anchor text.
+- UX: extra steps or clicks, hidden or surprising behaviour, popups that break the back button on
+  mobile, text a visitor has to decode, inconsistency with how the rest of the site works,
+  accessibility (contrast, focus, tap targets).
+- A short, concrete objection beats a vague caution. Do not refuse, and do not object for the sake
+  of it: when the request is sound, just build it.
+
 ## Conventions
 
 - **`market`, never `locale`.** Laravel already has an app locale for framework strings. `be-nl` and
