@@ -328,3 +328,8 @@ only, so nothing in the builder's prompt mentions them.
 Both refuse anything but https, credentials and ports (`CoveMarkup::external()`), and a refused
 one is reported like any rejected token. The API's body limit went from 20,000 to 60,000
 characters ("don't limit yourself to the default limits if more info is available").
+**An advice article may name a product (owner, 2026-11-07).** `ADVICE_SYSTEM` said "Never name a
+specific product, and never claim a fact about one", from when advice had no shortlist and the
+writer had nothing to check a named product against. The owner removed it ("i don't know why it's
+there") for the gift-card guides, which compare named cards. What it guarded stays covered by the
+rule above it: never invent product names, figures or company policy.

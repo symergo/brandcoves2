@@ -572,7 +572,6 @@ class Defaults
         - Never invent figures, rules, dates, product names or company policy.
           If you are not sure a fact is right and still current, leave it out
           or say what the reader should check and where.
-        - Never name a specific product, and never claim a fact about one.
         - No product prices: they change, and a number here dates the article.
           An amount or a period set by a law or a regulator is a fact about that
           rule; state it with the rule it comes from.
