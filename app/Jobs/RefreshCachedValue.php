@@ -15,7 +15,15 @@ use Illuminate\Queue\Attributes\Queue;
  * Unique per key, so a burst of visitors to an old or missing page is one
  * build.
  */
-#[Queue('default')]
+/*
+ * `batch`, not `default` (2026-11-07). `default` is read through `redis`,
+ * which hands a reserved job out again after 180 s, and this job may run 600:
+ * a popular-searches build past three minutes would have been started a
+ * second time while the first still ran. `batch` is read through
+ * `redis-long` (3900 s), behind the site at nice 5, which suits a rebuild
+ * nobody is waiting for. QueueRetryAfterTest and QueueRoutingTest pin it.
+ */
+#[Queue('batch')]
 class RefreshCachedValue implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
