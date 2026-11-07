@@ -158,6 +158,15 @@ function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
     const { market, auth, unreadCount, analytics, amazonAssociate } = page.props
     const { t } = useTranslations()
+
+    /*
+     * The search page is wider (owner, 2026-11-07: "maak de pagina breder zodat
+     * de winkel kolommen op de zoekpagina ook breder worden"): 1536px instead of
+     * 1152px, header and footer with it so the edges line up. Only there: the
+     * by-shop view is a row of columns side by side, and every other page is
+     * text and cards that read worse wider.
+     */
+    const width = page.component === 'Search' ? 'max-w-[96rem]' : 'max-w-6xl'
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
     /*
@@ -403,7 +412,7 @@ function Chrome({ children }: PropsWithChildren) {
                 {/* gap-2 below `sm` (2026-10-26): at 360px the logo and the
                     phone buttons filled the row exactly, and at 320px the
                     page scrolled sideways by 23px. */}
-                <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-6 xl:gap-4">
+                <div className={`mx-auto flex h-14 ${width} items-center gap-2 px-4 sm:gap-6 xl:gap-4`}>
                     {/*
                       The name at the mark's height. It was 18px beside a 28px
                       mark, which made the mark the logo and the word its
@@ -762,7 +771,7 @@ function Chrome({ children }: PropsWithChildren) {
               it reads as a page that starts late rather than as one
               that is well spaced.
             */}
-            <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-10">
+            <main id="main" className={`mx-auto w-full ${width} flex-1 px-4 py-6 sm:py-10`}>
                 {/*
                   Above the page, not inside it: a controller reports an outcome
                   by redirecting back, and the page it lands on should not have
@@ -805,7 +814,7 @@ function Chrome({ children }: PropsWithChildren) {
                   and needs a route into the two largest indexable URL spaces
                   on the site. A footer link on every page is exactly that.
                 */}
-                <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-soft sm:py-4">
+                <div className={`mx-auto ${width} px-4 py-5 text-xs text-ink-soft sm:py-4`}>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                         <nav aria-label={t('footer.explore')} className="flex flex-wrap gap-x-4 gap-y-0 sm:gap-y-1">
                             {/* Under its own name, not `nav.brand_coves`: with

@@ -1071,7 +1071,7 @@ export default function Search({
                                 */
                                 <section
                                     key={shop}
-                                    className="w-56 shrink-0 snap-start overflow-hidden rounded-card border border-line bg-card sm:w-64"
+                                    className="w-60 shrink-0 snap-start overflow-hidden rounded-card border border-line bg-card sm:w-72 xl:w-80"
                                     aria-label={shop}
                                 >
                                     {/*
@@ -1179,7 +1179,7 @@ export default function Search({
                                                           price as a bare "−20%",
                                                           not the grid's badge
                                                           over the image: the
-                                                          lane is 224px wide and
+                                                          lane is 240px wide at least and
                                                           the thumbnail 56px, so
                                                           there is room for a
                                                           suffix and none for

@@ -1151,3 +1151,13 @@ switches to, with that view's icon (`grid`, `lanes` in ToolIcon). The Filters po
 the button's right edge, because the button sits at the right of the page. The pills' row is only
 drawn when there are pills. Tests: `SearchShopCapTest::the_page_carries_no_total_and_pages_by_whether_more_follow`
 (19 + the card, page 2, the by-store view), `SearchThinLiveTest`, `SearchLiveQueueTest`.
+
+## A wider page, wider shop columns (owner, 2026-11-07)
+
+"Maak de pagina breder zodat de winkel kolommen op de zoekpagina ook breder worden." The search page
+is 1536px wide instead of the site's 1152px, header and footer with it so the edges line up
+(`width` in `SiteLayout`, keyed on `page.component === 'Search'`). Only the search page: the by-shop
+view is a row of columns, and the other pages are text and cards that read worse wider. The columns
+grow too, since the page alone would only have shown more of the same 256px columns: 240px on a
+phone, 288px from `sm`, 320px from `xl`. At 1680px that is four whole columns and part of a fifth.
+The grid view keeps five cards a row, each wider.
