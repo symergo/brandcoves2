@@ -244,7 +244,8 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
                 */
                 <section
                     className="mt-14 bg-band py-10 shadow-[0_0_0_100vmax_var(--color-band)] [clip-path:inset(0_-100vmax)] sm:mt-20 sm:py-14"
-                    aria-labelledby={today ? 'today-heading' : 'latest-heading'}
+                    aria-labelledby={today ? 'today-heading' : undefined}
+                    aria-label={today ? undefined : t('home.latest_heading')}
                 >
                 <div className={`grid gap-8 ${today && latest.length > 0 ? 'lg:grid-cols-2 lg:items-start' : ''}`}>
                 {today && (
@@ -327,19 +328,18 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
 
                 {latest.length > 0 && (
                     <div>
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <h2 id="latest-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">
-                                {t('home.latest_heading')}
-                            </h2>
-                            <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                                {t('home.coves_all')} →
-                            </Link>
-                        </div>
-                        <ul className={`mt-4 grid gap-3 ${today ? '' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+                        {/* No heading (owner, 2026-11-07: "remove the title Nieuwste
+                            Coves"): the rows say what they are. The list keeps the
+                            name for a screen reader, and the link to every Cove
+                            sits under it, where the reader arrives at the end. */}
+                        <ul aria-label={t('home.latest_heading')} className={`grid gap-3 ${today ? '' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
                             {latest.map((cove) => (
                                 <LatestCoveCard key={cove.id} cove={cove} />
                             ))}
                         </ul>
+                        <Link href={`${base}/coves`} className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                            {t('home.coves_all')} →
+                        </Link>
                     </div>
                 )}
                 </div>
