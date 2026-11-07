@@ -155,6 +155,36 @@ class ManualItemTest extends TestCase
     }
 
     #[Test]
+    public function an_offline_item_can_be_saved_with_its_picture(): void
+    {
+        // The gift-card guides (2026-11-07): a card saved from an article keeps
+        // the article's picture, its name and the shop's address. https only.
+        [$owner, $list] = $this->list();
+
+        $this->actingAs($owner)->postJson('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'title' => 'Bongo-cadeaubon',
+            'url' => 'https://www.bongo.be/nl/bon',
+            'image_url' => 'https://media.smartbox.com/kaart.jpg',
+        ])->assertSuccessful();
+
+        $item = WishlistItem::query()->where('wishlist_id', $list->id)->latest('id')->firstOrFail();
+        $this->assertSame('Bongo-cadeaubon', $item->snapshot_title);
+        $this->assertSame('https://www.bongo.be/nl/bon', $item->snapshot_url);
+        $this->assertSame('https://media.smartbox.com/kaart.jpg', $item->snapshot_image_url);
+
+        // Not over plain http.
+        $this->actingAs($owner)->postJson('/be-nl/list-items', [
+            'wishlist_id' => $list->id,
+            'source' => 'manual',
+            'title' => 'Iets anders',
+            'image_url' => 'http://example.com/x.jpg',
+        ])->assertSuccessful();
+        $this->assertNull(WishlistItem::query()->where('snapshot_title', 'Iets anders')->value('snapshot_image_url'));
+    }
+
+    #[Test]
     public function a_dangerous_link_is_refused(): void
     {
         // Affiliate and hand-typed URLs are hostile input, invariant #5. The

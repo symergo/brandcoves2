@@ -338,3 +338,11 @@ rule above it: never invent product names, figures or company policy.
 return window, its fees) as fact" went too: the gift-card guides are about exactly that, each
 issuer's validity, fees and terms. Inventing a policy is still ruled out ("never invent … company
 policy"); the guides date what they report ("volgens de voorwaarden, november 2026").
+
+**Save a pictured thing to a list (owner, 2026-11-07: "add the possibility to add the card as an
+off-line product to a wish list").** `[[image:PICTURE|name|WHERE IT IS SOLD]]`: with the third
+part (it passes `CoveMarkup::shop()`, so an Amazon address carries our tag) the picture shows the
+site's save button, which saves an offline item with that name, picture and link (`SaveToList`
+with `url`, `title` and `imageUrl`). The server now keeps a picture given with an offline save
+(`WishlistItemController::store`), https only and only when no photo was uploaded; a picture read
+from the page later fills only a missing one.

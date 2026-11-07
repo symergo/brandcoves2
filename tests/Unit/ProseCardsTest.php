@@ -223,6 +223,12 @@ De [[product:12|Sony]] is de stille.'
         $this->assertSame('', $blocks[0]['html']);
         // Inside a sentence the token goes and the words close up.
         $this->assertSame('Een zin met een beeld.', $blocks[1]['html']);
+        $this->assertNull($blocks[0]['image']['buy']);
+
+        // A third part: where it is sold, so the page can offer to save it.
+        $sold = $this->cards()->blocks('[[image:https://www.bongo.be/k.png|Bongo-cadeaubon|https://www.bongo.be/nl/bon]]');
+        $this->assertSame('https://www.bongo.be/nl/bon', $sold[0]['image']['buy']);
+        $this->assertSame('Bongo-cadeaubon', $sold[0]['image']['alt']);
     }
 
     #[Test]

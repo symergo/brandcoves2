@@ -126,7 +126,7 @@ class CoveMarkup
      * of a card with no words is nothing to a screen reader. A token inside a
      * sentence is removed, as a figure's is.
      */
-    private const IMAGE = '/^\s*\[\[image:([^\]|\s]{1,600})\|([^\]]{1,200})\]\]\s*$/u';
+    private const IMAGE = '/^\s*\[\[image:([^\]|\s]{1,600})\|([^\]|]{1,200})(?:\|([^\]|\s]{1,600}))?\]\]\s*$/u';
 
     private const INLINE_IMAGE = '/ ?\[\[image:[^\]]{1,800}\]\]/u';
 
@@ -669,17 +669,24 @@ class CoveMarkup
      * is an image token whose URL did not pass, so the caller can drop it and
      * report it rather than print the token.
      *
-     * @return array{src: string|null, alt: string, rejected: bool}|null
+     * A third part is where the thing pictured is sold (2026-11-07): the page
+     * then offers to save it to a list as an offline item, with this picture,
+     * the description as its name and that address as its link. It passes
+     * `shop()`, so an Amazon address carries our tag; one that fails is left
+     * off and the picture still shows.
+     *
+     * @return array{src: string|null, alt: string, rejected: bool, buy: string|null}|null
      */
-    public function image(string $paragraph): ?array
+    public function image(string $paragraph, ?Market $market = null): ?array
     {
         if (preg_match(self::IMAGE, $paragraph, $m) !== 1) {
             return null;
         }
 
         $src = self::external($m[1]);
+        $buy = isset($m[3]) && $m[3] !== '' ? self::shop($m[3], $market) : null;
 
-        return ['src' => $src, 'alt' => trim($m[2]), 'rejected' => $src === null];
+        return ['src' => $src, 'alt' => trim($m[2]), 'rejected' => $src === null, 'buy' => $buy];
     }
 
     /**

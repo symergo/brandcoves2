@@ -100,7 +100,7 @@ final class ProseCards
              * `CoveMarkup::external()` is dropped and reported, like a
              * figure with an unknown key.
              */
-            $image = $this->markup->image($paragraph);
+            $image = $this->markup->image($paragraph, $this->market);
             if ($image !== null) {
                 if ($image['rejected']) {
                     $this->rejected[] = 'image';
@@ -114,6 +114,8 @@ final class ProseCards
                             'src' => $image['src'],
                             'token' => app(ImageProxy::class)->token($image['src']),
                             'alt' => $image['alt'],
+                            // Where it is sold: the page offers to save it as an offline item.
+                            'buy' => $image['buy'],
                         ],
                     ];
                 }

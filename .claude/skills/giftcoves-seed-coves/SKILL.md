@@ -218,6 +218,11 @@ included; an Amazon address on the market's own storefront gets our Associates t
 `sponsored`. Check every picture address loads before publishing.
 
     [[image:https://www.bongo.be/…/kaart.png|De Bongo-cadeaubon]]
+    [[image:https://www.bongo.be/…/kaart.png|Bongo-cadeaubon|https://www.bongo.be/nl/bon]]
+
+The second form adds where it is sold: the picture then carries the site's save button, which
+puts it on a list as an offline item with that name, picture and link. Write the description as
+the thing's name when you give a third part, since it becomes the item's title.
     Koop hem bij [[shop:https://www.bongo.be/nl|Bongo]].
 
 An article body may be 60,000 characters (was 20,000); the advice prompt's 900-1300 words is a

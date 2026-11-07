@@ -13,6 +13,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Rules\SafeExternalUrl;
 use App\Services\Connectors\Offer;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Images\ImageStore;
 use App\Services\PageReading\LinkRouter;
 use App\Services\Search\SearchQuery;
@@ -599,6 +600,15 @@ class WishlistItemController extends Controller
             if ($photo !== null) {
                 $images->forget($item->snapshot_image_url);
                 $item->update(['snapshot_image_url' => $photo]);
+            } elseif (CoveMarkup::external((string) ($validated['image_url'] ?? '')) !== null) {
+                /*
+                 * A picture given with the save (2026-11-07): the gift-card
+                 * guides save a card as an offline item with the picture the
+                 * article shows. https only (`CoveMarkup::external()`), and only
+                 * when no photo was uploaded; a picture read from the page later
+                 * does not overwrite it (ItemLinker fills a missing one only).
+                 */
+                $item->update(['snapshot_image_url' => trim((string) $validated['image_url'])]);
             }
 
             return $this->report($request, $item, $list);

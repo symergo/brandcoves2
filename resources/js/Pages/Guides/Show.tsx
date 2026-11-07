@@ -53,7 +53,7 @@ interface Block {
      * line. `token` is the image proxy's when it serves that host, else null
      * and the address is used as given. `alt` is required by the token.
      */
-    image?: { src: string; token: string | null; alt: string } | null
+    image?: { src: string; token: string | null; alt: string; buy?: string | null } | null
     /**
      * A table instead of a paragraph, from a block of `| a | b |` lines.
      * `html` is empty then. Cells are safe HTML from CoveMarkup, escaped
@@ -500,7 +500,7 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
  * picture that will not load is left out rather than shown broken; the
  * proxy's copy is tried first and the original address after it.
  */
-function ArticleImage({ image }: { image: { src: string; token: string | null; alt: string } }) {
+function ArticleImage({ image }: { image: { src: string; token: string | null; alt: string; buy?: string | null } }) {
     const [proxyFailed, setProxyFailed] = useState(false)
     const [broken, setBroken] = useState(false)
 
@@ -510,13 +510,26 @@ function ArticleImage({ image }: { image: { src: string; token: string | null; a
 
     return (
         <figure className="my-6 flex justify-center">
-            <img
-                {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
-                alt={image.alt}
-                loading="lazy"
-                className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3"
-                onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
-            />
+            <div className="relative">
+                <img
+                    {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
+                    alt={image.alt}
+                    loading="lazy"
+                    className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3"
+                    onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
+                />
+                {/*
+                  Save the card to a list as an offline item (owner, 2026-11-07):
+                  its name (the picture's description), this picture, and the
+                  shop's address as its link. The site's own save button, top
+                  right, as on every product card.
+                */}
+                {image.buy && (
+                    <div className="absolute top-2 right-2">
+                        <SaveToList url={image.buy} title={image.alt} imageUrl={image.src} compact />
+                    </div>
+                )}
+            </div>
         </figure>
     )
 }

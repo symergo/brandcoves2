@@ -180,7 +180,9 @@ export default function SaveToList({
     const payload = groupId
         ? { group_id: groupId }
         : url !== undefined
-          ? { source: 'manual', url }
+          ? // The name and picture when the page knows them (an article's gift
+            // card, 2026-11-07); otherwise the link alone, and its page is read.
+            { source: 'manual', url, ...(title ? { title } : {}), ...(imageUrl ? { image_url: imageUrl } : {}) }
           : { source, external_id: externalId, title, image_url: imageUrl, price }
 
     /*
