@@ -354,3 +354,13 @@ column grows with the screen instead: 20rem, 26rem from `xl`, 30rem from `2xl`. 
 rather than the article alone, keeps a line of text near 100 characters at 1536px (about 980px of
 text) and about 790px at 1280, instead of the 140 characters a full-width article would reach. The
 FAQ under the article lost the same cap. Applies to every guide page (`Guides/Show.tsx`).
+
+## Pictures beside the text (2026-11-07)
+
+Owner: "put the pictures next to the text (to the left) on desktop". From `md` up an article
+picture floats left at 15rem (at most 12rem tall) and the paragraphs and lists after it run beside
+it. A picture sits under its card's heading, so headings, tables, drawings and the FAQ clear the
+float: the next card starts on its own line instead of wrapping round the previous picture. Lists
+are `flow-root` beside the float, or their bullets would be drawn over the picture, and the
+article is `flow-root` so a picture near the end cannot hang out under the article. On a phone the
+picture stays centred above the text: 15rem beside text would leave a column too narrow to read.

@@ -163,7 +163,7 @@ function Article({
                           sideways as a whole loses the reader's place in the
                           prose above it.
                         */
-                        <div className="my-5 overflow-x-auto">
+                        <div className="my-5 clear-both overflow-x-auto">
                             <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
                                 <thead>
                                     <tr className="border-b border-line">
@@ -195,12 +195,12 @@ function Article({
                     ) : block.heading === 2 ? (
                         // The sections of an advice article: the questions people search for.
                         <h2
-                            className="mt-8 text-xl font-semibold tracking-tight [&_a]:underline"
+                            className="mt-8 clear-both text-xl font-semibold tracking-tight [&_a]:underline"
                             dangerouslySetInnerHTML={{ __html: block.html }}
                         />
                     ) : block.heading === 3 ? (
                         <h3
-                            className="mt-6 text-lg font-medium [&_a]:underline"
+                            className="mt-6 clear-both text-lg font-medium [&_a]:underline"
                             dangerouslySetInnerHTML={{ __html: block.html }}
                         />
                     ) : block.list ? (
@@ -214,7 +214,7 @@ function Article({
 
                             return (
                                 <ListTag
-                                    className={`${className} space-y-1.5 pl-6 ${block.list.ordered ? 'list-decimal' : 'list-disc'} [&_a]:underline`}
+                                    className={`${className} space-y-1.5 pl-6 md:flow-root ${block.list.ordered ? 'list-decimal' : 'list-disc'} [&_a]:underline`}
                                 >
                                     {block.list.items.map((item, k) => (
                                         <li key={k} dangerouslySetInnerHTML={{ __html: item }} />
@@ -231,7 +231,7 @@ function Article({
                           because it sits in the reading column rather than
                           above a title.
                         */
-                        <figure className="my-6 flex justify-center">
+                        <figure className="my-6 flex clear-both justify-center">
                             <SceneIllustration
                                 name={block.figure}
                                 className="h-32 w-auto text-accent sm:h-40"
@@ -308,7 +308,7 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
             */}
             <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 <div className="min-w-0">
-                    <article>
+                    <article className="flow-root">
                         {/*
                           The drawing, on an advice article only.
 
@@ -451,7 +451,7 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
                     )}
 
                     {guide.faq && guide.faq.length > 0 && (
-                        <section className="mt-12">
+                        <section className="mt-12 clear-both">
                             <h2 className="text-lg font-medium">{t('guides.faq')}</h2>
                             <dl className="mt-4 space-y-4">
                                 {guide.faq.map((pair, i) => (
@@ -499,10 +499,19 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
 
 /**
  * A photograph in an article (2026-11-07): a gift card, as its issuer shows
- * it. Contained rather than cropped, on white, at most 320px tall: a card is
- * a wide, flat thing and cropping it to a square would cut off its name. A
- * picture that will not load is left out rather than shown broken; the
- * proxy's copy is tried first and the original address after it.
+ * it. Contained rather than cropped, on white: a card is a wide, flat thing
+ * and cropping it to a square would cut off its name. A picture that will not
+ * load is left out rather than shown broken; the proxy's copy is tried first
+ * and the original address after it.
+ *
+ * From `md` up it floats left, 15rem wide, and the text after it runs beside
+ * it (owner, 2026-11-07: "put the pictures next to the text, to the left").
+ * A picture sits under its card's heading, so the next heading, table or
+ * drawing clears the float and the following card starts on its own line
+ * rather than wrapping round the last one's picture. Lists are `flow-root`
+ * beside it, or their bullets would be drawn over the picture. On a phone it
+ * stays centred above the text: 15rem beside text leaves a column too narrow
+ * to read.
  */
 function ArticleImage({ image }: { image: { src: string; token: string | null; alt: string; buy?: string | null } }) {
     const [proxyFailed, setProxyFailed] = useState(false)
@@ -513,13 +522,13 @@ function ArticleImage({ image }: { image: { src: string; token: string | null; a
     }
 
     return (
-        <figure className="my-6 flex justify-center">
+        <figure className="my-6 flex justify-center md:float-left md:my-1 md:mr-6 md:mb-4 md:block md:w-60">
             <div className="relative">
                 <img
                     {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
                     alt={image.alt}
                     loading="lazy"
-                    className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3"
+                    className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3 md:max-h-48 md:w-full"
                     onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
                 />
                 {/*
