@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PublishStatus;
 use App\Models\BrandStat;
+use App\Models\DailyPickSet;
 use App\Models\PageBlock;
 use App\Models\PageBlockVariant;
 use App\Models\ProductGroup;
@@ -135,6 +138,43 @@ class PlaceholderFunctionTest extends TestCase
 
         // Nothing anywhere in the payload is markup.
         $this->assertStringNotContainsString('<a', json_encode($blocks));
+    }
+
+    #[Test]
+    public function guide_links_name_our_published_reading_about_the_term(): void
+    {
+        // Owner, 2026-11-07: links to buying guides and other useful content in
+        // the copy under the results. A compound word counts ("koffie" finds
+        // "De koffiefanaat"), the Daily Cove does not (dated), nor a draft, nor
+        // another market.
+        $cove = fn (CoveKind $kind, string $slug, string $title, Market $market = Market::BeNl, PublishStatus $status = PublishStatus::Published) => DailyPickSet::create([
+            'market' => $market->value,
+            'kind' => $kind->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'status' => $status->value,
+            'drop_date' => $kind === CoveKind::Daily ? '2026-11-01' : null,
+            'published_at' => '2026-10-01',
+        ]);
+
+        $cove(CoveKind::Persona, 'de-koffiefanaat', 'De koffiefanaat');
+        $cove(CoveKind::Guide, 'koffie-kiezen', 'Goede koffie kiezen');
+        $cove(CoveKind::Daily, 'koffie-vandaag', 'Koffie van vandaag');
+        $cove(CoveKind::Guide, 'koffie-concept', 'Koffie in ontwerp', status: PublishStatus::Draft);
+        $cove(CoveKind::Guide, 'koffie-nl', 'Koffie in Nederland', Market::NlNl);
+        $this->block('Lees ook :guide_links.');
+
+        $blocks = $this->render($this->context(term: 'koffie'));
+        $links = collect($blocks[0]['parts'])->firstWhere('t', 'links');
+
+        $this->assertEqualsCanonicalizing(
+            ['/be-nl/gift-ideas/de-koffiefanaat', '/be-nl/guides/koffie-kiezen'],
+            array_column($links['items'], 'url'),
+        );
+
+        // Nothing about the term: the sentence goes, not a hole in it.
+        $this->assertSame([], $this->render($this->context(term: 'tuinslang')));
     }
 
     #[Test]

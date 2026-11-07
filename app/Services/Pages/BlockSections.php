@@ -81,6 +81,14 @@ final class BlockSections
             }
         }
 
-        return trim($text);
+        $text = trim($text);
+
+        /*
+         * A heading starts with a capital (2026-11-07). A heading that opens with
+         * the search term ("koffie vergelijken") read as a sentence cut in half,
+         * because people type their searches in lower case. Only the first
+         * letter: "iPhone" or a brand's own spelling further on stays as it is.
+         */
+        return $text === '' ? '' : mb_strtoupper(mb_substr($text, 0, 1)).mb_substr($text, 1);
     }
 }

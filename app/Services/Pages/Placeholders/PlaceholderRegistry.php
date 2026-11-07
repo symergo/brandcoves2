@@ -41,6 +41,7 @@ final class PlaceholderRegistry
     private const FUNCTIONS = [
         BrandLinks::class,
         TermLinks::class,
+        GuideLinks::class,
     ];
 
     /** @var array<string, PlaceholderFunction>|null */

@@ -1235,3 +1235,26 @@ nothing else used. The search page's `coves` and `covesUrl` props went too. The 
 Coves" under the price where a product is in one. `SearchThinLiveTest` used that lookup to prove the
 live follow-up computes nothing else; it now checks the follow-up's answer holds no results and no
 filters.
+
+## The copy under the results, back in four languages, with links (owner, 2026-11-07)
+
+On production only Spanish still had copy under the results: the Dutch, English and French blocks
+shipped in September had been taken out in /admin, so a Belgian or Dutch results page carried no
+words of its own. Migration `2026_11_07_000300_search_copy_with_links` writes a new version for those
+three languages, and only where a language has no blocks (an editor's are never overwritten).
+
+**Why this copy and not more.** A results page is mostly product names any shop also shows, so the
+copy's job is to make each URL its own: nearly every sentence is the page's facts (price range, number
+of offers, brands, what is reduced), each block hidden when its fact is missing. Headings are the
+questions people type ("Prijzen voor …", "… het goedkoopst kopen"). About 150 to 200 words: long
+fixed text repeated over thousands of URLs is what search engines now treat as scaled content (the
+September copy was 18 blocks, mostly fixed). No general gift advice (the guides do that, and two
+pages on one subject compete), no FAQ markup (no rich results for this kind of site since 2023), no
+AI text per term, no "the best …" claims. Thin and filtered variants still get none (`isThin()`).
+
+**Links rather than words** (the owner's ask): `:brand_links` to brand pages, `:term_links` to
+narrower searches, the new `:guide_links` to our guides and gift-idea pages about the term (its block
+drops out when none match), and `:gift_finder_link` and `:guides_link`. Phrased to work whether the
+term is singular or plural ("Bij deze zoekopdracht vind je producten van …", "Prijzen voor …"), and a
+heading now starts with a capital (`BlockSections::flatten()`), since one that opens with the term
+read as "koffie vergelijken".
