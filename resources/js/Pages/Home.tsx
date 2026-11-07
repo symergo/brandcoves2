@@ -90,11 +90,13 @@ export default function Home({ today, amazonEvent = null }: Props) {
                   band's own height, so the band spans the window while its
                   content stays on the page's grid, and no 100vw width can add
                   a sideways scrollbar on a desktop with a visible one. The
-                  negative top margin meets the header; the deep bottom padding
-                  is room for the search card, which overlaps the band.
+                  negative top margin meets the header. The bottom padding was
+                  deeper while the search card overlapped the band's lower edge
+                  (until 2026-11-07); the card is inside the band now.
                 */}
-                <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-20 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-24 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
-                    <div>
+                <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-14 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
+                    {/* min-w-0: on a phone the search field's own width pushed the column past the screen. */}
+                    <div className="min-w-0">
                         <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
                         <h1 id="hero-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
                             {t('home.hero_title')}
@@ -102,15 +104,14 @@ export default function Home({ today, amazonEvent = null }: Props) {
                         {/* The owner's combination of three proposals (2026-10-03). */}
                         <p className="mt-4 max-w-xl text-lg text-ink">{t('home.hero_subtitle')}</p>
 
-                        <div className="mt-7 flex flex-wrap gap-3">
-                            <Link href={createCove} className={buttonClasses('primary', 'lg')}>
-                                {t('home.cta_create')}
-                            </Link>
-                            {/* "Zoek cadeaus" to Find a gift, where "Ontdek Coves" to /coves stood (owner, 2026-09-28). */}
-                            <Link href={`${base}/gift`} className={buttonClasses('secondary', 'lg')}>
-                                {t('home.cta_find_gift')}
-                            </Link>
-                        </div>
+                        {/*
+                          The search card where "Maak een Cove" and "Zoek
+                          cadeaus" stood (owner, 2026-11-07). It overlapped the
+                          band's lower edge before; both ways in stay one tap
+                          away, in the header and in the three ways to start
+                          below.
+                        */}
+                        <SearchCard className="mt-7 max-w-xl shadow-[0_8px_24px_rgb(42_18_19/0.08)]" />
                     </div>
 
                     {/*
@@ -130,13 +131,10 @@ export default function Home({ today, amazonEvent = null }: Props) {
             </section>
 
             {/*
-              The search card, right under the hero (owner, 2026-09-26): the
-              same card as on Discover, with the barcode camera one tap away.
-              Somebody who arrives knowing what they want should not have to
-              find the header's search first.
+              The search card stood here, under the hero and overlapping its
+              lower edge (2026-09-26 to 2026-11-07). It is inside the band now,
+              where the two buttons were (owner).
             */}
-            {/* Overlapping the hero band's lower edge (2026-10-05). */}
-            <SearchCard className="relative -mt-12 shadow-[0_8px_24px_rgb(42_18_19/0.08)] sm:-mt-14" />
 
             {/*
               An Amazon sales event, under the hero while it runs (owner,

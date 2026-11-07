@@ -666,3 +666,12 @@ Invariant 6 holds: a link and Amazon's own image, loaded from Amazon; nothing ab
 product is stored. The home page is page-cached for 10 minutes, so the card can outlive the
 event's end by that much. For the next event, add an entry to the config and its texts under
 `site.home.{key}`.
+
+## The search card in the hero, where the two buttons were (owner, 2026-11-07)
+
+"Maak een Cove" and "Zoek cadeaus" left the hero, and the search card (field, barcode camera,
+button) took their place inside the red band. It overlapped the band's lower edge before; that copy
+is gone, and the band's bottom padding, which was room for the overlap, came down to match the
+top. Both ways in stay one tap away: in the header, and in the three ways to start below the hero
+("Vind een cadeau", "Maak mijn Cove"). The text column carries `min-w-0`, because on a phone the
+field's own width pushed the column past the screen.
