@@ -197,8 +197,13 @@ Secret Friend draw on a profile. A board of what we already mean to do asks visi
 to-do list.
 
 Then: "you can keep the already built part, also add in the future". So the three built ones stay as
-**done**, and **every feature a visitor would notice gets an entry here as `done` when it ships**, in
-four languages, described as it works. "Al gebouwd" on the board is where that shows.
+**done**, and an idea from the board moves to `done` when it ships, in four languages, described as
+it works. "Al gebouwd" on the board is where that shows.
+
+**Only ideas from the board (owner, 2026-11-07).** "No need to add features that were created off
+the board to the board when they are done." Until then every feature a visitor would notice was
+added as `done` when it shipped; a feature asked for in chat or planned by us is not added any more.
+The entries added that way before this stay.
 
 **Seeding.** `php artisan bc:seed-feature-ideas` (`--dry-run`, `--replace`) is idempotent, matched on
 `seed_key`, and never overwrites an idea edited in the admin: saving a shipped idea there turns its

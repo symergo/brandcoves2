@@ -25,10 +25,12 @@ declare(strict_types=1);
  *   Friend draw on a profile). The browser button stays: the extension in
  *   `extension/` is for editors importing shelves, not visitors.
  * - **What is built stays, as `done`** (owner, the same day: "you can keep
- *   the already built part, also add in the future"). Every feature a
- *   visitor would notice gets an entry here with status `done` when it
- *   ships, in all four languages, described as it works; that is what "Al
- *   gebouwd" on the board is for.
+ *   the already built part, also add in the future"). An idea from the
+ *   board moves to `done` when it ships, in all four languages, described as
+ *   it works; that is what "Al gebouwd" on the board is for. A feature made
+ *   off the board is not added when it ships (owner, 2026-11-07: "no need to
+ *   add features that were created off the board to the board when they are
+ *   done").
  * - **Nothing about Amazon.**
  * - Plain words, in all four languages. `sort` orders ideas that share a
  *   status before the votes do (FeatureBoard).
@@ -403,66 +405,6 @@ return [
         'es' => [
             'title' => 'Buscar sin esperar',
             'body' => 'Una búsqueda muestra al momento lo que ya conocemos. Si encontramos poco, miramos después también en las propias tiendas, y sus productos se añaden abajo. Si tarda un poco, ves dónde aparecerán los productos, y un consejo.',
-        ],
-    ],
-    'relationship-when-making-a-list' => [
-        'status' => 'done',
-        'sort' => 99,
-        'nl' => [
-            'title' => 'Wie is het voor jou?',
-            'body' => 'Maak je een lijst voor iemand anders, dan kun je meteen kiezen wie die persoon voor je is: mama, een vriend, een collega. Dat hoeft niet. Aanpassen kan later op de pagina van die persoon, via Meer en dan Naam, relatie en verjaardag.',
-        ],
-        'en' => [
-            'title' => 'Who are they to you?',
-            'body' => 'When you make a list for somebody else, you can say straight away who they are to you: your mum, a friend, a colleague. You do not have to. You can change it later on their page, under More, then Name, relationship and birthday.',
-        ],
-        'fr' => [
-            'title' => 'Qui est-ce pour vous ?',
-            'body' => "Quand vous faites une liste pour quelqu'un d'autre, vous pouvez dire tout de suite qui c'est pour vous : votre maman, un ami, un collègue. Ce n'est pas obligatoire. Vous pouvez le changer plus tard sur sa page, sous Plus, puis Nom, lien et anniversaire.",
-        ],
-        'es' => [
-            'title' => '¿Quién es para ti?',
-            'body' => 'Cuando haces una lista para otra persona, puedes decir enseguida quién es para ti: tu madre, un amigo, un compañero. No es obligatorio. Puedes cambiarlo después en su página, en Más y luego Nombre, relación y cumpleaños.',
-        ],
-    ],
-    'home-shows-your-coves-and-people' => [
-        'status' => 'done',
-        'sort' => 99,
-        'nl' => [
-            'title' => 'Jouw Coves en je mensen op de startpagina',
-            'body' => 'Ben je aangemeld, dan zie je bovenaan de startpagina de Coves die je het laatst aanpaste en je mensen, wie het eerst jarig is eerst. Eén klik en je bent erin.',
-        ],
-        'en' => [
-            'title' => 'Your Coves and your people on the home page',
-            'body' => 'When you are signed in, the top of the home page shows the Coves you changed last and your people, whoever has the next birthday first. One click and you are in.',
-        ],
-        'fr' => [
-            'title' => "Vos Coves et vos proches sur la page d'accueil",
-            'body' => "Quand vous êtes connecté, le haut de la page d'accueil montre les Coves que vous avez modifiées en dernier et vos proches, le prochain anniversaire d'abord. Un clic et vous y êtes.",
-        ],
-        'es' => [
-            'title' => 'Tus Coves y tu gente en la página de inicio',
-            'body' => 'Si has iniciado sesión, arriba en la página de inicio ves las Coves que cambiaste por última vez y tu gente, el próximo cumpleaños primero. Un clic y ya estás dentro.',
-        ],
-    ],
-    'rename-any-item' => [
-        'status' => 'done',
-        'sort' => 99,
-        'nl' => [
-            'title' => 'Een eigen naam voor wat op je lijst staat',
-            'body' => 'Elk product op je lijst kan een eigen naam krijgen, via de drie puntjes en Aanpassen, met een notitie erbij als je wil. Die naam zie je overal waar de lijst staat. De naam van de winkel blijft bewaard, en met één klik zet je hem terug.',
-        ],
-        'en' => [
-            'title' => 'Your own name for what is on your list',
-            'body' => "Any product on your list can have a name of your own, through the three dots and Edit, with a note if you like. That name shows wherever the list does. The shop's name is kept, and one click puts it back.",
-        ],
-        'fr' => [
-            'title' => 'Votre propre nom pour ce qui est sur votre liste',
-            'body' => 'Chaque produit de votre liste peut recevoir votre propre nom, via les trois points et Modifier, avec une note si vous voulez. Ce nom apparaît partout où la liste apparaît. Le nom de la boutique est conservé, et un clic le remet.',
-        ],
-        'es' => [
-            'title' => 'Tu propio nombre para lo que está en tu lista',
-            'body' => 'Cualquier producto de tu lista puede tener tu propio nombre, con los tres puntos y Editar, con una nota si quieres. Ese nombre aparece dondequiera que esté la lista. El nombre de la tienda se guarda, y un clic lo recupera.',
         ],
     ],
 ];
