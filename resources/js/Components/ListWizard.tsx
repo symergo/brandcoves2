@@ -5,7 +5,8 @@ import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 import PersonPicker, { type PickablePerson } from './PersonPicker'
-import { choiceCard } from '../choiceCard'
+import { choiceCard, choiceState } from '../choiceCard'
+import ChoiceCheck from './ChoiceCheck'
 
 /**
  * The answers to "who is it for?". Three are list kinds; `santa` is a Secret
@@ -504,14 +505,13 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
                                 type="button"
                                 aria-pressed={kind === choice.value}
                                 onClick={() => choose(choice.value)}
-                                className={`rounded-card border bg-card px-4 py-3 text-left transition ${
-                                    kind === choice.value ? 'border-accent ring-2 ring-accent/30' : 'border-line hover:border-ink'
-                                }`}
+                                className={`flex items-start gap-2 rounded-card border px-4 py-3 text-left transition ${choiceState(kind === choice.value)}`}
                             >
-                                <span className={`block font-medium ${kind === choice.value ? 'text-accent' : ''}`}>
-                                    {choice.label}
+                                <span className="min-w-0 flex-1">
+                                    <span className="block font-medium">{choice.label}</span>
+                                    <span className="block text-xs text-ink-soft">{choice.kindLabel}</span>
                                 </span>
-                                <span className="block text-xs text-ink-soft">{choice.kindLabel}</span>
+                                <ChoiceCheck on={kind === choice.value} className="mt-0.5" />
                             </button>
                         ))}
                     </div>
@@ -562,6 +562,7 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
                                         }
                                     >
                                         {option.label}
+                                        <ChoiceCheck on={form.data.relationship === option.value} />
                                     </button>
                                 ))}
                             </div>

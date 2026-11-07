@@ -8,6 +8,8 @@ import { useSignIn } from '../../signIn'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ToolIcon from '../../Components/ToolIcon'
+import ChoiceCheck from '../../Components/ChoiceCheck'
+import { choiceCard } from '../../choiceCard'
 
 interface Option {
     value: string
@@ -280,13 +282,10 @@ export default function SelfDescribe({
                                     type="button"
                                     aria-pressed={form.data.interests.includes(option.value)}
                                     onClick={() => toggle(form.data.interests, 'interests', option.value)}
-                                    className={`rounded-full border px-3 py-1.5 text-sm ${
-                                        form.data.interests.includes(option.value)
-                                            ? 'border-accent bg-accent text-white'
-                                            : 'border-line hover:bg-card'
-                                    }`}
+                                    className={choiceCard(form.data.interests.includes(option.value))}
                                 >
                                     {option.label}
+                                    <ChoiceCheck on={form.data.interests.includes(option.value)} />
                                 </button>
                             ))}
                         </div>

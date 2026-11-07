@@ -28,7 +28,8 @@ import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 import PersonPicker, { type PickablePerson } from '../../Components/PersonPicker'
 import TastePairs from '../../Components/TastePairs'
-import { choiceCard } from '../../choiceCard'
+import { choiceCard, choiceState } from '../../choiceCard'
+import ChoiceCheck from '../../Components/ChoiceCheck'
 
 interface Option {
     value: string
@@ -687,10 +688,9 @@ export default function GiftWizard(props: Props) {
     const learnedAvoid = avoid.filter((word) => word.startsWith(LEARNED))
     const typedAvoid = avoid.filter((word) => !word.startsWith(LEARNED))
 
+    // The site's one look for a choice (choiceCard.ts, 2026-11-07).
     const chip = (selected: boolean, disabled = false) =>
-        `rounded-full border px-3 py-1.5 text-sm ${
-            selected ? 'border-accent bg-accent text-white' : 'border-line hover:bg-card'
-        } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`
+        `${choiceCard(selected)} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`
 
     /*
       This or that, carrying who it is for: a saved person by id (the server
@@ -785,11 +785,12 @@ export default function GiftWizard(props: Props) {
     const forLine = !card && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             {forMe ? (
-                <span className="flex items-center gap-3 rounded-card border border-accent bg-accent px-5 py-3 text-base font-medium text-white">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/20">
-                        <ToolIcon name="wishlist" className="h-5 w-5" />
+                <span className={`flex items-center gap-3 rounded-card border px-5 py-3 text-base font-medium ${choiceState(true)}`}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-accent">
+                        <ToolIcon name="wishlist" className="h-6 w-6" duo />
                     </span>
                     {t('gift.who_me')}
+                    <ChoiceCheck on />
                 </span>
             ) : chosenPerson !== null ? (
                 // One card: the picker's two- and three-column grid would make it a third as wide.
@@ -803,7 +804,10 @@ export default function GiftWizard(props: Props) {
                     />
                 </div>
             ) : kind !== null && whoLabel ? (
-                <span className={choiceCard(true)}>{whoLabel}</span>
+                <span className={choiceCard(true)}>
+                    {whoLabel}
+                    <ChoiceCheck on />
+                </span>
             ) : (
                 <span className="rounded-full bg-accent/10 px-3 py-1 font-medium text-accent-dark">{t('gift.for_someone')}</span>
             )}
@@ -948,19 +952,13 @@ export default function GiftWizard(props: Props) {
                         type="button"
                         aria-pressed={forMe}
                         onClick={useMe}
-                        className={`mt-4 flex w-full items-center gap-3 rounded-card border px-5 py-4 text-left text-base font-medium transition sm:w-auto sm:min-w-72 ${
-                            forMe ? 'border-accent bg-accent text-white' : 'border-line bg-card hover:border-ink'
-                        }`}
+                        className={`mt-4 flex w-full items-center gap-3 rounded-card border px-5 py-4 text-left text-base font-medium transition sm:w-auto sm:min-w-72 ${choiceState(forMe)}`}
                     >
-                        <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                forMe ? 'bg-white/20 text-white' : 'text-accent'
-                            }`}
-                        >
-                            {/* Duotone while it is a choice; plain white once chosen, on the red. */}
-                            <ToolIcon name="wishlist" className={forMe ? 'h-5 w-5' : 'h-7 w-7'} duo={!forMe} />
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
+                            <ToolIcon name="wishlist" className="h-7 w-7" duo />
                         </span>
-                        {t('gift.who_me')}
+                        <span className="flex-1">{t('gift.who_me')}</span>
+                        <ChoiceCheck on={forMe} />
                     </button>
 
                     {pickable.length > 0 && (
@@ -988,6 +986,7 @@ export default function GiftWizard(props: Props) {
                                         onClick={() => useKind(option.value)}
                                     >
                                         {option.label}
+                                        <ChoiceCheck on={recipient === null && relationship === option.value} />
                                     </button>
                                 ))}
                             </div>
@@ -1164,6 +1163,7 @@ export default function GiftWizard(props: Props) {
                                                 onClick={() => toggle(interests, setInterests, option.value)}
                                             >
                                                 {option.label}
+                                                <ChoiceCheck on={selected} />
                                             </button>
                                         )
                                     })}
@@ -1219,6 +1219,7 @@ export default function GiftWizard(props: Props) {
                                             onClick={() => setAgeBand(ageBand === option.value ? null : option.value)}
                                         >
                                             {option.label}
+                                            <ChoiceCheck on={ageBand === option.value} />
                                         </button>
                                     ))}
                                 </div>
@@ -1240,6 +1241,7 @@ export default function GiftWizard(props: Props) {
                                                     onClick={() => setGender(gender === value ? null : value)}
                                                 >
                                                     {t(`gift.genders.${value}`)}
+                                                    <ChoiceCheck on={gender === value} />
                                                 </button>
                                             ))}
                                         </div>

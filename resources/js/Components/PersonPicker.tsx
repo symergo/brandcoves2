@@ -4,6 +4,8 @@ import type { Cents, SharedProps } from '../types'
 import { formatCountdown, formatDay } from '../types'
 import { useTranslations } from '../useTranslations'
 import Badge from './Badge'
+import ChoiceCheck from './ChoiceCheck'
+import { choiceState } from '../choiceCard'
 import ToolIcon from './ToolIcon'
 
 /**
@@ -126,9 +128,11 @@ export default function PersonPicker({
                                 aria-label={extra ? `${person.name}, ${extra}` : undefined}
                                 disabled={disabled || busyKey === person.key}
                                 onClick={() => onChoose(person)}
-                                className={`flex h-full w-full items-start rounded-card border text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                // Centred like "Voor mezelf" (owner, 2026-11-07): a name with no
+                                // date under it sat at the top, beside a round mark centred lower.
+                                className={`flex h-full w-full items-center rounded-card border text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                     compact ? 'gap-2.5 px-3 py-2.5' : 'gap-3 p-4'
-                                } ${on ? 'border-accent bg-accent/5' : 'border-line bg-card hover:border-ink'}`}
+                                } ${choiceState(on)}`}
                             >
                                 <span
                                     aria-hidden
@@ -156,7 +160,7 @@ export default function PersonPicker({
                                         </>
                                     )}
                                 </span>
-                                {on && <ToolIcon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-accent" />}
+                                <ChoiceCheck on={on} />
                             </button>
                         </li>
                     )

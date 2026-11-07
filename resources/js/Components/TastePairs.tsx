@@ -1,3 +1,5 @@
+import ChoiceCheck from './ChoiceCheck'
+
 interface Pole {
     value: string
     label: string
@@ -50,7 +52,7 @@ export default function TastePairs({
                         key={axis}
                         role="group"
                         aria-label={poles.map((p) => p.label).join(' / ')}
-                        className={`flex rounded-full border p-1 transition ${
+                        className={`flex rounded-card border p-1 transition ${
                             chosen ? 'border-accent bg-accent/5' : 'border-line bg-card'
                         } ${full ? 'opacity-40' : ''}`}
                     >
@@ -64,11 +66,14 @@ export default function TastePairs({
                                     aria-pressed={on}
                                     disabled={full}
                                     onClick={() => choose(poles, pole.value)}
-                                    className={`min-h-10 flex-1 rounded-full px-3 text-sm transition ${
-                                        on ? 'bg-accent font-medium text-white shadow-sm' : 'text-ink hover:bg-cream'
+                                    // Chosen as every choice is (choiceCard.ts, 2026-11-07): dark text,
+                                    // a red edge and a check, not white on red.
+                                    className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm transition ${
+                                        on ? 'bg-card font-medium text-ink shadow-sm ring-1 ring-accent' : 'text-ink hover:bg-cream'
                                     } disabled:cursor-not-allowed`}
                                 >
                                     {pole.label}
+                                    <ChoiceCheck on={on} />
                                 </button>
                             )
                         })}

@@ -632,3 +632,16 @@ save sheet's rows are tick boxes (`isChecked`), the copy menus' are actions. No 
   yet; a filter field above the cards would be the fix.
 - The Gift Cove passes `WizardOffer` to the wizard as well; its own type still lists the two older
   fields only (the new ones are optional), which is harmless but a second description of one shape.
+
+## One look for a choice (owner, 2026-11-07)
+
+"The styling of the buttons and selections is not consistent." Choosing the same kind of thing looked
+three ways: solid red with white text ("Voor mezelf", relationships, interests, age, Handig | Design),
+a pale fill with a red border and a check (person cards), and a red ring with red text (the list
+wizard's kinds). The owner picked the person card's look for all of them: `choiceState()` and
+`choiceCard()` in `resources/js/choiceCard.ts`, and `ChoiceCheck` for the check, so chosen does not
+rest on colour alone. Every choice has card corners now (the chips were fully round); sizes still
+differ by what a choice holds, so a person card is taller and "Voor mezelf" stays the larger first
+option. Used by Find a gift, the list wizard, `PersonPicker`, `TastePairs` and the recipient's own
+interests page. Not by tabs (`PersonaBudgets`): a tab shows where you are, not what you picked.
+Person cards are centred vertically, like "Voor mezelf"; a name with no date under it sat at the top.
