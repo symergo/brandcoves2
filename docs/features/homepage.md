@@ -724,3 +724,13 @@ is the card beside the list, and a repeat would waste a row) and the three newes
 newest first together: a Daily by the day it is for, anything else by when it went live. A market
 short of Dailies fills the six with other Coves. A Daily row carries the "Cove van de dag" label and
 icon from the Discover menu.
+
+## "Coves om te ontdekken" removed (2026-11-07)
+
+Owner: "verwijder de sectie Coves om te ontdekken op de homepage". The six cards, one per kind of
+Cove (Cove van de dag, Verrassingscove, Cadeau-ideeën, Slim kopen, Community Coves, Merken &
+winkels), are gone. Nothing becomes unreachable: the same six entries are in the header's Ontdek
+menu on every page, and the newest Coves beside the Daily link into the same places. The page loses
+six internal links to those hubs; the header menu carries the same links, so for a crawler little
+changes. `home.coves_heading` stays in the language files because nothing else would notice it gone;
+`home.coves_intro` is still used by the Discover page.

@@ -69,7 +69,7 @@ interface MyPerson {
  *  3. Daily, the thing that makes somebody come back (moved up from fifth
  *     on 2026-10-02, owner: right under "Gewoon rondkijken").
  *  4. From anywhere: what makes this more than an affiliate catalogue.
- *  5. Coves: one card per kind of Cove.
+ *  5. (Coves, one card per kind: removed 2026-11-07.)
  *  6. Trust, short.
  *  7. Start your first Cove.
  *
@@ -376,32 +376,11 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
             </section>
 
             {/*
-              4. Coves: one card per kind, where two lists of Coves stood (six
-              drawn at random, then the newest Community Coves) until the owner
-              swapped them (2026-09-29). The same six entries, names and icons
-              as the Discover menu, so a visitor learns them once.
+              4. Coves, one card per kind, stood here until 2026-11-07, when the
+              owner removed it ("verwijder de sectie Coves om te ontdekken"):
+              the newest Coves now sit beside the Daily, and the same six
+              entries are in the header's Ontdek menu on every page.
             */}
-            <section className="mt-14 sm:mt-20" aria-labelledby="coves-heading">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {t('home.coves_heading')}
-                    </h2>
-                    <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
-                        {t('home.coves_all')} →
-                    </Link>
-                </div>
-
-                {/* One card per row on a phone: two side by side split "Verrassingscove"
-                    and "Community Coves" mid-word. Two rows of three on a desktop. */}
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <CoveKindCard icon="daily" label={t('nav.daily')} href={`${base}/${market.coveSegment}`} />
-                    <CoveKindCard icon="surprise" label={t('nav.surprise')} href={`${base}/surprise`} />
-                    <CoveKindCard icon="persona" label={t('nav.gift_ideas')} href={`${base}/gift-ideas`} />
-                    <CoveKindCard icon="idea" label={t('nav.smart')} href={`${base}/guides`} />
-                    <CoveKindCard icon="ask" label={t('community.index_heading')} href={`${base}/coves/community`} />
-                    <CoveKindCard icon="brand" label={t('nav.brands_shops')} href={`${base}/brands`} />
-                </ul>
-            </section>
 
             {/*
               6 and 7, side by side (owner, 2026-09-27: "sections on the
@@ -635,20 +614,6 @@ function LatestCoveCard({ cove }: { cove: LatestCove }) {
                     <div className="mt-0.5 line-clamp-1 font-medium group-hover:text-accent">{cove.title}</div>
                     {cove.intro && <p className="mt-0.5 line-clamp-1 text-sm text-ink-soft">{cove.intro}</p>}
                 </div>
-            </Link>
-        </li>
-    )
-}
-
-function CoveKindCard({ icon, label, href }: { icon: CoveKey; label: string; href: string }) {
-    return (
-        <li>
-            <Link
-                href={href}
-                className="flex h-full min-h-14 items-center gap-3 rounded-card border border-line bg-card px-4 py-3 font-medium transition hover:border-ink"
-            >
-                <CoveIcon name={icon} className="h-6 w-6 shrink-0 text-accent" />
-                <span className="min-w-0">{label}</span>
             </Link>
         </li>
     )
