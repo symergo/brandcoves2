@@ -106,6 +106,9 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
         ...(coves.length > 0 ? [{ id: 'guides', label: t('nav.smart'), icon: <CoveIcon name="idea" className="h-4 w-4" /> }] : []),
         // Always: the invitation to ask is there even before anybody has.
         { id: 'ask', label: t('ask.title'), icon: <CoveIcon name="ask" className="h-4 w-4" /> },
+        ...(dailies.length > 0
+            ? [{ id: 'dailies', label: t('discover_cove.dailies_heading'), icon: <CoveIcon name="daily" className="h-4 w-4" /> }]
+            : []),
     ]
 
     return (
@@ -147,12 +150,22 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
 
                         {today.finds.length > 0 && <FindGrid finds={today.finds} className="mt-5" />}
 
-                        <Link
-                            href={today.url}
-                            className="mt-5 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-                        >
-                            {t('home.today_cta')}
-                        </Link>
+                        {/*
+                          The archive beside today's button (owner, 2026-11-07):
+                          the "All editions" link at the foot of the page was
+                          the only way there, below every other band.
+                        */}
+                        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <Link
+                                href={today.url}
+                                className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                            >
+                                {t('home.today_cta')}
+                            </Link>
+                            <Link href={urls.dailyArchive} className="text-sm text-accent-dark underline hover:text-ink">
+                                {t('daily_archive.title')}
+                            </Link>
+                        </div>
                     </div>
                 </section>
             )}

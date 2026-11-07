@@ -33,6 +33,12 @@ Five explainer tiles then repeated the sections below them word for word. The re
    **Earlier editions** only with three or more: one earlier edition under its own heading read as
    an empty shelf.
 
+**The archive is linked from today's card (2026-11-07).** The owner asked for a link to the Cove of
+the day archive; the only one was "All editions" at the foot of the last band, below everything
+else. Today's card now carries "Every Cove of the day" beside its button, and the jump links at the
+top include "Earlier editions" whenever that band is on the page. Without today's edition (a day the
+planner left empty) the foot link is still there.
+
 Result on local data: 2,245 px on a desktop (was 3,603), about 4,200 px on a phone (was 7,800).
 
 Still no counts or totals, as [homepage.md](homepage.md) decided for the front page.
