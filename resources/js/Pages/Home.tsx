@@ -115,7 +115,7 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                   deeper while the search card overlapped the band's lower edge
                   (until 2026-11-07); the card is inside the band now.
                 */}
-                <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-14 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-12">
+                <div className="-mt-6 grid items-center gap-8 bg-hero pt-10 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-14 sm:pb-14 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:gap-12">
                     {/* min-w-0: on a phone the search field's own width pushed the column past the screen. */}
                     <div className="min-w-0">
                         <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('home.hero_kicker')}</p>
@@ -123,7 +123,8 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                             {t('home.hero_title')}
                         </h1>
                         {/* The owner's combination of three proposals (2026-10-03). */}
-                        <p className="mt-4 max-w-xl text-lg text-ink">{t('home.hero_subtitle')}</p>
+                        {/* Wider with the page (owner, 2026-11-07): the title, the line and the search field had 576px. */}
+                        <p className="mt-4 max-w-3xl text-lg text-ink">{t('home.hero_subtitle')}</p>
 
                         {/*
                           The search card where "Maak een Cove" and "Zoek
@@ -132,7 +133,7 @@ export default function Home({ today, amazonEvent = null, mine = null }: Props) 
                           away, in the header and in the three ways to start
                           below.
                         */}
-                        <SearchCard className="mt-7 max-w-xl shadow-[0_8px_24px_rgb(42_18_19/0.08)]" />
+                        <SearchCard className="mt-7 max-w-3xl shadow-[0_8px_24px_rgb(42_18_19/0.08)]" />
                     </div>
 
                     {/*

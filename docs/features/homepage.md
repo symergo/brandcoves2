@@ -694,3 +694,8 @@ person." A band under the hero, `ForYou` in `Home.tsx`, fed by `mine` from `Home
 answers requests with no session, no remember-me cookie and nobody signed in. A signed-in request
 never reaches it, and a visitor's `mine` is null, so a personal band cannot be cached and shown to
 somebody else. `HomePageTest::signed_in_the_page_shows_your_own_coves_and_people` holds both halves.
+
+**Wider with the page (owner, 2026-11-07).** When every page went from 1152px to 1536px, the hero's
+text column, its line under the title and the search field were still capped at 576px
+(`max-w-xl`) and read as narrow. The text column now takes two thirds beside the present (it was
+1.4 to 1), and the line and the search field go to 768px (`max-w-3xl`).
