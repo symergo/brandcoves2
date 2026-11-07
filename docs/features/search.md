@@ -1178,8 +1178,9 @@ mention the store each time".
   the one that applies. The discount badge shows only when this price is the one it is about.
 - **Where it goes, said once:** the column header reads "Links naar coolblue.be" (the shop's domain
   from its deep link; the affiliate URL is a network's address, awin1.com, and says nothing). Each
-  row carries only a mark: a pale red circle with a shopping bag (`ToolIcon` `shop`) at the end of
-  the price, filled red when the row is pointed at. It replaced a small ↗ the same day ("vervang de
+  row carries only a mark: a white circle with a black shopping bag (`ToolIcon` `shop`) before the
+  price, like the save button beside it, turning red when the row is pointed at (owner, the same
+  day: "zet het voor de prijs en maak het wit zwart als het niet geklikt is"). It replaced a small ↗ the same day ("vervang de
   pijlen door iets aantrekkelijker"); a solid red circle under the save button was tried first and
   read as two buttons crowding the row.
 - **Amazon.** It never has a column (invariant 6), so nothing here links to it. Its one link on the

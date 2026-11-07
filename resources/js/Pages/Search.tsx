@@ -1267,6 +1267,21 @@ export default function Search({
                                                           the weight.
                                                         */}
                                                         <span className="mt-1.5 flex items-center">
+                                                            {/*
+                                                              To the shop, as a mark rather than
+                                                              words (owner, 2026-11-07: the arrow
+                                                              was too plain, the shop is named once
+                                                              in the header). Before the price, white
+                                                              with a black bag while it is not
+                                                              pressed, like the save button beside
+                                                              it; red when the row is pointed at.
+                                                            */}
+                                                            <span
+                                                                aria-hidden
+                                                                className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition group-hover:border-accent group-hover:bg-accent group-hover:text-white"
+                                                            >
+                                                                <ToolIcon name="shop" className="h-4 w-4" />
+                                                            </span>
                                                             <span className="text-base font-semibold text-ink">
                                                                 {g.shop.price === null
                                                                     ? '-'
@@ -1283,20 +1298,6 @@ export default function Search({
                                                                     −{n(g.discountPercent)}%
                                                                 </span>
                                                             )}
-                                                            {/*
-                                                              To the shop, as a mark rather than
-                                                              words (owner, 2026-11-07: the arrow
-                                                              was too plain, and the shop is named
-                                                              once in the header). A pale bag at
-                                                              the end of the price, filled red
-                                                              when the row is pointed at.
-                                                            */}
-                                                            <span
-                                                                aria-hidden
-                                                                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white"
-                                                            >
-                                                                <ToolIcon name="shop" className="h-4 w-4" />
-                                                            </span>
                                                         </span>
                                                         {g.shop.needsPriceTimestamp && (
                                                             <span className="mt-0.5 block text-2xs text-ink-soft">
