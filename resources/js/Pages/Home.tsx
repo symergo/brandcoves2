@@ -30,7 +30,7 @@ interface Props {
 
 interface LatestCove {
     id: number
-    kind: 'gift' | 'guide' | 'brand'
+    kind: 'daily' | 'gift' | 'guide' | 'brand'
     title: string
     intro: string
     image: string | null
@@ -611,8 +611,8 @@ function OpenWay({ icon, text, href }: { icon: ToolKey; text: string; href: stri
  */
 function LatestCoveCard({ cove }: { cove: LatestCove }) {
     const { t } = useTranslations()
-    const label = { gift: t('nav.gift_ideas'), guide: t('nav.smart'), brand: t('nav.brands_shops') }[cove.kind]
-    const icon: CoveKey = cove.kind === 'gift' ? 'persona' : cove.kind === 'brand' ? 'brand' : 'idea'
+    const label = { daily: t('nav.daily'), gift: t('nav.gift_ideas'), guide: t('nav.smart'), brand: t('nav.brands_shops') }[cove.kind]
+    const icon: CoveKey = { daily: 'daily', gift: 'persona', guide: 'idea', brand: 'brand' }[cove.kind] as CoveKey
 
     return (
         <li>

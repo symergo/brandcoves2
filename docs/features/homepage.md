@@ -717,3 +717,10 @@ card per kind. That list was a random shelf; this one is what changed lately, so
 sees something new, and new pages get a link from the front page the day they go live. Two queries
 (the Coves and their picks), in `HomeController::latest()`. The anonymous page cache still applies,
 so a new Cove can take as long as that cache lives to appear.
+
+**Mixed with the Dailies (same day).** Owner: "mix the latest 3 daily coves with the latest 3 other
+coves in the newest coves band". The six rows are now the three Dailies before today's (today's own
+is the card beside the list, and a repeat would waste a row) and the three newest other Coves, sorted
+newest first together: a Daily by the day it is for, anything else by when it went live. A market
+short of Dailies fills the six with other Coves. A Daily row carries the "Cove van de dag" label and
+icon from the Discover menu.

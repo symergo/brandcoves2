@@ -23,8 +23,14 @@ class HomeController extends Controller
     /** How many of each the band shows; the rest is one click away on its own page. */
     private const MINE_SHOWN = 6;
 
-    /** Two rows of three on a desktop, the same as the kind cards below them. */
+    /**
+     * Six rows beside the Daily card, about its height; three of them Dailies
+     * (owner, 2026-11-07: "mix the latest 3 daily coves with the latest 3
+     * other coves").
+     */
     private const LATEST_SHOWN = 6;
+
+    private const LATEST_DAILIES = 3;
 
     public function __invoke(Request $request, CurrentMarket $current, MyPeople $people): Response
     {
@@ -63,19 +69,20 @@ class HomeController extends Controller
              * edition with real finds learns that this site changes; one who
              * sees a search box learns it is a search engine.
              */
-            'today' => $this->today($current),
+            'today' => $today = $this->today($current),
 
             /*
              * The newest Coves we wrote (owner, 2026-11-07: "put the latest
-             * coves on the frontpage"): guides, advice, gift ideas and shop and
-             * brand pages, newest first. Not the Daily, which has its own band
-             * just above. This brings back a list of Coves, which the
+             * coves on the frontpage"): the three Dailies before today's and
+             * the three newest other Coves (guides, advice, gift ideas, shop
+             * and brand pages), mixed newest first. Today's Daily is the card
+             * beside the list. This brings back a list of Coves, which the
              * 2026-09-29 redesign had swapped for one card per kind; that was
              * a random shelf, this one is what changed lately, so a returning
              * visitor sees something new and a crawler finds new pages from
              * the front page.
              */
-            'latest' => $this->latest($current),
+            'latest' => $this->latest($current, $today['date'] ?? null),
 
             /*
              * Yours, when you are signed in (owner, 2026-11-07): the Coves you
@@ -157,20 +164,48 @@ class HomeController extends Controller
      *
      * @return list<array<string, mixed>>
      */
-    private function latest(CurrentMarket $current): array
+    private function latest(CurrentMarket $current, ?string $todayDate): array
     {
         $market = $current->get();
+        $picks = ['picks' => fn ($q) => $q->orderBy('rank')->with('group:id,image_url,in_stock')];
+        $columns = ['id', 'kind', 'slug', 'drop_date', 'theme_title', 'theme_blurb', 'scene', 'published_at'];
 
-        return DailyPickSet::query()
+        /*
+         * The three Dailies before today's: today's own is the card beside
+         * this list, and showing it twice would spend a row on a repeat.
+         */
+        $dailies = DailyPickSet::query()
+            ->forMarket($market)
+            ->daily()
+            ->published()
+            ->whereNotNull('slug')
+            ->when($todayDate !== null, fn ($q) => $q->where('drop_date', '<', $todayDate))
+            ->with($picks)
+            ->orderByDesc('drop_date')
+            ->limit(self::LATEST_DAILIES)
+            ->get($columns);
+
+        $others = DailyPickSet::query()
             ->forMarket($market)
             ->published()
             ->where('kind', '!=', CoveKind::Daily->value)
             ->whereNotNull('slug')
-            ->with(['picks' => fn ($q) => $q->orderBy('rank')->with('group:id,image_url,in_stock')])
+            ->with($picks)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->limit(self::LATEST_SHOWN)
-            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene', 'published_at'])
+            ->limit(self::LATEST_SHOWN - $dailies->count())
+            ->get($columns);
+
+        /*
+         * Mixed by date, newest first: a Daily by the day it is for, anything
+         * else by when it went live. Short of Dailies (a new market), the
+         * other kinds fill the six; the reverse is not needed, a market with
+         * Dailies has had other Coves for longer.
+         */
+        return $dailies->concat($others)
+            ->sortByDesc(fn (DailyPickSet $cove) => $cove->kind === CoveKind::Daily
+                ? $cove->drop_date?->endOfDay()->getTimestamp()
+                : $cove->published_at?->getTimestamp())
             ->map(function (DailyPickSet $cove) use ($current, $market): array {
                 $image = $cove->picks
                     ->first(fn (DailyPick $pick) => $pick->group?->image_url !== null && $pick->group->in_stock)
@@ -179,6 +214,7 @@ class HomeController extends Controller
                 return [
                     'id' => $cove->id,
                     'kind' => match (true) {
+                        $cove->kind === CoveKind::Daily => 'daily',
                         $cove->kind->isGiftColumn() => 'gift',
                         $cove->kind === CoveKind::Shop, $cove->kind === CoveKind::Brand => 'brand',
                         default => 'guide',
