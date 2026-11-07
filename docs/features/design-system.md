@@ -379,7 +379,9 @@ because Inertia answers `popstate` by mounting the page afresh (`preserveState: 
 lose what was typed and reopen a `?panel=` popup. "Before Inertia's" has to be arranged: on `window`
 listeners run in the order they were added, capture or not, so `installBackCloses()` is called in
 `app.tsx` before `createInertiaApp`. Until 2026-11-07 it was added with the first popup, after
-Inertia's, and the list settings opened from the ⋯ on Mijn Coves would not close. Known leftover: a popup closed by navigating away,
+Inertia's, and the list settings opened from the ⋯ on Mijn Coves would not close. The same bug kept a
+deleted list on Mijn Coves until a reload: closing the "are you sure?" reached Inertia, which
+cancelled the delete's answer (`cancelAll`) and put the old page back. Known leftover: a popup closed by navigating away,
 or by a save Inertia answers with a replaced entry, leaves one extra step back to the same page.
 
 **The row's share popup stays a popup** on My Coves, as the owner asked on 2026-09-27 (no trip to
