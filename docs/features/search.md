@@ -1219,7 +1219,10 @@ cards of their own), owner's design after a short discussion:
 sliding?)". The columns scroll sideways, and the only way along with a mouse was the thin native
 scrollbar under them, a screen down on a long column. `LaneScroller` puts a bar above them: an arrow
 either side that moves one column (the first column's width plus the gap), and between them a range
-input showing where you are among the shops, which moves the columns as it is dragged. A real range
-input, so the keyboard and a screen reader can use it. The arrows grey out at the ends, with an 8px
+slider whose thumb is as wide as the part of the row in view ("the slider should be proportional to
+the visible part of the screen", the same day: four of six columns in view is a thumb two thirds of
+the track). Drag the thumb, or press the track to jump there. Drawn, since a range input cannot size
+its thumb, with what the range input gave kept: `role="slider"` with its value, and the arrow keys,
+Page Up/Down, Home and End. The arrows grey out at the ends, with an 8px
 margin because snapping leaves the columns 4px off the edge. The bar shows only when the columns do
 not all fit, and the native scrollbar is hidden; a swipe on a phone or trackpad still scrolls.
