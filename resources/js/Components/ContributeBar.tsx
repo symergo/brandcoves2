@@ -78,7 +78,7 @@ export default function ContributeBar() {
           across the top of every page.
         */
         <aside aria-label={t('contribute.bar_label')} className="border-b border-line bg-cream text-sm">
-            <div className="mx-auto flex max-w-6xl items-center gap-2 py-1 pr-1 pl-4 sm:pr-3">
+            <div className="mx-auto flex max-w-[96rem] items-center gap-2 py-1 pr-1 pl-4 sm:pr-3">
                 {/*
                   The whole row is the link, not only "Denk mee" (owner,
                   2026-09-27): a one-line bar is one target. Only the close

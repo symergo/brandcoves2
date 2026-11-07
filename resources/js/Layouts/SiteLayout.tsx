@@ -160,13 +160,14 @@ function Chrome({ children }: PropsWithChildren) {
     const { t } = useTranslations()
 
     /*
-     * The search page is wider (owner, 2026-11-07: "maak de pagina breder zodat
-     * de winkel kolommen op de zoekpagina ook breder worden"): 1536px instead of
-     * 1152px, header and footer with it so the edges line up. Only there: the
-     * by-shop view is a row of columns side by side, and every other page is
-     * text and cards that read worse wider.
+     * Every page is 1536px wide at most, header and footer with it so the edges
+     * line up (owner, 2026-11-07: first the search page, "maak de pagina breder
+     * zodat de winkel kolommen op de zoekpagina ook breder worden", then
+     * "adjust the page width for all pages, not just search"). It was 1152px.
+     * Running text keeps its own measure (`max-w-2xl` and the like on article
+     * bodies), so a wider page widens grids and columns, not lines of prose.
      */
-    const width = page.component === 'Search' ? 'max-w-[96rem]' : 'max-w-6xl'
+    const width = 'max-w-[96rem]'
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
     /*

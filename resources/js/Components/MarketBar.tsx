@@ -122,7 +122,7 @@ export default function MarketBar() {
             aria-label={t('market_bar.label')}
             className="border-b border-line bg-cream text-sm"
         >
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3">
+            <div className="mx-auto flex max-w-[96rem] flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3">
                 <p className="flex min-w-0 items-center gap-2 text-ink-soft">
                     <FlagIcon
                         country={current.country as FlagCountry}

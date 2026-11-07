@@ -1156,8 +1156,10 @@ drawn when there are pills. Tests: `SearchShopCapTest::the_page_carries_no_total
 
 "Maak de pagina breder zodat de winkel kolommen op de zoekpagina ook breder worden." The search page
 is 1536px wide instead of the site's 1152px, header and footer with it so the edges line up
-(`width` in `SiteLayout`, keyed on `page.component === 'Search'`). Only the search page: the by-shop
-view is a row of columns, and the other pages are text and cards that read worse wider. The columns
+(`width` in `SiteLayout`). First the search page only; later the same day every page ("adjust the
+page width for all pages, not just search"), with the three full-width bars (`AddingToBar`,
+`ContributeBar`, `MarketBar`) aligned to it. Running text keeps its own measure (`max-w-2xl` on
+article bodies, measured at 672px on guides), so a wider page widens grids and columns, not prose. The columns
 grow too, since the page alone would only have shown more of the same 256px columns: 240px on a
 phone, 288px from `sm`, 320px from `xl`. At 1680px that is four whole columns and part of a fifth.
 The grid view keeps five cards a row, each wider.
