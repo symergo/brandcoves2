@@ -15,7 +15,6 @@ import {
     type LiveHit,
 } from './ProductSearch'
 import TheirWishes, { type Wish } from './TheirWishes'
-import SaveButton from './SaveButton'
 
 /** What has been chosen and is about to be added, in whichever shape. */
 type Chosen =
@@ -122,18 +121,41 @@ export default function AddProduct({
     const { term, setTerm, groups, live, link, linkRefused, searching, searched } = found
 
     /*
-     * How a result is chosen. On the list page the whole row is the press:
-     * the panel sits on the list, so what it adds to is plain. Elsewhere
-     * (Find a gift's "Weet je al wat je zoekt?") the row carries the site's
-     * round save button, as the same search does when nobody is chosen
-     * (owner, 2026-11-07: "I get no save to list icon next to the items").
-     * The press is the same either way: on to the wording step, then onto
-     * this list.
+     * How a result is chosen; the whole row is the press either way. On the
+     * list page it leads to the wording step, then onto the list. Elsewhere
+     * (Find a gift's "Weet je al wat je zoekt?") one press puts it on the list
+     * as it is (owner, 2026-11-07: "make adding to list a one-click step ...
+     * no save to list needed"): the shop's name, no note, renamed later from
+     * the list if wanted. The panel stays open, so several go on in a row, and
+     * each added row shows it.
      */
-    const pick = (onChoose: () => void) =>
+    const [added, setAdded] = useState<Set<string>>(new Set())
+    const [adding, setAdding] = useState<string | null>(null)
+
+    const addNow = (key: string, payload: Record<string, unknown>) => {
+        setError(null)
+        setAdding(key)
+        router.post(
+            `${base}/list-items`,
+            { wishlist_id: listId, note: null, on_list_page: false, ...payload },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => setAdded((was) => new Set(was).add(key)),
+                onError: (errors) => setError(Object.values(errors)[0] ?? null),
+                onFinish: () => setAdding(null),
+            },
+        )
+    }
+
+    const pick = (key: string, chosenNext: Chosen, oneClick: Record<string, unknown>) =>
         onListPage
-            ? { onPick: onChoose }
-            : { action: <SaveButton compact saved={false} onClick={onChoose} label={t('save_button.save')} /> }
+            ? { onPick: () => choose(chosenNext) }
+            : {
+                  onPick: () => (added.has(key) || adding !== null ? undefined : addNow(key, oneClick)),
+                  done: added.has(key),
+                  busy: adding === key,
+              }
 
     const [chosen, setChosen] = useState<Chosen | null>(null)
     const [title, setTitle] = useState('')
@@ -386,7 +408,7 @@ export default function AddProduct({
                                     title={g.title}
                                     price={g.price}
                                     badge={groupBadge(g)}
-                                    {...pick(() => choose({ kind: 'group', hit: g }))}
+                                    {...pick(`g${g.id}`, { kind: 'group', hit: g }, { title: g.title, group_id: g.id })}
                                 />
                             ))}
                             {live.map((l) => (
@@ -396,7 +418,13 @@ export default function AddProduct({
                                     title={l.title}
                                     price={l.price}
                                     badge={l.merchant}
-                                    {...pick(() => choose({ kind: 'live', hit: l }))}
+                                    {...pick(`l${l.source}-${l.externalId}`, { kind: 'live', hit: l }, {
+                                        title: l.title,
+                                        source: l.source,
+                                        external_id: l.externalId,
+                                        image_url: l.image,
+                                        price: l.price,
+                                    })}
                                 />
                             ))}
                         </HitList>

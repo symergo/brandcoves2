@@ -763,6 +763,7 @@ return [
         'rename_item' => 'Naam wijzigen',
         'item_name' => 'Naam op je lijst',
         'item_name_reset' => 'Terug naar de naam van de winkel',
+        'on_the_list' => 'Op de lijst',
         'remove_item' => 'Van deze lijst halen',
         'save_changes' => 'Opslaan',
         'manual_url' => 'Link (optioneel)',

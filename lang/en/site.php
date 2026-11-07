@@ -911,6 +911,7 @@ return [
         'rename_item' => 'Rename',
         'item_name' => 'Name on your list',
         'item_name_reset' => "Use the shop's name again",
+        'on_the_list' => 'On the list',
         'remove_item' => 'Remove from this list',
         'save_changes' => 'Save',
         'manual_url' => 'Link (optional)',

@@ -280,7 +280,13 @@ export function HitRow({
     onPick,
     href,
     action,
+    done = false,
+    busy = false,
 }: {
+    /** A one-press add that has landed: the row says so and does nothing more. */
+    done?: boolean
+    /** That add on its way. */
+    busy?: boolean
     image: string | null
     title: string
     price: number | null
@@ -291,6 +297,7 @@ export function HitRow({
     action?: ReactNode
 }) {
     const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
 
     const picture = image ? (
         <img
@@ -322,10 +329,17 @@ export function HitRow({
                 <button
                     type="button"
                     onClick={onPick}
-                    className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-cream"
+                    aria-disabled={done || busy}
+                    className={`flex w-full items-center gap-3 rounded-lg p-2 text-left ${done ? 'bg-accent/5' : 'hover:bg-cream'} ${busy ? 'opacity-60' : ''}`}
                 >
                     {picture}
                     <span className="min-w-0 flex-1">{words}</span>
+                    {done && (
+                        <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-dark">
+                            <ToolIcon name="check" className="h-4 w-4" />
+                            {t('lists.on_the_list')}
+                        </span>
+                    )}
                 </button>
             </li>
         )

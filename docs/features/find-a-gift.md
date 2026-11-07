@@ -323,3 +323,12 @@ the whole row was the press and nothing showed it. Off the list page (`onListPag
 row now carries the round save button instead, as the same search does when nobody is chosen;
 pressing it goes on to the wording step and onto that person's list, as the row did. On the list
 page itself the row stays the press: the panel sits on the list, so what it adds to is plain.
+
+**One press adds it (owner, 2026-11-07, the same day).** The round save button above lasted an
+hour: "make adding to list a one-click step ... make the full item clickable (no save to list
+needed)" and "add it immediately to the list, don't offer title change". Off the list page
+(`onListPage={false}`) a press on the row now posts the product straight onto that person's list
+with the shop's name and no note (`AddProduct::addNow`), skips the wording step, and leaves the
+results open so several go on in a row; an added row is tinted and says "Op de lijst", and the
+"Bewaard in …" message names the list. A name of your own is given later, from the list
+(item-names.md). On the list page itself the row still leads to the wording step.

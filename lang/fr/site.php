@@ -758,6 +758,7 @@ return [
         'rename_item' => 'Renommer',
         'item_name' => 'Nom sur votre liste',
         'item_name_reset' => 'Reprendre le nom de la boutique',
+        'on_the_list' => 'Sur la liste',
         'remove_item' => 'Retirer de cette liste',
         'save_changes' => 'Enregistrer',
         'manual_url' => 'Lien (facultatif)',
