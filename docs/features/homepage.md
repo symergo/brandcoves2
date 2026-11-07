@@ -675,3 +675,22 @@ is gone, and the band's bottom padding, which was room for the overlap, came dow
 top. Both ways in stay one tap away: in the header, and in the three ways to start below the hero
 ("Vind een cadeau", "Maak mijn Cove"). The text column carries `min-w-0`, because on a phone the
 field's own width pushed the column past the screen.
+
+## Your Coves and your people, signed in (owner, 2026-11-07)
+
+"When logged in, the homepage should be personalized with the coves and the people of the logged in
+person." A band under the hero, `ForYou` in `Home.tsx`, fed by `mine` from `HomeController::mine()`:
+
+- **Mijn Coves:** your own lists on this market, last changed first, six at most, each with its
+  four covers and item count. Lists somebody shared with you stay on Mijn Coves, where they are
+  marked as theirs.
+- **Mijn mensen:** the first six rows of `MyPeople::for()`, so the order is the people page's
+  (nearest birthday or occasion first). Each card opens the person's page.
+- Each heading has "Alles bekijken" to the full page. Two columns only when both halves have
+  something; one half takes the width; nothing at all when both are empty, because the page below
+  already says how to start.
+
+**The page cache.** `/` is served from the anonymous page cache (`CacheAnonymousPage`), which only
+answers requests with no session, no remember-me cookie and nobody signed in. A signed-in request
+never reaches it, and a visitor's `mine` is null, so a personal band cannot be cached and shown to
+somebody else. `HomePageTest::signed_in_the_page_shows_your_own_coves_and_people` holds both halves.

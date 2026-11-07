@@ -83,6 +83,8 @@ return [
     ],
 
     'home' => [
+        'mine_label' => 'Para ti',
+        'mine_all' => 'Ver todo',
         // Consulta la explicación de estas claves en lang/en/site.php.
         'seo_description' => 'Crea listas de deseos, elige regalos en grupo, haz el amigo invisible y encuentra ideas para cada persona. Una comunidad a la que le gusta regalar.',
         'title' => 'GiftCoves: listas de deseos, ideas de regalo y regalar juntos',
@@ -2432,6 +2434,7 @@ return [
         'find_history' => 'Lo que marcaste con «Yo lo regalo» en listas para alguien queda fuera de las nuevas ideas para esa persona. Lo que marcaron otros no cuenta. En su página (ábrela desde una lista para esa persona o desde «Encontrar un regalo») proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en «Encontrar un regalo» o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',
         'find_relationship' => 'Cuando haces una lista para otra persona, puedes decir enseguida quién es para ti, como tu madre o un compañero. No es obligatorio, y lo cambias después en su página, en Más: Nombre, relación y cumpleaños.',
+        'find_home_mine' => 'Si has iniciado sesión, arriba en la página de inicio ves las Coves que cambiaste por última vez y tu gente, el próximo cumpleaños primero. Ver todo abre Mis Coves o Mi gente.',
         'find_taste' => '¿No sabes qué le gusta a alguien? En Esto o aquello eliges una docena de veces entre dos productos. Averiguamos sus gustos y un presupuesto, te mostramos ideas y puedes guardar el resultado en una persona.',
         'find_taste_together' => '¿No sabes qué le gusta a alguien, y los demás tampoco? En la lista para esa persona, crea un enlace de Esto o aquello y compártelo. Cada uno juega sobre esa persona sin cuenta, y tú ves cuántos jugaron y lo que encontraron juntos, nunca quién eligió qué. Añádelo a la persona con un solo clic.',
         'find_taste_card' => '¿Has jugado a Esto o aquello para ti? Crea una tarjeta de perfil de regalo, como «café, senderismo, entre 30 € y 60 €», y envía su enlace a quien te hace regalos. Abre «Encontrar un regalo» con tus gustos ya rellenados. Sin nombre salvo que escribas uno, y puedes eliminarla cuando quieras.',

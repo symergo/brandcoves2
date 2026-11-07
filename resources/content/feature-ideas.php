@@ -425,4 +425,24 @@ return [
             'body' => 'Cuando haces una lista para otra persona, puedes decir enseguida quién es para ti: tu madre, un amigo, un compañero. No es obligatorio. Puedes cambiarlo después en su página, en Más y luego Nombre, relación y cumpleaños.',
         ],
     ],
+    'home-shows-your-coves-and-people' => [
+        'status' => 'done',
+        'sort' => 99,
+        'nl' => [
+            'title' => 'Jouw Coves en je mensen op de startpagina',
+            'body' => 'Ben je aangemeld, dan zie je bovenaan de startpagina de Coves die je het laatst aanpaste en je mensen, wie het eerst jarig is eerst. Eén klik en je bent erin.',
+        ],
+        'en' => [
+            'title' => 'Your Coves and your people on the home page',
+            'body' => 'When you are signed in, the top of the home page shows the Coves you changed last and your people, whoever has the next birthday first. One click and you are in.',
+        ],
+        'fr' => [
+            'title' => "Vos Coves et vos proches sur la page d'accueil",
+            'body' => "Quand vous êtes connecté, le haut de la page d'accueil montre les Coves que vous avez modifiées en dernier et vos proches, le prochain anniversaire d'abord. Un clic et vous y êtes.",
+        ],
+        'es' => [
+            'title' => 'Tus Coves y tu gente en la página de inicio',
+            'body' => 'Si has iniciado sesión, arriba en la página de inicio ves las Coves que cambiaste por última vez y tu gente, el próximo cumpleaños primero. Un clic y ya estás dentro.',
+        ],
+    ],
 ];

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ListKind;
+use App\Enums\Market;
+use App\Models\Recipient;
+use App\Models\User;
+use App\Models\Wishlist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -90,5 +95,28 @@ class HomePageTest extends TestCase
 
         $this->assertArrayNotHasKey('coves', $props);
         $this->assertArrayNotHasKey('collected', $props);
+    }
+
+    #[Test]
+    public function signed_in_the_page_shows_your_own_coves_and_people(): void
+    {
+        // Owner, 2026-11-07. Only your own lists on this market, and the
+        // people My people lists; a visitor gets nothing personal, which is
+        // also what lets the anonymous page cache keep serving the page.
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+
+        Wishlist::factory()->create(['owner_user_id' => $me->id, 'kind' => ListKind::Mine, 'market' => Market::BeNl, 'title' => 'Mijn wensen']);
+        Wishlist::factory()->create(['owner_user_id' => $me->id, 'kind' => ListKind::Mine, 'market' => Market::NlNl, 'title' => 'Elders']);
+        Wishlist::factory()->create(['owner_user_id' => $other->id, 'kind' => ListKind::Mine, 'market' => Market::BeNl, 'title' => 'Niet van mij']);
+        Recipient::query()->create(['owner_user_id' => $me->id, 'name' => 'Lien', 'relationship' => 'sibling']);
+
+        $mine = $this->actingAs($me)->get('/be-nl')->assertOk()->viewData('page')['props']['mine'];
+
+        $this->assertSame(['Mijn wensen'], array_column($mine['coves'], 'title'));
+        $this->assertSame(['Lien'], array_column($mine['people'], 'name'));
+
+        auth()->logout();
+        $this->assertNull($this->get('/be-nl')->assertOk()->viewData('page')['props']['mine']);
     }
 }

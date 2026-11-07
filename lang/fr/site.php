@@ -84,6 +84,8 @@ return [
     ],
 
     'home' => [
+        'mine_label' => 'Pour vous',
+        'mine_all' => 'Tout voir',
         // Voir l'explication de ces clés dans lang/en/site.php.
         'seo_description' => "Créez des listes d'envies, choisissez un cadeau à plusieurs, tirez au sort et trouvez des idées par personne. Une communauté de gens qui aiment offrir.",
         'title' => "GiftCoves : listes d'envies, idées cadeaux et offrir ensemble",
@@ -2434,6 +2436,7 @@ return [
         'find_history' => 'Ce que vous avez marqué « Je m’en occupe » sur les listes pour quelqu’un n’apparaît plus dans les nouvelles idées pour cette personne. Ce que d’autres ont marqué ne compte pas. Sur sa page (ouvrez-la depuis une liste pour elle ou depuis « Trouver un cadeau »), nous proposons l’étape suivante, comme du café en grains après une cafetière italienne.',
         'find_reminders' => 'Enregistrez un anniversaire ou une occasion pour quelqu’un et nous vous envoyons un rappel par e-mail. Environ deux semaines avant, le rappel apporte trois idées adaptées à la personne, à son budget et à ce que vous avez déjà offert, avec un clic pour les voir dans « Trouver un cadeau » ou les ajouter à sa liste. Arrêtez les e-mails depuis le lien de n’importe quel rappel.',
         'find_relationship' => "Quand vous faites une liste pour quelqu'un d'autre, vous pouvez dire tout de suite qui c'est pour vous, comme votre maman ou un collègue. Ce n'est pas obligatoire, et vous le changez plus tard sur sa page, sous Plus : Nom, lien et anniversaire.",
+        'find_home_mine' => "Quand vous êtes connecté, le haut de la page d'accueil montre les Coves que vous avez modifiées en dernier et vos proches, le prochain anniversaire d'abord. Tout voir ouvre Mes Coves ou Mes proches.",
         'find_taste' => 'Vous ne savez pas ce que quelqu’un aime ? Dans Ceci ou cela, vous choisissez une douzaine de fois entre deux produits. Nous en tirons ses goûts et un budget, montrons des idées, et vous pouvez garder le résultat pour une personne.',
         'find_taste_together' => 'Vous ne savez pas ce que quelqu’un aime, et les autres non plus ? Sur la liste pour cette personne, créez un lien Ceci ou cela et faites-le circuler. Chacun joue pour cette personne sans compte, et vous voyez combien ont joué et ce qu’ils ont trouvé ensemble, jamais qui a choisi quoi. Ajoutez-le à la personne d’un seul geste.',
         'find_taste_card' => 'Vous avez joué à Ceci ou cela pour vous-même ? Créez une carte de profil cadeau, comme « café, marche, environ 30 € à 60 € », et envoyez son lien à ceux qui vous offrent des cadeaux. Elle ouvre l’Assistant cadeau avec vos goûts déjà remplis. Aucun nom sauf si vous en tapez un, et vous pouvez la supprimer à tout moment.',

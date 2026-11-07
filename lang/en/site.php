@@ -125,6 +125,8 @@ return [
     ],
 
     'home' => [
+        'mine_label' => 'For you',
+        'mine_all' => 'See all',
         /*
          * `seo_title` and `seo_description` are what a search engine and a
          * social card show; `title` is the browser tab and, on most pages, the
@@ -2703,6 +2705,7 @@ return [
         'find_history' => 'What you marked "I\'ll get this" on lists for someone stays out of new ideas for them. What anybody else marked does not count. On their page (open it from a list for them or from Find a gift) we suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in Find a gift or add them to their list. Stop the emails from the link in any reminder.',
         'find_relationship' => 'When you make a list for somebody else, you can say straight away who they are to you, such as your mum or a colleague. You do not have to, and you change it later on their page, under More: Name, relationship and birthday.',
+        'find_home_mine' => 'When you are signed in, the top of the home page shows the Coves you changed last and your people, whoever has the next birthday first. See all opens My Coves or My people.',
         'find_taste' => 'Not sure what somebody likes? In This or that you choose between two products a dozen times. It works out their taste and a budget, shows ideas, and can keep the result on a person.',
         'find_taste_together' => 'Not sure what somebody likes, and nor is anyone else? On the list for them, make a This or that link and send it round. Everybody plays about that person without an account, and you see how many played and what they found together, never who chose what. Add it to the person with one press.',
         'find_taste_card' => 'Played This or that for yourself? Make a gift profile card, like "coffee, walking, around €30 to €60", and send its link to whoever buys for you. It opens Find a gift with your taste filled in. No name unless you type one, and you can remove it any time.',

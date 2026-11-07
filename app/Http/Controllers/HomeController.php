@@ -6,15 +6,22 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Models\Wishlist;
 use App\Services\Search\AmazonEvent;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\MyPeople;
 use App\Support\CurrentMarket;
+use App\Support\Owner;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function __invoke(CurrentMarket $current): Response
+    /** How many of each the band shows; the rest is one click away on its own page. */
+    private const MINE_SHOWN = 6;
+
+    public function __invoke(Request $request, CurrentMarket $current, MyPeople $people): Response
     {
         /*
          * No catalogue counters.
@@ -53,6 +60,15 @@ class HomeController extends Controller
              */
             'today' => $this->today($current),
 
+            /*
+             * Yours, when you are signed in (owner, 2026-11-07): the Coves you
+             * changed last and your people, nearest date first. Null for a
+             * visitor, which is also what keeps this page in the anonymous page
+             * cache: that cache only serves requests nobody is signed in to, so
+             * a personal answer never reaches somebody else.
+             */
+            'mine' => $this->mine($request, $current, $people),
+
             // An Amazon sales event under the hero while it runs (AmazonEvent).
             'amazonEvent' => AmazonEvent::current($current->get()),
 
@@ -69,6 +85,50 @@ class HomeController extends Controller
              * with the lists they fed.
              */
         ]);
+    }
+
+    /**
+     * Your own Coves on this market, last changed first, and your people.
+     *
+     * Only lists you own: a list somebody shared with you is on Mijn Coves,
+     * where it is marked as theirs. The people are My people's rows, in its
+     * order (nearest birthday or occasion first), so the two pages agree.
+     *
+     * @return array{coves: list<array<string, mixed>>, people: list<array<string, mixed>>}|null
+     */
+    private function mine(Request $request, CurrentMarket $current, MyPeople $people): ?array
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $owner = Owner::fromRequest($request);
+        $language = $current->get()->language();
+
+        $coves = $owner->scope(Wishlist::query())
+            ->where('market', $current->get()->value)
+            ->with(['items' => fn ($q) => $q->whereNotNull('snapshot_image_url')->latest('created_at')->limit(4)])
+            ->withCount('items')
+            ->latest('updated_at')
+            ->limit(self::MINE_SHOWN)
+            ->get()
+            ->map(fn (Wishlist $list) => [
+                'id' => $list->id,
+                'title' => $list->displayTitle($language),
+                'kind' => $list->kind->value,
+                'count' => $list->items_count,
+                'covers' => $list->items->pluck('snapshot_image_url')->all(),
+                'url' => $current->url("lists/{$list->id}"),
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'coves' => $coves,
+            'people' => array_slice($people->for($user, $current), 0, self::MINE_SHOWN),
+        ];
     }
 
     /** @return array<string, mixed>|null */

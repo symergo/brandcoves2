@@ -104,6 +104,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'people', text: t('help.find_history') },
                         { icon: 'alerts', text: t('help.find_reminders') },
                         { icon: 'people', text: t('help.find_relationship') },
+                        { icon: 'wishlist', text: t('help.find_home_mine') },
                         { icon: 'taste', text: t('help.find_taste') },
                         { icon: 'taste', text: t('help.find_taste_together') },
                         { icon: 'taste', text: t('help.find_taste_card') },

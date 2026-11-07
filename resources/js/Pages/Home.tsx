@@ -6,7 +6,8 @@ import SearchCard from '../Components/SearchCard'
 import HeroGift from '../Components/HeroGift'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import { buttonClasses } from '../Components/Button'
-import { formatPrice, type SharedProps } from '../types'
+import { formatCountdown, formatDay, formatPrice, type SharedProps } from '../types'
+import { ListThumb } from '../Components/ListRow'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
@@ -20,6 +21,26 @@ interface Props {
         url: string
         finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     } | null
+    /** Signed in only: your Coves, last changed first, and your people, nearest date first. */
+    mine?: { coves: MyCove[]; people: MyPerson[] } | null
+}
+
+interface MyCove {
+    id: string
+    title: string
+    kind: string
+    count: number
+    covers: string[]
+    url: string
+}
+
+/** A row of My people (MyPeople::for), as much of it as this band draws. */
+interface MyPerson {
+    key: string
+    name: string
+    relationship: string | null
+    next: { date: string; days: number; kind: 'birthday' | 'occasion'; title: string | null } | null
+    urls: { person: string | null }
 }
 
 /**
@@ -44,7 +65,7 @@ interface Props {
  * visitor's convenience, not an answer to the three questions). The search
  * card left too and came back under the hero later the same day; see below.
  */
-export default function Home({ today, amazonEvent = null }: Props) {
+export default function Home({ today, amazonEvent = null, mine = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -129,6 +150,8 @@ export default function Home({ today, amazonEvent = null }: Props) {
                 </div>
                 {/* "Zoek · Verzamel · Deel" stood here until the owner removed it (2026-09-27). */}
             </section>
+
+            {mine && <ForYou coves={mine.coves} people={mine.people} base={base} />}
 
             {/*
               The search card stood here, under the hero and overlapping its
@@ -390,6 +413,114 @@ export default function Home({ today, amazonEvent = null }: Props) {
                 </section>
             </div>
         </>
+    )
+}
+
+/**
+ * "Voor jou": your Coves and your people, under the hero, signed in only
+ * (owner, 2026-11-07: "the homepage should be personalized with the coves and
+ * the people of the logged in person"). Each card opens its page; the heading
+ * links to the whole overview. Two columns only when both have something
+ * (the owner's rule: no empty column); otherwise the one there takes the width.
+ * Nothing at all when both are empty: the page below already says how to start.
+ */
+function ForYou({ coves, people, base }: { coves: MyCove[]; people: MyPerson[]; base: string }) {
+    const { market } = usePage<SharedProps>().props
+    const { t, n } = useTranslations()
+    const both = coves.length > 0 && people.length > 0
+
+    if (coves.length === 0 && people.length === 0) {
+        return null
+    }
+
+    const heading = (title: string, href: string) => (
+        <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+            <Link href={href} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                {t('home.mine_all')} →
+            </Link>
+        </div>
+    )
+
+    return (
+        <section className={`mt-10 grid gap-8 sm:mt-12 ${both ? 'lg:grid-cols-2' : ''}`} aria-label={t('home.mine_label')}>
+            {coves.length > 0 && (
+                <div className="min-w-0">
+                    {heading(t('lists.title'), `${base}/lists`)}
+                    <ul className={`mt-4 grid gap-3 sm:grid-cols-2 ${both ? '' : 'lg:grid-cols-3'}`}>
+                        {coves.map((cove) => (
+                            <li key={cove.id}>
+                                <Link
+                                    href={cove.url}
+                                    className="flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
+                                >
+                                    <ListThumb covers={cove.covers} kind={cove.kind} />
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-medium">{cove.title}</span>
+                                        <span className="block text-sm text-ink-soft">
+                                            {cove.count === 1 ? t('lists.one_item') : t('lists.items', { count: n(cove.count) })}
+                                        </span>
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {people.length > 0 && (
+                <div className="min-w-0">
+                    {heading(t('people.title'), `${base}/people`)}
+                    <ul className={`mt-4 grid gap-3 sm:grid-cols-2 ${both ? '' : 'lg:grid-cols-3'}`}>
+                        {people.map((person) => {
+                            const relationship =
+                                person.relationship && person.relationship.toLowerCase() !== person.name.toLowerCase()
+                                    ? person.relationship
+                                    : null
+                            const body = (
+                                <>
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tint font-semibold text-accent"
+                                    >
+                                        {person.name.slice(0, 1).toUpperCase()}
+                                    </span>
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-medium">
+                                            {person.name}
+                                            {relationship && <span className="font-normal text-ink-soft"> · {relationship}</span>}
+                                        </span>
+                                        {person.next && (
+                                            <span className="flex items-center text-sm text-ink-soft">
+                                                {person.next.kind === 'birthday' && <ToolIcon name="cake" className="mr-1 h-4 w-4 shrink-0" />}
+                                                {formatDay(person.next.date, market)}
+                                                {' · '}
+                                                <span className={person.next.days <= 14 ? 'ml-1 font-medium text-ink' : 'ml-1'}>
+                                                    {formatCountdown(person.next.days, t)}
+                                                </span>
+                                            </span>
+                                        )}
+                                    </span>
+                                </>
+                            )
+                            const card = 'flex items-center gap-3 rounded-card border border-line bg-card p-3'
+
+                            return (
+                                <li key={person.key}>
+                                    {person.urls.person ? (
+                                        <Link href={person.urls.person} className={`${card} transition hover:border-ink`}>
+                                            {body}
+                                        </Link>
+                                    ) : (
+                                        <div className={card}>{body}</div>
+                                    )}
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+            )}
+        </section>
     )
 }
 
