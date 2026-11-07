@@ -942,6 +942,9 @@ class WishlistController extends Controller
                      * refuses to hand back anything else.
                      */
                     'externalUrl' => $item->externalUrl(),
+                    // The same address as the link a reader follows: tracked when the
+                    // shop is one of ours. externalUrl stays the shop's own, for editing.
+                    'buyUrl' => $item->trackedExternalUrl(),
 
                     // A pasted link still being looked up in a queued job.
                     // The page asks again for a few seconds while any row

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Source;
+use App\Services\Affiliate\MerchantLinks;
 use App\Services\Images\ImageStore;
 use App\Services\PageReading\LinkRouter;
 use App\Services\Wishlist\ItemLinker;
@@ -172,6 +173,19 @@ class WishlistItem extends Model
         }
 
         return self::isSafeExternalUrl($this->snapshot_url) ? trim((string) $this->snapshot_url) : null;
+    }
+
+    /**
+     * The address to send a reader to: externalUrl(), as an affiliate link when
+     * the shop is one we are registered with (owner, 2026-11-07, see
+     * MerchantLinks). Only for the link itself: the edit form and the job
+     * that reads the page keep externalUrl(), the shop's own address.
+     */
+    public function trackedExternalUrl(): ?string
+    {
+        $url = $this->externalUrl();
+
+        return $url === null ? null : MerchantLinks::wrap($url);
     }
 
     /**

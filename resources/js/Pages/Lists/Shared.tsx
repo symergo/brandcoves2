@@ -29,6 +29,7 @@ interface Item {
     groupId: number | null
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
+    buyUrl?: string | null
     inStock: boolean
     /**
      * Absent — not null — for anybody who may not see claims, which on a wish
@@ -542,6 +543,7 @@ export default function SharedList({
                                 image={item.image}
                                 url={item.url}
                                 externalUrl={item.externalUrl}
+                                buyUrl={item.buyUrl}
                                 note={item.note}
                                 price={item.price}
                                 market={market}

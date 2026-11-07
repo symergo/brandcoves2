@@ -34,6 +34,7 @@ interface Item {
     groupId: number | null
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
+    buyUrl?: string | null
     /** Typed by somebody rather than saved from the catalogue, so its title,
      *  link and price are theirs to correct. */
     manual: boolean
@@ -522,6 +523,7 @@ export default function ListShow({
                                 image={item.image}
                                 url={item.url}
                                 externalUrl={item.externalUrl}
+                                buyUrl={item.buyUrl}
                                 note={item.note}
                                 price={item.currentPrice}
                                 was={item.price}

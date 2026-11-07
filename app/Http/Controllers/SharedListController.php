@@ -559,6 +559,9 @@ class SharedListController extends Controller
                 // not the same link as the one above and must not be rendered
                 // as one. `https:` only, decided by the model.
                 'externalUrl' => $item->externalUrl(),
+                // The same address as the link a reader follows: tracked when the
+                // shop is one of ours. externalUrl stays the shop's own, for editing.
+                'buyUrl' => $item->trackedExternalUrl(),
 
                 'inStock' => $item->group?->in_stock ?? false,
 

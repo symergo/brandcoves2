@@ -36,6 +36,7 @@ export default function ListItemCard({
     image,
     url,
     externalUrl,
+    buyUrl = null,
     note,
     price,
     was = null,
@@ -52,6 +53,8 @@ export default function ListItemCard({
     url: string | null
     /** Somebody's hand-typed link, off-site. Never an Inertia visit. */
     externalUrl: string | null
+    /** The link to follow: externalUrl as an affiliate link when the shop is one of ours. */
+    buyUrl?: string | null
     note: string | null
     /** What it costs now. Null when nothing knows. */
     price: Cents | null
@@ -147,9 +150,9 @@ export default function ListItemCard({
                             </Link>
                         ) : externalUrl ? (
                             <a
-                                href={externalUrl}
+                                href={buyUrl ?? externalUrl}
                                 target="_blank"
-                                rel="nofollow noopener noreferrer"
+                                rel={buyUrl && buyUrl !== externalUrl ? 'sponsored nofollow noopener noreferrer' : 'nofollow noopener noreferrer'}
                                 tabIndex={-1}
                                 aria-hidden
                                 className={box}
@@ -186,9 +189,9 @@ export default function ListItemCard({
                           is the rest.
                         */
                         <a
-                            href={externalUrl}
+                            href={buyUrl ?? externalUrl}
                             target="_blank"
-                            rel="nofollow noopener noreferrer"
+                            rel={buyUrl && buyUrl !== externalUrl ? 'sponsored nofollow noopener noreferrer' : 'nofollow noopener noreferrer'}
                             className="line-clamp-2 text-sm font-medium hover:underline lg:line-clamp-3 lg:text-base"
                         >
                             {title}

@@ -64,7 +64,7 @@ use Throwable;
 final class CoveProse
 {
     /** Bump when the rendered output changes; see the class comment. */
-    public const VERSION = 2;
+    public const VERSION = 3;
 
     /**
      * A day, for a Cove whose stored prose is missing or out of date.

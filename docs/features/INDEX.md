@@ -148,3 +148,4 @@ is true now.
 | 7 | Admin, SEO, cutover from v1 | ✅ Done — cutover executed 2026-08-10 |
 | 8 | Deferred: the Amazon API connector, catalogue breadth, embeddings | |
 | 9 | Gifting lenses: recipient linking, Secret Santa, co-givers, the quiz, occasion reminders | ✅ Done |
+| [affiliate-links.md](affiliate-links.md) | Commerce | Active: typed shop links (articles, offline list items) leave tracked for bol and Awin shops, since 2026-11-07 |

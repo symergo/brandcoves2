@@ -6,6 +6,7 @@ namespace App\Services\Guides;
 
 use App\Enums\CoveScene;
 use App\Enums\Market;
+use App\Services\Affiliate\MerchantLinks;
 use App\Services\Identity\MergedProducts;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
@@ -373,11 +374,21 @@ class CoveMarkup
                  * the article.
                  */
                 if ($kind === 'shop') {
+                    /*
+                     * Tracked when the shop is one we are registered with
+                     * (owner, 2026-11-07: "bol links should be affiliate links -
+                     * that's a rule for all merchants registered on giftcoves").
+                     * Wrapped here, at the link, and not in shop(): a picture's
+                     * buy address is saved to a list as the item's own link, and
+                     * that must stay the shop's address, not a tracker's.
+                     */
+                    $tracked = MerchantLinks::wrap($href, $market);
+
                     return sprintf(
                         '<a href="%s" rel="%s" target="_blank">%s</a>',
-                        e($href),
-                        // Amazon's: paid, so `sponsored` too, as every Amazon link here is.
-                        self::isAmazon($href) ? 'sponsored nofollow noopener' : 'nofollow noopener',
+                        e($tracked),
+                        // Paid, so `sponsored` too: Amazon's and every tracked one.
+                        self::isAmazon($href) || $tracked !== $href ? 'sponsored nofollow noopener' : 'nofollow noopener',
                         e($label),
                     );
                 }
