@@ -128,22 +128,14 @@ interface Props {
 }
 
 /**
- * How the results are ordered, and which shape they take.
+ * How the results are ordered.
  *
- * In the Filters panel rather than above the grid, because all three answer
- * one question - "show me this differently" - and a row above the products
- * competes with the products for the first line of the page. The one panel
- * serves both views, so switching view never takes the sort away.
+ * In the Filters panel rather than above the grid, because a row above the
+ * products competes with the products for the first line of the page. The one
+ * panel serves both views, so switching view never takes the sort away. The
+ * view itself has its own button since 2026-11-07 (ViewToggle).
  */
-function ResultControls({
-    sort,
-    view,
-    go,
-}: {
-    sort: string
-    view: string
-    go: (changes: Record<string, unknown>) => void
-}) {
+function ResultControls({ sort, go }: { sort: string; go: (changes: Record<string, unknown>) => void }) {
     const { t } = useTranslations()
 
     return (
@@ -165,29 +157,34 @@ function ResultControls({
                     <option value="newest">{t('search.sort_newest')}</option>
                 </select>
             </div>
-
-            <div>
-                <span className="mb-1 block text-xs font-semibold tracking-wide text-ink-soft uppercase">
-                    {t('search.view')}
-                </span>
-                <div className="flex overflow-hidden rounded border border-line text-sm">
-                    {(['grid', 'store'] as const).map((v) => (
-                        <button
-                            key={v}
-                            type="button"
-                            onClick={() => {
-                                rememberView(v)
-                                go({ view: v === 'grid' ? null : v })
-                            }}
-                            aria-pressed={view === v}
-                            className={`flex-1 px-3 py-1.5 ${view === v ? 'bg-ink text-cream' : ''}`}
-                        >
-                            {t(`search.view_${v}`)}
-                        </button>
-                    ))}
-                </div>
-            </div>
         </div>
+    )
+}
+
+/**
+ * The view as a button of its own beside Filters (owner, 2026-11-07); it was
+ * the second control in the Filters panel. One button that names the view it
+ * switches to, with that view's icon: an icon on a phone, icon and word from
+ * `sm` up, like Filters and the bell beside it.
+ */
+function ViewToggle({ view, go }: { view: string; go: (changes: Record<string, unknown>) => void }) {
+    const { t } = useTranslations()
+    const next = view === 'store' ? 'grid' : 'store'
+    const label = t(`search.view_${next}`)
+
+    return (
+        <button
+            type="button"
+            className={buttonClasses('secondary', 'sm', 'min-w-11 rounded-full sm:min-w-0')}
+            title={label}
+            onClick={() => {
+                rememberView(next)
+                go({ view: next === 'grid' ? null : next })
+            }}
+        >
+            <ToolIcon name={next === 'grid' ? 'grid' : 'lanes'} className="h-5 w-5 shrink-0" />
+            <span className="sr-only sm:not-sr-only">{label}</span>
+        </button>
     )
 }
 
@@ -671,12 +668,96 @@ export default function Search({
                             {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
                         </h1>
 
-                        {/* Watch this search. Null on the landing, where there is no term. */}
-                        {q && watch && (
-                            <div className="shrink-0">
-                                <WatchSearch term={q} watch={watch} compact />
+                        {/*
+                          Filters to the left of the bell (owner, 2026-11-07),
+                          the same shape: an icon on a phone, icon and word
+                          from `sm` up. It was the first thing on the pills'
+                          row under the Coves.
+                        */}
+                        <div className="flex shrink-0 items-start gap-2">
+                            <ViewToggle view={view} go={go} />
+
+                            <div className="relative" ref={panelRef}>
+                                <button
+                                    type="button"
+                                    className={buttonClasses('secondary', 'sm', 'min-w-11 rounded-full sm:min-w-0')}
+                                    aria-expanded={filtersOpen}
+                                    aria-controls="search-filters"
+                                    title={t('search.filters')}
+                                    onClick={() => setFiltersOpen(!filtersOpen)}
+                                >
+                                    <ToolIcon name="settings" className="h-5 w-5 shrink-0" />
+                                    <span className="sr-only sm:not-sr-only">{t('search.filters')}</span>
+                                    {chips.length > 0 && (
+                                        <span className="rounded-full bg-accent px-1.5 py-0.5 text-xs text-white">
+                                            {n(chips.length)}
+                                        </span>
+                                    )}
+                                    <ToolIcon
+                                        name="chevron"
+                                        className={`hidden h-4 w-4 text-ink-soft transition sm:block ${filtersOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+
+                                {/*
+                                  A sheet on a phone, a popover on a desktop.
+
+                                  Floating on a desktop so opening it moves nothing:
+                                  reading a filter must not cost sight of the
+                                  results it filters. On a phone it covers the
+                                  screen, and "Show results" is one press away.
+                                  Anchored to the button's right edge, because the
+                                  button sits at the right of the page.
+                                */}
+                                <aside
+                                    id="search-filters"
+                                    aria-label={t('search.filters')}
+                                    className={
+                                        filtersOpen
+                                            ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 text-sm lg:absolute lg:top-full lg:right-0 lg:bottom-auto lg:left-auto lg:z-30 lg:mt-2 lg:max-h-[70vh] lg:w-80 lg:space-y-5 lg:rounded-card lg:border lg:border-line lg:bg-card lg:pb-4 lg:shadow-lg'
+                                            : 'hidden'
+                                    }
+                                >
+                                    <div className="flex items-center justify-between lg:hidden">
+                                        <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFiltersOpen(false)}
+                                            className={buttonClasses('primary', 'sm')}
+                                        >
+                                            {t('search.show_results')}
+                                        </button>
+                                    </div>
+
+                                    <ResultControls sort={sort} go={go} />
+
+                                    {/*
+                                      In the by-store view the shops are columns,
+                                      and the menu shows or hides them instead of
+                                      filtering the search by shop.
+                                    */}
+                                    <FilterPanel
+                                        facets={facets}
+                                        filters={filters}
+                                        brandLinks={brandLinks}
+                                        go={go}
+                                        showShops={view !== 'store'}
+                                        shopVisibility={
+                                            view === 'store' && lanes
+                                                ? {
+                                                      shops: lanes.map((lane) => lane.shop),
+                                                      hidden: hiddenShops,
+                                                      setVisible: (shop, visible) => (visible ? showShop(shop) : hideShop(shop)),
+                                                  }
+                                                : undefined
+                                        }
+                                    />
+                                </aside>
                             </div>
-                        )}
+
+                            {/* Watch this search. Null on the landing, where there is no term. */}
+                            {q && watch && <WatchSearch term={q} watch={watch} compact />}
+                        </div>
                     </div>
 
 
@@ -699,142 +780,53 @@ export default function Search({
                     <SearchCoves coves={coves} allUrl={covesUrl} />
 
                     {/*
-                      The toolbar: Filters on the left, the Amazon hand-off on
-                      the right.
-
-                      The Amazon link moved here from the foot of the filter
-                      rail when the rail went away. It is still an alternative
-                      to the whole page rather than to any one result, which is
-                      why it sits with the page's controls and not among the
-                      cards, and still not on an empty page, whose own copy of
-                      it sits in the middle of the screen
-                      (docs/features/amazon-search-cta.md).
+                      The narrowing pills: a row that scrolls sideways on a
+                      phone, one clipped line from `sm` up. The Filters button
+                      shared this row from 2026-10-05 and moved up beside the
+                      bell on 2026-11-07 (owner), so the row is only there when
+                      there are pills. The Amazon hand-off is a card in the
+                      grid since 2026-10-05; see below.
                     */}
-                    {/*
-                      Filters and the narrowing pills share this row since
-                      2026-10-05: a row that scrolls sideways on a phone, one
-                      clipped line from `sm` up. They were two rows, and the
-                      pills' row was 36px high around 40px buttons, so on a
-                      phone every pill was cut off at the bottom. The pills sit
-                      in their own list beside the button, not around it: the
-                      filters panel hangs off the button, and a scrolling
-                      container would clip it.
-                    */}
-                    <div className="mb-4 flex items-center gap-2">
-                        <div className="relative shrink-0" ref={panelRef}>
-                            <button
-                                type="button"
-                                className="flex min-h-10 items-center gap-2 rounded-full border border-line bg-card px-4 py-1.5 text-sm font-medium transition hover:border-ink"
-                                aria-expanded={filtersOpen}
-                                aria-controls="search-filters"
-                                onClick={() => setFiltersOpen(!filtersOpen)}
-                            >
-                                <span>{t('search.filters')}</span>
-                                {chips.length > 0 && (
-                                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-xs text-white">
-                                        {n(chips.length)}
-                                    </span>
-                                )}
-                                <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${filtersOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/*
-                              A sheet on a phone, a popover on a desktop.
-
-                              Floating on a desktop so opening it moves nothing:
-                              reading a filter must not cost sight of the
-                              results it filters. On a phone it covers the
-                              screen, and "Show results" is one press away.
-                            */}
-                            <aside
-                                id="search-filters"
-                                aria-label={t('search.filters')}
-                                className={
-                                    filtersOpen
-                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 text-sm lg:absolute lg:top-full lg:right-auto lg:bottom-auto lg:left-0 lg:z-30 lg:mt-2 lg:max-h-[70vh] lg:w-80 lg:space-y-5 lg:rounded-card lg:border lg:border-line lg:bg-card lg:pb-4 lg:shadow-lg'
-                                        : 'hidden'
-                                }
-                            >
-                                <div className="flex items-center justify-between lg:hidden">
-                                    <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFiltersOpen(false)}
-                                        className={buttonClasses('primary', 'sm')}
-                                    >
-                                        {t('search.show_results')}
-                                    </button>
-                                </div>
-
-                                <ResultControls sort={sort} view={view} go={go} />
-
+                    {terms.length > 0 && (
+                        <nav className="mb-4 min-w-0" aria-label={t('search.terms_heading')}>
+                            <ul className="-mr-4 flex gap-2 overflow-x-auto pr-4 [scrollbar-width:none] sm:mr-0 sm:max-h-10 sm:flex-wrap sm:overflow-hidden sm:pr-0">
                                 {/*
-                                  In the by-store view the shops are columns,
-                                  and the menu shows or hides them instead of
-                                  filtering the search by shop.
+                                  Buttons, not links, and that is the point.
+
+                                  Each pill narrows the search by *adding* its word to the
+                                  query. As anchors that was a combinatorial supply of
+                                  crawlable URLs, each one logged as a new term in
+                                  `search_log`, the table these pills are drawn from. A
+                                  button navigates for a visitor and does not exist for a
+                                  crawler. The URL is the server's own
+                                  (`SearchContext::narrowUrl()`). See docs/features/seo.md.
                                 */}
-                                <FilterPanel
-                                    facets={facets}
-                                    filters={filters}
-                                    brandLinks={brandLinks}
-                                    go={go}
-                                    showShops={view !== 'store'}
-                                    shopVisibility={
-                                        view === 'store' && lanes
-                                            ? {
-                                                  shops: lanes.map((lane) => lane.shop),
-                                                  hidden: hiddenShops,
-                                                  setVisible: (shop, visible) => (visible ? showShop(shop) : hideShop(shop)),
-                                              }
-                                            : undefined
-                                    }
-                                />
-                            </aside>
-                        </div>
-
-                        {terms.length > 0 && (
-                            <nav className="min-w-0 flex-1" aria-label={t('search.terms_heading')}>
-                                <ul className="-mr-4 flex gap-2 overflow-x-auto pr-4 [scrollbar-width:none] sm:mr-0 sm:max-h-10 sm:flex-wrap sm:overflow-hidden sm:pr-0">
-                                    {/*
-                                      Buttons, not links, and that is the point.
-
-                                      Each pill narrows the search by *adding* its word to the
-                                      query. As anchors that was a combinatorial supply of
-                                      crawlable URLs, each one logged as a new term in
-                                      `search_log`, the table these pills are drawn from. A
-                                      button navigates for a visitor and does not exist for a
-                                      crawler. The URL is the server's own
-                                      (`SearchContext::narrowUrl()`). See docs/features/seo.md.
-                                    */}
-                                    {terms.map((item) => (
-                                        <li key={item.term} className="shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.get(
-                                                        item.url,
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                            preserveState: true,
-                                                            onStart: () => setSearching(true),
-                                                            onFinish: () => setSearching(false),
-                                                        },
-                                                    )
-                                                }
-                                                className="inline-flex min-h-10 items-center rounded-full border border-line bg-card px-3 text-sm whitespace-nowrap text-ink-soft transition hover:border-ink hover:text-ink"
-                                            >
-                                                <span aria-hidden className="mr-1 text-ink-soft">+</span>
-                                                {item.term}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </nav>
-                        )}
-
-                        {/* The Amazon hand-off is a card in the grid since 2026-10-05; see below. */}
-                    </div>
+                                {terms.map((item) => (
+                                    <li key={item.term} className="shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.get(
+                                                    item.url,
+                                                    {},
+                                                    {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                        onStart: () => setSearching(true),
+                                                        onFinish: () => setSearching(false),
+                                                    },
+                                                )
+                                            }
+                                            className="inline-flex min-h-10 items-center rounded-full border border-line bg-card px-3 text-sm whitespace-nowrap text-ink-soft transition hover:border-ink hover:text-ink"
+                                        >
+                                            <span aria-hidden className="mr-1 text-ink-soft">+</span>
+                                            {item.term}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    )}
 
                     {/*
                       Every filter that is on, each with its own way off.

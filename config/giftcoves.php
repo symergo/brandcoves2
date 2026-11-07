@@ -145,7 +145,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'search' => [
-        'per_page' => 24,
+        // Twenty results a page (owner, 2026-11-07; 24 before). Fills whole
+        // rows at 2, 4 and 5 columns. fuzzy_below and inline_live_below mean
+        // "one page" and follow it.
+        'per_page' => 20,
 
         // Per-merchant cap in the "by store" view. Without it, one recently
         // ingested merchant with a huge feed monopolises every result slot and
@@ -181,7 +184,7 @@ return [
         // nothing by words, so it still gets the fuzzy match; a correctly
         // spelled term already has a page and gains only a weak tail that
         // ranks last anyway. See SearchService::applyTextMatch().
-        'fuzzy_below' => 24,
+        'fuzzy_below' => 20,
 
         // What `<%` meant before the threshold above became global: Postgres'
         // own default.
@@ -213,7 +216,7 @@ return [
          * bol knows shows bol's products on the first view. At or above it
          * the page is already full and the fetch stays in the background.
          */
-        'inline_live_below' => 24,
+        'inline_live_below' => 20,
 
         /*
          * Seconds each shop gets on that inline path, all asked at once, no

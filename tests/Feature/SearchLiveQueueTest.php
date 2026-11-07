@@ -174,9 +174,9 @@ class SearchLiveQueueTest extends TestCase
         $second = $search->search(new SearchQuery(market: Market::BeNl, term: 'koptelefoon', page: 2, logged: false));
 
         $this->assertSame([], $this->searchQueries(), 'Page two ran the text search again.');
-        // 30 in the list, 24 on page one: page two holds the last 6 and
+        // 30 in the list, 20 on page one: page two holds the last 10 and
         // says there is nothing after it. No total anywhere.
-        $this->assertCount(6, $second->groups->items());
+        $this->assertCount(10, $second->groups->items());
         $this->assertFalse($second->groups->hasMorePages());
 
         // Same order as the uncached list, and no card on both pages.

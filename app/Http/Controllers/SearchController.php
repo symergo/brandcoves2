@@ -49,8 +49,8 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
-    /** Suggestions a gift search shows: two rows of the grid at desktop width. */
-    private const GIFT_RESULTS = 24;
+    /** Suggestions a gift search shows: one page, like any search (search.per_page, 2026-11-07). */
+    private const GIFT_RESULTS = 20;
 
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
@@ -175,8 +175,21 @@ class SearchController extends Controller
         $followUp = in_array('live', explode(',', (string) $request->header('X-Inertia-Partial-Data')), true);
         $searchQuery = $followUp ? $query->unlogged() : $query;
 
+        // Not the whole sentence of a gift search: Amazon would search
+        // "cadeau voor mijn papa die graag kookt" word for word.
+        $amazonSearch = $query->hasTerm() && $gift === null
+            ? AmazonSearchLink::for($current->get(), $query->term)?->toArray()
+            : null;
+
+        /*
+         * Twenty boxes a page, the ads included (owner, 2026-11-07): when the
+         * grid carries the Amazon card, the page holds one product fewer. The
+         * by-store view has no such card and pages by lanes, not by this.
+         */
+        $perPage = (int) config('giftcoves.search.per_page') - ($amazonSearch !== null && $query->view === 'grid' ? 1 : 0);
+
         $result = $landing === null && $gift === null
-            ? $search->search($searchQuery, askShops: $askShops, deferThin: $askShops && ! Crawlers::isSearchEngine($request->userAgent()))
+            ? $search->search($searchQuery, askShops: $askShops, deferThin: $askShops && ! Crawlers::isSearchEngine($request->userAgent()), perPage: $perPage)
             : SearchResult::none($query);
 
         /*
@@ -280,11 +293,7 @@ class SearchController extends Controller
              * question we could not; with no question, there is nothing to
              * hand off.
              */
-            // Not the whole sentence of a gift search: Amazon would search
-            // "cadeau voor mijn papa die graag kookt" word for word.
-            'amazonSearch' => $query->hasTerm() && $gift === null
-                ? AmazonSearchLink::for($current->get(), $query->term)?->toArray()
-                : null,
+            'amazonSearch' => $amazonSearch,
 
             /*
              * What we made of a pasted link, if the box held one.
@@ -887,7 +896,8 @@ class SearchController extends Controller
      */
     private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search, CurrentMarket $current): array
     {
-        $result = $search->search($query->unlogged());
+        // The same page size as the page on screen (one less with the Amazon card).
+        $result = $search->search($query->unlogged(), perPage: $shown->groups->perPage());
         $results = $this->withSignals($this->present($result), $current);
 
         $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());

@@ -1129,3 +1129,25 @@ the same names; and the merged list after a shop's answer now includes its brand
 `live_cache_ttl` went from 15 minutes to six hours the same day (owner): a term's bol and eBay prices
 are refreshed at most four times a day, 24 times fewer API calls and jobs, and a card's price can be
 up to six hours behind the shop's (the click lands on the current one).
+
+## Twenty boxes a page, and the view and Filters buttons beside the title (owner, 2026-11-07)
+
+**A page is twenty boxes, the ads included.** `search.per_page` went from 24 to 20, and when the grid
+carries the Amazon card (`amazonSearch` is set and the view is the grid) the controller asks
+`SearchService::search()` for 19 products (`perPage:`), so the card is the twentieth box rather than
+a twenty-first. The live follow-up (`liveUpdate()`) asks for the same size as the page on screen.
+The by-store view has no such card and pages by twenty. Gift searches show 20 suggestions
+(`GIFT_RESULTS`). Twenty fills whole rows at 2, 4 and 5 columns (24 left four empty tiles at 5);
+at 3 columns the last row has one gap.
+
+`fuzzy_below` and `inline_live_below` mean "fewer than one page" and moved to 20 with it: the fuzzy
+title match now tops up a search that finds under 20, and a thin search waits for the shops below 20.
+
+**Filters and the view moved up beside the bell.** The Filters button sat at the start of the pills'
+row; it is now in the title row, left of "Hou me op de hoogte", and the view (Raster / Per winkel),
+which was the second control inside the Filters panel, is a button of its own to its left. All three
+are the same shape: an icon on a phone, icon and word from `sm` up. The view button names the view it
+switches to, with that view's icon (`grid`, `lanes` in ToolIcon). The Filters popover now hangs from
+the button's right edge, because the button sits at the right of the page. The pills' row is only
+drawn when there are pills. Tests: `SearchShopCapTest::the_page_carries_no_total_and_pages_by_whether_more_follow`
+(19 + the card, page 2, the by-store view), `SearchThinLiveTest`, `SearchLiveQueueTest`.

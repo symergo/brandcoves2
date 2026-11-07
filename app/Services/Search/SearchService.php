@@ -76,8 +76,11 @@ class SearchService
      *                           follow-up request (2026-10-25, see
      *                           SearchController). The search page passes it for
      *                           a person; a search engine gets the whole page.
+     * @param  int  $perPage  products on this page; 0 is `search.per_page`. The search page passes
+     *                        one less when a card that is not a product (the Amazon hand-off) takes
+     *                        a tile, so a page is always twenty boxes (owner, 2026-11-07).
      */
-    public function search(SearchQuery $query, bool $waitForLive = false, bool $askShops = true, bool $deferThin = false): SearchResult
+    public function search(SearchQuery $query, bool $waitForLive = false, bool $askShops = true, bool $deferThin = false, int $perPage = 0): SearchResult
     {
         // The live half is driven by `liveTerm()`, not by the term. A brand page
         // has no search term and still has something to ask bol: the brand's
@@ -111,7 +114,7 @@ class SearchService
         }
 
         return new SearchResult(
-            groups: $this->page($query, $ids),
+            groups: $this->page($query, $ids, $perPage),
             query: $query,
             liveOffersAdded: $live['written'],
             // Deferred: only the pages with a filter rail read these. See
@@ -178,9 +181,9 @@ class SearchService
      * @param  list<int>  $ids
      * @return Paginator<int, ProductGroup>
      */
-    private function page(SearchQuery $query, array $ids): Paginator
+    private function page(SearchQuery $query, array $ids, int $perPage = 0): Paginator
     {
-        $perPage = (int) config('giftcoves.search.per_page');
+        $perPage = $perPage > 0 ? $perPage : (int) config('giftcoves.search.per_page');
         $offset = ($query->page - 1) * $perPage;
 
         // One more than a page: the paginator reads "is there a next page"

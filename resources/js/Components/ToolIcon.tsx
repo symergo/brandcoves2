@@ -51,6 +51,8 @@ export type ToolKey =
     | 'mailAccount'
     | 'click'
     | 'unfriend'
+    | 'grid'
+    | 'lanes'
 
 /*
  * Two drawings with two names each, drawn once so the pairs cannot drift
@@ -236,6 +238,24 @@ const paths: Record<ToolKey, ReactNode> = {
     ),
 
     chevron: <path d="m6 9.5 6 6 6-6" />,
+
+    // The search page's two views (2026-11-07): the grid as four tiles, the
+    // by-shop view as three columns, one per shop.
+    grid: (
+        <>
+            <rect x="4.5" y="4.5" width="6" height="6" rx="1.2" />
+            <rect x="13.5" y="4.5" width="6" height="6" rx="1.2" />
+            <rect x="4.5" y="13.5" width="6" height="6" rx="1.2" />
+            <rect x="13.5" y="13.5" width="6" height="6" rx="1.2" />
+        </>
+    ),
+    lanes: (
+        <>
+            <rect x="4" y="4.5" width="4" height="15" rx="1.2" />
+            <rect x="10" y="4.5" width="4" height="15" rx="1.2" />
+            <rect x="16" y="4.5" width="4" height="15" rx="1.2" />
+        </>
+    ),
 
     edit: (
         <>

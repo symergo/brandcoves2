@@ -80,13 +80,20 @@ class SearchShopCapTest extends TestCase
                 ->where('results.empty', false)
                 ->where('results.currentPage', 1)
                 ->where('results.hasMore', true)
-                ->has('results.items', 24));
+                // Twenty boxes, the Amazon card one of them (2026-11-07).
+                ->whereNot('amazonSearch', null)
+                ->has('results.items', 19));
 
         $this->get('/be-nl/search?q=koptelefoon&page=2')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('results.hasMore', false)
-                ->has('results.items', 1));
+                ->has('results.items', 6));
+
+        // The by-store view has no Amazon card, and its grid pages by twenty.
+        $this->get('/be-nl/search?q=koptelefoon&view=store&page=2')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('results.items', 5));
 
         // A search that finds nothing still says so, without a number.
         $this->get('/be-nl/search?q=zzqxv')

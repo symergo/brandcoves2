@@ -172,7 +172,8 @@ class SearchThinLiveTest extends TestCase
 
         $this->get('/be-nl/search?q=tuinkabouter')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('results.items', 24));
+            // A full page: 19 products and the Amazon card (2026-11-07).
+            ->assertInertia(fn ($page) => $page->has('results.items', 19));
 
         $this->assertSame(0, $this->searches());
         Queue::assertPushed(PullLiveSearch::class, 1);
