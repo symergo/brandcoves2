@@ -9,6 +9,7 @@ import ListTools, { ListToolsBar, type Panel } from '../../Components/ListTools'
 import type { Publication } from '../../Components/PublishCove'
 import { type ListKind } from '../../Components/ListKindBadge'
 import EditManualItem from '../../Components/EditManualItem'
+import RenameItem from '../../Components/RenameItem'
 import SaveToList from '../../Components/SaveToList'
 import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
@@ -36,6 +37,8 @@ interface Item {
     /** Typed by somebody rather than saved from the catalogue, so its title,
      *  link and price are theirs to correct. */
     manual: boolean
+    /** The product's own name: what a renamed item goes back to (RenameItem). */
+    productTitle: string
     /**
      * Our page for it — already carrying the market the *product* is in, which
      * is not necessarily the one this page is being read in. A list is not
@@ -576,7 +579,16 @@ export default function ListShow({
                                     </p>
                                 )}
 
-                                {editingItem === item.id && (
+                                {editingItem === item.id && !item.manual && (
+                                    <RenameItem
+                                        action={`${base}/list-items/${item.id}`}
+                                        title={item.title}
+                                        productTitle={item.productTitle}
+                                        onDone={() => setEditingItem(null)}
+                                    />
+                                )}
+
+                                {editingItem === item.id && item.manual && (
                                     <EditManualItem
                                         action={`${base}/list-items/${item.id}`}
                                         title={item.title}

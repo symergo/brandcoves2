@@ -719,6 +719,12 @@ class WishlistItemController extends Controller
      * from it. So the fields are accepted and then dropped for such an item
      * rather than refused: the form does not offer them, so a request carrying
      * them was not sent by the page.
+     *
+     * **Except the name, since 2026-11-07** (owner: "allow everywhere to change
+     * the name of an item on a list"). On a catalogue item `title` goes into
+     * `custom_title`, a column of its own that `displayTitle()` reads first,
+     * so the snapshot stays the record above. Blank, or the product's own
+     * name, clears it.
      */
     public function update(Request $request, CurrentMarket $current, ItemSaver $saver, string $market, string $item): RedirectResponse
     {
@@ -729,15 +735,25 @@ class WishlistItemController extends Controller
             'priority' => ['nullable', 'integer', 'between:-2,2'],
 
             // Only read on a hand-written item; see the docblock.
-            'title' => ['sometimes', 'string', 'max:500'],
+            'title' => ['sometimes', 'nullable', 'string', 'max:500'],
             'url' => ['sometimes', 'nullable', 'string', 'max:2048', new SafeExternalUrl],
             'price' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ]);
 
         $changes = array_intersect_key($validated, ['note' => null, 'priority' => null]);
 
+        /*
+         * A product from the catalogue may be renamed too (owner, 2026-11-07),
+         * into a column of its own so the snapshot above stays the record it
+         * is. Blank, or the product's own name, means no name of your own.
+         */
+        if (! $wishlistItem->isManual() && array_key_exists('title', $validated)) {
+            $typed = trim((string) $validated['title']);
+            $changes['custom_title'] = $typed === '' || $typed === $wishlistItem->productTitle() ? null : $typed;
+        }
+
         if ($wishlistItem->isManual()) {
-            if (array_key_exists('title', $validated)) {
+            if (filled($validated['title'] ?? null)) {
                 $changes['snapshot_title'] = trim($validated['title']);
             }
 

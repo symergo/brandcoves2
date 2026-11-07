@@ -26,8 +26,9 @@ import { useTranslations } from '../useTranslations'
  *
  * ## What each item does, unchanged from before
  *
- * - **Edit** — only on a hand-written item (`EditManualItem`, opened under the
- *   card). A catalogue item's title and price are what the feed said.
+ * - **Edit** — a hand-written item's whole form (`EditManualItem`), or since
+ *   2026-11-07 a product's name of your own (`RenameItem`), opened under the
+ *   card). A catalogue item's price is what the feed said; its name may be yours.
  * - **Copy to another list** — `ItemTransferController::between`, the endpoint
  *   `CopyToList` has always used for hand-written items. It now serves catalogue
  *   items here too, where the bookmark's picker did the same job: the copy keeps
@@ -99,17 +100,20 @@ export default function OwnItemMenu({
                 {(close) =>
                     view === 'main' ? (
                         <>
-                            {manual && (
-                                <MenuItem
-                                    icon={<ToolIcon name="edit" className="h-4 w-4" />}
-                                    onSelect={() => {
-                                        close()
-                                        onEdit()
-                                    }}
-                                >
-                                    {t('lists.edit_item')}
-                                </MenuItem>
-                            )}
+                            {/*
+                              Every item: a hand-written one opens its whole
+                              form ("Aanpassen"), a product its name alone
+                              ("Naam wijzigen", RenameItem, 2026-11-07).
+                            */}
+                            <MenuItem
+                                icon={<ToolIcon name="edit" className="h-4 w-4" />}
+                                onSelect={() => {
+                                    close()
+                                    onEdit()
+                                }}
+                            >
+                                {manual ? t('lists.edit_item') : t('lists.rename_item')}
+                            </MenuItem>
                             {/* Nowhere to copy to is no item, not a dead one. */}
                             {targets.length > 0 && (
                                 <MenuItem
@@ -122,7 +126,7 @@ export default function OwnItemMenu({
                                     </span>
                                 </MenuItem>
                             )}
-                            {(manual || targets.length > 0) && <MenuSeparator />}
+                            <MenuSeparator />
                             <MenuItem
                                 danger
                                 icon={<ToolIcon name="trash" className="h-4 w-4" />}

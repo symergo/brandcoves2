@@ -245,6 +245,13 @@ class WishlistItem extends Model
      */
     public function displayTitle(): string
     {
+        // The name the owner gave it comes first (2026-11-07, `custom_title`).
+        return filled($this->custom_title) ? (string) $this->custom_title : $this->productTitle();
+    }
+
+    /** The product's own name, or what was saved: what a renamed item goes back to. */
+    public function productTitle(): string
+    {
         return $this->group?->displayTitle() ?? (string) $this->snapshot_title;
     }
 

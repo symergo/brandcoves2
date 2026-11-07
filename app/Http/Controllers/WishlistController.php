@@ -899,6 +899,8 @@ class WishlistController extends Controller
                     // The product's title, falling back to the snapshot when
                     // the product is gone. See WishlistItem::displayTitle().
                     'title' => $item->displayTitle(),
+                    // What a renamed product goes back to (custom_title, 2026-11-07).
+                    'productTitle' => $item->productTitle(),
                     'image' => $item->snapshot_image_url,
                     'price' => $item->snapshot_price,
                     'note' => $item->note,

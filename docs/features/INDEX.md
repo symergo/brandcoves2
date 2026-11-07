@@ -50,6 +50,7 @@ is true now.
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
 | [design-system.md](design-system.md) | Brand / Frontend | Active — tokens, Button, Badge, the navigation beam, shared rows, popups, headers and empty states; most call sites not yet migrated |
 | [list-names-in-text.md](list-names-in-text.md) | Frontend / Wishlist | Active — a list's name in a sentence is `ListName` (kind icon, medium weight); bold in e-mail |
+| [item-names.md](item-names.md) | Wishlist | Active — rename any item on your own list from its ⋯; a product's name goes into `custom_title`, the shop's record stays |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [brand-fill.md](brand-fill.md) | Catalogue / Ingestion | Active since 2026-09-30: an offer without a brand gets the known brand its title starts with; `bc:fill-brands` for the stored ones |

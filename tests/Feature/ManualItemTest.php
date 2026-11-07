@@ -133,6 +133,20 @@ class ManualItemTest extends TestCase
         $this->assertSame('Sony WH-1000XM5', $item->snapshot_title);
         $this->assertSame(32999, $item->snapshot_price);
         $this->assertSame('still mine to write', $item->note, 'The note is yours on any item.');
+
+        // The name, though, may be yours (owner, 2026-11-07), kept apart from
+        // the record above and shown wherever the item is.
+        $this->assertSame('Free headphones', $item->custom_title);
+        $this->assertSame('Free headphones', $item->displayTitle());
+
+        // Blank, or the product's own name, goes back to the product's.
+        $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => ''])->assertRedirect();
+        $this->assertNull($item->refresh()->custom_title);
+        $this->assertSame('Sony WH-1000XM5', $item->displayTitle());
+
+        $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => 'For the train'])->assertRedirect();
+        $this->actingAs($owner)->patch("/be-nl/list-items/{$item->id}", ['title' => 'Sony WH-1000XM5'])->assertRedirect();
+        $this->assertNull($item->refresh()->custom_title);
     }
 
     #[Test]

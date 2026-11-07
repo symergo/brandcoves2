@@ -445,4 +445,24 @@ return [
             'body' => 'Si has iniciado sesión, arriba en la página de inicio ves las Coves que cambiaste por última vez y tu gente, el próximo cumpleaños primero. Un clic y ya estás dentro.',
         ],
     ],
+    'rename-any-item' => [
+        'status' => 'done',
+        'sort' => 99,
+        'nl' => [
+            'title' => 'Een eigen naam voor wat op je lijst staat',
+            'body' => 'Elk product op je lijst kan een eigen naam krijgen, via de drie puntjes en Naam wijzigen. Die naam zie je overal waar de lijst staat. De naam van de winkel blijft bewaard, en met één klik zet je hem terug.',
+        ],
+        'en' => [
+            'title' => 'Your own name for what is on your list',
+            'body' => "Any product on your list can have a name of your own, through the three dots and Rename. That name shows wherever the list does. The shop's name is kept, and one click puts it back.",
+        ],
+        'fr' => [
+            'title' => 'Votre propre nom pour ce qui est sur votre liste',
+            'body' => 'Chaque produit de votre liste peut recevoir votre propre nom, via les trois points et Renommer. Ce nom apparaît partout où la liste apparaît. Le nom de la boutique est conservé, et un clic le remet.',
+        ],
+        'es' => [
+            'title' => 'Tu propio nombre para lo que está en tu lista',
+            'body' => 'Cualquier producto de tu lista puede tener tu propio nombre, con los tres puntos y Cambiar el nombre. Ese nombre aparece dondequiera que esté la lista. El nombre de la tienda se guarda, y un clic lo recupera.',
+        ],
+    ],
 ];
