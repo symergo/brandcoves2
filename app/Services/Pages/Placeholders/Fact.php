@@ -55,6 +55,9 @@ final readonly class Fact implements PlaceholderFunction
             new self('low', 'Cheapest price on this page', 'Formatted in the market currency.', '€ 19,99'),
             new self('high', 'Dearest price on this page', 'Formatted in the market currency.', '€ 1.299,00'),
             new self('brands', 'Brands present, as words', 'A plain list. Use :brand_links for a linked one.', 'Sony, Philips, JBL'),
+            // For "brands similar to :top_brand" (owner, 2026-11-08): a brand
+            // found here, so the sentence names something on the page.
+            new self('top_brand', 'The most frequent brand here', 'The brand most of these results carry.', 'Sony'),
             new self('shop', 'The leading shop', 'The one carrying most of this brand.', 'Coolblue'),
             new self('category', 'The leading category', 'What this brand mostly makes here.', 'Koptelefoons'),
             new self('categories', 'Categories, as words', 'What the brand appears in, most first.', 'Koptelefoons, speakers en soundbars'),

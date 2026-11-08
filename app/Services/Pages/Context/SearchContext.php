@@ -80,7 +80,31 @@ final class SearchContext extends PageContext
             // Six, because a sentence naming more than that has stopped being a
             // sentence and become a list.
             'brands' => implode(', ', array_slice($this->brands(), 0, 6)),
+            'top_brand' => $this->topBrand(),
         ];
+    }
+
+    /** The brand most of these results carry, in the feed's spelling; null when none has one. */
+    private function topBrand(): ?string
+    {
+        $counts = [];
+        $names = [];
+
+        foreach ($this->items as $group) {
+            if ($group->brand !== null && trim($group->brand) !== '') {
+                $key = mb_strtolower($group->brand);
+                $counts[$key] = ($counts[$key] ?? 0) + 1;
+                $names[$key] ??= $group->brand;
+            }
+        }
+
+        if ($counts === []) {
+            return null;
+        }
+
+        arsort($counts);
+
+        return $names[array_key_first($counts)];
     }
 
     protected function computeConditions(): array

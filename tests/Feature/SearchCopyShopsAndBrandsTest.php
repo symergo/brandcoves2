@@ -141,49 +141,51 @@ class SearchCopyShopsAndBrandsTest extends TestCase
     }
 
     #[Test]
-    public function the_migration_revises_only_the_shipped_wording(): void
+    public function the_migration_rewrites_unedited_copy_and_leaves_an_edited_language_alone(): void
     {
-        $shipped = [
-            ':term vergelijken',
-            'Prijzen voor :term',
-            'Op deze pagina liggen de prijzen voor :term tussen :low en :high. Het verschil zit meestal in het product zelf: een duurder model heeft vaak meer functies of een groter formaat.',
-            ':term het goedkoopst kopen',
-            'Deze pagina zet :shops aanbiedingen van webwinkels naast elkaar, de goedkoopste eerst. Je koopt altijd bij de winkel zelf; wij verkopen niets.',
-            'Zoek je iets specifiekers?',
-            'Kijk dan ook bij :term_links.',
-            ':term als cadeau',
-        ];
+        // The copy as it shipped on 2026-11-07, read from that migration, so
+        // this test cannot drift from what production actually holds.
+        $shipped = (new \ReflectionClass(require database_path('migrations/2026_11_07_000300_search_copy_with_links.php')))->getConstant('COPY');
 
-        foreach ($shipped as $i => $body) {
-            PageBlock::create(['page' => 'search', 'region' => 'below_grid', 'language' => 'nl', 'kind' => str_contains($body, '.') ? 'paragraph' : 'heading', 'position' => $i + 1, 'conditions' => [], 'enabled' => true])
-                ->variants()->create(['body' => $body, 'weight' => 1, 'enabled' => true]);
+        foreach ($shipped as $language => $blocks) {
+            foreach ($blocks as $i => $block) {
+                PageBlock::create(['page' => 'search', 'region' => 'below_grid', 'language' => $language, 'kind' => $block['kind'], 'position' => $i + 1, 'conditions' => $block['conditions'], 'enabled' => true])
+                    ->variants()->create(['body' => $block['body'], 'weight' => 1, 'enabled' => true]);
+            }
         }
 
-        // An editor's own French heading is left alone.
-        PageBlock::create(['page' => 'search', 'region' => 'below_grid', 'language' => 'fr', 'kind' => 'heading', 'position' => 1, 'conditions' => [], 'enabled' => true])
-            ->variants()->create(['body' => 'Acheter :term au meilleur prix', 'weight' => 1, 'enabled' => true]);
+        // One French block an editor rewrote: French stays as it is.
+        DB::table('page_block_variants')->where('body', 'Acheter :term moins cher')->update(['body' => 'Acheter :term au meilleur prix']);
 
         $migration = require database_path('migrations/2026_11_08_000100_search_copy_compares_shops_and_brands.php');
         $migration->up();
         // A second run changes nothing.
         $migration->up();
 
-        $nl = DB::table('page_blocks as b')->join('page_block_variants as v', 'v.block_id', '=', 'b.id')
-            ->where('b.page', 'search')->where('b.language', 'nl')->where('b.enabled', true)->orderBy('b.position')->pluck('v.body')->all();
+        $bodies = fn (string $language) => DB::table('page_blocks as b')->join('page_block_variants as v', 'v.block_id', '=', 'b.id')
+            ->where('b.page', 'search')->where('b.language', $language)->orderBy('b.position')->pluck('v.body')->all();
 
-        $this->assertSame([
-            ':term vergelijken',
-            ':term prijzen vergelijken',
-            'Deze pagina zet :shops aanbiedingen van webwinkels naast elkaar, de goedkoopste eerst. Je koopt altijd bij de winkel zelf; wij verkopen niets.',
-            'Je vergelijkt hier onder meer de prijzen van :shop_links.',
-            'Zoek je iets specifiekers?',
-            'Vergelijk dan de beste aanbiedingen voor :term_links.',
-            'Andere merken',
-            'Dit soort producten vind je ook van :other_brand_links.',
-            ':term als cadeau',
-        ], $nl);
+        $nl = $bodies('nl');
+        $this->assertSame(':term prijzen vergelijken', $nl[0]);
+        $this->assertStringStartsWith('Je vergelijkt hier prijzen voor :term bij :shop_links', $nl[1]);
+        $this->assertContains('Zoek je merken die vergelijkbaar zijn met :top_brand? Kijk dan ook bij :other_brand_links.', $nl);
+        $this->assertContains('Vergelijk dan de beste aanbiedingen voor :term_links.', $nl);
+        $this->assertCount(12, $nl);
 
-        $this->assertSame(['Acheter :term au meilleur prix'], DB::table('page_blocks as b')->join('page_block_variants as v', 'v.block_id', '=', 'b.id')
-            ->where('b.page', 'search')->where('b.language', 'fr')->pluck('v.body')->all());
+        // The owner's rule: nothing generic. Every sentence names something found.
+        foreach ([...$nl, ...$bodies('en')] as $body) {
+            $this->assertDoesNotMatchRegularExpression('/zoekopdracht|producten|this search|products/i', $body, $body);
+        }
+
+        $this->assertContains('Acheter :term au meilleur prix', $bodies('fr'));
+        $this->assertCount(13, $bodies('fr'));
+    }
+
+    #[Test]
+    public function the_top_brand_is_the_one_most_results_carry(): void
+    {
+        $context = new SearchContext(Market::BeNl, [$this->group('Belka'), $this->group('Aurex'), $this->group('aurex')], 3, 'koptelefoon');
+
+        $this->assertSame('Aurex', $context->fact('top_brand'));
     }
 }

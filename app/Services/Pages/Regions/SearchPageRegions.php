@@ -33,7 +33,7 @@ final class SearchPageRegions
     {
         $facts = [
             'term', 'count', 'shown', 'shops', 'comparable',
-            'reduced', 'percent', 'low', 'high', 'brands',
+            'reduced', 'percent', 'low', 'high', 'brands', 'top_brand',
         ];
 
         /*

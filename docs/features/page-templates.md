@@ -87,6 +87,7 @@ added next year without touching a block, the schema or the admin.
 | `:term_links` | inline | links | The vocabulary of the results, each to a narrower search. Also rendered as chips above the grid, so putting it in `above_grid` shows the same words twice. On the search page each link shows the whole search it runs, "koptelefoon draadloos" rather than "draadloos" (owner, 2026-11-08: it says where the link goes, and it is better anchor text); brand pages and shop Coves still show the word alone, since their links search inside the brand (`PageContext::narrowLabel()`). |
 | `:shop_links` | inline | links | The shops whose offers these results compare, the most offers first, at most six, each an affiliate link (`rel="sponsored nofollow"`, through `/go/`) to that shop's cheapest product here. A product rather than the shop's own search, because the catalogue does not know how each shop builds its search address (owner, 2026-11-08). |
 | `:other_brand_links` | inline | links | Other brands of this kind of product: the brands with the most products in the results' main category (`brand_stats.categories`), less the brands already in the results, at most six, each linked to its brand page. Cached ten minutes per category. |
+| `:top_brand` | fact | text | The brand most of these results carry, in the feed's spelling. Search page only; empty, which hides the block, when no result has a brand. |
 | `:guide_links` | inline | links | Our published buying guides, advice, seasonal guides, personas and occasions whose title or blurb matches the term (each word as a prefix, so Dutch compounds count), at most three, best first. Not the Daily Cove, which is dated. Nothing matching hides the sentence. Added 2026-11-07. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
 | `:search_link` `:brands_link` `:coves_link` `:guides_link` `:shops_link` `:gift_finder_link` `:search_help_link` | inline | links | Another part of the site, market-prefixed and labelled from the navigation's own strings. A hand-typed `/be-nl/coves` is right in one market and a 404 in four — and it is a 404 nobody notices. |
@@ -358,18 +359,29 @@ the bundle it started with.
 - **`copy_templates` is still there**, unread, as of 2026-09-15; its drop is not yet scheduled.
 
 
-## The search copy, revised (2026-11-08)
+## The search copy, rewritten (2026-11-08)
 
 The owner's changes to the copy under the search results, in `2026_11_08_000100_search_copy_compares_shops_and_brands`
-for Dutch, English and French alike: the price section ("Prijzen voor :term") is switched off; ":term het
-goedkoopst kopen" is ":term prijzen vergelijken" and names its shops (`:shop_links`); "Kijk dan ook bij
-:term_links." is "Vergelijk dan de beste aanbiedingen voor :term_links.", whose links now read
-"koptelefoon draadloos" rather than "draadloos"; and an "Andere merken" section names `:other_brand_links`.
-The migration matches each block on its shipped wording, so a block an editor rewrote stays theirs.
+for Dutch, English and French alike:
+
+- **One comparison section** instead of three (":term vergelijken", "Prijzen voor :term", ":term het goedkoopst
+  kopen"): ":term prijzen vergelijken", opening with "Je vergelijkt hier prijzen voor :term bij :shop_links". The
+  price-range paragraph is gone.
+- **Other brands against a brand found here:** "Merken zoals :top_brand" / "Zoek je merken die vergelijkbaar zijn
+  met :top_brand? Kijk dan ook bij :other_brand_links." `:top_brand` is the brand most results carry.
+- "Kijk dan ook bij :term_links." is "Vergelijk dan de beste aanbiedingen voor :term_links.", whose links read
+  "koptelefoon draadloos" rather than "draadloos".
+
+**The page's own words, never generic ones** (the owner's rule for this copy): no "bij deze zoekopdracht", no
+"producten". Each sentence names the term, a brand or a shop that was found. A sentence that reads the same on
+every results page tells the reader nothing and is the repeated text search engines discount. A sentence does
+not open on `:term` either: the term is lowercase as typed.
+
+The migration replaces a language's search copy whole, and only when every block still carries a known text
+(the 2026-11-07 copy, or the intermediate wording it had on a development database that day); one edited block
+and that language is left alone.
 
 **A heading whose section came out empty is dropped** (`PageCopy::forRegion()`), since that day. A paragraph
 hides when its data is missing, and its heading used to stay behind with nothing under it ("Meer lezen over
 :term" with no guide to name). A heading followed by another heading, or by the end of the region, goes.
-
-Noted to the owner and left as asked: ":term vergelijken" and ":term prijzen vergelijken" are now two
-near-identical headings on one page. Tests: `SearchCopyShopsAndBrandsTest`.
+Tests: `SearchCopyShopsAndBrandsTest`.
