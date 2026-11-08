@@ -53,15 +53,16 @@ class LanguageLinksTest extends TestCase
     #[Test]
     public function each_market_sitemap_submits_its_home_page_with_its_alternates(): void
     {
-        $xml = $this->get('/sitemap/be-fr/1.xml')->assertOk()->getContent();
+        $xml = $this->get('/sitemap-be-fr.xml')->assertOk()->getContent();
 
         $this->assertStringContainsString('<loc>'.url('/be-fr').'</loc>', $xml);
         $this->assertStringContainsString('hreflang="nl-BE" href="'.url('/be-nl').'"', $xml);
 
-        // The help pages too ("keep help in"), and still no legal page.
-        foreach (['/be-fr/help', '/be-fr/search-help', '/be-fr/lists-help', '/be-fr/lists-help/sharing'] as $path) {
-            $this->assertStringContainsString('<loc>'.url($path).'</loc>', $xml);
+        // The Daily archive is in, checked daily (owner, 2026-11-08). The
+        // help pages were in for an hour that day and went out again.
+        $this->assertMatchesRegularExpression('#<loc>'.preg_quote(url(Market::BeFr->covePath('archive')), '#').'</loc><changefreq>daily</changefreq>#', $xml);
+        foreach (['/be-fr/help', '/be-fr/search-help', '/be-fr/lists-help', '/be-fr/privacy'] as $path) {
+            $this->assertStringNotContainsString('<loc>'.url($path).'</loc>', $xml);
         }
-        $this->assertStringNotContainsString('/be-fr/privacy', $xml);
     }
 }

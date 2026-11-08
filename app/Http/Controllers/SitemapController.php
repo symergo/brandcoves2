@@ -10,12 +10,20 @@ use App\Enums\PublishStatus;
 use App\Services\Search\SearchTermStats;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Sitemaps: an index, plus one file per market.
+ *
+ * ## What is submitted (2026-11-08)
+ *
+ * The home page, the Daily Coves with their archive, the gift ideas archive
+ * (not each persona), the guides and the latest searches. One file per
+ * market at `/sitemap-{market}.xml`, shown as a table in a browser through
+ * `/sitemap.xsl`.
  *
  * ## Four kinds of page, and only those (2026-11-07)
  *
@@ -45,9 +53,11 @@ use Illuminate\Support\Facades\DB;
  */
 class SitemapController extends Controller
 {
+    private const STYLESHEET = '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>';
+
     public function index(): Response
     {
-        $xml = Cache::remember('bc:sitemap:index', 3600, function (): string {
+        $xml = Cache::remember('bc:sitemap:v2:index', 3600, function (): string {
             /*
              * One file per market, and no count to make first.
              *
@@ -59,7 +69,7 @@ class SitemapController extends Controller
              * is not open spends crawl budget to prove there is nothing there.
              */
             $entries = array_map(
-                fn (Market $market): string => url("/sitemap/{$market->value}/1.xml"),
+                fn (Market $market): string => url('/'.self::fileFor($market->value)),
                 Market::published(),
             );
 
@@ -68,151 +78,143 @@ class SitemapController extends Controller
                 $entries,
             ));
 
-            return '<?xml version="1.0" encoding="UTF-8"?>'
+            return '<?xml version="1.0" encoding="UTF-8"?>'.self::STYLESHEET
                 .'<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'.$body.'</sitemapindex>';
         });
 
         return response($xml, 200, ['Content-Type' => 'application/xml']);
     }
 
-    public function market(string $market, int $page): Response
+    /**
+     * The old address of a market's file, `/sitemap/{market}/{page}.xml`, until
+     * 2026-11-08. A permanent redirect to the new one: Search Console may hold
+     * the old address, and Google follows a redirect for a sitemap file. Every
+     * page number goes to the one file, as `2.xml` was already empty.
+     */
+    public function legacy(string $market): RedirectResponse
+    {
+        abort_if(Market::tryFrom($market) === null, 404);
+
+        return redirect('/'.self::fileFor($market), 301);
+    }
+
+    /** A market's file name: `sitemap-be-nl.xml`. */
+    public static function fileFor(string $market): string
+    {
+        return "sitemap-{$market}.xml";
+    }
+
+    public function market(string $market): Response
     {
         $resolved = Market::tryFrom($market);
         abort_if($resolved === null, 404);
 
-        $xml = Cache::remember("bc:sitemap:{$market}:{$page}", 3600, function () use ($resolved, $page): string {
+        $xml = Cache::remember(self::cacheKey($resolved), 3600, function () use ($resolved): string {
             $alternates = app(Alternates::class);
 
             $urls = [];
 
             /*
-             * Everything lives in the first file, and there is no second one.
+             * Four kinds of page and nothing else (owner, 2026-11-07): the
+             * Daily Coves, the gift personas, the guides and the latest
+             * searches. The home page, the hubs, brand pages, shop Coves,
+             * gift landing pages, community Coves, the board and the
+             * help and legal pages all left the file that day. They stay
+             * indexable and linked; they are simply not submitted.
              *
-             * This gate was how a repeated block was kept out of every product
-             * chunk — listing each editorial URL eight times reads as a sitemap
-             * a crawler cannot trust. The chunks went with the products on
-             * 2026-09-18 and the gate stayed: the index names `1.xml` only, and
-             * a stale crawler asking for `2.xml` gets a valid empty file rather
-             * than a 404 for something it was told about last week.
+             * The next day (owner, 2026-11-08) the home page came back, and
+             * the Daily archive with it. Search Console reported giftcoves.com
+             * itself as not indexed (it is a redirect to a market, correctly),
+             * and a market's home was then reachable only through hreflang,
+             * with no crawlable link from its twins (the switcher is buttons)
+             * and no sitemap entry. The personas went the same day, replaced
+             * by their archive.
              */
-            if ($page === 1) {
-                /*
-                 * Four kinds of page and nothing else (owner, 2026-11-07): the
-                 * Daily Coves, the gift personas, the guides and the latest
-                 * searches. The home page, the hubs, brand pages, shop Coves,
-                 * gift landing pages, community Coves, the board and the
-                 * help and legal pages all left the file that day. They stay
-                 * indexable and linked; they are simply not submitted.
-                 *
-                 * The home page came back the next day (owner, 2026-11-08):
-                 * Search Console reported giftcoves.com itself as not indexed
-                 * (it is a redirect to a market, correctly), and a market's
-                 * home was then reachable only through hreflang, with no
-                 * crawlable link from its twins (the switcher is buttons) and
-                 * no sitemap entry. One URL per market file, so it is cheap.
-                 */
-                $urls[] = [
-                    'loc' => url("/{$resolved->value}"),
-                    'priority' => '1.0',
-                    'changefreq' => 'daily',
-                ];
+            $urls[] = [
+                'loc' => url("/{$resolved->value}"),
+                'priority' => '1.0',
+                'changefreq' => 'daily',
+            ];
 
-                /*
-                 * The help pages, back the same day (owner, 2026-11-08: "keep
-                 * help in"): how it works, the search tips, and the lists help
-                 * with one page per topic. Legal pages stay out. Monthly: they
-                 * change when a feature does.
-                 */
-                foreach (['help', 'search-help', 'lists-help', ...array_map(fn (string $topic) => "lists-help/{$topic}", ListHelpController::TOPICS)] as $path) {
+            // The Daily Coves archive, checked daily (owner, 2026-11-08):
+            // a new edition lands on it every morning.
+            $urls[] = [
+                'loc' => url($resolved->covePath('archive')),
+                'priority' => '0.8',
+                'changefreq' => 'daily',
+            ];
+
+            // Every past Daily edition, newest first. Monthly (owner,
+            // 2026-11-08; it said `never` until then): an edition's words stay
+            // put, but its prices, offers and links are rebuilt underneath it.
+            // The archive above is the daily one.
+            DB::table('daily_pick_sets')
+                ->where('market', $resolved->value)
+                // Dated editions only: a persona's drop_date is null and would
+                // emit /{market}/tips/ with an empty segment.
+                ->where('kind', CoveKind::Daily->value)
+                ->where('status', PublishStatus::Published->value)
+                ->orderByDesc('drop_date')
+                ->limit(400)
+                ->pluck('slug')
+                ->each(function ($slug) use (&$urls, $resolved): void {
                     $urls[] = [
-                        'loc' => url("/{$resolved->value}/{$path}"),
-                        'priority' => '0.4',
+                        'loc' => url($resolved->covePath($slug)),
+                        'priority' => '0.6',
                         'changefreq' => 'monthly',
                     ];
-                }
+                });
 
-                // Every past Daily edition, newest first. A past edition never
-                // changes, and saying so stops a crawler re-fetching ninety
-                // static pages a day.
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    // Dated editions only: a persona's drop_date is null and would
-                    // emit /{market}/tips/ with an empty segment.
-                    ->where('kind', CoveKind::Daily->value)
-                    ->where('status', PublishStatus::Published->value)
-                    ->orderByDesc('drop_date')
-                    ->limit(400)
-                    ->pluck('slug')
-                    ->each(function ($slug) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url($resolved->covePath($slug)),
-                            'priority' => '0.6',
-                            'changefreq' => 'never',
-                        ];
-                    });
+            /*
+             * The gift ideas archive, not every persona in it (owner,
+             * 2026-11-08: "remove the gift-ideas part, link to the
+             * archive instead"). The archive links each persona and
+             * occasion, so a crawler still reaches all of them; they are
+             * no longer submitted one by one.
+             */
+            $urls[] = [
+                'loc' => url("/{$resolved->value}/gift-ideas"),
+                'priority' => '0.7',
+                'changefreq' => 'weekly',
+            ];
 
-                /*
-                 * Gift personas, and occasions with them: an occasion is the
-                 * same page as a persona at its own address
-                 * (docs/features/occasion-coves.md). Undated and rebuilt when
-                 * their products move, so weekly.
-                 */
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    ->whereIn('kind', [CoveKind::Persona->value, CoveKind::Occasion->value])
-                    ->where('status', PublishStatus::Published->value)
-                    ->whereNotNull('slug')
-                    ->orderBy('kind')
-                    ->orderBy('slug')
-                    ->limit(400)
-                    ->get(['kind', 'slug', 'updated_at'])
-                    ->each(function ($row) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/".CoveKind::from($row->kind)->path($row->slug, $resolved)),
-                            'lastmod' => $row->updated_at ? Carbon::parse($row->updated_at)->toAtomString() : null,
-                            'priority' => '0.7',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
+            // The guides: every published article in the /guides space.
+            DB::table('daily_pick_sets')
+                ->where('market', $resolved->value)
+                ->whereIn('kind', [CoveKind::Guide->value, CoveKind::Seasonal->value, CoveKind::Advice->value])
+                ->where('status', PublishStatus::Published->value)
+                ->orderBy('id')
+                ->get(['slug', 'updated_at'])
+                ->each(function ($guide) use (&$urls, $resolved): void {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/guides/{$guide->slug}"),
+                        'lastmod' => $guide->updated_at ? Carbon::parse($guide->updated_at)->toAtomString() : null,
+                        'priority' => '0.8',
+                        'changefreq' => 'weekly',
+                    ];
+                });
 
-                // The guides: every published article in the /guides space.
-                DB::table('daily_pick_sets')
-                    ->where('market', $resolved->value)
-                    ->whereIn('kind', [CoveKind::Guide->value, CoveKind::Seasonal->value, CoveKind::Advice->value])
-                    ->where('status', PublishStatus::Published->value)
-                    ->orderBy('id')
-                    ->get(['slug', 'updated_at'])
-                    ->each(function ($guide) use (&$urls, $resolved): void {
-                        $urls[] = [
-                            'loc' => url("/{$resolved->value}/guides/{$guide->slug}"),
-                            'lastmod' => $guide->updated_at ? Carbon::parse($guide->updated_at)->toAtomString() : null,
-                            'priority' => '0.8',
-                            'changefreq' => 'weekly',
-                        ];
-                    });
-
-                /*
-                 * The latest searches: the "latest" column of the public
-                 * popular-searches page (SearchTermStats::for()), at their
-                 * canonical /{market}/zoek/{term} address. Same rules as that
-                 * page: searched in at least two different hours (a privacy
-                 * floor, never one visitor's words), found products, and passed
-                 * the length and stop-term rules. Twenty terms, so the file
-                 * never submits search results wholesale, which Google warns
-                 * against. Daily, because the list turns over.
-                 */
-                collect(app(SearchTermStats::class)->for($resolved)['latest'])
-                    ->pluck('url')
-                    ->filter()
-                    ->unique()
-                    ->each(function (string $path) use (&$urls): void {
-                        $urls[] = [
-                            'loc' => url($path),
-                            'priority' => '0.5',
-                            'changefreq' => 'daily',
-                        ];
-                    });
-            }
+            /*
+             * The latest searches: the "latest" column of the public
+             * popular-searches page (SearchTermStats::for()), at their
+             * canonical /{market}/zoek/{term} address. Same rules as that
+             * page: searched in at least two different hours (a privacy
+             * floor, never one visitor's words), found products, and passed
+             * the length and stop-term rules. Twenty terms, so the file
+             * never submits search results wholesale, which Google warns
+             * against. Daily, because the list turns over.
+             */
+            collect(app(SearchTermStats::class)->for($resolved)['latest'])
+                ->pluck('url')
+                ->filter()
+                ->unique()
+                ->each(function (string $path) use (&$urls): void {
+                    $urls[] = [
+                        'loc' => url($path),
+                        'priority' => '0.5',
+                        'changefreq' => 'daily',
+                    ];
+                });
 
             /*
              * Alternates, resolved per kind rather than per URL.
@@ -261,12 +263,33 @@ class SitemapController extends Controller
                 return $xml.'</url>';
             }, $urls));
 
-            return '<?xml version="1.0" encoding="UTF-8"?>'
+            return '<?xml version="1.0" encoding="UTF-8"?>'.self::STYLESHEET
                 .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
                 .'xmlns:xhtml="http://www.w3.org/1999/xhtml">'.$body.'</urlset>';
         });
 
         return response($xml, 200, ['Content-Type' => 'application/xml']);
+    }
+
+    /**
+     * The stylesheet that shows a sitemap as a table in a browser (owner,
+     * 2026-11-08: "make the site map human readable"). A crawler reads the XML
+     * and ignores the instruction; a browser applies it. It has to come from
+     * this host: browsers refuse a cross-origin XSLT.
+     */
+    public function stylesheet(): Response
+    {
+        return response(
+            (string) file_get_contents(resource_path('sitemap/sitemap.xsl')),
+            200,
+            ['Content-Type' => 'text/xsl; charset=utf-8', 'Cache-Control' => 'public, max-age=86400'],
+        );
+    }
+
+    /** One place for the key, so the job that changes a file's content can clear it. */
+    public static function cacheKey(Market $market): string
+    {
+        return "bc:sitemap:v2:{$market->value}";
     }
 
     public function robots(): Response

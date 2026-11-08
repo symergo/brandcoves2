@@ -330,7 +330,7 @@ Tweede alinea.',
         $this->cove('bol-com', 'Acheter chez bol', market: Market::BeFr);
         $this->cove('coolblue', 'Kopen bij Coolblue', market: Market::BeNl);
 
-        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $xml = (string) $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
 
         // Owner, 2026-11-07: Daily Coves, personas, guides and the latest
         // searches only. The shop page stays indexable.

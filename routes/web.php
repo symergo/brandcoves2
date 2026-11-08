@@ -156,9 +156,14 @@ Route::get('/img/{width}/{signature}/{source}', ImageProxyController::class)
 Route::withoutMiddleware(StatelessRoutes::SKIPPED)->group(function (): void {
     Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
     Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
-    Route::get('/sitemap/{market}/{page}.xml', [SitemapController::class, 'market'])
-        ->whereNumber('page')
+    // One file per market, named for it (owner, 2026-11-08). The old
+    // /sitemap/{market}/{page}.xml answers with a 301 to it.
+    Route::get('/sitemap-{market}.xml', [SitemapController::class, 'market'])
+        ->where('market', '[a-z]{2}(-[a-z]{2})?')
         ->name('sitemap.market');
+    Route::get('/sitemap/{market}/{page}.xml', [SitemapController::class, 'legacy'])
+        ->whereNumber('page');
+    Route::get('/sitemap.xsl', [SitemapController::class, 'stylesheet'])->name('sitemap.xsl');
 });
 
 // Root sends visitors to the market they chose, or failing that to our best

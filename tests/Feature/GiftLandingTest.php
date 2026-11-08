@@ -159,7 +159,7 @@ class GiftLandingTest extends TestCase
 
         // Not submitted since 2026-11-07 (the sitemap lists Daily Coves,
         // personas, guides and the latest searches only), still served.
-        $xml = $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $xml = $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
         $this->assertStringNotContainsString('/gift-ideas/for/', $xml);
 
         // be-nl and nl-nl both have dad and cooking; be-fr does not.

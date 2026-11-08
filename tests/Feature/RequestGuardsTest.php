@@ -36,7 +36,7 @@ class RequestGuardsTest extends TestCase
          * of the sitemap — and queue a Set-Cookie that made the response
          * uncacheable.
          */
-        foreach (['/robots.txt', '/sitemap.xml', '/sitemap/be-nl/1.xml', '/be-nl/og/default.png', '/health'] as $path) {
+        foreach (['/robots.txt', '/sitemap.xml', '/sitemap-be-nl.xml', '/be-nl/og/default.png', '/health'] as $path) {
             $this->get($path)->assertOk()->assertCookieMissing('bc_visitor');
         }
 

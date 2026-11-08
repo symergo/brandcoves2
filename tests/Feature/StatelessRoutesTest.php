@@ -32,7 +32,9 @@ class StatelessRoutesTest extends TestCase
             '/health',
             '/robots.txt',
             '/sitemap.xml',
+            '/sitemap-be-nl.xml',
             '/sitemap/be-nl/1.xml',
+            '/sitemap.xsl',
             '/be-nl/og/default.png',
         ] as $path) {
             $response = $this->browserGet($path);

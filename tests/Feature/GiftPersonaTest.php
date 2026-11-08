@@ -136,13 +136,15 @@ class GiftPersonaTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_lists_a_persona_by_slug_and_never_as_a_dateless_daily(): void
+    public function the_sitemap_lists_the_gift_ideas_archive_not_each_persona_and_never_a_dateless_daily(): void
     {
         $this->buildPersona();
 
-        $response = $this->get('/sitemap/be-nl/1.xml')->assertOk();
+        $response = $this->get('/sitemap-be-nl.xml')->assertOk();
 
-        $response->assertSee('/be-nl/gift-ideas/de-kruidenliefhebber', escape: false);
+        // Owner, 2026-11-08: the archive, which links every persona.
+        $response->assertSee('/be-nl/gift-ideas</loc>', escape: false);
+        $response->assertDontSee('/be-nl/gift-ideas/de-kruidenliefhebber', escape: false);
         // The shape a null drop_date would produce if it reached the daily loop.
         $response->assertDontSee('/be-nl/tips/</loc>', escape: false);
     }

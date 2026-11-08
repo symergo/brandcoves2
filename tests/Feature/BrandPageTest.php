@@ -760,7 +760,7 @@ class BrandPageTest extends TestCase
         // and the latest searches only. A brand page stays indexable.
         $this->seedBrand('Aurex');
 
-        $this->get('/sitemap/be-nl/1.xml')
+        $this->get('/sitemap-be-nl.xml')
             ->assertOk()
             ->assertDontSee('/be-nl/brand/', escape: false);
     }

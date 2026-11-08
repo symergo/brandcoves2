@@ -46,6 +46,8 @@ class TrackAnonymousIdentity
         'robots.txt',
         'sitemap.xml',
         'sitemap/*',
+        'sitemap-*',
+        'sitemap.xsl',
         '*/og/*',
         'health',
         'up',

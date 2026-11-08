@@ -149,7 +149,7 @@ class AskYourPeopleTest extends TestCase
         $discover = $this->props($this->get('/be-nl/discover-cove'))['questions'];
         $this->assertNotContains('Alleen voor mijn mensen, echt waar', array_column($discover, 'title'));
 
-        $sitemap = (string) $this->get('/sitemap/be-nl/1.xml')->getContent();
+        $sitemap = (string) $this->get('/sitemap-be-nl.xml')->getContent();
         $this->assertStringNotContainsString($question->share_token, $sitemap);
         $this->assertStringNotContainsString("/ask/{$question->id}/", $sitemap);
     }

@@ -100,14 +100,17 @@ class OccasionCoveTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_lists_an_occasion_at_its_address(): void
+    public function the_sitemap_lists_the_gift_ideas_archive_rather_than_an_occasion(): void
     {
         $this->forbidAi();
         $this->build(CoveKind::Occasion, 'moederdag', 'Cadeaus voor Moederdag');
 
-        $this->get('/sitemap/be-nl/1.xml')
+        // Owner, 2026-11-08: the archive links the occasions; they are not
+        // submitted one by one.
+        $this->get('/sitemap-be-nl.xml')
             ->assertOk()
-            ->assertSee('/be-nl/gift-ideas/occasion/moederdag', escape: false);
+            ->assertSee('/be-nl/gift-ideas</loc>', escape: false)
+            ->assertDontSee('/be-nl/gift-ideas/occasion/moederdag', escape: false);
     }
 
     #[Test]

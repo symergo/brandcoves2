@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Http\Controllers\SitemapController;
 use App\Jobs\Concerns\RunsOneAtATime;
 use App\Services\Gift\GiftLandingPlanner;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,7 +45,7 @@ class PlanGiftLandingPages implements ShouldQueue
 
         // The sitemap is cached for an hour; a page that opened or closed
         // tonight should be listed, or dropped, by the morning crawl.
-        Cache::forget("bc:sitemap:{$this->market->value}:1");
+        Cache::forget(SitemapController::cacheKey($this->market));
 
         Log::info('Gift landing pages planned', ['market' => $this->market->value, ...$result]);
     }

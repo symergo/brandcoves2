@@ -325,11 +325,29 @@ them, since the request named the latest searches. The paragraphs below describe
 this date. Tests: `SeoTest::the_sitemap_lists_daily_coves_personas_and_guides_with_their_twins`, the
 negative checks in `SeoTest::the_sitemap_does_not_list_product_pages`, `PopularSearchesTest`.
 
+**What each market's file holds, since 2026-11-08** (the owner, in one sitting):
+
+| Entry | changefreq | Why |
+|---|---|---|
+| the home page, `/{market}` | daily | reachable from its twins by nothing a crawler follows otherwise (see "Plain links to the twins") |
+| the Daily archive, `/{market}/tips/archive` | daily | a new edition lands on it every morning |
+| every Daily edition (up to 400) | monthly | was `never`; the words stay, the prices and offers under them are rebuilt |
+| the gift ideas archive, `/{market}/gift-ideas` | weekly | replaces every persona and occasion: the archive links each of them |
+| every guide, seasonal and advice article | weekly | unchanged |
+| the latest searches (20, under the privacy floor) | daily | unchanged; few on be-fr, where little is searched yet |
+
+The file is now `/sitemap-{market}.xml`; the old `/sitemap/{market}/{page}.xml` answers 301 to it,
+for whatever Search Console still holds. Both the index and the files carry
+`<?xml-stylesheet href="/sitemap.xsl"?>`, so a browser shows a table (page, its language versions,
+changefreq, priority, last changed) while a crawler reads the XML and ignores the instruction. The
+stylesheet is served by the app from `resources/sitemap/sitemap.xsl` because browsers refuse an XSLT
+from another origin. The cache keys moved to `bc:sitemap:v2:*` so a deploy never serves an hour of
+the old shape; `SitemapController::cacheKey()` is the one place for them. The help pages were in
+for an hour that day and went out again. Tests: `SeoTest`, `LanguageLinksTest`.
+
 **The home page is back, since 2026-11-08**: one URL per market file, `/{market}`, priority 1.0,
 daily, with its alternates. See "Plain links to the twins" above for why. Test:
-`LanguageLinksTest::each_market_sitemap_submits_its_home_page_with_its_alternates`. The help pages
-came back the same day (owner: "keep help in"): `/help`, `/search-help`, `/lists-help` and its
-ten topic pages, priority 0.4, monthly. The legal pages stay out.
+`LanguageLinksTest::each_market_sitemap_submits_its_home_page_with_its_alternates`.
 
 **Product pages are not listed, since 2026-09-18.** The owner's decision. What
 is submitted is the editorial surface: the home page, the Coves, the guides, the

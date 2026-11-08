@@ -533,7 +533,7 @@ class SeoTest extends TestCase
         config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
 
-        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $xml = (string) $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
 
         $this->assertStringNotContainsString("/be-nl/p/{$group->id}/{$group->slug}", $xml);
         $this->assertStringNotContainsString('/p/', $xml);
@@ -579,7 +579,7 @@ class SeoTest extends TestCase
             ]);
         }
 
-        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $xml = (string) $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
 
         $this->assertStringContainsString('<loc>'.url('/be-nl/tips/de-laatste-vakantiedag').'</loc>', $xml);
         // hreflang in the sitemap as well as the head: Google treats the two
@@ -622,7 +622,7 @@ class SeoTest extends TestCase
         $xml = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
         foreach (Market::published() as $market) {
-            $this->assertStringContainsString("/sitemap/{$market->value}/1.xml", $xml);
+            $this->assertStringContainsString("/sitemap-{$market->value}.xml", $xml);
         }
 
         // An unpublished market has no supply, so its sitemap would spend crawl
@@ -630,7 +630,7 @@ class SeoTest extends TestCase
         $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isPublished());
 
         foreach ($hidden as $market) {
-            $this->assertStringNotContainsString("/sitemap/{$market->value}/", $xml);
+            $this->assertStringNotContainsString("/sitemap-{$market->value}.xml", $xml);
         }
     }
 
@@ -737,22 +737,36 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function a_market_has_one_sitemap_file_and_its_urls_are_listed_once(): void
+    public function a_market_has_one_sitemap_file_named_for_it_and_the_old_addresses_redirect(): void
     {
         config(['giftcoves.robots_allow' => true]);
 
-        $first = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
-        $second = (string) $this->get('/sitemap/be-nl/2.xml')->assertOk()->getContent();
+        $file = (string) $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
         $index = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
-        $this->assertStringContainsString('<urlset', $first);
+        $this->assertStringContainsString('<urlset', $file);
+        $this->assertStringContainsString(url('/sitemap-be-nl.xml'), $index);
+        $this->assertStringNotContainsString('/sitemap/be-nl/', $index);
 
-        // Since the catalogue left the sitemap there is one file per market,
-        // and the index names only that one. A second file still answers,
-        // empty: a crawler told about `2.xml` last week should meet a valid
-        // file rather than a 404 while it forgets.
-        $this->assertStringNotContainsString('/sitemap/be-nl/2.xml', $index);
-        $this->assertStringNotContainsString('<url>', $second);
+        // The address until 2026-11-08, which Search Console may still hold.
+        // Every page number goes to the one file: 2.xml was already empty.
+        $this->get('/sitemap/be-nl/1.xml')->assertStatus(301)->assertRedirect('/sitemap-be-nl.xml');
+        $this->get('/sitemap/be-nl/2.xml')->assertStatus(301)->assertRedirect('/sitemap-be-nl.xml');
+        $this->get('/sitemap/xx-yy/1.xml')->assertNotFound();
+    }
+
+    #[Test]
+    public function a_sitemap_reads_as_a_table_in_a_browser(): void
+    {
+        // Owner, 2026-11-08. The instruction a browser follows; a crawler
+        // reads the XML and ignores it.
+        $pi = '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>';
+        $this->assertStringContainsString($pi, (string) $this->get('/sitemap.xml')->getContent());
+        $this->assertStringContainsString($pi, (string) $this->get('/sitemap-be-nl.xml')->getContent());
+
+        $xsl = $this->get('/sitemap.xsl')->assertOk();
+        $this->assertStringStartsWith('text/xsl', (string) $xsl->headers->get('Content-Type'));
+        $this->assertStringContainsString('<xsl:template match="s:urlset">', (string) $xsl->getContent());
     }
 
     #[Test]

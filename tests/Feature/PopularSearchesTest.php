@@ -85,7 +85,7 @@ class PopularSearchesTest extends TestCase
         $this->log('jan peeters', 1);
         $this->log('nergensvindbaar', 12, results: 0);
 
-        $xml = $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $xml = $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
 
         $this->assertStringContainsString('/be-nl/zoek/koptelefoon</loc>', $xml);
         $this->assertStringNotContainsString('jan-peeters', $xml);
