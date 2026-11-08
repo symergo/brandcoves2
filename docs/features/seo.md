@@ -223,6 +223,27 @@ silently serves English copy into a Dutch market.
 
 ## hreflang and canonicals
 
+**Plain links to the twins, in the footer, since 2026-11-08.** Search Console reported
+`giftcoves.com` as not indexed. That part is correct: the root is a 302 to a market (`/en` for a
+crawler, which sends no language), and a redirect is never indexed. But it showed a real gap. The
+market switcher is buttons that post a choice (it must be, see market-routing.md), so no crawlable
+link led from a page to the same page in another market. The hreflang tags said the twin existed,
+and they are not a link. With the home page also out of the sitemap since the day before, a
+market's home was reachable from its twins by nothing a crawler follows.
+
+The footer now carries "Ook in: Belgique (Français) · Europe (English) · …": ordinary `<a>` links,
+each name in its own language with `lang` and `hreflang` on the link. The addresses are the
+`languageLinks` shared prop (`HandleInertiaRequests::languageLinks()`), built from the same
+`Alternates::for()` answer as the head, so the footer can never offer a twin the head does not
+declare, or one that 404s. A product with no twin shows no line. `Alternates` is scoped and
+memoises `for()` per request, so the head and the footer cost one lookup between them. A plain link
+writes no market cookie, and must not: only the switcher chooses.
+
+Why not make `/` an indexable page instead (a country chooser marked `x-default`): every first-time
+visitor typing the domain would get an extra click before any gift, for a page with almost nothing
+on it. A locale redirect at the root is one of the two patterns Google documents; what has to be
+indexed is the market homes. Tests: `LanguageLinksTest`.
+
 Alternates go in the head *and* in the sitemap — Google treats those as
 independent signals and picks the sitemap version up faster on a new URL.
 
@@ -303,6 +324,10 @@ they are only not submitted. The two other popular-search columns (by month, tre
 them, since the request named the latest searches. The paragraphs below describe the file before
 this date. Tests: `SeoTest::the_sitemap_lists_daily_coves_personas_and_guides_with_their_twins`, the
 negative checks in `SeoTest::the_sitemap_does_not_list_product_pages`, `PopularSearchesTest`.
+
+**The home page is back, since 2026-11-08**: one URL per market file, `/{market}`, priority 1.0,
+daily, with its alternates. See "Plain links to the twins" above for why. Test:
+`LanguageLinksTest::each_market_sitemap_submits_its_home_page_with_its_alternates`.
 
 **Product pages are not listed, since 2026-09-18.** The owner's decision. What
 is submitted is the editorial surface: the home page, the Coves, the guides, the

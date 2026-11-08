@@ -611,6 +611,7 @@ return [
     ],
 
     'footer' => [
+        'other_languages' => 'También en',
         'affiliate' => 'Podemos recibir una comisión por las compras realizadas a través de nuestros enlaces, eso nunca cambia lo que pagas tú.',
         'amazon' => 'En calidad de Afiliado de Amazon, obtenemos ingresos por las compras adscritas que cumplen los requisitos aplicables.',
         'copyright' => '© :year GiftCoves.',

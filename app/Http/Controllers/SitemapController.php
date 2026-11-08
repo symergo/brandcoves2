@@ -103,7 +103,19 @@ class SitemapController extends Controller
                  * gift landing pages, community Coves, the board and the
                  * help and legal pages all left the file that day. They stay
                  * indexable and linked; they are simply not submitted.
+                 *
+                 * The home page came back the next day (owner, 2026-11-08):
+                 * Search Console reported giftcoves.com itself as not indexed
+                 * (it is a redirect to a market, correctly), and a market's
+                 * home was then reachable only through hreflang, with no
+                 * crawlable link from its twins (the switcher is buttons) and
+                 * no sitemap entry. One URL per market file, so it is cheap.
                  */
+                $urls[] = [
+                    'loc' => url("/{$resolved->value}"),
+                    'priority' => '1.0',
+                    'changefreq' => 'daily',
+                ];
 
                 // Every past Daily edition, newest first. A past edition never
                 // changes, and saying so stops a crawler re-fetching ninety

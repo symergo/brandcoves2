@@ -615,6 +615,8 @@ return [
     ],
 
     'footer' => [
+        // The footer's links to this page in the other markets.
+        'other_languages' => 'Ook in',
         'affiliate' => 'We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
         'amazon' => 'Als Amazon Associate verdienen we aan in aanmerking komende aankopen.',
         'copyright' => '© :year GiftCoves.',

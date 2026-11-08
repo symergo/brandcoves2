@@ -14,6 +14,7 @@ use App\Services\Connectors\Tradedoubler\TradedoublerConnector;
 use App\Services\Gift\InterestGuesser;
 use App\Services\Identity\MergedProducts;
 use App\Services\Pages\PageCopy;
+use App\Services\Seo\Alternates;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Settings\AffiliateSettingsStore;
@@ -40,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
         // persists between requests, and a singleton here would leak one page's
         // SEO metadata and structured data into the next visitor's page.
         $this->app->scoped(PageMeta::class);
+
+        // Scoped for its per-request memo: the head and the footer's language
+        // links ask it the same question on every page.
+        $this->app->scoped(Alternates::class);
 
         // Also scoped, and for a subtler reason than PageMeta: the cache here is
         // "which brands have a page", which is true for the length of a request

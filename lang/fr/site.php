@@ -612,6 +612,7 @@ return [
     ],
 
     'footer' => [
+        'other_languages' => 'Aussi en',
         'affiliate' => 'Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
         'amazon' => 'En tant que Partenaire Amazon, nous réalisons un bénéfice sur les achats remplissant les conditions requises.',
         'copyright' => '© :year GiftCoves.',

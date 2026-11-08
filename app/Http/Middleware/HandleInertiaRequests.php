@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\Market;
 use App\Models\Notification;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Seo\Alternates;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\ListOptions;
@@ -203,6 +205,20 @@ class HandleInertiaRequests extends Middleware
             'markets' => app(MarketSwitcher::class)->payload(),
 
             /*
+             * This page in the other markets, as ordinary links for the footer
+             * (owner, 2026-11-08). The switcher is buttons that post a choice,
+             * so a crawler following links found no way from one market's page
+             * to its twin; the hreflang tags in the head said the twin existed
+             * but are not a link. The same addresses as those tags, from the
+             * same call (Alternates memoises it for the request), so the footer
+             * can never offer a twin the head does not declare, or one that 404s.
+             *
+             * A plain link does not write the market cookie, and must not: only
+             * the switcher chooses (docs/features/market-routing.md).
+             */
+            'languageLinks' => fn (): array => $this->languageLinks($request, $market),
+
+            /*
              * The market bar: which country this page is, offered beside the
              * others, for a visitor who has not chosen or who is looking at
              * another country than the one they chose. Null for a crawler and
@@ -344,5 +360,33 @@ class HandleInertiaRequests extends Middleware
                 'signUp' => fn () => $request->session()->get('signed_up'),
             ],
         ];
+    }
+
+    /**
+     * @return list<array{market: string, name: string, lang: string, href: string}>
+     */
+    private function languageLinks(Request $request, Market $current): array
+    {
+        $alternates = app(PageMeta::class)->toArray()['alternates']
+            ?? app(Alternates::class)->for($request->path(), $current);
+
+        $links = [];
+
+        foreach (Market::published() as $market) {
+            $href = $alternates[$market->hrefLang()] ?? null;
+
+            if ($market === $current || $href === null) {
+                continue;
+            }
+
+            $links[] = [
+                'market' => $market->value,
+                'name' => $market->nativeName(),
+                'lang' => $market->hrefLang(),
+                'href' => $href,
+            ];
+        }
+
+        return $links;
     }
 }

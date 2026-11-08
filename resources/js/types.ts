@@ -115,6 +115,12 @@ export interface SharedProps {
     market: CurrentMarket
     markets: SwitcherCountry[]
     /**
+     * This page in the other markets, for the footer's plain links. The same
+     * addresses as the hreflang tags in the head; empty when no twin exists.
+     * See HandleInertiaRequests::languageLinks().
+     */
+    languageLinks: { market: string; name: string; lang: string; href: string }[]
+    /**
      * The market bar above the header, or null for none (a crawler, or a
      * visitor on their chosen country). `suggest` is a market to offer first;
      * `remember` says whether closing the bar records this page's market.

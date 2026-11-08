@@ -758,6 +758,7 @@ return [
     ],
 
     'footer' => [
+        'other_languages' => 'Also in',
         'affiliate' => 'We may earn a commission on purchases made through our links, it never changes what you pay.',
         // Amazon's own wording, which the programme requires verbatim. Shown
         // only in markets that carry Amazon links; see amazon-compliance.md.

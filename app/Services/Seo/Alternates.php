@@ -49,9 +49,27 @@ use Illuminate\Support\Facades\DB;
 class Alternates
 {
     /**
+     * Answers already given in this request. The head and the footer's
+     * language links both ask for the page's alternates, and on a product or
+     * guide page that is a query or two; scoped in AppServiceProvider, so the
+     * memo lives one request.
+     *
+     * @var array<string, array<string, string>>
+     */
+    private array $memo = [];
+
+    /**
      * @return array<string, string> hreflang => absolute URL
      */
     public function for(string $path, Market $current): array
+    {
+        return $this->memo[$current->value.'|'.$path] ??= $this->resolve($path, $current);
+    }
+
+    /**
+     * @return array<string, string> hreflang => absolute URL
+     */
+    private function resolve(string $path, Market $current): array
     {
         $path = '/'.trim($path, '/');
         $segments = explode('/', trim($path, '/'));

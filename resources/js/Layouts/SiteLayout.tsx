@@ -167,7 +167,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
 function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, auth, unreadCount, analytics, amazonAssociate } = page.props
+    const { market, auth, unreadCount, analytics, amazonAssociate, languageLinks } = page.props
     const { t } = useTranslations()
 
     /*
@@ -913,6 +913,33 @@ function Chrome({ children }: PropsWithChildren) {
                       page can. Only in markets that have a tag, since the
                       others show no Amazon link at all.
                     */}
+                    {/*
+                      This page in the other markets, as plain <a> links
+                      (owner, 2026-11-08). The switcher is buttons that post a
+                      choice, which a crawler never presses, so without these no
+                      link led from a market's page to its twin. A full page
+                      load on purpose, not an Inertia visit: another market is
+                      another language, and the whole shell changes with it.
+                      Each name is in its own language, marked with lang and
+                      hreflang, so a screen reader says "Belgique" in French.
+                    */}
+                    {languageLinks.length > 0 && (
+                        <nav aria-label={t('footer.other_languages')} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-0 sm:mt-1 sm:gap-y-1">
+                            <span>{t('footer.other_languages')}:</span>
+                            {languageLinks.map((link) => (
+                                <a
+                                    key={link.market}
+                                    href={link.href}
+                                    lang={link.lang}
+                                    hrefLang={link.lang}
+                                    className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0"
+                                >
+                                    {link.name}
+                                </a>
+                            ))}
+                        </nav>
+                    )}
+
                     <p className="mt-3 border-t border-line/60 pt-3 text-2xs">
                         {/*
                           The year on the site's clock, not the machine's: the
