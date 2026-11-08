@@ -120,21 +120,39 @@ class SearchCopyShopsAndBrandsTest extends TestCase
     {
         $a = $this->group('Aurex');
 
-        foreach ([['Aurex', 50], ['Bose', 40], ['Sennheiser', 30], ['Kettlemax', 0]] as [$brand, $count]) {
-            BrandStat::create([
-                'market' => Market::BeNl->value,
-                'brand' => $brand,
-                'slug' => Str::slug($brand),
-                'aliases' => [$brand],
-                'product_count' => 100,
-                'categories' => $count > 0 ? [['category' => 'Koptelefoons', 'count' => $count]] : [['category' => 'Waterkokers', 'count' => 90]],
-            ]);
+        // Ranked by their in-stock products in the category; another
+        // category's brand, a sub-brand of a brand here, and a brand with
+        // nothing in stock do not appear.
+        $this->stock('Bose', 'Koptelefoons', 3);
+        $this->stock('Sennheiser', 'Koptelefoons', 2);
+        $this->stock('Kettlemax', 'Waterkokers', 5);
+        $this->stock('Aurex Pro', 'Koptelefoons', 4);
+        $this->stock('Gone', 'Koptelefoons', 6, inStock: false);
+
+        foreach (['Aurex', 'Bose', 'Sennheiser', 'Kettlemax', 'Aurex Pro', 'Gone'] as $brand) {
+            $this->brandPage($brand);
         }
 
         $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, [$a], 1, 'koptelefoon'))->items;
 
         $this->assertSame(['Bose', 'Sennheiser'], array_column($links, 'label'));
         $this->assertStringContainsString('/brand/bose', $links[0]['url']);
+    }
+
+    /** Products of a brand in a category, shown and in stock unless said otherwise. */
+    private function stock(string $brand, string $category, int $count, bool $inStock = true): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            $this->group($brand, $category)->forceFill(['worth_showing' => true, 'in_stock' => $inStock])->save();
+        }
+    }
+
+    private function brandPage(string $brand): void
+    {
+        BrandStat::create([
+            'market' => Market::BeNl->value, 'brand' => $brand, 'slug' => Str::slug($brand),
+            'aliases' => [$brand], 'product_count' => 100,
+        ]);
     }
 
     #[Test]
@@ -272,11 +290,9 @@ class SearchCopyShopsAndBrandsTest extends TestCase
             $this->group('Lenovo', 'Knuffel'),
         ];
 
-        foreach ([['Tabby', 'Tablet', 50], ['Slate', 'Tablet', 40], ['Lappo', 'Laptop', 30], ['Kaloo', 'Knuffel', 90]] as [$brand, $category, $count]) {
-            BrandStat::create([
-                'market' => Market::BeNl->value, 'brand' => $brand, 'slug' => Str::slug($brand), 'aliases' => [$brand],
-                'product_count' => 100, 'categories' => [['category' => $category, 'count' => $count]],
-            ]);
+        foreach ([['Tabby', 'Tablet', 5], ['Slate', 'Tablet', 4], ['Lappo', 'Laptop', 3], ['Kaloo', 'Knuffel', 9]] as [$brand, $category, $count]) {
+            $this->stock($brand, $category, $count);
+            $this->brandPage($brand);
         }
 
         $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, $items, 6, 'lenovo'))->items;

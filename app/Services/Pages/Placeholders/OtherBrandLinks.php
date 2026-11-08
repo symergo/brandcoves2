@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Pages\Placeholders;
 
-use App\Models\BrandStat;
 use App\Models\ProductGroup;
 use App\Services\Pages\Context\PageContext;
 use App\Services\Pages\Context\ResultCategories;
 use App\Services\Seo\BrandLinker;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -17,10 +17,9 @@ use Illuminate\Support\Str;
  * section on other brands for this kind of product").
  *
  * "This kind" is the three categories most of these results carry
- * (`ResultCategories::top()`). The brands are taken in turns from each, the
- * ones with the most products in it in this market first (brand_stats keeps
- * each brand's top categories with a count), less every brand already in the
- * results. Linked to their brand pages, so
+ * (`ResultCategories::significant()`). The brands are taken in turns from
+ * each, the ones with the most in-stock products in it in this market first,
+ * less every brand already in the results and their sub-brands. Linked to their brand pages, so
  * only a brand that has a page appears.
  *
  * Cached for ten minutes per market and set of categories: many searches share a
@@ -108,7 +107,7 @@ final class OtherBrandLinks implements PlaceholderFunction
             foreach ($byCategory as $brands) {
                 $brand = $brands[$round] ?? null;
 
-                if ($brand !== null && ! isset($seen[$brand['slug']])) {
+                if ($brand !== null && ! isset($seen[$brand['slug']]) && ! self::sameFamily($brand['slug'], $present)) {
                     $seen[$brand['slug']] = true;
                     $ordered[] = $brand['brand'];
                 }
@@ -138,40 +137,77 @@ final class OtherBrandLinks implements PlaceholderFunction
     }
 
     /**
-     * Per category, its brands ranked by their products in that category, not
-     * overall: a brand with one phone case and ten thousand other things is
-     * not a phone-case brand. One query for all three categories.
+     * "Stanley Fatmax" is Stanley, not an alternative to it: a slug that
+     * extends a brand in the results, or that one extends, is the same family.
+     *
+     * @param  array<string, true>  $present
+     */
+    private static function sameFamily(string $slug, array $present): bool
+    {
+        foreach (array_keys($present) as $own) {
+            if (str_starts_with($slug, $own.'-') || str_starts_with($own, $slug.'-')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Per category, its brands ranked by their in-stock products in it, read
+     * from the products themselves. One grouped query on the category index
+     * (`product_groups_category_rail_idx`), about 25 ms for the largest
+     * category on a cold cache, then cached.
+     *
+     * Not from `brand_stats.categories`, which it used first: that keeps each
+     * brand's four biggest categories only, so DeWalt and Makita, which sell
+     * tool cases among a great deal else, never appeared beside Stanley.
      *
      * @param  list<string>  $categories
      * @return array<string, list<array{brand: string, slug: string}>>
      */
     private static function brandsIn(PageContext $context, array $categories): array
     {
-        $stats = BrandStat::query()
-            ->forMarket($context->market)
-            ->where(function ($query) use ($categories): void {
-                foreach ($categories as $category) {
-                    $query->orWhereJsonContains('categories', [['category' => $category]]);
-                }
-            })
-            ->orderByDesc('product_count')
-            ->limit(90)
-            ->get(['brand', 'slug', 'categories']);
+        $rows = DB::table('product_groups')
+            ->where('market', $context->market->value)
+            // The index's own conditions, so the planner can use it, and only
+            // what can be bought.
+            ->where('worth_showing', true)
+            ->where('in_stock', true)
+            ->whereIn('category', $categories)
+            ->whereNotNull('brand')
+            ->groupBy('category', 'brand')
+            ->selectRaw('category, brand, count(*) as n')
+            ->get();
 
-        $out = [];
+        $out = array_fill_keys($categories, []);
 
-        foreach ($categories as $category) {
-            $out[$category] = $stats
-                ->map(fn (BrandStat $stat) => [
-                    'brand' => $stat->brand,
-                    'slug' => $stat->slug,
-                    'count' => (int) (collect($stat->categories)->firstWhere('category', $category)['count'] ?? 0),
-                ])
-                ->filter(fn (array $row) => $row['count'] > 0)
-                ->sortByDesc('count')
-                ->map(fn (array $row) => ['brand' => $row['brand'], 'slug' => $row['slug']])
-                ->values()
-                ->all();
+        foreach ($rows as $row) {
+            $slug = Str::slug((string) $row->brand);
+
+            if ($slug === '') {
+                continue;
+            }
+
+            // Spellings of one brand ("Audio-Technica", "Audio Technica") fold
+            // into one; the most common spelling is the one shown.
+            $entry = $out[$row->category][$slug] ?? ['brand' => (string) $row->brand, 'slug' => $slug, 'n' => 0, 'top' => 0];
+            $entry['n'] += (int) $row->n;
+
+            if ((int) $row->n > $entry['top']) {
+                $entry['brand'] = (string) $row->brand;
+                $entry['top'] = (int) $row->n;
+            }
+
+            $out[$row->category][$slug] = $entry;
+        }
+
+        foreach ($out as $category => $brands) {
+            uasort($brands, fn (array $a, array $b) => $b['n'] <=> $a['n']);
+            $out[$category] = array_values(array_map(
+                fn (array $b) => ['brand' => $b['brand'], 'slug' => $b['slug']],
+                array_slice($brands, 0, 30),
+            ));
         }
 
         return $out;
