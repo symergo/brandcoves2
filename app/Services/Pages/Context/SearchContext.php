@@ -81,6 +81,7 @@ final class SearchContext extends PageContext
             // sentence and become a list.
             'brands' => implode(', ', array_slice($this->brands(), 0, 6)),
             'top_brand' => $this->topBrand(),
+            'result_categories' => ($shown = ResultCategories::shown($this->items)) === [] ? '' : ' ('.implode(', ', $shown).')',
         ];
     }
 

@@ -88,6 +88,7 @@ added next year without touching a block, the schema or the admin.
 | `:shop_links` | inline | links | The shops whose offers these results compare, the most offers first, at most six, each an affiliate link (`rel="sponsored nofollow"`, through `/go/`) to that shop's cheapest product here. A product rather than the shop's own search, because the catalogue does not know how each shop builds its search address (owner, 2026-11-08). |
 | `:other_brand_links` | inline | links | Other brands of this kind of product: the brands with the most products in the results' main category (`brand_stats.categories`), less the brands already in the results, at most six, each linked to its brand page. Cached ten minutes per category. |
 | `:top_brand` | fact | text | The brand most of these results carry, in the feed's spelling. Search page only; empty, which hides the block, when no result has a brand. |
+| `:result_categories` | fact | text | The categories of these results, in brackets with a leading space, " (tablet, laptop)", read from the products on the page (no query). Up to three; a name is printed only when it reads as a plain word or two (letters, spaces, hyphens, at most 30 characters and three words, no brand from the results in it), and after the first only when two results carry it. Empty otherwise, and never hides its sentence: write it straight after a word, `:top_brand:result_categories?`. `ResultCategories`. |
 | `:save_search_link` | inline | save | "Zet :term op een cadeaulijst" in the page's language (`site.search_copy.save_search`), drawn as the site's Save button in words. It saves a hand-written list item called "Lenovo aanbiedingen" (`site.search_copy.saved_title`) linking to these results. `ItemSaver` does not read our own pages as it does a shop's, and a link to this site passes the https-only rule for list links even as http, which is what a development machine serves (`WishlistItem::isOwnUrl()`). A fifth part shape, `save`, so `Parts.tsx` has a branch for it. |
 | `:guide_links` | inline | links | Our published buying guides, advice, seasonal guides, personas and occasions whose title or blurb matches the term (each word as a prefix, so Dutch compounds count), at most three, best first. Not the Daily Cove, which is dated. Nothing matching hides the sentence. Added 2026-11-07. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
@@ -372,6 +373,9 @@ for Dutch, English and French alike:
 - **Alternative brands against a brand found here:** "Merken zoals :top_brand" / "Zoek je alternatieve merken
   voor :top_brand? Bekijk dan de aanbiedingen en offertes van :other_brand_links." `:top_brand` is the brand most
   results carry. ("Offertes" is the owner's word; it was pointed out that in Dutch it means a requested quotation.)
+- **Broader, and with categories** (the same day): `:other_brand_links` takes brands in turns from the three
+  categories most results carry, and the sentence names the printable ones: "Zoek je alternatieve merken voor
+  Lenovo (tablet)?" (`2026_11_08_000200_search_copy_names_the_categories`). Still one cached query.
 - "Kijk dan ook bij :term_links." is "Vergelijk dan de beste aanbiedingen voor :term_links.", whose links read
   "koptelefoon draadloos" rather than "draadloos".
 - **":term als cadeau"** is "Wil je :term als cadeau geven of zelf krijgen? Zet :term op een cadeaulijst.", the
@@ -385,6 +389,11 @@ not open on `:term` either: the term is lowercase as typed.
 The migration replaces a language's search copy whole, and only when every block still carries a known text
 (the 2026-11-07 copy, or the intermediate wording it had on a development database that day); one edited block
 and that language is left alone.
+
+**Two cards to a row** (`PageNarrative`, 2026-11-08: "make the boxes stack more evenly"). The sections were a
+three-column grid, where a short section sat over a hole beside a long one; newspaper columns were tried and
+balanced four sections as one card beside two. Four sections is the usual count, so two rows of two equal-height
+cards, one column on a phone.
 
 **A heading whose section came out empty is dropped** (`PageCopy::forRegion()`), since that day. A paragraph
 hides when its data is missing, and its heading used to stay behind with nothing under it ("Meer lezen over

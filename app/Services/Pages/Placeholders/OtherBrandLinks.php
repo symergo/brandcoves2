@@ -7,6 +7,7 @@ namespace App\Services\Pages\Placeholders;
 use App\Models\BrandStat;
 use App\Models\ProductGroup;
 use App\Services\Pages\Context\PageContext;
+use App\Services\Pages\Context\ResultCategories;
 use App\Services\Seo\BrandLinker;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -15,13 +16,14 @@ use Illuminate\Support\Str;
  * Other brands that make this kind of product (owner, 2026-11-08: "add a
  * section on other brands for this kind of product").
  *
- * "This kind" is the category most of these results carry. The brands are the
- * ones with the most products in that category in this market (brand_stats
- * keeps each brand's top categories with a count), less every brand already in
- * the results: `:brand_links` names those. Linked to their brand pages, so
+ * "This kind" is the three categories most of these results carry
+ * (`ResultCategories::top()`). The brands are taken in turns from each, the
+ * ones with the most products in it in this market first (brand_stats keeps
+ * each brand's top categories with a count), less every brand already in the
+ * results. Linked to their brand pages, so
  * only a brand that has a page appears.
  *
- * Cached for ten minutes per market and category: many searches share a
+ * Cached for ten minutes per market and set of categories: many searches share a
  * category, and brand_stats changes once a night.
  */
 final class OtherBrandLinks implements PlaceholderFunction
@@ -70,66 +72,61 @@ final class OtherBrandLinks implements PlaceholderFunction
 
     public function resolve(PageContext $context): Value
     {
-        $categories = [];
         $present = [];
 
         foreach ($context->items as $group) {
-            if (! $group instanceof ProductGroup) {
-                continue;
-            }
-
-            if (filled($group->category)) {
-                $categories[$group->category] = ($categories[$group->category] ?? 0) + 1;
-            }
-
-            if (filled($group->brand)) {
+            if ($group instanceof ProductGroup && filled($group->brand)) {
                 $present[Str::slug($group->brand)] = true;
             }
         }
+
+        // The three categories most of the results belong to, not only the
+        // first (owner, 2026-11-08: "broaden the list"). "lenovo" is tablets,
+        // laptops and desktops, and one category named only tablet brands.
+        $categories = ResultCategories::top($context->items, 3);
 
         if ($categories === []) {
             return Value::nothing();
         }
 
-        arsort($categories);
-        $category = (string) array_key_first($categories);
-
-        $candidates = Cache::remember(
-            'other-brands:'.$context->market->value.':'.md5($category),
+        $byCategory = Cache::remember(
+            'other-brands:'.$context->market->value.':'.md5(implode('|', $categories)),
             self::TTL,
-            fn (): array => BrandStat::query()
-                ->forMarket($context->market)
-                ->whereJsonContains('categories', [['category' => $category]])
-                ->orderByDesc('product_count')
-                ->limit(30)
-                ->get(['brand', 'slug', 'categories'])
-                // Ranked by their products in this category, not overall: a
-                // brand with one phone case and ten thousand other things is
-                // not a phone-case brand.
-                ->map(fn (BrandStat $stat) => [
-                    'brand' => $stat->brand,
-                    'slug' => $stat->slug,
-                    'count' => (int) (collect($stat->categories)->firstWhere('category', $category)['count'] ?? 0),
-                ])
-                ->sortByDesc('count')
-                ->values()
-                ->all(),
+            fn (): array => self::brandsIn($context, $categories),
         );
 
-        $others = array_values(array_filter($candidates, fn (array $c) => ! isset($present[$c['slug']])));
+        /*
+         * In turns: the strongest brand of the first category, then of the
+         * second, then of the third, and round again. Summing the counts let
+         * the biggest category take every place, which is the narrow list
+         * this replaced.
+         */
+        $ordered = [];
+        $seen = $present;
 
-        if ($others === []) {
+        for ($round = 0; $round < 30; $round++) {
+            foreach ($byCategory as $brands) {
+                $brand = $brands[$round] ?? null;
+
+                if ($brand !== null && ! isset($seen[$brand['slug']])) {
+                    $seen[$brand['slug']] = true;
+                    $ordered[] = $brand['brand'];
+                }
+            }
+        }
+
+        if ($ordered === []) {
             return Value::nothing();
         }
 
-        $urls = app(BrandLinker::class)->urls(array_column($others, 'brand'), $context->market);
+        $urls = app(BrandLinker::class)->urls($ordered, $context->market);
         $links = [];
 
-        foreach ($others as $other) {
-            $url = $urls[mb_strtolower($other['brand'])] ?? null;
+        foreach ($ordered as $brand) {
+            $url = $urls[mb_strtolower($brand)] ?? null;
 
             if ($url !== null) {
-                $links[] = ['label' => $other['brand'], 'url' => $url];
+                $links[] = ['label' => $brand, 'url' => $url];
             }
 
             if (count($links) === self::LIMIT) {
@@ -138,5 +135,45 @@ final class OtherBrandLinks implements PlaceholderFunction
         }
 
         return Value::links($links);
+    }
+
+    /**
+     * Per category, its brands ranked by their products in that category, not
+     * overall: a brand with one phone case and ten thousand other things is
+     * not a phone-case brand. One query for all three categories.
+     *
+     * @param  list<string>  $categories
+     * @return array<string, list<array{brand: string, slug: string}>>
+     */
+    private static function brandsIn(PageContext $context, array $categories): array
+    {
+        $stats = BrandStat::query()
+            ->forMarket($context->market)
+            ->where(function ($query) use ($categories): void {
+                foreach ($categories as $category) {
+                    $query->orWhereJsonContains('categories', [['category' => $category]]);
+                }
+            })
+            ->orderByDesc('product_count')
+            ->limit(90)
+            ->get(['brand', 'slug', 'categories']);
+
+        $out = [];
+
+        foreach ($categories as $category) {
+            $out[$category] = $stats
+                ->map(fn (BrandStat $stat) => [
+                    'brand' => $stat->brand,
+                    'slug' => $stat->slug,
+                    'count' => (int) (collect($stat->categories)->firstWhere('category', $category)['count'] ?? 0),
+                ])
+                ->filter(fn (array $row) => $row['count'] > 0)
+                ->sortByDesc('count')
+                ->map(fn (array $row) => ['brand' => $row['brand'], 'slug' => $row['slug']])
+                ->values()
+                ->all();
+        }
+
+        return $out;
     }
 }

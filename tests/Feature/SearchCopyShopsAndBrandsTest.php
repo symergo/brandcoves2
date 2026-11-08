@@ -18,6 +18,7 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Pages\Context\ResultCategories;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
@@ -252,5 +253,45 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $this->assertTrue($item->isSavedSearch());
         $this->assertFalse((new WishlistItem(['source' => 'manual', 'snapshot_url' => 'https://www.bol.com/be/nl/p/x/1/']))->isSavedSearch());
         Queue::assertNotPushed(ReadItemLink::class);
+    }
+
+    #[Test]
+    public function other_brands_come_in_turns_from_the_top_three_categories(): void
+    {
+        // Two tablets and a laptop: tablet brands may not take every place.
+        $items = [$this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Laptop')];
+
+        foreach ([['Tabby', 'Tablet', 50], ['Slate', 'Tablet', 40], ['Lappo', 'Laptop', 30]] as [$brand, $category, $count]) {
+            BrandStat::create([
+                'market' => Market::BeNl->value, 'brand' => $brand, 'slug' => Str::slug($brand), 'aliases' => [$brand],
+                'product_count' => 100, 'categories' => [['category' => $category, 'count' => $count]],
+            ]);
+        }
+
+        $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, $items, 3, 'lenovo'))->items;
+
+        $this->assertSame(['Tabby', 'Lappo', 'Slate'], array_column($links, 'label'));
+    }
+
+    #[Test]
+    public function only_plain_category_names_are_printed_in_brackets(): void
+    {
+        $items = [
+            $this->group('Samsung', 'Tablet'), $this->group('Samsung', 'Tablet'),
+            // A brand in the name, and a feed's code: used for brands, never printed.
+            $this->group('Samsung', 'Samsung hoesjes'),
+            $this->group('Lego', 'LEGO (R) Bouwsets'),
+        ];
+
+        $this->assertSame(['tablet'], ResultCategories::shown($items));
+
+        // One laptop among the tablets is not named; two are.
+        $this->assertSame(['tablet'], ResultCategories::shown([...$items, $this->group('Samsung', 'Laptop')]));
+        // (A tie, two and two, sorts by name.)
+        $this->assertSame(['laptop', 'tablet'], ResultCategories::shown([...$items, $this->group('Samsung', 'Laptop'), $this->group('Samsung', 'Laptop')]));
+        $this->assertSame(' (tablet)', (new SearchContext(Market::BeNl, $items, 4, 'samsung'))->fact('result_categories'));
+
+        // None fit to print: empty, and the sentence still reads.
+        $this->assertSame('', (new SearchContext(Market::BeNl, [$this->group('Samsung', 'Samsung hoesjes')], 1, 'samsung'))->fact('result_categories'));
     }
 }

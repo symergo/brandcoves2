@@ -41,7 +41,15 @@ export default function PageNarrative({ narrative }: { narrative: Narrative }) {
 
     return (
         <div className="mt-16 border-t border-line pt-10">
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {/*
+              Cards of equal height, two to a row (owner, 2026-11-08: "make the
+              boxes stack more evenly"). Three columns left a short section
+              over a hole beside a long one, and newspaper columns balanced
+              four sections as one card beside two. The copy has four sections
+              most of the time, and two rows of two are even; each card takes
+              its row's height.
+            */}
+            <div className="grid gap-4 md:grid-cols-2">
                 {narrative.sections.map((section, i) => (
                     /*
                       Keyed by index, not by heading.
@@ -51,7 +59,7 @@ export default function PageNarrative({ narrative }: { narrative: Narrative }) {
                       reconciliation in a way that shows up as content swapping
                       between columns.
                     */
-                    <section key={i}>
+                    <section key={i} className="rounded-card border border-line bg-card p-5">
                         {section.heading !== '' && (
                             <h2 className="font-semibold">{section.heading}</h2>
                         )}

@@ -58,6 +58,12 @@ final readonly class Fact implements PlaceholderFunction
             // For "brands similar to :top_brand" (owner, 2026-11-08): a brand
             // found here, so the sentence names something on the page.
             new self('top_brand', 'The most frequent brand here', 'The brand most of these results carry.', 'Sony'),
+            // Read from the products on the page, so no query (2026-11-08).
+            // Carries its own brackets and leading space, and is never a reason
+            // to hide a sentence: write it straight after a word,
+            // ":top_brand:result_categories?", and with no category fit to
+            // print the sentence simply reads without it.
+            new self('result_categories', 'Categories of these results, in brackets', 'Up to three, as " (tablet, laptop)" with its leading space, only names that read as plain words. Empty when none do, and the sentence still shows.', ' (tablet, laptop)', Absence::Never),
             new self('shop', 'The leading shop', 'The one carrying most of this brand.', 'Coolblue'),
             new self('category', 'The leading category', 'What this brand mostly makes here.', 'Koptelefoons'),
             new self('categories', 'Categories, as words', 'What the brand appears in, most first.', 'Koptelefoons, speakers en soundbars'),
