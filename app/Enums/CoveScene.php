@@ -241,6 +241,58 @@ enum CoveScene: string
     /** A month on the wall with one day ringed. */
     case CalendarDay = 'calendar_day';
 
+    /*
+    |--------------------------------------------------------------------------
+    | Added 2026-11-08 — people and occasions
+    |--------------------------------------------------------------------------
+    |
+    | Drawn with the colour (see `SceneIllustration`). Every persona that was
+    | not an interest — the relation personas, new parents, the cat person,
+    | the home worker — fell back to `someone`, so a third of `/gift-ideas`
+    | was the same featureless figure.
+    */
+
+    case Cat = 'cat';
+    case Partner = 'partner';
+    case Mum = 'mum';
+    case Dad = 'dad';
+    case Child = 'child';
+    case Baby = 'baby';
+    case Grandparents = 'grandparents';
+    case Siblings = 'siblings';
+    case Friend = 'friend';
+    case Colleague = 'colleague';
+    case Host = 'host';
+    case Teacher = 'teacher';
+    case HomeOffice = 'home_office';
+    case BuildingBlocks = 'building_blocks';
+    case Crafts = 'crafts';
+    case Student = 'student';
+    case Graduation = 'graduation';
+    case SmartHome = 'smart_home';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Added 2026-11-08 — subjects
+    |--------------------------------------------------------------------------
+    |
+    | The seasonal guides and the advice articles written after the first
+    | twelve, which all showed the generic `article` sheet.
+    */
+
+    case Sinterklaas = 'sinterklaas';
+    case GiftCard = 'gift_card';
+    case Halloween = 'halloween';
+    case Costume = 'costume';
+    case ChristmasMarket = 'christmas_market';
+    case WishList = 'wish_list';
+    case Repair = 'repair';
+    case PrivateSale = 'private_sale';
+    case Subscription = 'subscription';
+    case LateDelivery = 'late_delivery';
+    case Payment = 'payment';
+    case TrustMark = 'trust_mark';
+
     /**
      * Pages of an article, and nothing saying which one.
      *
@@ -293,6 +345,36 @@ enum CoveScene: string
             self::Letter => 'A letter',
             self::PlantCutting => 'Plant cutting',
             self::CalendarDay => 'A day set aside',
+            self::Cat => 'Cats',
+            self::Partner => 'A partner',
+            self::Mum => 'Mum',
+            self::Dad => 'Dad',
+            self::Child => 'A child',
+            self::Baby => 'A baby, new parents',
+            self::Grandparents => 'Grandparents',
+            self::Siblings => 'Brother or sister',
+            self::Friend => 'A friend',
+            self::Colleague => 'A colleague',
+            self::Host => 'A host',
+            self::Teacher => 'A teacher',
+            self::HomeOffice => 'Working from home',
+            self::BuildingBlocks => 'Building bricks',
+            self::Crafts => 'Crafts and making',
+            self::Student => 'A student',
+            self::Graduation => 'Graduation',
+            self::SmartHome => 'Smart home',
+            self::Sinterklaas => 'Sinterklaas',
+            self::GiftCard => 'Gift cards',
+            self::Halloween => 'Halloween',
+            self::Costume => 'Dressing up',
+            self::ChristmasMarket => 'Christmas markets',
+            self::WishList => 'Wish lists',
+            self::Repair => 'Repair',
+            self::PrivateSale => 'Buying from a private seller',
+            self::Subscription => 'Subscriptions and trials',
+            self::LateDelivery => 'Late delivery',
+            self::Payment => 'Paying safely',
+            self::TrustMark => 'Trust marks',
             self::Article => 'No particular subject',
         };
     }
@@ -338,6 +420,10 @@ enum CoveScene: string
                 self::Dog, self::Photography, self::Diy, self::Outdoors,
                 self::Gardening, self::Plants, self::Music, self::Reading,
                 self::Gaming, self::Fitness, self::Travel, self::Baking,
+                self::Cat, self::Partner, self::Mum, self::Dad, self::Child,
+                self::Baby, self::Grandparents, self::Siblings, self::Friend,
+                self::Colleague, self::Host, self::Teacher, self::HomeOffice,
+                self::BuildingBlocks, self::Crafts, self::Student, self::SmartHome,
                 self::Someone,
             ],
             // The drawings that suit a day or a gesture, rather than a person.
@@ -345,6 +431,9 @@ enum CoveScene: string
                 self::CalendarDay, self::Letter, self::Someone, self::MoneyGift,
                 self::Handmade, self::PlantCutting, self::Gardening, self::Cooking,
                 self::Baking, self::Travel,
+                self::Mum, self::Dad, self::Baby, self::Partner, self::Graduation,
+                self::Host, self::Colleague, self::Friend, self::Teacher,
+                self::Sinterklaas, self::ChristmasMarket, self::Halloween, self::GiftCard,
             ],
             CoveKind::Guide, CoveKind::Seasonal, CoveKind::Advice => [
                 self::Rights, self::PriceHistory, self::Seller, self::Reviews,
@@ -353,6 +442,9 @@ enum CoveScene: string
                 self::MoneyGift, self::Handmade,
                 self::MoneyTree, self::FoldedNote, self::CoinJar, self::TreasureMap,
                 self::CouponBook, self::Letter, self::PlantCutting, self::CalendarDay,
+                self::Sinterklaas, self::GiftCard, self::Halloween, self::Costume,
+                self::ChristmasMarket, self::WishList, self::Repair, self::PrivateSale,
+                self::Subscription, self::LateDelivery, self::Payment, self::TrustMark,
                 self::Article,
             ],
             CoveKind::Daily, CoveKind::Shop, CoveKind::Brand => [],

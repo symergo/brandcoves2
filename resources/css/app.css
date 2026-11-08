@@ -144,6 +144,28 @@
      */
     --color-danger: #a3123a;
 
+    /*
+     * The colours of the Cove drawings (`SceneIllustration`), 2026-11-08.
+     *
+     * The drawings were ink lines with a 10% wash of the accent; the owner
+     * asked for colour and chose flat fills on the plain card, without a tinted
+     * tile behind them. The site's own red, orange, gold, apricot and cream,
+     * plus a blue, a mint, a brown and kraft paper, so a dog, a coffee bean and
+     * a parcel can each be the colour they are. `ill-ink` is the outline: one
+     * fixed colour, so a drawing no longer follows the text colour of its card.
+     */
+    --color-ill-ink: #24170f;
+    --color-ill-red: #e4513b;
+    --color-ill-orange: #f28c28;
+    --color-ill-gold: #f2c94c;
+    --color-ill-apricot: #ffd9a8;
+    --color-ill-mint: #8fd0a9;
+    --color-ill-green: #0e7a4c;
+    --color-ill-sky: #8ec5ea;
+    --color-ill-cocoa: #8a5a3c;
+    --color-ill-kraft: #e3ad72;
+    --color-ill-cream: #fff7ee;
+
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
     /*

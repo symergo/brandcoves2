@@ -49,6 +49,7 @@ interface Props {
         url: string
         itemCount: number
         searchVolume: number
+        scene: SceneKey
     } | null
     /** The Gift Cove, the other personas, and more of what this one is about. */
     rail: Rail
@@ -255,17 +256,20 @@ export default function Persona({
                     <PersonaTopTen top={topTen} />
 
                     {guide && (
-                        <section className="mt-10 rounded-lg border border-line p-5">
-                            <h2 className="text-sm font-medium text-ink-soft">{t('daily.guide_title')}</h2>
-                            <Link href={guide.url} className="mt-2 block text-lg font-medium hover:underline">
-                                {guide.title}
-                            </Link>
-                            {guide.intro && <p className="mt-2 text-ink-soft">{guide.intro}</p>}
-                            {guide.searchVolume > 0 && (
-                                <p className="mt-2 text-xs text-ink-soft">
-                                    {t('daily.guide_why', { count: n(guide.searchVolume) })}
-                                </p>
-                            )}
+                        <section className="mt-10 flex items-start gap-4 rounded-lg border border-line p-5">
+                            <SceneIllustration name={guide.scene} className="h-16 w-22 shrink-0 sm:h-20 sm:w-28" />
+                            <div className="min-w-0">
+                                <h2 className="text-sm font-medium text-ink-soft">{t('daily.guide_title')}</h2>
+                                <Link href={guide.url} className="mt-2 block text-lg font-medium hover:underline">
+                                    {guide.title}
+                                </Link>
+                                {guide.intro && <p className="mt-2 text-ink-soft">{guide.intro}</p>}
+                                {guide.searchVolume > 0 && (
+                                    <p className="mt-2 text-xs text-ink-soft">
+                                        {t('daily.guide_why', { count: n(guide.searchVolume) })}
+                                    </p>
+                                )}
+                            </div>
                         </section>
                     )}
                 </div>

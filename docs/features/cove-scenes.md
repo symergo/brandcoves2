@@ -1,9 +1,31 @@
 ---
 name: Cove scenes
 area: Content / Frontend
-status: Active — 38 scenes; personas, articles, and figures inside articles
+status: Active — 68 scenes, in colour since 2026-11-08; personas, articles, and figures inside articles
 date_added: 2026-09-05
 ---
+
+> **2026-11-08: colour, and thirty more.** At the owner's request the drawings went from ink lines
+> with a 10% accent wash to flat colour fills (`--color-ill-*` in `app.css`: the site's red, orange,
+> gold, apricot and cream plus a blue, a mint, a green, a brown and kraft paper), with one fixed ink
+> outline (`stroke-ill-ink`). A preview compared fills on a tinted tile per theme against fills on
+> the plain card; the owner chose the plain card. Consequences:
+>
+> - The outline no longer follows the card's text colour, so the old `text-ink-soft
+>   group-hover:text-accent` on the drawings does nothing now; the card's own hover carries it.
+> - Each shape is drawn once with its fill, instead of a wash and then the same outline.
+> - Thirty scenes were added for the Coves that fell back to `someone` or `article`: people
+>   (`cat`, `partner`, `mum`, `dad`, `child`, `baby`, `grandparents`, `siblings`, `friend`,
+>   `colleague`, `host`, `teacher`, `home_office`, `building_blocks`, `crafts`, `student`,
+>   `graduation`, `smart_home`) and subjects (`sinterklaas`, `gift_card`, `halloween`, `costume`,
+>   `christmas_market`, `wish_list`, `repair`, `private_sale`, `subscription`, `late_delivery`,
+>   `payment`, `trust_mark`). `2026_11_08_000400_thirty_more_drawings_in_colour` widens the CHECK
+>   and froze the 38.
+> - The guide card on a Daily and on a persona page (`EditionPresenter::guide()`) now carries the
+>   guide's drawing too.
+>
+> Rendered at card size and at 64px before shipping, per the process below; the pumpkin's ribs
+> were moved off its face.
 
 # Cove scenes
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Cove;
 
+use App\Enums\CoveScene;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Support\CurrentMarket;
@@ -120,6 +121,10 @@ class EditionPresenter
             // honest answer to "why this guide" and because it is a fact only
             // this site has.
             'searchVolume' => $guide->source_volume,
+            // The guide's drawing, so its card carries the same mark as on
+            // /guides (owner, 2026-11-08). Resolved here, never null, as the
+            // guide shelf resolves it.
+            'scene' => ($guide->scene ?? CoveScene::defaultFor($guide->kind))->value,
         ];
     }
 }
