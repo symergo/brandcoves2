@@ -76,7 +76,7 @@ final class TermLinks implements PlaceholderFunction
         );
 
         return Value::links(array_map(fn (string $term) => [
-            'label' => $term,
+            'label' => $context->narrowLabel($term),
             'url' => $context->narrowUrl($term),
         ], $terms));
     }

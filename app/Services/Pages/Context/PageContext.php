@@ -71,6 +71,15 @@ abstract class PageContext
     abstract public function narrowUrl(string $term): string;
 
     /**
+     * The words a narrower-search link shows. The word alone by default; the
+     * search page shows the whole search the link runs (SearchContext).
+     */
+    public function narrowLabel(string $term): string
+    {
+        return $term;
+    }
+
+    /**
      * The scalar facts this page can state, keyed by placeholder name.
      *
      * @return array<string, string|int|null>

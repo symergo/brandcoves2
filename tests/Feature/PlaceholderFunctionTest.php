@@ -141,6 +141,24 @@ class PlaceholderFunctionTest extends TestCase
     }
 
     #[Test]
+    public function a_narrower_search_link_on_the_search_page_shows_the_whole_search(): void
+    {
+        // Owner, 2026-11-08: "koptelefoon draadloos", not "draadloos" alone,
+        // so the words say where the link goes.
+        $this->block('Kijk dan ook bij :term_links.');
+
+        $blocks = $this->render($this->context(['Aurex', 'Belka', 'Corvo']));
+        $links = collect($blocks[0]['parts'])->firstWhere('t', 'links');
+
+        $this->assertNotEmpty($links['items']);
+        foreach ($links['items'] as $link) {
+            $this->assertStringStartsWith('koptelefoon ', $link['label']);
+            // The link runs the search its words name.
+            $this->assertStringEndsWith('/'.str_replace(' ', '-', mb_strtolower($link['label'])), urldecode($link['url']));
+        }
+    }
+
+    #[Test]
     public function guide_links_name_our_published_reading_about_the_term(): void
     {
         // Owner, 2026-11-07: links to buying guides and other useful content in

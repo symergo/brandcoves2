@@ -48,6 +48,16 @@ final class SearchContext extends PageContext
         return SearchUrl::for($this->market, trim($this->term.' '.$term));
     }
 
+    /**
+     * The search the link runs, "koptelefoon draadloos", not the added word
+     * alone (owner, 2026-11-08). It says where the link goes, and it is the
+     * page's own words as anchor text, which a bare "draadloos" was not.
+     */
+    public function narrowLabel(string $term): string
+    {
+        return trim($this->term.' '.$term);
+    }
+
     protected function computeFacts(): array
     {
         $prices = $this->prices();
