@@ -761,7 +761,7 @@ return [
     'search_copy' => [
         'save_search' => 'Put :term on a gift list',
         // The list item a saved search becomes; links to the results.
-        'saved_title' => ':term search results',
+        'saved_title' => ':term offers',
     ],
 
     'footer' => [

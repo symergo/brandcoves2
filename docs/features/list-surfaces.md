@@ -764,7 +764,24 @@ the whole list arrives at who it belongs to. Both are omitted for the owner, who
 anonymous owner, who has no name to give. The initial is drawn from the name; the site keeps no
 photos of people.
 
-## The item card is a tile on a phone (2026-09-08)
+## The item card is a row at every width (2026-11-08)
+
+The owner reversed the tile below: "the items on the lists on small screen view should also be
+horizontal rows, not big pictures with small text below". `ListItemCard` is now the desktop row
+everywhere: a 64px thumbnail (80px from `lg`), up to three lines of title and the price, the controls
+at the end. Lists show one column on a phone; the shared list keeps two columns from `lg`. The cost,
+said at the time: a picture a quarter of the size on a phone, and longer lists to scroll; the gain is
+a title you can read.
+
+**Without a picture** the title and the controls sit in the middle of the row's height, not at its
+top.
+
+**A saved search** (an item linking to one of our own search pages, `WishlistItem::isSavedSearch()`,
+saved from "Zet lenovo op een cadeaulijst" under the search results) shows the duotone search icon
+where the picture goes, no tile behind it (design-system.md), and its title "Lenovo aanbiedingen"
+opens the results in the same tab, since it is this site.
+
+## The item card is a tile on a phone (2026-09-08, replaced 2026-11-08)
 
 On a phone the row that works on a desktop did not: thumbnail, three lines of title and the
 save control side by side in 390px left the title 141px and the picture a smudge. Three fixes in

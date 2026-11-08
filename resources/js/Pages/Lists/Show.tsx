@@ -35,6 +35,8 @@ interface Item {
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
     buyUrl?: string | null
+    /** Links to one of our own search pages: drawn as a saved search. */
+    search?: boolean
     /** Typed by somebody rather than saved from the catalogue, so its title,
      *  link and price are theirs to correct. */
     manual: boolean
@@ -509,7 +511,7 @@ export default function ListShow({
                       the product half; the actions stay here, because the
                       owner's are genuinely not the visitor's.
                     */}
-                    <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4">
+                    <ul className="mt-3 grid gap-3 sm:gap-4">
                         {items.map((item) => (
                             <ListItemCard
                                 key={item.id}
@@ -524,6 +526,7 @@ export default function ListShow({
                                 url={item.url}
                                 externalUrl={item.externalUrl}
                                 buyUrl={item.buyUrl}
+                                search={item.search}
                                 note={item.note}
                                 price={item.currentPrice}
                                 was={item.price}

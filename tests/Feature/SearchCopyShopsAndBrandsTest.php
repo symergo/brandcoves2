@@ -206,7 +206,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $this->assertSame('save', $value->toPart()['t']);
         $this->assertSame([
             'label' => 'Zet lenovo op een cadeaulijst',
-            'title' => 'Lenovo zoekresultaten',
+            'title' => 'Lenovo aanbiedingen',
             'url' => url('/be-nl/zoek/lenovo'),
         ], $value->items[0]);
     }
@@ -245,9 +245,12 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         ])->assertOk();
 
         $item = WishlistItem::query()->where('wishlist_id', $list->id)->sole();
-        $this->assertSame('Lenovo zoekresultaten', $item->snapshot_title);
+        $this->assertSame('Lenovo aanbiedingen', $item->snapshot_title);
         $this->assertSame(url('/be-nl/zoek/lenovo'), $item->externalUrl());
         $this->assertNull($item->link_status);
+        // Drawn on the list as a saved search, with the search icon.
+        $this->assertTrue($item->isSavedSearch());
+        $this->assertFalse((new WishlistItem(['source' => 'manual', 'snapshot_url' => 'https://www.bol.com/be/nl/p/x/1/']))->isSavedSearch());
         Queue::assertNotPushed(ReadItemLink::class);
     }
 }

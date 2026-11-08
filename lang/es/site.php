@@ -614,7 +614,7 @@ return [
     'search_copy' => [
         'save_search' => 'Pon :term en una lista de regalos',
         // The list item a saved search becomes; links to the results.
-        'saved_title' => 'Resultados de búsqueda de :term',
+        'saved_title' => 'Ofertas de :term',
     ],
 
     'footer' => [

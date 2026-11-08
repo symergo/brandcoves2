@@ -15,7 +15,7 @@ use App\Support\SearchUrl;
  * Not a link but the site's Save, drawn as words: the same list choice,
  * sign-in when signed out and confirmation with Undo as every other save
  * (`SaveToList`). What is saved is a hand-written item called "Lenovo
- * zoekresultaten" (`site.search_copy.saved_title`), carrying this search's
+ * aanbiedingen" (`site.search_copy.saved_title`), carrying this search's
  * address, so whoever opens the list lands on the same
  * comparison. ItemSaver does not read that page, as it does a shop's: it is
  * ours.
@@ -70,7 +70,7 @@ final class SaveSearchLink implements PlaceholderFunction
 
         return Value::save(
             __('site.search_copy.save_search', ['term' => $term], $context->market->language()),
-            // "Lenovo zoekresultaten" (owner, 2026-11-08): what the list
+            // "Lenovo aanbiedingen" (owner, 2026-11-08): what the list
             // shows, and the link goes to these results.
             self::capitalised(__('site.search_copy.saved_title', ['term' => $term], $context->market->language())),
             url(SearchUrl::for($context->market, $term)),

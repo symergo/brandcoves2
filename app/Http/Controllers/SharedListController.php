@@ -562,6 +562,7 @@ class SharedListController extends Controller
                 // The same address as the link a reader follows: tracked when the
                 // shop is one of ours. externalUrl stays the shop's own, for editing.
                 'buyUrl' => $item->trackedExternalUrl(),
+                'search' => $item->isSavedSearch(),
 
                 'inStock' => $item->group?->in_stock ?? false,
 

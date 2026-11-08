@@ -30,6 +30,8 @@ interface Item {
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
     buyUrl?: string | null
+    /** Links to one of our own search pages: drawn as a saved search. */
+    search?: boolean
     inStock: boolean
     /**
      * Absent — not null — for anybody who may not see claims, which on a wish
@@ -535,7 +537,7 @@ export default function SharedList({
                       a tally under it. A third statement of the same thing, in
                       a grey line between them, was the one nobody needed.
                     */}
-                    <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-2">
+                    <ul className="mt-6 grid gap-3 sm:gap-4 lg:grid-cols-2">
                         {ordered.map((item) => (
                             <ListItemCard
                                 key={item.id}
@@ -544,6 +546,7 @@ export default function SharedList({
                                 url={item.url}
                                 externalUrl={item.externalUrl}
                                 buyUrl={item.buyUrl}
+                                search={item.search}
                                 note={item.note}
                                 price={item.price}
                                 market={market}

@@ -9,6 +9,7 @@ use App\Services\Affiliate\MerchantLinks;
 use App\Services\Images\ImageStore;
 use App\Services\PageReading\LinkRouter;
 use App\Services\Wishlist\ItemLinker;
+use App\Support\SearchUrl;
 use Database\Factories\WishlistItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -200,6 +201,24 @@ class WishlistItem extends Model
      * the shop is one we are registered with (owner, 2026-11-07, see
      * MerchantLinks). Only for the link itself: the edit form and the job
      * that reads the page keep externalUrl(), the shop's own address.
+     */
+    public function isSavedSearch(): bool
+    {
+        $url = $this->externalUrl();
+
+        if ($url === null || ! self::isOwnUrl($url)) {
+            return false;
+        }
+
+        // /{market}/zoek/lenovo, /{market}/recherche/..., or /{market}/search?q=...
+        $segments = explode('/', trim((string) parse_url($url, PHP_URL_PATH), '/'));
+
+        return in_array($segments[1] ?? null, [...SearchUrl::segments(), 'search'], true);
+    }
+
+    /**
+     * The link to follow for a hand-written item, as an affiliate link when it
+     * goes to a shop we are registered with.
      */
     public function trackedExternalUrl(): ?string
     {

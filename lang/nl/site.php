@@ -618,7 +618,7 @@ return [
     'search_copy' => [
         'save_search' => 'Zet :term op een cadeaulijst',
         // The list item a saved search becomes; links to the results.
-        'saved_title' => ':term zoekresultaten',
+        'saved_title' => ':term aanbiedingen',
     ],
 
     'footer' => [
