@@ -327,7 +327,9 @@ negative checks in `SeoTest::the_sitemap_does_not_list_product_pages`, `PopularS
 
 **The home page is back, since 2026-11-08**: one URL per market file, `/{market}`, priority 1.0,
 daily, with its alternates. See "Plain links to the twins" above for why. Test:
-`LanguageLinksTest::each_market_sitemap_submits_its_home_page_with_its_alternates`.
+`LanguageLinksTest::each_market_sitemap_submits_its_home_page_with_its_alternates`. The help pages
+came back the same day (owner: "keep help in"): `/help`, `/search-help`, `/lists-help` and its
+ten topic pages, priority 0.4, monthly. The legal pages stay out.
 
 **Product pages are not listed, since 2026-09-18.** The owner's decision. What
 is submitted is the editorial surface: the home page, the Coves, the guides, the

@@ -57,5 +57,11 @@ class LanguageLinksTest extends TestCase
 
         $this->assertStringContainsString('<loc>'.url('/be-fr').'</loc>', $xml);
         $this->assertStringContainsString('hreflang="nl-BE" href="'.url('/be-nl').'"', $xml);
+
+        // The help pages too ("keep help in"), and still no legal page.
+        foreach (['/be-fr/help', '/be-fr/search-help', '/be-fr/lists-help', '/be-fr/lists-help/sharing'] as $path) {
+            $this->assertStringContainsString('<loc>'.url($path).'</loc>', $xml);
+        }
+        $this->assertStringNotContainsString('/be-fr/privacy', $xml);
     }
 }

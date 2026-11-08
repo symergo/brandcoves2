@@ -117,6 +117,20 @@ class SitemapController extends Controller
                     'changefreq' => 'daily',
                 ];
 
+                /*
+                 * The help pages, back the same day (owner, 2026-11-08: "keep
+                 * help in"): how it works, the search tips, and the lists help
+                 * with one page per topic. Legal pages stay out. Monthly: they
+                 * change when a feature does.
+                 */
+                foreach (['help', 'search-help', 'lists-help', ...array_map(fn (string $topic) => "lists-help/{$topic}", ListHelpController::TOPICS)] as $path) {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/{$path}"),
+                        'priority' => '0.4',
+                        'changefreq' => 'monthly',
+                    ];
+                }
+
                 // Every past Daily edition, newest first. A past edition never
                 // changes, and saying so stops a crawler re-fetching ninety
                 // static pages a day.
