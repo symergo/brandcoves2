@@ -109,6 +109,7 @@ export default function SignInDialog({
     return (
         <dialog
             ref={ref}
+            aria-labelledby="sign-in-title"
             onClose={onClose}
             // Escape and the backdrop both close it; without this the `open`
             // prop and the element disagree the moment somebody presses Escape.
@@ -134,7 +135,12 @@ export default function SignInDialog({
             // Full screen on a phone, like every popup (owner, 2026-10-06; see Modal).
             className="m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto bg-cream p-6 sm:bg-card backdrop:bg-ink/40 sm:m-auto sm:h-fit sm:max-h-[calc(100dvh-2rem)] sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-card sm:border sm:border-line"
         >
-            <h2 className="text-lg font-semibold">{t('auth.title')}</h2>
+            {/* Named by aria-labelledby, not a heading (2026-11-08): the closed
+                dialog is in every page's HTML, and "Inloggen" was a heading on
+                every page Google read. */}
+            <p id="sign-in-title" className="text-lg font-semibold">
+                {t('auth.title')}
+            </p>
             {/* A page's own reason to sign in, when it gave one. The general
                 line ("we send you a link") went on 2026-10-25 (owner): the
                 email form says it now, where it applies. */}

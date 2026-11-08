@@ -769,7 +769,10 @@ export default function Search({
                                     }
                                 >
                                     <div className="flex items-center justify-between lg:hidden">
-                                        <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
+                                        {/* A label, not a heading (2026-11-08): Google reads a page's
+                                            headings as what it is about, and "Filters en
+                                            sorteren" said nothing about lenovo. */}
+                                        <p className="font-medium">{t('search.filters_and_sort')}</p>
                                         <button
                                             type="button"
                                             onClick={() => setFiltersOpen(false)}
@@ -1537,10 +1540,17 @@ function Facet({
         </span>
     )
 
+    /*
+      The group's name ("Merk", "Winkel") is a label, not a heading
+      (2026-11-08). Search engines read a page's headings as what the page is
+      about; the content's own headings ("Lenovo prijzen vergelijken") say
+      that, and "Merk" did not. The button keeps aria-expanded, so a screen
+      reader still hears a group that opens and closes.
+    */
     return (
         <div>
             {collapsible ? (
-                <h2>
+                <div>
                     <button
                         type="button"
                         className="flex w-full items-center justify-between gap-2 py-1 text-left font-medium"
@@ -1554,12 +1564,12 @@ function Facet({
                         </span>
                         <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${open ? 'rotate-180' : ''}`} />
                     </button>
-                </h2>
+                </div>
             ) : (
-                <h2 className="py-1 font-medium">
+                <p className="py-1 font-medium">
                     {title}
                     {count}
-                </h2>
+                </p>
             )}
             <ul id={panelId} className="mt-2 space-y-1" hidden={!shown}>
                 {items.map((item) => (

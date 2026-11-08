@@ -221,6 +221,15 @@ brand; over that, the brand is what Google drops.
 added to `lang/en` and forgotten in `lang/nl` does not raise an error — it
 silently serves English copy into a Dutch market.
 
+## Interface labels are not headings (2026-11-08)
+
+A search page's headings were "Lenovo", then "Filters en sorteren", "Merk", "Winkel", the four content
+sections, and "Inloggen". Google reads headings as what a page is about, and five of those said nothing about
+lenovo. The filter panel's title and its group names ("Merk", "Winkel") are now plain labels; the group buttons
+keep `aria-expanded`. The sign-in dialog, which sits closed in every page's HTML, names itself through
+`aria-labelledby` instead of an `<h2>`. A search page now has its H1 and the copy's own section headings only.
+The by-shop view keeps a heading per shop: there the shop is what the section is about.
+
 ## hreflang and canonicals
 
 **Plain links to the twins, in the footer, since 2026-11-08.** Search Console reported
