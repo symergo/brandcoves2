@@ -85,6 +85,8 @@ added next year without touching a block, the schema or the admin.
 | `:term` `:brand` `:entity` `:count` `:shown` `:shops` `:comparable` `:reduced` `:percent` `:low` `:high` `:brands` `:shop` `:category` `:categories` | inline | text | Read off the products **on this page**, never the whole result set — a reader can check a claim about twenty-four visible products and cannot check one about four hundred they will never see. `:count` is the one exception and says so. |
 | `:brand_links` | inline | links | The brands in these results, each to its own page. Only brands that have one: a brand needs three products before it earns a page, and a link to a 404 from a sentence on every search page is the worst possible place for one. |
 | `:term_links` | inline | links | The vocabulary of the results, each to a narrower search. Also rendered as chips above the grid, so putting it in `above_grid` shows the same words twice. On the search page each link shows the whole search it runs, "koptelefoon draadloos" rather than "draadloos" (owner, 2026-11-08: it says where the link goes, and it is better anchor text); brand pages and shop Coves still show the word alone, since their links search inside the brand (`PageContext::narrowLabel()`). |
+| `:shop_links` | inline | links | The shops whose offers these results compare, the most offers first, at most six, each an affiliate link (`rel="sponsored nofollow"`, through `/go/`) to that shop's cheapest product here. A product rather than the shop's own search, because the catalogue does not know how each shop builds its search address (owner, 2026-11-08). |
+| `:other_brand_links` | inline | links | Other brands of this kind of product: the brands with the most products in the results' main category (`brand_stats.categories`), less the brands already in the results, at most six, each linked to its brand page. Cached ten minutes per category. |
 | `:guide_links` | inline | links | Our published buying guides, advice, seasonal guides, personas and occasions whose title or blurb matches the term (each word as a prefix, so Dutch compounds count), at most three, best first. Not the Daily Cove, which is dated. Nothing matching hides the sentence. Added 2026-11-07. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
 | `:search_link` `:brands_link` `:coves_link` `:guides_link` `:shops_link` `:gift_finder_link` `:search_help_link` | inline | links | Another part of the site, market-prefixed and labelled from the navigation's own strings. A hand-typed `/be-nl/coves` is right in one market and a 404 in four — and it is a 404 nobody notices. |
@@ -354,3 +356,20 @@ the bundle it started with.
 - **Reordering is drag-and-drop**, not the up/down buttons `CuratePlan` uses. Defensible because
   nothing is written until Save and a mis-drop is undone by reloading — but it is a divergence.
 - **`copy_templates` is still there**, unread, as of 2026-09-15; its drop is not yet scheduled.
+
+
+## The search copy, revised (2026-11-08)
+
+The owner's changes to the copy under the search results, in `2026_11_08_000100_search_copy_compares_shops_and_brands`
+for Dutch, English and French alike: the price section ("Prijzen voor :term") is switched off; ":term het
+goedkoopst kopen" is ":term prijzen vergelijken" and names its shops (`:shop_links`); "Kijk dan ook bij
+:term_links." is "Vergelijk dan de beste aanbiedingen voor :term_links.", whose links now read
+"koptelefoon draadloos" rather than "draadloos"; and an "Andere merken" section names `:other_brand_links`.
+The migration matches each block on its shipped wording, so a block an editor rewrote stays theirs.
+
+**A heading whose section came out empty is dropped** (`PageCopy::forRegion()`), since that day. A paragraph
+hides when its data is missing, and its heading used to stay behind with nothing under it ("Meer lezen over
+:term" with no guide to name). A heading followed by another heading, or by the end of the region, goes.
+
+Noted to the owner and left as asked: ":term vergelijken" and ":term prijzen vergelijken" are now two
+near-identical headings on one page. Tests: `SearchCopyShopsAndBrandsTest`.

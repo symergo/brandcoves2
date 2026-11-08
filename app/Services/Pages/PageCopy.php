@@ -119,7 +119,26 @@ class PageCopy
             }
         }
 
-        return $rendered;
+        /*
+         * A heading whose section came out empty goes too (2026-11-08). Its
+         * paragraph is hidden when its data is missing, "Meer lezen over
+         * :term" with no guide to name, and the heading used to stay behind
+         * with nothing under it. A heading followed by another heading, or by
+         * the end of the region, has no section.
+         */
+        $kept = [];
+
+        foreach ($rendered as $i => $block) {
+            $next = $rendered[$i + 1] ?? null;
+
+            if ($block['kind'] === PageBlock::HEADING && ($next === null || $next['kind'] === PageBlock::HEADING)) {
+                continue;
+            }
+
+            $kept[] = $block;
+        }
+
+        return $kept;
     }
 
     /**

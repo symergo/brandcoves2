@@ -43,7 +43,11 @@ final readonly class Value
     public const NOTHING = 'nothing';
 
     /**
-     * @param  list<array{label: string, url: string}>  $items
+     * A link item may carry `rel`: an affiliate link (`:shop_links`) is
+     * `sponsored nofollow`, and the page renders it as a plain <a> that leaves
+     * the site rather than an in-app visit.
+     *
+     * @param  list<array{label: string, url: string, rel?: string}>  $items
      */
     private function __construct(
         public string $type,

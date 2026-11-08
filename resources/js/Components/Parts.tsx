@@ -17,7 +17,7 @@ import { Link } from '@inertiajs/react'
 
 export type Part =
     | { t: 'text'; v: string }
-    | { t: 'links'; items: { label: string; url: string }[] }
+    | { t: 'links'; items: { label: string; url: string; rel?: string }[] }
     | { t: 'chips'; items: { label: string; url: string }[] }
 
 export type Paragraph = Part[]
@@ -77,15 +77,24 @@ function Chips({ items }: { items: { label: string; url: string }[] }) {
  * Punctuation stays out of here on purpose: the editor wrote the sentence and
  * knows whether it wants a comma, a full stop or nothing after the list.
  */
-function Links({ items }: { items: { label: string; url: string }[] }) {
+function Links({ items }: { items: { label: string; url: string; rel?: string }[] }) {
     return (
         <>
             {items.map((item, i) => (
                 <span key={item.url}>
                     {i > 0 && ', '}
-                    <Link href={item.url} className="underline hover:text-accent">
-                        {item.label}
-                    </Link>
+                    {/* An item with a rel is an affiliate link (`:shop_links`):
+                        it goes through the click-out redirect to a shop, so a
+                        plain <a> in a new tab, never an in-app visit. */}
+                    {item.rel ? (
+                        <a href={item.url} rel={`${item.rel} noopener`} target="_blank" className="underline hover:text-accent">
+                            {item.label}
+                        </a>
+                    ) : (
+                        <Link href={item.url} className="underline hover:text-accent">
+                            {item.label}
+                        </Link>
+                    )}
                 </span>
             ))}
         </>

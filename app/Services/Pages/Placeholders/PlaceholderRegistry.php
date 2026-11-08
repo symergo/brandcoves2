@@ -42,6 +42,8 @@ final class PlaceholderRegistry
         BrandLinks::class,
         TermLinks::class,
         GuideLinks::class,
+        ShopLinks::class,
+        OtherBrandLinks::class,
     ];
 
     /** @var array<string, PlaceholderFunction>|null */
