@@ -8,7 +8,7 @@ use App\Services\Pages\Context\PageContext;
 use App\Support\SearchUrl;
 
 /**
- * "Zet :term op een cadeaulijst": saves this search to a list (owner,
+ * "Bewaar :term op je cadeaulijst": saves this search to a list (owner,
  * 2026-11-08: "make the latter a link that allows to save the search to a
  * wishlist").
  *
@@ -37,7 +37,7 @@ final class SaveSearchLink implements PlaceholderFunction
 
     public function help(): string
     {
-        return 'The words "Zet :term op een cadeaulijst" in the page\'s language, as a Save button: it puts this search on one of the visitor\'s lists.';
+        return 'The words "Bewaar :term op je cadeaulijst" in the page\'s language, as a Save button: it puts this search on one of the visitor\'s lists.';
     }
 
     public function level(): Level
@@ -52,7 +52,7 @@ final class SaveSearchLink implements PlaceholderFunction
 
     public function sample(): Value
     {
-        return Value::save('Zet koptelefoon op een cadeaulijst', 'Koptelefoon', '#');
+        return Value::save('Bewaar koptelefoon op je cadeaulijst', 'Koptelefoon', '#');
     }
 
     public function dependsOn(): array

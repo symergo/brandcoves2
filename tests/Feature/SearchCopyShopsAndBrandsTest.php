@@ -211,7 +211,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
 
         $this->assertSame('save', $value->toPart()['t']);
         $this->assertSame([
-            'label' => 'Zet lenovo op een cadeaulijst',
+            'label' => 'Bewaar lenovo op je cadeaulijst',
             'title' => 'Lenovo aanbiedingen',
             'url' => url('/be-nl/zoek/lenovo'),
         ], $value->items[0]);

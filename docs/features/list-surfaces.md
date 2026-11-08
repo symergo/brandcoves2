@@ -777,7 +777,7 @@ a title you can read.
 top.
 
 **A saved search** (an item linking to one of our own search pages, `WishlistItem::isSavedSearch()`,
-saved from "Zet lenovo op een cadeaulijst" under the search results) shows the duotone search icon
+saved from "Bewaar lenovo op je cadeaulijst" under the search results) shows the duotone search icon
 where the picture goes, no tile behind it (design-system.md), and its title "Lenovo aanbiedingen"
 opens the results in the same tab, since it is this site.
 

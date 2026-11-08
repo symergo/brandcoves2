@@ -109,8 +109,8 @@ export default function Parts({ parts }: { parts: Paragraph }) {
             {parts.map((part, i) => {
                 if (part.t === 'text') return <span key={i}>{part.v}</span>
                 if (part.t === 'links') return <Links key={i} items={part.items} />
-                // The site's Save, drawn as the sentence's own words: "Zet
-                // lenovo op een cadeaulijst" saves this search to a list.
+                // The site's Save, drawn as the sentence's own words: "Bewaar
+                // lenovo op je cadeaulijst" saves this search to a list.
                 if (part.t === 'save')
                     return part.items.map((item) => <SaveToList key={item.url} url={item.url} title={item.title} words={item.label} />)
                 return <Chips key={i} items={part.items} />

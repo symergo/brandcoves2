@@ -612,7 +612,7 @@ return [
 
     // The search page's copy below the results (`:save_search_link`).
     'search_copy' => [
-        'save_search' => 'Pon :term en una lista de regalos',
+        'save_search' => 'Guarda :term en tu lista de regalos',
         // The list item a saved search becomes; links to the results.
         'saved_title' => 'Ofertas de :term',
     ],
@@ -2447,7 +2447,7 @@ return [
         'coves_body4' => 'Pulsa Guardar en una Cove y elige. Guardar en Mis Coves la deja en Mis Coves, en Guardadas; se mantiene al día con la Cove. Hacerla mi lista copia sus productos en una lista tuya, que puedes cambiar a tu gusto. Es el mismo botón Guardar que en un producto.',
         'find_title' => 'Encontrar cosas',
         'find_search' => 'Busca por nombre, marca o tipo de cosa, o di para quién es: «regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros». Miramos en muchas tiendas a la vez y comparamos sus precios. Ves al momento lo que ya conocemos; si encontramos poco, miramos después también en las propias tiendas, y sus productos se añaden abajo.',
-        'find_search_results' => 'En la página de resultados, primero aparecen las Coves sobre lo que buscaste. Los filtros y el orden están detrás del botón Filtros, y cada filtro activo se muestra como una etiqueta que puedes quitar. Debajo de un producto ves cuántas personas lo tienen en una lista y en cuántas Coves está: solo un número, nunca quién. Abajo, Pon … en una lista de regalos guarda la búsqueda en una lista, para que quien la abra vea la misma comparación.',
+        'find_search_results' => 'En la página de resultados, primero aparecen las Coves sobre lo que buscaste. Los filtros y el orden están detrás del botón Filtros, y cada filtro activo se muestra como una etiqueta que puedes quitar. Debajo de un producto ves cuántas personas lo tienen en una lista y en cuántas Coves está: solo un número, nunca quién. Abajo, Guarda … en tu lista de regalos guarda la búsqueda en una lista, para que quien la abra vea la misma comparación.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
         'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. El botón de país e idioma de arriba (en el menú, en un móvil) lo cambia cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
         'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, quién es, como tu pareja o un compañero de trabajo, o tú mismo. Luego eliges cómo buscar: desliza entre regalos y pon directamente en la lista lo que quieras, responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. O pregunta a alguien: a los demás, o a la propia persona, con su propio enlace donde juega a Esto o aquello, propone regalos o comparte una lista de deseos. Cada camino menos esos dos últimos termina en la misma página de ideas, con ideas sin tienda, Coves que hicieron otros y, al final, Pregunta a otras personas.',

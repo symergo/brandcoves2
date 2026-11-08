@@ -96,7 +96,7 @@ export default function SaveToList({
 }: {
     /**
      * Drawn as these words inside a sentence instead of as the button
-     * (`:save_search_link`, "Zet lenovo op een cadeaulijst", 2026-11-08).
+     * (`:save_search_link`, "Bewaar lenovo op je cadeaulijst", 2026-11-08).
      * Same save, same sheet, same toast.
      */
     words?: string
