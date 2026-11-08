@@ -40,6 +40,9 @@ final readonly class Value
 
     public const CHIPS = 'chips';
 
+    /** A Save button drawn as words; `items` holds one {label, title, url}. */
+    public const SAVE = 'save';
+
     public const NOTHING = 'nothing';
 
     /**
@@ -72,6 +75,12 @@ final readonly class Value
         return $items === [] ? self::nothing() : new self(self::CHIPS, items: $items);
     }
 
+    /** The site's Save for a search, drawn as the words `$label`. */
+    public static function save(string $label, string $title, string $url): self
+    {
+        return new self(self::SAVE, items: [['label' => $label, 'title' => $title, 'url' => $url]]);
+    }
+
     public static function nothing(): self
     {
         return new self(self::NOTHING);
@@ -96,7 +105,7 @@ final readonly class Value
     /** Can this sit inside a sentence? */
     public function isInline(): bool
     {
-        return $this->type === self::TEXT || $this->type === self::LINKS;
+        return $this->type === self::TEXT || $this->type === self::LINKS || $this->type === self::SAVE;
     }
 
     /** @return array{t: string, v?: string, items?: list<array{label: string, url: string}>} */

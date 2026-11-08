@@ -5,21 +5,28 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Jobs\ReadItemLink;
 use App\Models\BrandStat;
 use App\Models\Merchant;
 use App\Models\PageBlock;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Models\User;
+use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
+use App\Services\Pages\Placeholders\SaveSearchLink;
 use App\Services\Pages\Placeholders\ShopLinks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -168,9 +175,11 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $nl = $bodies('nl');
         $this->assertSame(':term prijzen vergelijken', $nl[0]);
         $this->assertStringStartsWith('Je vergelijkt hier prijzen voor :term bij :shop_links', $nl[1]);
-        $this->assertContains('Zoek je merken die vergelijkbaar zijn met :top_brand? Kijk dan ook bij :other_brand_links.', $nl);
+        $this->assertContains('Zoek je alternatieve merken voor :top_brand? Bekijk dan de aanbiedingen en offertes van :other_brand_links.', $nl);
+        $this->assertContains('Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', $nl);
         $this->assertContains('Vergelijk dan de beste aanbiedingen voor :term_links.', $nl);
-        $this->assertCount(12, $nl);
+        $this->assertCount(11, $nl);
+        $this->assertNotContains('Je vindt hier :term van onder meer :brand_links.', $nl);
 
         // The owner's rule: nothing generic. Every sentence names something found.
         foreach ([...$nl, ...$bodies('en')] as $body) {
@@ -187,5 +196,58 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $context = new SearchContext(Market::BeNl, [$this->group('Belka'), $this->group('Aurex'), $this->group('aurex')], 3, 'koptelefoon');
 
         $this->assertSame('Aurex', $context->fact('top_brand'));
+    }
+
+    #[Test]
+    public function save_this_search_is_a_save_button_named_in_the_pages_language(): void
+    {
+        $value = (new SaveSearchLink)->resolve(new SearchContext(Market::BeNl, [], 0, 'lenovo'));
+
+        $this->assertSame('save', $value->toPart()['t']);
+        $this->assertSame([
+            'label' => 'Zet lenovo op een cadeaulijst',
+            'title' => 'Lenovo zoekresultaten',
+            'url' => url('/be-nl/zoek/lenovo'),
+        ], $value->items[0]);
+    }
+
+    #[Test]
+    public function a_list_item_linking_to_our_own_page_is_not_read_like_a_shops(): void
+    {
+        config(['app.url' => 'https://giftcoves.com', 'giftcoves.legacy_hosts' => ['brandcoves.com']]);
+
+        $this->assertTrue(WishlistItem::isOwnUrl('https://giftcoves.com/be-nl/zoek/lenovo'));
+        $this->assertTrue(WishlistItem::isOwnUrl('https://brandcoves.com/be-nl/zoek/lenovo'));
+        $this->assertFalse(WishlistItem::isOwnUrl('https://www.bol.com/be/nl/s/?searchtext=lenovo'));
+
+        // http is accepted for our own address only (a development machine).
+        config(['app.url' => 'http://localhost:8000']);
+        $this->assertTrue(WishlistItem::isSafeExternalUrl('http://localhost:8000/be-nl/zoek/lenovo'));
+        $this->assertFalse(WishlistItem::isSafeExternalUrl('http://www.bol.com/x'));
+        $this->assertFalse(WishlistItem::isSafeExternalUrl('javascript:alert(1)'));
+    }
+
+    #[Test]
+    public function saving_the_search_puts_its_results_on_the_list_without_reading_our_own_page(): void
+    {
+        Queue::fake();
+        config(['app.url' => 'http://localhost']);
+        $user = User::factory()->create();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'kind' => ListKind::Mine, 'title' => 'Camping', 'market' => Market::BeNl]);
+        $save = (new SaveSearchLink)->resolve(new SearchContext(Market::BeNl, [], 0, 'lenovo'))->items[0];
+
+        // What the button sends: a hand-written item with a title and a link.
+        $this->actingAs($user)->postJson('/be-nl/list-items', [
+            'source' => 'manual',
+            'url' => $save['url'],
+            'title' => $save['title'],
+            'wishlist_id' => $list->id,
+        ])->assertOk();
+
+        $item = WishlistItem::query()->where('wishlist_id', $list->id)->sole();
+        $this->assertSame('Lenovo zoekresultaten', $item->snapshot_title);
+        $this->assertSame(url('/be-nl/zoek/lenovo'), $item->externalUrl());
+        $this->assertNull($item->link_status);
+        Queue::assertNotPushed(ReadItemLink::class);
     }
 }

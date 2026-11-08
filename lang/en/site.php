@@ -757,6 +757,13 @@ return [
         'more' => 'Read more',
     ],
 
+    // The search page's copy below the results (`:save_search_link`).
+    'search_copy' => [
+        'save_search' => 'Put :term on a gift list',
+        // The list item a saved search becomes; links to the results.
+        'saved_title' => ':term search results',
+    ],
+
     'footer' => [
         'other_languages' => 'Also in',
         'affiliate' => 'We may earn a commission on purchases made through our links, it never changes what you pay.',
@@ -2711,7 +2718,7 @@ return [
         'coves_body4' => 'Press Save on a Cove and choose. Keep it in My Coves to find it again under My Coves, in Saved; it keeps up with the Cove as we change it. Make it my list copies its products into a list of your own, which is yours to change. It is the same Save button as on a product.',
         'find_title' => 'Finding things',
         'find_search' => 'Search by name, brand or kind of thing, or say who it is for: "gift for my sister who loves gardening, €30-€50". We look across many shops at once and compare their prices. You see what we already know at once; when we find little, we then also look at the shops themselves, and their products are added at the bottom.',
-        'find_search_results' => 'On the results page, Coves about what you searched come first. Filters and sorting sit behind the Filters button, and every filter that is on shows as a chip you can remove. Under a product you can see how many people keep it on a list and how many Coves hold it: a count only, never who.',
+        'find_search_results' => 'On the results page, Coves about what you searched come first. Filters and sorting sit behind the Filters button, and every filter that is on shows as a chip you can remove. Under a product you can see how many people keep it on a list and how many Coves hold it: a count only, never who. At the bottom, Put … on a gift list saves the search itself to a list, so whoever opens the list sees the same comparison.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The country and language button at the top (in the menu on a phone) changes it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
         'find_gift' => 'In Find a gift you first say who it is for: one of your people, who they are, like your partner or a colleague, or yourself. Then choose how to look: swipe through gifts and put what you want straight on the list, answer a few questions, choose between two things in This or that, or start from a type of person. Or ask somebody: other people, or the person themselves, on their own link where they play This or that, suggest gifts or share a wish list. Every way but those last two ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask others.',

@@ -92,7 +92,14 @@ export default function SaveToList({
     into,
     url,
     onSaved,
+    words,
 }: {
+    /**
+     * Drawn as these words inside a sentence instead of as the button
+     * (`:save_search_link`, "Zet lenovo op een cadeaulijst", 2026-11-08).
+     * Same save, same sheet, same toast.
+     */
+    words?: string
     /**
      * Told which list it landed in, for a page that shows that list beside the
      * button (`/for/{token}`'s ideas, above the person's own list) and has to
@@ -611,6 +618,7 @@ export default function SaveToList({
             label={saved ? t('save_button.saved_label') : destination}
             opensSheet={saved}
             expanded={open}
+            words={words}
         />
     )
 

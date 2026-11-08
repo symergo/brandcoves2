@@ -229,7 +229,8 @@ class PageRegionsTest extends TestCase
                 $value = $context->resolve($function);
 
                 $this->assertContains($value->type, [
-                    Value::TEXT, Value::LINKS, Value::CHIPS, Value::NOTHING,
+                    // SAVE since 2026-11-08 (:save_search_link), drawn by Parts.tsx.
+                    Value::TEXT, Value::LINKS, Value::CHIPS, Value::SAVE, Value::NOTHING,
                 ], "{$region->id()} — :{$function->name()} returned an unknown shape.");
             }
         }

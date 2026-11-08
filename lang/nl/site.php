@@ -614,6 +614,13 @@ return [
         'more' => 'Lees meer',
     ],
 
+    // The search page's copy below the results (`:save_search_link`).
+    'search_copy' => [
+        'save_search' => 'Zet :term op een cadeaulijst',
+        // The list item a saved search becomes; links to the results.
+        'saved_title' => ':term zoekresultaten',
+    ],
+
     'footer' => [
         // The footer's links to this page in the other markets.
         'other_languages' => 'Ook in',
@@ -2456,7 +2463,7 @@ return [
         'coves_body4' => 'Klik op Bewaar bij een Cove en kies. Bewaar in Mijn Coves en je vindt hem terug onder Mijn Coves, bij Bewaard; hij verandert mee als wij de Cove bijwerken. Maak er mijn lijst van zet de producten in een eigen lijst, die je zelf kunt aanpassen. Het is dezelfde Bewaar-knop als bij een product.',
         'find_title' => 'Dingen vinden',
         'find_search' => 'Zoek op naam, merk of soort ding, of zeg voor wie het is: "cadeau voor mijn zus die van tuinieren houdt, €30-€50". We kijken in veel winkels tegelijk en vergelijken hun prijzen. Je ziet meteen wat we al kennen; vinden we weinig, dan kijken we daarna ook bij de winkels zelf en komen hun producten er onderaan bij.',
-        'find_search_results' => 'Op de resultatenpagina staan eerst de Coves over wat je zocht. Filters en sorteren zitten achter de knop Filters, en elk filter dat aan staat zie je als een chip die je weghaalt. Onder een product zie je hoeveel mensen het op een lijst hebben en in hoeveel Coves het staat: alleen een aantal, nooit wie.',
+        'find_search_results' => 'Op de resultatenpagina staan eerst de Coves over wat je zocht. Filters en sorteren zitten achter de knop Filters, en elk filter dat aan staat zie je als een chip die je weghaalt. Onder een product zie je hoeveel mensen het op een lijst hebben en in hoeveel Coves het staat: alleen een aantal, nooit wie. Onderaan zet je met Zet … op een cadeaulijst de zoekopdracht zelf op een lijst, zodat wie de lijst opent dezelfde vergelijking ziet.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
         'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de knop voor land en taal bovenaan (op een telefoon in het menu) wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
         'find_gift' => 'In Cadeau vinden zeg je eerst voor wie het is: een van je mensen, wie het is, zoals je partner of een collega, of jezelf. Kies dan hoe je zoekt: swipe door cadeaus en zet wat je wilt meteen op de lijst, beantwoord een paar vragen, kies tussen twee dingen in Dit of dat, of begin bij een type persoon. Of vraag het iemand: aan anderen, of aan de persoon zelf, met een eigen link waar die Dit of dat speelt, cadeaus voorstelt of een verlanglijst deelt. Elke weg behalve die laatste twee eindigt op dezelfde pagina met ideeën, met daaronder ideeën zonder winkel, Coves die anderen maakten, en onderaan Vraag het aan anderen.',

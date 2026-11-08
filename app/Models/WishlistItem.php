@@ -152,7 +152,27 @@ class WishlistItem extends Model
 
         $scheme = parse_url(trim($url), PHP_URL_SCHEME);
 
-        return is_string($scheme) && strtolower($scheme) === 'https';
+        if (is_string($scheme) && strtolower($scheme) === 'https') {
+            return true;
+        }
+
+        // Our own address, whatever its scheme: a saved search (2026-11-08)
+        // carries this site's URL, which is http on a development machine.
+        // It cannot be a hostile link; the https rule is for other sites.
+        return is_string($scheme) && strtolower($scheme) === 'http' && self::isOwnUrl($url);
+    }
+
+    /** Whether a link points at this site, on its own host or a legacy one. */
+    public static function isOwnUrl(string $url): bool
+    {
+        $host = mb_strtolower((string) parse_url(trim($url), PHP_URL_HOST));
+        $own = array_filter([
+            parse_url((string) config('app.url'), PHP_URL_HOST),
+            config('giftcoves.canonical_host'),
+            ...(array) config('giftcoves.legacy_hosts'),
+        ]);
+
+        return $host !== '' && in_array($host, array_map('mb_strtolower', $own), true);
     }
 
     /**

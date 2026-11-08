@@ -43,12 +43,30 @@ const SaveButton = forwardRef<
         /** Set when the press opens the sheet, so it is announced as a popup. */
         expanded?: boolean
         opensSheet?: boolean
+        /** Drawn as these words, underlined like a link, inside a sentence. */
+        words?: string
     }
->(function SaveButton({ saved, onClick, compact = false, busy = false, label, expanded, opensSheet = false }, ref) {
+>(function SaveButton({ saved, onClick, compact = false, busy = false, label, expanded, opensSheet = false, words }, ref) {
     const { t } = useTranslations()
     const word = saved ? t('save_button.saved') : t('save_button.save')
 
     const popup = opensSheet ? { 'aria-haspopup': 'dialog' as const, 'aria-expanded': expanded ?? false } : {}
+
+    if (words !== undefined) {
+        return (
+            <button
+                ref={ref}
+                type="button"
+                onClick={onClick}
+                disabled={busy}
+                title={label}
+                {...popup}
+                className="inline underline hover:text-accent disabled:opacity-50"
+            >
+                {words}
+            </button>
+        )
+    }
 
     if (compact) {
         return (

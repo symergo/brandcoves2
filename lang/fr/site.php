@@ -611,6 +611,13 @@ return [
         'more' => 'En savoir plus',
     ],
 
+    // The search page's copy below the results (`:save_search_link`).
+    'search_copy' => [
+        'save_search' => 'Mettez :term sur une liste de cadeaux',
+        // The list item a saved search becomes; links to the results.
+        'saved_title' => 'Résultats de recherche pour :term',
+    ],
+
     'footer' => [
         'other_languages' => 'Aussi en',
         'affiliate' => 'Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
@@ -2442,7 +2449,7 @@ return [
         'coves_body4' => 'Cliquez sur Enregistrer sur une Cove et choisissez. Garder dans Mes Coves la range dans Mes Coves, sous Enregistrées ; elle suit nos mises à jour. En faire ma liste copie ses produits dans une liste à vous, que vous modifiez comme vous voulez. C’est le même bouton Enregistrer que sur un produit.',
         'find_title' => 'Trouver',
         'find_search' => 'Cherchez par nom, marque ou type de chose, ou dites pour qui c\'est : « cadeau pour ma sœur qui aime le jardinage, 30 à 50 € ». Nous regardons dans de nombreuses boutiques à la fois et comparons leurs prix. Vous voyez tout de suite ce que nous connaissons déjà ; si nous trouvons peu, nous regardons ensuite aussi chez les boutiques elles-mêmes, et leurs produits s’ajoutent en bas.',
-        'find_search_results' => 'Sur la page de résultats, les Coves sur ce que vous cherchez viennent d\'abord. Les filtres et le tri sont derrière le bouton Filtres, et chaque filtre actif s\'affiche en pastille que vous pouvez retirer. Sous un produit, vous voyez combien de personnes le gardent sur une liste et dans combien de Coves il se trouve : un nombre seulement, jamais qui.',
+        'find_search_results' => 'Sur la page de résultats, les Coves sur ce que vous cherchez viennent d\'abord. Les filtres et le tri sont derrière le bouton Filtres, et chaque filtre actif s\'affiche en pastille que vous pouvez retirer. Sous un produit, vous voyez combien de personnes le gardent sur une liste et dans combien de Coves il se trouve : un nombre seulement, jamais qui. En bas, Mettez … sur une liste de cadeaux enregistre la recherche elle-même dans une liste : qui ouvre la liste voit la même comparaison.',
         'find_scan' => 'Scannez un code-barres avec l\'appareil photo de votre téléphone pour voir le produit et son prix ailleurs.',
         'find_country' => 'Les prix et les boutiques dépendent de votre pays. Lors d\'une première visite, une barre en haut indique le pays choisi, avec les autres à un clic ; fermez-la pour le garder. Le bouton pays et langue en haut (dans le menu sur un téléphone) le change à tout moment. Nous retenons votre choix, et ouvrir le lien de quelqu\'un vers un autre pays ne le change pas.',
         'find_gift' => 'Dans « Trouver un cadeau », dites d’abord pour qui c’est : l’un de vos proches, qui c’est, comme votre partenaire ou un collègue, ou vous-même. Choisissez ensuite comment chercher : balayez des cadeaux et mettez directement sur la liste ce qui vous plaît, répondez à quelques questions, choisissez entre deux choses dans Ceci ou cela, ou partez d’un type de personne. Ou demandez à quelqu’un : aux autres, ou à la personne elle-même, avec son propre lien où elle joue à Ceci ou cela, propose des cadeaux ou partage une liste d’envies. Chaque chemin sauf ces deux derniers mène à la même page d’idées, avec des idées hors boutique, des Coves faites par d’autres, et tout en bas Demandez à d’autres.',

@@ -176,7 +176,10 @@ class ItemSaver
             // Kept for the nightly pass that joins it to its product once a
             // shop carries it. See LinkBarcodeItems.
             'gtin' => Gtin::normalise($gtin),
-            'link_status' => $url === null ? null : 'pending',
+            // Our own page (a saved search, 2026-11-08) is not read: the
+            // site would be fetching itself through Cloudflare to learn what
+            // it already knows. Its title says what it is.
+            'link_status' => $url === null || WishlistItem::isOwnUrl($url) ? null : 'pending',
             // Suggestions null this immediately afterwards, exactly as they do
             // for a catalogue save.
             'accepted_at' => now(),

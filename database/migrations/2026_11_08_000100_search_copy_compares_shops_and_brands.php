@@ -42,47 +42,42 @@ return new class extends Migration
     private const COPY = [
         'nl' => [
             ['heading', [], ':term prijzen vergelijken'],
-            ['paragraph', [], 'Je vergelijkt hier prijzen voor :term bij :shop_links, de goedkoopste aanbieding eerst. Via "Bekijk alle aanbiedingen" zie je wat elke winkel vraagt, en je koopt altijd bij de winkel zelf.'],
-            // Not opening on :term: the term is lowercase as typed, and a
-            // sentence would start with a small letter.
-            ['paragraph', ['has_brands'], 'Je vindt hier :term van onder meer :brand_links.'],
+            ['paragraph', [], 'Je vergelijkt hier prijzen voor :term bij :shop_links, de goedkoopste aanbieding eerst. Via "Bekijk alle aanbiedingen" zie je wat elke winkel vraagt.'],
             ['paragraph', ['has_discount'], 'Voor :term liggen :reduced prijzen nu lager dan de gewone prijs van de afgelopen 30 dagen, tot :percent% minder.'],
             ['heading', [], 'Merken zoals :top_brand'],
-            ['paragraph', [], 'Zoek je merken die vergelijkbaar zijn met :top_brand? Kijk dan ook bij :other_brand_links.'],
+            ['paragraph', [], 'Zoek je alternatieve merken voor :top_brand? Bekijk dan de aanbiedingen en offertes van :other_brand_links.'],
             ['heading', [], 'Meer lezen over :term'],
             ['paragraph', [], 'Lees ook :guide_links.'],
             ['heading', [], 'Zoek je iets specifiekers?'],
             ['paragraph', [], 'Vergelijk dan de beste aanbiedingen voor :term_links.'],
             ['heading', [], ':term als cadeau'],
-            ['paragraph', [], 'Is het voor iemand anders? Met :gift_finder_link krijg je ideeën op basis van wie het is en wat die graag doet, en in onze :guides_link lees je waar je op let.'],
+            ['paragraph', [], 'Wil je :term als cadeau geven of zelf krijgen? :save_search_link.'],
         ],
         'en' => [
             ['heading', [], 'Comparing :term prices'],
-            ['paragraph', [], 'Here you compare prices for :term at :shop_links, the cheapest offer first. "See all offers" shows what each shop asks, and you always buy from the shop itself.'],
-            ['paragraph', ['has_brands'], 'You will find :term here from brands such as :brand_links.'],
+            ['paragraph', [], 'Here you compare prices for :term at :shop_links, the cheapest offer first. "See all offers" shows what each shop asks.'],
             ['paragraph', ['has_discount'], 'For :term, :reduced prices are now below their usual price over the last 30 days, by up to :percent%.'],
             ['heading', [], 'Brands like :top_brand'],
-            ['paragraph', [], 'Looking for brands similar or comparable to :top_brand? Have a look at brands such as :other_brand_links.'],
+            ['paragraph', [], 'Looking for alternative brands to :top_brand? Then see the offers from :other_brand_links.'],
             ['heading', [], 'More to read about :term'],
             ['paragraph', [], 'See also :guide_links.'],
             ['heading', [], 'Looking for something more specific?'],
             ['paragraph', [], 'Then compare the best offers for :term_links.'],
             ['heading', [], ':term as a gift'],
-            ['paragraph', [], 'Is it for someone else? :gift_finder_link gives you ideas based on who they are and what they enjoy, and our :guides_link say what to look out for.'],
+            ['paragraph', [], 'Want to give :term as a gift, or get it yourself? :save_search_link.'],
         ],
         'fr' => [
             ['heading', [], 'Comparer les prix de :term'],
-            ['paragraph', [], 'Vous comparez ici les prix de :term chez :shop_links, l\'offre la moins chère d\'abord. « Voir toutes les offres » montre ce que demande chaque boutique, et vous achetez toujours auprès de la boutique elle-même.'],
-            ['paragraph', ['has_brands'], 'Vous trouvez ici :term de marques comme :brand_links.'],
+            ['paragraph', [], 'Vous comparez ici les prix de :term chez :shop_links, l\'offre la moins chère d\'abord. « Voir toutes les offres » montre ce que demande chaque boutique.'],
             ['paragraph', ['has_discount'], 'Pour :term, :reduced prix sont maintenant inférieurs au prix habituel des 30 derniers jours, jusqu\'à :percent % de moins.'],
             ['heading', [], 'Des marques comme :top_brand'],
-            ['paragraph', [], 'Vous cherchez des marques similaires ou comparables à :top_brand ? Découvrez aussi :other_brand_links.'],
+            ['paragraph', [], 'Vous cherchez des marques alternatives à :top_brand ? Découvrez alors les offres de :other_brand_links.'],
             ['heading', [], 'À lire sur :term'],
             ['paragraph', [], 'Lisez aussi :guide_links.'],
             ['heading', [], 'Vous cherchez quelque chose de plus précis ?'],
             ['paragraph', [], 'Comparez alors les meilleures offres pour :term_links.'],
             ['heading', [], ':term en cadeau'],
-            ['paragraph', [], 'C\'est pour quelqu\'un d\'autre ? :gift_finder_link vous donne des idées selon qui c\'est et ce qu\'il ou elle aime, et nos :guides_link disent à quoi faire attention.'],
+            ['paragraph', [], 'Vous voulez offrir :term ou le recevoir vous-même ? :save_search_link.'],
         ],
     ];
 
@@ -95,6 +90,9 @@ return new class extends Migration
      */
     private const KNOWN = [
         'nl' => [
+            'Zoek je merken die vergelijkbaar zijn met :top_brand? Kijk dan ook bij :other_brand_links.',
+            'Je vergelijkt hier prijzen voor :term bij :shop_links, de goedkoopste aanbieding eerst. Via "Bekijk alle aanbiedingen" zie je wat elke winkel vraagt, en je koopt altijd bij de winkel zelf.',
+            'Je vindt hier :term van onder meer :brand_links.',
             ':term vergelijken',
             'Bij deze zoekopdracht vind je producten van onder meer :brand_links. Elk product staat er één keer, met de laagste prijs en de winkel waar je die vindt. Via "Bekijk alle aanbiedingen" zie je wat de andere winkels vragen.',
             'Prijzen voor :term',
@@ -116,6 +114,9 @@ return new class extends Migration
             'Is het voor iemand anders? Met :gift_finder_link krijg je ideeën op basis van wie het is en wat die graag doet, en in onze :guides_link lees je waar je op let.',
         ],
         'en' => [
+            'Looking for brands similar or comparable to :top_brand? Have a look at brands such as :other_brand_links.',
+            'Here you compare prices for :term at :shop_links, the cheapest offer first. "See all offers" shows what each shop asks, and you always buy from the shop itself.',
+            'You will find :term here from brands such as :brand_links.',
             'Comparing :term',
             'This search finds products from brands such as :brand_links. Each product appears once, with the lowest price and the shop that has it. "See all offers" shows what the other shops ask.',
             'Prices for :term',
@@ -136,6 +137,9 @@ return new class extends Migration
             'Is it for someone else? :gift_finder_link gives you ideas based on who they are and what they enjoy, and our :guides_link say what to look out for.',
         ],
         'fr' => [
+            'Vous cherchez des marques similaires ou comparables à :top_brand ? Découvrez aussi :other_brand_links.',
+            'Vous comparez ici les prix de :term chez :shop_links, l\'offre la moins chère d\'abord. « Voir toutes les offres » montre ce que demande chaque boutique, et vous achetez toujours auprès de la boutique elle-même.',
+            'Vous trouvez ici :term de marques comme :brand_links.',
             'Comparer :term',
             'Cette recherche trouve des produits de marques comme :brand_links. Chaque produit n\'apparaît qu\'une fois, avec le prix le plus bas et la boutique qui le propose. « Voir toutes les offres » montre ce que demandent les autres boutiques.',
             'Prix pour :term',
