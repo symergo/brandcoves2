@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Models\DailyPickSet;
 use App\Services\Pages\Context\PageContext;
+use App\Services\Pages\Context\ResultCategories;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -93,7 +94,23 @@ final class GuideLinks implements PlaceholderFunction
             return Value::nothing();
         }
 
-        return Value::links(self::matching($context->market, $term));
+        $links = self::matching($context->market, $term);
+
+        /*
+         * Nothing titled after the term: try what the results are (owner,
+         * 2026-11-08, guides "related to the search"). "lenovo" names no
+         * guide, but its results are tablets, and a guide about tablets is
+         * the reading this page needs. Cached like the first lookup.
+         */
+        if ($links === []) {
+            $category = ResultCategories::top($context->items, 1)[0] ?? null;
+
+            if ($category !== null && mb_strtolower($category) !== mb_strtolower($term)) {
+                $links = self::matching($context->market, $category);
+            }
+        }
+
+        return Value::links($links);
     }
 
     /** @return list<array{label: string, url: string}> */

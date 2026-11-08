@@ -83,7 +83,7 @@ final class OtherBrandLinks implements PlaceholderFunction
         // The three categories most of the results belong to, not only the
         // first (owner, 2026-11-08: "broaden the list"). "lenovo" is tablets,
         // laptops and desktops, and one category named only tablet brands.
-        $categories = ResultCategories::top($context->items, 3);
+        $categories = ResultCategories::significant($context->items, 3);
 
         if ($categories === []) {
             return Value::nothing();

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
+use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Jobs\ReadItemLink;
 use App\Models\BrandStat;
+use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\PageBlock;
 use App\Models\Product;
@@ -21,6 +24,8 @@ use App\Models\WishlistItem;
 use App\Services\Pages\Context\ResultCategories;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
+use App\Services\Pages\Placeholders\CoveLinks;
+use App\Services\Pages\Placeholders\GuideLinks;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
 use App\Services\Pages\Placeholders\SaveSearchLink;
 use App\Services\Pages\Placeholders\ShopLinks;
@@ -258,17 +263,23 @@ class SearchCopyShopsAndBrandsTest extends TestCase
     #[Test]
     public function other_brands_come_in_turns_from_the_top_three_categories(): void
     {
-        // Two tablets and a laptop: tablet brands may not take every place.
-        $items = [$this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Laptop')];
+        // Three tablets and two laptops: tablet brands may not take every
+        // place. One cuddly toy is not a category of this page, and brings no
+        // toy brand (the "stanley" case).
+        $items = [
+            $this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Tablet'),
+            $this->group('Lenovo', 'Laptop'), $this->group('Lenovo', 'Laptop'),
+            $this->group('Lenovo', 'Knuffel'),
+        ];
 
-        foreach ([['Tabby', 'Tablet', 50], ['Slate', 'Tablet', 40], ['Lappo', 'Laptop', 30]] as [$brand, $category, $count]) {
+        foreach ([['Tabby', 'Tablet', 50], ['Slate', 'Tablet', 40], ['Lappo', 'Laptop', 30], ['Kaloo', 'Knuffel', 90]] as [$brand, $category, $count]) {
             BrandStat::create([
                 'market' => Market::BeNl->value, 'brand' => $brand, 'slug' => Str::slug($brand), 'aliases' => [$brand],
                 'product_count' => 100, 'categories' => [['category' => $category, 'count' => $count]],
             ]);
         }
 
-        $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, $items, 3, 'lenovo'))->items;
+        $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, $items, 6, 'lenovo'))->items;
 
         $this->assertSame(['Tabby', 'Lappo', 'Slate'], array_column($links, 'label'));
     }
@@ -293,5 +304,49 @@ class SearchCopyShopsAndBrandsTest extends TestCase
 
         // None fit to print: empty, and the sentence still reads.
         $this->assertSame('', (new SearchContext(Market::BeNl, [$this->group('Samsung', 'Samsung hoesjes')], 1, 'samsung'))->fact('result_categories'));
+    }
+
+    private function cove(string $slug, string $title, CoveKind $kind = CoveKind::Persona): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => $kind->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'theme_source' => 'theme',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now()->subDay(),
+        ]);
+    }
+
+    #[Test]
+    public function the_coves_holding_these_results_are_linked_most_matches_first(): void
+    {
+        $a = $this->group('Aurex');
+        $b = $this->group('Belka');
+        $one = $this->cove('voor-de-student', 'Cadeaus voor de student');
+        $two = $this->cove('muziekliefhebber', 'Cadeaus voor de muziekliefhebber');
+        $this->cove('niets-hiervan', 'Niets hiervan');
+
+        $one->picks()->create(['group_id' => $a->id, 'rank' => 1, 'slug' => 'p-'.uniqid()]);
+        $two->picks()->create(['group_id' => $a->id, 'rank' => 1, 'slug' => 'p-'.uniqid()]);
+        $two->picks()->create(['group_id' => $b->id, 'rank' => 2, 'slug' => 'p-'.uniqid()]);
+
+        $links = (new CoveLinks)->resolve(new SearchContext(Market::BeNl, [$a, $b], 2, 'koptelefoon'))->items;
+
+        $this->assertSame(['Cadeaus voor de muziekliefhebber', 'Cadeaus voor de student'], array_column($links, 'label'));
+        $this->assertSame('/be-nl/gift-ideas/muziekliefhebber', $links[0]['url']);
+    }
+
+    #[Test]
+    public function with_no_guide_named_after_the_term_the_results_category_finds_one(): void
+    {
+        $this->cove('tablets-kiezen', 'Een tablet kiezen', CoveKind::Guide);
+        $items = [$this->group('Lenovo', 'Tablet'), $this->group('Lenovo', 'Tablet')];
+
+        $links = (new GuideLinks)->resolve(new SearchContext(Market::BeNl, $items, 2, 'lenovo'))->items;
+
+        $this->assertSame(['Een tablet kiezen'], array_column($links, 'label'));
     }
 }

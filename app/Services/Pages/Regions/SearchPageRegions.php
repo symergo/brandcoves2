@@ -45,7 +45,7 @@ final class SearchPageRegions
          * page: every brand in the results, each linked.
          */
         $links = [
-            'brand_links', 'other_brand_links', 'shop_links', 'save_search_link', 'term_links', 'term_page_link',
+            'brand_links', 'other_brand_links', 'shop_links', 'save_search_link', 'cove_links', 'term_links', 'term_page_link',
             ...array_keys(SiteLink::all()),
         ];
 

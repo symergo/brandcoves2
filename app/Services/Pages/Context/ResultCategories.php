@@ -52,6 +52,30 @@ final class ResultCategories
     }
 
     /**
+     * The top categories that hold a real share of the page: the first always,
+     * after it only one that two results carry. "stanley" found four tool
+     * cases and one cuddly toy, and the toy's category brought toy brands into
+     * "alternative brands for Stanley" (2026-11-08). Used both for the brands
+     * and for the names printed, so the two always agree.
+     *
+     * @param  list<ProductGroup>  $items
+     * @return list<string>
+     */
+    public static function significant(array $items, int $limit = 3): array
+    {
+        $counts = array_count_values(array_values(array_filter(array_map(
+            fn ($group) => $group instanceof ProductGroup && filled($group->category) ? $group->category : null,
+            $items,
+        ))));
+
+        return array_values(array_filter(
+            self::top($items, $limit),
+            fn (string $category, int $index) => $index === 0 || ($counts[$category] ?? 0) >= 2,
+            ARRAY_FILTER_USE_BOTH,
+        ));
+    }
+
+    /**
      * The top categories fit to print, written as words inside a sentence.
      *
      * @param  list<ProductGroup>  $items
@@ -68,19 +92,8 @@ final class ResultCategories
         }
 
         $shown = [];
-        $counts = array_count_values(array_values(array_filter(array_map(
-            fn ($group) => $group instanceof ProductGroup && filled($group->category) ? $group->category : null,
-            $items,
-        ))));
 
-        foreach (self::top($items, $limit) as $index => $category) {
-            // Only a category that holds a real share of the page: "lenovo"
-            // found one all-in-one among eight tablets, and naming it beside
-            // tablets overstated it. The first is always named.
-            if ($index > 0 && ($counts[$category] ?? 0) < 2) {
-                continue;
-            }
-
+        foreach (self::significant($items, $limit) as $category) {
             $slug = Str::slug($category);
             $plain = preg_match('/^[\p{L}][\p{L} \-]*$/u', $category) === 1
                 && mb_strlen($category) <= 30

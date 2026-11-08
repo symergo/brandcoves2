@@ -89,6 +89,7 @@ added next year without touching a block, the schema or the admin.
 | `:other_brand_links` | inline | links | Other brands of this kind of product: the brands with the most products in the results' main category (`brand_stats.categories`), less the brands already in the results, at most six, each linked to its brand page. Cached ten minutes per category. |
 | `:top_brand` | fact | text | The brand most of these results carry, in the feed's spelling. Search page only; empty, which hides the block, when no result has a brand. |
 | `:result_categories` | fact | text | The categories of these results, in brackets with a leading space, " (tablet, laptop)", read from the products on the page (no query). Up to three; a name is printed only when it reads as a plain word or two (letters, spaces, hyphens, at most 30 characters and three words, no brand from the results in it), and after the first only when two results carry it. Empty otherwise, and never hides its sentence: write it straight after a word, `:top_brand:result_categories?`. `ResultCategories`. |
+| `:cove_links` | inline | links | Our gift-idea pages, occasions, guides and Dailies that contain products from these results, the ones holding most of them first, at most three; leaves out what `:guide_links` already names. One query on `daily_picks.group_id`, cached ten minutes per set of products. Under "Cadeau-ideeën met :term" since 2026-11-08 (`2026_11_08_000300`). |
 | `:save_search_link` | inline | save | "Zet :term op een cadeaulijst" in the page's language (`site.search_copy.save_search`), drawn as the site's Save button in words. It saves a hand-written list item called "Lenovo aanbiedingen" (`site.search_copy.saved_title`) linking to these results. `ItemSaver` does not read our own pages as it does a shop's, and a link to this site passes the https-only rule for list links even as http, which is what a development machine serves (`WishlistItem::isOwnUrl()`). A fifth part shape, `save`, so `Parts.tsx` has a branch for it. |
 | `:guide_links` | inline | links | Our published buying guides, advice, seasonal guides, personas and occasions whose title or blurb matches the term (each word as a prefix, so Dutch compounds count), at most three, best first. Not the Daily Cove, which is dated. Nothing matching hides the sentence. Added 2026-11-07. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
@@ -373,6 +374,12 @@ for Dutch, English and French alike:
 - **Alternative brands against a brand found here:** "Merken zoals :top_brand" / "Zoek je alternatieve merken
   voor :top_brand? Bekijk dan de aanbiedingen en offertes van :other_brand_links." `:top_brand` is the brand most
   results carry. ("Offertes" is the owner's word; it was pointed out that in Dutch it means a requested quotation.)
+- **Guides related to the search** (the same day): "Meer lezen over :term" falls back to the results' main
+  category when no guide is titled after the term ("lenovo" finds guides about tablets), and a new section,
+  "Cadeau-ideeën met :term" / "Je vindt :term ook in :cove_links.", links the Coves that hold these very products.
+- Categories count only when they hold a real share of the page (`ResultCategories::significant()`): the first,
+  then any that two results carry. One cuddly toy among Stanley tool cases had brought toy brands into
+  "alternative brands for Stanley".
 - **Broader, and with categories** (the same day): `:other_brand_links` takes brands in turns from the three
   categories most results carry, and the sentence names the printable ones: "Zoek je alternatieve merken voor
   Lenovo (tablet)?" (`2026_11_08_000200_search_copy_names_the_categories`). Still one cached query.
