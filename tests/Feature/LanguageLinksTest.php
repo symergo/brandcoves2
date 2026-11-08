@@ -61,6 +61,8 @@ class LanguageLinksTest extends TestCase
         // The Daily archive is in, checked daily (owner, 2026-11-08). The
         // help pages were in for an hour that day and went out again.
         $this->assertMatchesRegularExpression('#<loc>'.preg_quote(url(Market::BeFr->covePath('archive')), '#').'</loc><changefreq>daily</changefreq>#', $xml);
+        // The guides overview, weekly (owner, 2026-11-08).
+        $this->assertStringContainsString('<loc>'.url('/be-fr/guides').'</loc><changefreq>weekly</changefreq>', $xml);
         foreach (['/be-fr/help', '/be-fr/search-help', '/be-fr/lists-help', '/be-fr/privacy'] as $path) {
             $this->assertStringNotContainsString('<loc>'.url($path).'</loc>', $xml);
         }

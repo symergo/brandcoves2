@@ -333,6 +333,7 @@ negative checks in `SeoTest::the_sitemap_does_not_list_product_pages`, `PopularS
 | the Daily archive, `/{market}/tips/archive` | daily | a new edition lands on it every morning |
 | every Daily edition (up to 400) | monthly | was `never`; the words stay, the prices and offers under them are rebuilt |
 | the gift ideas archive, `/{market}/gift-ideas` | weekly | replaces every persona and occasion: the archive links each of them |
+| the guides overview, `/{market}/guides` | weekly | added the same day |
 | every guide, seasonal and advice article | weekly | unchanged |
 | the latest searches (20, under the privacy floor) | daily | unchanged; few on be-fr, where little is searched yet |
 

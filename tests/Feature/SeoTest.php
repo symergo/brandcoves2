@@ -541,7 +541,7 @@ class SeoTest extends TestCase
         // Nor, since 2026-11-07, any fixed page: the file holds Daily Coves,
         // personas, guides and the latest searches, and, since 2026-11-08,
         // the market's home page (LanguageLinksTest), and nothing else.
-        foreach (['/be-nl/search</loc>', '/be-nl/brands', '/be-nl/brand/', '/be-nl/about', '/be-nl/guides</loc>'] as $gone) {
+        foreach (['/be-nl/search</loc>', '/be-nl/brands', '/be-nl/brand/', '/be-nl/about'] as $gone) {
             $this->assertStringNotContainsString($gone, $xml);
         }
     }

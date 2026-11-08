@@ -178,6 +178,13 @@ class SitemapController extends Controller
                 'changefreq' => 'weekly',
             ];
 
+            // The guides overview, checked weekly (owner, 2026-11-08).
+            $urls[] = [
+                'loc' => url("/{$resolved->value}/guides"),
+                'priority' => '0.8',
+                'changefreq' => 'weekly',
+            ];
+
             // The guides: every published article in the /guides space.
             DB::table('daily_pick_sets')
                 ->where('market', $resolved->value)
