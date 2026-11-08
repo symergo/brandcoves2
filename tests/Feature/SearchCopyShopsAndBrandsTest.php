@@ -139,6 +139,23 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $this->assertStringContainsString('/brand/bose', $links[0]['url']);
     }
 
+    #[Test]
+    public function two_spellings_of_one_brand_are_offered_once(): void
+    {
+        $a = $this->group('Aurex');
+
+        // "BLACK + DECKER" and "BLACK+DECKER" both have a page on production.
+        $this->stock('BLACK + DECKER', 'Koptelefoons', 3);
+        $this->stock('BLACK+DECKER', 'Koptelefoons', 2);
+        $this->brandPage('BLACK + DECKER');
+        $this->brandPage('BLACK+DECKER');
+
+        $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, [$a], 1, 'koptelefoon'))->items;
+
+        // The commoner spelling, once.
+        $this->assertSame(['BLACK + DECKER'], array_column($links, 'label'));
+    }
+
     /** Products of a brand in a category, shown and in stock unless said otherwise. */
     private function stock(string $brand, string $category, int $count, bool $inStock = true): void
     {

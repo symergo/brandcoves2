@@ -101,14 +101,19 @@ final class OtherBrandLinks implements PlaceholderFunction
          * this replaced.
          */
         $ordered = [];
-        $seen = $present;
+        // Seen by the folded name, so a brand in the results is never offered
+        // back under another spelling.
+        $seen = [];
+        foreach (array_keys($present) as $own) {
+            $seen[self::fold($own)] = true;
+        }
 
         for ($round = 0; $round < 30; $round++) {
             foreach ($byCategory as $brands) {
                 $brand = $brands[$round] ?? null;
 
-                if ($brand !== null && ! isset($seen[$brand['slug']]) && ! self::sameFamily($brand['slug'], $present)) {
-                    $seen[$brand['slug']] = true;
+                if ($brand !== null && ! isset($seen[self::fold($brand['slug'])]) && ! self::sameFamily($brand['slug'], $present)) {
+                    $seen[self::fold($brand['slug'])] = true;
                     $ordered[] = $brand['brand'];
                 }
             }
@@ -134,6 +139,12 @@ final class OtherBrandLinks implements PlaceholderFunction
         }
 
         return Value::links($links);
+    }
+
+    /** A slug without its hyphens: "black-decker" and "blackdecker" are one brand. */
+    private static function fold(string $slug): string
+    {
+        return str_replace('-', '', $slug);
     }
 
     /**
@@ -189,17 +200,22 @@ final class OtherBrandLinks implements PlaceholderFunction
                 continue;
             }
 
-            // Spellings of one brand ("Audio-Technica", "Audio Technica") fold
-            // into one; the most common spelling is the one shown.
-            $entry = $out[$row->category][$slug] ?? ['brand' => (string) $row->brand, 'slug' => $slug, 'n' => 0, 'top' => 0];
+            // Spellings of one brand fold into one: "Audio-Technica" and
+            // "Audio Technica" by their slug, and "BLACK + DECKER" and
+            // "BLACK+DECKER" (black-decker, blackdecker) by the slug without
+            // its hyphens; both showed on production. The most common spelling
+            // is the one shown, and it is that spelling's page that is linked.
+            $key = self::fold($slug);
+            $entry = $out[$row->category][$key] ?? ['brand' => (string) $row->brand, 'slug' => $slug, 'n' => 0, 'top' => 0];
             $entry['n'] += (int) $row->n;
 
             if ((int) $row->n > $entry['top']) {
                 $entry['brand'] = (string) $row->brand;
+                $entry['slug'] = $slug;
                 $entry['top'] = (int) $row->n;
             }
 
-            $out[$row->category][$slug] = $entry;
+            $out[$row->category][$key] = $entry;
         }
 
         foreach ($out as $category => $brands) {
