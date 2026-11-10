@@ -201,6 +201,20 @@ class ImageProxyTest extends TestCase
     }
 
     #[Test]
+    public function partner_banners_in_articles_are_signed(): void
+    {
+        // An article banner is only seen through the proxy: the page's
+        // img-src is 'self', so an unsigned shop picture is blocked outright.
+        foreach ([
+            'https://image.vandenborre.be/WEB/images/lp/BF2026_Top_Banner_desk_NL.jpg',
+            'https://image.coolblue.be/transparent/max/960xauto/content/caffa5a83f84b4b7b69a1abeaa9b10ab',
+            'https://image.coolblue.nl/transparent/max/960xauto/content/caffa5a83f84b4b7b69a1abeaa9b10ab',
+        ] as $url) {
+            $this->assertNotNull(app(ImageProxy::class)->token($url), $url);
+        }
+    }
+
+    #[Test]
     public function http_is_never_signed(): void
     {
         $this->assertNull(app(ImageProxy::class)->token('http://media.s-bol.com/x/250x200.jpg'));

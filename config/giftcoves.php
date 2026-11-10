@@ -875,6 +875,11 @@ return [
                 'images.awin.com',
                 'productserve.com',
                 'bynder.com',
+                // Shop banners in authored articles (owner, 2026-11-10: the
+                // Black Friday guide): partners' own campaign images.
+                'image.vandenborre.be',
+                'image.coolblue.be',
+                'image.coolblue.nl',
             ],
             array_map('trim', explode(',', (string) env('IMAGE_PROXY_HOSTS', ''))),
         ))),
