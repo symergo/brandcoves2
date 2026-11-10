@@ -497,8 +497,8 @@ return [
         // Guides published longer ago than this are never posted: switching
         // the feature on must not empty the whole archive into the feed.
         'guide_window_days' => 7,
-        // Guides per run. Two runs a day (see routes/console.php), so at most
-        // one guide and one Daily Cove a day.
+        // Guides per run. Two guide runs a day (see routes/console.php), so
+        // at most two guides and one Daily Cove a day.
         'guides_per_run' => 1,
         // A post that failed this often is left alone and shows in the admin
         // log rather than being retried every day.

@@ -16,10 +16,10 @@ account, "new guides + daily Cove", run inside the app, with an existing token.
 | Schedule (UTC) | Command | Posts |
 |---|---|---|
 | 09:20 | `bc:post-instagram --only=daily` | today's Daily Cove, twenty minutes after its 09:00 drop |
-| 17:20 | `bc:post-instagram --only=guides` | the oldest guide published in the last 7 days that is not posted yet |
+| 12:20 and 17:20 | `bc:post-instagram --only=guides` | each time, the oldest guide published in the last 7 days that is not posted yet (owner, 2026-11-10: "2 each day") |
 
-So the feed gets at most two posts a day, and a busy publishing day (three guides at once) becomes
-three days of posts rather than a burst. "Guide" means every article kind (`guide`, `seasonal`,
+So the feed gets at most three posts a day, and a busy publishing day (eight guides at once) becomes
+four days of posts rather than a burst. "Guide" means every article kind (`guide`, `seasonal`,
 `advice`); `giftcoves.instagram.guide_window_days` keeps switching the feature on from emptying the
 archive into the feed.
 

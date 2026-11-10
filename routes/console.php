@@ -473,8 +473,9 @@ foreach (Market::published() as $index => $market) {
 
 /*
  * GiftCoves' Instagram account (owner, 2026-11-10): the Daily Cove at 09:20,
- * twenty minutes after its 09:00 drop (giftcoves.picks.drop_time), and one new
- * guide at 17:20, so the feed gets at most two posts a day. Times are UTC like
+ * twenty minutes after its 09:00 drop (giftcoves.picks.drop_time), and a new
+ * guide at 12:20 and at 17:20 (owner, 2026-11-10: "2 each day"), so the feed
+ * gets at most three posts a day. Times are UTC like
  * the rest of this file. A no-op while INSTAGRAM_ENABLED is off; each Cove is
  * posted once (instagram_posts). See App\Console\Commands\PostInstagramCommand
  * and docs/features/instagram.md.
@@ -487,6 +488,6 @@ Schedule::command('bc:post-instagram --only=daily')
 
 Schedule::command('bc:post-instagram --only=guides')
     ->name('post-instagram-guides')
-    ->dailyAt('17:20')
+    ->twiceDailyAt(12, 17, 20)
     ->withoutOverlapping()
     ->onOneServer();
