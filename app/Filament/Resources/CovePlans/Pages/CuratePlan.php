@@ -497,7 +497,7 @@ class CuratePlan extends Page
     {
         // Per kind. Judging a buying guide against the column's floor calls a
         // page unbuildable that would publish fine, and vice versa.
-        $minimum = $this->plan()->kind->minimumItems();
+        $minimum = $this->plan()->minimumItems();
         $items = $this->plan()->items()->count();
 
         if ($this->plan()->pick_mode === PickMode::Locked && $items < $minimum) {

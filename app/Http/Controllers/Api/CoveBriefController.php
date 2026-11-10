@@ -155,7 +155,7 @@ class CoveBriefController extends Controller
                  * failure this whole surface exists to avoid.
                  */
                 'floor' => [
-                    'minimum' => $plan->kind->minimumItems(),
+                    'minimum' => $plan->minimumItems(),
                     'target' => $plan->kind->targetItems(),
                     'curated' => count($finds),
                     'buildable' => $plan->isBuildable(),

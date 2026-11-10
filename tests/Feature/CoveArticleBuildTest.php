@@ -313,6 +313,44 @@ class CoveArticleBuildTest extends TestCase
     }
 
     #[Test]
+    public function an_authored_seasonal_guide_publishes_with_no_products(): void
+    {
+        $plan = $this->plan(PickMode::Locked);
+        $plan->update([
+            'kind' => CoveKind::Seasonal->value,
+            'slug' => 'black-friday-2026',
+            'title' => 'Black Friday 2026',
+            'writer' => PlanWriter::Authored->value,
+            'body' => 'Welke winkels doen mee, en tot wanneer.',
+        ]);
+
+        // Products are optional on a seasonal guide a person wrote (owner,
+        // 2026-11-10): its substance is the prose, here a list of shops.
+        $this->assertTrue($plan->fresh()->isBuildable());
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan->fresh());
+
+        $this->assertNotNull($edition);
+        $this->assertSame(0, $edition->picks()->count());
+        $this->assertSame('Welke winkels doen mee, en tot wanneer.', $edition->body);
+    }
+
+    #[Test]
+    public function a_seasonal_guide_the_model_writes_still_needs_its_products(): void
+    {
+        $plan = $this->plan();
+        $plan->update([
+            'kind' => CoveKind::Seasonal->value,
+            'slug' => 'halloween-kostuums',
+            'title' => 'Halloweenkostuums',
+        ]);
+
+        // The model writes about the products; with none it has nothing to say.
+        $this->assertNull(app(EditionBuilder::class)->buildArticle($plan->fresh()));
+        $this->assertSame(0, DailyPickSet::query()->count());
+    }
+
+    #[Test]
     public function a_draft_plan_is_not_built(): void
     {
         $this->shelf();

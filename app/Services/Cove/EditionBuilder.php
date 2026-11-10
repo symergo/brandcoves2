@@ -412,7 +412,7 @@ class EditionBuilder
         $market = $plan->market;
         $finds = $this->finds($market, $plan->kind->targetItems(), null, $plan, $exclude);
 
-        if (count($finds) < $plan->kind->minimumItems()) {
+        if (count($finds) < $plan->minimumItems()) {
             /*
              * The catalogue looked able to fill this and is not now — stock
              * moves. Better to skip than to publish a three-item "best of",
@@ -422,7 +422,7 @@ class EditionBuilder
                 'plan' => $plan->id,
                 'kind' => $plan->kind->value,
                 'found' => count($finds),
-                'needed' => $plan->kind->minimumItems(),
+                'needed' => $plan->minimumItems(),
             ]);
 
             /*
@@ -437,7 +437,7 @@ class EditionBuilder
             $this->recordFailedBuild($plan, sprintf(
                 '%d of the %d products this kind needs. The catalogue could not fill it.',
                 count($finds),
-                $plan->kind->minimumItems(),
+                $plan->minimumItems(),
             ));
 
             return null;

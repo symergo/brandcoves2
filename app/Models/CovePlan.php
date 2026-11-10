@@ -311,6 +311,25 @@ class CovePlan extends Model
         // an advice article needs none, so judging a guide against the column's
         // minimum called a page unbuildable that would have published fine —
         // and, worse, the other way round.
-        return $this->items()->count() >= $this->kind->minimumItems();
+        return $this->items()->count() >= $this->minimumItems();
+    }
+
+    /**
+     * Below this many products this plan's page does not publish.
+     *
+     * The kind's floor, with one exception: a seasonal guide whose article a
+     * person wrote stands on its prose, so products are optional on it (owner,
+     * 2026-11-10: "Seasonal guides do not need products - its optional"). The
+     * Black Friday guide that asked for it is a list of shops and dates, not
+     * of things to buy. A seasonal guide the model writes keeps the floor: that
+     * writing is about the products, and with none it has nothing to say.
+     */
+    public function minimumItems(): int
+    {
+        if ($this->kind === CoveKind::Seasonal && ! $this->writer->callsModel() && filled($this->body)) {
+            return 0;
+        }
+
+        return $this->kind->minimumItems();
     }
 }

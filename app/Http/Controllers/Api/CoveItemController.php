@@ -377,7 +377,7 @@ class CoveItemController extends Controller
             'revision' => PlanRevision::of($plan),
             'pickMode' => $plan->pick_mode->value,
             'floor' => [
-                'minimum' => $plan->kind->minimumItems(),
+                'minimum' => $plan->minimumItems(),
                 'target' => $plan->kind->targetItems(),
                 'curated' => $plan->items()->count(),
                 'buildable' => $plan->isBuildable(),
