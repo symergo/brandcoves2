@@ -122,6 +122,8 @@ php artisan bc:check-ebay             # the same for eBay, plus the marketplace 
 php artisan bc:check-tradedoubler     # the same for Tradedoubler. --raw prints the real payload
                                       # shape, which that connector was written without
 php artisan bc:check-config           # did this environment's config arrive? lengths, never values
+php artisan bc:post-instagram --dry-run # what the Instagram run would post, captions included; sends
+                                      # nothing. Scheduled 09:20 (daily) and 17:20 (guides) UTC
 php artisan bc:export-content         # editorial (feeds, page blocks, coves, topics, cove plans)
                                       # as a portable envelope
 php artisan bc:import-content --in=-  # apply one here. Dry run unless --write

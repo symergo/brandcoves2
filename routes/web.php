@@ -1475,6 +1475,16 @@ Route::prefix('{market}')->group(function () {
             ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
             ->name('og.daily');
 
+        // The same two cards as JPEG, for Instagram, whose publishing API
+        // takes no other format (bc:post-instagram, docs/features/instagram.md).
+        Route::get('/og/guide/{slug}.jpg', [OgImageController::class, 'guideJpeg'])
+            ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+            ->name('og.guide.jpg');
+
+        Route::get('/og/daily/{date}.jpg', [OgImageController::class, 'dailyJpeg'])
+            ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+            ->name('og.daily.jpg');
+
         Route::get('/og/brand/{slug}.png', [OgImageController::class, 'brand'])
             ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
             ->name('og.brand');

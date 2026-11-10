@@ -471,6 +471,41 @@ return [
     |
     */
     /*
+     * Posting to GiftCoves' Instagram account (owner, 2026-11-10: "a routine to
+     * post to instagram"). `bc:post-instagram` posts the day's Daily Cove and,
+     * once each, newly published guides, using their social card as the
+     * picture. See docs/features/instagram.md.
+     *
+     * Off unless INSTAGRAM_ENABLED is true *and* the token and account id are
+     * filled: a half-configured account is reported by `bc:check-config`, not
+     * discovered as a 400 at 09:20. The token is a Graph API user or system
+     * user token with `instagram_content_publish`; it is sent as a bearer
+     * header, never in a URL, so it cannot end up in a log line.
+     *
+     * One account, so one market: the captions are in that market's language
+     * and the links point at its edition.
+     */
+    'instagram' => [
+        'enabled' => (bool) env('INSTAGRAM_ENABLED', false),
+        'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+        'user_id' => env('INSTAGRAM_USER_ID'),
+        'market' => env('INSTAGRAM_MARKET', 'be-nl'),
+        // graph.facebook.com for an account connected through a Facebook Page
+        // (Facebook Login); graph.instagram.com for Instagram Login tokens.
+        'graph_host' => env('INSTAGRAM_GRAPH_HOST', 'graph.facebook.com'),
+        'graph_version' => 'v23.0',
+        // Guides published longer ago than this are never posted: switching
+        // the feature on must not empty the whole archive into the feed.
+        'guide_window_days' => 7,
+        // Guides per run. Two runs a day (see routes/console.php), so at most
+        // one guide and one Daily Cove a day.
+        'guides_per_run' => 1,
+        // A post that failed this often is left alone and shows in the admin
+        // log rather than being retried every day.
+        'max_attempts' => 3,
+    ],
+
+    /*
      * Amazon sales events shown under the home page's hero while they run
      * (App\Services\Search\AmazonEvent). Window in Belgian time; per market
      * the event page's path (never /deals: Amazon's forward from there drops

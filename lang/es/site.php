@@ -2339,6 +2339,13 @@ return [
         'placeholder' => '¿Qué buscas?',
     ],
 
+    // Captions for GiftCoves' Instagram posts (bc:post-instagram). :url is the
+    // page, written out because a caption does not link.
+    'instagram' => [
+        'more_guide' => 'Lee la guía completa en :url (enlace en la bio).',
+        'more_daily' => 'La Cove del día: :url (enlace en la bio).',
+        'hashtags' => '#giftcoves #regalos #ideasderegalo #ideasregalo #regalosoriginales',
+    ],
     'og' => [
         'daily' => 'La Cove Diaria',
         // The homepage's share title (2026-10-04, owner's wording). The

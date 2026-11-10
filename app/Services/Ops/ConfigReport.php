@@ -50,6 +50,7 @@ class ConfigReport
         // was not turned off — which is what makes its keys required rather
         // than optional and stops them being quietly forgotten.
         $ebayOn = (bool) config('giftcoves.connectors.ebay.enabled');
+        $instagramOn = (bool) config('giftcoves.instagram.enabled');
 
         $tradedoublerOn = (bool) config('giftcoves.connectors.tradedoubler.enabled');
 
@@ -94,6 +95,12 @@ class ConfigReport
             'AI' => [
                 ['AI_ENABLED', $aiOn ? 'true' : 'false', false, 'With AI off the whole site still works, by invariant.'],
                 ['ANTHROPIC_API_KEY', config('giftcoves.ai.api_key'), $aiOn, $aiOn ? 'Required while AI is on.' : 'Not needed while AI is off.'],
+            ],
+            'Instagram' => [
+                ['INSTAGRAM_ENABLED', $instagramOn ? 'true' : 'false', false, 'bc:post-instagram posts nothing while off.'],
+                ['INSTAGRAM_ACCESS_TOKEN', config('giftcoves.instagram.access_token'), $instagramOn, $instagramOn ? 'Required while Instagram is on; needs instagram_content_publish.' : 'Not needed while Instagram is off.'],
+                ['INSTAGRAM_USER_ID', config('giftcoves.instagram.user_id'), $instagramOn, 'The Instagram business account id, not the username.'],
+                ['INSTAGRAM_MARKET', config('giftcoves.instagram.market'), false, 'The edition whose Coves and language are posted.'],
             ],
             'Connectors' => [
                 ['AWIN_API_TOKEN', config('giftcoves.connectors.awin.api_token'), true, 'The catalogue comes from here.'],

@@ -187,6 +187,57 @@ class OgImageController extends Controller
         );
     }
 
+    /** {@see self::guide()} as a JPEG, for Instagram. */
+    public function guideJpeg(CurrentMarket $current, OgImage $og, string $market, string $slug): Response
+    {
+        return self::jpeg($this->guide($current, $og, $market, $slug));
+    }
+
+    /** {@see self::daily()} as a JPEG, for Instagram. */
+    public function dailyJpeg(CurrentMarket $current, OgImage $og, string $market, string $date): Response
+    {
+        return self::jpeg($this->daily($current, $og, $market, $date));
+    }
+
+    /**
+     * The card re-encoded as a JPEG on white.
+     *
+     * Instagram's publishing API fetches the picture itself and takes JPEG
+     * only. Converted from the cached PNG rather than drawn twice: the PNG is
+     * the card, this is a format. The ETag gets a suffix so a client holding
+     * the PNG never revalidates its way into the JPEG, or the other way round.
+     */
+    private static function jpeg(Response $png): Response
+    {
+        $etag = (string) $png->headers->get('ETag');
+        $png->headers->set('ETag', rtrim($etag, '"').'-jpg"');
+
+        if ($png->getStatusCode() !== 200) {
+            return $png;
+        }
+
+        $source = imagecreatefromstring((string) $png->getContent());
+
+        if ($source === false) {
+            abort(500, 'Card could not be converted.');
+        }
+
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $canvas = imagecreatetruecolor($width, $height);
+        imagefill($canvas, 0, 0, (int) imagecolorallocate($canvas, 255, 255, 255));
+        imagecopy($canvas, $source, 0, 0, 0, 0, $width, $height);
+
+        ob_start();
+        imagejpeg($canvas, null, 90);
+        $bytes = (string) ob_get_clean();
+
+        $png->setContent($bytes);
+        $png->headers->set('Content-Type', 'image/jpeg');
+
+        return $png;
+    }
+
     public function brand(CurrentMarket $current, OgImage $og, string $market, string $slug): Response
     {
         $brand = BrandStat::query()
