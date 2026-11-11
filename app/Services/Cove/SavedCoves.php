@@ -122,6 +122,8 @@ class SavedCoves
 
         return DB::transaction(function () use ($source, $current, $owner, $items): Wishlist {
             $list = $this->lists->make(owner: $owner, current: $current, title: (string) $source->public_title);
+            // One clock reading for the whole copy; see copyToList().
+            $now = now();
 
             foreach ($items as $index => $item) {
                 $copy = $item->group !== null
@@ -130,7 +132,7 @@ class SavedCoves
                     ? $this->saver->saveGroup($list, $item->group, new CurrentMarket($item->group->market))
                     : $this->saver->saveManual($list, (string) $item->snapshot_title, price: $item->snapshot_price);
 
-                $copy->forceFill(['created_at' => now()->subSeconds($index)])->save();
+                $copy->forceFill(['created_at' => $now->copy()->subSeconds($index)])->save();
             }
 
             return $list;
@@ -158,10 +160,16 @@ class SavedCoves
              * A list shows its newest items first (Lists/Show), so each pick
              * is dated a second before the one above it: the list reads in the
              * Cove's own order without a sort column of its own.
+             *
+             * From one reading of the clock (2026-11-11). `now()` inside the
+             * loop gave two items the same second whenever the clock ticked
+             * mid-copy, and those two swapped places on the list.
              */
+            $now = now();
+
             foreach ($picks as $index => $pick) {
                 $item = $this->saver->saveGroup($list, $pick->group, $current);
-                $item->forceFill(['created_at' => now()->subSeconds($index)])->save();
+                $item->forceFill(['created_at' => $now->copy()->subSeconds($index)])->save();
             }
 
             return $list;

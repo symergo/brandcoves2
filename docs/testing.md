@@ -77,10 +77,11 @@ methods became 2,647 (the case count barely moved: merged methods keep their cas
 **The parallel run no longer crashes.** Local Postgres ran with the default 64 locks per transaction,
 and eight processes rebuilding a 73-table schema at once answered "out of shared memory"; that was the
 "parallel runner crashed" case of the pre-push hook. `docker-compose.yml` now starts it with
-`max_locks_per_transaction=512`. Two tests are still flaky under the parallel run and pass alone:
-`BolPageImportTest::without_a_barcode_it_resolves_the_page_id_through_a_title_search` (the bol rate
-limiter lives in Redis, shared by all processes) and
-`SavedCoveTest::copying_makes_a_list_in_the_coves_order_that_later_edits_do_not_touch` (an ordering tie).
+`max_locks_per_transaction=512`. The two tests that were still flaky under the parallel run were fixed the same day. Each process now has
+its own Redis key prefix (`Tests\TestCase`, from ParaTest's `TEST_TOKEN`), so the connectors' rate
+limiters are no longer shared between processes (`BolPageImportTest`). And `SavedCoves` dates a copied
+list from one reading of the clock: `now()` inside the loop gave two items the same second when the
+clock ticked mid-copy, a real ordering bug that `SavedCoveTest` hit now and then.
 
 ## Pruned on 2026-09-14, and what counts as a duplicate
 
