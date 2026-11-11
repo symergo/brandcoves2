@@ -88,8 +88,9 @@ composer test:serial          # one process, for when parallelism is the suspect
 ```
 
 > **Run the tests the change touches, and say which ran**, so "tests pass" is never read as "the
-> suite passes": the narrowest `--filter`, or the file. Run `composer test` only when asked, or when
-> a change touches migrations or shared services that no narrow filter covers. **There is no GitHub
+> suite passes": the narrowest `--filter`, or the file. Run `composer test` only when asked (owner,
+> 2026-11-11: "Don't do full test suit on each change"); for a migration or a shared service, run the
+> test files of what it touches instead, and say the full suite did not run. **There is no GitHub
 > CI** (removed 2026-11-11, owner: "No github ci"; it never got past `composer install`). The gate is
 > local: the tests the change touches plus `vendor/bin/pint --test` on the changed files, then
 > `git push --no-verify`. Run `composer test` (or push without `--no-verify`, which runs the pre-push
