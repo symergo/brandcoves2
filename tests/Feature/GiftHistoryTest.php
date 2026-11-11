@@ -380,8 +380,12 @@ class GiftHistoryTest extends TestCase
     public function the_next_step_keeps_to_her_budget(): void
     {
         $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
-        $this->budgetOnHerList(2000);
+        // The gift first: gave() makes a list of its own, and the budget goes
+        // on the newest list, the one ListBudget reads. The other way round,
+        // the budget sat on an older list and the test passed only when both
+        // lists shared a created_at second (flaky in the parallel run).
         $this->gave($moka);
+        $this->budgetOnHerList(2000);
 
         $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
         $dear = ProductGroup::factory()->priced(9000)->create(['title' => 'Elektrische grinder', 'brand' => 'Sage']);
@@ -429,7 +433,7 @@ class GiftHistoryTest extends TestCase
     /** The budget is her list's, not hers (2026-10-05); see ListBudget. */
     private function budgetOnHerList(int $cents): void
     {
-        $list = Wishlist::query()->where('recipient_id', $this->mum->id)->where('kind', ListKind::ForSomeone->value)->latest('created_at')->first()
+        $list = Wishlist::query()->where('recipient_id', $this->mum->id)->where('kind', ListKind::ForSomeone->value)->latest('created_at')->latest('id')->first()
             ?? Wishlist::factory()->forSomeone($this->mum)->create(['owner_user_id' => $this->giver->id]);
 
         $list->update(['budget_max' => $cents]);

@@ -67,6 +67,9 @@ final class ListBudget
             ->where('recipient_id', $recipient->id)
             ->where('kind', ListKind::ForSomeone->value)
             ->latest('created_at')
+            // Two lists made in the same second: the later one, every time,
+            // rather than whichever the database returns first.
+            ->latest('id')
             ->first();
     }
 }
