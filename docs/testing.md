@@ -53,6 +53,35 @@ the narrow run and `vendor/bin/pint --test` on the changed files: since 2026-11-
 CI behind it (see "No CI" below), so this local run is the gate. Run `composer test` locally when it is asked for, or when a change touches
 migrations or shared services that a narrow filter cannot cover — and say that you did.
 
+## Second pass, 2026-11-11
+
+Owner: "Kan je de testen vereenvoudigen en dubbele testen verwijderen". Six read-only reviews, one per
+area, applied the rule below to every file; each proposed removal was then checked by hand. 2,710 test
+methods became 2,647 (the case count barely moved: merged methods keep their cases as data-provider rows).
+
+- **13 duplicates removed**, each covered by a named test with the same path and an equal or stronger
+  assertion. Two proposals were refused: `IngestionTest::a_javascript_url_never_reaches_the_database`
+  (invariant 5 keeps a test under its own name) and `FeatureIdeaAdminTest::the_panel_is_for_admins_only`
+  (the same rule on a different surface).
+- **About 25 tests that could not fail were fixed, a few removed.** Three of the "known weak tests" listed
+  below are closed: the crawler rule in `SearchLogTest` now sends the session cookie, the Secret Santa
+  giftee test no longer depends on the draw, and the indexable checks of `SearchHelpPageTest`,
+  `LegalPagesTest`, `HelpPageTest` and `ListHelpPageTest` switch `robots_allow` on and look for
+  `index, follow`.
+- **Near-identical methods merged** into one test with a `#[DataProvider]`, and helpers copied between
+  files moved to traits in `tests/Feature/Concerns/`.
+- Left for later: `PageRegionsTest::every_declared_region_is_rendered_by_a_page` (still weak), one
+  `admin()` trait for the 14 files that each have a copy, and folding `QueueRetryAfterTest` into
+  `QueueRoutingTest` (docs and a job comment cite the file by name).
+
+**The parallel run no longer crashes.** Local Postgres ran with the default 64 locks per transaction,
+and eight processes rebuilding a 73-table schema at once answered "out of shared memory"; that was the
+"parallel runner crashed" case of the pre-push hook. `docker-compose.yml` now starts it with
+`max_locks_per_transaction=512`. Two tests are still flaky under the parallel run and pass alone:
+`BolPageImportTest::without_a_barcode_it_resolves_the_page_id_through_a_title_search` (the bol rate
+limiter lives in Redis, shared by all processes) and
+`SavedCoveTest::copying_makes_a_list_in_the_coves_order_that_later_edits_do_not_touch` (an ordering tie).
+
 ## Pruned on 2026-09-14, and what counts as a duplicate
 
 77 tests were removed (1,885 → 1,808), including the whole of `GuideFoldTest`, which recreated

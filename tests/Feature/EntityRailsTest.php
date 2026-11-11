@@ -15,7 +15,6 @@ use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
-use App\Models\PopularRank;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
@@ -26,8 +25,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesDemandSignals;
 use Tests\TestCase;
 
 /**
@@ -40,6 +39,7 @@ use Tests\TestCase;
  */
 class EntityRailsTest extends TestCase
 {
+    use MakesDemandSignals;
     use RefreshDatabase;
 
     private Merchant $merchant;
@@ -395,17 +395,7 @@ class EntityRailsTest extends TestCase
         $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
 
         // Built before the column existed: nothing stored.
-        DailyPickSet::create([
-            'market' => Market::BeNl->value,
-            'kind' => CoveKind::Shop->value,
-            'slug' => 'shop-be',
-            'theme_title' => 'Kopen bij Shop',
-            'theme_slug' => 'shop-be',
-            'theme_blurb' => 'Waar het over gaat.',
-            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->shopCove();
 
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -428,17 +418,7 @@ class EntityRailsTest extends TestCase
         $this->merchant->forceFill(['enabled' => true])->save();
         $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
 
-        $cove = DailyPickSet::create([
-            'market' => Market::BeNl->value,
-            'kind' => CoveKind::Shop->value,
-            'slug' => 'shop-be',
-            'theme_title' => 'Kopen bij Shop',
-            'theme_slug' => 'shop-be',
-            'theme_blurb' => 'Waar het over gaat.',
-            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $cove = $this->shopCove();
 
         // A dry run reports and stores nothing.
         $this->artisan('bc:store-entity-links')->assertSuccessful();
@@ -494,18 +474,7 @@ class EntityRailsTest extends TestCase
         $this->merchant->forceFill(['enabled' => true])->save();
         $this->product('Koptelefoon', 9900, 'Sony', category: 'Koptelefoons');
 
-        DailyPickSet::create([
-            'market' => Market::BeNl->value,
-            'kind' => CoveKind::Shop->value,
-            'slug' => 'shop-be',
-            'theme_title' => 'Kopen bij Shop',
-            'theme_slug' => 'shop-be',
-            'theme_blurb' => 'Waar het over gaat.',
-            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
-            'link_categories' => ['Koptelefoons'],
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->shopCove(['link_categories' => ['Koptelefoons']]);
 
         $directory = fn () => $this->queriesMatching('from "merchants"');
         $count = fn () => $this->queriesMatching('count(distinct "group_id")');
@@ -553,25 +522,25 @@ class EntityRailsTest extends TestCase
     }
 
     /**
-     * One anonymous owner per list.
+     * The published be-nl Cove of the shop "Shop", whose body links one
+     * category.
      *
-     * `wishlists_one_owner` requires exactly one of a user or an anonymous
-     * identity, and these lists belong to nobody in particular — which is the
-     * realistic case for the rail, since most lists on this site are made
-     * without an account.
+     * @param  array<string, mixed>  $extra
      */
-    private function anon(): string
+    private function shopCove(array $extra = []): DailyPickSet
     {
-        $id = (string) Str::uuid();
-
-        DB::table('anonymous_identities')->insert([
-            'id' => $id,
-            'last_seen_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'shop-be',
+            'theme_title' => 'Kopen bij Shop',
+            'theme_slug' => 'shop-be',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Kijk naar [[search:Koptelefoons|koptelefoons]].',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+            ...$extra,
         ]);
-
-        return $id;
     }
 
     private function brand(string $name): BrandStat
@@ -582,43 +551,6 @@ class EntityRailsTest extends TestCase
             ['market' => Market::BeNl->value, 'slug' => strtolower($name)],
             ['brand' => $name, 'product_count' => 3],
         );
-    }
-
-    /** @return list<Wishlist> */
-    private function wish(ProductGroup $group, int $lists): array
-    {
-        $made = [];
-
-        for ($i = 0; $i < $lists; $i++) {
-            $list = Wishlist::create([
-                'owner_anon_id' => $this->anon(),
-                'title' => "Lijst {$i}",
-                'market' => Market::BeNl->value,
-            ]);
-            WishlistItem::create([
-                'wishlist_id' => $list->id,
-                'group_id' => $group->id,
-                // Snapshotted on every item, so a list survives its product
-                // disappearing from the catalogue.
-                'snapshot_title' => $group->title,
-            ]);
-            $made[] = $list;
-        }
-
-        return $made;
-    }
-
-    private function chart(ProductGroup $group, int $rank): void
-    {
-        PopularRank::create([
-            'source' => Source::Bol->value,
-            'market' => Market::BeNl->value,
-            'external_id' => 'x'.bin2hex(random_bytes(4)),
-            'group_id' => $group->id,
-            'rank' => $rank,
-            'captured_on' => now()->toDateString(),
-            'captured_at' => now(),
-        ]);
     }
 
     private function product(

@@ -103,16 +103,6 @@ class ProductSignalsTest extends TestCase
         $this->assertNull($this->signals(ProductGroup::factory()->create(['min_price' => 45000]))['band']);
     }
 
-    #[Test]
-    public function the_product_page_carries_the_signals(): void
-    {
-        $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
-
-        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('signals.savedBy')->has('signals.coves')->has('signals.band'));
-    }
-
     /** @return array<string, mixed> */
     private function signals(ProductGroup $group): array
     {

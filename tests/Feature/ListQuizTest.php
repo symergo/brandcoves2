@@ -163,6 +163,8 @@ class ListQuizTest extends TestCase
             $this->ordered(),
         );
 
+        $this->assertNotEmpty($rounds);
+
         foreach ($rounds as $round) {
             foreach ($round['options'] as $option) {
                 if ($option['id'] === $round['answer']) {
@@ -248,6 +250,8 @@ class ListQuizTest extends TestCase
             ProductGroup::query()->whereIn('id', array_map(fn ($g) => $g->id, $pool))->get(),
             $this->ordered(),
         );
+
+        $this->assertNotEmpty($rounds);
 
         foreach ($rounds as $round) {
             $this->assertNotNull(ProductGroup::query()->find($round['answer']));

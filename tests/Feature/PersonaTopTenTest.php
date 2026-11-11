@@ -6,22 +6,17 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Enums\PickMode;
-use App\Enums\Source;
 use App\Jobs\RefreshPersonaTopLists;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\PersonaTopList;
-use App\Models\PopularRank;
 use App\Models\ProductGroup;
-use App\Models\Wishlist;
-use App\Models\WishlistItem;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Gift\PersonaTopTen;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesDemandSignals;
 use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
@@ -33,6 +28,7 @@ use Tests\TestCase;
  */
 class PersonaTopTenTest extends TestCase
 {
+    use MakesDemandSignals;
     use MakesGiftShelf;
     use RefreshDatabase;
 
@@ -216,29 +212,5 @@ class PersonaTopTenTest extends TestCase
         $this->assertInstanceOf(DailyPickSet::class, app(EditionBuilder::class)->buildPersona($plan));
 
         return $curated;
-    }
-
-    private function wish(ProductGroup $group, int $lists): void
-    {
-        for ($i = 0; $i < $lists; $i++) {
-            $anon = (string) Str::uuid();
-            DB::table('anonymous_identities')->insert(['id' => $anon, 'last_seen_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
-
-            $list = Wishlist::create(['owner_anon_id' => $anon, 'title' => "Lijst {$i}", 'market' => Market::BeNl->value]);
-            WishlistItem::create(['wishlist_id' => $list->id, 'group_id' => $group->id, 'snapshot_title' => $group->title]);
-        }
-    }
-
-    private function chart(ProductGroup $group, int $rank): void
-    {
-        PopularRank::create([
-            'source' => Source::Bol->value,
-            'market' => Market::BeNl->value,
-            'external_id' => 'x'.bin2hex(random_bytes(4)),
-            'group_id' => $group->id,
-            'rank' => $rank,
-            'captured_on' => now()->toDateString(),
-            'captured_at' => now(),
-        ]);
     }
 }

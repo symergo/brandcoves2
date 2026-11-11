@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\SavesPeopleForMe;
 use Tests\TestCase;
 
 /**
@@ -30,6 +31,7 @@ use Tests\TestCase;
 class InviteSavedPersonTest extends TestCase
 {
     use RefreshDatabase;
+    use SavesPeopleForMe;
 
     private User $me;
 
@@ -203,12 +205,6 @@ class InviteSavedPersonTest extends TestCase
         $this->actingAs($this->me)->from('/be-nl/people')->post('/be-nl/friends', ['email' => 'mama@example.com']);
 
         $this->assertSame($mum->id, FriendInvite::query()->value('recipient_id'));
-    }
-
-    /** @param  array<string, mixed>  $attributes */
-    private function saved(string $name, array $attributes = []): Recipient
-    {
-        return Recipient::create(['owner_user_id' => $this->me->id, 'name' => $name, ...$attributes]);
     }
 
     private function invite(Recipient $person, string $email, ?string $birthday = null): TestResponse

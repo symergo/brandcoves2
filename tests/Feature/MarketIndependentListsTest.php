@@ -196,6 +196,8 @@ class MarketIndependentListsTest extends TestCase
          * version of each product was reported, and with no Belgian twin
          * nothing was reported at all. The bookmark sat empty on the very list
          * the item is on. On production that was five of fifteen products.
+         * Reporting every saved product's own id keeps the response small:
+         * one id per saved product, two at most (with its twin here).
          */
         $user = User::factory()->create();
         $dutchOnly = $this->group(Market::NlNl);

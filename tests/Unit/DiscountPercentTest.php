@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Models\ProductGroup;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -29,27 +30,26 @@ class DiscountPercentTest extends TestCase
         $this->assertSame(19, $this->group(8040, 10000)->discountPercent());
     }
 
-    #[Test]
-    public function a_saving_below_one_percent_is_not_a_discount(): void
+    /** @return iterable<string, array{?int, ?int}> */
+    public static function notADiscount(): iterable
     {
         // Floors to 0, and "0% off" is a badge that claims nothing while
         // looking exactly like one that claims something. Seen on the by-store
         // lanes as "-0%".
-        $this->assertNull($this->group(9950, 10000)->discountPercent());
-    }
+        yield 'a saving below 1%' => [9950, 10000];
 
-    #[Test]
-    public function a_price_at_or_above_the_previous_one_is_not_a_discount(): void
-    {
-        $this->assertNull($this->group(10000, 10000)->discountPercent());
-        $this->assertNull($this->group(12000, 10000)->discountPercent());
-    }
+        yield 'a price equal to the previous one' => [10000, 10000];
+        yield 'a price above the previous one' => [12000, 10000];
 
-    #[Test]
-    public function it_is_null_without_a_previous_price_to_compare_against(): void
-    {
         // An offer whose price has never changed since we first saw it.
-        $this->assertNull($this->group(8000, null)->discountPercent());
-        $this->assertNull($this->group(null, 10000)->discountPercent());
+        yield 'no previous price' => [8000, null];
+        yield 'no current price' => [null, 10000];
+    }
+
+    #[Test]
+    #[DataProvider('notADiscount')]
+    public function it_is_not_a_discount(?int $min, ?int $previous): void
+    {
+        $this->assertNull($this->group($min, $previous)->discountPercent());
     }
 }

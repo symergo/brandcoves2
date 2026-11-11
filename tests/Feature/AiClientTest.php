@@ -9,6 +9,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -55,8 +56,8 @@ class AiClientTest extends TestCase
         ]);
     }
 
-    #[Test]
-    public function a_thinking_block_before_the_text_does_not_swallow_the_answer(): void
+    /** @return iterable<string, array{list<array<string, mixed>>, array<string, string>, array<string, mixed>}> */
+    public static function replies(): iterable
     {
         /*
          * The regression, in the exact shape the API returned it: index 0 is a
@@ -65,62 +66,67 @@ class AiClientTest extends TestCase
          * A short prompt produces no thinking block, so the smoke test passed
          * and the credential looked healthy while every real generation failed.
          */
-        $this->fakeResponse([
-            ['type' => 'thinking', 'thinking' => '', 'signature' => 'abc'],
-            ['type' => 'text', 'text' => '{"ok":true}'],
-        ]);
-
-        $result = app(AiClient::class)->json(
-            featureKey: 'gift_angles',
-            system: 'x',
-            prompt: 'y',
-            schemaHint: ['ok' => 'boolean'],
-        );
-
-        $this->assertSame(['ok' => true], $result);
-    }
-
-    #[Test]
-    public function a_plain_single_text_block_still_works(): void
-    {
-        $this->fakeResponse([['type' => 'text', 'text' => '{"ok":true}']]);
-
-        $this->assertSame(
+        yield 'a thinking block before the text' => [
+            [
+                ['type' => 'thinking', 'thinking' => '', 'signature' => 'abc'],
+                ['type' => 'text', 'text' => '{"ok":true}'],
+            ],
+            ['ok' => 'boolean'],
             ['ok' => true],
-            app(AiClient::class)->json('gift_angles', 'x', 'y', ['ok' => 'boolean']),
-        );
-    }
+        ];
 
-    #[Test]
-    public function several_text_blocks_are_joined(): void
-    {
+        yield 'a plain single text block' => [
+            [['type' => 'text', 'text' => '{"ok":true}']],
+            ['ok' => 'boolean'],
+            ['ok' => true],
+        ];
+
         // A long answer can arrive split. Taking only the first would truncate
         // the JSON and fail to parse, which looks identical to a bad model.
-        $this->fakeResponse([
-            ['type' => 'text', 'text' => '{"a":1,'],
-            ['type' => 'text', 'text' => '"b":2}'],
-        ]);
-
-        $this->assertSame(
+        yield 'several text blocks are joined' => [
+            [
+                ['type' => 'text', 'text' => '{"a":1,'],
+                ['type' => 'text', 'text' => '"b":2}'],
+            ],
+            [],
             ['a' => 1, 'b' => 2],
-            app(AiClient::class)->json('gift_angles', 'x', 'y', []),
-        );
-    }
+        ];
 
-    #[Test]
-    public function an_unknown_block_type_is_ignored_rather_than_breaking(): void
-    {
         // Stability against a model adding a block type later, which is exactly
         // what happened the first time.
-        $this->fakeResponse([
-            ['type' => 'redacted_thinking', 'data' => 'opaque'],
-            ['type' => 'text', 'text' => '{"ok":true}'],
-        ]);
-
-        $this->assertSame(
+        yield 'an unknown block type is ignored' => [
+            [
+                ['type' => 'redacted_thinking', 'data' => 'opaque'],
+                ['type' => 'text', 'text' => '{"ok":true}'],
+            ],
+            [],
             ['ok' => true],
-            app(AiClient::class)->json('gift_angles', 'x', 'y', []),
-        );
+        ];
+
+        // Models occasionally fence despite being told not to. Cheaper to strip
+        // than to burn a retry on the same answer.
+        yield 'a fenced reply' => [
+            [
+                ['type' => 'thinking', 'thinking' => ''],
+                ['type' => 'text', 'text' => "```json\n{\"ok\":true}\n```"],
+            ],
+            [],
+            ['ok' => true],
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $content
+     * @param  array<string, string>  $schemaHint
+     * @param  array<string, mixed>  $expected
+     */
+    #[Test]
+    #[DataProvider('replies')]
+    public function a_reply_is_parsed(array $content, array $schemaHint, array $expected): void
+    {
+        $this->fakeResponse($content);
+
+        $this->assertSame($expected, app(AiClient::class)->json('gift_angles', 'x', 'y', $schemaHint));
     }
 
     #[Test]
@@ -160,22 +166,6 @@ class AiClientTest extends TestCase
 
         $this->assertSame(1, $usage->calls);
         $this->assertSame(2400, $usage->output_tokens);
-    }
-
-    #[Test]
-    public function a_fenced_reply_is_still_parsed(): void
-    {
-        // Models occasionally fence despite being told not to. Cheaper to strip
-        // than to burn a retry on the same answer.
-        $this->fakeResponse([
-            ['type' => 'thinking', 'thinking' => ''],
-            ['type' => 'text', 'text' => "```json\n{\"ok\":true}\n```"],
-        ]);
-
-        $this->assertSame(
-            ['ok' => true],
-            app(AiClient::class)->json('gift_angles', 'x', 'y', []),
-        );
     }
 
     #[Test]

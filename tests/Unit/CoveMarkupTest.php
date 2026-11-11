@@ -6,8 +6,8 @@ namespace Tests\Unit;
 
 use App\Enums\Market;
 use App\Services\Guides\CoveMarkup;
-use App\Services\Seo\BrandLinker;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MarkupWithoutBrandPages;
 use Tests\TestCase;
 
 /**
@@ -21,6 +21,8 @@ use Tests\TestCase;
  */
 class CoveMarkupTest extends TestCase
 {
+    use MarkupWithoutBrandPages;
+
     private function allowed(): array
     {
         return [
@@ -32,33 +34,9 @@ class CoveMarkupTest extends TestCase
         ];
     }
 
-    /**
-     * A brand linker that answers from memory.
-     *
-     * This test is about token parsing and destination allowlisting, neither of
-     * which needs a database. `CoveMarkup` used to resolve `BrandLinker` from
-     * the container mid-render, which made every case here depend on a
-     * `brand_stats` table — so the file passed on its own and errored on all 11
-     * cases in a full run, depending on what an earlier test had left behind.
-     *
-     * Empty is the honest answer for a class with no brand pages: `brand()`
-     * falls back to a filtered search link, which is exactly what these tests
-     * assert. Whether a brand *has* a page belongs to BrandPageTest.
-     */
-    private function markup(): CoveMarkup
-    {
-        return new CoveMarkup(new class extends BrandLinker
-        {
-            public function urls(array $brands, Market $market): array
-            {
-                return [];
-            }
-        });
-    }
-
     private function render(string $text): array
     {
-        return $this->markup()->render($text, Market::BeNl, $this->allowed());
+        return $this->markupWithoutBrandPages()->render($text, Market::BeNl, $this->allowed());
     }
 
     #[Test]
@@ -136,7 +114,7 @@ class CoveMarkupTest extends TestCase
     #[Test]
     public function plain_text_gives_an_unlabelled_guide_its_title_too(): void
     {
-        $plain = $this->markup()->plain('Zie [[guide:je-rechten-bij-een-online-aankoop]].', $this->allowed());
+        $plain = $this->markupWithoutBrandPages()->plain('Zie [[guide:je-rechten-bij-een-online-aankoop]].', $this->allowed());
 
         $this->assertSame('Zie Je rechten bij een online aankoop.', $plain);
     }
@@ -146,7 +124,7 @@ class CoveMarkupTest extends TestCase
     {
         // A meta description, an email, a FAQ answer. Same failure, and the one
         // audience that cannot ask what the number was for.
-        $plain = $this->markup()->plain('The [[product:1234]] is the obvious one.', $this->allowed());
+        $plain = $this->markupWithoutBrandPages()->plain('The [[product:1234]] is the obvious one.', $this->allowed());
 
         $this->assertSame('The Sony WH-1000XM5 is the obvious one.', $plain);
     }
@@ -159,7 +137,7 @@ class CoveMarkupTest extends TestCase
          * the page is the writer's own few words for the thing, so the contract
          * has to ask for them — and has to keep asking after somebody tidies it.
          */
-        $contract = $this->markup()->promptContract($this->allowed());
+        $contract = $this->markupWithoutBrandPages()->promptContract($this->allowed());
 
         $this->assertStringContainsString('[[product:1234|', $contract);
         $this->assertStringContainsString('MUST carry a label', $contract);
@@ -242,7 +220,7 @@ class CoveMarkupTest extends TestCase
     #[Test]
     public function paragraphs_are_split_on_blank_lines(): void
     {
-        $result = $this->markup()->paragraphs(
+        $result = $this->markupWithoutBrandPages()->paragraphs(
             "First, about [[brand:Sony]].\n\nSecond, about [[brand:JBL]].",
             Market::BeNl,
             $this->allowed(),
@@ -304,7 +282,7 @@ class CoveMarkupTest extends TestCase
             'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
         ]);
 
-        $result = $this->markup()->render(
+        $result = $this->markupWithoutBrandPages()->render(
             'Have a look [[amazon:wireless headphones|on Amazon]] too.',
             Market::En,
             $this->allowed(),
@@ -322,7 +300,7 @@ class CoveMarkupTest extends TestCase
     {
         // A meta description or an email must never print the token, and must
         // never print a URL either.
-        $plain = $this->markup()->plain('Kijk [[amazon:koptelefoon|op Amazon]] voor meer.');
+        $plain = $this->markupWithoutBrandPages()->plain('Kijk [[amazon:koptelefoon|op Amazon]] voor meer.');
 
         $this->assertSame('Kijk op Amazon voor meer.', $plain);
     }
@@ -391,14 +369,14 @@ class CoveMarkupTest extends TestCase
         // the asterisks were for.
         $this->assertSame(
             'Er is geen vaste termijn.',
-            $this->markup()->plain('**Er is geen vaste termijn.**'),
+            $this->markupWithoutBrandPages()->plain('**Er is geen vaste termijn.**'),
         );
     }
 
     #[Test]
     public function the_prompt_contract_lists_only_what_the_renderer_accepts(): void
     {
-        $contract = $this->markup()->promptContract($this->allowed());
+        $contract = $this->markupWithoutBrandPages()->promptContract($this->allowed());
 
         /*
          * The prompt lives next to the parser because the two drifting apart is
@@ -429,7 +407,7 @@ class CoveMarkupTest extends TestCase
     #[Test]
     public function a_figure_token_is_a_paragraph_of_its_own_or_nothing(): void
     {
-        $markup = $this->markup();
+        $markup = $this->markupWithoutBrandPages();
 
         // Alone on its paragraph: a figure, with its key.
         $this->assertSame('coin_jar', $markup->figureKey('[[figure:coin_jar]]'));
@@ -461,7 +439,7 @@ Twee.',
     #[Test]
     public function an_unknown_figure_is_dropped_and_reported_never_drawn_as_the_default(): void
     {
-        $result = $this->markup()->paragraphs(
+        $result = $this->markupWithoutBrandPages()->paragraphs(
             'Een.
 
 [[figure:not_a_scene]]
@@ -480,7 +458,7 @@ Twee.',
     #[Test]
     public function a_block_of_pipe_lines_is_a_table(): void
     {
-        $table = $this->markup()->tableFrom(
+        $table = $this->markupWithoutBrandPages()->tableFrom(
             '| Stad | Markt | 2026 |
 |---|---|---|
 | Brussel | Winterpret | 27 nov - 3 jan |
@@ -495,7 +473,7 @@ Twee.',
     #[Test]
     public function prose_is_never_mistaken_for_a_table(): void
     {
-        $markup = $this->markup();
+        $markup = $this->markupWithoutBrandPages();
 
         // The defence is the pipe at both ends plus the rule line, and this is
         // the case it exists for: a paragraph silently rendered as a
@@ -518,7 +496,7 @@ Twee.',
     #[Test]
     public function a_cell_is_escaped_and_resolves_its_tokens(): void
     {
-        $table = $this->markup()->table(
+        $table = $this->markupWithoutBrandPages()->table(
             '| Stad | Waar |
 |---|---|
 | <b>Brussel</b> | [[search:draadloze koptelefoon|zoek]] |
@@ -539,7 +517,7 @@ Twee.',
     #[Test]
     public function a_ragged_row_is_padded_rather_than_dropping_the_table(): void
     {
-        $table = $this->markup()->tableFrom(
+        $table = $this->markupWithoutBrandPages()->tableFrom(
             '| Stad | Markt | 2026 |
 |---|---|---|
 | Brussel | Winterpret |
@@ -559,7 +537,7 @@ Twee.',
          * absence — but LinkCheck reads this method too, so a link inside a
          * cell that nothing checked is exactly the link that breaks.
          */
-        $result = $this->markup()->paragraphs(
+        $result = $this->markupWithoutBrandPages()->paragraphs(
             'Een.
 
 | Stad | Waar |
@@ -665,8 +643,8 @@ Twee.',
     {
         config(['giftcoves.editorial_sources' => ['acm.nl']]);
 
-        $column = $this->markup()->promptContract($this->allowed());
-        $article = $this->markup()->promptContract($this->allowed(), article: true);
+        $column = $this->markupWithoutBrandPages()->promptContract($this->allowed());
+        $article = $this->markupWithoutBrandPages()->promptContract($this->allowed(), article: true);
 
         $this->assertStringContainsString('no headings, no lists', $column);
         $this->assertStringNotContainsString('[[source:', $column);
@@ -679,7 +657,7 @@ Twee.',
     #[Test]
     public function a_surface_that_prints_paragraphs_still_reads_a_heading_and_a_list(): void
     {
-        $out = $this->markup()->paragraphs("## Een vraag?\n\n- een\n- twee", Market::BeNl, $this->allowed());
+        $out = $this->markupWithoutBrandPages()->paragraphs("## Een vraag?\n\n- een\n- twee", Market::BeNl, $this->allowed());
 
         $this->assertSame(['Een vraag?', "• een\n• twee"], $out['html']);
     }

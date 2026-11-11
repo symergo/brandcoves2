@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
-use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\ApiToken;
 use App\Models\CovePlan;
 use App\Models\Merchant;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesCoveBriefProducts;
 use Tests\TestCase;
 
 /**
@@ -37,6 +34,7 @@ use Tests\TestCase;
  */
 class CoveItemApiTest extends TestCase
 {
+    use MakesCoveBriefProducts;
     use RefreshDatabase;
 
     private Merchant $merchant;
@@ -341,44 +339,5 @@ class CoveItemApiTest extends TestCase
         }
 
         return $items;
-    }
-
-    private function product(string $title, int $price, string $brand, ?Market $market = null): ProductGroup
-    {
-        $market ??= Market::BeNl;
-
-        $group = ProductGroup::create([
-            'market' => $market,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'brand' => $brand,
-            'category' => 'audio',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 1,
-            'in_stock' => true,
-            'giftable' => true,
-            'surprise_score' => 60,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => $market,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'title' => $title,
-            'brand' => $brand,
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
     }
 }

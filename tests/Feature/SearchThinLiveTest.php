@@ -331,15 +331,8 @@ class SearchThinLiveTest extends TestCase
     public function the_follow_up_computes_only_the_live_answer(): void
     {
         $this->fakeBol([$this->bolProduct()]);
-        $url = '/be-nl/search?q=tuinkabouter';
-        $version = $this->get($url)->viewData('page')['version'];
 
-        $this->get($url, [
-            'X-Inertia' => 'true',
-            'X-Inertia-Version' => (string) $version,
-            'X-Inertia-Partial-Component' => 'Search',
-            'X-Inertia-Partial-Data' => 'live',
-        ])->assertOk()
+        $this->followUp('/be-nl/search?q=tuinkabouter')
             ->assertJsonPath('props.live.added', 1)
             ->assertJsonMissingPath('props.results')
             ->assertJsonMissingPath('props.facets');

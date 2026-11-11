@@ -21,6 +21,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -553,19 +554,7 @@ class SeoTest extends TestCase
         // PopularSearchesTest covers them, with their privacy floor.
         config(['giftcoves.robots_allow' => true]);
 
-        foreach ([[Market::BeNl, 'de-laatste-vakantiedag'], [Market::BeFr, 'dernier-jour-de-vacances']] as [$market, $slug]) {
-            DailyPickSet::create([
-                'market' => $market->value,
-                'kind' => CoveKind::Daily->value,
-                'drop_date' => '2026-08-08',
-                'slug' => $slug,
-                'theme_title' => 'De laatste vakantiedag',
-                'theme_slug' => 'vakantie',
-                'theme_source' => 'theme',
-                'status' => PublishStatus::Published->value,
-                'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
-            ]);
-        }
+        $this->twinDailies();
 
         foreach ([[CoveKind::Guide, 'koptelefoons', PublishStatus::Published], [CoveKind::Guide, 'nog-niet-klaar', PublishStatus::Draft]] as [$kind, $slug, $status]) {
             DailyPickSet::create([
@@ -634,30 +623,34 @@ class SeoTest extends TestCase
         }
     }
 
+    /**
+     * Two ways a product ends up with nothing to buy.
+     *
+     * Sold out: still active rows, so the old `$offers === []` test said
+     * "indexable" of a page with no price on it and no AggregateOffer in its
+     * markup.
+     *
+     * @return array<string, array{array<string, string>}>
+     */
+    public static function offersWithNothingToBuy(): array
+    {
+        return [
+            'stale offers' => [['status' => 'stale']],
+            'all sold out' => [['availability' => 'out_of_stock']],
+        ];
+    }
+
+    /** @param array<string, string> $offerUpdate */
     #[Test]
-    public function an_unstocked_product_is_still_indexable(): void
+    #[DataProvider('offersWithNothingToBuy')]
+    public function a_product_without_live_offers_is_still_indexable(array $offerUpdate): void
     {
         // It was `noindex, follow` until 2026-09-12 (a page with no offers is
         // thin); the owner asked for every page to be indexable, and a product
         // that comes back in stock is then already known to the index.
         config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
-        $group->offers()->update(['status' => 'stale']);
-
-        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertOk()
-            ->assertDontSee('noindex', false);
-    }
-
-    #[Test]
-    public function a_product_whose_shops_have_all_sold_out_is_indexable_too(): void
-    {
-        config(['giftcoves.robots_allow' => true]);
-        $group = $this->seedCatalogue();
-
-        // Still active rows, so the old `$offers === []` test said "indexable"
-        // — of a page with no price on it and no AggregateOffer in its markup.
-        $group->offers()->update(['availability' => 'out_of_stock']);
+        $group->offers()->update($offerUpdate);
 
         $this->get("/be-nl/p/{$group->id}/{$group->slug}")
             ->assertOk()
@@ -677,19 +670,7 @@ class SeoTest extends TestCase
          * recognising the path and fell back to the blind segment swap, which
          * emitted all four and put the two 404s in the head and the sitemap.
          */
-        foreach ([[Market::BeNl, 'de-laatste-vakantiedag'], [Market::BeFr, 'dernier-jour-de-vacances']] as [$market, $slug]) {
-            DailyPickSet::create([
-                'market' => $market->value,
-                'kind' => CoveKind::Daily->value,
-                'drop_date' => '2026-08-08',
-                'slug' => $slug,
-                'theme_title' => 'De laatste vakantiedag',
-                'theme_slug' => 'vakantie',
-                'theme_source' => 'theme',
-                'status' => PublishStatus::Published->value,
-                'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
-            ]);
-        }
+        $this->twinDailies();
 
         $this->assertSame([
             'fr-BE' => url('/be-fr/tips/dernier-jour-de-vacances'),
@@ -789,5 +770,26 @@ class SeoTest extends TestCase
         // `brand=` never appears in a URL this site generates — the parameter
         // is an array — so the rule that used to read that way matched nothing.
         $this->assertStringNotContainsString('Disallow: /*?*brand=', $body);
+    }
+
+    /**
+     * One Daily on 2026-08-08 in be-nl and its twin in be-fr, each under its
+     * own market's slug.
+     */
+    private function twinDailies(): void
+    {
+        foreach ([[Market::BeNl, 'de-laatste-vakantiedag'], [Market::BeFr, 'dernier-jour-de-vacances']] as [$market, $slug]) {
+            DailyPickSet::create([
+                'market' => $market->value,
+                'kind' => CoveKind::Daily->value,
+                'drop_date' => '2026-08-08',
+                'slug' => $slug,
+                'theme_title' => 'De laatste vakantiedag',
+                'theme_slug' => 'vakantie',
+                'theme_source' => 'theme',
+                'status' => PublishStatus::Published->value,
+                'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
+            ]);
+        }
     }
 }

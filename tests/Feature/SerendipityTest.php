@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Services\Discovery\CatalogueStats;
 use App\Services\Discovery\SerendipityEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -208,29 +209,54 @@ class SerendipityTest extends TestCase
         );
     }
 
-    #[Test]
-    public function rarity_cannot_buy_its_way_past_the_quality_gate(): void
+    /**
+     * THE TEST THIS CLASS EXISTS FOR.
+     *
+     * Every row here is rare by any measure, and every one must still score
+     * zero: the quality gate holds whatever rarity offers.
+     *
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function gatedRows(): iterable
     {
-        $this->ordinaryCatalogue();
-
-        /*
-         * THE TEST THIS CLASS EXISTS FOR.
-         *
-         * This row wins every rarity signal there is: a category of one, a
-         * brand nobody has heard of, a single merchant, brand new. It is also
-         * a phone case with no picture, which is the single worst thing you
-         * could put on a page whose promise is "look what we found".
-         */
-        $junk = $this->group([
+        // This row wins every rarity signal there is: a category of one, a
+        // brand nobody has heard of, a single merchant, brand new. It is also
+        // a phone case with no picture, which is the single worst thing you
+        // could put on a page whose promise is "look what we found".
+        yield 'junk that wins every rarity signal' => [[
             'title' => 'Onbekend merk siliconen hoesje ART-4471B',
             'brand' => 'Noname',
             'category' => 'Hoesjes',
             'image_url' => null,
             'min_price' => 299,
             'merchant_count' => 1,
-        ]);
+        ]];
 
-        $this->assertSame(0.0, $this->engine()->score($junk)['score']);
+        // "Look what we found" followed by "you cannot have it" is worse than
+        // showing nothing.
+        yield 'out of stock' => [[
+            'title' => 'Sous-vide circulator met vacuumsealer',
+            'category' => 'Kookgerei',
+            'in_stock' => false,
+            'merchant_count' => 1,
+        ]];
+
+        // Feed artefacts are rare by construction and worthless to show.
+        yield 'a title made of codes' => [[
+            'title' => 'ART.4471-B (zw)',
+            'category' => 'Overig',
+            'merchant_count' => 1,
+        ]];
+    }
+
+    /** @param array<string, mixed> $attributes */
+    #[Test]
+    #[DataProvider('gatedRows')]
+    public function rarity_cannot_buy_its_way_past_the_quality_gate(array $attributes): void
+    {
+        $this->ordinaryCatalogue();
+
+        $this->assertSame(0.0, $this->engine()->score($this->group($attributes))['score']);
     }
 
     #[Test]
@@ -281,38 +307,6 @@ class SerendipityTest extends TestCase
 
         $this->assertGreaterThan(0.0, $result['score']);
         $this->assertArrayNotHasKey('gated', $result['breakdown']);
-    }
-
-    #[Test]
-    public function an_out_of_stock_find_is_gated(): void
-    {
-        $this->ordinaryCatalogue();
-
-        $gone = $this->group([
-            'title' => 'Sous-vide circulator met vacuumsealer',
-            'category' => 'Kookgerei',
-            'in_stock' => false,
-            'merchant_count' => 1,
-        ]);
-
-        // "Look what we found" followed by "you cannot have it" is worse than
-        // showing nothing.
-        $this->assertSame(0.0, $this->engine()->score($gone)['score']);
-    }
-
-    #[Test]
-    public function a_title_made_of_codes_is_gated(): void
-    {
-        $this->ordinaryCatalogue();
-
-        // Feed artefacts are rare by construction and worthless to show.
-        $artefact = $this->group([
-            'title' => 'ART.4471-B (zw)',
-            'category' => 'Overig',
-            'merchant_count' => 1,
-        ]);
-
-        $this->assertSame(0.0, $this->engine()->score($artefact)['score']);
     }
 
     #[Test]
@@ -367,9 +361,20 @@ class SerendipityTest extends TestCase
 
         (new ScoreSerendipity(Market::BeNl))->handle();
 
-        $this->get('/be-nl/surprise')
+        $finds = $this->get('/be-nl/surprise')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('finds'));
+            ->assertInertia(fn ($page) => $page->has('finds'))
+            ->viewData('page')['props']['finds'];
+
+        // The sous-vide find scored (see the test above), so the page is not
+        // empty, and everything on it scored above zero. Not "it shows the
+        // sous-vide": the page samples six from the top of the ranking, and the
+        // ordinary headphones may score above zero too.
+        $this->assertNotEmpty($finds);
+
+        foreach ($finds as $find) {
+            $this->assertGreaterThan(0, ProductGroup::query()->findOrFail($find['id'])->surprise_score);
+        }
     }
 
     #[Test]

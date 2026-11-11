@@ -91,16 +91,7 @@ class PromptBankTest extends TestCase
         PromptTemplate::create(['slot' => 'cove.guide', 'system' => 'Write it in limericks.']);
 
         $this->shelf();
-        $systems = new ArrayObject;
-
-        $this->mock(AiClient::class, function ($mock) use ($systems) {
-            $mock->shouldReceive('isEnabled')->andReturn(true);
-            $mock->shouldReceive('json')->andReturnUsing(function (string $f, string $system) use ($systems) {
-                $systems->append($system);
-
-                return [];
-            });
-        });
+        $systems = $this->captureSystemPrompts();
 
         app(EditionBuilder::class)->buildArticle($this->plan());
 
@@ -123,6 +114,24 @@ class PromptBankTest extends TestCase
         PromptTemplate::create(['slot' => 'cove.daily', 'system' => 'FOR THE DAILY ONLY']);
 
         $this->shelf();
+        $systems = $this->captureSystemPrompts();
+
+        app(EditionBuilder::class)->buildArticle($this->plan());
+
+        // A guide must not pick up the column's prompt. That is the whole point
+        // of a slot per kind.
+        $this->assertNotEmpty($systems);
+        $this->assertStringNotContainsString('FOR THE DAILY ONLY', implode("\n", $systems->getArrayCopy()));
+    }
+
+    /**
+     * An AI client that answers nothing and keeps every system prompt it was
+     * sent, so a test can read what reached the model.
+     *
+     * @return ArrayObject<int, string>
+     */
+    private function captureSystemPrompts(): ArrayObject
+    {
         $systems = new ArrayObject;
 
         $this->mock(AiClient::class, function ($mock) use ($systems) {
@@ -134,11 +143,7 @@ class PromptBankTest extends TestCase
             });
         });
 
-        app(EditionBuilder::class)->buildArticle($this->plan());
-
-        // A guide must not pick up the column's prompt. That is the whole point
-        // of a slot per kind.
-        $this->assertStringNotContainsString('FOR THE DAILY ONLY', implode("\n", $systems->getArrayCopy()));
+        return $systems;
     }
 
     #[Test]

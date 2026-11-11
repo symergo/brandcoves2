@@ -169,24 +169,6 @@ class GiftabilityClassifierTest extends TestCase
     }
 
     #[Test]
-    public function the_price_ceiling_is_the_only_rejection_that_still_shows(): void
-    {
-        // The invariant behind the split, stated once rather than inferred from
-        // the table above: everything else excludes a row from both surfaces.
-        $expensive = $this->classifier()->classify('LG OLED 77 inch televisie', 'TV', 249900);
-        $consumable = $this->classifier()->classify('HP 305XL inktcartridge zwart', 'Printers', 3299);
-        $cheap = $this->classifier()->classify('Sleutelhanger', 'Accessoires', 199);
-
-        $this->assertTrue($expensive->worthShowing, 'over the ceiling is still worth showing');
-        $this->assertFalse($consumable->worthShowing, 'a cartridge is not worth showing');
-        $this->assertFalse($cheap->worthShowing, 'a €2 keyring is not worth showing');
-
-        foreach ([$expensive, $consumable, $cheap] as $verdict) {
-            $this->assertFalse($verdict->giftable);
-        }
-    }
-
-    #[Test]
     public function accents_are_folded_the_same_way_on_every_platform(): void
     {
         // iconv's //TRANSLIT differs across glibc, musl and Windows. Tests run

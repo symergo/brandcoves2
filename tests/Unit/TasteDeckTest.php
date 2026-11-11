@@ -54,9 +54,7 @@ class TasteDeckTest extends TestCase
         $this->assertCount(TasteDeck::ROUNDS, $rounds);
 
         foreach ($rounds as $round) {
-            if (count($round) === 2) {
-                $this->assertFalse($round[0]->sharesAnInterestWith($round[1]));
-            }
+            $this->assertFalse($round[0]->sharesAnInterestWith($round[1]));
         }
     }
 

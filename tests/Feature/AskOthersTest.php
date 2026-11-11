@@ -13,8 +13,8 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\InertiaProps;
 use Tests\TestCase;
 
 /**
@@ -28,13 +28,8 @@ use Tests\TestCase;
  */
 class AskOthersTest extends TestCase
 {
+    use InertiaProps;
     use RefreshDatabase;
-
-    /** @return array<string, mixed> */
-    private function props(TestResponse $response): array
-    {
-        return $response->viewData('page')['props'];
-    }
 
     // --- Posting -------------------------------------------------------------
 
@@ -70,17 +65,6 @@ class AskOthersTest extends TestCase
 
         // And it is not on the public board.
         $this->assertSame([], $this->props($this->get('/be-nl/ask'))['questions']);
-    }
-
-    #[Test]
-    public function posting_a_question_queues_the_triage_job(): void
-    {
-        Queue::fake();
-
-        $this->actingAs(User::factory()->create())
-            ->post('/be-nl/ask', ['title' => 'Ideas for a colleague leaving after ten years?']);
-
-        Queue::assertPushed(TriageCommunityPost::class);
     }
 
     #[Test]

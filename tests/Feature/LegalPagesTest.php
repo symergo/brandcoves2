@@ -116,10 +116,15 @@ class LegalPagesTest extends TestCase
     public function they_are_indexable(): void
     {
         // An about page is a trust signal, and a privacy policy nobody can find
-        // is a privacy policy nobody believes.
-        $this->get('/be-nl/about')
-            ->assertOk()
-            ->assertDontSee('content="noindex, follow"', escape: false);
+        // is a privacy policy nobody believes. The robots tag is "noindex"
+        // everywhere the flag is off, so the flag is what this asserts through.
+        config(['giftcoves.robots_allow' => true]);
+
+        foreach (['about', 'privacy', 'terms'] as $page) {
+            $this->get("/be-nl/{$page}")
+                ->assertOk()
+                ->assertSee('<meta name="robots" content="index, follow', escape: false);
+        }
     }
 
     #[Test]

@@ -54,6 +54,10 @@ class LegacyRedirectTest extends TestCase
         yield 'secret santa' => ['/secret-santa/kantoor-2025'];
         yield 'a profile' => ['/profile/marie'];
         yield 'a wordpress page' => ['/over-ons'];
+
+        // `/de/search` looks like a WPML prefix but German was never a v1
+        // language. Redirecting it would invent a mapping we cannot support.
+        yield 'a language v1 never had' => ['/de/search'];
     }
 
     #[Test]
@@ -89,14 +93,6 @@ class LegacyRedirectTest extends TestCase
          * and it is the one a crawl report will actually surface.
          */
         $this->get($from)->assertNotFound();
-    }
-
-    #[Test]
-    public function an_unknown_market_prefix_is_not_treated_as_a_legacy_url(): void
-    {
-        // `/de/search` looks like a WPML prefix but German was never a v1
-        // language. Redirecting it would invent a mapping we cannot support.
-        $this->get('/de/search')->assertNotFound();
     }
 
     #[Test]

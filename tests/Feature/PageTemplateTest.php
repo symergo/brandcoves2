@@ -409,7 +409,7 @@ class PageTemplateTest extends TestCase
     #[Test]
     public function weight_biases_the_draw(): void
     {
-        $block = $this->block('Zeldzaam.', variants: [['body' => 'Vaak.', 'weight' => 9]]);
+        $this->block('Zeldzaam.', variants: [['body' => 'Vaak.', 'weight' => 9]]);
 
         $often = 0;
 
@@ -422,7 +422,6 @@ class PageTemplateTest extends TestCase
         // does something, not that the hash is uniform.
         $this->assertGreaterThan(40, $often);
         $this->assertLessThan(60, $often);
-        $this->assertNotNull($block->fresh());
     }
 
     /*

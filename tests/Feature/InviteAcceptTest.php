@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\RecipientStatus;
-use App\Mail\FriendInviteMail;
 use App\Models\FriendInvite;
 use App\Models\FriendInviteToken;
 use App\Models\Friendship;
@@ -18,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
+use Tests\Feature\Concerns\ReadsQueuedFriendInvite;
 use Tests\TestCase;
 
 /**
@@ -32,6 +32,7 @@ use Tests\TestCase;
  */
 class InviteAcceptTest extends TestCase
 {
+    use ReadsQueuedFriendInvite;
     use RefreshDatabase;
 
     private User $anna;
@@ -222,21 +223,6 @@ class InviteAcceptTest extends TestCase
 
     private function buttonFor(string $email): string
     {
-        $url = null;
-
-        Mail::assertQueued(FriendInviteMail::class, function (FriendInviteMail $mail) use ($email, &$url) {
-            if ($mail->hasTo($email)) {
-                $url = $mail->url;
-
-                return true;
-            }
-
-            return false;
-        });
-
-        // Signed out from here on: the reader of an email has no session here.
-        $this->app['auth']->forgetGuards();
-
-        return (string) $url;
+        return $this->queuedInviteLink($email, 'url');
     }
 }

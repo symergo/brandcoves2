@@ -11,6 +11,7 @@ use App\Models\CommunityQuestion;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -125,52 +126,6 @@ class DiscoverCoveHubTest extends TestCase
             );
     }
 
-    #[Test]
-    public function a_draft_is_not_listed(): void
-    {
-        // The hub is a public page. A Cove that is still being written is not
-        // published anywhere else either, and this must not be the leak.
-        $this->guide('concept', 'Nog niet klaar', Market::BeNl, PublishStatus::Draft, '2026-08-01');
-
-        $this->get('/be-nl/discover-cove')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('coves', 0));
-    }
-
-    #[Test]
-    public function another_markets_coves_are_not_listed(): void
-    {
-        /*
-         * Coves are written per market, in that market's language and against
-         * its catalogue. A Dutch Cove on the French hub is the market boundary
-         * leaking — the same class of mistake as invariant #2, one page further
-         * out.
-         */
-        $this->guide('nederlands', 'Een Nederlandse Cove', Market::BeNl, PublishStatus::Published, '2026-08-01');
-
-        $this->get('/be-fr/discover-cove')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('coves', 0));
-
-        $this->get('/be-nl/discover-cove')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('coves', 1));
-    }
-
-    #[Test]
-    public function the_list_is_capped_so_the_hub_does_not_become_the_archive(): void
-    {
-        // Enough titles that the range is obvious, then a link to the whole
-        // thing. A hub that lists everything is a second copy of /guides.
-        for ($i = 1; $i <= 15; $i++) {
-            $this->guide("cove-{$i}", "Cove {$i}", Market::BeNl, PublishStatus::Published, '2026-08-01');
-        }
-
-        $this->get('/be-nl/discover-cove')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('coves', 6));
-    }
-
     // --- The persona band ----------------------------------------------------
 
     private function persona(string $slug, string $title, Market $market, PublishStatus $status, string $publishedAt): DailyPickSet
@@ -208,38 +163,71 @@ class DiscoverCoveHubTest extends TestCase
             );
     }
 
-    #[Test]
-    public function a_draft_persona_is_not_listed(): void
+    /**
+     * The two bands of Coves on the hub, as [the helper that makes one, the
+     * prop it is listed in]. Both helpers share a signature.
+     *
+     * @return array<string, array{string, string}>
+     */
+    public static function bands(): array
     {
-        // The 18 seeded on 2026-08-29 are all drafts. If this leaked, the hub
-        // would be the one public page advertising unfinished writing.
-        $this->persona('concept', 'Nog niet klaar', Market::BeNl, PublishStatus::Draft, '2026-08-01');
+        return [
+            'guides' => ['guide', 'coves'],
+            'personas' => ['persona', 'personas'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('bands')]
+    public function a_draft_is_not_listed(string $maker, string $prop): void
+    {
+        /*
+         * The hub is a public page. A Cove that is still being written is not
+         * published anywhere else either, and this must not be the leak. The 18
+         * personas seeded on 2026-08-29 are all drafts: if this leaked, the hub
+         * would be the one public page advertising unfinished writing.
+         */
+        $this->{$maker}('concept', 'Nog niet klaar', Market::BeNl, PublishStatus::Draft, '2026-08-01');
 
         $this->get('/be-nl/discover-cove')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('personas', 0));
+            ->assertInertia(fn ($page) => $page->has($prop, 0));
     }
 
     #[Test]
-    public function another_markets_personas_are_not_listed(): void
+    #[DataProvider('bands')]
+    public function another_markets_coves_are_not_listed(string $maker, string $prop): void
     {
-        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl, PublishStatus::Published, '2026-08-01');
+        /*
+         * Coves are written per market, in that market's language and against
+         * its catalogue. A Dutch Cove on the French hub is the market boundary
+         * leaking — the same class of mistake as invariant #2, one page further
+         * out.
+         */
+        $this->{$maker}('nederlands', 'Een Nederlandse Cove', Market::BeNl, PublishStatus::Published, '2026-08-01');
 
         $this->get('/be-fr/discover-cove')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('personas', 0));
+            ->assertInertia(fn ($page) => $page->has($prop, 0));
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has($prop, 1));
     }
 
     #[Test]
-    public function the_persona_band_is_capped(): void
+    #[DataProvider('bands')]
+    public function the_list_is_capped_so_the_hub_does_not_become_the_archive(string $maker, string $prop): void
     {
-        for ($i = 1; $i <= 9; $i++) {
-            $this->persona("persona-{$i}", "Persona {$i}", Market::BeNl, PublishStatus::Published, '2026-08-01');
+        // Enough titles that the range is obvious, then a link to the whole
+        // thing. A hub that lists everything is a second copy of /guides.
+        for ($i = 1; $i <= 15; $i++) {
+            $this->{$maker}("{$maker}-{$i}", "Cove {$i}", Market::BeNl, PublishStatus::Published, '2026-08-01');
         }
 
         $this->get('/be-nl/discover-cove')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('personas', 6));
+            ->assertInertia(fn ($page) => $page->has($prop, 6));
     }
 
     /**

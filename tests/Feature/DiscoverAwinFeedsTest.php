@@ -215,18 +215,6 @@ class DiscoverAwinFeedsTest extends TestCase
         $this->assertSame(['Coolblue NL'], $this->rows($component));
     }
 
-    #[Test]
-    public function searching_narrows_the_list(): void
-    {
-        $this->sampleFeeds();
-
-        $component = Livewire::actingAs($this->admin())
-            ->test(DiscoverAwinFeeds::class)
-            ->set('tableSearch', 'coolblue');
-
-        $this->assertSame(['Coolblue NL'], $this->rows($component));
-    }
-
     /**
      * Awin writes "Vanden Borre BE"; a person types "vandenborre".
      *

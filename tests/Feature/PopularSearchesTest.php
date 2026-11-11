@@ -150,7 +150,9 @@ class PopularSearchesTest extends TestCase
     {
         config()->set('giftcoves.search.popular.min_volume', 5);
 
-        $this->log('a name somebody typed once', 1);
+        // Two hours, so the two-hours rule passes it and only the volume
+        // floor (3 < 5) can keep it off the page.
+        $this->log('a name somebody typed once', 3);
         $this->log('koptelefoon', 40);
 
         $terms = array_column(app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'], 'term');
@@ -261,7 +263,8 @@ class PopularSearchesTest extends TestCase
          */
         config()->set('giftcoves.search.popular.min_volume', 5);
 
-        $this->log('someone typed this once', 1, daysAgo: 0);
+        // Two hours, so only the volume floor (3 < 5) can keep it off.
+        $this->log('someone typed this once', 3, daysAgo: 0);
         $this->log('koptelefoon', 40, daysAgo: 2);
 
         $terms = array_column(app(SearchTermStats::class)->for(Market::BeNl)['latest'], 'term');

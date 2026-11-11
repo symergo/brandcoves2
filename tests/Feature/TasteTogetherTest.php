@@ -16,12 +16,12 @@ use App\Models\TasteInvite;
 use App\Models\TasteRun;
 use App\Models\User;
 use App\Models\Wishlist;
-use App\Services\Ai\AiClient;
 use App\Services\Gift\TasteTogether;
 use App\Services\Wishlist\ListBudget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -31,6 +31,7 @@ use Tests\TestCase;
  */
 class TasteTogetherTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     private const INTERESTS = ['cooking', 'coffee', 'gaming', 'music', 'reading', 'gardening'];
@@ -43,10 +44,7 @@ class TasteTogetherTest extends TestCase
         parent::setUp();
 
         // Invariant 1: nothing on this path may reach the model.
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
 
         foreach (self::INTERESTS as $interest) {
             foreach ([1500, 3000, 6000] as $price) {

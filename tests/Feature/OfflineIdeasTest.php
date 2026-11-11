@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\CreatesAdminUser;
 use Tests\TestCase;
 
 /**
@@ -34,6 +35,7 @@ use Tests\TestCase;
  */
 class OfflineIdeasTest extends TestCase
 {
+    use CreatesAdminUser;
     use RefreshDatabase;
 
     #[Test]
@@ -332,13 +334,5 @@ class OfflineIdeasTest extends TestCase
             'snapshot_url' => $url,
             'accepted_at' => $accepted ? now() : null,
         ]);
-    }
-
-    private function admin(): User
-    {
-        $user = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'password-for-testing']);
-        $user->forceFill(['is_admin' => true])->save();
-
-        return $user;
     }
 }

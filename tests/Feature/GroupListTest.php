@@ -18,8 +18,8 @@ use App\Models\WishlistCollaborator;
 use App\Models\WishlistItem;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\InertiaProps;
 use Tests\TestCase;
 
 /**
@@ -36,6 +36,7 @@ use Tests\TestCase;
  */
 class GroupListTest extends TestCase
 {
+    use InertiaProps;
     use RefreshDatabase;
 
     private function groupList(User $organiser, string $for = 'Dad'): Wishlist
@@ -50,12 +51,6 @@ class GroupListTest extends TestCase
             'market' => Market::BeNl,
             'visibility' => ListVisibility::Link,
         ]);
-    }
-
-    /** @return array<string, mixed> */
-    private function props(TestResponse $response): array
-    {
-        return $response->viewData('page')['props'];
     }
 
     // --- Creating one --------------------------------------------------------

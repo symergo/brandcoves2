@@ -14,6 +14,7 @@ use App\Models\WishlistItem;
 use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\SavesPeopleForMe;
 use Tests\TestCase;
 
 /**
@@ -27,6 +28,7 @@ use Tests\TestCase;
 class MyPeopleTest extends TestCase
 {
     use RefreshDatabase;
+    use SavesPeopleForMe;
 
     private User $me;
 
@@ -290,11 +292,5 @@ class MyPeopleTest extends TestCase
         foreach (['claim', 'progress', 'bought', 'taken'] as $forbidden) {
             $this->assertStringNotContainsString($forbidden, $encoded);
         }
-    }
-
-    /** @param array<string, mixed> $attributes */
-    private function saved(string $name, array $attributes = []): Recipient
-    {
-        return Recipient::create(['owner_user_id' => $this->me->id, 'name' => $name, ...$attributes]);
     }
 }

@@ -6,9 +6,8 @@ namespace Tests\Unit;
 
 use App\Enums\Market;
 use App\Services\Editorial\ProseCards;
-use App\Services\Guides\CoveMarkup;
-use App\Services\Seo\BrandLinker;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MarkupWithoutBrandPages;
 use Tests\TestCase;
 
 /**
@@ -22,6 +21,8 @@ use Tests\TestCase;
  */
 class ProseCardsTest extends TestCase
 {
+    use MarkupWithoutBrandPages;
+
     private function allowed(): array
     {
         return [
@@ -35,21 +36,13 @@ class ProseCardsTest extends TestCase
     }
 
     /**
-     * No database, for the reason CoveMarkupTest documents at length: resolving
-     * BrandLinker from the container mid-render made a `brand_stats` table a
-     * hidden dependency of turning a string into HTML.
+     * No database, for the reason MarkupWithoutBrandPages documents at length:
+     * resolving BrandLinker from the container mid-render made a `brand_stats`
+     * table a hidden dependency of turning a string into HTML.
      */
     private function cards(): ProseCards
     {
-        $markup = new CoveMarkup(new class extends BrandLinker
-        {
-            public function urls(array $brands, Market $market): array
-            {
-                return [];
-            }
-        });
-
-        return new ProseCards($markup, Market::BeNl, $this->allowed());
+        return new ProseCards($this->markupWithoutBrandPages(), Market::BeNl, $this->allowed());
     }
 
     #[Test]

@@ -9,10 +9,10 @@ use App\Models\GiftProfileCard;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
-use App\Services\Ai\AiClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -21,6 +21,7 @@ use Tests\TestCase;
  */
 class GiftProfileCardTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     /** @var array<string, list<ProductGroup>> */
@@ -30,10 +31,7 @@ class GiftProfileCardTest extends TestCase
     {
         parent::setUp();
 
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
 
         foreach (['cooking', 'coffee', 'gaming', 'music', 'reading'] as $interest) {
             foreach ([2500, 4000, 6000] as $price) {

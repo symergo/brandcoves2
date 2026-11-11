@@ -22,8 +22,8 @@ use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\InertiaProps;
 use Tests\TestCase;
 
 /**
@@ -36,18 +36,8 @@ use Tests\TestCase;
  */
 class AskOthersReachTest extends TestCase
 {
+    use InertiaProps;
     use RefreshDatabase;
-
-    /** @return array<string, mixed> */
-    private function props(TestResponse $response): array
-    {
-        return $response->viewData('page')['props'];
-    }
-
-    private function friends(User $a, User $b): void
-    {
-        app(Friends::class)->link($a, $b);
-    }
 
     // --- Filled in -----------------------------------------------------------
 
@@ -222,7 +212,7 @@ class AskOthersReachTest extends TestCase
         $asker = User::factory()->create(['name' => 'Anna']);
         $friend = User::factory()->create();
         $stranger = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $question = CommunityQuestion::factory()->create(['user_id' => $asker->id, 'title' => 'Wat koop ik voor mijn zus?']);
         $question->publish();
@@ -247,7 +237,7 @@ class AskOthersReachTest extends TestCase
 
         $asker = User::factory()->create();
         $friend = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $this->actingAs($asker)->post('/be-nl/ask', ['title' => 'What do I buy my sister for her 30th?']);
 
@@ -281,7 +271,7 @@ class AskOthersReachTest extends TestCase
 
         $asker = User::factory()->create();
         $friend = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $this->actingAs($asker)
             ->post('/be-nl/notifications/ask-people', ['setting' => 'ask', 'on' => false])
@@ -302,8 +292,8 @@ class AskOthersReachTest extends TestCase
         $asker = User::factory()->create();
         $off = User::factory()->create();
         $on = User::factory()->create();
-        $this->friends($asker, $off);
-        $this->friends($asker, $on);
+        app(Friends::class)->link($asker, $off);
+        app(Friends::class)->link($asker, $on);
 
         $this->actingAs($off)->post('/be-nl/notifications/ask-people', ['setting' => 'receive', 'on' => false]);
 
@@ -311,7 +301,8 @@ class AskOthersReachTest extends TestCase
 
         $this->assertSame(0, Notification::query()->where('user_id', $off->id)->count());
         $this->assertSame(1, Notification::query()->where('user_id', $on->id)->count());
-        Mail::assertQueued(PeopleQuestionMail::class, fn ($mail) => ! $mail->hasTo($off->email));
+        Mail::assertNotQueued(PeopleQuestionMail::class, fn ($mail) => $mail->hasTo($off->email));
+        Mail::assertQueued(PeopleQuestionMail::class, fn ($mail) => $mail->hasTo($on->email));
     }
 
     #[Test]
@@ -322,7 +313,7 @@ class AskOthersReachTest extends TestCase
         $asker = User::factory()->create();
         $friend = User::factory()->create();
         $friend->forceFill(['people_question_emails_off_at' => now()])->save();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         CommunityQuestion::factory()->create(['user_id' => $asker->id])->publish();
 
@@ -337,7 +328,7 @@ class AskOthersReachTest extends TestCase
 
         $asker = User::factory()->create();
         $friend = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $first = CommunityQuestion::factory()->create(['user_id' => $asker->id]);
         $first->publish();
@@ -365,7 +356,7 @@ class AskOthersReachTest extends TestCase
 
         $asker = User::factory()->create();
         $friend = User::factory()->create(['preferred_market' => Market::BeFr]);
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         CommunityQuestion::factory()->create(['user_id' => $asker->id, 'title' => 'Wat koop ik voor mijn zus?'])->publish();
 

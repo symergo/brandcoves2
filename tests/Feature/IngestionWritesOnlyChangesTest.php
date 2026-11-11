@@ -99,6 +99,8 @@ class IngestionWritesOnlyChangesTest extends TestCase
 
         IngestFeed::dispatchSync($feed->id);
 
+        // Retired, not deleted: a wishlist item or published guide may point
+        // at it, and a dead link is worse than an out-of-stock badge.
         $this->assertSame(ProductStatus::Stale, Product::query()->where('external_id', 'no-longer-listed')->firstOrFail()->status);
         $this->assertSame(0, Product::query()->where('feed_id', $feed->id)->where('external_id', '<>', 'no-longer-listed')->where('status', ProductStatus::Stale->value)->count());
         $this->assertSame(0, DB::table('ingestion_seen_offers')->count(), 'the seen list lives for one run');

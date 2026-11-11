@@ -73,13 +73,6 @@ class BrandPageTest extends TestCase
     }
 
     /**
-     * Give a brand enough products to earn a page.
-     *
-     * Built by hand rather than by widening the fixture, because the threshold is
-     * the thing under test and a fixture that happens to satisfy it tests
-     * nothing.
-     */
-    /**
      * A visit as a browser makes it: the page, and when it names shops still
      * to be asked (a thin brand page since 2026-10-25), the follow-up request
      * for the deferred `live` prop. Returns the last response.
@@ -100,6 +93,13 @@ class BrandPageTest extends TestCase
         ])->assertOk();
     }
 
+    /**
+     * Give a brand enough products to earn a page.
+     *
+     * Built by hand rather than by widening the fixture, because the threshold is
+     * the thing under test and a fixture that happens to satisfy it tests
+     * nothing.
+     */
     private function seedBrand(string $brand, int $count = 4, array $overrides = [], int $offset = 0): void
     {
         // A group with no offers behind it is not searchable — `products` is what

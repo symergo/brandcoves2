@@ -61,13 +61,20 @@ class SearchLogTest extends TestCase
     {
         // The short steps of a crawler's walk through search links look like
         // queries; the user agent is the only thing that tells them apart.
-        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+        // Each carries the session cookie, so the cookie rule lets it through
+        // and only the user agent can keep it out of the log.
+        $cookie = (string) config('session.cookie');
+
+        $this->withCookie($cookie, 'x')
+            ->withHeader('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
             ->get('/en/search?q=headphones')
             ->assertOk();
-        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')
+        $this->withCookie($cookie, 'x')
+            ->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')
             ->get('/en/search?q=headphones')
             ->assertOk();
-        $this->withHeader('User-Agent', 'python-requests/2.32')
+        $this->withCookie($cookie, 'x')
+            ->withHeader('User-Agent', 'python-requests/2.32')
             ->get('/en/search?q=headphones')
             ->assertOk();
 

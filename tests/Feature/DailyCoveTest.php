@@ -180,23 +180,21 @@ class DailyCoveTest extends TestCase
     }
 
     #[Test]
-    public function a_thin_catalogue_produces_no_edition_at_all(): void
-    {
-        $this->find('Enige vondst', 5000, 'Categorie');
-
-        // A three-item edition is worse than none. Publishing a thin one on a
-        // bad catalogue day teaches people the page is not worth opening.
-        $this->assertNull(app(EditionBuilder::class)->build(Market::BeNl));
-    }
-
-    #[Test]
     public function tomorrows_edition_is_not_reachable_by_url(): void
     {
-        $this->buildEdition();
+        // Tomorrow's edition really exists, so the 404s below come from it being
+        // in the future and not from there being nothing on that date.
+        $this->seedFinds();
+        $this->planDay(CarbonImmutable::tomorrow());
+        $tomorrow = app(EditionBuilder::class)->build(Market::BeNl, CarbonImmutable::tomorrow());
+        $this->assertNotNull($tomorrow);
 
         // A future edition is a draft. Reachable by URL, it would leak
-        // tomorrow's theme and finds. The dated form 404s too — nothing is
-        // published on that date, so there is nothing to redirect to.
+        // tomorrow's theme and finds: not by its name, and not by the dated
+        // form either, which has nothing published to redirect to.
+        $this->get('/be-nl/tips/'.$tomorrow->slug)
+            ->assertNotFound();
+
         $this->get('/be-nl/daily/'.CarbonImmutable::tomorrow()->toDateString())
             ->assertNotFound();
     }

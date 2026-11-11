@@ -4,27 +4,25 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
-use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\CovePlan;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
 use ArrayObject;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesCoveArticleProducts;
 use Tests\TestCase;
 
 /**
@@ -41,6 +39,7 @@ use Tests\TestCase;
  */
 class CoveArticleBuildTest extends TestCase
 {
+    use MakesCoveArticleProducts;
     use RefreshDatabase;
 
     private Merchant $merchant;
@@ -386,14 +385,34 @@ class CoveArticleBuildTest extends TestCase
         $this->assertTrue($second->last_checked_at->gt($publishedAt));
     }
 
+    /**
+     * The blurb an author sent with a finished body, or none.
+     *
+     * The null row is the bug `writer` exists to end. `article()` short-circuited
+     * on `filled(body) && filled(blurb)`, so an author who sent a finished body
+     * and left the blurb to us got the model run over their article anyway: real
+     * spend against `guide_copy`, and a generated title replacing the one they
+     * chose, reported nowhere.
+     *
+     * @return array<string, array{?string}>
+     */
+    public static function authoredBlurbs(): array
+    {
+        return [
+            'with a blurb' => ['Wat je moet weten voor je er een koopt.'],
+            'without a blurb' => [null],
+        ];
+    }
+
     #[Test]
-    public function an_authored_guide_costs_nothing_to_publish(): void
+    #[DataProvider('authoredBlurbs')]
+    public function an_authored_guide_costs_nothing_to_publish(?string $blurb): void
     {
         $this->shelf();
         $plan = $this->plan();
         $plan->update([
             'writer' => PlanWriter::Authored->value,
-            'blurb' => 'Wat je moet weten voor je er een koopt.',
+            'blurb' => $blurb,
             'body' => 'Let op pasvorm en ruisonderdrukking.',
         ]);
 
@@ -403,35 +422,6 @@ class CoveArticleBuildTest extends TestCase
 
         // Authored prose wins outright and skips the model: generating a second
         // article and throwing it away is spend with no output.
-        $this->assertSame('Let op pasvorm en ruisonderdrukking.', $edition->body);
-        $this->assertSame('planned', $edition->editorial_source);
-        $this->assertSame([], $prompts->getArrayCopy());
-    }
-
-    #[Test]
-    public function an_authored_guide_with_no_blurb_still_skips_the_model(): void
-    {
-        $this->shelf();
-        $plan = $this->plan();
-
-        /*
-         * The bug `writer` exists to end.
-         *
-         * `article()` short-circuited on `filled(body) && filled(blurb)`, so an
-         * author who sent a finished body and left the blurb to us got the model
-         * run over their article anyway: real spend against `guide_copy`, and a
-         * generated title replacing the one they chose, reported nowhere.
-         */
-        $plan->update([
-            'writer' => PlanWriter::Authored->value,
-            'blurb' => null,
-            'body' => 'Let op pasvorm en ruisonderdrukking.',
-        ]);
-
-        $prompts = $this->captureAiPrompts();
-
-        $edition = app(EditionBuilder::class)->buildArticle($plan->fresh());
-
         $this->assertSame('Let op pasvorm en ruisonderdrukking.', $edition->body);
         $this->assertSame('planned', $edition->editorial_source);
         $this->assertSame([], $prompts->getArrayCopy());
@@ -532,43 +522,6 @@ class CoveArticleBuildTest extends TestCase
         foreach (['Sony', 'Sennheiser', 'JBL', 'Philips', 'Marshall', 'AKG'] as $i => $brand) {
             $this->product("{$brand} koptelefoon", 5000 + $i * 4000, $brand);
         }
-    }
-
-    private function product(string $title, int $price, string $brand): ProductGroup
-    {
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'brand' => $brand,
-            'category' => 'audio',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 2,
-            'in_stock' => true,
-            'giftable' => true,
-            'worth_showing' => true,
-            'surprise_score' => 50,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'title' => $title,
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
     }
 
     /**

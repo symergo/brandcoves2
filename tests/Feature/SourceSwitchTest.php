@@ -131,29 +131,6 @@ class SourceSwitchTest extends TestCase
     }
 
     #[Test]
-    public function ingestion_stops_for_a_switched_off_feed_source(): void
-    {
-        $feed = Feed::create([
-            'source' => Source::Awin,
-            'external_feed_id' => 'switch-test',
-            'market' => Market::BeNl,
-            'label' => 'Switchable feed',
-            'enabled' => true,
-            'column_map' => ['url' => base_path('tests/Fixtures/awin-mixed-barcode-columns.csv')],
-        ]);
-
-        $this->switch->set(Source::Awin, Market::BeNl, false);
-
-        IngestFeed::dispatchSync($feed->id);
-
-        // The job never consults supports(), so this is the check that actually
-        // holds the scheduler back. Without it a switched-off source keeps
-        // downloading on the usual timetable — the one thing switching it off
-        // is for.
-        $this->assertSame(0, Product::query()->count());
-    }
-
-    #[Test]
     public function ingestion_resumes_when_the_source_is_switched_back_on(): void
     {
         $feed = Feed::create([
@@ -167,13 +144,18 @@ class SourceSwitchTest extends TestCase
 
         $this->switch->set(Source::Awin, Market::BeNl, false);
         IngestFeed::dispatchSync($feed->id);
+
+        // The job never consults supports(), so this is the check that actually
+        // holds the scheduler back. Without it a switched-off source keeps
+        // downloading on the usual timetable — the one thing switching it off
+        // is for.
         $this->assertSame(0, Product::query()->count());
 
         $this->switch->set(Source::Awin, Market::BeNl, true);
         IngestFeed::dispatchSync($feed->id);
 
         // The pair matters more than either half: a guard that stopped the feed
-        // permanently — by poisoning the cursor, say — would pass the test above
+        // permanently — by poisoning the cursor, say — would pass the first half
         // and still be a bug nobody could undo from the panel.
         $this->assertGreaterThan(0, Product::query()->count());
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Services\Editorial\HouseStyle;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -19,37 +20,35 @@ use PHPUnit\Framework\TestCase;
  */
 class HouseStyleTest extends TestCase
 {
-    #[Test]
-    public function it_replaces_a_spaced_em_dash_with_a_spaced_hyphen(): void
+    /** @return iterable<string, array{string, string}> */
+    public static function prose(): iterable
     {
-        $this->assertSame(
+        yield 'a spaced em dash becomes a spaced hyphen' => [
+            'Not because anything is wrong — simply because you changed your mind.',
             'Not because anything is wrong - simply because you changed your mind.',
-            HouseStyle::prose('Not because anything is wrong — simply because you changed your mind.'),
-        );
-    }
+        ];
 
-    /**
-     * The form a straight `str_replace` gets wrong.
-     *
-     * `word—word` becomes `word-word`, which reads as a compound noun rather
-     * than a break, and quietly changes what the sentence says.
-     */
-    #[Test]
-    public function it_spaces_an_unspaced_em_dash(): void
-    {
-        $this->assertSame('two years - a national extension', HouseStyle::prose('two years—a national extension'));
-    }
+        // The form a straight `str_replace` gets wrong: `word—word` becomes
+        // `word-word`, which reads as a compound noun rather than a break, and
+        // quietly changes what the sentence says.
+        yield 'an unspaced em dash is spaced' => ['two years—a national extension', 'two years - a national extension'];
 
-    #[Test]
-    public function it_handles_a_dash_that_opens_a_line(): void
-    {
-        $this->assertSame("A list:\n- one thing", HouseStyle::prose("A list:\n— one thing"));
+        yield 'a dash that opens a line' => ["A list:\n— one thing", "A list:\n- one thing"];
+        yield 'a dash at the end' => ['and then —', 'and then -'];
+
+        // An en dash is a range, not a parenthetical, and a hyphen inside a
+        // word is part of the word. Neither is the habit this exists for.
+        yield 'a hyphen and an en dash are left alone' => ['Audio-Technica, 2020–2024', 'Audio-Technica, 2020–2024'];
+
+        // Prose keeps its emphasis, because `CoveMarkup` renders it as `<strong>`.
+        yield 'bold markup is kept' => ['**There is no fixed term.**', '**There is no fixed term.**'];
     }
 
     #[Test]
-    public function it_handles_a_dash_at_the_end(): void
+    #[DataProvider('prose')]
+    public function prose_is_put_into_house_style(string $in, string $out): void
     {
-        $this->assertSame('and then -', HouseStyle::prose('and then —'));
+        $this->assertSame($out, HouseStyle::prose($in));
     }
 
     /** Two passes must not differ from one, or the tidy command never settles. */
@@ -62,47 +61,30 @@ class HouseStyleTest extends TestCase
         $this->assertSame('one - two - three', $once);
     }
 
-    #[Test]
-    public function it_leaves_a_hyphen_and_an_en_dash_alone(): void
-    {
-        // An en dash is a range, not a parenthetical, and a hyphen inside a
-        // word is part of the word. Neither is the habit this exists for.
-        $this->assertSame('Audio-Technica, 2020–2024', HouseStyle::prose('Audio-Technica, 2020–2024'));
-    }
-
-    /**
-     * Prose keeps its emphasis, because `CoveMarkup` renders it as `<strong>`.
-     */
-    #[Test]
-    public function prose_keeps_bold_markup(): void
-    {
-        $this->assertSame('**There is no fixed term.**', HouseStyle::prose('**There is no fixed term.**'));
-    }
-
     /**
      * A title, a blurb or a verdict is printed as a React text node, so the
      * asterisks would reach the reader.
+     *
+     * @return iterable<string, array{string, string}>
      */
-    #[Test]
-    public function plain_takes_the_asterisks_off(): void
+    public static function plain(): iterable
     {
-        $this->assertSame('There is no fixed term.', HouseStyle::plain('**There is no fixed term.**'));
-        $this->assertSame('Best for small kitchens', HouseStyle::plain('Best for **small kitchens**'));
-    }
+        yield 'the asterisks come off' => ['**There is no fixed term.**', 'There is no fixed term.'];
+        yield 'the asterisks come off mid-line' => ['Best for **small kitchens**', 'Best for small kitchens'];
 
-    #[Test]
-    public function plain_leaves_an_unpaired_asterisk_alone(): void
-    {
         // "5*" and a footnote marker are not markup, and deleting them would
         // change what the line says.
-        $this->assertSame('rated 5* by buyers', HouseStyle::plain('rated 5* by buyers'));
-        $this->assertSame('opened with ** and never closed', HouseStyle::plain('opened with ** and never closed'));
+        yield 'an unpaired asterisk is left alone' => ['rated 5* by buyers', 'rated 5* by buyers'];
+        yield 'an unclosed pair is left alone' => ['opened with ** and never closed', 'opened with ** and never closed'];
+
+        yield 'two bold runs are not merged' => ['**one** and **two**, plain', 'one and two, plain'];
     }
 
     #[Test]
-    public function plain_does_not_merge_two_bold_runs(): void
+    #[DataProvider('plain')]
+    public function plain_text_loses_its_markup(string $in, string $out): void
     {
-        $this->assertSame('one and two, plain', HouseStyle::plain('**one** and **two**, plain'));
+        $this->assertSame($out, HouseStyle::plain($in));
     }
 
     #[Test]

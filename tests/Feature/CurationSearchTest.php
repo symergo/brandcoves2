@@ -16,10 +16,9 @@ use App\Models\SearchLog;
 use App\Services\Curation\CurationSearch;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\ConfiguresBol;
 use Tests\TestCase;
 
 /**
@@ -34,26 +33,14 @@ use Tests\TestCase;
  */
 class CurationSearchTest extends TestCase
 {
+    use ConfiguresBol;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config([
-            'giftcoves.connectors.bol.enabled' => true,
-            'giftcoves.connectors.bol.client_id' => 'test-id',
-            'giftcoves.connectors.bol.client_secret' => 'test-secret',
-            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
-        ]);
-
-        Cache::flush();
-
-        // The rate limiter talks to Redis directly rather than through the
-        // cache store, because sharing state across processes is its whole job.
-        foreach (['search', 'product'] as $bucket) {
-            Redis::del("bc:ratelimit:bol:{$bucket}", "bc:ratelimit:bol:{$bucket}:cooldown");
-        }
+        $this->configureBol();
     }
 
     #[Test]

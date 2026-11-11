@@ -10,8 +10,8 @@ use App\Services\Connectors\Bol\BolConnector;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\ConfiguresBol;
 use Tests\TestCase;
 
 /**
@@ -21,29 +21,15 @@ use Tests\TestCase;
  */
 class BolConnectorTest extends TestCase
 {
+    use ConfiguresBol;
+
     private BolConnector $connector;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config([
-            'giftcoves.connectors.bol.enabled' => true,
-            'giftcoves.connectors.bol.client_id' => 'test-id',
-            'giftcoves.connectors.bol.client_secret' => 'test-secret',
-            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
-        ]);
-
-        Cache::flush();
-
-        // The cache store is `array` under test, so Cache::flush() does not
-        // touch the rate limiter — it talks to Redis directly, on purpose,
-        // because its whole job is sharing state across processes. Without
-        // this reset the bucket drains part-way through the class and later
-        // tests silently make no requests at all.
-        foreach (['search', 'product'] as $bucket) {
-            Redis::del("bc:ratelimit:bol:{$bucket}", "bc:ratelimit:bol:{$bucket}:cooldown");
-        }
+        $this->configureBol();
 
         $this->connector = new BolConnector;
     }
@@ -314,8 +300,10 @@ class BolConnectorTest extends TestCase
         $this->assertTrue($this->connector->isCoolingDown());
 
         // While cooling down nothing further is attempted at all.
+        $sent = count(Http::recorded());
         Cache::forget('bc:bol:search:be-nl:'.sha1('koptelefoon').':24');
         $this->assertSame([], $this->connector->search('koptelefoon', Market::BeNl));
+        $this->assertCount($sent, Http::recorded());
     }
 
     #[Test]

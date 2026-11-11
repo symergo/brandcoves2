@@ -4,15 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
-use App\Enums\Market;
-use App\Enums\ProductStatus;
-use App\Enums\Source;
-use App\Models\Merchant;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesTaggedGroups;
 use Tests\TestCase;
 
 /**
@@ -21,6 +15,7 @@ use Tests\TestCase;
  */
 class IntentSearchTest extends TestCase
 {
+    use MakesTaggedGroups;
     use RefreshDatabase;
 
     private const GIFT = 'cadeau voor mijn zus die van tuinieren houdt, €30-€50';
@@ -28,8 +23,8 @@ class IntentSearchTest extends TestCase
     #[Test]
     public function a_gift_search_is_shown_back_and_answered_by_the_brief(): void
     {
-        $gloves = $this->giftable('Tuinhandschoenen van leer', 3900, ['interest:gardening']);
-        $this->giftable('Tuinset van staal', 8900, ['interest:gardening']);
+        $gloves = $this->taggedGroup('Tuinhandschoenen van leer', ['interest:gardening'], 3900, category: 'Tuin');
+        $this->taggedGroup('Tuinset van staal', ['interest:gardening'], 8900, category: 'Tuin');
 
         $this->get('/be-nl/search?q='.urlencode(self::GIFT))
             ->assertOk()
@@ -53,7 +48,7 @@ class IntentSearchTest extends TestCase
     #[Test]
     public function the_reading_is_one_sentence(): void
     {
-        $this->giftable('Tuinhandschoenen van leer', 3900, ['interest:gardening']);
+        $this->taggedGroup('Tuinhandschoenen van leer', ['interest:gardening'], 3900, category: 'Tuin');
 
         $this->get('/be-nl/search?q='.urlencode(self::GIFT))
             ->assertOk()
@@ -66,7 +61,7 @@ class IntentSearchTest extends TestCase
     #[Test]
     public function each_chip_carries_the_search_without_it(): void
     {
-        $this->giftable('Tuinhandschoenen van leer', 3900, ['interest:gardening']);
+        $this->taggedGroup('Tuinhandschoenen van leer', ['interest:gardening'], 3900, category: 'Tuin');
 
         $page = $this->get('/be-nl/search?q='.urlencode(self::GIFT))->viewData('page')['props'];
 
@@ -79,7 +74,7 @@ class IntentSearchTest extends TestCase
     #[Test]
     public function the_words_can_be_searched_as_typed(): void
     {
-        $this->giftable('Tuinhandschoenen van leer', 3900, ['interest:gardening']);
+        $this->taggedGroup('Tuinhandschoenen van leer', ['interest:gardening'], 3900, category: 'Tuin');
 
         $this->get('/be-nl/search?as=words&q='.urlencode(self::GIFT))
             ->assertOk()
@@ -113,48 +108,5 @@ class IntentSearchTest extends TestCase
         $this->get('/be-nl/search?q='.urlencode(self::GIFT))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('intent', null));
-    }
-
-    /** @param list<string> $tags */
-    private function giftable(string $title, int $price, array $tags): ProductGroup
-    {
-        $merchant = Merchant::query()->firstOrCreate(
-            ['source' => Source::Awin->value, 'external_id' => 'shop'],
-            ['name' => 'Shop'],
-        );
-
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'category' => 'Tuin',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 1,
-            'in_stock' => true,
-            'giftable' => true,
-            'gift_tags' => $tags,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'merchant_category' => 'Tuin',
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
     }
 }

@@ -63,7 +63,7 @@ class SearchCovesAndSignalsTest extends TestCase
         $this->save($popular, $this->listOf($many));
         $this->save($popular, $this->listOf($many));
         $this->save($popular, $this->listOf(User::factory()->create()));
-        $claimed = $this->save($popular, $this->listOf(User::factory()->create()));
+        $this->save($popular, $this->listOf(User::factory()->create()));
 
         // Two people and one pending suggestion: under it.
         $this->save($rare, $this->listOf(User::factory()->create()));
@@ -77,12 +77,6 @@ class SearchCovesAndSignalsTest extends TestCase
         // "Op de lijst van … mensen" left the card on 2026-11-07 (owner); the Coves stay.
         $this->assertNull($cards[$popular->id]['kept']);
         $this->assertSame('In 1 Cove', $cards[$rare->id]['kept']);
-
-        // A claim changes nothing: being bought is not being wanted.
-        Cache::flush();
-        $claimed->forceFill(['claimed_by_hash' => str_repeat('b', 64), 'claimed_by_name' => 'Bob', 'claimed_at' => now()])->save();
-        $cards = collect($this->props(['q' => 'koffiemolen'])['results']['items'])->keyBy('id');
-        $this->assertNull($cards[$popular->id]['kept']);
     }
 
     #[Test]
@@ -120,54 +114,23 @@ class SearchCovesAndSignalsTest extends TestCase
         return ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => $title, ...$extra]);
     }
 
-    private function cove(
-        string $slug,
-        string $title,
-        CoveKind $kind,
-        ?string $blurb = null,
-        bool $published = true,
-        Market $market = Market::BeNl,
-    ): DailyPickSet {
+    private function cove(string $slug, string $title, CoveKind $kind): DailyPickSet
+    {
         return DailyPickSet::create([
-            'market' => $market,
+            'market' => Market::BeNl,
             'kind' => $kind,
             'slug' => $slug,
             'theme_title' => $title,
             'theme_slug' => $slug,
-            'theme_blurb' => $blurb,
             'drop_date' => $kind === CoveKind::Daily ? now()->toDateString() : null,
-            'status' => $published ? 'published' : 'draft',
-            'published_at' => $published ? now()->subHour() : null,
+            'status' => 'published',
+            'published_at' => now()->subHour(),
         ]);
     }
 
     private function pick(ProductGroup $group, DailyPickSet $cove): void
     {
         DailyPick::query()->create(['set_id' => $cove->id, 'group_id' => $group->id, 'rank' => 1, 'slug' => $group->slug]);
-    }
-
-    private function communityCove(
-        string $publicTitle,
-        string $slug,
-        int $products = 3,
-        Market $market = Market::BeNl,
-        string $privateTitle = 'Mijn lijstje',
-    ): Wishlist {
-        $list = Wishlist::create([
-            'owner_user_id' => User::factory()->create()->id,
-            'title' => $privateTitle,
-            'market' => $market,
-            'kind' => ListKind::Mine,
-            'visibility' => 'private',
-        ]);
-
-        foreach (range(1, $products) as $i) {
-            $this->save(ProductGroup::factory()->create(['market' => $market]), $list);
-        }
-
-        $list->forceFill(['public_title' => $publicTitle, 'public_slug' => $slug, 'published_at' => now()->subDay()])->save();
-
-        return $list;
     }
 
     private function save(ProductGroup $group, Wishlist $list, bool $accepted = true): WishlistItem

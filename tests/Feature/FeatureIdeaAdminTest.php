@@ -15,6 +15,7 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\CreatesAdminUser;
 use Tests\TestCase;
 
 /**
@@ -27,15 +28,8 @@ use Tests\TestCase;
  */
 class FeatureIdeaAdminTest extends TestCase
 {
+    use CreatesAdminUser;
     use RefreshDatabase;
-
-    private function admin(): User
-    {
-        $user = User::create(['name' => 'Root', 'email' => 'root@example.test', 'password' => 'password-for-testing']);
-        $user->forceFill(['is_admin' => true])->save();
-
-        return $user;
-    }
 
     #[Test]
     public function the_shipped_ideas_are_complete_in_four_languages_and_never_about_amazon(): void

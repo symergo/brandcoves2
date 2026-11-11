@@ -142,15 +142,23 @@ class EditorialAutomationTest extends TestCase
         $this->allOff();
         $this->on('build', CoveKind::Seasonal);
 
-        $this->plan([
+        $dated = $this->plan([
             'kind' => CoveKind::Seasonal->value,
             'status' => 'approved',
             'drop_date' => '2027-05-01',
         ]);
 
+        // The control: an undated plan in the same run is queued, so the walk
+        // does build and the dated one is left out for its date alone.
+        $undated = $this->plan([
+            'kind' => CoveKind::Seasonal->value,
+            'status' => 'approved',
+        ]);
+
         app()->call([new RunEditorialAutomation(Market::BeNl), 'handle']);
 
-        Queue::assertNotPushed(BuildCove::class);
+        Queue::assertPushed(BuildCove::class, fn (BuildCove $job) => $job->planId === $undated->id);
+        Queue::assertNotPushed(BuildCove::class, fn (BuildCove $job) => $job->planId === $dated->id);
     }
 
     #[Test]

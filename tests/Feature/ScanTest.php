@@ -60,34 +60,21 @@ class ScanTest extends TestCase
         $this->group('0049055249309');
 
         /*
-         * The destination carries the NORMALISED GTIN, not what the camera
-         * read.
+         * The lookup and the destination both use the NORMALISED GTIN, not
+         * what the camera read.
          *
          * A camera reads a UPC-A as 12 digits and the catalogue stores 13, so
-         * navigating to the raw read would land on an empty results page for
-         * every American product — with the product sitting in the database.
-         */
-        $this->getJson('/be-nl/scan/049055249309')
-            ->assertOk()
-            ->assertJsonPath('searchUrl', '/be-nl/zoek/0049055249309');
-    }
-
-    #[Test]
-    public function a_upc_a_is_normalised_to_the_stored_gtin(): void
-    {
-        /*
-         * A camera reads a US barcode as 12 digits; the catalogue stores
-         * GTIN-13. Without normalisation every American product would scan as
-         * "not found" while sitting in the database.
+         * without normalisation every American product would scan as "not
+         * found", and navigating to the raw read would land on an empty
+         * results page, with the product sitting in the database.
          *
          * 049055249309 is a real UPC-A (check digit computed, not invented) and
-         * 0049055249309 is what it normalises to — zero-padded, same product.
+         * 0049055249309 is what it normalises to: zero-padded, same product.
          */
-        $this->group('0049055249309');
-
         $this->getJson('/be-nl/scan/049055249309')
             ->assertOk()
-            ->assertJsonPath('status', 'found');
+            ->assertJsonPath('status', 'found')
+            ->assertJsonPath('searchUrl', '/be-nl/zoek/0049055249309');
     }
 
     #[Test]

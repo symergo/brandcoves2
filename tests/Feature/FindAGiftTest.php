@@ -14,11 +14,11 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
-use App\Services\Ai\AiClient;
 use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -28,6 +28,7 @@ use Tests\TestCase;
  */
 class FindAGiftTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     /** @var array<string, list<ProductGroup>> */
@@ -38,10 +39,7 @@ class FindAGiftTest extends TestCase
         parent::setUp();
 
         // Invariant 1: nothing on this path may reach the model.
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
 
         foreach (['cooking', 'gaming', 'music', 'reading'] as $interest) {
             foreach ([1500, 3000, 6000] as $price) {

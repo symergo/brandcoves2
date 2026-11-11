@@ -230,22 +230,8 @@ class RecipientProfileTest extends TestCase
 
         // And the two are connected, both ways (2026-09-27): without it the
         // giver saw none of their wish lists, which a friend's page shows.
-        if ($recipient->owner_user_id !== null) {
-            $this->assertDatabaseHas('friendships', ['user_id' => $recipient->owner_user_id, 'friend_id' => $person->id]);
-            $this->assertDatabaseHas('friendships', ['user_id' => $person->id, 'friend_id' => $recipient->owner_user_id]);
-        }
-    }
-
-    #[Test]
-    public function the_owner_cannot_claim_their_own_stub(): void
-    {
-        $owner = User::factory()->create();
-        $recipient = $this->recipient($owner);
-
-        // Otherwise they become the recipient of their own gift research.
-        $this->actingAs($owner)
-            ->post("/be-nl/for/{$recipient->share_token}/claim")
-            ->assertForbidden();
+        $this->assertDatabaseHas('friendships', ['user_id' => $recipient->owner_user_id, 'friend_id' => $person->id]);
+        $this->assertDatabaseHas('friendships', ['user_id' => $person->id, 'friend_id' => $recipient->owner_user_id]);
     }
 
     #[Test]

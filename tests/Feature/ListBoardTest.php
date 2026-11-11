@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -108,29 +109,25 @@ class ListBoardTest extends TestCase
         $this->assertTrue($props['board']['canPost']);
     }
 
-    #[Test]
-    public function the_organiser_of_a_group_gift_is_in_the_conversation(): void
+    /** @return iterable<string, array{ListKind}> */
+    public static function nonWishLists(): iterable
     {
         /*
-         * `shouldHideClaimsFrom()` alone answered "hide" here, because
-         * `ownerSeesClaimsByDefault()` is true only for `for_someone` — a
-         * default older than group lists having a pot. The organiser was being
-         * kept out of the conversation they are running.
+         * `shouldHideClaimsFrom()` alone answered "hide" for a group list,
+         * because `ownerSeesClaimsByDefault()` is true only for `for_someone` —
+         * a default older than group lists having a pot. The organiser was
+         * being kept out of the conversation they are running.
          */
-        $organiser = User::factory()->create();
-        $list = $this->list($organiser, ListKind::Group);
-
-        $this->actingAs($organiser)
-            ->get("/be-nl/lists/{$list->id}")
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('board.canPost', true));
+        yield 'group organiser' => [ListKind::Group];
+        yield 'owner of a list about somebody else' => [ListKind::ForSomeone];
     }
 
     #[Test]
-    public function the_owner_of_a_list_about_somebody_else_is_too(): void
+    #[DataProvider('nonWishLists')]
+    public function the_owner_of_a_non_wish_list_can_post_to_its_board(ListKind $kind): void
     {
         $owner = User::factory()->create();
-        $list = $this->list($owner, ListKind::ForSomeone);
+        $list = $this->list($owner, $kind);
 
         $this->actingAs($owner)
             ->get("/be-nl/lists/{$list->id}")

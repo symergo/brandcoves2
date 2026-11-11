@@ -86,25 +86,6 @@ class OfferUpserterTest extends TestCase
     }
 
     #[Test]
-    public function a_duplicate_does_not_stop_the_rest_of_the_chunk_being_written(): void
-    {
-        // The consequence that actually hurt: one bad pair losing tens of
-        // thousands of good rows.
-        $offers = [];
-
-        foreach (range(1, 20) as $i) {
-            $offers[] = $this->offer('93000001862871'.str_pad((string) $i, 2, '0', STR_PAD_LEFT), 1000 + $i);
-        }
-
-        // The same product again, in the middle of the chunk.
-        $offers[] = $this->offer('9300000186287101', 9999);
-
-        $this->upserter()->upsert($offers);
-
-        $this->assertSame(20, DB::table('products')->count());
-    }
-
-    #[Test]
     public function a_repeat_across_two_runs_still_updates_rather_than_duplicating(): void
     {
         // The ordinary path, unchanged: deduplicating inside a batch must not

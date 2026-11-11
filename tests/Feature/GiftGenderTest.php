@@ -9,7 +9,6 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\UserTaste;
-use App\Services\Ai\AiClient;
 use App\Services\Gift\DeckSeed;
 use App\Services\Gift\GiftTags;
 use App\Services\Gift\SuggestionEngine;
@@ -18,6 +17,7 @@ use App\Services\Gift\TasteCard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -28,6 +28,7 @@ use Tests\TestCase;
  */
 class GiftGenderTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -35,10 +36,7 @@ class GiftGenderTest extends TestCase
         parent::setUp();
 
         // Invariant 1: nothing on this path may reach the model.
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
     }
 
     #[Test]

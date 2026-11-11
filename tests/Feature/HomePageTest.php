@@ -32,16 +32,21 @@ class HomePageTest extends TestCase
     }
 
     #[Test]
-    public function the_page_no_longer_carries_the_list_wizard(): void
+    public function the_front_page_sends_only_what_it_shows(): void
     {
-        // It is where "Create a Cove" leads, so the front page does not
-        // repeat the next page. Its props (recipients, friends, occasions)
-        // cost queries for nothing if they are still sent.
         $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
 
+        // No list wizard: it is where "Create a Cove" leads, so the front page
+        // does not repeat the next page. Its props (recipients, friends,
+        // occasions) cost queries for nothing if they are still sent.
         $this->assertArrayNotHasKey('recipients', $props);
         $this->assertArrayNotHasKey('myLists', $props);
         $this->assertArrayHasKey('today', $props);
+
+        // Owner, 2026-09-29: the two lists of Coves became one card per kind.
+        // Neither list's data is fetched any more.
+        $this->assertArrayNotHasKey('coves', $props);
+        $this->assertArrayNotHasKey('collected', $props);
     }
 
     #[Test]
@@ -84,17 +89,6 @@ class HomePageTest extends TestCase
 
             $this->assertContains($status, [200, 301, 302], "{$url} answered {$status}.");
         }
-    }
-
-    #[Test]
-    public function the_coves_band_is_cards_per_kind_and_sends_no_lists(): void
-    {
-        // Owner, 2026-09-29: the two lists of Coves became one card per kind.
-        // Neither list's data is fetched any more.
-        $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
-
-        $this->assertArrayNotHasKey('coves', $props);
-        $this->assertArrayNotHasKey('collected', $props);
     }
 
     #[Test]

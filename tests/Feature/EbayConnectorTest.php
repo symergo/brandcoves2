@@ -454,8 +454,15 @@ class EbayConnectorTest extends TestCase
         // liveFor(), so search stops asking rather than degrading per request.
         $this->assertTrue($this->connector->isCoolingDown());
 
+        // While cooling down nothing further is sent. The token bucket is
+        // refilled first (with a burst of 1 an empty bucket would refuse the
+        // call on its own), but the cooldown key is kept: that is what must
+        // do the refusing.
+        $sent = count(Http::recorded());
+        Redis::del('bc:ratelimit:ebay:search');
         Cache::forget(sprintf('bc:ebay:search:%s:%s:%d', Market::NlNl->value, sha1('koptelefoon'), 24));
         $this->assertSame([], $this->connector->search('koptelefoon', Market::NlNl));
+        $this->assertCount($sent, Http::recorded());
     }
 
     #[Test]

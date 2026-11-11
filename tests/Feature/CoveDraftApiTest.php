@@ -13,6 +13,7 @@ use App\Models\CovePlan;
 use App\Models\GuideTopic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -92,39 +93,37 @@ class CoveDraftApiTest extends TestCase
                 .'Mine more with bc:refresh-discovery and bc:pull-charts, or add one by hand under Cove topics.']);
     }
 
-    #[Test]
-    public function a_kind_with_no_source_is_refused_with_the_reason(): void
+    /**
+     * Kinds the drafter has no source for.
+     *
+     * The brand row: the controller calls `draft()` before `canDraft()`,
+     * because the refusal sentence is what `draft()` returns. So a kind with no
+     * arm in that match threw before the refusal was ever reached, and the
+     * caller got a 500 naming a PHP class instead of a sentence telling it to
+     * write the piece from the brand page.
+     *
+     * @return array<string, array{CoveKind}>
+     */
+    public static function kindsWithNoSource(): array
     {
-        $this->withToken($this->key([ApiToken::WRITE]))
-            ->postJson('/api/editorial/coves/drafts', [
-                'market' => Market::BeNl->value,
-                'kind' => CoveKind::Advice->value,
-                'count' => 5,
-            ])
-            // 422 rather than an empty 200: an agent told why moves on and
-            // writes the titles itself, which is the correct behaviour.
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('kind');
-
-        $this->assertSame(0, CovePlan::query()->count());
+        return [
+            'advice' => [CoveKind::Advice],
+            'brand' => [CoveKind::Brand],
+        ];
     }
 
     #[Test]
-    public function a_brand_is_refused_with_the_reason_rather_than_a_500(): void
+    #[DataProvider('kindsWithNoSource')]
+    public function a_kind_with_no_source_is_refused_with_the_reason(CoveKind $kind): void
     {
         $this->withToken($this->key([ApiToken::WRITE]))
             ->postJson('/api/editorial/coves/drafts', [
                 'market' => Market::BeNl->value,
-                'kind' => CoveKind::Brand->value,
+                'kind' => $kind->value,
                 'count' => 5,
             ])
-            /*
-             * The controller calls `draft()` before `canDraft()`, because the
-             * refusal sentence is what `draft()` returns. So a kind with no arm
-             * in that match threw before the refusal was ever reached, and the
-             * caller got a 500 naming a PHP class instead of a sentence telling
-             * it to write the piece from the brand page.
-             */
+            // 422 rather than an empty 200 (or a 500): an agent told why moves
+            // on and writes the titles itself, which is the correct behaviour.
             ->assertStatus(422)
             ->assertJsonValidationErrors('kind');
 

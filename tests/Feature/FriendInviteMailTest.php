@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\ReadsQueuedFriendInvite;
 use Tests\TestCase;
 
 /**
@@ -33,6 +34,7 @@ use Tests\TestCase;
  */
 class FriendInviteMailTest extends TestCase
 {
+    use ReadsQueuedFriendInvite;
     use RefreshDatabase;
 
     private User $anna;
@@ -304,22 +306,7 @@ class FriendInviteMailTest extends TestCase
     /** The link as it went out in the queued email to this address. */
     private function notWantedUrlFor(string $email): string
     {
-        $url = null;
-
-        Mail::assertQueued(FriendInviteMail::class, function (FriendInviteMail $mail) use ($email, &$url) {
-            if ($mail->hasTo($email)) {
-                $url = $mail->notWantedUrl;
-
-                return true;
-            }
-
-            return false;
-        });
-
-        // Signed-out from here on: the reader of an email has no session here.
-        $this->app['auth']->forgetGuards();
-
-        return (string) $url;
+        return $this->queuedInviteLink($email, 'notWantedUrl');
     }
 
     /** The spam button on the page that link opens, for an invitation from Anna. */

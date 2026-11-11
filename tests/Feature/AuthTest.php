@@ -69,28 +69,22 @@ class AuthTest extends TestCase
         User::create(['email' => 'known@example.test']);
 
         $known = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'known@example.test']);
+        // Read now: both requests share one session store, so read after the
+        // second post this would be the second answer compared with itself.
+        $knownFlash = session()->get('success');
         $unknown = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'nobody@example.test']);
 
         // Anything else turns this form into an account-existence oracle:
         // "does this person have an account here" is not ours to disclose.
         $this->assertSame($known->getStatusCode(), $unknown->getStatusCode());
-        $this->assertSame(
-            session()->get('success'),
-            $unknown->getSession()->get('success'),
-        );
+        $this->assertSame(__('site.auth.link_sent'), $knownFlash);
+        $this->assertSame($knownFlash, $unknown->getSession()->get('success'));
     }
 
     #[Test]
     public function a_link_signs_you_in_and_creates_the_account(): void
     {
-        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test']);
-
-        $token = null;
-        Mail::assertSent(MagicLinkMail::class, function (MagicLinkMail $mail) use (&$token) {
-            $token = $mail->token;
-
-            return true;
-        });
+        $token = $this->requestLink('new@example.test');
 
         $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
 
@@ -202,13 +196,7 @@ class AuthTest extends TestCase
     #[Test]
     public function a_link_works_exactly_once(): void
     {
-        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'once@example.test']);
-        $token = null;
-        Mail::assertSent(MagicLinkMail::class, function ($mail) use (&$token) {
-            $token = $mail->token;
-
-            return true;
-        });
+        $token = $this->requestLink('once@example.test');
 
         $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
 

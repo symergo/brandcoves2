@@ -141,11 +141,12 @@ class BolPopularChartTest extends TestCase
     public function an_unstorable_row_still_consumes_its_rank(): void
     {
         Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::sequence()
-            // The middle row has no URL, so it has no affiliate link and
-            // Offer::isValid() rejects it.
+            // The first row has no URL, so it has no affiliate link and
+            // Offer::isValid() rejects it. It goes first so the kept row's rank
+            // shows whether the dropped one was counted.
             ->push($this->chart([
-                $this->product('1', 'First'),
                 array_merge($this->product('2', 'Broken'), ['url' => '']),
+                $this->product('1', 'First'),
             ]))
             ->push($this->chart([])),
         ]);
@@ -160,7 +161,7 @@ class BolPopularChartTest extends TestCase
          * never held — and since movement is a difference of ranks, one dropped
          * row would fabricate a climb for everything below it.
          */
-        $this->assertSame(1, $chart->entries[0]->rank);
+        $this->assertSame(2, $chart->entries[0]->rank);
     }
 
     #[Test]

@@ -20,6 +20,7 @@ use App\Models\WishlistCollaborator;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -381,11 +382,11 @@ class GiftingMechanismsTest extends TestCase
 
     // --- Group gift ----------------------------------------------------------
 
-    #[Test]
-    public function only_a_group_list_can_be_pledged_on(): void
+    /** @return iterable<string, array{ListKind}> */
+    public static function listsWithoutAPot(): iterable
     {
         /*
-         * These four tests used to pledge against an **item** on a wish list,
+         * The pledge tests used to pledge against an **item** on a wish list,
          * because that is what the table was built for: "one person claims it,
          * the others pledge against it."
          *
@@ -395,30 +396,23 @@ class GiftingMechanismsTest extends TestCase
          * group list is what that is. So the money is the list's, and only a
          * group list has any.
          */
-        $owner = User::factory()->create();
-        $list = $this->sharedList($owner);
+        yield 'wish list' => [ListKind::Mine];
 
-        $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge", [
-                'amount' => 25,
-                'display_name' => 'Ann',
-            ])
-            ->assertForbidden();
-
-        $this->assertSame(0, GiftPledge::query()->count());
+        // One person's research about somebody. There is no pool, because
+        // there is no group.
+        yield 'research list' => [ListKind::ForSomeone];
     }
 
     #[Test]
-    public function a_research_list_cannot_be_pledged_on(): void
+    #[DataProvider('listsWithoutAPot')]
+    public function only_a_group_list_can_be_pledged_on(ListKind $kind): void
     {
-        // One person's research about somebody. There is no pool, because
-        // there is no group.
         $owner = User::factory()->create();
 
         $list = Wishlist::factory()->create([
             'owner_user_id' => $owner->id,
-            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $owner->id])->id,
-            'kind' => ListKind::ForSomeone,
+            'recipient_id' => $kind === ListKind::Mine ? null : Recipient::factory()->create(['owner_user_id' => $owner->id])->id,
+            'kind' => $kind,
             'market' => Market::BeNl,
             'visibility' => ListVisibility::Link,
         ]);
@@ -429,6 +423,8 @@ class GiftingMechanismsTest extends TestCase
                 'display_name' => 'Ann',
             ])
             ->assertForbidden();
+
+        $this->assertSame(0, GiftPledge::query()->count());
     }
 
     // --- Registry ------------------------------------------------------------
@@ -629,7 +625,6 @@ class GiftingMechanismsTest extends TestCase
         $this->assertNull($props['occasion']);
     }
 
-    /** A shared wish list with an occasion, a date and somewhere to post it. */
     #[Test]
     public function every_occasion_the_enum_offers_is_one_the_database_accepts(): void
     {
@@ -727,6 +722,7 @@ class GiftingMechanismsTest extends TestCase
             ->assertInertia(fn ($page) => $page->missing('items.0.claimed'));
     }
 
+    /** A shared wish list with an occasion, a date and somewhere to post it. */
     private function registry(User $owner): Wishlist
     {
         $list = $this->sharedList($owner);

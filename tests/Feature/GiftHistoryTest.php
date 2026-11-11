@@ -11,7 +11,6 @@ use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
-use App\Services\Ai\AiClient;
 use App\Services\Gift\GiftHistory;
 use App\Services\Gift\PastGift;
 use App\Services\Identity\GroupMerger;
@@ -22,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -32,6 +32,7 @@ use Tests\TestCase;
  */
 class GiftHistoryTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     private User $giver;
@@ -44,10 +45,7 @@ class GiftHistoryTest extends TestCase
         Cache::flush();
 
         // Invariant 1: nothing here may reach the model.
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
 
         $this->giver = User::factory()->create();
         $this->mum = Recipient::factory()->create([
@@ -377,27 +375,6 @@ class GiftHistoryTest extends TestCase
     }
 
     #[Test]
-    public function the_next_step_keeps_to_her_budget(): void
-    {
-        $moka = ProductGroup::factory()->priced(3500)->create(['title' => 'Moka pot', 'brand' => 'Bialetti']);
-        // The gift first: gave() makes a list of its own, and the budget goes
-        // on the newest list, the one ListBudget reads. The other way round,
-        // the budget sat on an older list and the test passed only when both
-        // lists shared a created_at second (flaky in the parallel run).
-        $this->gave($moka);
-        $this->budgetOnHerList(2000);
-
-        $cheap = ProductGroup::factory()->priced(1500)->create(['title' => 'Koffiebonen', 'brand' => 'Illy']);
-        $dear = ProductGroup::factory()->priced(9000)->create(['title' => 'Elektrische grinder', 'brand' => 'Sage']);
-
-        $ids = array_column($this->actingAs($this->giver)->get("/be-nl/people/{$this->mum->id}")
-            ->viewData('page')['props']['nextSteps'], 'id');
-
-        $this->assertContains($cheap->id, $ids);
-        $this->assertNotContains($dear->id, $ids);
-    }
-
-    #[Test]
     public function the_next_steps_are_worked_out_once_and_again_when_what_goes_in_changes(): void
     {
         // Kept an hour (speed wave 2): a second view does not fetch the
@@ -425,6 +402,10 @@ class GiftHistoryTest extends TestCase
         $this->assertSame(0, $fetches($ids), 'the second view fetched the candidates again');
         $this->assertSame($first, $ids());
 
+        // The gift came first: gave() makes a list of its own, and the budget
+        // goes on the newest list, the one ListBudget reads. The other way
+        // round, the budget sat on an older list and the test passed only when
+        // both lists shared a created_at second (flaky in the parallel run).
         $this->budgetOnHerList(2000);
         $this->assertNotContains($dear->id, $ids());
         $this->assertContains($cheap->id, $ids());

@@ -160,9 +160,15 @@ class CovePlanCurationTest extends TestCase
         $plan = $this->plan();
         $plan->items()->create(['group_id' => $soldOut->id, 'rank' => 1]);
 
-        app(EditionBuilder::class)->build(Market::BeNl);
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+
+        // Written at build...
+        $this->assertNotNull($edition);
+        $this->assertTrue($edition->picks()->where('group_id', $soldOut->id)->exists());
 
         $soldOut->update(['in_stock' => false]);
+
+        // ...and filtered at render.
 
         $this->get('/be-nl/tips')
             ->assertOk()

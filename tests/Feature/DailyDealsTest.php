@@ -9,6 +9,7 @@ use App\Enums\PublishStatus;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -181,8 +182,25 @@ class DailyDealsTest extends TestCase
         $this->assertCount(2, $this->deals());
     }
 
+    /**
+     * Every surface that shows an edition's finds.
+     *
+     * The front page is the first thing a visitor sees: one fewer card beats
+     * one they cannot buy.
+     *
+     * @return array<string, array{string, string}>
+     */
+    public static function surfacesShowingFinds(): array
+    {
+        return [
+            'the Daily page' => ['/be-nl/tips', 'finds'],
+            'the front page' => ['/be-nl', 'today.finds'],
+        ];
+    }
+
     #[Test]
-    public function a_sold_out_find_disappears_from_the_edition(): void
+    #[DataProvider('surfacesShowingFinds')]
+    public function a_sold_out_find_disappears(string $url, string $path): void
     {
         $edition = DailyPickSet::query()->firstOrFail();
 
@@ -205,34 +223,9 @@ class DailyDealsTest extends TestCase
          * at eleven carried on being presented as an ordinary buyable product —
          * price, shop count and a save button — for the rest of its life.
          */
-        $props = $this->get('/be-nl/tips')->assertOk()->viewData('page')['props'];
+        $props = $this->get($url)->assertOk()->viewData('page')['props'];
 
-        $this->assertSame(['Still here'], array_column($props['finds'], 'title'));
-    }
-
-    #[Test]
-    public function a_sold_out_find_disappears_from_the_front_page(): void
-    {
-        $edition = DailyPickSet::query()->firstOrFail();
-
-        $here = $this->group(['title' => 'Buyable']);
-        $gone = $this->group(['title' => 'Sold out']);
-
-        foreach ([$here, $gone] as $i => $group) {
-            $edition->picks()->create([
-                'group_id' => $group->id,
-                'rank' => $i + 1,
-                'slug' => 'pick-'.$group->id,
-            ]);
-        }
-
-        $gone->forceFill(['in_stock' => false])->saveQuietly();
-
-        // The first thing a visitor sees. One fewer card beats one they cannot
-        // buy.
-        $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
-
-        $this->assertSame(['Buyable'], array_column($props['today']['finds'], 'title'));
+        $this->assertSame(['Still here'], array_column(data_get($props, $path), 'title'));
     }
 
     #[Test]

@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
 use Tests\TestCase;
@@ -35,53 +36,40 @@ class EbayAccountDeletionTest extends TestCase
         ]);
     }
 
-    #[Test]
-    public function it_answers_the_challenge_with_the_hash_ebay_expects(): void
+    /**
+     * The hash is computed here from the specification's own recipe rather
+     * than from the controller's, so the test disagrees with the code if the
+     * code drifts.
+     *
+     * Order is part of the specification: code, then token, then endpoint.
+     * Any other order produces a perfectly valid-looking hex string that eBay
+     * rejects, and the portal's failure message names none of the three inputs.
+     *
+     * @return array<string, array{?string, string, string, string}>
+     */
+    public static function challenges(): array
     {
-        $code = 'abc123challenge';
-
-        $response = $this->getJson('/webhooks/ebay/account-deletion?challenge_code='.$code);
-
-        /*
-         * The hash is computed here from the specification's own recipe rather
-         * than from the controller's, so the test disagrees with the code if
-         * the code drifts.
-         *
-         * Order is part of the specification: code, then token, then endpoint.
-         * Any other order produces a perfectly valid-looking hex string that
-         * eBay rejects, and the portal's failure message names none of the
-         * three inputs.
-         */
-        $response->assertOk()->assertExactJson([
-            'challengeResponse' => hash('sha256', $code.self::TOKEN.self::ENDPOINT),
-        ]);
+        return [
+            'configured endpoint' => [self::ENDPOINT, '/webhooks/ebay/account-deletion', 'abc123challenge', self::ENDPOINT],
+            // Whoever pastes the URL should not be able to break the hash with
+            // a keystroke that means nothing.
+            'trailing slash on the configured endpoint' => [self::ENDPOINT.'/', '/webhooks/ebay/account-deletion', 'xyz', self::ENDPOINT],
+            // Keeps local and staging working without ceremony. Production sets
+            // the value; everywhere else the URL eBay called is the URL to hash.
+            'no endpoint configured: the request url' => [null, 'http://localhost/webhooks/ebay/account-deletion', 'xyz', 'http://localhost/webhooks/ebay/account-deletion'],
+        ];
     }
 
     #[Test]
-    public function a_trailing_slash_does_not_change_the_answer(): void
+    #[DataProvider('challenges')]
+    public function it_answers_the_challenge_with_the_hash_ebay_expects(?string $configuredEndpoint, string $requestUrl, string $code, string $hashedEndpoint): void
     {
-        config(['giftcoves.connectors.ebay.deletion.endpoint' => self::ENDPOINT.'/']);
+        config(['giftcoves.connectors.ebay.deletion.endpoint' => $configuredEndpoint]);
 
-        // Whoever pastes the URL should not be able to break the hash with a
-        // keystroke that means nothing.
-        $this->getJson('/webhooks/ebay/account-deletion?challenge_code=xyz')
+        $this->getJson($requestUrl.'?challenge_code='.$code)
             ->assertOk()
             ->assertExactJson([
-                'challengeResponse' => hash('sha256', 'xyz'.self::TOKEN.self::ENDPOINT),
-            ]);
-    }
-
-    #[Test]
-    public function it_falls_back_to_the_request_url_when_no_endpoint_is_configured(): void
-    {
-        config(['giftcoves.connectors.ebay.deletion.endpoint' => null]);
-
-        // Keeps local and staging working without ceremony. Production sets the
-        // value; everywhere else the URL eBay called is the URL to hash.
-        $this->getJson('http://localhost/webhooks/ebay/account-deletion?challenge_code=xyz')
-            ->assertOk()
-            ->assertExactJson([
-                'challengeResponse' => hash('sha256', 'xyz'.self::TOKEN.'http://localhost/webhooks/ebay/account-deletion'),
+                'challengeResponse' => hash('sha256', $code.self::TOKEN.$hashedEndpoint),
             ]);
     }
 
@@ -94,33 +82,31 @@ class EbayAccountDeletionTest extends TestCase
         $this->getJson('/webhooks/ebay/account-deletion')->assertStatus(400);
     }
 
-    #[Test]
-    public function an_unconfigured_token_refuses_rather_than_answering_wrongly(): void
+    /** @return array<string, array{?string}> */
+    public static function unusableTokens(): array
     {
-        config(['giftcoves.connectors.ebay.deletion.verification_token' => null]);
-
-        /*
-         * Answering incorrectly is worse than failing.
-         *
-         * A wrong hash records a validation failure against an endpoint that is
-         * otherwise fine, and the fix then looks like a code problem rather
-         * than a missing environment variable.
-         */
-        $this->getJson('/webhooks/ebay/account-deletion?challenge_code=xyz')->assertStatus(503);
+        return [
+            'unset' => [null],
+            // One short of eBay's minimum, and otherwise perfectly usable. It
+            // hashes fine locally and fails in the portal, where the message
+            // says nothing about length, so the check belongs on our side.
+            '31 characters' => [str_repeat('a', 31)],
+            'a character outside eBay\'s alphabet' => [str_repeat('a', 40).'!'],
+        ];
     }
 
+    /**
+     * Answering incorrectly is worse than failing.
+     *
+     * A wrong hash records a validation failure against an endpoint that is
+     * otherwise fine, and the fix then looks like a code problem rather than a
+     * missing environment variable.
+     */
     #[Test]
-    public function a_token_ebay_would_reject_is_refused_here_too(): void
+    #[DataProvider('unusableTokens')]
+    public function a_token_ebay_would_not_accept_is_refused(?string $token): void
     {
-        // 31 characters: one short of eBay's minimum, and otherwise perfectly
-        // usable. It hashes fine locally and fails in the portal, where the
-        // message says nothing about length — so the check belongs on our side.
-        config(['giftcoves.connectors.ebay.deletion.verification_token' => str_repeat('a', 31)]);
-
-        $this->getJson('/webhooks/ebay/account-deletion?challenge_code=xyz')->assertStatus(503);
-
-        // And a character outside eBay's alphabet.
-        config(['giftcoves.connectors.ebay.deletion.verification_token' => str_repeat('a', 40).'!']);
+        config(['giftcoves.connectors.ebay.deletion.verification_token' => $token]);
 
         $this->getJson('/webhooks/ebay/account-deletion?challenge_code=xyz')->assertStatus(503);
     }

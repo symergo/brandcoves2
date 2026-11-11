@@ -47,6 +47,9 @@ class ListNameTest extends TestCase
         $list = $this->list($user);
         $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
 
+        // "Saved to your list" is true of every save and so answers nothing —
+        // a save can land in the default list, one picked from the menu, or one
+        // created in the same click.
         $this->actingAs($user)
             ->post('/be-nl/list-items', ['group_id' => $group->id, 'wishlist_id' => $list->id])
             ->assertSessionHas('success', __('site.lists.added_to', ['list' => 'Camping']))

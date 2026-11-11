@@ -193,6 +193,4 @@ class AddProductTest extends TestCase
         $this->assertSame('liefst een 10-beurtenkaart', $item->note);
         $this->assertNull($item->group_id);
     }
-
-    /** A hand-written link is hostile input until proven otherwise. */
 }

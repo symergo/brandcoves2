@@ -16,11 +16,10 @@ use App\Services\Ingestion\OfferUpserter;
 use App\Services\Ingestion\ProductGrouper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\ConfiguresBol;
 use Tests\TestCase;
 
 /**
@@ -41,6 +40,7 @@ use Tests\TestCase;
  */
 class BolPageImportTest extends TestCase
 {
+    use ConfiguresBol;
     use RefreshDatabase;
 
     private string $token;
@@ -49,23 +49,7 @@ class BolPageImportTest extends TestCase
     {
         parent::setUp();
 
-        config([
-            'giftcoves.connectors.bol.enabled' => true,
-            'giftcoves.connectors.bol.client_id' => 'test-id',
-            'giftcoves.connectors.bol.client_secret' => 'test-secret',
-            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
-        ]);
-
-        Cache::flush();
-
-        // The rate limiter talks to Redis directly rather than through the
-        // cache store, on purpose — sharing state across processes is its whole
-        // job — so Cache::flush() does not reset it. Without this the bucket
-        // drains part-way through the class and later tests make no requests at
-        // all, which looks like a broken connector rather than a drained token.
-        foreach (['search', 'product'] as $bucket) {
-            Redis::del("bc:ratelimit:bol:{$bucket}", "bc:ratelimit:bol:{$bucket}:cooldown");
-        }
+        $this->configureBol();
 
         $this->token = ApiToken::issue('extension', [ApiToken::READ, ApiToken::WRITE])['token'];
     }

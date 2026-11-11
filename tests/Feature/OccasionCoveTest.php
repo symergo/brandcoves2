@@ -40,6 +40,9 @@ class OccasionCoveTest extends TestCase
     public function an_occasion_is_built_and_read_at_its_own_address(): void
     {
         $this->forbidAi();
+        // The CHECK constraint on both tables (cove_plans, daily_pick_sets) names
+        // every kind; a kind the enum has and the constraint lacks fails only
+        // when first written, which this build does on both.
         $edition = $this->build(CoveKind::Occasion, 'moederdag', 'Cadeaus voor Moederdag');
 
         $this->assertSame(CoveKind::Occasion, $edition->kind);
@@ -126,19 +129,6 @@ class OccasionCoveTest extends TestCase
         (new RefreshPersonaTopLists(Market::BeNl))->handle(app(PersonaTopTen::class));
 
         $this->assertTrue(PersonaTopList::query()->where('set_id', $edition->id)->exists());
-    }
-
-    #[Test]
-    public function the_database_accepts_the_kind(): void
-    {
-        // The CHECK constraint on both tables names every kind; a kind the
-        // enum has and the constraint lacks fails only when first written.
-        $plan = CovePlan::create([
-            'market' => Market::BeNl->value, 'kind' => 'occasion', 'slug' => 'pensioen',
-            'title' => 'Cadeaus voor een pensioen', 'status' => 'draft',
-        ]);
-
-        $this->assertSame(CoveKind::Occasion, $plan->fresh()->kind);
     }
 
     /** A published plan of this kind with eight products tagged for gardening. */

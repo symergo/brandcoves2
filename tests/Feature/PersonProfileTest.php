@@ -17,6 +17,7 @@ use App\Services\Social\Friends;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\SavesPeopleForMe;
 use Tests\TestCase;
 
 /**
@@ -27,6 +28,7 @@ use Tests\TestCase;
 class PersonProfileTest extends TestCase
 {
     use RefreshDatabase;
+    use SavesPeopleForMe;
 
     private User $me;
 
@@ -207,19 +209,6 @@ class PersonProfileTest extends TestCase
     }
 
     #[Test]
-    public function taste_they_gave_themselves_is_not_overwritten(): void
-    {
-        $mum = $this->saved('Mum', ['interests' => ['gardening'], 'taste_source' => TasteSource::Self]);
-
-        $this->actingAs($this->me)->patch("/be-nl/recipients/{$mum->id}", [
-            'interests' => ['cooking'],
-        ]);
-
-        $mum->refresh();
-        $this->assertSame(['gardening'], $mum->interests);
-    }
-
-    #[Test]
     public function the_person_is_renamed_and_their_birthday_changed(): void
     {
         $mum = $this->saved('Mum');
@@ -363,7 +352,6 @@ class PersonProfileTest extends TestCase
         }
     }
 
-    /** @param array<string, mixed> $attributes */
     #[Test]
     public function a_friends_own_taste_shows_in_about_as_the_search_reads_it(): void
     {
@@ -388,11 +376,6 @@ class PersonProfileTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('profile.about.interests.0.value', 'gardening')
                 ->where('profile.about.preferences', []));
-    }
-
-    private function saved(string $name, array $attributes = []): Recipient
-    {
-        return Recipient::create(['owner_user_id' => $this->me->id, 'name' => $name, ...$attributes]);
     }
 
     private function listFor(Recipient $person, string $title, ListKind $kind): Wishlist

@@ -613,23 +613,6 @@ class SearchTest extends TestCase
     }
 
     /**
-     * Each lane carries its shop's mark.
-     *
-     * The lane payload used to be keyed by merchant name, which could not say
-     * anything else about the shop. It is a list of records now precisely so
-     * the column header can show a logo, and `faviconUrl()` derives one from
-     * the merchant's domain when no `logo_url` was stored.
-     */
-    /**
-     * A related-term pill narrows the search without changing the view.
-     *
-     * These links were `?q=` and nothing else, so clicking one from the
-     * by-store view answered the narrower question back in the grid. Sort went
-     * the same way. `withTerm()` already states the rule the whole page follows
-     * — the visitor chose the sort and the view, and a pill is not them
-     * changing their mind about either.
-     */
-    /**
      * Three products that share a word, so there is a related term at all.
      *
      * The shared fixture cannot produce one: `ResultTerms` drops any word
@@ -649,6 +632,15 @@ class SearchTest extends TestCase
         }
     }
 
+    /**
+     * A related-term pill narrows the search without changing the view.
+     *
+     * These links were `?q=` and nothing else, so clicking one from the
+     * by-store view answered the narrower question back in the grid. Sort went
+     * the same way. `withTerm()` already states the rule the whole page follows
+     * — the visitor chose the sort and the view, and a pill is not them
+     * changing their mind about either.
+     */
     #[Test]
     public function a_related_term_keeps_the_view_and_the_sort(): void
     {
@@ -691,6 +683,14 @@ class SearchTest extends TestCase
         }
     }
 
+    /**
+     * Each lane carries its shop's mark.
+     *
+     * The lane payload used to be keyed by merchant name, which could not say
+     * anything else about the shop. It is a list of records now precisely so
+     * the column header can show a logo, and `faviconUrl()` derives one from
+     * the merchant's domain when no `logo_url` was stored.
+     */
     #[Test]
     public function each_lane_carries_the_shops_mark(): void
     {

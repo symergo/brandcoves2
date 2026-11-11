@@ -11,12 +11,12 @@ use App\Models\User;
 use App\Models\UserTaste;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
-use App\Services\Ai\AiClient;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -25,6 +25,7 @@ use Tests\TestCase;
  */
 class SwipeGiftsTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
 
     private const INTERESTS = ['cooking', 'coffee', 'gaming', 'music', 'reading', 'gardening', 'fitness', 'travel'];
@@ -37,10 +38,7 @@ class SwipeGiftsTest extends TestCase
         parent::setUp();
 
         // Invariant 1: nothing on this path may reach the model.
-        $this->mock(AiClient::class, function ($mock): void {
-            $mock->shouldNotReceive('json');
-            $mock->shouldNotReceive('chat');
-        });
+        $this->forbidAi();
 
         foreach (self::INTERESTS as $interest) {
             foreach ([1500, 3000, 6000, 9000] as $price) {

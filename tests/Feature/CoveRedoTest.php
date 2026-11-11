@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PlanWriter;
-use App\Enums\ProductStatus;
 use App\Enums\Reaction;
 use App\Enums\Source;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\PickReaction;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\RedoOptions;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesCoveArticleProducts;
 use Tests\TestCase;
 
 /**
@@ -37,6 +34,7 @@ use Tests\TestCase;
  */
 class CoveRedoTest extends TestCase
 {
+    use MakesCoveArticleProducts;
     use RefreshDatabase;
 
     private Merchant $merchant;
@@ -274,42 +272,5 @@ class CoveRedoTest extends TestCase
         foreach (range(1, $count) as $i) {
             $this->product("Merk{$i} koptelefoon", 4000 + $i * 2000, "Merk{$i}");
         }
-    }
-
-    private function product(string $title, int $price, string $brand): ProductGroup
-    {
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'brand' => $brand,
-            'category' => 'audio',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 2,
-            'in_stock' => true,
-            'giftable' => true,
-            'worth_showing' => true,
-            'surprise_score' => 50,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'title' => $title,
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
     }
 }

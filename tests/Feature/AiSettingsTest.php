@@ -290,12 +290,14 @@ class AiSettingsTest extends TestCase
         Schema::drop('cache');
 
         try {
+            $before = config('giftcoves.ai.model');
+
             // Both must survive: the provider calls apply(), which calls stored().
             $this->assertSame([], (new AiSettingsStore)->stored());
             (new AiSettingsStore)->apply();
 
             // And the env defaults are what stand.
-            $this->assertSame(config('giftcoves.ai.model'), config('giftcoves.ai.model'));
+            $this->assertSame($before, config('giftcoves.ai.model'));
         } finally {
             /*
              * Put it back, always.

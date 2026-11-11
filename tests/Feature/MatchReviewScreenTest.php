@@ -15,10 +15,10 @@ use App\Models\MatchCandidate;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\CreatesAdminUser;
 use Tests\TestCase;
 
 /**
@@ -30,6 +30,7 @@ use Tests\TestCase;
  */
 class MatchReviewScreenTest extends TestCase
 {
+    use CreatesAdminUser;
     use RefreshDatabase;
 
     private Merchant $merchant;
@@ -39,14 +40,6 @@ class MatchReviewScreenTest extends TestCase
         parent::setUp();
 
         $this->merchant = Merchant::create(['source' => Source::Awin->value, 'external_id' => 'shop', 'name' => 'Speelgoedwinkel']);
-    }
-
-    private function admin(): User
-    {
-        $user = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'password-for-testing']);
-        $user->forceFill(['is_admin' => true])->save();
-
-        return $user;
     }
 
     private function group(string $title, int $offers = 1): ProductGroup

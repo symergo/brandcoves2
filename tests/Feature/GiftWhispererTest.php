@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\ListKind;
 use App\Enums\Market;
-use App\Enums\ProductStatus;
-use App\Enums\Source;
 use App\Enums\TasteSource;
 use App\Models\Event;
-use App\Models\Merchant;
-use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
@@ -23,6 +18,7 @@ use App\Services\Wishlist\ListBudget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -39,20 +35,8 @@ use Tests\TestCase;
  */
 class GiftWhispererTest extends TestCase
 {
+    use MakesGiftShelf;
     use RefreshDatabase;
-
-    private Merchant $merchant;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->merchant = Merchant::create([
-            'source' => Source::Awin->value,
-            'external_id' => 'shop',
-            'name' => 'Shop',
-        ]);
-    }
 
     /**
      * Enough stock that a board of four can be refilled several times.
@@ -64,73 +48,14 @@ class GiftWhispererTest extends TestCase
     private function catalogue(int $count = 40): void
     {
         for ($i = 0; $i < $count; $i++) {
-            $price = 2000 + $i * 100;
-            $title = "Koffiemolen {$i} voor koffie";
-
-            $group = ProductGroup::create([
-                'market' => Market::BeNl,
-                'identity_key' => 'k'.bin2hex(random_bytes(5)),
-                'identity_kind' => 'ean',
-                'title' => $title,
-                'slug' => 'p-'.bin2hex(random_bytes(3)),
-                'category' => 'Koffie',
-                'image_url' => 'https://img.test/x.jpg',
-                'min_price' => $price,
-                'merchant_count' => 1,
-                'in_stock' => true,
-                'giftable' => true,
-            ]);
-
-            Product::create([
-                'source' => Source::Awin,
-                'market' => Market::BeNl,
-                'merchant_id' => $this->merchant->id,
-                'group_id' => $group->id,
-                'external_id' => 'e'.bin2hex(random_bytes(5)),
-                'title' => $title,
-                'merchant_category' => 'Koffie',
-                'price' => $price,
-                'currency' => 'EUR',
-                'affiliate_url' => 'https://example.test/buy',
-                'availability' => Availability::InStock,
-                'status' => ProductStatus::Active,
-                'identity_key' => $group->identity_key,
-            ]);
+            $this->giftable("Koffiemolen {$i} voor koffie", 2000 + $i * 100, category: 'Koffie');
         }
     }
 
     /** A handful of untagged garden products, found by the angle queries alone. */
     private function gardening(string $title, int $price): void
     {
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title.' snoeischaar tuin',
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'category' => 'Tuin',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 1,
-            'in_stock' => true,
-            'giftable' => true,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'title' => $group->title,
-            'merchant_category' => 'Tuin',
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
+        $this->giftable($title.' snoeischaar tuin', $price, category: 'Tuin');
     }
 
     /** @return list<int> */
@@ -490,24 +415,6 @@ class GiftWhispererTest extends TestCase
     }
 
     #[Test]
-    public function the_answers_are_kept_on_a_saved_person_without_asking(): void
-    {
-        /*
-         * There used to be a "remember these answers" tick (on unless
-         * unticked); the owner removed it on 2026-09-28. What somebody tells
-         * Find a gift about a saved person is now always kept on them.
-         */
-        $this->catalogue();
-        [$user, $mum] = $this->mother();
-
-        $this->actingAs($user)
-            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
-            ->assertOk();
-
-        $this->assertNotSame([], $mum->fresh()->interests);
-    }
-
-    #[Test]
     public function a_search_for_a_kind_of_person_writes_nothing_on_anyone(): void
     {
         $this->catalogue();
@@ -557,6 +464,12 @@ class GiftWhispererTest extends TestCase
     #[Test]
     public function remembering_writes_the_answers_onto_the_person(): void
     {
+        /*
+         * There used to be a "remember these answers" tick (on unless
+         * unticked); the owner removed it on 2026-09-28. What somebody tells
+         * Find a gift about a saved person is now always kept on them, so
+         * nothing in this post asks for it.
+         */
         $this->catalogue();
         [$user, $mum] = $this->mother();
 
@@ -566,7 +479,6 @@ class GiftWhispererTest extends TestCase
                 'preferences' => ['vintage'],
                 'budget_max' => 60,
                 'recipient_id' => $mum->id,
-                'remember' => true,
             ])
             ->assertOk();
 
@@ -594,7 +506,6 @@ class GiftWhispererTest extends TestCase
                 'interests' => ['coffee'],
                 'budget_max' => 60,
                 'recipient_id' => $mum->id,
-                'remember' => true,
             ])
             ->assertOk();
 

@@ -248,7 +248,9 @@ class ListHelpPageTest extends TestCase
         // through.
         config(['giftcoves.robots_allow' => true]);
 
-        $this->get('/be-nl/lists-help')->assertOk()->assertSee('index, follow', escape: false);
-        $this->get('/be-nl/lists-help/sharing')->assertOk()->assertSee('index, follow', escape: false);
+        // The quote before `index` is the point: `noindex, follow` contains
+        // `index, follow` too.
+        $this->get('/be-nl/lists-help')->assertOk()->assertSee('content="index, follow', escape: false);
+        $this->get('/be-nl/lists-help/sharing')->assertOk()->assertSee('content="index, follow', escape: false);
     }
 }

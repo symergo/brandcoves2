@@ -59,6 +59,8 @@ class HelpPageTest extends TestCase
     {
         config()->set('giftcoves.robots_allow', true);
 
-        $this->get('/be-nl/help')->assertOk()->assertSee('index, follow', escape: false);
+        // The quote before `index` is the point: `noindex, follow` contains
+        // `index, follow` too.
+        $this->get('/be-nl/help')->assertOk()->assertSee('content="index, follow', escape: false);
     }
 }

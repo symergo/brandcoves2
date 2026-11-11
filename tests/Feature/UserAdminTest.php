@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\CreatesAdminUser;
 use Tests\TestCase;
 
 /**
@@ -31,15 +32,8 @@ use Tests\TestCase;
  */
 class UserAdminTest extends TestCase
 {
+    use CreatesAdminUser;
     use RefreshDatabase;
-
-    private function admin(): User
-    {
-        $user = User::create(['name' => 'Root', 'email' => 'root@example.test', 'password' => 'password-for-testing']);
-        $user->forceFill(['is_admin' => true])->save();
-
-        return $user;
-    }
 
     /** A shopper: signed in by magic link, so no name and no password. */
     private function shopper(string $email = 'ann@example.test'): User

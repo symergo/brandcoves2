@@ -248,7 +248,7 @@ class IngestionTest extends TestCase
     }
 
     #[Test]
-    public function it_resumes_from_a_saved_cursor(): void
+    public function a_completed_run_clears_its_cursor(): void
     {
         $feed = $this->feed();
         IngestFeed::dispatchSync($feed->id);
@@ -259,22 +259,5 @@ class IngestionTest extends TestCase
         $this->assertSame(JobStatus::Completed, $tracker->status);
         // Cleared on success so the next run starts from the top of a fresh feed.
         $this->assertNull($tracker->cursor);
-    }
-
-    #[Test]
-    public function rows_that_vanish_from_a_feed_are_retired_not_deleted(): void
-    {
-        $this->ingest();
-
-        $product = Product::query()->where('external_id', '1001')->firstOrFail();
-        // Pretend this row was not in the latest feed.
-        $product->update(['last_seen_at' => now()->subDays(2)]);
-
-        $feed = Feed::query()->firstOrFail();
-        IngestFeed::dispatchSync($feed->id);
-
-        // Still present — a wishlist item or published guide may point at it,
-        // and a dead link is worse than an out-of-stock badge.
-        $this->assertDatabaseHas('products', ['external_id' => '1001']);
     }
 }

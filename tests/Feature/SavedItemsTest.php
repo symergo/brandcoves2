@@ -73,34 +73,6 @@ class SavedItemsTest extends TestCase
     }
 
     #[Test]
-    public function a_product_from_another_market_is_reported_under_its_own_id(): void
-    {
-        /*
-         * This test used to assert the opposite: a product with no twin in the
-         * market being read was not reported at all, from when the ids were
-         * kept to this market to keep the response small. That left its
-         * bookmark empty on the list page, which shows every row under the
-         * group it was saved as, so the owner saw an item on their own list
-         * with an unsaved bookmark (2026-09-15). The response is still small:
-         * one id per saved product, two at most.
-         */
-        $user = User::factory()->create();
-        $group = ProductGroup::factory()->create(['market' => Market::Es]);
-
-        $list = Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'market' => Market::Es,
-        ]);
-
-        WishlistItem::factory()->of($group)->create(['wishlist_id' => $list->id]);
-
-        $this->actingAs($user)
-            ->getJson('/be-nl/saved-items')
-            ->assertJsonPath('groupIds', [$group->id]);
-    }
-
-    #[Test]
     public function someone_elses_list_is_not_reported(): void
     {
         $group = ProductGroup::factory()->create(['market' => Market::BeNl]);

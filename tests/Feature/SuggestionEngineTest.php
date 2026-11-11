@@ -144,6 +144,8 @@ class SuggestionEngineTest extends TestCase
 
         // Someone who wrote "no alcohol" is not expressing a preference to be
         // weighed against price. A single violation makes the page untrustworthy.
+        $this->assertNotEmpty($picks);
+
         foreach ($picks as $pick) {
             $this->assertStringNotContainsStringIgnoringCase('whisky', $pick->group->title);
         }

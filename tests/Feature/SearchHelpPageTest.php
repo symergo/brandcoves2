@@ -98,8 +98,14 @@ class SearchHelpPageTest extends TestCase
     {
         // "How do I scan a barcode to compare prices" is a real query, and
         // /search cannot answer it — it is empty until somebody types.
+        //
+        // `robots_allow` is off everywhere but production, which prints
+        // `noindex, nofollow` on every page; without turning it on this would
+        // pass whatever the page asked for.
+        config()->set('giftcoves.robots_allow', true);
+
         $this->get('/be-nl/search-help')
             ->assertOk()
-            ->assertDontSee('content="noindex, follow"', escape: false);
+            ->assertDontSee('noindex', false);
     }
 }

@@ -19,8 +19,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\InertiaProps;
 use Tests\TestCase;
 
 /**
@@ -32,18 +32,8 @@ use Tests\TestCase;
  */
 class AskYourPeopleTest extends TestCase
 {
+    use InertiaProps;
     use RefreshDatabase;
-
-    /** @return array<string, mixed> */
-    private function props(TestResponse $response): array
-    {
-        return $response->viewData('page')['props'];
-    }
-
-    private function friends(User $a, User $b): void
-    {
-        app(Friends::class)->link($a, $b);
-    }
 
     private function askPeople(User $asker, string $title = 'Wat koop ik voor mijn zus van dertig?'): CommunityQuestion
     {
@@ -171,7 +161,7 @@ class AskYourPeopleTest extends TestCase
     {
         $asker = User::factory()->create();
         $friend = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $question = CommunityQuestion::factory()->forPeople()->create(['user_id' => $asker->id]);
         $url = "/be-nl/ask/p/{$question->share_token}";
@@ -237,7 +227,7 @@ class AskYourPeopleTest extends TestCase
         $me = User::factory()->create();
         $friend = User::factory()->create();
         $stranger = User::factory()->create();
-        $this->friends($me, $friend);
+        app(Friends::class)->link($me, $friend);
 
         $mineOnBoard = CommunityQuestion::factory()->published()->create(['user_id' => $me->id]);
         $mineHeld = CommunityQuestion::factory()->create(['user_id' => $me->id]);
@@ -286,7 +276,7 @@ class AskYourPeopleTest extends TestCase
         $asker = User::factory()->create(['name' => 'Anna']);
         $friend = User::factory()->create();
         $stranger = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $question = $this->askPeople($asker);
 
@@ -310,8 +300,8 @@ class AskYourPeopleTest extends TestCase
         $noEmail = User::factory()->create();
         $off->forceFill(['people_questions_off_at' => now()])->save();
         $noEmail->forceFill(['people_question_emails_off_at' => now()])->save();
-        $this->friends($asker, $off);
-        $this->friends($asker, $noEmail);
+        app(Friends::class)->link($asker, $off);
+        app(Friends::class)->link($asker, $noEmail);
 
         $this->askPeople($asker);
 
@@ -328,7 +318,7 @@ class AskYourPeopleTest extends TestCase
         $asker = User::factory()->create();
         $asker->forceFill(['ask_people_off_at' => now()])->save();
         $friend = User::factory()->create();
-        $this->friends($asker, $friend);
+        app(Friends::class)->link($asker, $friend);
 
         $this->askPeople($asker);
 

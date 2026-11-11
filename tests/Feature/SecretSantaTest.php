@@ -319,7 +319,9 @@ class SecretSantaTest extends TestCase
         $group = $this->group();
         $person = User::factory()->create();
 
-        $sam = $this->join($group, 'Sam', 'sam@example.test');
+        // Sam may not draw the organiser, so of three members Sam can only
+        // draw Ash and the draw is no longer a coin toss.
+        $sam = $this->join($group, 'Sam', 'sam@example.test', [$group->organiser->email]);
         $ash = $this->join($group, 'Ash', 'ash@example.test');
         $ash->update(['user_id' => $person->id]);
 
@@ -339,14 +341,11 @@ class SecretSantaTest extends TestCase
 
         // Whoever drew Ash sees Ash's list. No new way to hold a product, no
         // second claim mechanism — the whole point of the assignment layer.
-        $samsGiftee = SecretSantaMember::query()->find($sam->fresh()->assigned_member_id);
+        // Stored encrypted as text, so it comes back a string.
+        $this->assertSame((string) $ash->id, $sam->fresh()->assigned_member_id);
 
-        if ($samsGiftee?->id === $ash->id) {
-            $this->get("/be-nl/santa/{$group->id}/me/{$sam->fresh()->join_token}")
-                ->assertInertia(fn ($page) => $page->has('me.giftee.wishes', 1));
-        }
-
-        $this->assertTrue(true);
+        $this->get("/be-nl/santa/{$group->id}/me/{$sam->fresh()->join_token}")
+            ->assertInertia(fn ($page) => $page->has('me.giftee.wishes', 1));
     }
 
     #[Test]

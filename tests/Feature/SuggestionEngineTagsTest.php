@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\Market;
-use App\Enums\ProductStatus;
-use App\Enums\Source;
-use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesGiftShelf;
 use Tests\TestCase;
 
 /**
@@ -27,57 +24,21 @@ use Tests\TestCase;
  */
 class SuggestionEngineTagsTest extends TestCase
 {
+    use MakesGiftShelf {
+        giftable as shelfGiftable;
+    }
     use RefreshDatabase;
 
-    private Merchant $merchant;
-
-    protected function setUp(): void
+    /**
+     * The shelf's product, filed under 'Divers' unless a test says otherwise:
+     * the category text is in the search vector, so the exact interest_fit
+     * scores below depend on it.
+     *
+     * @param  list<string>  $tags
+     */
+    private function giftable(string $title, int $price, array $tags = [], string $category = 'Divers'): ProductGroup
     {
-        parent::setUp();
-
-        $this->merchant = Merchant::create([
-            'source' => Source::Awin->value,
-            'external_id' => 'shop',
-            'name' => 'Shop',
-        ]);
-    }
-
-    /** @param list<string> $tags */
-    private function giftable(string $title, int $price, array $tags = [], ?string $category = 'Divers'): ProductGroup
-    {
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(3)),
-            'category' => $category,
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 1,
-            'in_stock' => true,
-            'giftable' => true,
-            'gift_tags' => $tags,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'merchant_category' => $category,
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
+        return $this->shelfGiftable($title, $price, $tags, $category);
     }
 
     private function engine(): SuggestionEngine

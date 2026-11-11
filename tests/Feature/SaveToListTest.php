@@ -194,26 +194,6 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
-    public function saving_says_which_list_it_went_into(): void
-    {
-        $user = User::factory()->create();
-
-        $list = Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'title' => 'Camping',
-            'market' => Market::BeNl,
-        ]);
-
-        // "Saved to your list" is true of every save and so answers nothing —
-        // a save can land in the default list, one picked from the menu, or one
-        // created in the same click.
-        $this->actingAs($user)
-            ->post('/be-nl/list-items', ['group_id' => $this->group()->id, 'wishlist_id' => $list->id])
-            ->assertSessionHas('success', fn (string $flash) => str_contains($flash, 'Camping'));
-    }
-
-    #[Test]
     public function a_save_made_on_the_list_page_points_at_the_row_instead(): void
     {
         $user = User::factory()->create();

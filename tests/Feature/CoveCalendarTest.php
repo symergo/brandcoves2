@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
-use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Filament\Pages\CoveCalendar;
 use App\Jobs\BuildCove;
@@ -15,8 +13,6 @@ use App\Jobs\PublishDueCoves;
 use App\Models\CovePlan;
 use App\Models\GuideTopic;
 use App\Models\Merchant;
-use App\Models\Product;
-use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Cove\SeasonalSeries;
 use App\Services\Cove\YearCalendar;
@@ -26,6 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Feature\Concerns\MakesCoveArticleProducts;
 use Tests\TestCase;
 
 /**
@@ -45,6 +42,7 @@ use Tests\TestCase;
  */
 class CoveCalendarTest extends TestCase
 {
+    use MakesCoveArticleProducts;
     use RefreshDatabase;
 
     private const TODAY = '2027-04-15';
@@ -461,44 +459,7 @@ class CoveCalendarTest extends TestCase
             'Bardani', 'Eurotrail', 'Outwell', 'Salewa'];
 
         foreach (array_slice($brands, $offset, $count) as $index => $brand) {
-            $this->product("{$brand} {$noun} model {$index}", 4000 + ($index * 1500), $brand.'-'.$noun);
+            $this->product("{$brand} {$noun} model {$index}", 4000 + ($index * 1500), $brand.'-'.$noun, 'outdoor');
         }
-    }
-
-    private function product(string $title, int $price, string $brand): ProductGroup
-    {
-        $group = ProductGroup::create([
-            'market' => Market::BeNl,
-            'identity_key' => 'k'.bin2hex(random_bytes(5)),
-            'identity_kind' => 'ean',
-            'title' => $title,
-            'slug' => 'p-'.bin2hex(random_bytes(4)),
-            'brand' => $brand,
-            'category' => 'outdoor',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => $price,
-            'merchant_count' => 2,
-            'in_stock' => true,
-            'giftable' => true,
-            'worth_showing' => true,
-            'surprise_score' => 50,
-        ]);
-
-        Product::create([
-            'source' => Source::Awin,
-            'market' => Market::BeNl,
-            'merchant_id' => $this->merchant->id,
-            'group_id' => $group->id,
-            'external_id' => 'e'.bin2hex(random_bytes(5)),
-            'title' => $title,
-            'price' => $price,
-            'currency' => 'EUR',
-            'affiliate_url' => 'https://example.test/buy',
-            'availability' => Availability::InStock,
-            'status' => ProductStatus::Active,
-            'identity_key' => $group->identity_key,
-        ]);
-
-        return $group;
     }
 }
