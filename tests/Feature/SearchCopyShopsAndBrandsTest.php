@@ -26,6 +26,7 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Placeholders\CoveLinks;
 use App\Services\Pages\Placeholders\GuideLinks;
+use App\Services\Pages\Placeholders\OtherBrandCategories;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
 use App\Services\Pages\Placeholders\OtherBrandsByCategory;
 use App\Services\Pages\Placeholders\SaveSearchLink;
@@ -353,6 +354,10 @@ class SearchCopyShopsAndBrandsTest extends TestCase
             ['Midi controller', ['Hercules']],
         ], $lines);
         $this->assertStringContainsString('/brand/jbl', $value->items[0]['links'][0]['url']);
+
+        // The question above the list names exactly the kinds the list has lines for.
+        $context = new SearchContext(Market::BeNl, $items, 7, 'custom');
+        $this->assertSame('autospeaker, constructiespeelgoed en midi controller', (new OtherBrandCategories)->resolve($context)->text);
     }
 
     #[Test]
@@ -362,6 +367,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
 
         // Nothing, which hides the paragraph, and the heading over it goes too.
         $this->assertSame('nothing', $value->type);
+        $this->assertSame('nothing', (new OtherBrandCategories)->resolve(new SearchContext(Market::BeNl, [$this->group('Aurex')], 1, 'aurex'))->type);
     }
 
     #[Test]
