@@ -145,7 +145,7 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
             ]);
         }
 
-        if ($sections === [] || blank($owner->email)) {
+        if ($sections === [] || blank($owner->email) || ! $owner->emailConfirmed()) {
             return;
         }
 

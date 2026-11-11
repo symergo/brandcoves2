@@ -47,6 +47,10 @@ class LinkSharerAsFriend
          * invite that applied on the magic link but not on Google would be
          * invisible to whichever half of people pressed the other button.
          */
-        $this->invites->applyTo($user);
+        // Only for a proven address: typing somebody's address into the
+        // sign-in form must not hand over their invitations.
+        if ($user->emailConfirmed()) {
+            $this->invites->applyTo($user);
+        }
     }
 }

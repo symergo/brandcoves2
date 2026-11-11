@@ -784,6 +784,8 @@ return [
         'sending' => 'Sending...',
         'email' => 'Email address',
         'send' => 'Send me a link',
+        // A new address is signed in at once, unconfirmed (2026-11-12).
+        'signed_in_unconfirmed' => 'You are signed in. Press the link in the email we just sent to confirm your address: you then stay signed in and get our notifications.',
         'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'confirm_title' => 'Sign in to GiftCoves',

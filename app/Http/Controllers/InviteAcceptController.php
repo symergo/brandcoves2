@@ -43,7 +43,7 @@ class InviteAcceptController extends Controller
         if ($user !== null) {
             $address = $acceptance->addressFor($token);
 
-            if ($address !== null && mb_strtolower((string) $user->email) === $address) {
+            if ($address !== null && $user->emailConfirmed() && mb_strtolower((string) $user->email) === $address) {
                 return redirect()->to(app(CurrentMarket::class)->url('people'));
             }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
+use App\Http\Middleware\EndProvisionalSession;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
 use App\Models\User;
@@ -11,6 +12,7 @@ use App\Services\Social\InviteAcceptance;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Signing somebody in by a proven email address: the magic link, and since
@@ -24,6 +26,15 @@ use Illuminate\Support\Facades\Auth;
  */
 class EmailSignIn
 {
+    /** Session key of a sign-in that proved nothing yet: ['user' => id, 'ip' => address]. */
+    public const PROVISIONAL = 'auth.provisional';
+
+    /** Where the address was proven from, for {@see EndProvisionalSession}. */
+    public static function provenFromKey(int $userId): string
+    {
+        return "auth:proven-from:{$userId}";
+    }
+
     public function __construct(private readonly IdentityMerger $merger) {}
 
     /**
@@ -32,9 +43,18 @@ class EmailSignIn
      * With `$onlyNew`, an address that already has an account is not signed
      * in and null comes back; the invitation button uses that (see
      * {@see InviteAcceptance}).
+     *
+     * With `$proven` false nothing proved the address: the sign-in form made
+     * the account for an address it had never seen (owner, 2026-11-12: "log
+     * in automatically but only send mails and set long term cookie ... when
+     * the email link was clicked"). Such a sign-in only ever creates, leaves
+     * the address unconfirmed, sets no remember cookie and marks the session
+     * provisional.
      */
-    public function signIn(Request $request, string $email, ?string $name, string $market, bool $onlyNew = false): ?User
+    public function signIn(Request $request, string $email, ?string $name, string $market, bool $onlyNew = false, bool $proven = true): ?User
     {
+        $onlyNew = $onlyNew || ! $proven;
+
         $email = mb_strtolower(trim($email));
 
         // Case-insensitive, matching the unique index on lower(email), so
@@ -73,9 +93,12 @@ class EmailSignIn
             $user->forceFill(['name' => $name])->save();
         }
 
-        // Proof of mailbox control is exactly what both paths establish.
-        if ($user->email_verified_at === null) {
+        // Proof of mailbox control is exactly what both proven paths
+        // establish. Where it was proven from is kept, so the browser that
+        // made the account can stay signed in and any other cannot.
+        if ($proven && $user->email_verified_at === null) {
             $user->forceFill(['email_verified_at' => now()])->save();
+            Cache::forever(self::provenFromKey((int) $user->id), (string) $request->ip());
         }
 
         // Everything built before signing up moves across. Do this BEFORE
@@ -88,11 +111,19 @@ class EmailSignIn
             }
         }
 
-        // Fires Login, which LinkSharerAsFriend turns into connections.
-        Auth::login($user, remember: true);
+        // Fires Login, which LinkSharerAsFriend turns into connections. The
+        // remember cookie only for a proven address: an unconfirmed sign-in
+        // lasts as long as its session.
+        Auth::login($user, remember: $proven);
         // A fresh session id after a privilege change; otherwise a session
         // fixed before login stays valid after it.
         $request->session()->regenerate();
+
+        if ($proven) {
+            $request->session()->forget(self::PROVISIONAL);
+        } else {
+            $request->session()->put(self::PROVISIONAL, ['user' => $user->id, 'ip' => (string) $request->ip()]);
+        }
 
         return $user;
     }

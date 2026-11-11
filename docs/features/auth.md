@@ -291,3 +291,51 @@ Two changes:
 Accounts the bots already created are not removed by this; that is a separate, reviewed clean-up.
 The local screenshot scripts (`scripts/shot.mjs`, `shots.mjs`, `help-screenshots.mjs`) press the
 button after opening the link.
+
+## Unconfirmed accounts: a new address is signed in at once (2026-11-12)
+
+Owner: "If there is no user with the email yet, log in automatically but only
+send mails and set long term cookie (instead of session only) when the email
+link was clicked in the past".
+
+`MagicLinkController::send()` still mails the link to everybody. When the
+address has **no account yet**, it also makes the account and signs the visitor
+in on the spot (`EmailSignIn::signIn(..., proven: false)`). An address that
+already has an account is only mailed, as before: typing it proves nothing.
+
+Confirmed means `users.email_verified_at` is set (`User::emailConfirmed()`):
+a mailed link was pressed once, or the account came through Google.
+
+| | Unconfirmed | Confirmed |
+|---|---|---|
+| Signed in | this session only (no remember cookie) | remember cookie |
+| Price alerts, list digests, occasion reminders by mail | no | yes |
+| Invitations waiting for the address (`InviteAcceptance::applyTo`) | no | yes, applied when the link is pressed |
+| In-app notifications, lists, saving | yes | yes |
+
+Pressing the link confirms. It works while already signed in, which is why the
+two `/auth/magic/{token}` routes sit outside the `guest` group.
+
+### What this costs
+
+- **The form now tells whether an address has an account**: a new one is
+  signed in, a known one is told a link was sent. The earlier rule (identical
+  answers) is given up on purpose.
+- **Anybody can make an account under somebody else's address.** That is why
+  an unconfirmed account gets nothing that belongs to the address (mail,
+  invitations), and why `EndProvisionalSession` signs an unconfirmed session
+  out as soon as the address is confirmed from another IP address: the real
+  owner pressing the link must not share the account with whoever got there
+  first. Confirmed from the same IP address (laptop and phone at home), the
+  session simply becomes an ordinary one. What the first visitor saved before
+  that stays in the account.
+- **The registration (GA4 `sign_up`, the owner's mail) is counted when the
+  form is sent**, not when the link is pressed, so unconfirmed addresses are
+  in those numbers.
+
+The bot trap and both rate limits run before any of this, so an automated
+request still makes no account.
+
+Migration `2026_11_11_000400_existing_accounts_are_confirmed` marks every
+account from before this release as confirmed: until then an account could
+only be made through a proven path.

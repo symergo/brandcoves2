@@ -549,7 +549,7 @@ class SendOccasionReminders implements ShouldBeUnique, ShouldQueue
 
         $user = User::query()->find($userId);
 
-        if ($user === null || blank($user->email) || $user->reminder_emails_off_at !== null) {
+        if ($user === null || blank($user->email) || ! $user->emailConfirmed() || $user->reminder_emails_off_at !== null) {
             return null;
         }
 

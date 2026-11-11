@@ -180,6 +180,20 @@ class User extends Authenticatable implements FilamentUser, HasName
      * the page, which is a leak they never agreed to and cannot undo. "ann" is
      * a name; "ann@gmail.com" is a target for spam.
      */
+    /**
+     * Whether this address was ever proven: a sign-in link pressed, or Google.
+     *
+     * An account made by typing a new address into the sign-in form is signed
+     * in at once and is not confirmed (owner, 2026-11-12). Until it is, it
+     * gets no mail of its own, no long-lived cookie and none of what was
+     * waiting for that address. See docs/features/auth.md, "Unconfirmed
+     * accounts".
+     */
+    public function emailConfirmed(): bool
+    {
+        return $this->email_verified_at !== null;
+    }
+
     public function displayName(): string
     {
         if (filled($this->name)) {

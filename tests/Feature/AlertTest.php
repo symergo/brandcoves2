@@ -96,7 +96,8 @@ class AlertTest extends TestCase
 
     private function user(): User
     {
-        return User::create(['email' => 'watcher@example.test']);
+        // Confirmed: an unconfirmed address gets no alert mail (docs/features/auth.md).
+        return tap(User::create(['email' => 'watcher@example.test'])->forceFill(['email_verified_at' => now()]))->save();
     }
 
     #[Test]

@@ -78,7 +78,8 @@ class ListPriceWatchTest extends TestCase
 
     private function user(string $email = 'owner@example.test'): User
     {
-        return User::create(['email' => $email]);
+        // Confirmed: an unconfirmed address gets no digest (docs/features/auth.md).
+        return tap(User::create(['email' => $email])->forceFill(['email_verified_at' => now()]))->save();
     }
 
     /** A list the user owns, with one item per group, watching at the given percentage. */

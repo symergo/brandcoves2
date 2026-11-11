@@ -6,6 +6,7 @@ use App\Enums\Market;
 use App\Http\Controllers\NotFoundController;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\CacheAnonymousPage;
+use App\Http\Middleware\EndProvisionalSession;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectLegacyHost;
@@ -69,6 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // anything tries to attach a wishlist to it.
             SetMarket::class,
             TrackAnonymousIdentity::class,
+            EndProvisionalSession::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);

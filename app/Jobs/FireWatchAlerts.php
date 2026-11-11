@@ -222,7 +222,7 @@ class FireWatchAlerts implements ShouldQueue
          */
         $user = $alert->user;
 
-        if ($user === null || $group === null || $url === null || blank($user->email)) {
+        if ($user === null || $group === null || $url === null || blank($user->email) || ! $user->emailConfirmed()) {
             return;
         }
 

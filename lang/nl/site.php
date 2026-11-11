@@ -640,6 +640,8 @@ return [
         'sending' => 'Bezig met versturen...',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
+        // A new address is signed in at once, unconfirmed (2026-11-12).
+        'signed_in_unconfirmed' => 'Je bent aangemeld. Klik op de link in de mail die we je stuurden om je adres te bevestigen: dan blijf je aangemeld en krijg je onze meldingen.',
         'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
         // The page the link in the email opens: a button, because mail

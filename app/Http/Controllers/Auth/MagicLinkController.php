@@ -78,7 +78,7 @@ class MagicLinkController extends Controller
         ]);
     }
 
-    public function send(Request $request, CurrentMarket $current): RedirectResponse
+    public function send(Request $request, CurrentMarket $current, EmailSignIn $signIn): RedirectResponse
     {
         $validated = $request->validate([
             // rfc only, deliberately not dns. A DNS check rejects perfectly
@@ -191,8 +191,27 @@ class MagicLinkController extends Controller
             ]);
         }
 
-        // Deliberately identical whether or not the address has an account.
-        // Anything else turns this form into an account-existence oracle.
+        /*
+         * An address with no account yet is signed in at once (owner,
+         * 2026-11-12), unconfirmed: the link just mailed is what confirms it.
+         * See EmailSignIn::signIn() and docs/features/auth.md.
+         *
+         * This does make the answer differ by whether the address has an
+         * account, which the form avoided until now. The owner's choice: one
+         * step less for every new visitor, against a stranger learning that
+         * an address is known here.
+         */
+        if ($signIn->signIn($request, $email, $name, $current->get()->value, proven: false) !== null) {
+            $message = __('site.auth.signed_in_unconfirmed');
+            $previous = (string) parse_url(url()->previous(), PHP_URL_PATH);
+
+            // Back to the page the popup was opened on; from the login page
+            // itself, on to their lists (a signed-in visitor has no login page).
+            return str_ends_with(rtrim($previous, '/'), '/login')
+                ? redirect()->intended($current->url('lists'))->with('success', $message)
+                : back()->with('success', $message);
+        }
+
         return back()->with('success', __('site.auth.link_sent'));
     }
 

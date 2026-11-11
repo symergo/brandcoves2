@@ -16,7 +16,10 @@ use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Auth\EmailSignIn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
@@ -64,21 +67,125 @@ class AuthTest extends TestCase
     }
 
     #[Test]
-    public function the_response_is_identical_for_unknown_addresses(): void
+    public function a_known_address_is_only_mailed_a_link(): void
     {
         User::create(['email' => 'known@example.test']);
 
-        $known = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'known@example.test']);
-        // Read now: both requests share one session store, so read after the
-        // second post this would be the second answer compared with itself.
-        $knownFlash = session()->get('success');
-        $unknown = $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'nobody@example.test']);
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'known@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('success', __('site.auth.link_sent'));
 
-        // Anything else turns this form into an account-existence oracle:
-        // "does this person have an account here" is not ours to disclose.
-        $this->assertSame($known->getStatusCode(), $unknown->getStatusCode());
-        $this->assertSame(__('site.auth.link_sent'), $knownFlash);
-        $this->assertSame($knownFlash, $unknown->getSession()->get('success'));
+        // Typing an address that has an account proves nothing.
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function a_new_address_is_signed_in_at_once_but_unconfirmed(): void
+    {
+        /*
+         * Owner, 2026-11-12: "If there is no user with the email yet, log in
+         * automatically but only send mails and set long term cookie (instead
+         * of session only) when the email link was clicked in the past".
+         */
+        $response = $this->from('/be-nl/tips')
+            ->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'New@Example.test', 'name' => 'Nina'])
+            ->assertRedirect('/be-nl/tips')
+            ->assertSessionHas('success', __('site.auth.signed_in_unconfirmed'))
+            ->assertSessionHas(EmailSignIn::PROVISIONAL);
+
+        $user = User::query()->where('email', 'new@example.test')->firstOrFail();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('Nina', $user->name);
+        $this->assertFalse($user->emailConfirmed());
+        // The link still goes out: pressing it is what confirms the address.
+        Mail::assertSent(MagicLinkMail::class);
+        // Session only: no cookie that outlives it.
+        $response->assertCookieMissing(Auth::guard()->getRecallerName());
+    }
+
+    #[Test]
+    public function from_the_login_page_a_new_address_lands_on_their_lists(): void
+    {
+        // Back to the login page would bounce: a signed-in visitor has none.
+        $this->from('/be-nl/login')
+            ->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test'])
+            ->assertRedirect('/be-nl/lists');
+
+        $this->assertAuthenticated();
+    }
+
+    #[Test]
+    public function a_request_that_looks_automated_makes_no_account(): void
+    {
+        $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'bot@example.test', 'website' => 'x']);
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'bot@example.test']);
+    }
+
+    #[Test]
+    public function pressing_the_link_confirms_the_address_and_keeps_you_signed_in(): void
+    {
+        $token = $this->requestLink('new@example.test');
+
+        // Same browser, already signed in: the link opens all the same.
+        $response = $this->get("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+
+        $user = User::query()->where('email', 'new@example.test')->firstOrFail();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue($user->emailConfirmed());
+        $response->assertCookie(Auth::guard()->getRecallerName());
+        $response->assertSessionMissing(EmailSignIn::PROVISIONAL);
+    }
+
+    #[Test]
+    public function an_unconfirmed_session_ends_when_the_address_is_confirmed_elsewhere(): void
+    {
+        /*
+         * Anybody can type anybody's address. Whoever made the account first
+         * must not still be inside it once its owner presses the link.
+         */
+        $token = $this->requestLink('victim@example.test');
+        $user = User::query()->where('email', 'victim@example.test')->firstOrFail();
+        $provisional = session()->all();
+
+        // The owner, on their own device and network.
+        $this->otherBrowser();
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+            ->post("/be-nl/auth/magic/{$token}")
+            ->assertRedirect('/be-nl/lists');
+        $this->assertTrue($user->fresh()->emailConfirmed());
+
+        // The first browser again.
+        $this->otherBrowser();
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+            ->withSession($provisional)
+            ->get('/be-nl/lists');
+
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function an_unconfirmed_session_survives_a_confirmation_from_the_same_address(): void
+    {
+        // Asked on the laptop, pressed on the phone, both at home.
+        $token = $this->requestLink('home@example.test');
+        $user = User::query()->where('email', 'home@example.test')->firstOrFail();
+        $provisional = session()->all();
+
+        $this->otherBrowser();
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+        $this->assertSame('127.0.0.1', Cache::get(EmailSignIn::provenFromKey($user->id)));
+
+        $this->otherBrowser();
+        $this->withSession($provisional)
+            ->get('/be-nl/lists')
+            ->assertOk()
+            ->assertSessionMissing(EmailSignIn::PROVISIONAL);
+
+        $this->assertAuthenticatedAs($user);
     }
 
     #[Test]
@@ -105,7 +212,7 @@ class AuthTest extends TestCase
         $token = $this->requestLink('scanned@example.test');
 
         // The scanner is not the browser that asked for the link.
-        $this->flushSession();
+        $this->otherBrowser();
 
         $this->get("/be-nl/auth/magic/{$token}")
             ->assertOk()
@@ -116,8 +223,10 @@ class AuthTest extends TestCase
         // A second open, as a scanner and then the person would.
         $this->get("/be-nl/auth/magic/{$token}")->assertOk();
 
+        // The account exists since the form was sent (2026-11-12); opening
+        // the link neither signs in nor confirms it.
         $this->assertGuest();
-        $this->assertDatabaseMissing('users', ['email' => 'scanned@example.test']);
+        $this->assertDatabaseHas('users', ['email' => 'scanned@example.test', 'email_verified_at' => null]);
 
         // The button is what signs in.
         $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
@@ -149,14 +258,16 @@ class AuthTest extends TestCase
         // Another address's link, opened here: the session holds a different
         // hash, so this is the page with the button, as for anybody else.
         $theirs = $this->requestLink('theirs@example.test');
-        $this->flushSession();
+        $this->otherBrowser();
         $this->requestLink('mine@example.test');
 
         $this->get("/be-nl/auth/magic/{$theirs}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('Auth/ConfirmLink'));
 
-        $this->assertGuest();
+        // Still whoever this browser was, and theirs is not confirmed by it.
+        $this->assertAuthenticatedAs(User::query()->where('email', 'mine@example.test')->firstOrFail());
+        $this->assertDatabaseHas('users', ['email' => 'theirs@example.test', 'email_verified_at' => null]);
     }
 
     #[Test]
@@ -358,6 +469,8 @@ class AuthTest extends TestCase
     #[Test]
     public function too_many_requests_are_refused(): void
     {
+        User::create(['email' => 'flood@example.test']);
+
         for ($i = 0; $i < 5; $i++) {
             $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'flood@example.test']);
         }
@@ -486,6 +599,7 @@ class AuthTest extends TestCase
 
         // And the server still says it, so removing the duplicate did not
         // remove the message.
+        User::create(['email' => 'someone@example.test']);
         $this->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'someone@example.test'])
             ->assertRedirect()
             ->assertSessionHas('success', __('site.auth.link_sent'));
@@ -504,7 +618,10 @@ class AuthTest extends TestCase
          */
         config(['giftcoves.registrations.notify' => 'owner@example.test']);
 
-        $this->post('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+        // The account is made when the form is sent (2026-11-12), so that is
+        // where the sign-up is reported; pressing the link later is not one.
+        $this->from('/be-nl/login')
+            ->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test'])
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'email');
 
@@ -567,6 +684,13 @@ class AuthTest extends TestCase
         $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
     }
 
+    /** A browser with no session and nobody signed in. */
+    private function otherBrowser(): void
+    {
+        $this->flushSession();
+        $this->app['auth']->forgetGuards();
+    }
+
     /** Ask for a magic link and return its token, the way a mailbox would hand it over. */
     private function requestLink(string $email): string
     {
@@ -590,7 +714,8 @@ class AuthTest extends TestCase
     {
         config(['giftcoves.registrations.notify' => null]);
 
-        $this->post('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+        $this->from('/be-nl/login')
+            ->post('/be-nl/login', ['elapsed_ms' => 5000, 'email' => 'new@example.test'])
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'email');
 
