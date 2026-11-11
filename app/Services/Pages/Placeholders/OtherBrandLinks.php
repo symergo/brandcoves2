@@ -71,13 +71,7 @@ final class OtherBrandLinks implements PlaceholderFunction
 
     public function resolve(PageContext $context): Value
     {
-        $present = [];
-
-        foreach ($context->items as $group) {
-            if ($group instanceof ProductGroup && filled($group->brand)) {
-                $present[Str::slug($group->brand)] = true;
-            }
-        }
+        $present = self::present($context);
 
         // The three categories most of the results belong to, not only the
         // first (owner, 2026-11-08: "broaden the list"). "lenovo" is tablets,
@@ -88,11 +82,7 @@ final class OtherBrandLinks implements PlaceholderFunction
             return Value::nothing();
         }
 
-        $byCategory = Cache::remember(
-            'other-brands:'.$context->market->value.':'.md5(implode('|', $categories)),
-            self::TTL,
-            fn (): array => self::brandsIn($context, $categories),
-        );
+        $byCategory = self::brandsByCategory($context, $categories);
 
         /*
          * In turns: the strongest brand of the first category, then of the
@@ -141,8 +131,43 @@ final class OtherBrandLinks implements PlaceholderFunction
         return Value::links($links);
     }
 
+    /**
+     * Per category, its brands ranked by in-stock products, cached for ten
+     * minutes per market and set of categories. Shared with
+     * {@see OtherBrandsByCategory}.
+     *
+     * @param  list<string>  $categories
+     * @return array<string, list<array{brand: string, slug: string}>>
+     */
+    public static function brandsByCategory(PageContext $context, array $categories): array
+    {
+        return Cache::remember(
+            'other-brands:'.$context->market->value.':'.md5(implode('|', $categories)),
+            self::TTL,
+            fn (): array => self::brandsIn($context, $categories),
+        );
+    }
+
+    /**
+     * The brands already in these results, by slug.
+     *
+     * @return array<string, true>
+     */
+    public static function present(PageContext $context): array
+    {
+        $present = [];
+
+        foreach ($context->items as $group) {
+            if ($group instanceof ProductGroup && filled($group->brand)) {
+                $present[Str::slug($group->brand)] = true;
+            }
+        }
+
+        return $present;
+    }
+
     /** A slug without its hyphens: "black-decker" and "blackdecker" are one brand. */
-    private static function fold(string $slug): string
+    public static function fold(string $slug): string
     {
         return str_replace('-', '', $slug);
     }
@@ -153,7 +178,7 @@ final class OtherBrandLinks implements PlaceholderFunction
      *
      * @param  array<string, true>  $present
      */
-    private static function sameFamily(string $slug, array $present): bool
+    public static function sameFamily(string $slug, array $present): bool
     {
         foreach (array_keys($present) as $own) {
             if (str_starts_with($slug, $own.'-') || str_starts_with($own, $slug.'-')) {

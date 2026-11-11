@@ -40,6 +40,12 @@ final readonly class Value
 
     public const CHIPS = 'chips';
 
+    /**
+     * Labelled lists of links, one line each: "Autospeaker: JBL, Pioneer".
+     * `items` holds {label, links: list<{label, url}>}. Block-level, like chips.
+     */
+    public const GROUPS = 'groups';
+
     /** A Save button drawn as words; `items` holds one {label, title, url}. */
     public const SAVE = 'save';
 
@@ -73,6 +79,12 @@ final readonly class Value
     public static function chips(array $items): self
     {
         return $items === [] ? self::nothing() : new self(self::CHIPS, items: $items);
+    }
+
+    /** @param list<array{label: string, links: list<array{label: string, url: string}>}> $groups */
+    public static function groups(array $groups): self
+    {
+        return $groups === [] ? self::nothing() : new self(self::GROUPS, items: $groups);
     }
 
     /** The site's Save for a search, drawn as the words `$label`. */

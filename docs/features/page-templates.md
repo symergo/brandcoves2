@@ -406,3 +406,17 @@ cards, one column on a phone.
 hides when its data is missing, and its heading used to stay behind with nothing under it ("Meer lezen over
 :term" with no guide to name). A heading followed by another heading, or by the end of the region, goes.
 Tests: `SearchCopyShopsAndBrandsTest`.
+
+## Other brands per kind of product (2026-11-11)
+
+Owner, on the search "custom": "Merken zoals Hot Wheels ... Zoek je alternatieve merken voor Hot Wheels
+(autospeaker, constructiespeelgoed, midi controller)? ... van Lego, JBL, Geomag, Hercules" read wrong. The
+most common brand is not the subject of a page of very different results, and four kinds of product ran
+together in one list. `:other_brands_by_category` (block-level, alone in its paragraph) draws one line per
+significant category of the results, labelled when the name prints as plain words
+(`ResultCategories::label()`), with that category's other brands linked: "Autospeaker: JBL, Pioneer". Same
+brands and cache as `:other_brand_links`; a brand strong in two categories appears once, under the first.
+It is a fifth value shape, `groups`, drawn by `Parts.tsx` as a list. The shipped copy became "Andere merken"
+/ "Other brands" / "Autres marques" over `:other_brands_by_category`
+(`2026_11_11_000200_search_copy_other_brands_by_category`, unedited blocks only). `:other_brand_links`
+stays available to editors.

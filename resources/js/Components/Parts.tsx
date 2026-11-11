@@ -21,6 +21,7 @@ export type Part =
     | { t: 'links'; items: { label: string; url: string; rel?: string }[] }
     | { t: 'save'; items: { label: string; title: string; url: string }[] }
     | { t: 'chips'; items: { label: string; url: string }[] }
+    | { t: 'groups'; items: { label: string; links: { label: string; url: string }[] }[] }
 
 export type Paragraph = Part[]
 
@@ -31,7 +32,7 @@ export interface BlockPayload {
 
 /** Does this paragraph draw a block of its own rather than a sentence? */
 export function isWidget(parts: Paragraph): boolean {
-    return parts.length === 1 && parts[0].t === 'chips'
+    return parts.length === 1 && (parts[0].t === 'chips' || parts[0].t === 'groups')
 }
 
 /**
@@ -103,6 +104,24 @@ function Links({ items }: { items: { label: string; url: string; rel?: string }[
     )
 }
 
+/**
+ * One line per kind of product, its brands linked: "Autospeaker: JBL, Pioneer"
+ * (`:other_brands_by_category`, owner 2026-11-11). A list rather than a
+ * sentence, because the lines are separate answers for separate kinds of
+ * product, and a crawler gets one anchor per brand either way.
+ */
+function Groups({ items }: { items: { label: string; links: { label: string; url: string }[] }[] }) {
+    return (
+        <ul className="mt-2 space-y-1">
+            {items.map((group) => (
+                <li key={group.label}>
+                    <span className="font-medium">{group.label}:</span> <Links items={group.links} />
+                </li>
+            ))}
+        </ul>
+    )
+}
+
 export default function Parts({ parts }: { parts: Paragraph }) {
     return (
         <>
@@ -113,6 +132,7 @@ export default function Parts({ parts }: { parts: Paragraph }) {
                 // lenovo op je cadeaulijst" saves this search to a list.
                 if (part.t === 'save')
                     return part.items.map((item) => <SaveToList key={item.url} url={item.url} title={item.title} words={item.label} />)
+                if (part.t === 'groups') return <Groups key={i} items={part.items} />
                 return <Chips key={i} items={part.items} />
             })}
         </>

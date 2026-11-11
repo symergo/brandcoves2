@@ -94,18 +94,43 @@ final class ResultCategories
         $shown = [];
 
         foreach (self::significant($items, $limit) as $category) {
-            $slug = Str::slug($category);
-            $plain = preg_match('/^[\p{L}][\p{L} \-]*$/u', $category) === 1
-                && mb_strlen($category) <= 30
-                && count(preg_split('/\s+/', trim($category)) ?: []) <= 3;
-            $branded = array_filter($brands, fn (string $brand) => $brand !== '' && str_contains($slug, $brand)) !== [];
-
-            if ($plain && ! $branded) {
+            if (self::printable($category, $brands)) {
                 $shown[] = self::inSentence($category);
             }
         }
 
         return array_values(array_unique($shown));
+    }
+
+    /**
+     * A category name fit to print as a line's label ("Autospeaker"), or null.
+     * The same test as `shown()`: a plain word or two, no brand from the page in it.
+     *
+     * @param  list<ProductGroup>  $items
+     */
+    public static function label(string $category, array $items): ?string
+    {
+        $brands = [];
+
+        foreach ($items as $group) {
+            if ($group instanceof ProductGroup && filled($group->brand)) {
+                $brands[] = Str::slug($group->brand);
+            }
+        }
+
+        return self::printable($category, $brands) ? Str::ucfirst(trim($category)) : null;
+    }
+
+    /** @param  list<string>  $brandSlugs */
+    private static function printable(string $category, array $brandSlugs): bool
+    {
+        $slug = Str::slug($category);
+        $plain = preg_match('/^[\p{L}][\p{L} \-]*$/u', $category) === 1
+            && mb_strlen($category) <= 30
+            && count(preg_split('/\s+/', trim($category)) ?: []) <= 3;
+        $branded = array_filter($brandSlugs, fn (string $brand) => $brand !== '' && str_contains($slug, $brand)) !== [];
+
+        return $plain && ! $branded;
     }
 
     /**

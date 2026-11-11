@@ -27,6 +27,7 @@ use App\Services\Pages\PageCopy;
 use App\Services\Pages\Placeholders\CoveLinks;
 use App\Services\Pages\Placeholders\GuideLinks;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
+use App\Services\Pages\Placeholders\OtherBrandsByCategory;
 use App\Services\Pages\Placeholders\SaveSearchLink;
 use App\Services\Pages\Placeholders\ShopLinks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -315,6 +316,52 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $links = (new OtherBrandLinks)->resolve(new SearchContext(Market::BeNl, $items, 6, 'lenovo'))->items;
 
         $this->assertSame(['Tabby', 'Lappo', 'Slate'], array_column($links, 'label'));
+    }
+
+    #[Test]
+    public function other_brands_are_listed_per_kind_of_product(): void
+    {
+        // The "custom" case (owner, 2026-11-11): very different results, and
+        // the brands of each kind of product on a line of their own instead of
+        // one list under "Merken zoals Hot Wheels".
+        $items = [
+            $this->group('Hot Wheels', 'Autospeaker'), $this->group('Hot Wheels', 'Autospeaker'),
+            $this->group('Bricky', 'Constructiespeelgoed'), $this->group('Bricky', 'Constructiespeelgoed'),
+            $this->group('Numark', 'Midi controller'), $this->group('Numark', 'Midi controller'),
+            // A feed's code is used for nothing printed.
+            $this->group('Lego', 'LEGO (R) Bouwsets'),
+        ];
+
+        foreach ([['JBL', 'Autospeaker', 6], ['Pioneer', 'Autospeaker', 4], ['Geomag', 'Constructiespeelgoed', 5],
+            ['Mega Bloks', 'Constructiespeelgoed', 3], ['Hercules', 'Midi controller', 2],
+            // A brand strong in two kinds appears once, under the first.
+            ['Pioneer', 'Midi controller', 9]] as [$brand, $category, $count]) {
+            $this->stock($brand, $category, $count);
+        }
+
+        foreach (['JBL', 'Pioneer', 'Geomag', 'Mega Bloks', 'Hercules'] as $brand) {
+            $this->brandPage($brand);
+        }
+
+        $value = (new OtherBrandsByCategory)->resolve(new SearchContext(Market::BeNl, $items, 7, 'custom'));
+
+        $this->assertSame('groups', $value->type);
+        $lines = array_map(fn (array $g) => [$g['label'], array_column($g['links'], 'label')], $value->items);
+        $this->assertSame([
+            ['Autospeaker', ['JBL', 'Pioneer']],
+            ['Constructiespeelgoed', ['Geomag', 'Mega Bloks']],
+            ['Midi controller', ['Hercules']],
+        ], $lines);
+        $this->assertStringContainsString('/brand/jbl', $value->items[0]['links'][0]['url']);
+    }
+
+    #[Test]
+    public function no_other_brands_means_no_list(): void
+    {
+        $value = (new OtherBrandsByCategory)->resolve(new SearchContext(Market::BeNl, [$this->group('Aurex')], 1, 'aurex'));
+
+        // Nothing, which hides the paragraph, and the heading over it goes too.
+        $this->assertSame('nothing', $value->type);
     }
 
     #[Test]

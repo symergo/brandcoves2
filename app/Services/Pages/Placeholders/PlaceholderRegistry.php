@@ -44,6 +44,7 @@ final class PlaceholderRegistry
         GuideLinks::class,
         ShopLinks::class,
         OtherBrandLinks::class,
+        OtherBrandsByCategory::class,
         SaveSearchLink::class,
         CoveLinks::class,
     ];
