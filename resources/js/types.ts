@@ -38,6 +38,8 @@ export interface AuthUser {
     isAdmin: boolean
     /** False until a mailed sign-in link was pressed (or Google). */
     confirmed: boolean
+    /** On the Daily Cove list of this market with the account's address. */
+    coveSubscribed: boolean
 }
 
 /** Nested translation tree, as returned by Lang::get('site'). */

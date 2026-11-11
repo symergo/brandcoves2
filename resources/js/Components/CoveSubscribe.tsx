@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../types'
-import { useTranslations } from '../useTranslations'
+import { rich, useTranslations } from '../useTranslations'
 
 /**
  * Subscribe to the Daily Cove.
@@ -15,9 +15,16 @@ import { useTranslations } from '../useTranslations'
  */
 export default function CoveSubscribe({ source = 'daily' }: { source?: string }) {
     const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
+    const { market, auth } = usePage<SharedProps>().props
+    const user = auth.user
 
     const form = useForm({ email: '', source })
+
+    function submit() {
+        form.post(`/${market.key}/coves/subscribe`, { preserveScroll: true })
+    }
+
+    const address = user ? { email: <strong className="break-all font-semibold">{user.email}</strong> } : {}
 
     return (
         // Text left, form right on a wide screen (owner's rule, 2026-09-27: a
@@ -34,7 +41,31 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                 <p className="mt-2 max-w-xl text-sm text-ink-soft">{t('cove.subscribe_intro')}</p>
             </div>
 
-            {form.wasSuccessful ? (
+            {user && (user.coveSubscribed || (form.wasSuccessful && user.confirmed)) ? (
+                // Signed in and on the list: their own address, so saying so
+                // discloses nothing.
+                <p className="rounded border border-sage/40 bg-sage/10 p-3 text-sm" role="status">
+                    {rich(t('cove.subscribed_as'), address)}
+                </p>
+            ) : user && !form.wasSuccessful ? (
+                /*
+                 * Signed in: one press, no field (owner, 2026-11-12). The
+                 * server takes the account's address, whatever is posted. An
+                 * unconfirmed address still gets the confirmation mail, which
+                 * is the "check your inbox" branch below.
+                 */
+                <div className="space-y-2">
+                    <button
+                        type="button"
+                        onClick={submit}
+                        disabled={form.processing}
+                        className="w-full rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50 sm:w-auto"
+                    >
+                        {t('cove.subscribe_one_click')}
+                    </button>
+                    <p className="text-xs text-ink-soft">{rich(t('cove.subscribe_to_address'), address)}</p>
+                </div>
+            ) : form.wasSuccessful ? (
                 /*
                  * Replaces the form rather than sitting above it: leaving the
                  * form visible invites a second submission, which is a second
@@ -60,7 +91,7 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                 <form
                     onSubmit={(e) => {
                         e.preventDefault()
-                        form.post(`/${market.key}/coves/subscribe`, { preserveScroll: true })
+                        submit()
                     }}
                     className="flex flex-wrap gap-2"
                 >

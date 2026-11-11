@@ -592,6 +592,10 @@ return [
         'subscribe_intro' => 'One short email a day: the theme, a few of the finds, and why they are worth a look. No product spam, and one click to leave.',
         'subscribe_placeholder' => 'you@example.com',
         'subscribe_button' => 'Send it to me',
+        // Signed in: one press, the account's address (2026-11-12).
+        'subscribe_one_click' => 'Sign me up',
+        'subscribe_to_address' => 'Every morning to :email. Unsubscribe with one click.',
+        'subscribed_as' => 'You are subscribed: the Daily Cove comes to :email.',
         'subscribe_thanks' => 'Check your inbox, if that address is new to us, a confirmation link is on its way.',
         'subscribe_privacy' => 'We use your address for this email and nothing else.',
         'confirm_done' => "You're on the list. The next Cove arrives tomorrow morning.",

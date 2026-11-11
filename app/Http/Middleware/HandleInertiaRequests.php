@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\Market;
+use App\Models\CoveSubscriber;
 use App\Models\Notification;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
@@ -83,6 +84,14 @@ class HandleInertiaRequests extends Middleware
                     'isAdmin' => $request->user()->is_admin,
                     // False until a mailed link was pressed: ConfirmEmailNotice.
                     'confirmed' => $request->user()->emailConfirmed(),
+                    // Their own address only, so nothing is disclosed: CoveSubscribe
+                    // shows "you are subscribed" instead of its button.
+                    'coveSubscribed' => CoveSubscriber::query()
+                        ->forMarket($market)
+                        ->where('email', CoveSubscriber::normaliseEmail((string) $request->user()->email))
+                        ->whereNotNull('confirmed_at')
+                        ->whereNull('unsubscribed_at')
+                        ->exists(),
                 ],
 
                 /*

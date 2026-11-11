@@ -454,6 +454,10 @@ return [
         'subscribe_intro' => 'Un court e-mail par jour : le thème, quelques trouvailles et pourquoi elles valent le détour. Pas de spam produit, et un clic pour se désabonner.',
         'subscribe_placeholder' => 'vous@exemple.be',
         'subscribe_button' => 'Envoyez-la-moi',
+        // Signed in: one press, the account's address (2026-11-12).
+        'subscribe_one_click' => 'Inscrivez-moi',
+        'subscribe_to_address' => 'Chaque matin à :email. Désinscription en un clic.',
+        'subscribed_as' => 'Vous êtes inscrit : la Cove du jour arrive à :email.',
         'subscribe_thanks' => 'Regardez votre boîte, si cette adresse nous est inconnue, un lien de confirmation est en route.',
         'subscribe_privacy' => "Nous utilisons votre adresse pour cet e-mail et rien d'autre.",
         'confirm_done' => 'Vous êtes inscrit. La prochaine Cove arrive demain matin.',

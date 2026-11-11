@@ -184,3 +184,20 @@ It is carried as a second flash, `action` (`label` and `href`), which `FlashMess
 link after the sentence. A flash message could not hold a link before: it was a string, and the
 banner is shared by every controller, so the way to add a link was a typed sibling rather than
 HTML in a translation string.
+
+## Signed in: one press (2026-11-12)
+
+Owner: "Iemand die is ingelogd kan met 1 klik inschrijven op de cove van de
+dag". `CoveSubscribe` shows a button instead of the address field when
+somebody is signed in, and `CoveSubscriptionController::store()` takes the
+account's address, never one from the request.
+
+- Account address confirmed (`User::emailConfirmed()`): on the list at once,
+  no confirmation mail. Pressing a sign-in link was the proof double opt-in
+  asks for.
+- Account address not confirmed yet (docs/features/auth.md, "Unconfirmed
+  accounts"): the usual confirmation mail, to the account's address.
+
+`auth.user.coveSubscribed` (shared, this market, their own address) makes the
+card say "you are subscribed" instead of offering the button again.
+

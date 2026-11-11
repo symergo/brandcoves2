@@ -453,6 +453,10 @@ return [
         'subscribe_intro' => 'Un correo corto al día: el tema, algunos hallazgos y por qué merecen un vistazo. Sin spam de productos, y un clic para darte de baja.',
         'subscribe_placeholder' => 'tu@ejemplo.es',
         'subscribe_button' => 'Envíamela',
+        // Signed in: one press, the account's address (2026-11-12).
+        'subscribe_one_click' => 'Apúntame',
+        'subscribe_to_address' => 'Cada mañana a :email. Puedes darte de baja con un clic.',
+        'subscribed_as' => 'Estás suscrito: la Cove del día llega a :email.',
         'subscribe_thanks' => 'Mira tu bandeja de entrada, si esa dirección es nueva para nosotros, hay un enlace de confirmación en camino.',
         'subscribe_privacy' => 'Usamos tu dirección para este correo y para nada más.',
         'confirm_done' => 'Ya estás en la lista. La próxima Cove llega mañana por la mañana.',

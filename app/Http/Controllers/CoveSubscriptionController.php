@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Market;
 use App\Mail\CoveConfirmationMail;
 use App\Models\CoveSubscriber;
 use App\Support\CurrentMarket;
@@ -30,6 +31,13 @@ use Illuminate\Support\Facades\RateLimiter;
  * returns the same message. Otherwise the form is an oracle: type an address,
  * read the response, learn whether that person reads this site. Same reasoning
  * as the magic-link flow.
+ *
+ * ## Signed in: one press (2026-11-12)
+ *
+ * A signed-in visitor gets a button instead of a field, and the address is the
+ * account's. A confirmed account address goes on the list at once; an
+ * unconfirmed one (docs/features/auth.md, "Unconfirmed accounts") still gets
+ * the confirmation mail, because nobody proved that mailbox yet.
  */
 class CoveSubscriptionController extends Controller
 {
@@ -44,12 +52,30 @@ class CoveSubscriptionController extends Controller
          * confirmation email already catches an undeliverable address: nothing is
          * ever sent to an unconfirmed row, so a bad domain simply never confirms.
          */
-        $validated = $request->validate([
-            'email' => ['required', 'string', 'email:rfc', 'max:254'],
-        ]);
-
+        $user = $request->user();
         $market = $current->get();
-        $email = CoveSubscriber::normaliseEmail($validated['email']);
+
+        /*
+         * Signed in: one press, no field (owner, 2026-11-12). The address is
+         * the account's, never one from the request, so being signed in
+         * cannot be used to subscribe somebody else.
+         */
+        if ($user !== null && filled($user->email)) {
+            $email = CoveSubscriber::normaliseEmail((string) $user->email);
+
+            // A confirmed account address has already pressed a mailed link
+            // (or is Google's): that is the proof the confirmation mail asks
+            // for, so there is nothing left to confirm.
+            if ($user->emailConfirmed()) {
+                return $this->subscribeProven($request, $market, $email);
+            }
+        } else {
+            $validated = $request->validate([
+                'email' => ['required', 'string', 'email:rfc', 'max:254'],
+            ]);
+
+            $email = CoveSubscriber::normaliseEmail($validated['email']);
+        }
 
         /*
          * Rate limited per address as well as per IP.
@@ -110,6 +136,33 @@ class CoveSubscriptionController extends Controller
          * property that matters here: what happened must not be legible from
          * the response. See the class docblock.
          */
+        return back();
+    }
+
+    /**
+     * On the list at once, for an address its owner has already proven.
+     *
+     * No mail and so no rate limit: nothing leaves the server here.
+     */
+    private function subscribeProven(Request $request, Market $market, string $email): RedirectResponse
+    {
+        $subscriber = CoveSubscriber::query()->firstOrNew([
+            'market' => $market->value,
+            'email' => $email,
+        ]);
+
+        if (! ($subscriber->exists && $subscriber->isConfirmed())) {
+            $subscriber->fill([
+                'confirmed_at' => now(),
+                'confirm_token' => null,
+                'unsubscribed_at' => null,
+                'signup_ip' => $request->ip(),
+                'signup_source' => substr((string) $request->input('source', 'web'), 0, 64),
+            ]);
+            $subscriber->unsubscribe_token ??= CoveSubscriber::newToken();
+            $subscriber->save();
+        }
+
         return back();
     }
 

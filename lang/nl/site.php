@@ -457,6 +457,10 @@ return [
         'subscribe_intro' => 'Eén korte mail per dag: het thema, een paar vondsten en waarom ze de moeite waard zijn. Geen productspam, en met één klik weg.',
         'subscribe_placeholder' => 'jij@voorbeeld.be',
         'subscribe_button' => 'Stuur maar',
+        // Signed in: one press, the account's address (2026-11-12).
+        'subscribe_one_click' => 'Schrijf me in',
+        'subscribe_to_address' => 'Elke ochtend naar :email. Uitschrijven kan met één klik.',
+        'subscribed_as' => 'Je bent ingeschreven: de Cove van de dag komt naar :email.',
         'subscribe_thanks' => 'Kijk in je inbox, als dat adres nieuw voor ons is, is er een bevestigingslink onderweg.',
         'subscribe_privacy' => 'We gebruiken je adres alleen voor deze mail.',
         'confirm_done' => 'Je staat op de lijst. De volgende Cove komt morgenochtend.',

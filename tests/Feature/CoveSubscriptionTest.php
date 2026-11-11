@@ -18,6 +18,7 @@ use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
@@ -119,6 +120,64 @@ class CoveSubscriptionTest extends TestCase
         $this->assertSame('sam@example.com', $subscriber->getAttribute('email'));
         $this->assertNull($subscriber->confirmed_at);
         $this->assertNotNull($subscriber->getAttribute('unsubscribe_token'));
+    }
+
+    #[Test]
+    public function somebody_signed_in_subscribes_with_one_press(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create(['email' => 'Sam@Example.com']);
+
+        $this->actingAs($user)->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('auth.user.coveSubscribed', false));
+
+        // No address posted, and one posted is ignored: it is the account's.
+        $this->actingAs($user)
+            ->post('/be-nl/coves/subscribe', ['email' => 'other@example.com', 'source' => 'daily'])
+            ->assertRedirect();
+
+        // Their address was proven when they signed in: nothing to confirm.
+        Mail::assertNothingSent();
+        $subscriber = CoveSubscriber::query()->sole();
+        $this->assertSame('sam@example.com', $subscriber->getAttribute('email'));
+        $this->assertTrue($subscriber->isConfirmed());
+        $this->assertNotNull($subscriber->getAttribute('unsubscribe_token'));
+
+        $this->actingAs($user)->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('auth.user.coveSubscribed', true));
+    }
+
+    #[Test]
+    public function one_press_brings_back_somebody_who_had_left(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create(['email' => 'sam@example.com']);
+        CoveSubscriber::create([
+            'market' => 'be-nl',
+            'email' => 'sam@example.com',
+            'confirmed_at' => now()->subMonth(),
+            'unsubscribed_at' => now()->subDay(),
+            'unsubscribe_token' => 'kept',
+        ]);
+
+        $this->actingAs($user)->post('/be-nl/coves/subscribe')->assertRedirect();
+
+        $subscriber = CoveSubscriber::query()->sole();
+        $this->assertTrue($subscriber->isConfirmed());
+        $this->assertSame('kept', $subscriber->getAttribute('unsubscribe_token'));
+    }
+
+    #[Test]
+    public function an_unconfirmed_account_still_has_to_confirm_by_mail(): void
+    {
+        // Signed in by typing a new address: nobody proved that mailbox yet.
+        Mail::fake();
+        $user = User::factory()->unverified()->create(['email' => 'new@example.com']);
+
+        $this->actingAs($user)->post('/be-nl/coves/subscribe')->assertRedirect();
+
+        Mail::assertSent(CoveConfirmationMail::class, fn ($mail) => $mail->hasTo('new@example.com'));
+        $this->assertFalse(CoveSubscriber::query()->sole()->isConfirmed());
     }
 
     #[Test]
