@@ -316,6 +316,15 @@ a mailed link was pressed once, or the account came through Google.
 Pressing the link confirms. It works while already signed in, which is why the
 two `/auth/magic/{token}` routes sit outside the `guest` group.
 
+### The reminder bar
+
+While `auth.user.confirmed` is false, `ConfirmEmailNotice` shows a bar under
+the header on every page: confirm the address to keep access, with a button
+that mails a fresh link (`POST /{market}/auth/confirm-link`,
+`MagicLinkController::resend()`; the first link expires in fifteen minutes).
+It cannot be dismissed; pressing a link removes it and sets the remember
+cookie.
+
 ### What this costs
 
 - **The form now tells whether an address has an account**: a new one is

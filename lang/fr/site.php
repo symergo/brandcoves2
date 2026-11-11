@@ -638,6 +638,10 @@ return [
         'send' => 'Envoyez-moi un lien',
         // A new address is signed in at once, unconfirmed (2026-11-12).
         'signed_in_unconfirmed' => 'Vous êtes connecté. Cliquez sur le lien dans l\'e-mail que nous venons d\'envoyer pour confirmer votre adresse : vous resterez connecté et recevrez nos notifications.',
+        // The bar on every page until the address is confirmed (ConfirmEmailNotice).
+        'confirm_notice' => 'Confirmez votre adresse pour garder l\'accès : cliquez sur le lien dans l\'e-mail envoyé à :email.',
+        'confirm_resend' => 'Renvoyer le lien',
+        'confirm_resent' => 'Envoyé. Consultez votre boîte mail.',
         'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes.',
         'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
         'confirm_title' => 'Se connecter à GiftCoves',

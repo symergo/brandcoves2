@@ -637,6 +637,10 @@ return [
         'send' => 'Envíame un enlace',
         // A new address is signed in at once, unconfirmed (2026-11-12).
         'signed_in_unconfirmed' => 'Has iniciado sesión. Pulsa el enlace del correo que te hemos enviado para confirmar tu dirección: así seguirás conectado y recibirás nuestros avisos.',
+        // The bar on every page until the address is confirmed (ConfirmEmailNotice).
+        'confirm_notice' => 'Confirma tu correo para conservar el acceso: pulsa el enlace del mensaje que enviamos a :email.',
+        'confirm_resend' => 'Enviar el enlace de nuevo',
+        'confirm_resent' => 'Enviado. Revisa tu correo.',
         'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',
         'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
         'confirm_title' => 'Entrar en GiftCoves',

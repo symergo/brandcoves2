@@ -36,6 +36,8 @@ export interface AuthUser {
     name: string | null
     email: string
     isAdmin: boolean
+    /** False until a mailed sign-in link was pressed (or Google). */
+    confirmed: boolean
 }
 
 /** Nested translation tree, as returned by Lang::get('site'). */

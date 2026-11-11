@@ -81,6 +81,8 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'isAdmin' => $request->user()->is_admin,
+                    // False until a mailed link was pressed: ConfirmEmailNotice.
+                    'confirmed' => $request->user()->emailConfirmed(),
                 ],
 
                 /*

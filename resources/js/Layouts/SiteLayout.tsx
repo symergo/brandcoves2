@@ -3,6 +3,7 @@ import AccountMenu from '../Components/AccountMenu'
 import AccountSheet from '../Components/AccountSheet'
 import AddingToBar from '../Components/AddingToBar'
 import { buttonClasses } from '../Components/Button'
+import ConfirmEmailNotice from '../Components/ConfirmEmailNotice'
 import CookieBanner from '../Components/CookieBanner'
 import ContributeBar from '../Components/ContributeBar'
 import CoveIcon from '../Components/CoveIcon'
@@ -773,6 +774,9 @@ function Chrome({ children }: PropsWithChildren) {
               page is about. Nothing renders when the mode is off.
             */}
             <AddingToBar />
+
+            {/* Signed in on an address nobody confirmed yet: says so on every page. */}
+            <ConfirmEmailNotice />
 
             {/*
               Vertical rhythm is lighter on a phone.

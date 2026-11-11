@@ -415,6 +415,11 @@ Route::prefix('{market}')->group(function () {
         ->middleware('throttle:20,1')
         ->name('login.magic.consume');
 
+    // The bar on every page of an unconfirmed account: mail the link again.
+    Route::post('/auth/confirm-link', [MagicLinkController::class, 'resend'])
+        ->middleware(['auth', 'throttle:6,1'])
+        ->name('login.resend');
+
     Route::post('/logout', [MagicLinkController::class, 'logout'])
         ->middleware('auth')
         ->name('logout');

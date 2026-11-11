@@ -684,6 +684,51 @@ class AuthTest extends TestCase
         $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
     }
 
+    #[Test]
+    public function every_page_knows_the_address_is_unconfirmed_until_the_link_is_pressed(): void
+    {
+        $token = $this->requestLink('new@example.test');
+
+        // What ConfirmEmailNotice, the bar under the header, is drawn from.
+        $this->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('auth.user.confirmed', false));
+
+        $this->post("/be-nl/auth/magic/{$token}");
+
+        $this->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('auth.user.confirmed', true));
+    }
+
+    #[Test]
+    public function the_bar_can_mail_the_link_again(): void
+    {
+        $this->requestLink('new@example.test');
+        Mail::fake();
+
+        $this->from('/be-nl/lists')
+            ->post('/be-nl/auth/confirm-link')
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionHas('success', __('site.auth.link_sent'));
+
+        $token = null;
+        Mail::assertSent(MagicLinkMail::class, function (MagicLinkMail $mail) use (&$token) {
+            $token = $mail->token;
+
+            return $mail->hasTo('new@example.test');
+        });
+
+        // And that link confirms, with the cookie that outlives the session.
+        $this->get("/be-nl/auth/magic/{$token}")
+            ->assertRedirect('/be-nl/lists')
+            ->assertCookie(Auth::guard()->getRecallerName());
+        $this->assertTrue(User::query()->where('email', 'new@example.test')->firstOrFail()->emailConfirmed());
+
+        // Confirmed: nothing more to send.
+        Mail::fake();
+        $this->post('/be-nl/auth/confirm-link');
+        Mail::assertNothingSent();
+    }
+
     /** A browser with no session and nobody signed in. */
     private function otherBrowser(): void
     {

@@ -265,6 +265,48 @@ class MagicLinkController extends Controller
         ]);
     }
 
+    /**
+     * Mails the link again to somebody signed in on an unconfirmed address.
+     *
+     * The link from send() expires in fifteen minutes and the account lasts
+     * only as long as its session until one is pressed, so the bar that says
+     * so (ConfirmEmailNotice) has to be able to send another. Same per-address
+     * limit as the form: the address may still be somebody else's mailbox.
+     */
+    public function resend(Request $request, CurrentMarket $current): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->emailConfirmed()) {
+            return back();
+        }
+
+        $email = mb_strtolower((string) $user->email);
+        $key = 'magic:'.$email;
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return back()->with('error', __('site.auth.too_many', ['seconds' => RateLimiter::availableIn($key)]));
+        }
+        RateLimiter::hit($key, 900);
+
+        ['token' => $token] = LoginToken::issue($email, $request->ip(), $user->name);
+        $request->session()->put(self::REQUESTED_HERE, hash('sha256', $token));
+
+        try {
+            Mail::to($email)->send(new MagicLinkMail(
+                token: $token,
+                market: $current->get(),
+                requestedFrom: $request->ip(),
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', __('site.auth.mail_failed'));
+        }
+
+        return back()->with('success', __('site.auth.link_sent'));
+    }
+
     /** The page's button. `{market}` is consumed by middleware but still passed positionally. */
     public function consume(Request $request, string $market, string $token, EmailSignIn $signIn): RedirectResponse
     {
