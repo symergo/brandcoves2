@@ -776,7 +776,12 @@ return [
 
     'auth' => [
         'title' => 'Sign in',
-        'email_easy' => 'Enter your email address and we will send you a sign-in link. No password to remember.',
+        'email_easy' => 'No password needed, just your email address.',
+        // Above both ways in, and the form's own answers (EmailSignIn, 2026-11-12).
+        'why_title' => 'Why sign in?',
+        'why_body' => 'Keep everything, share, and see the lists of your contacts.',
+        'failed' => 'That did not work. Please try again in a moment.',
+        'sending' => 'Sending...',
         'email' => 'Email address',
         'send' => 'Send me a link',
         'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',

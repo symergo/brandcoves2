@@ -632,7 +632,12 @@ return [
 
     'auth' => [
         'title' => 'Inloggen',
-        'email_easy' => 'Vul je e-mailadres in en we sturen je een aanmeldlink. Geen wachtwoord om te onthouden.',
+        'email_easy' => 'Geen wachtwoord nodig, enkel je e-mailadres.',
+        // Above both ways in, and the form's own answers (EmailSignIn, 2026-11-12).
+        'why_title' => 'Waarom aanmelden?',
+        'why_body' => 'Bewaar alles, deel en bekijk de lijstjes van je contacten.',
+        'failed' => 'Dat lukte niet. Probeer het zo nog eens.',
+        'sending' => 'Bezig met versturen...',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
         'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten.',

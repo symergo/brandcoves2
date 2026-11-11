@@ -627,7 +627,12 @@ return [
 
     'auth' => [
         'title' => 'Iniciar sesión',
-        'email_easy' => 'Escribe tu correo y te enviaremos un enlace para iniciar sesión. Sin contraseñas que recordar.',
+        'email_easy' => 'Sin contraseña, solo tu correo.',
+        // Above both ways in, and the form's own answers (EmailSignIn, 2026-11-12).
+        'why_title' => '¿Por qué iniciar sesión?',
+        'why_body' => 'Guarda todo, comparte y consulta las listas de tus contactos.',
+        'failed' => 'No ha funcionado. Inténtalo de nuevo en un momento.',
+        'sending' => 'Enviando...',
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',
         'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',

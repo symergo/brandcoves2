@@ -19,7 +19,8 @@ import ToolIcon from './ToolIcon'
  * without the page it redirects back to knowing anything about it.
  */
 export default function FlashMessage() {
-    const { flash } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { flash } = page.props
     const { t } = useTranslations()
     const message = flash.error ?? flash.success ?? flash.status
     const isError = Boolean(flash.error)
@@ -30,7 +31,8 @@ export default function FlashMessage() {
     // next one too, and the second is usually the one that mattered.
     useEffect(() => setDismissed(false), [message])
 
-    if (!message || dismissed) return null
+    // The login page says "check your inbox" beside its own button (EmailSignIn).
+    if (!message || dismissed || (!isError && page.component === 'Auth/Login')) return null
 
     return (
         <div

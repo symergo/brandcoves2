@@ -1,10 +1,9 @@
-import { useForm, usePage } from '@inertiajs/react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { usePage } from '@inertiajs/react'
+import { useEffect, useRef } from 'react'
 import type { SharedProps } from '../types'
 import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
-import { Honeypot, useFormClock } from './BotTrap'
-import ToolIcon from './ToolIcon'
+import EmailSignIn, { WhySignIn } from './EmailSignIn'
 
 /**
  * Signing in without leaving the page you were on.
@@ -47,21 +46,8 @@ export default function SignInDialog({
     const base = `/${market.key}`
     const ref = useRef<HTMLDialogElement>(null)
 
-    const form = useForm({ email: '', name: '', website: '' })
-    const elapsed = useFormClock(open)
-
     // Back closes it, like every popup (useBackCloses, 2026-10-06).
     useBackCloses(onClose, open)
-
-    // "Check your inbox", shown inside the dialog. See submit() for why the
-    // layout's banner is not enough.
-    const [sent, setSent] = useState<string | null>(null)
-
-    useEffect(() => {
-        if (open) {
-            setSent(null)
-        }
-    }, [open])
 
     useEffect(() => {
         const el = ref.current
@@ -78,33 +64,6 @@ export default function SignInDialog({
             el.close()
         }
     }, [open])
-
-    function submit(e: FormEvent) {
-        e.preventDefault()
-
-        /*
-         * The controller answers with a redirect back and a `success` flash.
-         * `FlashMessage` in the layout renders it too, but behind this dialog:
-         * `showModal()` puts the dialog in the top layer over a backdrop, so
-         * the banner was there and nobody could see it, and sending a link
-         * looked like nothing happened. So the dialog shows the sentence
-         * itself.
-         *
-         * The dialog stays open on purpose — the commonest next action is "it
-         * did not arrive, send another", which is exactly the reasoning the
-         * login page records for keeping its form on screen.
-         */
-        setSent(null)
-        // How long the dialog was open: the bot trap, see Components/BotTrap.
-        form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
-        form.post(`${base}/login`, {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                const flash = (page.props as unknown as SharedProps).flash
-                setSent(flash.error ? null : (flash.success ?? flash.status ?? null))
-            },
-        })
-    }
 
     return (
         <dialog
@@ -145,6 +104,8 @@ export default function SignInDialog({
                 line ("we send you a link") went on 2026-10-25 (owner): the
                 email form says it now, where it applies. */}
             {hint && <p className="mt-2 text-sm text-ink-soft">{hint}</p>}
+            {/* Why at all, when the page gave no reason of its own (owner, 2026-11-12). */}
+            {!hint && <WhySignIn className="mt-2" />}
 
             {/*
               Google first (owner's call, 2026-09-14). See Auth/Login.tsx: an
@@ -174,69 +135,7 @@ export default function SignInDialog({
                 </>
             )}
 
-            <form onSubmit={submit} className="relative space-y-3">
-                {/* How the email way works, at the email way itself (owner,
-                    2026-10-25). */}
-                <p className="text-sm text-ink">{t('auth.email_easy')}</p>
-                <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
-                {/* Optional, and only used when the account is created. A magic
-                    link is the whole of registration here, so this is the one
-                    moment there is to ask — and without a name a shared wishlist
-                    cannot say whose it is. */}
-                <label htmlFor="signin-name" className="block text-sm font-medium">
-                    {t('auth.name')}
-                </label>
-                <input
-                    id="signin-name"
-                    type="text"
-                    autoComplete="name"
-                    maxLength={80}
-                    value={form.data.name}
-                    onChange={(e) => form.setData('name', e.target.value)}
-                    className="mt-1 mb-3 w-full rounded-lg border border-line px-3 py-2"
-                />
-
-                <label htmlFor="signin-email" className="block text-sm font-medium">
-                    {t('auth.email')}
-                </label>
-                <input
-                    id="signin-email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    required
-                    value={form.data.email}
-                    onChange={(e) => form.setData('email', e.target.value)}
-                    aria-invalid={form.errors.email ? true : undefined}
-                    aria-describedby={form.errors.email ? 'signin-email-error' : undefined}
-                    className="w-full rounded-lg border border-line bg-cream px-4 py-3"
-                />
-
-                {form.errors.email && (
-                    <p id="signin-email-error" className="text-sm text-danger" role="alert">
-                        {form.errors.email}
-                    </p>
-                )}
-
-                {sent && (
-                    <p
-                        className="flex items-start gap-3 rounded-lg border border-sage bg-sage/10 px-4 py-3 text-base font-medium text-sage"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <ToolIcon name="mailAccount" className="h-7 w-7 shrink-0" />
-                        <span>{sent}</span>
-                    </p>
-                )}
-
-                <button
-                    type="submit"
-                    disabled={form.processing}
-                    className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
-                >
-                    {t('auth.send')}
-                </button>
-            </form>
+            <EmailSignIn idPrefix="signin" active={open} fieldClass="bg-cream" />
 
             <button
                 type="button"

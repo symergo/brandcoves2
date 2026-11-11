@@ -628,7 +628,12 @@ return [
 
     'auth' => [
         'title' => 'Se connecter',
-        'email_easy' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien de connexion. Aucun mot de passe à retenir.',
+        'email_easy' => 'Pas de mot de passe, juste votre adresse e-mail.',
+        // Above both ways in, and the form's own answers (EmailSignIn, 2026-11-12).
+        'why_title' => 'Pourquoi se connecter ?',
+        'why_body' => 'Gardez tout, partagez et consultez les listes de vos contacts.',
+        'failed' => 'Cela n\'a pas fonctionné. Réessayez dans un instant.',
+        'sending' => 'Envoi en cours...',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
         'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes.',
