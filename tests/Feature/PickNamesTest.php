@@ -17,55 +17,66 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The short product name a Cove's text gives each pick, shown on its card
- * (owner, 2026-11-10). See App\Services\Cove\PickNames.
+ * A product without a display title gets the short name a Cove's text gives
+ * it (owner, 2026-11-11). See App\Services\Cove\PickNames.
  */
 class PickNamesTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function the_link_label_in_the_text_becomes_the_cards_name(): void
+    public function a_product_without_a_display_title_gets_the_name_from_the_text(): void
     {
         $ninja = $this->group('NINJA AF200EU Foodi Dual Zone AIRFRYER 7 6 L', 'Ninja');
         $lego = $this->group('LEGO 21367 Ideas Tintin Maanraket - Bouwset voor volwassenen', 'LEGO');
-        $cove = $this->guide("De [[product:{$ninja->id}|Ninja Foodi Dual Zone]] wint.\n\nEn de [[product:{$lego->id}|LEGO Ideas Tintin Maanraket]].", [$ninja, $lego]);
+        $cove = $this->guide("De [[product:{$ninja->id}|Ninja Foodi Dual Zone]] wint.
+
+En de [[product:{$lego->id}|LEGO Ideas Tintin Maanraket]].", [$ninja, $lego]);
 
         $this->assertSame(2, app(PickNames::class)->fill($cove));
 
-        $this->assertSame(['Ninja Foodi Dual Zone', 'LEGO Ideas Tintin Maanraket'], $cove->picks()->orderBy('rank')->pluck('short_name')->all());
+        $this->assertSame('Ninja Foodi Dual Zone', $ninja->fresh()->display_title);
+        $this->assertSame('LEGO Ideas Tintin Maanraket', $lego->fresh()->display_title);
+    }
+
+    #[Test]
+    public function an_existing_display_title_is_never_replaced(): void
+    {
+        $ninja = $this->group('NINJA AF200EU Foodi Dual Zone AIRFRYER 7 6 L', 'Ninja', displayTitle: 'Ninja Dual Zone airfryer 7,6 L');
+        $cove = $this->guide("De [[product:{$ninja->id}|Ninja Foodi Dual Zone]] wint.", [$ninja]);
+
+        $this->assertSame(0, app(PickNames::class)->fill($cove));
+        $this->assertSame('Ninja Dual Zone airfryer 7,6 L', $ninja->fresh()->display_title);
+
+        // And a second Cove naming it differently does not rename it either:
+        // the first name a product gets is its name.
+        $other = $this->group('Philips Airfryer XL HD9270/90', 'Philips');
+        $first = $this->guide("De [[product:{$other->id}|Philips Airfryer XL]].", [$other], 'eerste');
+        $second = $this->guide("De [[product:{$other->id}|grote Philips-airfryer]].", [$other], 'tweede');
+        app(PickNames::class)->fill($first);
+        app(PickNames::class)->fill($second);
+        $this->assertSame('Philips Airfryer XL', $other->fresh()->display_title);
     }
 
     #[Test]
     public function a_label_that_does_not_name_the_product_is_not_used(): void
     {
         $ninja = $this->group('NINJA AF200EU Foodi Dual Zone AIRFRYER 7 6 L', 'Ninja');
-        // "the odd one" is a fine phrase in a sentence and no name for a card.
+        // "the odd one" is a fine phrase in a sentence and no name for a product.
         $cove = $this->guide("Dan [[product:{$ninja->id}|the odd one]], en later [[product:{$ninja->id}|airfryer van Ninja]].", [$ninja]);
 
         app(PickNames::class)->fill($cove);
 
         // The first label that shares a word with the product wins, capitalised.
-        $this->assertSame('Airfryer van Ninja', $cove->picks()->value('short_name'));
+        $this->assertSame('Airfryer van Ninja', $ninja->fresh()->display_title);
+
+        $vague = $this->group('Sony WH-1000XM5 Draadloze Koptelefoon', 'Sony');
+        app(PickNames::class)->fill($this->guide("Neem [[product:{$vague->id}|deze]].", [$vague], 'vaag'));
+        $this->assertNull($vague->fresh()->display_title);
     }
 
     #[Test]
-    public function a_product_the_text_no_longer_names_falls_back_to_its_title(): void
-    {
-        $ninja = $this->group('NINJA AF200EU Foodi Dual Zone AIRFRYER 7 6 L', 'Ninja');
-        $cove = $this->guide("De [[product:{$ninja->id}|Ninja Foodi Dual Zone]].", [$ninja]);
-        app(PickNames::class)->fill($cove);
-
-        $cove->update(['body' => 'Een tekst zonder link.']);
-        app(PickNames::class)->fill($cove->fresh());
-
-        $pick = $cove->picks()->first();
-        $this->assertNull($pick->short_name);
-        $this->assertSame($ninja->displayTitle(), $pick->cardTitle());
-    }
-
-    #[Test]
-    public function the_guide_card_shows_the_short_name(): void
+    public function the_guide_card_shows_it(): void
     {
         $ninja = $this->group('NINJA AF200EU Foodi Dual Zone AIRFRYER 7 6 L', 'Ninja');
         $cove = $this->guide("De [[product:{$ninja->id}|Ninja Foodi Dual Zone]] wint.", [$ninja]);
@@ -77,14 +88,14 @@ class PickNamesTest extends TestCase
     }
 
     /** @param  list<ProductGroup>  $groups */
-    private function guide(string $body, array $groups): DailyPickSet
+    private function guide(string $body, array $groups, string $slug = 'beste-airfryers'): DailyPickSet
     {
         $cove = DailyPickSet::create([
             'market' => Market::BeNl->value,
             'kind' => CoveKind::Guide->value,
-            'slug' => 'beste-airfryers',
+            'slug' => $slug,
             'theme_title' => 'De beste airfryers',
-            'theme_slug' => 'beste-airfryers',
+            'theme_slug' => $slug,
             'theme_blurb' => 'Welke past bij jou?',
             'body' => $body,
             'status' => PublishStatus::Published->value,
@@ -98,7 +109,7 @@ class PickNamesTest extends TestCase
         return $cove->fresh();
     }
 
-    private function group(string $title, string $brand): ProductGroup
+    private function group(string $title, string $brand, ?string $displayTitle = null): ProductGroup
     {
         static $i = 0;
         $i++;
@@ -108,6 +119,7 @@ class PickNamesTest extends TestCase
             'identity_key' => "names-{$i}",
             'identity_kind' => 'title',
             'title' => $title,
+            'display_title' => $displayTitle,
             'slug' => "names-{$i}",
             'brand' => $brand,
             'category' => 'Keuken',

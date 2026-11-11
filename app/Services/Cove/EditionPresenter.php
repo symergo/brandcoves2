@@ -75,7 +75,7 @@ class EditionPresenter
             ->map(fn (DailyPick $pick) => [
                 'id' => $pick->id,
                 'groupId' => $pick->group->id,
-                'title' => $pick->cardTitle(),
+                'title' => $pick->group->displayTitle(),
                 'image' => $pick->group->image_url,
                 'price' => $pick->group->min_price,
                 'merchantCount' => $pick->group->merchant_count,

@@ -6,29 +6,34 @@ namespace App\Services\Cove;
 
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Models\ProductGroup;
 use Illuminate\Support\Str;
 
 /**
- * The short name a Cove's own text gives each of its products, kept on the
- * pick and shown on its card instead of the shop's title (owner, 2026-11-10:
- * "add a short product name as generated in the text to the product and show
- * it in the card").
+ * Gives a product without a display title the short name a Cove's text uses
+ * for it (owner, 2026-11-10/11: "add a short product name as generated in the
+ * text to the product and show it in the card", then "switch to display_title
+ * when empty. Use the display title when it exists").
  *
  * A shop title is written for a search engine ("NINJA AF200EU Foodi Dual Zone
  * AIRFRYER 7 6 L"); the article already calls the same thing "Ninja Foodi Dual
  * Zone". That name is the label of the product's link token, so it costs no
- * extra writing and always matches the paragraph above the card.
+ * extra writing, and once it is the product's `display_title` every card on
+ * the site shows it through `ProductGroup::displayTitle()`.
  *
+ * - **Only an empty `display_title` is filled.** A title somebody wrote, or an
+ *   earlier Cove's name, is never replaced: the first Cove to name a product
+ *   names it. The update itself carries `whereNull('display_title')`, so two
+ *   builds racing cannot overwrite each other either.
  * - **Where it is read**: `[[product:ID|label]]` in the body, the editorial,
  *   the blurb and each pick's own copy, in reading order; the first usable
  *   label per product wins.
  * - **Usable** means 3 to 80 characters and sharing a real word with the
  *   product's title or brand. A writer may label a link "deze" or "the odd
- *   one"; that is fine in a sentence and useless on a card, and the shared word
- *   is what tells the two apart.
- * - **Filled at every build** ({@see EditionBuilder}), so a rewritten article
- *   updates its cards; a pick whose text no longer names it falls back to the
- *   shop title (`short_name` null).
+ *   one"; that is fine in a sentence and no name for a product, and the shared
+ *   word is what tells the two apart.
+ * - **Run at every build** ({@see EditionBuilder}) and once over the existing
+ *   Coves by the migration that introduced it.
  */
 final class PickNames
 {
@@ -40,27 +45,36 @@ final class PickNames
         'pour', 'avec', 'sur', 'dans', 'con', 'para', 'los', 'las', 'del', 'por', 'und', 'mit', 'der',
     ];
 
-    /** Fill `short_name` on every pick of this Cove. Returns how many got a name. */
+    /** Fill the empty display titles of this Cove's products. Returns how many were written. */
     public function fill(DailyPickSet $cove): int
     {
         $cove->loadMissing('picks.group');
         $labels = $this->labels($cove);
-        $named = 0;
+        $written = 0;
 
         foreach ($cove->picks as $pick) {
-            $name = $this->usable($labels[$pick->group_id] ?? [], $pick);
-
-            if ($pick->short_name !== $name) {
-                // Without touching updated_at: the name is derived from the
-                // text, and the text's own edit already moved the timestamp.
-                DailyPick::query()->whereKey($pick->id)->toBase()->update(['short_name' => $name]);
-                $pick->setAttribute('short_name', $name)->syncOriginalAttribute('short_name');
+            if ($pick->group === null || filled($pick->group->display_title)) {
+                continue;
             }
 
-            $named += $name !== null ? 1 : 0;
+            $name = $this->usable($labels[$pick->group_id] ?? [], $pick);
+
+            if ($name === null) {
+                continue;
+            }
+
+            // Without touching updated_at: the sitemap reads it as the
+            // product page's last change, and the page's facts did not change.
+            $written += ProductGroup::query()
+                ->whereKey($pick->group_id)
+                ->whereNull('display_title')
+                ->toBase()
+                ->update(['display_title' => $name]);
+
+            $pick->group->setAttribute('display_title', $name)->syncOriginalAttribute('display_title');
         }
 
-        return $named;
+        return $written;
     }
 
     /**
@@ -96,11 +110,7 @@ final class PickNames
     /** @param  list<string>  $labels */
     private function usable(array $labels, DailyPick $pick): ?string
     {
-        if ($pick->group === null) {
-            return null;
-        }
-
-        $reference = self::words($pick->group->title.' '.$pick->group->displayTitle().' '.$pick->group->brand);
+        $reference = self::words($pick->group->title.' '.$pick->group->brand);
 
         foreach ($labels as $label) {
             $label = trim((string) preg_replace('/\s+/u', ' ', strip_tags($label)));

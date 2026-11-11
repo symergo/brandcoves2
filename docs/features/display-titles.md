@@ -28,7 +28,9 @@ Three things depend on `product_groups.title` being exactly what the feed sent:
   an in-place rewrite would be undone twice a day.
 - The slug and the identity key derive from it.
 
-So `display_title` is a nullable column that nothing automated writes. Two accessors read it.
+So `display_title` is a nullable column. One automated writer fills it, and only when it is empty: a
+Cove build gives a product without one the name its text uses for it (pick-names.md, 2026-11-11).
+Nothing replaces a title once it is there. Two accessors read it.
 `ProductGroup::displayTitle()` returns it, or the feed title with the shouting undone
 (`ProductTitle::card()`), and every card, tile, row and mail goes through it: search cards, Cove
 finds, Today's Cove, Surprise, brand pages, rails, the scanner, Ask, Secret Friend, list matches,
