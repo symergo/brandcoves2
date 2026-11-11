@@ -26,6 +26,12 @@
 	skip_install_trust
 	auto_https off
 
+	# Stop within 5 seconds of SIGTERM (2026-11-11). Without a grace period
+	# Caddy waits for every open (keep-alive) connection from Traefik to close,
+	# so each deploy sat out Coolify's full 30-second stop timeout on this
+	# container, with the site down meanwhile. 5s finishes any real request.
+	grace_period 5s
+
 	# Caddy's admin API (localhost:2019) is not used by anything here: nothing
 	# reloads config at runtime, and the compose file replaces the base image's
 	# healthcheck, which is the only thing that ever called it.

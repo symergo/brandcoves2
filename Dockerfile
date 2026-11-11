@@ -70,9 +70,15 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
 # Runs the bundle directly rather than via `artisan inertia:start-ssr`, which is
 # a thin wrapper that adds a PHP process and a failure mode for no benefit.
 FROM node:24-alpine AS ssr
+# tini as PID 1 (2026-11-11). Node running as PID 1 ignores SIGTERM, so every
+# deploy waited Coolify's full 30-second stop timeout for this container before
+# killing it, and the site was down for that wait (old containers go before the
+# new ones start). tini forwards the signal and Node exits at once.
+RUN apk add --no-cache tini
 WORKDIR /app
 COPY --from=frontend /build/bootstrap/ssr ./bootstrap/ssr
 EXPOSE 13714
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "bootstrap/ssr/ssr.js"]
 
 # ------------------------------------------------------------ runtime -------
