@@ -48,9 +48,9 @@ change: `--filter` on the test class, the test file itself, or `--dirty` for eve
 uncommitted work. Report which one ran, so "tests pass" is never mistaken for "the suite passes".
 
 **The full suite is not run before every push, by the owner's decision of 2026-09-08.** The hook
-added two minutes to each push on days of many small commits, and CI runs the same suite on every
-push anyway, so the local run was an early warning rather than a gate. Push with
-`git push --no-verify`. Run `composer test` locally when it is asked for, or when a change touches
+added two minutes to each push on days of many small commits. Push with `git push --no-verify` after
+the narrow run and `vendor/bin/pint --test` on the changed files: since 2026-11-11 there is no GitHub
+CI behind it (see "No CI" below), so this local run is the gate. Run `composer test` locally when it is asked for, or when a change touches
 migrations or shared services that a narrow filter cannot cover — and say that you did.
 
 ## Pruned on 2026-09-14, and what counts as a duplicate
@@ -144,7 +144,17 @@ needs the file: `phpunit.xml` sets its own environment and `RefreshDatabase` mig
 database itself, so there is no reason to run `migrate:fresh` by hand between test runs. If you want
 the file anyway, recreate it locally, pinned to `DB_DATABASE=brandcoves_test`.
 
-## Two gates: the hook and CI
+## No CI (since 2026-11-11)
+
+**`.github/workflows/tests.yml` was removed on 2026-11-11 (owner: "No github ci").** It had never
+passed: every run in the available history (263) stopped at `composer install`, because
+post-autoload-dump boots artisan, which connects to `DB_DATABASE` from `.env.example` (`brandcoves`)
+while the service database was `brandcoves_test`. So the suite had not run on GitHub at all, and the
+section below described a gate that did not exist. What remains is local: the narrow run and Pint
+before each push, the pre-push hook (or `composer test`) for migrations and shared services, and the
+section below for history.
+
+## Two gates: the hook and CI (history, until 2026-11-11)
 
 `.github/workflows/tests.yml` runs the suite on GitHub for every push and pull request, against a
 real `postgres:16-alpine` service and a `redis:7-alpine` one (since 2026-11-07: some tests reach

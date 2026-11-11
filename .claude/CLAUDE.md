@@ -89,10 +89,11 @@ composer test:serial          # one process, for when parallelism is the suspect
 
 > **Run the tests the change touches, and say which ran**, so "tests pass" is never read as "the
 > suite passes": the narrowest `--filter`, or the file. Run `composer test` only when asked, or when
-> a change touches migrations or shared services that no narrow filter covers. Push with
-> `git push --no-verify`: [CI](../.github/workflows/tests.yml) runs the full suite against Postgres
-> 16 on every push and pull request, and nothing can skip it. The local pre-push hook is optional
-> (`git config core.hooksPath .githooks`). Why, and how CI differs: [docs/testing.md](../docs/testing.md).
+> a change touches migrations or shared services that no narrow filter covers. **There is no GitHub
+> CI** (removed 2026-11-11, owner: "No github ci"; it never got past `composer install`). The gate is
+> local: the tests the change touches plus `vendor/bin/pint --test` on the changed files, then
+> `git push --no-verify`. Run `composer test` (or push without `--no-verify`, which runs the pre-push
+> hook) for migrations and shared services. See [docs/testing.md](../docs/testing.md).
 
 > **Local dev runs on Windows, supervised.** PHP is Herd's, not WinGet's: Smart App Control blocks
 > WinGet's unsigned `php8ts.dll`, and `php.exe` then exits printing nothing. The stack runs as the
