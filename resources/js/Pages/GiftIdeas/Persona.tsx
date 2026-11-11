@@ -105,10 +105,11 @@ export default function Persona({
             {/*
               Two columns from `lg` up, one below it.
 
-              The same shape the Daily edition has, and for the same reason: the
-              prose is capped at `max-w-2xl` because a line past about seventy
-              characters is harder to read, and the rail uses the space that cap
-              was already leaving empty on a wide screen.
+              The same shape the Daily edition and the guides have: the article
+              fills its column and the rail grows with the screen (20rem, 26rem
+              from `xl`, 30rem from `2xl`), owner, 2026-11-10. The prose used to
+              be capped at `max-w-2xl`; a wider rail keeps a line near 100
+              characters instead.
 
               The whole persona goes in the left column — the finds and the
               guide included — so that it is the taller of the two whatever the
@@ -116,7 +117,7 @@ export default function Persona({
               a headline and a grid, and a rail beside a short column runs on
               past the bottom of the page.
             */}
-            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 <div className="min-w-0">
                     {/*
                       The drawing beside the title, not above it.
@@ -126,7 +127,7 @@ export default function Persona({
                       the same trade the old homepage drawing was hidden below `md` to avoid.
                       Here it is small enough to sit alongside at every width.
                     */}
-                    <header className="flex max-w-2xl items-start gap-4 sm:gap-6">
+                    <header className="flex items-start gap-4 sm:gap-6">
                         <div className="min-w-0 flex-1">
                             <p className="text-xs tracking-wide text-ink-soft uppercase">
                                 <Link href={`/${market.key}/gift-ideas`} className="hover:underline">
@@ -154,7 +155,7 @@ export default function Persona({
                       a URL — see CoveMarkupTest, which asserts both.
                     */}
                     {persona.editorial.length > 0 && (
-                        <div className="mt-6 max-w-2xl leading-relaxed text-ink">
+                        <div className="mt-6 leading-relaxed text-ink">
                             {persona.editorial.map((block, i) => (
                                 <div key={i}>
                                     <p

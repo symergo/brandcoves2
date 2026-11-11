@@ -93,7 +93,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
         <>
             <Head title={cove.title} />
 
-            <div className="mt-8 grid gap-x-10 gap-y-10 lg:grid-cols-[1fr_18rem]">
+            <div className="mt-8 grid gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 <div className="min-w-0">
                     <header>
                         {entity.logo && (
@@ -105,7 +105,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                         </div>
                     </header>
 
-                    <PageBlocks blocks={copy.above_prose} className="mt-6 max-w-2xl" />
+                    <PageBlocks blocks={copy.above_prose} className="mt-6" />
 
                     {/*
                       `intro` and `body` arrive as HTML because the link tokens
@@ -115,7 +115,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                       rather than as a link to nothing.
                     */}
                     <div
-                        className="mt-6 max-w-2xl text-lg leading-relaxed text-ink"
+                        className="mt-6 text-lg leading-relaxed text-ink"
                         dangerouslySetInnerHTML={{ __html: cove.intro }}
                     />
                     {/*
@@ -123,7 +123,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                       lines and resolves tokens within each, so a piece written
                       in three paragraphs reads as three.
                     */}
-                    <div className="mt-6 max-w-2xl space-y-4 leading-relaxed text-ink">
+                    <div className="mt-6 space-y-4 leading-relaxed text-ink">
                         {blocks.map((block, index) => (
                             <div key={index}>
                                 <p dangerouslySetInnerHTML={{ __html: block.html }} />
@@ -140,7 +140,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy, saveC
                         ))}
                     </div>
 
-                    <PageBlocks blocks={copy.below_prose} className="mt-10 max-w-2xl" />
+                    <PageBlocks blocks={copy.below_prose} className="mt-10" />
 
                     <EntityRails rails={below} />
                 </div>

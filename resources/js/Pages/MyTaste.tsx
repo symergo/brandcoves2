@@ -157,7 +157,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
                 </p>
             </PageHeader>
 
-            <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 {/* The quicker ways to fill it: first on a phone, beside the form from `lg`. */}
                 <aside className="space-y-3 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)] lg:order-last">
                     <h2 className="font-medium">{t('my_taste.learn_title')}</h2>

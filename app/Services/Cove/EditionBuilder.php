@@ -67,6 +67,7 @@ class EditionBuilder
         private readonly SuggestionEngine $engine,
         private readonly EntityLinks $links,
         private readonly CoveProse $prose,
+        private readonly PickNames $pickNames,
     ) {}
 
     /**
@@ -261,6 +262,8 @@ class EditionBuilder
         // The prose as the page shows it, rendered once here rather than on
         // every view. After the commit, so a failure in it cannot roll back
         // the build; see CoveProse.
+        // The cards' short names, read from the text just written (PickNames).
+        $this->pickNames->fill($edition);
         $this->prose->store($edition);
 
         return $edition;
@@ -358,6 +361,8 @@ class EditionBuilder
         });
 
         // Rendered once, stored with it; see build().
+        // The cards' short names, read from the text just written (PickNames).
+        $this->pickNames->fill($edition);
         $this->prose->store($edition);
 
         return $edition;
@@ -539,6 +544,8 @@ class EditionBuilder
 
         // Rendered once, stored with it; see build(). After the link list
         // above, which a Shop or Brand Cove's search links are checked against.
+        // The cards' short names, read from the text just written (PickNames).
+        $this->pickNames->fill($edition);
         $this->prose->store($edition);
 
         return $edition;
@@ -636,6 +643,8 @@ class EditionBuilder
         });
 
         // New words, so the stored rendering of the old ones goes; see build().
+        // The cards' short names, read from the text just written (PickNames).
+        $this->pickNames->fill($edition);
         $this->prose->store($edition);
 
         return $rewritten;

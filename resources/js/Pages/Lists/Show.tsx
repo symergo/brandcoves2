@@ -443,7 +443,7 @@ export default function ListShow({
               page uses. Two columns only when there is a discussion to show;
               without one the items keep the full width (owner's rule).
             */}
-            <div className={hasBoard ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10' : ''}>
+            <div className={hasBoard ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]' : ''}>
             <div className="min-w-0">
             {items.length === 0 ? (
                 <div className="mt-6 rounded-card border border-line bg-card p-8 text-center">

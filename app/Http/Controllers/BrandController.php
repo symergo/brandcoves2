@@ -462,7 +462,7 @@ class BrandController extends Controller
                 ->map(fn (DailyPick $pick) => [
                     'rank' => $pick->rank,
                     'groupId' => $pick->group->id,
-                    'title' => $pick->group->displayTitle(),
+                    'title' => $pick->cardTitle(),
                     'image' => $pick->group->image_url,
                     'price' => $pick->group->min_price,
                     'merchantCount' => $pick->group->merchant_count,

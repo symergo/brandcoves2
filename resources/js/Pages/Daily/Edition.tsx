@@ -215,7 +215,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
     )
 
     const header = (
-        <header className="max-w-2xl">
+        <header>
             <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-ink-soft">
                 <span className="tracking-wide uppercase">
                     {t('daily.title')} · {edition.label}
@@ -244,7 +244,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
       introduce a tag or a URL — see CoveMarkupTest, which asserts both.
     */
     const article = edition.editorial.length > 0 && (
-        <div className="mt-6 max-w-2xl leading-relaxed text-ink">
+        <div className="mt-6 leading-relaxed text-ink">
             {edition.editorial.map((block, i) => (
                 <div key={i}>
                     <p
@@ -404,10 +404,12 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
             {/*
               Two columns from `lg` up, one below it.
 
-              The article keeps its measure — prose past about 70 characters a
-              line is harder to read, which is why it was capped at `max-w-2xl`
-              in the first place — and the rail beside it uses the space that
-              cap was already leaving empty on a wide screen.
+              The article fills its column and the rail grows with the screen
+              (20rem, 26rem from `xl`, 30rem from `2xl`), as on a guide: owner,
+              2026-11-10, "broaden the article column in the daily coves as well
+              (actually do it for all the pages with a right column)". The
+              article used to be capped at `max-w-2xl`; widening the rail as
+              well keeps a line of text near 100 characters on the 96rem page.
 
               The whole edition body goes in the left column, not just the
               prose, and that is what lets the rail stay a rail. When the column
@@ -425,7 +427,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
               leave a hole. Only the subscribe box and the archive stay full
               width, below both columns.
             */}
-            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_26rem] 2xl:grid-cols-[minmax(0,1fr)_30rem]">
                 <div className="min-w-0">
                     {header}
                     {article}

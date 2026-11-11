@@ -414,7 +414,7 @@ class DiscoverCoveController extends Controller
                 ->take(self::FINDS)
                 ->map(fn (DailyPick $pick) => [
                     'id' => $pick->group->id,
-                    'title' => $pick->group->displayTitle(),
+                    'title' => $pick->cardTitle(),
                     'image' => $pick->group->image_url,
                     'price' => $pick->group->min_price,
                     'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),

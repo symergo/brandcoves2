@@ -39,6 +39,15 @@ class DailyPick extends Model
         ];
     }
 
+    /**
+     * The name on this pick's card: the short name the Cove's text gives it,
+     * else the product's own display title. See App\Services\Cove\PickNames.
+     */
+    public function cardTitle(): string
+    {
+        return filled($this->short_name) ? (string) $this->short_name : (string) $this->group?->displayTitle();
+    }
+
     /** @return BelongsTo<DailyPickSet, $this> */
     public function set(): BelongsTo
     {
