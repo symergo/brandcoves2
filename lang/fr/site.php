@@ -2003,9 +2003,6 @@ return [
             'published' => 'Sur le tableau',
             'rejected' => 'Non publié',
         ],
-
-        // Site review, 2026-11-12.
-        'empty_title' => 'Pour qui achetez-vous des cadeaux ?',
     ],
 
     'invitations' => [
@@ -2853,6 +2850,9 @@ return [
         'invite_self' => 'C\'est votre propre adresse e-mail.',
         'invite_person_tip' => 'Nous envoyons votre invitation à :name par e-mail. Si :name a un compte, ou en crée un, cette personne devient ce compte : ce que vous savez de :name et vos listes pour elle restent ensemble. Ce que vous avez enregistré reste à vous.',
         'help' => 'Mes proches réunit tous ceux à qui vous offrez : les personnes que vous avez enregistrées et vos amis sur GiftCoves. Ajoutez quelqu\'un que vous seul voyez, ou invitez quelqu\'un par e-mail. Sous chaque nom : ce que vous savez de la personne (centres d\'intérêt, listes pour elle), et les listes qu\'elle partage avec vous s\'affichent directement. Touchez le nom pour ouvrir sa page : ce que vous savez d\'elle (modifiable), ses listes d\'envies et vos listes pour elle. Pour un ami sur GiftCoves, aussi Avec : ses listes pour quelqu\'un d\'autre, les cadeaux communs et les Amis Secrets où vous êtes tous les deux. Un Ami Secret partagé apparaît aussi en petit à côté de son nom. Qui a tiré qui n\'est jamais affiché. Trouver un cadeau est sur chaque ligne ; Ceci ou cela et Demander (demandez des idées à d\'autres) sont sous Plus. Une personne enregistrée qui n\'est pas encore sur GiftCoves peut être invitée depuis Plus ; une fois inscrite, elle reste une seule personne.',
+
+        // Site review, 2026-11-12: the empty state's title.
+        'empty_title' => 'Pour qui achetez-vous des cadeaux ?',
     ],
 
     /*
