@@ -221,7 +221,8 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
             {buy && (
                 <Link
                     href={productUrl}
-                    className="relative z-20 flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-sm font-medium text-accent-dark transition hover:bg-cream hover:text-ink"
+                    // Grey, not red (site review, 2026-11-12): twenty red lines made the grid shout.
+                    className="relative z-20 flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-sm text-ink-soft transition hover:bg-cream hover:text-ink"
                 >
                     {group.offerCount > 1
                         ? t('product.all_offers_count', { count: n(group.offerCount) })

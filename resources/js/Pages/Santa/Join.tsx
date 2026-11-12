@@ -116,7 +116,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
 
                 {(
                     <form
-                        className="mt-6 space-y-4 rounded-card border border-line bg-card p-5"
+                        className="mt-6 space-y-4 rounded-card border border-line bg-card p-5 shadow-[0_8px_24px_rgb(42_18_19/0.08)] sm:p-6"
                         onSubmit={(e) => {
                             e.preventDefault()
 
@@ -213,7 +213,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
 
                         <button
                             disabled={form.processing}
-                            className={buttonClasses('primary')}
+                            className={buttonClasses('primary', 'lg', 'w-full')}
                         >
                             {t('santa.join')}
                         </button>

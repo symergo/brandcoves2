@@ -392,6 +392,10 @@ return [
          * remains the honest machine-readable copy of both.
          */
         'seo_title_multi' => ':title — bij :count winkels',
+
+        // The shop's description, folded (site review, 2026-11-12).
+        'read_more' => 'Lees meer',
+        'read_less' => 'Minder tonen',
     ],
 
     /*
@@ -1001,6 +1005,14 @@ return [
         'note_placeholder' => 'Wat de mensen die dit openen moeten weten.',
         'share_instagram' => 'Instagram kan geen links uit een browser aannemen — kopieer hem en plak hem daar.',
         'owner_view_note' => 'Dit is je eigen lijst, dus je ziet niet wat er gekocht is, dat is de bedoeling.',
+
+        // Site review, 2026-11-12.
+        'guest_mine_title' => 'Een verlanglijst',
+        'guest_mine_body' => 'Bewaar wat je zelf wilt, van elke winkel, en deel de lijst met wie je kiest.',
+        'guest_other_title' => 'Ideeën voor iemand',
+        'guest_other_body' => 'Hou cadeau-ideeën bij voor je partner, je mama of een collega. Zij zien het niet.',
+        'guest_group_title' => 'Samen geven',
+        'guest_group_body' => 'Leg samen in voor één groot cadeau, of trek namen met Geheime Vriend.',
     ],
 
     'recipients' => [
@@ -1989,6 +2001,9 @@ return [
             'published' => 'Op het bord',
             'rejected' => 'Niet geplaatst',
         ],
+
+        // Site review, 2026-11-12.
+        'empty_title' => 'Voor wie koop jij cadeaus?',
     ],
 
     'invitations' => [

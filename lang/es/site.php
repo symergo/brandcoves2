@@ -388,6 +388,10 @@ return [
          * remains the honest machine-readable copy of both.
          */
         'seo_title_multi' => ':title — en :count tiendas',
+
+        // The shop's description, folded (site review, 2026-11-12).
+        'read_more' => 'Leer más',
+        'read_less' => 'Mostrar menos',
     ],
 
     /*
@@ -994,6 +998,14 @@ return [
         'note_placeholder' => 'Lo que deberían saber quienes abran esto.',
         'share_instagram' => 'Instagram no acepta enlaces desde el navegador: cópialo y pégalo allí.',
         'owner_view_note' => 'Esta es tu lista, así que las reservas se te ocultan, de eso se trata.',
+
+        // Site review, 2026-11-12.
+        'guest_mine_title' => 'Una lista de deseos',
+        'guest_mine_body' => 'Guarda lo que quieres, de cualquier tienda, y comparte la lista con quien elijas.',
+        'guest_other_title' => 'Ideas para alguien',
+        'guest_other_body' => 'Apunta ideas de regalo para tu pareja, tu madre o un compañero. Ellos no las ven.',
+        'guest_group_title' => 'Regalar juntos',
+        'guest_group_body' => 'Poned dinero entre varios para un gran regalo, o sortead los nombres con Amigo invisible.',
     ],
 
     'recipients' => [
@@ -1982,6 +1994,9 @@ return [
             'published' => 'En el tablón',
             'rejected' => 'No publicado',
         ],
+
+        // Site review, 2026-11-12.
+        'empty_title' => '¿Para quién compras regalos?',
     ],
 
     'invitations' => [

@@ -63,51 +63,66 @@ export default function CovesIndex({ sections }: Props) {
                 <p className="mt-2 text-ink-soft">{t('coves.intro')}</p>
             </header>
 
+            {/*
+              The sections as chips to jump to (site review, 2026-11-12): the
+              page ran to some forty-five boxes in a column, and what kinds
+              there are was only learned by scrolling past all of them.
+            */}
+            {sections.length > 1 && (
+                <nav aria-label={t('coves.title')} className="mt-6 flex flex-wrap gap-2">
+                    {sections.map((section) => (
+                        <a
+                            key={section.key}
+                            href={`#${section.key}`}
+                            className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm font-medium transition hover:border-ink"
+                        >
+                            <CoveIcon name={icons[section.key]} className="h-4 w-4 text-accent" />
+                            {t(`coves.${section.key}_heading`)}
+                        </a>
+                    ))}
+                </nav>
+            )}
+
             {sections.length === 0 ? (
                 <p className="mt-8 text-ink-soft">{t('coves.empty')}</p>
             ) : (
                 sections.map((section) => (
-                    <section key={section.key} className="mt-12">
+                    <section key={section.key} id={section.key} className="mt-12 scroll-mt-24">
                         <div className="flex items-start gap-3">
                             <span className="mt-0.5 shrink-0 text-accent">
                                 <CoveIcon name={icons[section.key]} className="h-6 w-6" />
                             </span>
 
-                            <div className="max-w-2xl">
-                                <h2 className="text-lg font-medium">
+                            <div className="max-w-2xl flex-1">
+                                <h2 className="text-lg font-semibold">
                                     {t(`coves.${section.key}_heading`)}
                                 </h2>
                                 <p className="mt-1 text-sm text-ink-soft">
                                     {t(`coves.${section.key}_what`)}
                                 </p>
                             </div>
+
+                            {/* "All of them" beside the heading, where the eye already is. */}
+                            <Link href={section.url} className="hidden shrink-0 text-sm font-medium text-accent-dark hover:underline sm:block">
+                                {t(`coves.${section.key}_all`)} →
+                            </Link>
                         </div>
 
+                        {/* Six a section: a taste, and the rest is one press away. The whole card is the link. */}
                         <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {section.coves.map((cove) => (
-                                <li key={cove.url} className="rounded-card border border-line bg-card p-5">
-                                    {cove.date && (
-                                        <p className="text-xs text-ink-soft">{cove.date}</p>
-                                    )}
-
-                                    <Link
-                                        href={cove.url}
-                                        className={`font-medium hover:underline ${cove.date ? 'mt-1 block' : ''}`}
-                                    >
-                                        {cove.title}
+                            {section.coves.slice(0, 6).map((cove) => (
+                                <li key={cove.url}>
+                                    <Link href={cove.url} className="group flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink">
+                                        {cove.date && <span className="text-xs text-ink-soft">{cove.date}</span>}
+                                        <span className={`font-medium group-hover:underline ${cove.date ? 'mt-1' : ''}`}>{cove.title}</span>
+                                        {cove.intro && <span className="mt-2 line-clamp-2 text-sm text-ink-soft">{cove.intro}</span>}
                                     </Link>
-
-                                    {cove.intro && (
-                                        <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
-                                            {cove.intro}
-                                        </p>
-                                    )}
                                 </li>
                             ))}
                         </ul>
 
-                        <p className="mt-4">
-                            <Link href={section.url} className="text-sm text-accent hover:underline">
+                        <p className="mt-4 sm:hidden">
+                            <Link href={section.url} className="text-sm font-medium text-accent-dark hover:underline">
                                 {t(`coves.${section.key}_all`)} →
                             </Link>
                         </p>

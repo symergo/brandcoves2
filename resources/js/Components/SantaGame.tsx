@@ -143,7 +143,7 @@ export function RevealCard({ name, revealUrl }: { name: string; revealUrl: strin
     const face = 'absolute inset-0 flex flex-col items-center justify-center rounded-card border-2 p-6 text-center [backface-visibility:hidden]'
 
     return (
-        <section className="mt-8" aria-labelledby="reveal-title">
+        <section className="mt-8 text-center" aria-labelledby="reveal-title">
             <h2 id="reveal-title" className="text-lg font-medium">
                 {t('santa.reveal_title')}
             </h2>
@@ -153,7 +153,7 @@ export function RevealCard({ name, revealUrl }: { name: string; revealUrl: strin
                 type="button"
                 onClick={turn}
                 aria-live="polite"
-                className="mt-4 block h-56 w-full max-w-sm [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="mx-auto mt-4 block h-56 w-full max-w-sm [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
                 <span
                     className="relative block h-full w-full transition-transform duration-700 [transform-style:preserve-3d] motion-reduce:transition-none"

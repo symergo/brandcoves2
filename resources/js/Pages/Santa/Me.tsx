@@ -1,7 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react'
 import { buttonClasses } from '../../Components/Button'
 import PageHeader from '../../Components/PageHeader'
-import SantaBadge from '../../Components/SantaBadge'
 import { AskBox, chipClasses, Countdown, GuessSanta, HintsForm, Progress, QuestionInbox, RevealCard, type GuessState, type SantaQuestion } from '../../Components/SantaGame'
 import SaveToList from '../../Components/SaveToList'
 import { formatBudget, formatDay, formatPrice, type Cents, type SharedProps } from '../../types'
@@ -84,12 +83,14 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
+            {/* One centred column, like the group page (2026-11-12). */}
+            <div className="mx-auto max-w-2xl">
+
             <PageHeader
                 className="max-w-2xl"
                 size="md"
                 back={{ href: `/${market.key}/santa`, label: t('santa.title') }}
                 title={group.title}
-                beside={<SantaBadge />}
             >
 
                 {!group.drawn ? (
@@ -324,6 +325,7 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                     {me.muted ? t('santa.unmute_link') : t('santa.mute_link')}
                 </button>
             </p>
+            </div>
         </>
     )
 }

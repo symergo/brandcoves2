@@ -220,17 +220,37 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                       anyway — a loop that named its precondition at the last
                       step. Say it here.
                     */
-                    <EmptyState
-                        className="mt-10"
-                        title={t('lists.sign_in_to_keep')}
-                        action={
-                            <SignInLink hint={t('lists.sign_in_hint')} className={buttonClasses('primary', 'md')}>
-                                {t('nav.sign_in')}
-                            </SignInLink>
-                        }
-                    >
-                        {t('lists.sign_in_hint')}
-                    </EmptyState>
+                    <>
+                        {/* What a Cove is for, before the door (site review, 2026-11-12): the page was only the door. */}
+                        <ul className="mt-10 grid gap-4 md:grid-cols-3">
+                            {(
+                                [
+                                    ['wishlist', 'guest_mine'],
+                                    ['giftlist', 'guest_other'],
+                                    ['collab', 'guest_group'],
+                                ] as const
+                            ).map(([icon, key]) => (
+                                <li key={key} className="rounded-card border border-line bg-card p-6">
+                                    <span className="flex items-center gap-3">
+                                        <ToolIcon name={icon} className="h-8 w-8 shrink-0 text-accent" duo />
+                                        <span className="text-lg font-semibold">{t(`lists.${key}_title`)}</span>
+                                    </span>
+                                    <p className="mt-2 text-ink-soft">{t(`lists.${key}_body`)}</p>
+                                </li>
+                            ))}
+                        </ul>
+                        <EmptyState
+                            className="mt-4"
+                            title={t('lists.sign_in_to_keep')}
+                            action={
+                                <SignInLink hint={t('lists.sign_in_hint')} className={buttonClasses('primary', 'lg')}>
+                                    {t('nav.sign_in')}
+                                </SignInLink>
+                            }
+                        >
+                            {t('lists.sign_in_hint')}
+                        </EmptyState>
+                    </>
                 ) : (
                     <EmptyState
                         className="mt-10"

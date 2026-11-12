@@ -514,6 +514,10 @@ return [
          * remains the honest machine-readable copy of both.
          */
         'seo_title_multi' => ':title — at :count shops',
+
+        // The shop's description, folded (site review, 2026-11-12).
+        'read_more' => 'Read more',
+        'read_less' => 'Show less',
     ],
 
     /*
@@ -1161,6 +1165,14 @@ return [
         'note_placeholder' => 'Anything the people opening this should know.',
         'share_instagram' => 'Instagram cannot take links from a browser — copy it and paste it there.',
         'owner_view_note' => 'This is your own list, so claims are hidden from you, that is the point.',
+
+        // Site review, 2026-11-12.
+        'guest_mine_title' => 'A wish list',
+        'guest_mine_body' => 'Keep what you want yourself, from any shop, and share the list with whoever you choose.',
+        'guest_other_title' => 'Ideas for somebody',
+        'guest_other_body' => 'Keep gift ideas for your partner, your mum or a colleague. They do not see them.',
+        'guest_group_title' => 'Giving together',
+        'guest_group_body' => 'Chip in together for one big gift, or draw names with Secret Friend.',
     ],
 
     /*
@@ -2207,6 +2219,9 @@ return [
             'published' => 'On the board',
             'rejected' => 'Not published',
         ],
+
+        // Site review, 2026-11-12.
+        'empty_title' => 'Who do you buy gifts for?',
     ],
 
     'invitations' => [

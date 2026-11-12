@@ -389,6 +389,10 @@ return [
          * remains the honest machine-readable copy of both.
          */
         'seo_title_multi' => ':title — chez :count boutiques',
+
+        // The shop's description, folded (site review, 2026-11-12).
+        'read_more' => 'Lire la suite',
+        'read_less' => 'Réduire',
     ],
 
     /*
@@ -995,6 +999,14 @@ return [
         'note_placeholder' => 'Ce que les personnes qui ouvrent ceci doivent savoir.',
         'share_instagram' => 'Instagram n’accepte pas de liens depuis un navigateur — copiez-le et collez-le là-bas.',
         'owner_view_note' => 'C\'est votre liste, donc les réservations vous sont cachées, c\'est le principe.',
+
+        // Site review, 2026-11-12.
+        'guest_mine_title' => 'Une liste d’envies',
+        'guest_mine_body' => 'Gardez ce que vous voulez, de n’importe quelle boutique, et partagez la liste avec qui vous voulez.',
+        'guest_other_title' => 'Des idées pour quelqu’un',
+        'guest_other_body' => 'Notez des idées cadeaux pour votre partenaire, votre maman ou un collègue. Ils ne les voient pas.',
+        'guest_group_title' => 'Offrir ensemble',
+        'guest_group_body' => 'Cotisez ensemble pour un grand cadeau, ou tirez les noms avec Ami secret.',
     ],
 
     'recipients' => [
@@ -1983,6 +1995,9 @@ return [
             'published' => 'Sur le tableau',
             'rejected' => 'Non publié',
         ],
+
+        // Site review, 2026-11-12.
+        'empty_title' => 'Pour qui achetez-vous des cadeaux ?',
     ],
 
     'invitations' => [

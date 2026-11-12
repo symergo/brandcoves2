@@ -645,3 +645,16 @@ differ by what a choice holds, so a person card is taller and "Voor mezelf" stay
 option. Used by Find a gift, the list wizard, `PersonPicker`, `TastePairs` and the recipient's own
 interests page. Not by tabs (`PersonaBudgets`): a tab shows where you are, not what you picked.
 Person cards are centred vertically, like "Voor mezelf"; a name with no date under it sat at the top.
+
+## Site review, 2026-11-12
+
+Owner: "review other parts of the site in the same way: simplify the user experience and make screens more attractive", then "Ok, do all" and "Dont do the orange bands. Remove them" (the band stays on the homepage hero only).
+
+- **Find a gift, first question**: tiles in a grid beside the wrapped present, "Voor mezelf" the first tile.
+- **Mijn Coves for a visitor**: three cards saying what a Cove is for, then the sign-in card.
+- **Sign-in** (page and popup): one red button. Google is a white button with its own mark; the page form is a white card.
+- **Mijn mensen, empty**: a title and the add button in the empty state; "what your friends see" is a line that opens.
+- **Alle Coves**: chips to jump to a section, six cards a section, the whole card a link, "all" beside the heading.
+- **Product**: "Naar de winkel" beside the price (the cheapest buyable offer); the shop description shows four lines until asked. The `<h1>` is unchanged: it is the cleaned full title on purpose.
+- **Product card**: the link under the card is grey instead of red.
+- **Secret Friend**: the member page and the join page are one centred column; the reveal card is centred.

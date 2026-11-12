@@ -308,7 +308,16 @@ export default function PeopleIndex({ isSignedIn, people, settings, relationship
                     )}
 
                     {people.length === 0 ? (
-                        <EmptyState className="mt-8" icon="people">
+                        <EmptyState
+                            className="mt-8"
+                            icon="people"
+                            title={t('people.empty_title')}
+                            action={
+                                <Button type="button" size="lg" onClick={() => setAdding(true)}>
+                                    {t('people.add_person')}
+                                </Button>
+                            }
+                        >
                             {t('people.empty')}
                         </EmptyState>
                     ) : (
@@ -712,8 +721,10 @@ function Settings({ settings, base }: { settings: { birthday: string | null; fri
     })
 
     return (
-        <section className="mt-10 rounded-card border border-line bg-card p-5">
-            <h2 className="font-medium">{t('friends.settings_title')}</h2>
+        // A line that opens (site review, 2026-11-12): read once, and as an open
+        // card it looked more important than adding somebody.
+        <details className="mt-10 border-y border-line py-3">
+            <summary className="cursor-pointer font-medium">{t('friends.settings_title')}</summary>
 
             <form
                 onSubmit={(e) => {
@@ -756,6 +767,6 @@ function Settings({ settings, base }: { settings: { birthday: string | null; fri
                     {t('friends.save')}
                 </Button>
             </form>
-        </section>
+        </details>
     )
 }

@@ -120,6 +120,10 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
     // component mounted from one product page to the next, and a flag would
     // carry one product's failure over to the next product's picture.
     const [failedImage, setFailedImage] = useState<string | null>(null)
+    // The shop's own text is long; four lines are shown until somebody asks for the rest.
+    const [wholeDescription, setWholeDescription] = useState(false)
+    // The cheapest offer that can be bought: its button also stands beside the price.
+    const best = offers.find((offer) => offer.isBuyable) ?? null
     const resizedFailed = hasResized(product.imageToken, product.imageSizes) && failedImage === product.image
 
     // Remembered on this device, for the "you looked at" band. After mount,
@@ -291,6 +295,23 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                     </p>
 
                     <div className="mt-5 flex flex-wrap items-start gap-3">
+                        {/*
+                          "Naar de winkel" beside the price (site review,
+                          2026-11-12): it stood only in the offers table, a
+                          screen further down. Same link, same rel, same click
+                          report as the row it copies.
+                        */}
+                        {best && (
+                            <a
+                                href={best.url}
+                                rel="sponsored noopener nofollow"
+                                target="_blank"
+                                onMouseDown={() => reportClick(best)}
+                                className={buttonClasses('primary', 'md')}
+                            >
+                                {t('product.go_to_shop')} <span aria-hidden="true">→</span>
+                            </a>
+                        )}
                         <SaveToList groupId={product.id} />
                         <AlertButton groupId={product.id} alert={alert} inStock={product.inStock} />
                         {/*
@@ -507,11 +528,20 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                           — about 140 a line on a desktop, for up to 1800
                           characters of a shop's marketing copy.
                         */}
-                        <div className="max-w-2xl space-y-3 leading-relaxed text-ink-soft">
+                        {/* All of it is in the page; four lines are shown until asked (site review, 2026-11-12). */}
+                        <div className={`max-w-2xl space-y-3 leading-relaxed text-ink-soft ${wholeDescription ? '' : 'line-clamp-4'}`}>
                             {description.paragraphs.map((paragraph, i) => (
                                 <p key={i}>{paragraph}</p>
                             ))}
                         </div>
+                        <button
+                            type="button"
+                            aria-expanded={wholeDescription}
+                            onClick={() => setWholeDescription((v) => !v)}
+                            className="mt-3 text-sm font-medium text-accent-dark underline hover:text-ink"
+                        >
+                            {wholeDescription ? t('product.read_less') : t('product.read_more')}
+                        </button>
 
                         {/*
                           Named, because it is a quotation. Unattributed it

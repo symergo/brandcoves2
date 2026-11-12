@@ -1,3 +1,4 @@
+import HeroGift from '../../Components/HeroGift'
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
@@ -939,7 +940,14 @@ export default function GiftWizard(props: Props) {
                     }
                 />
             ) : stage === 'who' ? (
-                <section className="mt-8" aria-labelledby="gift-who">
+                /*
+                  Tiles beside the wrapped present (site review, 2026-11-12):
+                  the page was a title, one box and a row of ten small chips,
+                  with two thirds of the screen empty. "Voor mezelf" is the
+                  first tile of the same grid, still the one with an icon.
+                */
+                <section className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-12" aria-labelledby="gift-who">
+                    <div className="min-w-0">
                     {/*
                       "Sla over" beside the question, not under ten buttons and
                       a row of people (owner, 2026-11-07): the way past it is
@@ -958,23 +966,6 @@ export default function GiftWizard(props: Props) {
                         </button>
                     </div>
 
-                    {/*
-                      "Voor mezelf" first and larger than a chip (owner,
-                      2026-09-28): the one answer that is about the visitor.
-                    */}
-                    <button
-                        type="button"
-                        aria-pressed={forMe}
-                        onClick={useMe}
-                        className={`mt-4 flex w-full items-center gap-3 rounded-card border px-5 py-4 text-left text-base font-medium transition sm:w-auto sm:min-w-72 ${choiceState(forMe)}`}
-                    >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent">
-                            <ToolIcon name="wishlist" className="h-7 w-7" duo />
-                        </span>
-                        <span className="flex-1">{t('gift.who_me')}</span>
-                        <ChoiceCheck on={forMe} />
-                    </button>
-
                     {pickable.length > 0 && (
                         <div className="mt-4">
                             <PersonPicker
@@ -987,25 +978,47 @@ export default function GiftWizard(props: Props) {
                         </div>
                     )}
 
-                    {relationshipOptions.length > 0 && (
-                        <div className="mt-5">
-                            {recipients.length > 0 && <p className="text-sm text-ink-soft">{t('gift.who_type')}</p>}
-                            <div className="mt-2 flex flex-wrap gap-2">
-                                {relationshipOptions.map((option) => (
+                    <div className="mt-5">
+                        {recipients.length > 0 && <p className="text-sm text-ink-soft">{t('gift.who_type')}</p>}
+                        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            {/* "Voor mezelf" first (owner, 2026-09-28): the one answer that is about the visitor. */}
+                            <button
+                                type="button"
+                                aria-pressed={forMe}
+                                onClick={useMe}
+                                className={`col-span-2 flex items-center gap-3 rounded-card border px-5 py-4 text-left text-base font-medium transition sm:col-span-3 ${choiceState(forMe)}`}
+                            >
+                                <ToolIcon name="wishlist" className="h-7 w-7 shrink-0 text-accent" duo />
+                                <span className="flex-1">{t('gift.who_me')}</span>
+                                <ChoiceCheck on={forMe} />
+                            </button>
+
+                            {relationshipOptions.map((option) => {
+                                const on = recipient === null && relationship === option.value
+
+                                return (
                                     <button
                                         key={option.value}
                                         type="button"
-                                        aria-pressed={recipient === null && relationship === option.value}
-                                        className={choiceCard(recipient === null && relationship === option.value)}
+                                        aria-pressed={on}
+                                        className={`flex min-h-14 items-center justify-between gap-2 rounded-card border px-4 py-3 text-left font-medium transition ${choiceState(on)}`}
                                         onClick={() => useKind(option.value)}
                                     >
                                         {option.label}
-                                        <ChoiceCheck on={recipient === null && relationship === option.value} />
+                                        <ChoiceCheck on={on} />
                                     </button>
-                                ))}
-                            </div>
+                                )
+                            })}
                         </div>
-                    )}
+                    </div>
+                    </div>
+
+                    <div aria-hidden="true" className="relative hidden aspect-[5/4] w-full max-w-sm justify-self-center md:block">
+                        <span className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
+                        <span className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
+                        <span className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
+                        <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
+                    </div>
                 </section>
             ) : stage === 'ways' ? (
                 <section className="mt-8" aria-labelledby="gift-ways">
