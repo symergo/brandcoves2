@@ -652,11 +652,12 @@ return [
         'email' => 'Correo electrónico',
         'send' => 'Envíame un enlace',
         // A new address is signed in at once, unconfirmed (2026-11-12).
-        'signed_in_unconfirmed' => 'Has iniciado sesión. Pulsa el enlace del correo que te hemos enviado para confirmar tu dirección: así seguirás conectado y recibirás nuestros avisos.',
+        'signed_in_unconfirmed' => 'Has iniciado sesión. Pulsa el enlace del correo que te hemos enviado para confirmar tu dirección y recibir nuestros avisos.',
         // The bar on every page until the address is confirmed (ConfirmEmailNotice).
-        'confirm_notice' => 'Confirma tu correo para conservar el acceso: pulsa el enlace del mensaje que enviamos a :email.',
+        'confirm_notice' => 'Confirma tu correo con el enlace que te enviamos para recibir avisos.',
         'confirm_resend' => 'Enviar el enlace de nuevo',
-        'confirm_resent' => 'Enviado. Revisa tu correo.',
+        'confirm_dismiss' => 'Ocultar',
+        'confirm_resent' => 'Enviado.',
         'link_sent' => 'Hemos enviado un enlace de acceso a esa dirección. Ábrelo en 15 minutos.',
         'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
         'confirm_title' => 'Entrar en GiftCoves',
@@ -1455,6 +1456,13 @@ return [
         'next_share_others' => 'Compartir o pedir ideas a otros',
         'next_ask' => 'Pedir ideas a :name',
         'next_dismiss' => 'Más tarde',
+
+        // A Cove without an account: the address is asked in the form itself (2026-11-12).
+        'guest_email' => 'Tu correo electrónico',
+        'guest_hint' => 'No hace falta cuenta. Te enviamos un enlace para volver a tu Cove desde cualquier dispositivo.',
+        'guest_create' => 'Crear mi Cove',
+        'guest_link_sent' => 'Esta dirección ya tiene cuenta. Te hemos enviado un enlace: ábrelo y tu Cove quedará terminada.',
+        'guest_have_account' => '¿Ya tienes cuenta?',
     ],
 
     'reminders' => [

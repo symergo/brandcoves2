@@ -657,11 +657,12 @@ return [
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
         // A new address is signed in at once, unconfirmed (2026-11-12).
-        'signed_in_unconfirmed' => 'Je bent aangemeld. Klik op de link in de mail die we je stuurden om je adres te bevestigen: dan blijf je aangemeld en krijg je onze meldingen.',
+        'signed_in_unconfirmed' => 'Je bent aangemeld. Klik op de link in de mail die we je stuurden om je adres te bevestigen en onze meldingen te krijgen.',
         // The bar on every page until the address is confirmed (ConfirmEmailNotice).
-        'confirm_notice' => 'Bevestig je e-mailadres om toegang te houden: klik op de link in de mail die we naar :email stuurden.',
-        'confirm_resend' => 'Stuur de link opnieuw',
-        'confirm_resent' => 'Verstuurd. Kijk in je mailbox.',
+        'confirm_notice' => 'Bevestig je e-mailadres via de link in je mail om meldingen te krijgen.',
+        'confirm_resend' => 'Link opnieuw sturen',
+        'confirm_dismiss' => 'Verberg',
+        'confirm_resent' => 'Verstuurd.',
         'link_sent' => 'We stuurden een inloglink naar dat adres. Open hem binnen 15 minuten.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
         // The page the link in the email opens: a button, because mail
@@ -1462,6 +1463,13 @@ return [
         'next_share_others' => 'Delen of anderen om ideeën vragen',
         'next_ask' => 'Vraag :name om ideeën',
         'next_dismiss' => 'Later',
+
+        // A Cove without an account: the address is asked in the form itself (2026-11-12).
+        'guest_email' => 'Je e-mailadres',
+        'guest_hint' => 'Geen account nodig. We mailen je een link om je Cove op elk toestel terug te vinden.',
+        'guest_create' => 'Maak mijn Cove',
+        'guest_link_sent' => 'Dit adres heeft al een account. We stuurden je een link: open hem en je Cove wordt afgewerkt.',
+        'guest_have_account' => 'Al een account?',
     ],
 
     'reminders' => [

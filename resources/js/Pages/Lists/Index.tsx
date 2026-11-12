@@ -66,7 +66,8 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
     const intent = new URLSearchParams(page.url.split('?')[1] ?? '').get('new')
     const initialKind =
         intent === 'mine' || intent === 'for_someone' || intent === 'group' || intent === 'santa' ? intent : undefined
-    const [creating, setCreating] = useState(intent !== null)
+    // Open for a visitor: the page is the way to start, not a door to a sign-in (2026-11-12).
+    const [creating, setCreating] = useState(intent !== null || !isSignedIn)
 
     /*
      * A draft the wizard remembered across a sign-in is finished here too.
@@ -239,17 +240,7 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                                 </li>
                             ))}
                         </ul>
-                        <EmptyState
-                            className="mt-4"
-                            title={t('lists.sign_in_to_keep')}
-                            action={
-                                <SignInLink hint={t('lists.sign_in_hint')} className={buttonClasses('primary', 'lg')}>
-                                    {t('nav.sign_in')}
-                                </SignInLink>
-                            }
-                        >
-                            {t('lists.sign_in_hint')}
-                        </EmptyState>
+                        {/* The sign-in card stood here; the form above asks for an address itself, and offers the sign-in beside its button. */}
                     </>
                 ) : (
                     <EmptyState

@@ -1,7 +1,9 @@
-import { useForm, usePage } from '@inertiajs/react'
+import { router, useForm, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import { Honeypot, useFormClock } from './BotTrap'
+import { fieldClasses } from './Button'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 import PersonPicker, { type PickablePerson } from './PersonPicker'
@@ -183,6 +185,58 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
         } catch {
             // Same as above.
         }
+    }
+
+    /*
+     * A visitor without an account gives an address here and gets the Cove in
+     * one press (owner, 2026-11-12). The address goes to the sign-in endpoint:
+     * a new one is signed in on the spot and the form then submits itself; one
+     * that has an account is mailed the link, and the draft kept by
+     * `remember()` is finished when they come back through it.
+     */
+    const [guestEmail, setGuestEmail] = useState('')
+    const [trap, setTrap] = useState('')
+    const [guestState, setGuestState] = useState<'idle' | 'busy' | 'link'>('idle')
+    const [guestError, setGuestError] = useState<string | null>(null)
+    const elapsed = useFormClock(!signedIn)
+
+    function startAsVisitor() {
+        remember()
+        setGuestState('busy')
+        setGuestError(null)
+
+        router.post(
+            `${base}/login`,
+            { email: guestEmail, name: '', website: trap, elapsed_ms: elapsed() },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => {
+                    if ((page.props as unknown as SharedProps).auth.user) {
+                        // Signed in: the form they filled in is still here.
+                        submit()
+                    } else {
+                        setGuestState('link')
+                    }
+                },
+                onError: (errors) => {
+                    setGuestState('idle')
+                    setGuestError(errors.email ?? t('auth.failed'))
+                },
+                onHttpException: () => {
+                    setGuestState('idle')
+                    setGuestError(t('auth.failed'))
+
+                    return false
+                },
+                onNetworkError: () => {
+                    setGuestState('idle')
+                    setGuestError(t('auth.failed'))
+
+                    return false
+                },
+            },
+        )
     }
 
     const isSanta = kind === 'santa'
@@ -376,18 +430,51 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
         >
             {t(isSanta ? 'santa.create' : 'lists.create')}
         </button>
-    ) : ready ? (
-        <SignInLink
-            hint={t('wizard.sign_in_hint')}
-            onNavigate={remember}
-            className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark"
-        >
-            {t(isSanta ? 'wizard.sign_in_and_create_santa' : 'wizard.sign_in_and_create')}
-        </SignInLink>
     ) : (
-        <button type="button" disabled className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white opacity-50">
-            {t('wizard.sign_in_and_create')}
-        </button>
+        <span className="flex w-full flex-col gap-3">
+            <Honeypot value={trap} onChange={setTrap} />
+            <label className="block max-w-md">
+                <span className="text-sm font-medium">{t('wizard.guest_email')}</span>
+                <input
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    aria-invalid={guestError ? true : undefined}
+                    className={fieldClasses('bg-card')}
+                />
+                <span className="mt-1 block text-xs text-ink-soft">{t('wizard.guest_hint')}</span>
+            </label>
+
+            {guestError && (
+                <span className="text-sm text-danger" role="alert">
+                    {guestError}
+                </span>
+            )}
+            {guestState === 'link' && (
+                <span className="rounded-lg border border-sage/40 bg-sage/10 px-4 py-3 text-sm" role="status">
+                    {t('wizard.guest_link_sent')}
+                </span>
+            )}
+
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <button
+                    type="button"
+                    onClick={startAsVisitor}
+                    disabled={!ready || guestState === 'busy' || !/^\S+@\S+\.\S+$/.test(guestEmail)}
+                    className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                >
+                    {guestState === 'busy' ? t('auth.sending') : t(isSanta ? 'santa.create' : 'wizard.guest_create')}
+                </button>
+                <span className="text-sm text-ink-soft">
+                    {t('wizard.guest_have_account')}{' '}
+                    <SignInLink hint={t('wizard.sign_in_hint')} onNavigate={remember} className="underline hover:text-ink">
+                        {t('nav.sign_in')}
+                    </SignInLink>
+                </span>
+            </span>
+        </span>
     )
 
     return (

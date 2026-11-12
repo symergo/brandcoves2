@@ -185,8 +185,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      *
      * An account made by typing a new address into the sign-in form is signed
      * in at once and is not confirmed (owner, 2026-11-12). Until it is, it
-     * gets no mail of its own, no long-lived cookie and none of what was
-     * waiting for that address. See docs/features/auth.md, "Unconfirmed
+     * gets no mail of its own and none of what was waiting for that address. See docs/features/auth.md, "Unconfirmed
      * accounts".
      */
     public function emailConfirmed(): bool

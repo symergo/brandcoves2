@@ -100,8 +100,9 @@ class AuthTest extends TestCase
         $this->assertFalse($user->emailConfirmed());
         // The link still goes out: pressing it is what confirms the address.
         Mail::assertSent(MagicLinkMail::class);
-        // Session only: no cookie that outlives it.
-        $response->assertCookieMissing(Auth::guard()->getRecallerName());
+        // The cookie that outlives the session is set all the same (owner,
+        // 2026-11-12): what an unproven address does not get is mail.
+        $response->assertCookie(Auth::guard()->getRecallerName());
     }
 
     #[Test]
@@ -138,6 +139,35 @@ class AuthTest extends TestCase
         $this->assertTrue($user->emailConfirmed());
         $response->assertCookie(Auth::guard()->getRecallerName());
         $response->assertSessionMissing(EmailSignIn::PROVISIONAL);
+    }
+
+    #[Test]
+    public function proving_the_address_kills_every_cookie_handed_out_before(): void
+    {
+        $token = $this->requestLink('victim@example.test');
+        $user = User::query()->where('email', 'victim@example.test')->firstOrFail();
+        $before = $user->remember_token;
+        $this->assertNotNull($before);
+
+        $this->otherBrowser();
+        $this->post("/be-nl/auth/magic/{$token}")->assertRedirect('/be-nl/lists');
+
+        // Whoever typed the address first holds a cookie for the old token.
+        $this->assertNotSame($before, $user->fresh()->remember_token);
+    }
+
+    #[Test]
+    public function a_sign_in_that_comes_back_through_the_cookie_is_marked_provisional_too(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        // A request with a session, as the cookie sign-in has.
+        request()->setLaravelSession(session()->driver());
+
+        // However the session began: the Login event marks it.
+        Auth::login($user, remember: true);
+
+        $this->assertSame($user->id, session(EmailSignIn::PROVISIONAL)['user']);
     }
 
     #[Test]

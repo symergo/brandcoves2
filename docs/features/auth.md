@@ -308,7 +308,7 @@ a mailed link was pressed once, or the account came through Google.
 
 | | Unconfirmed | Confirmed |
 |---|---|---|
-| Signed in | this session only (no remember cookie) | remember cookie |
+| Signed in | remember cookie (since 2026-11-12 evening) | remember cookie |
 | Price alerts, list digests, occasion reminders by mail | no | yes |
 | Invitations waiting for the address (`InviteAcceptance::applyTo`) | no | yes, applied when the link is pressed |
 | In-app notifications, lists, saving | yes | yes |
@@ -348,3 +348,26 @@ request still makes no account.
 Migration `2026_11_11_000400_existing_accounts_are_confirmed` marks every
 account from before this release as confirmed: until then an account could
 only be made through a proven path.
+
+### The cookie lasts for an unconfirmed account too (2026-11-12, evening)
+
+Owner: "why can't the cookie not last longer? The most important thing is that there are no emails
+sent to the email until confirmed." So an unconfirmed sign-in sets the remember cookie as well, and
+the bar under the header became one small grey line that can be put away for the visit
+(`ConfirmEmailNotice`).
+
+What still protects an address somebody else typed:
+
+- no mail of its own and no waiting invitations until it is confirmed (unchanged);
+- confirming replaces `remember_token`, so every cookie handed out before stops working;
+- every session of an unconfirmed account is marked provisional at the `Login` event
+  (`MarkProvisionalSession`), cookie sign-ins included, and `EndProvisionalSession` ends those once
+  the address is confirmed from another IP address.
+
+### A Cove without an account (same evening)
+
+The "Maak een Cove" form asks a visitor for an address in the form itself and makes the Cove in one
+press: the address is posted to the sign-in endpoint, a new one is signed in on the spot, and the
+form then submits itself. An address that has an account gets the link instead, and the draft the
+form keeps (24 hours) is finished when they come back through it. My Coves shows the form open to a
+visitor. Saving a product was already finished after a sign-in by `PendingSave`.

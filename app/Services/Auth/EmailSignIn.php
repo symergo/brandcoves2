@@ -13,6 +13,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
  * Signing somebody in by a proven email address: the magic link, and since
@@ -48,8 +49,8 @@ class EmailSignIn
      * the account for an address it had never seen (owner, 2026-11-12: "log
      * in automatically but only send mails and set long term cookie ... when
      * the email link was clicked"). Such a sign-in only ever creates, leaves
-     * the address unconfirmed, sets no remember cookie and marks the session
-     * provisional.
+     * the address unconfirmed and marks the session provisional. It does set
+     * the remember cookie since the same evening, on the owner's word.
      */
     public function signIn(Request $request, string $email, ?string $name, string $market, bool $onlyNew = false, bool $proven = true): ?User
     {
@@ -97,7 +98,10 @@ class EmailSignIn
         // establish. Where it was proven from is kept, so the browser that
         // made the account can stay signed in and any other cannot.
         if ($proven && $user->email_verified_at === null) {
-            $user->forceFill(['email_verified_at' => now()])->save();
+            // A new remember token with it: any cookie handed out while the
+            // address was unproven stops working the moment it is proven, so
+            // whoever typed it first cannot ride that cookie back in.
+            $user->forceFill(['email_verified_at' => now(), 'remember_token' => Str::random(60)])->save();
             Cache::forever(self::provenFromKey((int) $user->id), (string) $request->ip());
         }
 
@@ -111,10 +115,12 @@ class EmailSignIn
             }
         }
 
-        // Fires Login, which LinkSharerAsFriend turns into connections. The
-        // remember cookie only for a proven address: an unconfirmed sign-in
-        // lasts as long as its session.
-        Auth::login($user, remember: $proven);
+        // Fires Login, which LinkSharerAsFriend turns into connections. With a
+        // remember cookie either way since 2026-11-12 (owner: the cookie may
+        // last; what an unproven address must not get is mail). What keeps
+        // that safe is above and in EndProvisionalSession: proving the address
+        // replaces the token and ends every unproven session elsewhere.
+        Auth::login($user, remember: true);
         // A fresh session id after a privilege change; otherwise a session
         // fixed before login stays valid after it.
         $request->session()->regenerate();

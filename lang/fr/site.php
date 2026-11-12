@@ -653,11 +653,12 @@ return [
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
         // A new address is signed in at once, unconfirmed (2026-11-12).
-        'signed_in_unconfirmed' => 'Vous êtes connecté. Cliquez sur le lien dans l\'e-mail que nous venons d\'envoyer pour confirmer votre adresse : vous resterez connecté et recevrez nos notifications.',
+        'signed_in_unconfirmed' => 'Vous êtes connecté. Cliquez sur le lien dans l’e-mail que nous venons d’envoyer pour confirmer votre adresse et recevoir nos notifications.',
         // The bar on every page until the address is confirmed (ConfirmEmailNotice).
-        'confirm_notice' => 'Confirmez votre adresse pour garder l\'accès : cliquez sur le lien dans l\'e-mail envoyé à :email.',
+        'confirm_notice' => 'Confirmez votre adresse via le lien reçu par e-mail pour recevoir nos notifications.',
         'confirm_resend' => 'Renvoyer le lien',
-        'confirm_resent' => 'Envoyé. Consultez votre boîte mail.',
+        'confirm_dismiss' => 'Masquer',
+        'confirm_resent' => 'Envoyé.',
         'link_sent' => 'Nous avons envoyé un lien de connexion à cette adresse. Ouvrez-le dans les 15 minutes.',
         'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
         'confirm_title' => 'Se connecter à GiftCoves',
@@ -1456,6 +1457,13 @@ return [
         'next_share_others' => 'Partager ou demander des idées',
         'next_ask' => 'Demander des idées à :name',
         'next_dismiss' => 'Plus tard',
+
+        // A Cove without an account: the address is asked in the form itself (2026-11-12).
+        'guest_email' => 'Votre adresse e-mail',
+        'guest_hint' => 'Pas besoin de compte. Nous vous envoyons un lien pour retrouver votre Cove sur n’importe quel appareil.',
+        'guest_create' => 'Créer ma Cove',
+        'guest_link_sent' => 'Cette adresse a déjà un compte. Nous vous avons envoyé un lien : ouvrez-le et votre Cove sera terminée.',
+        'guest_have_account' => 'Déjà un compte ?',
     ],
 
     'reminders' => [

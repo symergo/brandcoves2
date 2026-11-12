@@ -801,11 +801,12 @@ return [
         'email' => 'Email address',
         'send' => 'Send me a link',
         // A new address is signed in at once, unconfirmed (2026-11-12).
-        'signed_in_unconfirmed' => 'You are signed in. Press the link in the email we just sent to confirm your address: you then stay signed in and get our notifications.',
+        'signed_in_unconfirmed' => 'You are signed in. Press the link in the email we just sent to confirm your address and get our notifications.',
         // The bar on every page until the address is confirmed (ConfirmEmailNotice).
-        'confirm_notice' => 'Confirm your email address to keep access: press the link in the email we sent to :email.',
+        'confirm_notice' => 'Confirm your email address with the link in your inbox to get notifications.',
         'confirm_resend' => 'Send the link again',
-        'confirm_resent' => 'Sent. Check your inbox.',
+        'confirm_dismiss' => 'Hide',
+        'confirm_resent' => 'Sent.',
         'link_sent' => 'We sent a sign-in link to that address. Open it within 15 minutes.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'confirm_title' => 'Sign in to GiftCoves',
@@ -1659,6 +1660,13 @@ return [
         'next_share_others' => 'Share or ask others for ideas',
         'next_ask' => 'Ask :name for ideas',
         'next_dismiss' => 'Later',
+
+        // A Cove without an account: the address is asked in the form itself (2026-11-12).
+        'guest_email' => 'Your email address',
+        'guest_hint' => 'No account needed. We email you a link to find your Cove again on any device.',
+        'guest_create' => 'Make my Cove',
+        'guest_link_sent' => 'This address already has an account. We sent you a link: open it and your Cove is finished.',
+        'guest_have_account' => 'Already have an account?',
     ],
 
     'reminders' => [
