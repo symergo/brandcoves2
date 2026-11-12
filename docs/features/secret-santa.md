@@ -356,3 +356,27 @@ A band under the three ways in, linking to `/santa?new=1`, which opens the creat
   `app/Models/SecretSantaQuestion.php`, `app/Mail/SantaNoteMail.php`,
   `resources/js/Components/SantaGame.tsx`, `tests/Feature/SantaGameTest.php`, migration
   `2026_11_12_000100_secret_friend_becomes_a_game.php`.
+
+## The start page and the group page, rebuilt (2026-11-12, evening)
+
+Owner, the same evening: "The secret santa page looks very unclear. Also, add a way to add
+participants manually if you are logged in (name, email)".
+
+**The start page** (`Pages/Santa/Index.tsx`) was a title, a button, and under it an open form of
+seven fields ending in the same button again, with nothing saying what happens next. Now: your
+groups first when you have any (with "drawn" or "not drawn yet"), then three numbered steps, then one
+form that asks for the group's name (and a name and address from a visitor without an account).
+Budget, date, theme, list and the automatic draw sit behind "more options": all optional and all
+changeable on the group page.
+
+**The group page** (`Pages/Santa/Group.tsx`) had six unlabelled boxes in a column. It is now "for
+you" (the way to your own page, your list) and then, for the organiser before the draw, three
+numbered steps that mirror the start page: invite people, who is in, draw the names. Each member
+row says what that person still owes the group as a small label (tips ready or not, bought), never
+who drew whom. Deleting the group is a small link at the foot.
+
+**Adding somebody by hand**: `POST /santa/{group}/members` (`addMember`), organiser only and behind
+`auth`. A name and an address; the person is in at once and is mailed their own page
+(`SantaNoteMail`, kind `added`). After the draw the same form slots them into the chain as a late
+joiner. An address already in the group is refused; one that was removed earlier comes back as the
+same row. Forty an hour per group, because this is a form that mails an address somebody else typed.

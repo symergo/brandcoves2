@@ -47,6 +47,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class SecretSantaController extends Controller
 {
+    /** How many people an organiser may type into one group in an hour. */
+    private const MAX_ADDED = 40;
+
     /**
      * Your groups, and the form to start one.
      *
@@ -959,6 +962,70 @@ class SecretSantaController extends Controller
         $member->update(['muted_at' => $on ? now() : null]);
 
         return back()->with('success', __($on ? 'site.santa.muted' : 'site.santa.unmuted'));
+    }
+
+    /**
+     * Somebody typed in by the organiser: a name and an address (owner,
+     * 2026-11-12), for the people who will never open a link in a group chat.
+     *
+     * They are in at once, as if they had joined themselves, and are mailed
+     * their own page. After the draw they are slotted into the chain like any
+     * late joiner. The organiser is signed in (the route is behind `auth`) and
+     * a group holds at most `MAX_ADDED` people added this way an hour, because
+     * this is a form that mails an address somebody else typed.
+     */
+    public function addMember(Request $request, string $market, string $group, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+
+        $validated = $request->validate([
+            'display_name' => ['required', 'string', 'max:80'],
+            'email' => ['required', 'string', 'email:rfc', 'max:190'],
+        ]);
+
+        $email = mb_strtolower($validated['email']);
+        $known = SecretSantaMember::query()->where('group_id', $santa->id)->where('email', $email)->first();
+
+        if ($known !== null && $known->removed_at === null) {
+            throw ValidationException::withMessages(['email' => __('site.santa.group.add_twice')]);
+        }
+
+        $key = 'santa-add:'.$santa->id;
+
+        if (RateLimiter::tooManyAttempts($key, self::MAX_ADDED)) {
+            throw ValidationException::withMessages([
+                'email' => __('site.auth.too_many', ['seconds' => RateLimiter::availableIn($key)]),
+            ]);
+        }
+        RateLimiter::hit($key, 3600);
+
+        // Somebody removed earlier comes back as the same row: the unique
+        // index is on (group, address).
+        $member = $known ?? new SecretSantaMember(['group_id' => $santa->id, 'email' => $email]);
+        $member->fill(['display_name' => $validated['display_name'], 'joined_at' => now(), 'removed_at' => null])->save();
+
+        $language = $santa->market->language();
+
+        if ($santa->status->isDrawn()) {
+            try {
+                $game->lateJoin($santa, $member);
+            } catch (DrawImpossible) {
+                $member->update(['removed_at' => now()]);
+
+                return back()->with('error', __('site.santa.late_impossible'));
+            }
+        } else {
+            $game->note($santa, $member, 'added',
+                __('site.santa.mail.added_subject', ['name' => $request->user()->displayName(), 'title' => $santa->title], $language),
+                [__('site.santa.mail.added_body', ['title' => $santa->title], $language)],
+                __('site.santa.mail.open_mine', [], $language),
+            );
+            $game->drawIfFull($santa);
+        }
+
+        return back()->with('success', __('site.santa.group.added', ['name' => $member->display_name]));
     }
 
     /**

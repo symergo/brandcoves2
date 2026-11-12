@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import { useTranslations } from '../useTranslations'
+import { buttonClasses, fieldClasses } from './Button'
 import ToolIcon from './ToolIcon'
 
 /**
@@ -9,7 +10,18 @@ import ToolIcon from './ToolIcon'
  * anonymous questions, and a guess at the end. Shared by the member's page,
  * the join page and the group page. See docs/features/secret-santa.md, "The
  * game around the draw".
+ *
+ * One style per purpose (owner, same evening: "many different styles ... busy
+ * and unclear"): a surface is the plain white card, a button is the shared
+ * primary or secondary, a status is a grey sentence, and anything tapped from
+ * a set is `chipClasses`. Only the reveal card is red, because it is the one
+ * moment on these pages.
  */
+
+/** Something to tap from a set: outlined, dark once chosen. */
+export function chipClasses(on = false): string {
+    return `rounded-full border px-3 py-1.5 text-sm transition ${on ? 'border-ink bg-ink text-white' : 'border-line bg-card text-ink hover:border-ink'}`
+}
 
 /** Whole days from today to an ISO date or moment; negative once it is behind us. */
 export function daysUntil(iso: string): number {
@@ -58,12 +70,7 @@ export function Countdown({
 
     if (!line) return null
 
-    return (
-        <p className={`inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm font-medium text-ink ${className}`}>
-            <ToolIcon name="santa" className="h-4 w-4 text-accent" />
-            {line}
-        </p>
-    )
+    return <span className={`text-sm text-ink-soft ${className}`}>{line}</span>
 }
 
 /** How far the group is, as a bar: never who. */
@@ -77,14 +84,7 @@ export function Progress({ drawn, progress }: { drawn: boolean; progress: { memb
         ? t('santa.progress_done', { done: String(count), total: String(progress.members) })
         : t('santa.progress_ready', { ready: String(count), total: String(progress.members) })
 
-    return (
-        <div className="mt-4">
-            <p className="text-sm text-ink-soft">{label}</p>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-line" role="presentation">
-                <div className="h-full rounded-full bg-sage transition-all" style={{ width: `${Math.round((count / progress.members) * 100)}%` }} />
-            </div>
-        </div>
-    )
+    return <p className="mt-2 text-sm text-ink-soft">{label}</p>
 }
 
 /** Interests as chips to tap. `keys` come from the server (SantaGame::INTERESTS). */
@@ -112,9 +112,7 @@ export function InterestPicker({
                             type="button"
                             aria-pressed={on}
                             onClick={() => onChange(on ? value.filter((v) => v !== key) : value.length >= max ? value : [...value, key])}
-                            className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                                on ? 'border-accent bg-accent text-white' : 'border-line bg-card text-ink hover:border-ink'
-                            }`}
+                            className={chipClasses(on)}
                         >
                             {t(`santa.interest.${key}`)}
                         </button>
@@ -212,10 +210,10 @@ export function HintsForm({
                         onChange={(e) => form.setData('hints', e.target.value)}
                         maxLength={500}
                         placeholder={t('santa.hints_placeholder')}
-                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+                        className={fieldClasses()}
                     />
                 </label>
-                <button disabled={form.processing} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                <button disabled={form.processing} className={buttonClasses('secondary')}>
                     {t('santa.save')}
                 </button>
             </form>
@@ -236,7 +234,7 @@ export function QuestionInbox({ baseUrl, questions }: { baseUrl: string; questio
     if (questions.length === 0) return null
 
     return (
-        <section className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-5" aria-labelledby="inbox-title">
+        <section className="mt-8 rounded-card border border-line bg-card p-5" aria-labelledby="inbox-title">
             <h2 id="inbox-title" className="font-medium">
                 {t('santa.inbox_title')}
             </h2>
@@ -272,9 +270,9 @@ function AnswerForm({ url }: { url: string }) {
                 onChange={(e) => form.setData('answer', e.target.value)}
                 placeholder={t('santa.answer_placeholder')}
                 aria-label={t('santa.answer_placeholder')}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2"
+                className={fieldClasses('min-w-0 flex-1', { inline: true })}
             />
-            <button disabled={form.processing} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+            <button disabled={form.processing} className={buttonClasses('primary')}>
                 {t('santa.answer_send')}
             </button>
         </form>
@@ -319,9 +317,9 @@ export function AskBox({ baseUrl, name, asked }: { baseUrl: string; name: string
                     onChange={(e) => form.setData('question', e.target.value)}
                     placeholder={t('santa.ask_placeholder')}
                     aria-label={t('santa.ask_title', { name })}
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2"
+                    className={fieldClasses('min-w-0 flex-1', { inline: true })}
                 />
-                <button disabled={form.processing} className="rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent-dark hover:bg-accent hover:text-white disabled:opacity-50">
+                <button disabled={form.processing} className={buttonClasses('secondary')}>
                     {t('santa.ask_send')}
                 </button>
             </form>
@@ -343,7 +341,7 @@ export function GuessSanta({ baseUrl, guess, thanked }: { baseUrl: string; guess
     const thanks = useForm({ message: '' })
 
     return (
-        <section className="mt-10 rounded-card border border-accent/40 bg-accent/5 p-5" aria-labelledby="guess-title">
+        <section className="mt-10 rounded-card border border-line bg-card p-5" aria-labelledby="guess-title">
             <h2 id="guess-title" className="text-lg font-medium">
                 {t('santa.guess_title')}
             </h2>
@@ -357,7 +355,7 @@ export function GuessSanta({ baseUrl, guess, thanked }: { baseUrl: string; guess
                                 <button
                                     type="button"
                                     onClick={() => router.post(`${baseUrl}/guess`, { member_id: option.id }, { preserveScroll: true })}
-                                    className="rounded-full border border-line bg-card px-4 py-2 text-sm font-medium hover:border-accent"
+                                    className={chipClasses()}
                                 >
                                     {option.name}
                                 </button>
@@ -388,9 +386,9 @@ export function GuessSanta({ baseUrl, guess, thanked }: { baseUrl: string; guess
                                 onChange={(e) => thanks.setData('message', e.target.value)}
                                 placeholder={t('santa.thanks_placeholder')}
                                 aria-label={t('santa.thanks_label')}
-                                className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2"
+                                className={fieldClasses('min-w-0 flex-1', { inline: true })}
                             />
-                            <button disabled={thanks.processing} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                            <button disabled={thanks.processing} className={buttonClasses('secondary')}>
                                 {t('santa.thanks_send')}
                             </button>
                         </form>

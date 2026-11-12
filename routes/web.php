@@ -908,6 +908,7 @@ Route::prefix('{market}')->group(function () {
          * email cannot be unsent, so the alternative — drawing again — would
          * silently invalidate all of them. See app/Services/Gift/SantaRepair.php.
          */
+        Route::post('/santa/{group}/members', [SecretSantaController::class, 'addMember'])->name('santa.member.store');
         Route::delete('/santa/{group}/members/{member}', [SecretSantaController::class, 'removeMember'])
             ->whereNumber('member')
             ->name('santa.member.destroy');

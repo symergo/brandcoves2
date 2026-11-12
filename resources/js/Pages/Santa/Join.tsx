@@ -4,7 +4,8 @@ import { formatBudget, formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
-import { Countdown, InterestPicker } from '../../Components/SantaGame'
+import { buttonClasses, fieldClasses } from '../../Components/Button'
+import { chipClasses, Countdown, InterestPicker } from '../../Components/SantaGame'
 
 interface Props {
     group: {
@@ -90,7 +91,9 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
 
                 {group.theme && <p className="mt-3 text-ink-soft">{group.theme}</p>}
 
-                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-4" />
+                <p className="mt-3">
+                    <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
+                </p>
 
                 {/*
                   Who else is in. Not a secret, and it is what tells somebody
@@ -106,7 +109,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
                   once. Said before they type anything.
                 */}
                 {group.drawn && (
-                    <p className="mt-8 rounded-card border border-amber/40 bg-amber/10 p-4">
+                    <p className="mt-6 text-sm text-ink-soft">
                         {t('santa.late_note')}
                     </p>
                 )}
@@ -131,7 +134,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
                                 maxLength={80}
                                 value={form.data.display_name}
                                 onChange={(e) => form.setData('display_name', e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+                                className={fieldClasses()}
                             />
                             {form.errors.display_name && (
                                 <p className="mt-1 text-sm text-danger">{form.errors.display_name}</p>
@@ -148,7 +151,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
                                 required
                                 value={form.data.email}
                                 onChange={(e) => form.setData('email', e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+                                className={fieldClasses()}
                             />
                             <p className="mt-1 text-xs text-ink-soft">{t('santa.email_hint')}</p>
                             {form.errors.email && (
@@ -175,9 +178,7 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
                                                             on ? form.data.exclusions.filter((v) => v !== name) : [...form.data.exclusions, name],
                                                         )
                                                     }
-                                                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                                                        on ? 'border-ink bg-ink text-white line-through' : 'border-line bg-cream hover:border-ink'
-                                                    }`}
+                                                    className={`${chipClasses(on)} ${on ? 'line-through' : ''}`}
                                                 >
                                                     {name}
                                                 </button>
@@ -206,13 +207,13 @@ export default function SantaJoin({ group, members, you, interestKeys }: Props) 
                                 value={form.data.hints}
                                 onChange={(e) => form.setData('hints', e.target.value)}
                                 placeholder={t('santa.hints_placeholder')}
-                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+                                className={fieldClasses()}
                             />
                         </div>
 
                         <button
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
+                            className={buttonClasses('primary')}
                         >
                             {t('santa.join')}
                         </button>

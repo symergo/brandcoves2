@@ -1,10 +1,11 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { buttonClasses, fieldClasses } from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
 import { useConfirm } from '../../Components/Modal'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
-import { Countdown, Progress } from '../../Components/SantaGame'
+import { chipClasses, Countdown, Progress } from '../../Components/SantaGame'
 import ShareRow from '../../Components/ShareRow'
 import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -63,9 +64,22 @@ interface Props {
 export default function SantaGroup({ group, isOrganiser, members, me, myLists }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const done = members.filter((m) => m.done).length
     // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
     const [confirm, confirmDialog] = useConfirm()
+    const base = `/${market.key}/santa/${group.id}`
+    const joined = members.filter((m) => m.joined).length
+    // The organiser before the draw works through three numbered steps;
+    // everybody else, and everybody afterwards, reads the same blocks unnumbered.
+    const steps = isOrganiser && !group.drawn
+
+    const invite = !group.exchangePassed && (
+        <ShareRow
+            url={group.inviteUrl}
+            text={t('santa.invite_text', { title: group.title })}
+            label={group.drawn ? t('santa.invite_others') : t('santa.invite')}
+            hint={t('santa.invite_hint')}
+        />
+    )
 
     return (
         <>
@@ -75,14 +89,13 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
 
             {confirmDialog}
             <PageHeader
-                className="max-w-2xl"
+                className="max-w-3xl"
                 size="md"
                 back={{ href: `/${market.key}/santa`, label: t('santa.title') }}
                 title={group.title}
                 beside={<SantaBadge />}
             >
                 <p className="mt-2 text-sm text-ink-soft">
-                    {/* No dangling separator when the budget is missing. */}
                     {[
                         group.budgetMax !== null ? `${t('santa.budget')}: ${formatBudget(group.budgetMax, market)}` : null,
                         group.exchangeDate ? formatDay(group.exchangeDate, market, { year: 'auto' }) : null,
@@ -92,235 +105,211 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                         .join(' · ')}
                 </p>
 
-                {/*
-                  The invite is the whole point of this screen, and it used to be
-                  a lone "copy" button with the URL nowhere in sight — while a
-                  wishlist showed the link and offered the share sheet. Same row
-                  as everywhere else now.
-                */}
-                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-3" />
-
-                {/* Still shown after the draw: a latecomer is slotted into the chain. */}
-                {!group.exchangePassed && (
-                    <div className="mt-4 rounded-card border border-line bg-card p-4">
-                        <ShareRow
-                            url={group.inviteUrl}
-                            text={t('santa.invite_text', { title: group.title })}
-                            label={group.drawn ? t('santa.invite_others') : t('santa.invite')}
-                            hint={t('santa.invite_hint')}
-                        />
-                    </div>
-                )}
+                {/* Where the group stands, in one plain line, before anything else. */}
+                <p className="mt-1 text-sm text-ink-soft">
+                    {group.drawn ? t('santa.hub.status_drawn') : t('santa.hub.status_open')}
+                    {'. '}
+                    <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
+                </p>
             </PageHeader>
 
-            {me && (
-                <div className="mt-6 rounded-card border border-line bg-card p-4 text-sm">
-                    <Link href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
+            <div className="max-w-3xl">
+                {/*
+                  Mine: the way to my own page, and my list. Above the steps,
+                  because for every member except the organiser it is the only
+                  thing on this page that is theirs to do.
+                */}
+                {me && (
+                    <section className="mt-6 rounded-card border border-line bg-card p-5" aria-labelledby="santa-mine">
+                        <h2 id="santa-mine" className="font-semibold">
+                            {t('santa.group.for_you')}
+                        </h2>
+
                         {/* No name here until they turned their card on their own page. */}
-                        {group.drawn && me.giftee
-                            ? me.revealed
-                                ? t('santa.you_have', { name: me.giftee.name })
-                                : t('santa.email_reveal_cta')
-                            : t('santa.not_drawn')}
-                    </Link>
-
-                    {/*
-                      Your own list, attached from here.
-
-                      This is where every member ends up — the organiser after
-                      creating, everybody else after joining — and until
-                      2026-09-12 it only *said* who had a list; attaching one
-                      meant finding "Use this list" on the list's own page.
-                      The select writes through the same endpoint that button
-                      does, so the two doors cannot admit different lists.
-                      Somebody with no list is sent to make one, on the "for
-                      me" shape, since that is the only kind a Santa may see.
-                    */}
-                    {myLists.length > 0 ? (
-                        <label className="mt-3 block">
-                            <span className="font-medium">
-                                {t('santa.your_list')}
-                                <InfoTip className="ml-1">{t('santa.your_list_hint')}</InfoTip>
-                            </span>
-                            <select
-                                value={me.wishlistId ?? ''}
-                                onChange={(e) =>
-                                    router.post(
-                                        `/${market.key}/santa/${group.id}/list`,
-                                        { wishlist_id: e.target.value === '' ? null : e.target.value },
-                                        { preserveScroll: true },
-                                    )
-                                }
-                                className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 sm:w-auto sm:min-w-64"
-                            >
-                                <option value="">{t('santa.no_list_option')}</option>
-                                {myLists.map((list) => (
-                                    <option key={list.id} value={list.id}>
-                                        {list.title}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                    ) : (
-                        <p className="mt-3 text-ink-soft">
-                            {t('santa.build_yours_hint')}{' '}
-                            <Link href={`/${market.key}/lists?new=mine`} className="underline hover:text-ink">
-                                {t('santa.build_yours')}
-                            </Link>
+                        <p className="mt-1 text-sm text-ink-soft">
+                            {group.drawn && me.giftee
+                                ? me.revealed
+                                    ? t('santa.you_have', { name: me.giftee.name })
+                                    : t('santa.reveal_title')
+                                : t('santa.group.mine_before')}
                         </p>
-                    )}
-                </div>
-            )}
+                        <Link
+                            href={`${base}/me/${me.joinToken}`}
+                            className={buttonClasses(group.drawn ? 'primary' : 'secondary', 'md', 'mt-3')}
+                        >
+                            {group.drawn && me.giftee && !me.revealed ? t('santa.email_reveal_cta') : t('santa.mail.open_mine')}
+                        </Link>
 
-            <section className="mt-10">
-                <h2 className="text-lg font-medium">{t('santa.members')}</h2>
-
-                <Progress drawn={group.drawn} progress={group.progress} />
-
-                {group.guesses && group.guesses.made > 0 && (
-                    <p className="mt-2 text-sm text-ink-soft">
-                        {t('santa.guesses_stat', { right: String(group.guesses.right), made: String(group.guesses.made) })}
-                    </p>
+                        {/* My own list, attached from here; the same endpoint as "Use this list" on a list. */}
+                        {myLists.length > 0 ? (
+                            <label className="mt-4 block text-sm">
+                                <span className="font-medium">
+                                    {t('santa.your_list')}
+                                    <InfoTip className="ml-1">{t('santa.your_list_hint')}</InfoTip>
+                                </span>
+                                <select
+                                    value={me.wishlistId ?? ''}
+                                    onChange={(e) =>
+                                        router.post(`${base}/list`, { wishlist_id: e.target.value === '' ? null : e.target.value }, { preserveScroll: true })
+                                    }
+                                    className={fieldClasses('sm:w-auto sm:min-w-64')}
+                                >
+                                    <option value="">{t('santa.no_list_option')}</option>
+                                    {myLists.map((list) => (
+                                        <option key={list.id} value={list.id}>
+                                            {list.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        ) : (
+                            <p className="mt-4 text-sm text-ink-soft">
+                                {t('santa.build_yours_hint')}{' '}
+                                <Link href={`/${market.key}/lists?new=mine`} className="underline hover:text-ink">
+                                    {t('santa.build_yours')}
+                                </Link>
+                            </p>
+                        )}
+                    </section>
                 )}
 
-                <ul className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
-                    {members.map((member) => (
-                        <li key={member.id} className="flex items-center gap-4 p-4">
-                            <span className="flex-1 text-sm font-medium">
-                                {member.name}
-                                {/* Copied from last year, has not said "I'm in" yet. */}
-                                {!member.joined && <span className="ml-2 text-xs font-normal text-ink-soft">({t('santa.invited')})</span>}
-                            </span>
+                {/* 1. Getting people in: the link, or typed in by the organiser. */}
+                {(invite || isOrganiser) && !group.exchangePassed && (
+                    <section className="mt-10" aria-labelledby="santa-invite">
+                        <StepTitle id="santa-invite" step={steps ? 1 : null}>
+                            {group.drawn ? t('santa.invite_others') : t('santa.group.step_invite')}
+                        </StepTitle>
+                        <div className="mt-3 rounded-card border border-line bg-card p-5">
+                            {invite}
+                            {isOrganiser && <AddMember groupId={group.id} drawn={group.drawn} />}
+                        </div>
+                    </section>
+                )}
 
-                            {/*
-                              Aggregate facts only: whether they have a list, and
-                              whether they have finished. Never who they drew.
-                            */}
-                            {!member.hasList && (
-                                <span className="text-xs text-ink-soft">
-                                    {t('santa.build_yours')}
+                {/* 2. Who is in, and what each of them still owes the group. Never who drew whom. */}
+                <section className="mt-10" aria-labelledby="santa-members">
+                    <StepTitle id="santa-members" step={steps ? 2 : null}>
+                        {t('santa.group.step_members', { count: String(members.length) })}
+                    </StepTitle>
+
+                    <Progress drawn={group.drawn} progress={group.progress} />
+
+                    {group.guesses && group.guesses.made > 0 && (
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {t('santa.guesses_stat', { right: String(group.guesses.right), made: String(group.guesses.made) })}
+                        </p>
+                    )}
+
+                    <ul className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                        {members.map((member) => (
+                            <li key={member.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4">
+                                <span className="min-w-0 flex-1 text-sm font-medium">{member.name}</span>
+
+                                {/* Aggregate facts only, as plain words: in or not, something to go on, finished. */}
+                                <span className="text-sm text-ink-soft">
+                                    {[
+                                        member.joined ? null : t('santa.invited'),
+                                        member.hasList ? t('santa.group.has_tips') : t('santa.group.no_tips'),
+                                        member.done ? t('santa.group.bought') : null,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
                                 </span>
-                            )}
-                            {member.done && (
-                                <span className="text-xs text-sage">{t('lists.sent')}</span>
-                            )}
 
-                            {/*
-                              Repairing the draw, organiser only.
+                                {/* Repairing the draw, organiser only. Neither control reveals an assignment. */}
+                                {isOrganiser && (
+                                    <span className="flex items-center gap-3">
+                                        {group.drawn && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (
+                                                        await confirm({
+                                                            message: t('santa.redraw_confirm', { name: member.name }),
+                                                            confirmLabel: t('santa.redraw'),
+                                                            danger: true,
+                                                        })
+                                                    ) {
+                                                        router.post(`${base}/members/${member.id}/redraw`, {}, { preserveScroll: true })
+                                                    }
+                                                }}
+                                                className="text-xs text-ink-soft underline hover:text-ink"
+                                            >
+                                                {t('santa.redraw')}
+                                            </button>
+                                        )}
 
-                              Both confirmations are worded differently before
-                              and after the draw, the same discipline as the
-                              delete button below — after it, the action sends
-                              mail naming a person, and mail cannot be unsent.
-
-                              Redraw only appears once there is something to
-                              redraw. Neither control reveals an assignment: the
-                              payload still carries no giftee for anybody.
-                            */}
-                            {isOrganiser && (
-                                <span className="flex items-center gap-3">
-                                    {group.drawn && (
                                         <button
                                             type="button"
                                             onClick={async () => {
-                                                if (
-                                                    await confirm({
-                                                        message: t('santa.redraw_confirm', { name: member.name }),
-                                                        confirmLabel: t('santa.redraw'),
-                                                        danger: true,
-                                                    })
-                                                ) {
-                                                    router.post(
-                                                        `/${market.key}/santa/${group.id}/members/${member.id}/redraw`,
-                                                        {},
-                                                        { preserveScroll: true },
-                                                    )
+                                                const warning = group.drawn
+                                                    ? t('santa.remove_confirm_drawn', { name: member.name })
+                                                    : t('santa.remove_confirm', { name: member.name })
+
+                                                if (await confirm({ message: warning, confirmLabel: t('santa.remove_member'), danger: true })) {
+                                                    router.delete(`${base}/members/${member.id}`, { preserveScroll: true })
                                                 }
                                             }}
-                                            className="text-xs text-ink-soft underline hover:text-ink"
+                                            className="text-xs text-ink-soft underline hover:text-accent"
                                         >
-                                            {t('santa.redraw')}
+                                            {t('santa.remove_member')}
                                         </button>
-                                    )}
+                                    </span>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
 
-                                    <button
-                                        type="button"
-                                        onClick={async () => {
-                                            const warning = group.drawn
-                                                ? t('santa.remove_confirm_drawn', { name: member.name })
-                                                : t('santa.remove_confirm', { name: member.name })
+                    {isOrganiser && !group.drawn && members.length > 1 && <Couples groupId={group.id} members={members} />}
+                </section>
 
-                                            if (await confirm({ message: warning, confirmLabel: t('santa.remove_member'), danger: true })) {
-                                                router.delete(
-                                                    `/${market.key}/santa/${group.id}/members/${member.id}`,
-                                                    { preserveScroll: true },
-                                                )
-                                            }
-                                        }}
-                                        className="text-xs text-ink-soft underline hover:text-accent"
-                                    >
-                                        {t('santa.remove_member')}
-                                    </button>
-                                </span>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-
-                {isOrganiser && !group.drawn && members.length > 1 && <Couples groupId={group.id} members={members} />}
-                {isOrganiser && !group.drawn && <AutoDraw group={group} />}
+                {/* 3. The draw: the one button this page exists for, with what it does said beside it. */}
+                {steps && (
+                    <section className="mt-10" aria-labelledby="santa-draw">
+                        <StepTitle id="santa-draw" step={3}>
+                            {t('santa.group.step_draw')}
+                        </StepTitle>
+                        <div className="mt-3 rounded-card border border-line bg-card p-5">
+                            <p className="text-sm text-ink-soft">{t('santa.group.draw_hint')}</p>
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (await confirm({ message: t('santa.draw_confirm', { count: String(joined) }), confirmLabel: t('santa.draw') })) {
+                                            router.post(`${base}/draw`)
+                                        }
+                                    }}
+                                    disabled={joined < 2}
+                                    className={buttonClasses('primary', 'lg')}
+                                >
+                                    {t('santa.draw')}
+                                </button>
+                                {/* Says why the button is disabled, rather than a button that simply does nothing. */}
+                                {joined < 2 && <span className="text-sm text-ink-soft">{t('santa.draw_needs_two')}</span>}
+                            </div>
+                            <AutoDraw group={group} />
+                        </div>
+                    </section>
+                )}
 
                 {/* The same people, a year on: one press, from the organiser. */}
                 {isOrganiser && group.drawn && (
-                    <div className="mt-6 rounded-card border border-accent/40 bg-accent/5 p-4">
-                        <p className="text-sm text-ink-soft">{t('santa.again_hint')}</p>
-                        <button
-                            type="button"
-                            onClick={() => router.post(`/${market.key}/santa/${group.id}/again`)}
-                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-                        >
+                    <section className="mt-10 rounded-card border border-line bg-card p-5">
+                        <h2 className="font-semibold">{t('santa.again')}</h2>
+                        <p className="mt-1 text-sm text-ink-soft">{t('santa.again_hint')}</p>
+                        <button type="button" onClick={() => router.post(`${base}/again`)} className={buttonClasses('secondary', 'md', 'mt-3')}>
                             {t('santa.again')}
                         </button>
-                    </div>
+                    </section>
                 )}
 
+                {/*
+                  Calling it off, small and last. The confirmation is worded
+                  differently once a draw has happened: by then people hold an
+                  assignment and may have shopped, and nothing here tells them.
+                */}
                 {isOrganiser && (
-                    <div className="mt-6 flex flex-wrap items-center gap-3">
-                        {!group.drawn && (
-                            <button
-                                type="button"
-                                // Asked first, like every other consequential press
-                                // on this page: the draw emails everybody a name,
-                                // and there is no un-sending that.
-                                onClick={async () => {
-                                    if (
-                                        await confirm({
-                                            message: t('santa.draw_confirm', { count: String(members.length) }),
-                                            confirmLabel: t('santa.draw'),
-                                        })
-                                    ) {
-                                        router.post(`/${market.key}/santa/${group.id}/draw`)
-                                    }
-                                }}
-                                disabled={members.length < 2}
-                                className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50"
-                            >
-                                {t('santa.draw')}
-                            </button>
-                        )}
-
-                        {/* Why the button is off, rather than a button that
-                            simply does nothing. */}
-                        {!group.drawn && members.length < 2 && (
-                            <span className="text-sm text-ink-soft">{t('santa.draw_needs_two')}</span>
-                        )}
-
-                        {/*
-                          Calling it off. The confirmation is worded differently
-                          once a draw has happened, because by then people are
-                          holding an assignment and may already have shopped —
-                          and nothing here can tell them it is off.
-                        */}
+                    <p className="mt-12 border-t border-line pt-6">
                         <button
                             type="button"
                             onClick={async () => {
@@ -329,17 +318,84 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                                     : t('santa.delete_confirm', { title: group.title })
 
                                 if (await confirm({ message: warning, confirmLabel: t('santa.delete'), danger: true })) {
-                                    router.delete(`/${market.key}/santa/${group.id}`)
+                                    router.delete(base)
                                 }
                             }}
-                            className="rounded-lg border border-line px-4 py-2 text-sm text-accent hover:border-accent"
+                            className="text-sm text-ink-soft underline hover:text-accent"
                         >
                             {t('santa.delete')}
                         </button>
-                    </div>
+                    </p>
                 )}
-            </section>
+            </div>
         </>
+    )
+}
+
+/** A section heading, numbered while the organiser is still setting the group up. */
+function StepTitle({ id, step, children }: { id: string; step: number | null; children: ReactNode }) {
+    return (
+        <h2 id={id} className="text-lg font-semibold">
+            {step !== null && `${step}. `}
+            {children}
+        </h2>
+    )
+}
+
+/**
+ * Somebody typed in by the organiser (owner, 2026-11-12): a name and an
+ * address, for the people who will never open a link in a group chat. They
+ * are in at once and get a mail with their own page. After the draw the same
+ * form slots them into the chain, exactly as the invite link does.
+ */
+function AddMember({ groupId, drawn }: { groupId: string; drawn: boolean }) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const form = useForm({ display_name: '', email: '' })
+    const field = fieldClasses()
+
+    return (
+        <form
+            className="mt-5 border-t border-line pt-5"
+            onSubmit={(e) => {
+                e.preventDefault()
+                form.post(`/${market.key}/santa/${groupId}/members`, { preserveScroll: true, onSuccess: () => form.reset() })
+            }}
+        >
+            <p className="text-sm font-medium">{t('santa.group.add_title')}</p>
+            <p className="mt-1 text-sm text-ink-soft">{drawn ? t('santa.late_note') : t('santa.group.add_hint')}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <label className="block">
+                    <span className="text-sm">{t('santa.group.add_name')}</span>
+                    <input
+                        required
+                        maxLength={80}
+                        value={form.data.display_name}
+                        onChange={(e) => form.setData('display_name', e.target.value)}
+                        className={field}
+                    />
+                </label>
+                <label className="block">
+                    <span className="text-sm">{t('santa.group.add_email')}</span>
+                    <input
+                        type="email"
+                        required
+                        maxLength={190}
+                        value={form.data.email}
+                        onChange={(e) => form.setData('email', e.target.value)}
+                        className={field}
+                    />
+                </label>
+                <button disabled={form.processing} className={buttonClasses('secondary')}>
+                    {t('santa.group.add_button')}
+                </button>
+            </div>
+            {Object.entries(form.errors).map(([name, message]) => (
+                <p key={name} className="mt-2 text-sm text-danger" role="alert">
+                    {message}
+                </p>
+            ))}
+        </form>
     )
 }
 
@@ -356,7 +412,7 @@ function Couples({ groupId, members }: { groupId: string; members: Member[] }) {
     const pairs = members.reduce((count, m) => count + m.excludes.length, 0)
 
     return (
-        <details className="mt-6 rounded-card border border-line bg-card p-4" open={pairs > 0}>
+        <details className="mt-4 rounded-card border border-line bg-card p-5" open={pairs > 0}>
             <summary className="cursor-pointer text-sm font-medium">{t('santa.couples_title')}</summary>
             <p className="mt-2 text-sm text-ink-soft">{t('santa.couples_hint')}</p>
             <p className="mt-3 text-sm font-medium">{first ? t('santa.couples_for', { name: first.name }) : t('santa.couples_pick')}</p>
@@ -383,13 +439,7 @@ function Couples({ groupId, members }: { groupId: string; members: Member[] }) {
                                         { preserveScroll: true },
                                     )
                                 }}
-                                className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                                    isFirst
-                                        ? 'border-accent bg-accent text-white'
-                                        : apart
-                                          ? 'border-ink bg-ink text-white line-through'
-                                          : 'border-line bg-cream hover:border-ink'
-                                }`}
+                                className={`${chipClasses(isFirst || apart)} ${apart ? 'line-through' : ''} ${isFirst ? 'ring-2 ring-ink ring-offset-2' : ''}`}
                             >
                                 {member.name}
                             </button>
@@ -416,10 +466,10 @@ function AutoDraw({ group }: { group: Props['group'] }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const form = useForm({ draw_at: localMoment(group.drawAt), draw_when_count: group.drawWhenCount === null ? '' : String(group.drawWhenCount) })
-    const field = 'mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2'
+    const field = fieldClasses()
 
     return (
-        <details className="mt-4 rounded-card border border-line bg-card p-4" open={group.drawAt !== null || group.drawWhenCount !== null}>
+        <details className="mt-5 border-t border-line pt-4" open={group.drawAt !== null || group.drawWhenCount !== null}>
             <summary className="cursor-pointer text-sm font-medium">{t('santa.draw_auto')}</summary>
             <p className="mt-2 text-sm text-ink-soft">{t('santa.draw_auto_hint')}</p>
 
@@ -462,7 +512,7 @@ function AutoDraw({ group }: { group: Props['group'] }) {
                     </p>
                 ))}
                 <div className="sm:col-span-2">
-                    <button disabled={form.processing} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-ink disabled:opacity-50">
+                    <button disabled={form.processing} className={buttonClasses('secondary')}>
                         {t('santa.save')}
                     </button>
                 </div>

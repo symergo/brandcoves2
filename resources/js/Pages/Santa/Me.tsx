@@ -1,7 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react'
+import { buttonClasses } from '../../Components/Button'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
-import { AskBox, Countdown, GuessSanta, HintsForm, Progress, QuestionInbox, RevealCard, type GuessState, type SantaQuestion } from '../../Components/SantaGame'
+import { AskBox, chipClasses, Countdown, GuessSanta, HintsForm, Progress, QuestionInbox, RevealCard, type GuessState, type SantaQuestion } from '../../Components/SantaGame'
 import SaveToList from '../../Components/SaveToList'
 import { formatBudget, formatDay, formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -111,7 +112,9 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                         .join(' · ')}
                 </p>
 
-                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-3" />
+                <p className="mt-1">
+                    <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
+                </p>
                 <Progress drawn={group.drawn} progress={group.progress} />
             </PageHeader>
 
@@ -121,12 +124,12 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                 {/* Copied in from last year's group: in again with one press.
                     A button, not the page view: mail scanners open links. */}
                 {!me.joined && !group.drawn && (
-                    <div className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-5">
+                    <div className="mt-8 rounded-card border border-line bg-card p-5">
                         <p className="font-medium">{t('santa.mail.again_subject', { title: group.title })}</p>
                         <button
                             type="button"
                             onClick={() => router.post(`${mine}/in`, {}, { preserveScroll: true })}
-                            className="mt-3 rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark"
+                            className={buttonClasses('primary', 'md', 'mt-3')}
                         >
                             {t('santa.mail.again_cta')}
                         </button>
@@ -166,7 +169,7 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                     <p className="mt-1 text-sm text-ink-soft">{t('santa.build_yours_hint')}</p>
                     <a
                         href={`${base}/lists`}
-                        className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                        className={buttonClasses('secondary', 'md', 'mt-3')}
                     >
                         {t('lists.new_list')}
                     </a>
@@ -182,7 +185,7 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                             {me.giftee.interests.length > 0 && (
                                 <ul className="mt-2 flex flex-wrap gap-2">
                                     {me.giftee.interests.map((key) => (
-                                        <li key={key} className="rounded-full border border-line bg-cream px-3 py-1 text-sm">
+                                        <li key={key} className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft">
                                             {t(`santa.interest.${key}`)}
                                         </li>
                                     ))}
@@ -278,7 +281,7 @@ export default function SantaMe({ group, me, interestKeys }: Props) {
                             <ul className="mt-3 flex flex-wrap gap-2">
                                 {me.giftee.ideas.map((idea) => (
                                     <li key={idea.url}>
-                                        <a href={idea.url} className="inline-block rounded-full border border-accent/50 bg-card px-4 py-2 text-sm font-medium text-accent-dark hover:bg-accent hover:text-white">
+                                        <a href={idea.url} className={`inline-block ${chipClasses()}`}>
                                             {idea.label}
                                         </a>
                                     </li>

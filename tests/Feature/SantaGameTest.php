@@ -217,6 +217,71 @@ class SantaGameTest extends TestCase
     }
 
     #[Test]
+    public function the_organiser_adds_somebody_by_name_and_address(): void
+    {
+        $group = $this->group();
+        Mail::fake();
+        $url = "/be-nl/santa/{$group->id}/members";
+
+        $this->actingAs($group->organiser)
+            ->post($url, ['display_name' => 'Oma', 'email' => 'Oma@Example.test'])
+            ->assertSessionHas('success', __('site.santa.group.added', ['name' => 'Oma']));
+
+        // In at once, as if she had opened the link herself, and told by mail.
+        $oma = $group->members()->where('email', 'oma@example.test')->sole();
+        $this->assertNotNull($oma->joined_at);
+        Mail::assertQueued(SantaNoteMail::class, fn (SantaNoteMail $mail) => $mail->kind === 'added' && $mail->hasTo('oma@example.test'));
+
+        // Her own page works from the link in that mail, without an account.
+        auth()->logout();
+        $this->get($this->mine($group, $oma))->assertOk();
+
+        // Twice is refused, and it is the organiser's to do, nobody else's.
+        $this->actingAs($group->organiser)->post($url, ['display_name' => 'Oma', 'email' => 'oma@example.test'])->assertSessionHasErrors('email');
+        $this->actingAs(User::factory()->create())->post($url, ['display_name' => 'X', 'email' => 'x@example.test'])->assertForbidden();
+        auth()->logout();
+        $this->post($url, ['display_name' => 'X', 'email' => 'x@example.test'])->assertRedirect('/be-nl/login');
+
+        $this->assertSame(2, $group->members()->count());
+    }
+
+    #[Test]
+    public function somebody_added_after_the_draw_is_slotted_into_the_chain(): void
+    {
+        $group = $this->group();
+        $this->join($group, 'Sam');
+        $this->draw($group);
+        Mail::fake();
+
+        $this->actingAs($group->organiser)
+            ->post("/be-nl/santa/{$group->id}/members", ['display_name' => 'Oma', 'email' => 'oma@example.test'])
+            ->assertSessionHas('success');
+
+        $after = $group->members()->get()->mapWithKeys(fn ($m) => [$m->id => (int) $m->assigned_member_id]);
+
+        $this->assertCount(3, $after);
+        $this->assertEqualsCanonicalizing($after->keys()->all(), $after->values()->all());
+        Mail::assertQueued(SecretSantaAssignmentMail::class, 2);
+    }
+
+    #[Test]
+    public function somebody_removed_can_be_added_again(): void
+    {
+        $group = $this->group();
+        $sam = $this->join($group, 'Sam');
+
+        $this->actingAs($group->organiser)->delete("/be-nl/santa/{$group->id}/members/{$sam->id}");
+        $this->assertSame(1, $group->members()->count());
+
+        $this->actingAs($group->organiser)
+            ->post("/be-nl/santa/{$group->id}/members", ['display_name' => 'Sam', 'email' => 'sam@example.test'])
+            ->assertSessionHas('success');
+
+        $this->assertSame(2, $group->members()->count());
+        $this->assertNull($sam->fresh()->removed_at);
+    }
+
+    #[Test]
     public function the_draw_happens_by_itself_once_enough_people_are_in(): void
     {
         $group = $this->group(['draw_when_count' => 3]);
