@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { useForm, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../types'
 import { rich, useTranslations } from '../useTranslations'
@@ -59,7 +60,7 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                         type="button"
                         onClick={submit}
                         disabled={form.processing}
-                        className="w-full rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50 sm:w-auto"
+                        className={buttonClasses('primary', 'lg', 'w-full sm:w-auto')}
                     >
                         {t('cove.subscribe_one_click')}
                     </button>
@@ -108,11 +109,11 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                         placeholder={t('cove.subscribe_placeholder')}
                         aria-invalid={form.errors.email ? true : undefined}
                         aria-describedby={form.errors.email ? 'cove-email-error' : undefined}
-                        className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-4 py-2.5"
+                        className={fieldClasses('min-w-0 flex-1', { inline: true })}
                     />
                     <button
                         disabled={form.processing}
-                        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
+                        className={buttonClasses('primary', 'lg')}
                     >
                         {t('cove.subscribe_button')}
                     </button>

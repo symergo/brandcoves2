@@ -1,3 +1,4 @@
+import { buttonClasses } from './Button'
 import { router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Cents, SharedProps } from '../types'
@@ -347,7 +348,7 @@ export default function BarcodeScanner({ autoStart = false, onFound, onCode }: P
                         type="button"
                         onClick={start}
                         disabled={loading}
-                        className="w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-50"
+                        className={buttonClasses('primary', 'lg', 'w-full')}
                     >
                         {loading ? t('scan.preparing') : t('scan.start')}
                     </button>

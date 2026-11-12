@@ -1,3 +1,4 @@
+import { fieldClasses } from './Button'
 import { usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { ensureCsrfToken } from '../http'
@@ -213,7 +214,7 @@ export default function ListBoard({ board, action }: { board: BoardState; action
                             onChange={(e) => setName(e.target.value)}
                             maxLength={80}
                             placeholder={t('board.your_name')}
-                            className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                            className={fieldClasses('w-full', { inline: true })}
                         />
                     )}
 

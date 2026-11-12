@@ -1,7 +1,7 @@
 import { router, useForm } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import { useTranslations } from '../useTranslations'
-import { buttonClasses, fieldClasses } from './Button'
+import { buttonClasses, chipClasses, fieldClasses } from './Button'
 import ToolIcon from './ToolIcon'
 
 /**
@@ -18,10 +18,8 @@ import ToolIcon from './ToolIcon'
  * moment on these pages.
  */
 
-/** Something to tap from a set: outlined, dark once chosen. */
-export function chipClasses(on = false): string {
-    return `rounded-full border px-3 py-1.5 text-sm transition ${on ? 'border-ink bg-ink text-white' : 'border-line bg-card text-ink hover:border-ink'}`
-}
+// The chip itself lives with the button and the field; re-exported for the pages that import it from here.
+export { chipClasses }
 
 /** Whole days from today to an ISO date or moment; negative once it is behind us. */
 export function daysUntil(iso: string): number {

@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { router } from '@inertiajs/react'
 import { useState, type FormEvent } from 'react'
 import type { Cents } from '../types'
@@ -118,7 +119,7 @@ export default function EditManualItem({
                     maxLength={500}
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
 
@@ -129,7 +130,7 @@ export default function EditManualItem({
                     maxLength={2048}
                     value={form.url}
                     onChange={(e) => setForm({ ...form, url: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
 
@@ -139,7 +140,7 @@ export default function EditManualItem({
                     inputMode="decimal"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="mt-1 w-32 rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses('mt-1 w-32', { inline: true })}
                 />
             </label>
 
@@ -175,7 +176,7 @@ export default function EditManualItem({
             <div className="flex items-center gap-3 pt-1">
                 <button
                     type="submit"
-                    className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+                    className={buttonClasses('primary', 'sm')}
                 >
                     {t('lists.save_changes')}
                 </button>

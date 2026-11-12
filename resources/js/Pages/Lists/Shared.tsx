@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useRef, useState } from 'react'
-import Button from '../../Components/Button'
+import Button, { fieldClasses } from '../../Components/Button'
 import { type ListKind } from '../../Components/ListKindBadge'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import ListItemCard from '../../Components/ListItemCard'
@@ -358,7 +358,7 @@ export default function SharedList({
                 <div className="min-w-0">
                 <header>
                     {/* Whose list it is, not what they filed it under. */}
-                    <h1 className="text-xl font-semibold sm:text-2xl">{list.heading}</h1>
+                    <h1 className="text-2xl font-semibold sm:text-3xl">{list.heading}</h1>
 
                     {/*
                       Who the list is for, right under the title (owner's
@@ -451,7 +451,7 @@ export default function SharedList({
                                 maxLength={80}
                                 value={claimName}
                                 onChange={(e) => setClaimName(e.target.value)}
-                                className="mt-1 w-full max-w-xs rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                className={fieldClasses('max-w-xs')}
                             />
                         </label>
                     )}

@@ -1,3 +1,4 @@
+import { buttonClasses } from '../Components/Button'
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -116,7 +117,7 @@ export default function Surprise({ finds, seen }: Props) {
                     <button
                         type="button"
                         onClick={reroll}
-                        className="rounded bg-accent px-5 py-3 font-medium text-white"
+                        className={buttonClasses('primary', 'lg')}
                     >
                         {t('surprise.reroll')}
                     </button>

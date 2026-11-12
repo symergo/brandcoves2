@@ -132,7 +132,7 @@ export default function Notifications({
         <>
             <Head title={t('notifications.title')} />
 
-            <h1 className="text-xl sm:text-2xl font-semibold">{t('notifications.title')}</h1>
+            <h1 className="text-2xl font-semibold sm:text-3xl">{t('notifications.title')}</h1>
 
             {/*
               The switch for reminder emails, the way back on after the stop

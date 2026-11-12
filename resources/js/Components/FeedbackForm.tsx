@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { useForm, usePage } from '@inertiajs/react'
 import { useEffect } from 'react'
 import { previousPath } from '../previousPath'
@@ -96,7 +97,7 @@ export default function FeedbackForm({
                             value={form.data.message}
                             onChange={(e) => form.setData('message', e.target.value)}
                             placeholder={t('feedback.message_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                            className={fieldClasses()}
                         />
                     </label>
                     {form.errors.message && <p className="text-sm text-danger">{form.errors.message}</p>}
@@ -121,7 +122,7 @@ export default function FeedbackForm({
                             value={form.data.email}
                             onChange={(e) => form.setData('email', e.target.value)}
                             placeholder={t('feedback.email_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                            className={fieldClasses()}
                         />
                         <span className="mt-1 block text-xs font-normal text-ink-soft">
                             {t('feedback.email_hint')}
@@ -146,7 +147,7 @@ export default function FeedbackForm({
                     <button
                         type="submit"
                         disabled={form.processing}
-                        className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
+                        className={buttonClasses('primary', 'lg')}
                     >
                         {form.processing ? t('feedback.sending') : t('feedback.submit')}
                     </button>

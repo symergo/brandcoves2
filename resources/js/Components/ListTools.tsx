@@ -1,7 +1,7 @@
 import { router, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
-import Button, { headerActionClasses } from './Button'
+import Button, { headerActionClasses, fieldClasses } from './Button'
 import Menu, { MenuItem, MenuSeparator, MoreButtonContent } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
@@ -753,7 +753,7 @@ export default function ListTools({
                                                 value={personName}
                                                 onChange={(e) => setPersonName(e.target.value)}
                                                 maxLength={80}
-                                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                                className={fieldClasses()}
                                             />
                                         </label>
                                     )}
@@ -764,7 +764,7 @@ export default function ListTools({
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
                                             maxLength={120}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            className={fieldClasses()}
                                         />
                                     </label>
                                     <label className="block text-sm">
@@ -800,7 +800,7 @@ export default function ListTools({
                                             inputMode="numeric"
                                             value={budgetMin}
                                             onChange={(e) => setBudgetMin(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink"
+                                            className={fieldClasses('text-ink')}
                                         />
                                     </label>
                                     <label className="block min-w-0 text-sm text-ink-soft">
@@ -813,7 +813,7 @@ export default function ListTools({
                                             inputMode="numeric"
                                             value={budgetMax}
                                             onChange={(e) => setBudgetMax(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink"
+                                            className={fieldClasses('text-ink')}
                                         />
                                     </label>
                                 </div>
@@ -833,7 +833,7 @@ export default function ListTools({
                                         <select
                                             value={list.priceWatchPercent}
                                             onChange={(e) => setting({ price_watch_percent: Number(e.target.value) })}
-                                            className="rounded-lg border border-line bg-cream px-2 py-1 text-sm"
+                                            className={fieldClasses('', { inline: true })}
                                         >
                                             {[5, 10, 15, 20, 30].map((p) => (
                                                 <option key={p} value={p}>
@@ -901,7 +901,7 @@ export default function ListTools({
                                                             setting({ pledge_amount: euros })
                                                         }
                                                     }}
-                                                    className="w-28 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                                    className={fieldClasses('w-28', { inline: true })}
                                                 />
                                                 <span className="text-xs text-ink-soft">
                                                     {t('lists.pledge_mode_each_person')}
@@ -924,7 +924,7 @@ export default function ListTools({
                                         <select
                                             value={eventType}
                                             onChange={(e) => setEventType(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            className={fieldClasses()}
                                         >
                                             <option value="">{t('registry.none')}</option>
                                             {registryOptions.map((o) => (
@@ -948,7 +948,7 @@ export default function ListTools({
                                             type="date"
                                             value={eventDate}
                                             onChange={(e) => setEventDate(e.target.value)}
-                                            className="mt-1 block w-full max-w-full min-w-0 appearance-none rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            className={fieldClasses('max-w-full min-w-0 appearance-none')}
                                         />
                                     </label>
 
@@ -967,7 +967,7 @@ export default function ListTools({
                                                 rows={2}
                                                 value={address}
                                                 onChange={(e) => setAddress(e.target.value)}
-                                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                                className={fieldClasses()}
                                             />
                                         </label>
                                     )}
@@ -1065,7 +1065,7 @@ export default function ListTools({
                                 value={handTo}
                                 onChange={(e) => setHandTo(e.target.value)}
                                 placeholder="name@example.com"
-                                className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                                className={fieldClasses('min-w-0 flex-1', { inline: true })}
                             />
                             <button
                                 type="submit"

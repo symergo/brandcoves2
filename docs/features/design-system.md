@@ -661,3 +661,17 @@ Owner: "review other parts of the site in the same way: simplify the user experi
 - **Alle Coves, pictures** (same day, owner: "add images to the cards (products or drawings)"): each card shows a product from the Cove, its drawing when no pick has a picture in stock, or the section icon (`CovesController::picture()`).
 - **Product heading** (owner: "product page: use display titles"): the `<h1>` is the written display title, or the feed title cut to what the product is (`ProductTitle::short()`, always a prefix, never invented). The full title is printed small under it and stays the document title.
 - **An X on every popup** (same evening, owner: "Add a close X to all popups"): `Modal` draws it titled or not (confirmations included), and the sign-in popup, the save picker (sheet and panel) and the scanner have the same one. Dropdown menus and the cookie banner are not popups in this sense and have none.
+
+## Streamlining sweep, 2026-11-12
+
+Owner: "Are there other ways to streamline design, reuse code, simplify ux?" then "Do all".
+
+- **Buttons and fields**: 33 hand-written red buttons and 50 hand-written fields moved onto `buttonClasses` and `fieldClasses` by a script (plain `className` strings only; template literals were left). A field is cream everywhere now.
+- **`chipClasses`** lives in `Button.tsx` beside them: the recipe for anything tapped from a set. The fifty-odd older pills were not migrated; each was tuned with the owner.
+- **`GiftArt`**: the wrapped present on its circles, one component instead of five copies (`scene` and `badge`).
+- **`GoogleSignIn`**: the Google button and its "of", shared by the login page and the popup.
+- **The sign-in popup is `Modal`** like every other popup, rendered only while open, and it closes itself once the visitor is signed in.
+- **Page titles**: `text-2xl sm:text-3xl` on full pages; the narrow card pages (login, confirm, invitation) keep the smaller size on purpose.
+- **One Secret Friend start form**: the list wizard links to the Secret Friend page instead of switching into a second, shorter form. The wizard still contains that branch for `?new=santa`; removing it is open.
+
+Not done, and why: splitting the largest page files (a pure refactor with nothing to see, better done one file at a time with its tests), the scanner and quiz popups (each manages the camera or the keyboard itself), and the word "Cove" for two things (the owner decides the words).

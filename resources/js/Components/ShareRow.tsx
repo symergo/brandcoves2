@@ -1,3 +1,4 @@
+import { fieldClasses } from './Button'
 import { useRef } from 'react'
 import ShareIcon from './ShareIcon'
 import ShareMenu from './ShareMenu'
@@ -80,7 +81,7 @@ export default function ShareRow({
                     // Selecting on focus is the whole point of showing it: one
                     // tap and the browser's own copy is available.
                     onFocus={(e) => e.currentTarget.select()}
-                    className="min-w-0 flex-1 truncate rounded-lg border border-line bg-cream px-3 py-2 font-mono text-xs"
+                    className={fieldClasses('min-w-0 flex-1 truncate font-mono text-xs', { inline: true })}
                 />
 
                 <div className="flex items-center gap-2">

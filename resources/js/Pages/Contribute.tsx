@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import Badge, { type BadgeTone } from '../Components/Badge'
-import Button, { buttonClasses } from '../Components/Button'
+import Button, { buttonClasses, fieldClasses } from '../Components/Button'
 import InfoTip from '../Components/InfoTip'
 import SignInLink from '../Components/SignInLink'
 import ToolIcon from '../Components/ToolIcon'
@@ -248,7 +248,7 @@ function SuggestForm({ base }: { base: string }) {
                     value={form.data.title}
                     onChange={(e) => form.setData('title', e.target.value)}
                     placeholder={t('contribute.suggest_title_placeholder')}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                    className={fieldClasses()}
                 />
             </label>
             {form.errors.title && <p className="text-sm text-danger">{form.errors.title}</p>}
@@ -260,7 +260,7 @@ function SuggestForm({ base }: { base: string }) {
                     maxLength={2000}
                     value={form.data.body}
                     onChange={(e) => form.setData('body', e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                    className={fieldClasses()}
                 />
             </label>
             {form.errors.body && <p className="text-sm text-danger">{form.errors.body}</p>}

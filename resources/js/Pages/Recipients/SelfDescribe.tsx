@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from '../../Components/Button'
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
@@ -180,7 +181,7 @@ export default function SelfDescribe({
 
             {/* Full width: nothing sits beside it (owner's rule, re-checked 2026-09-27); only the sentence keeps a reading width. */}
             <header>
-                <h1 className="text-xl sm:text-2xl font-semibold">{t('recipients.self_title')}</h1>
+                <h1 className="text-2xl font-semibold sm:text-3xl">{t('recipients.self_title')}</h1>
                 <p className="mt-2 max-w-2xl text-ink-soft">
                     {t('recipients.self_intro', { name: person.name })}
                 </p>
@@ -190,7 +191,7 @@ export default function SelfDescribe({
                         <button
                             type="button"
                             onClick={() => router.post(`${base}/claim`, {}, { preserveScroll: true })}
-                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                            className={buttonClasses('primary', 'md', 'mt-3')}
                         >
                             {t('recipients.claim_this_is_me')}
                         </button>
@@ -321,7 +322,7 @@ export default function SelfDescribe({
                                 aria-label={t('lists.birthday_day')}
                                 value={form.data.birthday_day}
                                 onChange={(e) => form.setData('birthday_day', e.target.value)}
-                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                className={fieldClasses('', { inline: true })}
                             >
                                 <option value="">{t('lists.birthday_day')}</option>
                                 {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
@@ -335,7 +336,7 @@ export default function SelfDescribe({
                                 aria-label={t('lists.birthday_month')}
                                 value={form.data.birthday_month}
                                 onChange={(e) => form.setData('birthday_month', e.target.value)}
-                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                className={fieldClasses('', { inline: true })}
                             >
                                 <option value="">{t('lists.birthday_month')}</option>
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
@@ -356,7 +357,7 @@ export default function SelfDescribe({
                     <button
                         type="submit"
                         disabled={form.processing}
-                        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        className={buttonClasses('primary', 'md')}
                     >
                         {t('lists.save')}
                     </button>

@@ -1,3 +1,4 @@
+import { buttonClasses } from './Button'
 import { useForm, usePage } from '@inertiajs/react'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { SharedProps } from '../types'
@@ -163,7 +164,7 @@ export default function EmailSignIn({
             <button
                 type="submit"
                 disabled={form.processing}
-                className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
+                className={buttonClasses('primary', 'lg', 'w-full')}
             >
                 {form.processing ? t('auth.sending') : t('auth.send')}
             </button>

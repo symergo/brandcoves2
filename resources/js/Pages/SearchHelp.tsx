@@ -1,3 +1,4 @@
+import { buttonClasses } from '../Components/Button'
 import { Head, Link } from '@inertiajs/react'
 import { useTranslations } from '../useTranslations'
 
@@ -91,7 +92,7 @@ export default function SearchHelp({ urls }: Props) {
                 <div className="mt-10 flex flex-wrap gap-3">
                     <Link
                         href={urls.search}
-                        className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
+                        className={buttonClasses('primary', 'lg')}
                     >
                         {t('search_help.go_search')}
                     </Link>

@@ -6,7 +6,7 @@ import { formatBudget, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ListName from '../../Components/ListName'
 import SignInLink from '../../Components/SignInLink'
-import { headerActionClasses } from '../../Components/Button'
+import { headerActionClasses, buttonClasses, fieldClasses } from '../../Components/Button'
 import ToolIcon from '../../Components/ToolIcon'
 import InfoTip from '../../Components/InfoTip'
 import PageHeader from '../../Components/PageHeader'
@@ -304,7 +304,7 @@ export default function AskShow({
                             value={form.data.body}
                             onChange={(e) => form.setData('body', e.target.value)}
                             placeholder={t('ask.answer_placeholder')}
-                            className="w-full rounded-lg border border-line bg-cream px-3 py-2"
+                            className={fieldClasses('w-full', { inline: true })}
                         />
                         {form.errors.body && <p className="text-sm text-danger">{form.errors.body}</p>}
 
@@ -412,7 +412,7 @@ export default function AskShow({
                         <button
                             type="submit"
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
+                            className={buttonClasses('primary', 'md')}
                         >
                             {t('ask.answer_submit')}
                         </button>

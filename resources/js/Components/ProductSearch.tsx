@@ -1,3 +1,4 @@
+import { fieldClasses } from './Button'
 import { Link, usePage } from '@inertiajs/react'
 import { useRef, useState, type ReactNode, type RefObject } from 'react'
 import { formatPrice, type SharedProps } from '../types'
@@ -215,7 +216,7 @@ export function SearchField({
                 }
                 placeholder={words}
                 aria-label={words}
-                className="w-full min-w-0 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                className={fieldClasses('w-full min-w-0', { inline: true })}
             />
             <ScanButton
                 className="shrink-0 rounded-lg border border-line px-3 py-2"

@@ -1,4 +1,4 @@
-import HeroGift from '../../Components/HeroGift'
+import GiftArt from '../../Components/GiftArt'
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { type ReactNode, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
@@ -23,7 +23,7 @@ import {
     useListSearch,
 } from '../../Components/ProductSearch'
 import Badge from '../../Components/Badge'
-import Button from '../../Components/Button'
+import Button, { buttonClasses, fieldClasses } from '../../Components/Button'
 import { send } from '../../http'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
@@ -930,7 +930,7 @@ export default function GiftWizard(props: Props) {
                             {picks.length > 0 && (
                                 <button
                                     type="button"
-                                    className="rounded bg-accent px-4 py-2 text-sm font-medium text-white"
+                                    className={buttonClasses('primary', 'md')}
                                     onClick={more}
                                 >
                                     {t('gift.more')}
@@ -1013,12 +1013,7 @@ export default function GiftWizard(props: Props) {
                     </div>
                     </div>
 
-                    <div aria-hidden="true" className="relative hidden aspect-[5/4] w-full max-w-sm justify-self-center md:block">
-                        <span className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
-                        <span className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
-                        <span className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
-                        <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
-                    </div>
+                    <GiftArt className="hidden max-w-sm justify-self-center md:block" />
                 </section>
             ) : stage === 'ways' ? (
                 <section className="mt-8" aria-labelledby="gift-ways">
@@ -1088,7 +1083,7 @@ export default function GiftWizard(props: Props) {
                                     <select
                                         defaultValue=""
                                         onChange={(e) => e.target.value !== '' && router.visit(e.target.value)}
-                                        className="block w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        className={fieldClasses('w-full', { inline: true })}
                                     >
                                         <option value="" disabled>
                                             {t('gift.types_pick')}
@@ -1351,7 +1346,7 @@ export default function GiftWizard(props: Props) {
                             <>
                                 <button
                                     type="button"
-                                    className="rounded bg-accent px-5 py-2 font-medium text-white"
+                                    className={buttonClasses('primary', 'md')}
                                     onClick={() => setStep(step + 1)}
                                 >
                                     {t('gift.next')}
@@ -1367,7 +1362,7 @@ export default function GiftWizard(props: Props) {
                                 </button>
                             </>
                         ) : (
-                            <button type="button" className="rounded bg-accent px-5 py-2 font-medium text-white" onClick={submit}>
+                            <button type="button" className={buttonClasses('primary', 'md')} onClick={submit}>
                                 {t('gift.find')}
                             </button>
                         )}

@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Button, { buttonClasses } from '../../Components/Button'
+import Button, { buttonClasses, fieldClasses } from '../../Components/Button'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import ShareRow from '../../Components/ShareRow'
 import SignInLink from '../../Components/SignInLink'
@@ -763,7 +763,7 @@ function KeepOnPerson({
                         maxLength={80}
                         onChange={(e) => setName(e.target.value)}
                         placeholder={t('gift.taste.save_new_placeholder')}
-                        className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2"
+                        className={fieldClasses('min-w-0 flex-1', { inline: true })}
                     />
                     <Button type="submit" busy={busy === 'new'} disabled={busy !== null || name.trim() === ''}>
                         {t('gift.taste.save')}
@@ -955,7 +955,7 @@ function MakeCard({ url, choices }: { url: string; choices: Choice[] }) {
                             maxLength={40}
                             onChange={(e) => setName(e.target.value)}
                             placeholder={t('gift.card.name_placeholder')}
-                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2"
+                            className={fieldClasses('min-w-0 flex-1', { inline: true })}
                         />
                         <Button type="submit" busy={busy}>
                             {t('gift.card.make')}

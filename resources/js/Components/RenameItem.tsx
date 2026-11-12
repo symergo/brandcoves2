@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { router } from '@inertiajs/react'
 import { useState, type FormEvent } from 'react'
 import { useTranslations } from '../useTranslations'
@@ -55,7 +56,7 @@ export default function RenameItem({
                     onChange={(e) => setName(e.target.value)}
                     placeholder={productTitle}
                     autoFocus
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
             <label className="block text-xs font-medium">
@@ -65,7 +66,7 @@ export default function RenameItem({
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder={t('lists.add_note_placeholder')}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
             {renamed && (
@@ -77,7 +78,7 @@ export default function RenameItem({
                 <button
                     type="submit"
                     disabled={busy}
-                    className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                    className={buttonClasses('primary', 'sm')}
                 >
                     {t('lists.save_changes')}
                 </button>

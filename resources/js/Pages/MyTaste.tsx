@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
-import Button from '../Components/Button'
+import Button, { fieldClasses } from '../Components/Button'
 import InfoTip from '../Components/InfoTip'
 import PageHeader from '../Components/PageHeader'
 import TastePairs from '../Components/TastePairs'
@@ -216,7 +216,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
                                 }}
                                 placeholder={t('gift.interests_other_placeholder')}
                                 aria-label={t('my_taste.interests_other')}
-                                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                className={fieldClasses('min-w-0 flex-1', { inline: true })}
                             />
                             <Button type="button" variant="secondary" size="sm" onClick={addOwn} disabled={interestsFull}>
                                 {t('my_taste.add')}
@@ -298,7 +298,7 @@ export default function MyTaste({ taste, options, urls }: Props) {
                                 }}
                                 placeholder={t('my_taste.avoid_placeholder')}
                                 aria-label={t('my_taste.avoid')}
-                                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                className={fieldClasses('min-w-0 flex-1', { inline: true })}
                             />
                             <Button type="button" variant="secondary" size="sm" onClick={addAvoid}>
                                 {t('my_taste.add')}

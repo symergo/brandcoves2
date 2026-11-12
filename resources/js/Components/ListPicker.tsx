@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { useTranslations } from '../useTranslations'
-import { fieldClasses } from './Button'
+import { fieldClasses, buttonClasses } from './Button'
 import { kindIcons, type ListKind } from './ListKindBadge'
 import ToolIcon from './ToolIcon'
 
@@ -203,7 +203,7 @@ export function ListPickerNameForm({
                 <button
                     type="submit"
                     disabled={busy || name.trim() === ''}
-                    className="flex-1 rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50"
+                    className={buttonClasses('primary', 'sm', 'flex-1')}
                 >
                     {submitLabel}
                 </button>

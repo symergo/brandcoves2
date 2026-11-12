@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from '../../Components/Button'
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import { takeAskBrief } from '../../askBrief'
@@ -340,7 +341,7 @@ export default function AskIndex({
                         <button
                             type="button"
                             onClick={() => setAsking(true)}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark"
+                            className={buttonClasses('primary', 'md')}
                         >
                             {t('ask.ask_cta')}
                         </button>
@@ -428,7 +429,7 @@ export default function AskIndex({
                             value={form.data.title}
                             onChange={(e) => form.setData('title', e.target.value)}
                             placeholder={t('ask.question_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                            className={fieldClasses()}
                         />
                     </label>
                     {form.errors.title && <p className="text-sm text-danger">{form.errors.title}</p>}
@@ -441,7 +442,7 @@ export default function AskIndex({
                             value={form.data.body}
                             onChange={(e) => form.setData('body', e.target.value)}
                             placeholder={t('ask.detail_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+                            className={fieldClasses()}
                         />
                     </label>
 
@@ -487,7 +488,7 @@ export default function AskIndex({
                                         value={form.data.occasion}
                                         onChange={(e) => form.setData('occasion', e.target.value)}
                                         placeholder={t('ask.occasion_placeholder')}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                        className={fieldClasses()}
                                     />
                                 </label>
 
@@ -498,7 +499,7 @@ export default function AskIndex({
                                         value={form.data.age_band}
                                         onChange={(e) => form.setData('age_band', e.target.value)}
                                         placeholder={t('ask.age_placeholder')}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                        className={fieldClasses()}
                                     />
                                 </label>
 
@@ -508,7 +509,7 @@ export default function AskIndex({
                                         inputMode="decimal"
                                         value={form.data.budget_max}
                                         onChange={(e) => form.setData('budget_max', e.target.value)}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                        className={fieldClasses()}
                                     />
                                     <span className="mt-1 block text-xs font-normal text-ink-soft">
                                         {t('ask.budget_hint')}
@@ -525,7 +526,7 @@ export default function AskIndex({
                         <button
                             type="submit"
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
+                            className={buttonClasses('primary', 'md')}
                         >
                             {t('ask.submit')}
                         </button>

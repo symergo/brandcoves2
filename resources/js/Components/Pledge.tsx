@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { SharedProps } from '../types'
@@ -210,7 +211,7 @@ export default function Pledge({
                                         maxLength={80}
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                        className={fieldClasses()}
                                     />
                                 </label>
 
@@ -233,7 +234,7 @@ export default function Pledge({
                                             inputMode="decimal"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
-                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                            className={fieldClasses()}
                                         />
                                     </label>
                                 ) : (
@@ -250,7 +251,7 @@ export default function Pledge({
                             <div className="flex gap-2">
                                 <button
                                     type="submit"
-                                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white"
+                                    className={buttonClasses('primary', 'sm', 'text-xs')}
                                 >
                                     {t('pledges.join')}
                                 </button>

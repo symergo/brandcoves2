@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { useConfirm } from './Modal'
@@ -86,7 +87,7 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
                         value={title}
                         maxLength={80}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                        className={fieldClasses()}
                     />
                     {errors?.title && <p className="mt-1 text-xs text-danger">{errors.title}</p>}
 
@@ -104,7 +105,7 @@ export default function PublishCove({ base, listId, state }: { base: string; lis
                             type="button"
                             onClick={publish}
                             disabled={busy || title.trim() === ''}
-                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                            className={buttonClasses('primary', 'md')}
                         >
                             {state.published ? t('community.update') : t('community.publish')}
                         </button>

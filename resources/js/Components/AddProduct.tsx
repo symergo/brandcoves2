@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { router } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import { formatPrice } from '../types'
@@ -507,7 +508,7 @@ export default function AddProduct({
                                 maxLength={500}
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                className={fieldClasses()}
                             />
                         </label>
                     )}
@@ -536,7 +537,7 @@ export default function AddProduct({
                                     placeholder="https://"
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
-                                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                    className={fieldClasses()}
                                 />
                             </label>
 
@@ -546,7 +547,7 @@ export default function AddProduct({
                                     inputMode="decimal"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                    className={fieldClasses()}
                                 />
                             </label>
                         </div>
@@ -588,7 +589,7 @@ export default function AddProduct({
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             placeholder={t('lists.add_note_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                            className={fieldClasses()}
                         />
                     </label>
 
@@ -598,7 +599,7 @@ export default function AddProduct({
                         <button
                             type="submit"
                             disabled={busy}
-                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                            className={buttonClasses('primary', 'md')}
                         >
                             {t('lists.manual_save')}
                         </button>

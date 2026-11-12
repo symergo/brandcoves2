@@ -136,6 +136,22 @@ export function fieldClasses(className = '', { inline = false }: { inline?: bool
         .join(' ')
 }
 
+/**
+ * Something to tap from a set (an interest, a name, a suggestion): outlined,
+ * dark once chosen. Started on the Secret Friend pages (2026-11-12) and lives
+ * here with the button and the field, so a new set of chips has one recipe to
+ * reach for instead of the fifty-odd hand-written pills the site grew.
+ */
+export function chipClasses(on = false, className = ''): string {
+    return [
+        'rounded-full border px-3 py-1.5 text-sm transition',
+        on ? 'border-ink bg-ink text-white' : 'border-line bg-card text-ink hover:border-ink',
+        className,
+    ]
+        .filter(Boolean)
+        .join(' ')
+}
+
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant
     size?: ButtonSize

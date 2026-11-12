@@ -4,7 +4,7 @@ import { buttonClasses, fieldClasses } from '../../Components/Button'
 import { useConfirm } from '../../Components/Modal'
 import { chipClasses, Countdown, HintsForm, Progress } from '../../Components/SantaGame'
 import ShareRow from '../../Components/ShareRow'
-import HeroGift from '../../Components/HeroGift'
+import GiftArt from '../../Components/GiftArt'
 import ToolIcon from '../../Components/ToolIcon'
 import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -256,10 +256,7 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists, i
                             {/* Says why the button is disabled, rather than a button that simply does nothing. */}
                             {joined < 2 && <p className="mt-2 text-sm text-ink">{t('santa.draw_needs_two')}</p>}
                         </div>
-                        <div aria-hidden="true" className="relative hidden aspect-square w-28 shrink-0 sm:block">
-                            <span className="absolute inset-0 rounded-full bg-peach" />
-                            <HeroGift className="absolute top-[18%] left-[12%] h-auto w-[76%]" />
-                        </div>
+                        <GiftArt variant="badge" className="hidden w-28 sm:block" />
                     </section>
                 )}
 

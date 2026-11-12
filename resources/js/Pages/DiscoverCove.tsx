@@ -1,3 +1,4 @@
+import { buttonClasses } from '../Components/Button'
 import { Head, Link, usePage } from '@inertiajs/react'
 import { useState, type ReactNode } from 'react'
 import CoveIcon from '../Components/CoveIcon'
@@ -158,7 +159,7 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
                         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
                             <Link
                                 href={today.url}
-                                className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                className={buttonClasses('primary', 'md')}
                             >
                                 {t('home.today_cta')}
                             </Link>
@@ -189,7 +190,7 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
                         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                             <Link
                                 href={urls.taste}
-                                className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                className={buttonClasses('primary', 'md')}
                             >
                                 {t('discover_cove.taste_cta')}
                             </Link>
@@ -317,7 +318,7 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
                     </div>
                     <Link
                         href={`${urls.ask}?new=1`}
-                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-4 font-medium text-white hover:bg-accent-dark"
+                        className={buttonClasses('primary', 'md', 'shrink-0')}
                     >
                         {t('ask.ask_cta')}
                     </Link>

@@ -1,3 +1,4 @@
+import { buttonClasses, fieldClasses } from './Button'
 import { router } from '@inertiajs/react'
 import { useState } from 'react'
 import { useTranslations } from '../useTranslations'
@@ -115,7 +116,7 @@ export default function ManualItem({
                     maxLength={500}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    className={fieldClasses()}
                 />
             </label>
 
@@ -129,7 +130,7 @@ export default function ManualItem({
                         placeholder="https://"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                        className={fieldClasses()}
                     />
                 </label>
 
@@ -139,7 +140,7 @@ export default function ManualItem({
                         inputMode="decimal"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                        className={fieldClasses()}
                     />
                 </label>
             </div>
@@ -151,7 +152,7 @@ export default function ManualItem({
                         maxLength={500}
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                        className={fieldClasses()}
                     />
                 </label>
             )}
@@ -162,7 +163,7 @@ export default function ManualItem({
             {error && <p className="text-sm text-danger">{error}</p>}
 
             <div className="flex gap-2">
-                <button type="submit" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white">
+                <button type="submit" className={buttonClasses('primary', 'md')}>
                     {t('lists.manual_save')}
                 </button>
                 <button

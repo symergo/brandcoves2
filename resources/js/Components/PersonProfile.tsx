@@ -862,7 +862,7 @@ function AboutForm({
                             }}
                             placeholder={t('gift.interests_other_placeholder')}
                             aria-label={t('gift.interests_other')}
-                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                            className={fieldClasses('min-w-0 flex-1', { inline: true })}
                         />
                         <Button type="button" variant="secondary" size="sm" onClick={addOwn} disabled={full}>
                             {t('people.add_word')}
@@ -947,7 +947,7 @@ function AboutForm({
                             }}
                             placeholder={t('people.avoid_placeholder')}
                             aria-label={t('people.field_avoid')}
-                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                            className={fieldClasses('min-w-0 flex-1', { inline: true })}
                         />
                         <Button type="button" variant="secondary" size="sm" onClick={addAvoid}>
                             {t('people.add_word')}

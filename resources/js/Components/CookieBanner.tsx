@@ -1,3 +1,4 @@
+import { buttonClasses } from './Button'
 import { Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import { updateConsent } from '../analytics'
@@ -113,7 +114,7 @@ export default function CookieBanner() {
                     <button
                         type="button"
                         onClick={() => answer('granted')}
-                        className="rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark"
+                        className={buttonClasses('primary', 'md')}
                     >
                         {t('cookies.accept')}
                     </button>

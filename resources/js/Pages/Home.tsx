@@ -3,7 +3,7 @@ import CoveSubscribe from '../Components/CoveSubscribe'
 import SaveToList from '../Components/SaveToList'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import SearchCard from '../Components/SearchCard'
-import HeroGift from '../Components/HeroGift'
+import GiftArt from '../Components/GiftArt'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import { buttonClasses } from '../Components/Button'
 import { formatCountdown, formatDay, formatPrice, type SharedProps } from '../types'
@@ -155,12 +155,7 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
                       replaced the line drawing of shops, a cove and two
                       people. Decoration only.
                     */}
-                    <div className="relative aspect-[5/4] w-full max-w-[18rem] justify-self-center md:max-w-sm">
-                        <span aria-hidden="true" className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
-                        <span aria-hidden="true" className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
-                        <span aria-hidden="true" className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
-                        <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
-                    </div>
+                    <GiftArt className="max-w-[18rem] justify-self-center md:max-w-sm" />
                 </div>
                 {/* "Zoek · Verzamel · Deel" stood here until the owner removed it (2026-09-27). */}
             </section>
@@ -252,7 +247,7 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
                 </div>
                 <Link
                     href={`${base}/santa?new=1`}
-                    className="inline-block rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-dark"
+                    className={buttonClasses('primary', 'lg', 'text-center')}
                 >
                     {t('home.santa_cta')} →
                 </Link>
@@ -459,10 +454,7 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
                             </h2>
                             <p className="mt-2 text-ink">{t('home.final_body')}</p>
                         </div>
-                        <div aria-hidden="true" className="relative hidden aspect-square w-24 shrink-0 sm:block">
-                            <span className="absolute inset-0 rounded-full bg-peach" />
-                            <HeroGift className="absolute top-[18%] left-[12%] h-auto w-[76%]" />
-                        </div>
+                        <GiftArt variant="badge" className="hidden w-24 sm:block" />
                     </div>
                     <Link href={createCove} className={`mt-6 self-start ${buttonClasses('primary', 'lg')}`}>
                         {t('home.cta_create')} <span aria-hidden="true">→</span>

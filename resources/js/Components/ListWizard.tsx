@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import { Honeypot, useFormClock } from './BotTrap'
-import { fieldClasses } from './Button'
+import { fieldClasses, buttonClasses } from './Button'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 import PersonPicker, { type PickablePerson } from './PersonPicker'
@@ -426,7 +426,7 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
         <button
             type="submit"
             disabled={!ready || form.processing}
-            className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+            className={buttonClasses('primary', 'lg')}
         >
             {t(isSanta ? 'santa.create' : 'lists.create')}
         </button>
@@ -463,7 +463,7 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
                     type="button"
                     onClick={startAsVisitor}
                     disabled={!ready || guestState === 'busy' || !/^\S+@\S+\.\S+$/.test(guestEmail)}
-                    className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                    className={buttonClasses('primary', 'lg')}
                 >
                     {guestState === 'busy' ? t('auth.sending') : t(isSanta ? 'santa.create' : 'wizard.guest_create')}
                 </button>
@@ -696,13 +696,20 @@ export default function ListWizard({ signedIn, recipients, friends, myLists, rel
             */}
             <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 text-sm text-ink-soft">
                 {!isSanta && <p>{t('wizard.one_step_hint')}</p>}
-                <button
-                    type="button"
-                    onClick={() => choose(isSanta ? 'mine' : 'santa')}
-                    className="underline hover:text-ink"
-                >
-                    {isSanta ? t('wizard.not_santa') : `${t('wizard.or_santa')} (${t('santa.title')})`}
-                </button>
+                {/*
+                  A link to the Secret Friend page since 2026-11-12. It
+                  switched this form into a second "start a group" form with
+                  fewer fields than the real one; one form is enough.
+                */}
+                {isSanta ? (
+                    <button type="button" onClick={() => choose('mine')} className="underline hover:text-ink">
+                        {t('wizard.not_santa')}
+                    </button>
+                ) : (
+                    <a href={`${base}/santa?new=1`} className="underline hover:text-ink">
+                        {`${t('wizard.or_santa')} (${t('santa.title')})`}
+                    </a>
+                )}
             </div>
         </form>
     )

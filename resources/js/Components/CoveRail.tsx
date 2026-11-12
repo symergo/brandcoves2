@@ -1,3 +1,4 @@
+import { buttonClasses } from './Button'
 import { Link, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -134,7 +135,7 @@ export default function CoveRail({ rail }: { rail: Rail }) {
 
                 <Link
                     href={`/${market.key}/gift-cove`}
-                    className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                    className={buttonClasses('primary', 'md', 'mt-4')}
                 >
                     {t('gift_cove.rail_cta')}
                 </Link>

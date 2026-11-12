@@ -1,3 +1,4 @@
+import { buttonClasses } from './Button'
 import { Link, usePage } from '@inertiajs/react'
 import { addedCount, subscribe as subscribeToCount } from '../addingMode'
 import { useSyncExternalStore } from 'react'
@@ -59,7 +60,7 @@ export default function AddingToBar() {
                 */}
                 <Link
                     href={`/${market.key}/done-adding`}
-                    className="shrink-0 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent-dark"
+                    className={buttonClasses('primary', 'sm', 'shrink-0 text-xs')}
                 >
                     {t('lists.done_adding')}
                 </Link>

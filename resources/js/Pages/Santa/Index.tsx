@@ -6,7 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import { Honeypot, useFormClock } from '../../Components/BotTrap'
 import Button, { fieldClasses } from '../../Components/Button'
-import HeroGift from '../../Components/HeroGift'
+import GiftArt from '../../Components/GiftArt'
 
 interface Group {
     id: string
@@ -286,12 +286,7 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                     </div>
                 </div>
 
-                <div aria-hidden="true" className="relative hidden aspect-[5/4] w-full max-w-sm justify-self-center md:block">
-                    <span className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
-                    <span className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
-                    <span className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
-                    <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
-                </div>
+                <GiftArt className="hidden max-w-sm justify-self-center md:block" />
             </section>
 
             <ol className="mt-10 grid gap-4 md:grid-cols-3">

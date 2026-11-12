@@ -1,3 +1,4 @@
+import { buttonClasses } from '../../Components/Button'
 import { Head, Link } from '@inertiajs/react'
 import { Inline } from './HelpTopic'
 
@@ -53,7 +54,7 @@ export default function ListHelpIndex({ copy, topics, urls }: Props) {
                 <div className="mt-12 flex flex-wrap gap-3">
                     <Link
                         href={urls.search}
-                        className="rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark"
+                        className={buttonClasses('primary', 'md')}
                     >
                         {copy.cta_search}
                     </Link>
