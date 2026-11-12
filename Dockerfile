@@ -4,9 +4,25 @@
 # there is one container to reason about instead of two that have to agree on a
 # socket. It also gives us Octane later without changing the deployment shape.
 
+# ---------------------------------------------------- base images, pinned ----
+# Each base image is named by its digest as well as its tag (2026-11-12).
+#
+# The tags float: upstream republishes `php8.4-alpine` and `24-alpine` every
+# few days. A deploy that met a new one threw away every cached layer above
+# it, downloaded the images again and recompiled the PHP extensions from
+# source: 259 of the 417 seconds of the slow deploy that day, against 84
+# seconds for the next one on the same code. Pinned, a deploy only ever
+# rebuilds what the commit changed.
+#
+# The price is that base-image security updates no longer arrive by
+# themselves. Bump the three digests on purpose, about once a month or when an
+# advisory says so: `docker buildx imagetools inspect <image:tag>` prints the
+# current digest; expect that one deploy to take the long road.
+# See docs/deploy-speed.md.
+
 # ------------------------------------------------------------ frontend ------
 # Vite runs in its own stage so Node never reaches the runtime image.
-FROM node:24-alpine AS frontend
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS frontend
 WORKDIR /build
 
 COPY package.json package-lock.json ./
@@ -42,7 +58,7 @@ ENV VITE_APP_NAME=$VITE_APP_NAME
 RUN npm run build
 
 # ------------------------------------------------------------- vendor -------
-FROM composer:2 AS vendor
+FROM composer:2@sha256:ca11f643d7791ebdd90a34fc20caf11380d434007ae539a9ea75cd9212e13dca AS vendor
 WORKDIR /build
 COPY composer.json composer.lock ./
 # --no-scripts: artisan is not present yet and package discovery needs the full
@@ -69,7 +85,7 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
 #
 # Runs the bundle directly rather than via `artisan inertia:start-ssr`, which is
 # a thin wrapper that adds a PHP process and a failure mode for no benefit.
-FROM node:24-alpine AS ssr
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS ssr
 # tini as PID 1 (2026-11-11). Node running as PID 1 ignores SIGTERM, so every
 # deploy waited Coolify's full 30-second stop timeout for this container before
 # killing it, and the site was down for that wait (old containers go before the
@@ -82,7 +98,7 @@ ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "bootstrap/ssr/ssr.js"]
 
 # ------------------------------------------------------------ runtime -------
-FROM dunglas/frankenphp:php8.4-alpine AS runtime
+FROM dunglas/frankenphp:php8.4-alpine@sha256:0b9e020d7c3c17157d8fb051f67ce329b816fcbba456a19c45613fe0ef9fcb78 AS runtime
 
 # pcntl and posix are what Horizon needs to supervise its workers — they have no
 # Windows build, which is why dev uses `queue:work` and production uses Horizon.
