@@ -1035,7 +1035,7 @@ return [
         'exchange_date' => '¿Cuándo os haréis los regalos?',
         'theme' => 'Tema (opcional)',
         'invite' => 'Enlace de invitación',
-        'invite_hint' => 'Envíaselo a todos. Se unen con un nombre y un correo.',
+        'invite_hint' => 'Envía este enlace al grupo para que los participantes se apunten ellos mismos.',
         'join' => 'Unirme a este grupo',
         'your_name' => 'Tu nombre',
         'your_email' => 'Tu correo',

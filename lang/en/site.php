@@ -1219,7 +1219,7 @@ return [
         'exchange_date' => 'When are you exchanging?',
         'theme' => 'Theme (optional)',
         'invite' => 'Invite link',
-        'invite_hint' => 'Send this to everyone. They join with a name and an email.',
+        'invite_hint' => 'Send this link to the group so participants can sign themselves up.',
         'join' => 'Join this group',
         'your_name' => 'Your name',
         'your_email' => 'Your email',

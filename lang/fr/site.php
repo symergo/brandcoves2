@@ -1036,7 +1036,7 @@ return [
         'exchange_date' => 'Quand échangez-vous les cadeaux ?',
         'theme' => 'Thème (facultatif)',
         'invite' => 'Lien d’invitation',
-        'invite_hint' => 'Envoyez-le à tout le monde. On rejoint avec un nom et un e-mail.',
+        'invite_hint' => 'Envoyez ce lien au groupe pour que les participants s’inscrivent eux-mêmes.',
         'join' => 'Rejoindre ce groupe',
         'your_name' => 'Votre nom',
         'your_email' => 'Votre e-mail',

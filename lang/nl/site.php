@@ -1042,7 +1042,7 @@ return [
         'exchange_date' => 'Wanneer geven jullie de cadeaus?',
         'theme' => 'Thema (optioneel)',
         'invite' => 'Uitnodigingslink',
-        'invite_hint' => 'Stuur dit naar iedereen. Ze doen mee met een naam en een e-mailadres, zonder account.',
+        'invite_hint' => 'Stuur deze link naar de groep om deelnemers zichzelf te laten inschrijven.',
         'join' => 'Doe mee met deze groep',
         'your_name' => 'Je naam',
         'your_email' => 'Je e-mailadres',
