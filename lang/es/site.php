@@ -1172,6 +1172,7 @@ return [
         'invite_others' => '¿Falta alguien? Comparte el enlace',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
+            'kicker' => 'Sorteo de nombres, en línea',
             'lead' => 'Sortea los nombres con familia, amigos o compañeros. Cada uno descubre para quién compra, y nadie ve el resto.',
             'how_title' => 'Cómo funciona',
             'step1_title' => 'Crea un grupo',

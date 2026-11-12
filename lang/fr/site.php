@@ -1173,6 +1173,7 @@ return [
         'invite_others' => 'Quelqu’un a été oublié ? Partagez le lien',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
+            'kicker' => 'Tirage au sort, en ligne',
             'lead' => 'Tirez les noms en famille, entre amis ou collègues. Chacun découvre pour qui il achète, et personne ne voit le reste.',
             'how_title' => 'Comment ça marche',
             'step1_title' => 'Créez un groupe',

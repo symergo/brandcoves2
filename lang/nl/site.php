@@ -1179,6 +1179,7 @@ return [
         'invite_others' => 'Nog iemand vergeten? Deel de link',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
+            'kicker' => 'Lootjes trekken, online',
             'lead' => 'Trek namen met familie, vrienden of collega’s. Iedereen ontdekt voor wie die koopt, en niemand ziet de rest.',
             'how_title' => 'Zo werkt het',
             'step1_title' => 'Start een groep',

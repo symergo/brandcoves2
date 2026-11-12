@@ -6,7 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import { Honeypot, useFormClock } from '../../Components/BotTrap'
 import Button, { fieldClasses } from '../../Components/Button'
-import ToolIcon from '../../Components/ToolIcon'
+import HeroGift from '../../Components/HeroGift'
 
 interface Group {
     id: string
@@ -84,39 +84,26 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
             <Head title={t('santa.title')} />
 
             {/*
-              One screen: what it is on the left, the form on the right (under
-              it on a phone). Third pass, 2026-11-12: the first rebuild had a
-              steps card, a form card and two headings and was "busy"; the
-              second took the colour out and was "boring". This one has fewer
-              things, and lets the form be the colourful one.
+              The homepage's own look (fourth pass, 2026-11-12: "simpler, but
+              nicely styled"): the orange band with the wrapped present, the
+              words and the form on it as one white card, and the three steps
+              under it as the white cards the homepage uses for its ways in.
             */}
-            <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
-                <div>
-                    <ToolIcon name="santa" className="h-14 w-14 text-accent" duo />
-                    <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t('santa.title')}</h1>
-                    <p className="mt-3 text-lg text-ink-soft">{t('santa.hub.lead')}</p>
+            <section className={`grid items-center gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-12 -mt-6 bg-hero pt-8 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-12 sm:pb-12`} aria-labelledby="santa-title">
+                <div className="min-w-0">
+                    <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('santa.hub.kicker')}</p>
+                    <h1 id="santa-title" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
+                        {t('santa.title')}
+                    </h1>
+                    <p className="mt-4 max-w-2xl text-lg text-ink">{t('santa.hub.lead')}</p>
 
-                    <ol className="mt-6 space-y-3">
-                        {steps.map((step, index) => (
-                            <li key={step.title} className="flex items-start gap-3">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent-dark">
-                                    {index + 1}
-                                </span>
-                                <span>
-                                    <span className="font-medium">{step.title}.</span> <span className="text-ink-soft">{step.body}</span>
-                                </span>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
-
-                <div>
+                    <div className="mt-7 max-w-2xl">
                     {groups.length > 0 && (
                         <section className="mb-6" aria-labelledby="santa-groups">
-                            <h2 id="santa-groups" className="font-semibold">
+                            <h2 id="santa-groups" className="font-semibold text-ink">
                                 {t('santa.hub.your_groups')}
                             </h2>
-                            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-card bg-card shadow-[0_8px_24px_rgb(42_18_19/0.08)]">
                                 {groups.map((group) => (
                                     <li key={group.id}>
                                         <Link href={group.url} className="flex items-center gap-3 p-4 transition hover:bg-cream">
@@ -143,13 +130,13 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                     )}
 
                     {!creating ? (
-                        <Button type="button" onClick={() => setCreating(true)}>
+                        <Button type="button" variant="light" onClick={() => setCreating(true)}>
                             {t('santa.hub.start_another')}
                         </Button>
                     ) : (
                         <form
                             id="santa-create"
-                            className="rounded-card bg-accent/10 p-5 sm:p-6"
+                            className="rounded-card bg-card p-5 sm:p-6 shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
                             onSubmit={(e) => {
                                 e.preventDefault()
                                 // How long the form was open: the bot trap, see Components/BotTrap.
@@ -295,8 +282,30 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                             </p>
                         </form>
                     )}
+                    </div>
                 </div>
-            </div>
+
+                <div aria-hidden="true" className="relative hidden aspect-[5/4] w-full max-w-sm justify-self-center md:block">
+                    <span className="absolute top-[4%] left-[6%] aspect-square w-[62%] rounded-full bg-tint/80" />
+                    <span className="absolute top-[6%] right-0 aspect-square w-[36%] rounded-full bg-peach" />
+                    <span className="absolute bottom-[2%] left-[16%] aspect-square w-[22%] rounded-full bg-peach/70" />
+                    <HeroGift className="absolute top-[12%] left-[16%] h-auto w-[68%]" />
+                </div>
+            </section>
+
+            <ol className="mt-10 grid gap-4 md:grid-cols-3">
+                {steps.map((step, index) => (
+                    <li key={step.title} className="rounded-card border border-line bg-card p-6">
+                        <span className="flex items-center gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 font-semibold text-accent-dark">
+                                {index + 1}
+                            </span>
+                            <span className="text-lg font-semibold">{step.title}</span>
+                        </span>
+                        <p className="mt-2 text-ink-soft">{step.body}</p>
+                    </li>
+                ))}
+            </ol>
 
             <p className="mt-12 text-sm text-ink-soft">
                 <Link href={`/${market.key}/lists-help/santa`} className="underline hover:text-ink">

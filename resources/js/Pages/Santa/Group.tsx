@@ -2,9 +2,9 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { buttonClasses, fieldClasses } from '../../Components/Button'
 import { useConfirm } from '../../Components/Modal'
-import PageHeader from '../../Components/PageHeader'
 import { chipClasses, Countdown, Progress } from '../../Components/SantaGame'
 import ShareRow from '../../Components/ShareRow'
+import HeroGift from '../../Components/HeroGift'
 import ToolIcon from '../../Components/ToolIcon'
 import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -83,9 +83,14 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
               that card. Everything occasional (my list, couples, the automatic
               draw, deleting) is a line that opens, not a box.
             */}
-            <div className="mx-auto max-w-2xl">
-                <PageHeader size="md" back={{ href: `/${market.key}/santa`, label: t('santa.title') }} title={group.title}>
-                    <p className="mt-2 text-ink-soft">
+            {/* The band from the homepage, with this group's name on it and my own row as its white card. */}
+            <div className={`-mt-6 bg-hero pt-8 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-12 sm:pb-12`}>
+                <div className="mx-auto max-w-2xl">
+                    <Link href={`/${market.key}/santa`} className="text-sm text-ink hover:underline">
+                        ← {t('santa.title')}
+                    </Link>
+                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance text-ink sm:text-3xl">{group.title}</h1>
+                    <p className="mt-2 text-ink">
                         {[
                             group.drawn ? t('santa.hub.status_drawn') : t('santa.hub.status_open'),
                             group.budgetMax !== null ? formatBudget(group.budgetMax, market) : null,
@@ -95,36 +100,38 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                             .filter(Boolean)
                             .join(' · ')}
                     </p>
-                    <p className="mt-1">
+                    <p className="mt-1 [&>span]:text-ink">
                         <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
                     </p>
-                </PageHeader>
 
-                {/* Mine: one row to my own page. No name on it until I turned my card there. */}
-                {me && (
-                    <Link
-                        href={`${base}/me/${me.joinToken}`}
-                        className="mt-6 flex items-center gap-4 rounded-card bg-accent/10 p-4 transition hover:bg-accent/15"
-                    >
-                        <ToolIcon name="santa" className="h-9 w-9 shrink-0 text-accent" duo />
-                        <span className="min-w-0 flex-1">
-                            <span className="block font-medium">
-                                {group.drawn && me.giftee
-                                    ? me.revealed
-                                        ? t('santa.you_have', { name: me.giftee.name })
-                                        : t('santa.reveal_title')
-                                    : t('santa.group.for_you')}
+                    {/* Mine: one row to my own page. No name on it until I turned my card there. */}
+                    {me && (
+                        <Link
+                            href={`${base}/me/${me.joinToken}`}
+                            className="mt-6 flex items-center gap-4 rounded-card bg-card p-4 transition hover:bg-cream shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
+                        >
+                            <ToolIcon name="santa" className="h-9 w-9 shrink-0 text-accent" duo />
+                            <span className="min-w-0 flex-1">
+                                <span className="block font-medium">
+                                    {group.drawn && me.giftee
+                                        ? me.revealed
+                                            ? t('santa.you_have', { name: me.giftee.name })
+                                            : t('santa.reveal_title')
+                                        : t('santa.group.for_you')}
+                                </span>
+                                <span className="block text-sm text-ink-soft">
+                                    {group.drawn && me.giftee && !me.revealed ? t('santa.reveal_tap') : t('santa.group.mine_before')}
+                                </span>
                             </span>
-                            <span className="block text-sm text-ink-soft">
-                                {group.drawn && me.giftee && !me.revealed ? t('santa.reveal_tap') : t('santa.group.mine_before')}
+                            <span aria-hidden className="text-accent-dark">
+                                →
                             </span>
-                        </span>
-                        <span aria-hidden className="text-accent-dark">
-                            →
-                        </span>
-                    </Link>
-                )}
+                        </Link>
+                    )}
+                </div>
+            </div>
 
+            <div className="mx-auto max-w-2xl">
                 {/* The people: who is in, and the two ways to get more of them in. */}
                 <section className="mt-8" aria-labelledby="santa-members">
                     <h2 id="santa-members" className="text-lg font-semibold">
@@ -224,25 +231,31 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
 
                 {/* The draw: the one red button, with what it does said under it. */}
                 {isOrganiser && !group.drawn && (
-                    <section className="mt-10 rounded-card bg-accent/10 p-6 text-center" aria-labelledby="santa-draw">
-                        <h2 id="santa-draw" className="text-lg font-semibold">
-                            {t('santa.group.step_draw')}
-                        </h2>
-                        <p className="mx-auto mt-1 max-w-md text-sm text-ink-soft">{t('santa.group.draw_hint')}</p>
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                if (await confirm({ message: t('santa.draw_confirm', { count: String(joined) }), confirmLabel: t('santa.draw') })) {
-                                    router.post(`${base}/draw`)
-                                }
-                            }}
-                            disabled={joined < 2}
-                            className={buttonClasses('primary', 'lg', 'mt-4 px-10')}
-                        >
-                            {t('santa.draw')}
-                        </button>
-                        {/* Says why the button is disabled, rather than a button that simply does nothing. */}
-                        {joined < 2 && <p className="mt-2 text-sm text-ink-soft">{t('santa.draw_needs_two')}</p>}
+                    <section className="mt-10 flex items-center gap-5 rounded-card bg-hero p-6 text-ink sm:p-8" aria-labelledby="santa-draw">
+                        <div className="min-w-0 flex-1">
+                            <h2 id="santa-draw" className="text-2xl font-semibold tracking-tight">
+                                {t('santa.group.step_draw')}
+                            </h2>
+                            <p className="mt-2 text-ink">{t('santa.group.draw_hint')}</p>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (await confirm({ message: t('santa.draw_confirm', { count: String(joined) }), confirmLabel: t('santa.draw') })) {
+                                        router.post(`${base}/draw`)
+                                    }
+                                }}
+                                disabled={joined < 2}
+                                className={buttonClasses('primary', 'lg', 'mt-5 px-8')}
+                            >
+                                {t('santa.draw')} <span aria-hidden="true">→</span>
+                            </button>
+                            {/* Says why the button is disabled, rather than a button that simply does nothing. */}
+                            {joined < 2 && <p className="mt-2 text-sm text-ink">{t('santa.draw_needs_two')}</p>}
+                        </div>
+                        <div aria-hidden="true" className="relative hidden aspect-square w-28 shrink-0 sm:block">
+                            <span className="absolute inset-0 rounded-full bg-peach" />
+                            <HeroGift className="absolute top-[18%] left-[12%] h-auto w-[76%]" />
+                        </div>
                     </section>
                 )}
 

@@ -1356,6 +1356,7 @@ return [
         'invite_others' => 'Forgot somebody? Share the link',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
+            'kicker' => 'Draw names, online',
             'lead' => 'Draw names with family, friends or colleagues. Everybody finds out who they are buying for, and nobody sees the rest.',
             'how_title' => 'How it works',
             'step1_title' => 'Start a group',

@@ -382,3 +382,5 @@ joiner. An address already in the group is refused; one that was removed earlier
 same row. Forty an hour per group, because this is a form that mails an address somebody else typed.
 
 **Third pass, same evening** ("Looks boring now. Make it look simpler"): fewer things rather than fewer colours. The start page is one screen, what it is on the left and the form (the one tinted block, one full-width red button) on the right. The group page is two things, the people and the draw: the "add somebody" row is the last row of the people card, the invite link sits under it, and my list, couples, the automatic draw and deleting are lines that open instead of boxes.
+
+**Fourth pass** ("But nicely styled"): the homepage's own vocabulary rather than a new one. Both pages open on the orange band with the wrapped present; the start form and "for you" are white cards on it; the three steps are the white cards the homepage uses for its ways in; the draw is the orange call-to-action card with the red button.
