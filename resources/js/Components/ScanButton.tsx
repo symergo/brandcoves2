@@ -1,3 +1,4 @@
+import ToolIcon from './ToolIcon'
 import { useEffect, useRef, useState } from 'react'
 import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
@@ -159,15 +160,18 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                     }}
                 >
                     <div className="flex h-full w-full flex-col overflow-y-auto bg-cream p-5 sm:h-auto sm:max-w-md sm:rounded-lg sm:shadow-lg">
-                        <div className="mb-3 flex items-baseline justify-between gap-4">
+                        <div className="mb-3 flex items-start justify-between gap-4">
                             <h2 className="font-medium">{t('scan.title')}</h2>
+                            {/* The same X as every other popup (owner, 2026-11-12); it was the word, underlined. */}
                             <button
                                 type="button"
                                 ref={closer}
                                 onClick={() => setOpen(false)}
-                                className="text-sm text-ink-soft underline"
+                                aria-label={t('scan.close')}
+                                title={t('scan.close')}
+                                className="-mt-1 -mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
                             >
-                                {t('scan.close')}
+                                <ToolIcon name="close" className="h-4 w-4" />
                             </button>
                         </div>
 

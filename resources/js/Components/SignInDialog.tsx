@@ -4,6 +4,7 @@ import type { SharedProps } from '../types'
 import { useBackCloses } from '../useBackCloses'
 import { useTranslations } from '../useTranslations'
 import EmailSignIn, { WhySignIn } from './EmailSignIn'
+import ToolIcon from './ToolIcon'
 
 /**
  * Signing in without leaving the page you were on.
@@ -97,9 +98,21 @@ export default function SignInDialog({
             {/* Named by aria-labelledby, not a heading (2026-11-08): the closed
                 dialog is in every page's HTML, and "Inloggen" was a heading on
                 every page Google read. */}
-            <p id="sign-in-title" className="text-lg font-semibold">
-                {t('auth.title')}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+                <p id="sign-in-title" className="text-lg font-semibold">
+                    {t('auth.title')}
+                </p>
+                {/* The X every popup has (owner, 2026-11-12); Escape and the backdrop still close it too. */}
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label={t('nav.close')}
+                    title={t('nav.close')}
+                    className="-mt-1 -mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
+                >
+                    <ToolIcon name="close" className="h-4 w-4" />
+                </button>
+            </div>
             {/* A page's own reason to sign in, when it gave one. The general
                 line ("we send you a link") went on 2026-10-25 (owner): the
                 email form says it now, where it applies. */}

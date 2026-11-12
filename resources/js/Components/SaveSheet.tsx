@@ -1,3 +1,4 @@
+import ToolIcon from './ToolIcon'
 import { type ReactNode, type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslations } from '../useTranslations'
@@ -181,6 +182,18 @@ export default function SaveSheet({
                 >
                     {/* A grab handle: the one shape everybody reads as "this slides away". */}
                     <div aria-hidden className="mx-auto mb-2 h-1 w-10 rounded-full bg-line" />
+                    {/* The X every popup has (owner, 2026-11-12), beside the grab handle's way out. */}
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label={t('nav.close')}
+                            title={t('nav.close')}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
+                        >
+                            <ToolIcon name="close" className="h-4 w-4" />
+                        </button>
+                    </div>
                     {children}
                 </div>
             </div>,
@@ -206,6 +219,17 @@ export default function SaveSheet({
             }}
             className="z-50 overflow-y-auto rounded-card border border-line bg-card p-2 text-left shadow-xl"
         >
+            <div className="flex justify-end">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label={t('nav.close')}
+                    title={t('nav.close')}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
+                >
+                    <ToolIcon name="close" className="h-4 w-4" />
+                </button>
+            </div>
             {children}
         </div>,
         document.body,

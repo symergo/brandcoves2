@@ -113,19 +113,25 @@ export default function Modal({
             aria-label={label ?? (typeof title === 'string' ? title : undefined)}
             className={`${shape} overflow-x-hidden overflow-y-auto ${role === 'alertdialog' ? 'bg-card' : 'bg-cream sm:bg-card'} p-6 text-ink backdrop:bg-ink/40 ${sectionTitles}`}
         >
-            {title !== undefined && (
-                <div className="flex items-start justify-between gap-3">
-                    <h2 className="min-w-0 text-lg font-semibold break-words">{title}</h2>
+            {/*
+              An X on every popup (owner, 2026-11-12: "Add a close X to all
+              popups"). It was only drawn beside a title, so a confirmation
+              and any untitled popup closed by Escape, the backdrop or its own
+              Cancel, none of which is something to look for. Untitled, the X
+              gets a row of its own, right-aligned.
+            */}
+            <div className={`flex items-start gap-3 ${title !== undefined ? 'justify-between' : 'justify-end'}`}>
+                {title !== undefined && <h2 className="min-w-0 text-lg font-semibold break-words">{title}</h2>}
                     <button
                         type="button"
                         onClick={onClose}
                         aria-label={t('nav.close')}
+                        title={t('nav.close')}
                         className="-mt-1 -mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-line/40 hover:text-ink"
                     >
                         <ToolIcon name="close" className="h-4 w-4" />
                     </button>
-                </div>
-            )}
+            </div>
             {children}
         </dialog>
     )
