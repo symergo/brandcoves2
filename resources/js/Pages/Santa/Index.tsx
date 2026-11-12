@@ -6,7 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import { Honeypot, useFormClock } from '../../Components/BotTrap'
 import Button, { fieldClasses } from '../../Components/Button'
-import PageHeader from '../../Components/PageHeader'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Group {
     id: string
@@ -83,214 +83,222 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
         <>
             <Head title={t('santa.title')} />
 
-            <PageHeader className="max-w-3xl" title={t('santa.title')}>
-                <p className="mt-3 text-lg text-ink-soft">{t('santa.hub.lead')}</p>
-            </PageHeader>
+            {/*
+              One screen: what it is on the left, the form on the right (under
+              it on a phone). Third pass, 2026-11-12: the first rebuild had a
+              steps card, a form card and two headings and was "busy"; the
+              second took the colour out and was "boring". This one has fewer
+              things, and lets the form be the colourful one.
+            */}
+            <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
+                <div>
+                    <ToolIcon name="santa" className="h-14 w-14 text-accent" duo />
+                    <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t('santa.title')}</h1>
+                    <p className="mt-3 text-lg text-ink-soft">{t('santa.hub.lead')}</p>
 
-            {groups.length > 0 && (
-                <section className="mt-8" aria-labelledby="santa-groups">
-                    <h2 id="santa-groups" className="text-lg font-semibold">
-                        {t('santa.hub.your_groups')}
-                    </h2>
-                    <ul className="mt-3 grid gap-4 sm:grid-cols-2">
-                        {groups.map((group) => (
-                            <li key={group.id}>
-                                <Link href={group.url} className="block rounded-card border border-line bg-card p-5 transition hover:border-ink">
-                                    <span className="block font-medium">{group.title}</span>
-                                    <span className="mt-1 block text-sm text-ink-soft">
-                                        {[
-                                            group.drawn ? t('santa.hub.status_drawn') : t('santa.hub.status_open'),
-                                            t('santa.members_count', { count: String(group.members) }),
-                                            group.exchangeDate ? formatDay(group.exchangeDate, market, { year: 'auto' }) : null,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                    </span>
-                                </Link>
+                    <ol className="mt-6 space-y-3">
+                        {steps.map((step, index) => (
+                            <li key={step.title} className="flex items-start gap-3">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent-dark">
+                                    {index + 1}
+                                </span>
+                                <span>
+                                    <span className="font-medium">{step.title}.</span> <span className="text-ink-soft">{step.body}</span>
+                                </span>
                             </li>
                         ))}
-                    </ul>
-                </section>
-            )}
+                    </ol>
+                </div>
 
-            {/* The whole thing in three steps, before anybody types anything. */}
-            <section className="mt-10" aria-labelledby="santa-how">
-                <h2 id="santa-how" className="text-lg font-semibold">
-                    {t('santa.hub.how_title')}
-                </h2>
-                <ol className="mt-3 grid gap-x-8 gap-y-4 rounded-card border border-line bg-card p-5 md:grid-cols-3">
-                    {steps.map((step, index) => (
-                        <li key={step.title}>
-                            <span className="font-medium">
-                                {index + 1}. {step.title}
-                            </span>
-                            <p className="mt-1 text-sm text-ink-soft">{step.body}</p>
-                        </li>
-                    ))}
-                </ol>
-                <p className="mt-3 text-sm text-ink-soft">{t('santa.hub.perks')}</p>
-            </section>
+                <div>
+                    {groups.length > 0 && (
+                        <section className="mb-6" aria-labelledby="santa-groups">
+                            <h2 id="santa-groups" className="font-semibold">
+                                {t('santa.hub.your_groups')}
+                            </h2>
+                            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                                {groups.map((group) => (
+                                    <li key={group.id}>
+                                        <Link href={group.url} className="flex items-center gap-3 p-4 transition hover:bg-cream">
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block truncate font-medium">{group.title}</span>
+                                                <span className="block text-sm text-ink-soft">
+                                                    {[
+                                                        group.drawn ? t('santa.hub.status_drawn') : t('santa.hub.status_open'),
+                                                        t('santa.members_count', { count: String(group.members) }),
+                                                        group.exchangeDate ? formatDay(group.exchangeDate, market, { year: 'auto' }) : null,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' · ')}
+                                                </span>
+                                            </span>
+                                            <span aria-hidden className="text-ink-soft">
+                                                →
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
 
-            <section className="mt-10 max-w-3xl" aria-labelledby="santa-start">
-                {!creating ? (
-                    <Button type="button" onClick={() => setCreating(true)}>
-                        {t('santa.hub.start_another')}
-                    </Button>
-                ) : (
-                    <form
-                        id="santa-create"
-                        className="rounded-card border border-line bg-card p-5 sm:p-6"
-                        onSubmit={(e) => {
-                            e.preventDefault()
-                            // How long the form was open: the bot trap, see Components/BotTrap.
-                            form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
-                            form.post(`/${market.key}/santa`)
-                        }}
-                    >
-                        <h2 id="santa-start" className="text-lg font-semibold">
-                            {t('santa.hub.form_title')}
-                        </h2>
-                        <p className="mt-1 text-sm text-ink-soft">{t('santa.hub.form_hint')}</p>
+                    {!creating ? (
+                        <Button type="button" onClick={() => setCreating(true)}>
+                            {t('santa.hub.start_another')}
+                        </Button>
+                    ) : (
+                        <form
+                            id="santa-create"
+                            className="rounded-card bg-accent/10 p-5 sm:p-6"
+                            onSubmit={(e) => {
+                                e.preventDefault()
+                                // How long the form was open: the bot trap, see Components/BotTrap.
+                                form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
+                                form.post(`/${market.key}/santa`)
+                            }}
+                        >
+                            <div className="space-y-4">
+                                <label className="block">
+                                    <span className="font-medium">{t('santa.group_name')}</span>
+                                    <input
+                                        value={form.data.title}
+                                        onChange={(e) => form.setData('title', e.target.value)}
+                                        required
+                                        maxLength={120}
+                                        placeholder={t('santa.hub.name_placeholder')}
+                                        className={field}
+                                    />
+                                </label>
 
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                            <label className="block sm:col-span-2">
-                                <span className="text-sm font-medium">{t('santa.group_name')}</span>
-                                <input
-                                    value={form.data.title}
-                                    onChange={(e) => form.setData('title', e.target.value)}
-                                    required
-                                    maxLength={120}
-                                    placeholder={t('santa.hub.name_placeholder')}
-                                    className={field}
-                                />
-                            </label>
+                                {!isSignedIn && (
+                                    <>
+                                        <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <label className="block">
+                                                <span className="font-medium">{t('santa.organiser_name')}</span>
+                                                <input
+                                                    autoComplete="name"
+                                                    required
+                                                    maxLength={80}
+                                                    value={form.data.organiser_name}
+                                                    onChange={(e) => form.setData('organiser_name', e.target.value)}
+                                                    className={field}
+                                                />
+                                            </label>
+                                            <label className="block">
+                                                <span className="font-medium">{t('santa.organiser_email')}</span>
+                                                <input
+                                                    type="email"
+                                                    autoComplete="email"
+                                                    required
+                                                    value={form.data.organiser_email}
+                                                    onChange={(e) => form.setData('organiser_email', e.target.value)}
+                                                    className={field}
+                                                />
+                                            </label>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
 
-                            {!isSignedIn && (
-                                <>
-                                    <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
+                            {/* All optional, all changeable later on the group page. */}
+                            <details className="mt-4">
+                                <summary className="cursor-pointer text-sm text-ink-soft hover:text-ink">{t('santa.hub.more_options')}</summary>
+                                <div className="mt-3 grid gap-4 sm:grid-cols-2">
                                     <label className="block">
-                                        <span className="text-sm font-medium">{t('santa.organiser_name')}</span>
+                                        <span className="text-sm font-medium">{t('santa.hub.budget_label', { currency: market.currency })}</span>
+                                        {/* Whole euros in, cents stored by the server. */}
                                         <input
-                                            autoComplete="name"
-                                            required
-                                            maxLength={80}
-                                            value={form.data.organiser_name}
-                                            onChange={(e) => form.setData('organiser_name', e.target.value)}
+                                            type="number"
+                                            min={0}
+                                            step="1"
+                                            inputMode="numeric"
+                                            placeholder="25"
+                                            value={form.data.budget_max}
+                                            onChange={(e) => form.setData('budget_max', e.target.value)}
                                             className={field}
                                         />
                                     </label>
+
                                     <label className="block">
-                                        <span className="text-sm font-medium">{t('santa.organiser_email')}</span>
+                                        <span className="text-sm font-medium">{t('santa.exchange_date')}</span>
                                         <input
-                                            type="email"
-                                            autoComplete="email"
-                                            required
-                                            value={form.data.organiser_email}
-                                            onChange={(e) => form.setData('organiser_email', e.target.value)}
+                                            type="date"
+                                            value={form.data.exchange_date}
+                                            onChange={(e) => form.setData('exchange_date', e.target.value)}
                                             className={field}
                                         />
                                     </label>
-                                    <p className="text-sm text-ink-soft sm:col-span-2">
-                                        {t('santa.organiser_hint')}{' '}
+
+                                    <label className="block">
+                                        <span className="text-sm font-medium">{t('santa.theme')}</span>
+                                        <input
+                                            value={form.data.theme}
+                                            onChange={(e) => form.setData('theme', e.target.value)}
+                                            maxLength={120}
+                                            className={field}
+                                        />
+                                    </label>
+
+                                    <label className="block">
+                                        <span className="text-sm font-medium">{t('santa.draw_at_label')}</span>
+                                        <input
+                                            type="datetime-local"
+                                            value={form.data.draw_at}
+                                            onChange={(e) => form.setData('draw_at', e.target.value)}
+                                            className={field}
+                                        />
+                                    </label>
+
+                                    {/* Only when there is a list to choose. */}
+                                    {myLists.length > 0 && (
+                                        <label className="block sm:col-span-2">
+                                            <span className="text-sm font-medium">{t('santa.your_list')}</span>
+                                            <select
+                                                value={form.data.wishlist_id}
+                                                onChange={(e) => form.setData('wishlist_id', e.target.value)}
+                                                className={field}
+                                            >
+                                                <option value="">{t('santa.no_list_option')}</option>
+                                                {myLists.map((list) => (
+                                                    <option key={list.id} value={list.id}>
+                                                        {list.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    )}
+                                </div>
+                            </details>
+
+                            {/* What the server refused, beside the button that sent it. */}
+                            {Object.entries(form.errors).map(([name, message]) => (
+                                <p key={name} className="mt-4 text-sm text-danger" role="alert">
+                                    {message}
+                                </p>
+                            ))}
+
+                            <Button type="submit" size="lg" busy={form.processing} className="mt-5 w-full">
+                                {t('santa.create')}
+                            </Button>
+
+                            <p className="mt-3 text-center text-sm text-ink-soft">
+                                {t('santa.hub.perks')}
+                                {!isSignedIn && (
+                                    <>
+                                        {' '}
                                         <SignInLink hint={t('santa.create')} className="underline hover:text-ink">
                                             {t('nav.sign_in')}
                                         </SignInLink>
-                                    </p>
-                                </>
-                            )}
-                        </div>
-
-                        {/* All optional, all changeable later on the group page. */}
-                        <details className="mt-5 border-t border-line pt-4">
-                            <summary className="cursor-pointer text-sm font-medium">{t('santa.hub.more_options')}</summary>
-                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                                <label className="block">
-                                    <span className="text-sm font-medium">{t('santa.hub.budget_label', { currency: market.currency })}</span>
-                                    {/* Whole euros in, cents stored by the server. */}
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        step="1"
-                                        inputMode="numeric"
-                                        placeholder="25"
-                                        value={form.data.budget_max}
-                                        onChange={(e) => form.setData('budget_max', e.target.value)}
-                                        className={field}
-                                    />
-                                    <span className="mt-1 block text-xs text-ink-soft">{t('santa.budget_hint')}</span>
-                                </label>
-
-                                <label className="block">
-                                    <span className="text-sm font-medium">{t('santa.exchange_date')}</span>
-                                    <input
-                                        type="date"
-                                        value={form.data.exchange_date}
-                                        onChange={(e) => form.setData('exchange_date', e.target.value)}
-                                        className={field}
-                                    />
-                                </label>
-
-                                <label className="block">
-                                    <span className="text-sm font-medium">{t('santa.theme')}</span>
-                                    <input
-                                        value={form.data.theme}
-                                        onChange={(e) => form.setData('theme', e.target.value)}
-                                        maxLength={120}
-                                        className={field}
-                                    />
-                                </label>
-
-                                <label className="block">
-                                    <span className="text-sm font-medium">{t('santa.draw_at_label')}</span>
-                                    <input
-                                        type="datetime-local"
-                                        value={form.data.draw_at}
-                                        onChange={(e) => form.setData('draw_at', e.target.value)}
-                                        className={field}
-                                    />
-                                    <span className="mt-1 block text-xs text-ink-soft">{t('santa.hub.draw_at_hint')}</span>
-                                </label>
-
-                                {/* Only when there is a list to choose. */}
-                                {myLists.length > 0 && (
-                                    <label className="block sm:col-span-2">
-                                        <span className="text-sm font-medium">{t('santa.your_list')}</span>
-                                        <select
-                                            value={form.data.wishlist_id}
-                                            onChange={(e) => form.setData('wishlist_id', e.target.value)}
-                                            className={field}
-                                        >
-                                            <option value="">{t('santa.no_list_option')}</option>
-                                            {myLists.map((list) => (
-                                                <option key={list.id} value={list.id}>
-                                                    {list.title}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <span className="mt-1 block text-xs text-ink-soft">{t('santa.your_list_hint')}</span>
-                                    </label>
+                                    </>
                                 )}
-                            </div>
-                        </details>
-
-                        {/* What the server refused, beside the button that sent it. */}
-                        {Object.entries(form.errors).map(([name, message]) => (
-                            <p key={name} className="mt-4 text-sm text-danger" role="alert">
-                                {message}
                             </p>
-                        ))}
+                        </form>
+                    )}
+                </div>
+            </div>
 
-                        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-                            <Button type="submit" busy={form.processing}>
-                                {t('santa.create')}
-                            </Button>
-                            <span className="text-sm text-ink-soft">{t('santa.hub.next_hint')}</span>
-                        </div>
-                    </form>
-                )}
-            </section>
-
-            <p className="mt-12 border-t border-line pt-6 text-sm text-ink-soft">
+            <p className="mt-12 text-sm text-ink-soft">
                 <Link href={`/${market.key}/lists-help/santa`} className="underline hover:text-ink">
                     {t('santa.how_it_works')}
                 </Link>

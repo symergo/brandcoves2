@@ -1201,6 +1201,7 @@ return [
             'next_hint' => 'Daarna krijg je de link om iedereen uit te nodigen.',
         ],
         'group' => [
+            'redraw_short' => 'Opnieuw trekken',
             'for_you' => 'Voor jou',
             'mine_before' => 'Geef tips of koppel een verlanglijst, zodat wie jou trekt iets heeft om op af te gaan.',
             'step_invite' => 'Nodig mensen uit',

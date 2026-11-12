@@ -380,3 +380,5 @@ who drew whom. Deleting the group is a small link at the foot.
 (`SantaNoteMail`, kind `added`). After the draw the same form slots them into the chain as a late
 joiner. An address already in the group is refused; one that was removed earlier comes back as the
 same row. Forty an hour per group, because this is a form that mails an address somebody else typed.
+
+**Third pass, same evening** ("Looks boring now. Make it look simpler"): fewer things rather than fewer colours. The start page is one screen, what it is on the left and the form (the one tinted block, one full-width red button) on the right. The group page is two things, the people and the draw: the "add somebody" row is the last row of the people card, the invite link sits under it, and my list, couples, the automatic draw and deleting are lines that open instead of boxes.
