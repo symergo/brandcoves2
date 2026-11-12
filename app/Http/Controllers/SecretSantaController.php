@@ -194,8 +194,14 @@ class SecretSantaController extends Controller
                     'excludes' => $excludes[$member->id] ?? [],
                 ])->values(),
 
-            'me' => $me === null ? null : $this->mine($me, $current),
+            // My tips are edited on this page since 2026-11-12, under "Je
+            // verlanglijst / tips"; before the draw there is no page of my own to go to.
+            'me' => $me === null ? null : $this->mine($me, $current) + [
+                'interests' => array_values((array) $me->interests),
+                'hints' => $me->hints,
+            ],
             'myLists' => $this->myLists($request, $current),
+            'interestKeys' => SantaGame::INTERESTS,
         ]);
     }
 

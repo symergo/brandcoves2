@@ -1379,6 +1379,7 @@ return [
             'next_hint' => 'Next you get the link to invite everybody.',
         ],
         'group' => [
+            'list_tips' => 'Your wish list / hints',
             'redraw_short' => 'Redraw',
             'for_you' => 'For you',
             'mine_before' => 'Give hints or attach a wish list, so whoever draws you has something to go on.',

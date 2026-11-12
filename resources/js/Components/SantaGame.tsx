@@ -179,21 +179,22 @@ export function HintsForm({
     keys,
     interests,
     hints,
-    open,
+    open = true,
+    bare = false,
 }: {
     url: string
     keys: string[]
     interests: string[]
     hints: string | null
     /** Shown open while there is nothing yet; folded away once filled in. */
-    open: boolean
+    open?: boolean
+    /** Only the fields, for a caller that already has a section around them (the group page). */
+    bare?: boolean
 }) {
     const { t } = useTranslations()
     const form = useForm({ interests, hints: hints ?? '' })
 
-    return (
-        <details open={open} className="mt-8 rounded-card border border-line bg-card p-5">
-            <summary className="cursor-pointer font-medium">{t('santa.my_tips_title')}</summary>
+    const fields = (
             <form
                 className="mt-3 space-y-4"
                 onSubmit={(e) => {
@@ -217,6 +218,14 @@ export function HintsForm({
                     {t('santa.save')}
                 </button>
             </form>
+    )
+
+    if (bare) return fields
+
+    return (
+        <details open={open} className="mt-8 rounded-card border border-line bg-card p-5">
+            <summary className="cursor-pointer font-medium">{t('santa.my_tips_title')}</summary>
+            {fields}
         </details>
     )
 }

@@ -2,7 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { buttonClasses, fieldClasses } from '../../Components/Button'
 import { useConfirm } from '../../Components/Modal'
-import { chipClasses, Countdown, Progress } from '../../Components/SantaGame'
+import { chipClasses, Countdown, HintsForm, Progress } from '../../Components/SantaGame'
 import ShareRow from '../../Components/ShareRow'
 import HeroGift from '../../Components/HeroGift'
 import ToolIcon from '../../Components/ToolIcon'
@@ -46,10 +46,13 @@ interface Props {
         /** The list this member attached, if any. */
         wishlistId: string | null
         revealed: boolean
+        interests: string[]
+        hints: string | null
         giftee: { name: string } | null
     } | null
     /** The lists this person could attach: their own, about themselves. */
     myLists: { id: string; title: string }[]
+    interestKeys: string[]
 }
 
 /**
@@ -60,7 +63,7 @@ interface Props {
  * pairings outright, which quietly makes one player a spectator of everyone
  * else's game.
  */
-export default function SantaGroup({ group, isOrganiser, members, me, myLists }: Props) {
+export default function SantaGroup({ group, isOrganiser, members, me, myLists, interestKeys }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     // The site's own "are you sure?" (Modal.tsx), where `window.confirm()` was.
@@ -104,8 +107,13 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                         <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
                     </p>
 
-                    {/* Mine: one row to my own page. No name on it until I turned my card there. */}
-                    {me && (
+                    {/*
+                      Mine, once there is a name to turn: one row to my own
+                      page. Before the draw that page was only a place to give
+                      tips, so the tips moved into "Je verlanglijst / tips"
+                      below and the row is gone (owner, 2026-11-12).
+                    */}
+                    {me && group.drawn && me.giftee && (
                         <Link
                             href={`${base}/me/${me.joinToken}`}
                             className="mt-6 flex items-center gap-4 rounded-card bg-card p-4 transition hover:bg-cream shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
@@ -113,14 +121,10 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                             <ToolIcon name="santa" className="h-9 w-9 shrink-0 text-accent" duo />
                             <span className="min-w-0 flex-1">
                                 <span className="block font-medium">
-                                    {group.drawn && me.giftee
-                                        ? me.revealed
-                                            ? t('santa.you_have', { name: me.giftee.name })
-                                            : t('santa.reveal_title')
-                                        : t('santa.group.for_you')}
+                                    {me.revealed ? t('santa.you_have', { name: me.giftee.name }) : t('santa.reveal_title')}
                                 </span>
                                 <span className="block text-sm text-ink-soft">
-                                    {group.drawn && me.giftee && !me.revealed ? t('santa.reveal_tap') : t('santa.group.mine_before')}
+                                    {me.revealed ? t('santa.mail.open_mine') : t('santa.reveal_tap')}
                                 </span>
                             </span>
                             <span aria-hidden className="text-accent-dark">
@@ -265,8 +269,8 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                     {isOrganiser && !group.drawn && members.length > 1 && <Couples groupId={group.id} members={members} />}
 
                     {me && (
-                        <details className="py-3">
-                            <summary className="cursor-pointer font-medium">{t('santa.your_list')}</summary>
+                        <details className="py-3" open={!me.hasList && me.interests.length === 0 && !me.hints}>
+                            <summary className="cursor-pointer font-medium">{t('santa.group.list_tips')}</summary>
                             <p className="mt-2 text-sm text-ink-soft">{t('santa.your_list_hint')}</p>
                             {myLists.length > 0 ? (
                                 <select
@@ -289,6 +293,15 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                                     {t('santa.build_yours')}
                                 </Link>
                             )}
+
+                            {/* Tips in a few taps, here rather than on a page of their own. */}
+                            <HintsForm
+                                bare
+                                url={`${base}/me/${me.joinToken}/hints`}
+                                keys={interestKeys}
+                                interests={me.interests}
+                                hints={me.hints}
+                            />
                         </details>
                     )}
 

@@ -217,6 +217,25 @@ class SantaGameTest extends TestCase
     }
 
     #[Test]
+    public function a_signed_in_member_gives_tips_on_the_group_page(): void
+    {
+        $group = $this->group();
+        $me = $group->members()->sole();
+
+        // The group page carries my tips and the keys to tick; before the
+        // draw there is no page of my own to go to for them.
+        $this->actingAs($group->organiser)->get("/be-nl/santa/{$group->id}")
+            ->assertInertia(fn ($page) => $page->where('me.interests', [])->where('me.hints', null)->has('interestKeys'));
+
+        $this->actingAs($group->organiser)
+            ->post($this->mine($group, $me).'/hints', ['interests' => ['music'], 'hints' => 'Maat L'])
+            ->assertSessionHas('success');
+
+        $this->actingAs($group->organiser)->get("/be-nl/santa/{$group->id}")
+            ->assertInertia(fn ($page) => $page->where('me.interests', ['music'])->where('me.hints', 'Maat L'));
+    }
+
+    #[Test]
     public function the_organiser_adds_somebody_by_name_and_address(): void
     {
         $group = $this->group();

@@ -1195,6 +1195,7 @@ return [
             'next_hint' => 'Después recibes el enlace para invitar a todos.',
         ],
         'group' => [
+            'list_tips' => 'Tu lista de deseos / pistas',
             'redraw_short' => 'Volver a sortear',
             'for_you' => 'Para ti',
             'mine_before' => 'Da pistas o une una lista de deseos, para que quien te toque tenga por dónde empezar.',

@@ -1196,6 +1196,7 @@ return [
             'next_hint' => 'Vous recevez ensuite le lien pour inviter tout le monde.',
         ],
         'group' => [
+            'list_tips' => 'Votre liste d’envies / indices',
             'redraw_short' => 'Retirer',
             'for_you' => 'Pour vous',
             'mine_before' => 'Donnez des indices ou rattachez une liste d’envies, pour que la personne qui vous tire ait une piste.',
