@@ -265,32 +265,60 @@ Chacun joue une fois.',
 
         'santa' => [
             'title' => 'Ami secret',
-            'blurb' => 'Tirer les noms au sort sans papiers : un groupe, un budget, une date, et chacun reçoit un nom.',
-            'seo_description' => 'Tirer les noms au sort pour un Ami secret ou Secret Santa : créez un groupe, invitez tout le monde par un lien, tirez, et rattachez une liste d’envies.',
+            'blurb' => 'Tirer les noms au sort sans papiers : un groupe, un lien, et chacun retourne une carte avec un nom.',
+            'seo_description' => 'Tirer les noms au sort pour un Ami secret ou Secret Santa : créez un groupe sans compte, invitez par un lien, tirez automatiquement, posez des questions anonymes et devinez qui vous avait.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Créer un groupe',
-                    'body' => "1. Allez sur [Ami secret](santa).\n2. Touchez « Créer un groupe ».\n3. Donnez au groupe un nom, un budget et la date où vous offrez les cadeaux.\n\nVous êtes l’organisateur.",
+                    'body' => "1. Allez sur [Ami secret](santa).\n2. Donnez un nom au groupe. Vous pouvez ajouter un budget, la date des cadeaux et un thème.\n3. Pas encore connecté ? Indiquez votre adresse e-mail et votre nom. Pas besoin de compte : nous vous envoyons un lien pour retrouver votre groupe.\n\nVous êtes l’organisateur, et vous participez aussi.",
                     'shot' => 'santa',
                     'alt' => 'La page Ami secret, avec le bouton pour créer un groupe.',
                 ],
                 [
                     'title' => 'Inviter tout le monde',
-                    'body' => "1. Copiez le lien d’invitation du groupe.\n2. Envoyez-le à tous ceux qui participent.\n3. Qui l’ouvre remplit un nom et une adresse e-mail. Pas besoin de compte.",
+                    'body' => "1. Copiez le lien d’invitation du groupe, ou partagez-le directement par WhatsApp.\n2. Chaque personne qui ouvre le lien indique un nom et une adresse e-mail. Pas besoin de compte.\n3. Sur la même page, chacun touche qui il ne peut pas tirer, et ce qu’il aime.",
                 ],
                 [
-                    'title' => 'Tirer au sort',
-                    'body' => "1. Attendez que tout le monde soit là, au moins deux personnes.\n2. Touchez « Lancer le tirage ».\n\nChacun reçoit un nom par e-mail. L’organisateur ne voit jamais les paires, donc vous aussi restez surpris.",
+                    'title' => 'Qui ne peut pas se tirer',
+                    'body' => "En rejoignant le groupe, touchez les noms que vous ne pouvez pas tirer, votre partenaire par exemple.\n\nL’organisateur règle les couples sur la page du groupe, sous « Qui ne peut pas se tirer ? » : touchez un nom, puis qui cette personne ne peut pas tirer. Touchez à nouveau pour annuler.",
                 ],
                 [
-                    'title' => 'Si quelqu’un se retire',
-                    'body' => 'Retirez cette personne du groupe, ou choisissez « Retirer au sort pour cette personne ». Seules les paires concernées sont retirées au sort, et seules ces personnes reçoivent un nouvel e-mail.',
+                    'title' => 'Tirer, soi-même ou automatiquement',
+                    'body' => "Touchez « Tirer » dès qu’il y a au moins deux personnes. Ou laissez faire sous « Tirage automatique » : à un moment choisi, ou dès qu’il y a assez de participants.\n\nL’organisateur ne voit pas les paires, la surprise reste entière pour vous aussi. Si un tirage automatique échoue à cause des exclusions, vous recevez un e-mail qui dit pourquoi.",
                 ],
                 [
-                    'title' => 'Rattacher ma liste d’envies au groupe',
-                    'body' => "Choisissez votre liste sous « Votre liste d’envies » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste d’envies](lists) et touchez « Plus », puis « Ami Secret » et « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en une étape.",
+                    'title' => 'Découvrir qui vous avez',
+                    'body' => 'Après le tirage, chacun reçoit un e-mail. Le nom n’y figure pas : ouvrez votre page et touchez la carte pour voir pour qui vous achetez.',
+                ],
+                [
+                    'title' => 'Donner des indices et rattacher une liste',
+                    'body' => "Sur votre page, touchez ce que vous aimez et écrivez une ligne d’indices, comme votre taille ou ce que vous préférez éviter. Cela prend trente secondes et fonctionne sans compte.\n\nVous avez une liste d’envies ? Choisissez-la sous « Votre liste d’envies » à la création du groupe, ou ensuite sur la page du groupe. La personne qui vous a tiré voit tout cela, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en une étape.",
+                ],
+                [
+                    'title' => 'Poser une question anonyme',
+                    'body' => 'Un doute sur une taille ou un goût ? Posez une question depuis votre page à la personne que vous avez tirée. Elle voit la question, pas son auteur, et la réponse arrive par e-mail et sur votre page.',
+                ],
+                [
+                    'title' => 'Des idées dans le budget',
+                    'body' => 'Sous la liste de la personne que vous avez tirée, des recherches partent de ses indices et du thème, déjà limitées au budget du groupe.',
+                ],
+                [
+                    'title' => 'Voir où en est le groupe',
+                    'body' => "Chaque page montre combien de personnes ont une liste ou des indices, combien ont déjà acheté, et combien de jours il reste. Jamais qui.\n\nVous voyez aussi combien de fois votre Ami secret a regardé votre liste. Ceux qui ont encore quelque chose à faire reçoivent un court e-mail le lundi. Ces e-mails supplémentaires se coupent en bas de votre page.",
+                ],
+                [
+                    'title' => 'Rejoindre plus tard, ou quelqu’un se retire',
+                    'body' => "Une personne qui ouvre le lien après le tirage est insérée dans la chaîne et reçoit un nom tout de suite. Une seule autre personne reçoit un nouveau nom par e-mail.\n\nQuelqu’un se retire ? Retirez cette personne du groupe, ou choisissez « Retirer pour cette personne ». Seules les personnes concernées reçoivent un nouvel e-mail.",
+                ],
+                [
+                    'title' => 'Devinez qui vous avait',
+                    'body' => 'Dès le jour des cadeaux, vous avez un essai sur votre page pour deviner qui était votre Ami secret. Ensuite vous voyez qui c’était, et vous pouvez envoyer un merci.',
+                ],
+                [
+                    'title' => 'Recommencer l’an prochain',
+                    'body' => 'L’organisateur relance le même groupe avec « Même groupe, nouvelle année ». Chacun reçoit un e-mail et participe à nouveau avec un bouton, et personne ne retombe sur la personne de l’an dernier. Début novembre, nous vous envoyons un rappel.',
                 ],
                 [
                     'title' => 'Un rappel avant',

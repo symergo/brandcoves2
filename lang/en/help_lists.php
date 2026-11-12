@@ -265,32 +265,60 @@ Everyone plays once.',
 
         'santa' => [
             'title' => 'Secret Santa',
-            'blurb' => 'Drawing names without slips of paper: a group, a budget, a date, and everyone gets one name.',
-            'seo_description' => 'Draw names for Secret Santa: start a group, invite everyone with a link, draw, and attach a wish list.',
+            'blurb' => 'Drawing names without slips of paper: a group, a link, and everyone turns a card with one name.',
+            'seo_description' => 'Draw names for Secret Santa: start a group without an account, invite with a link, draw automatically, ask anonymous questions and guess who had you.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Starting a group',
-                    'body' => "1. Go to [Secret Santa](santa).\n2. Tap “Start a group”.\n3. Give the group a name, a budget and the date you give the gifts.\n\nYou are the organiser.",
+                    'body' => "1. Go to [Secret Santa](santa).\n2. Give the group a name. You can add a budget, the date you give the gifts and a theme.\n3. Not signed in? Fill in your email address and your name. No account needed: we email you a link to find your group again.\n\nYou are the organiser, and you take part too.",
                     'shot' => 'santa',
                     'alt' => 'The Secret Santa page, with the button to start a group.',
                 ],
                 [
                     'title' => 'Inviting everyone',
-                    'body' => "1. Copy the group’s invite link.\n2. Send it to everyone taking part.\n3. Whoever opens it fills in a name and an email address. No account needed.",
+                    'body' => "1. Copy the group’s invite link, or share it straight to WhatsApp.\n2. Whoever opens the link fills in a name and an email address. No account needed.\n3. On the same page everybody taps who they may not draw, and what they like.",
                 ],
                 [
-                    'title' => 'Drawing',
-                    'body' => "1. Wait until everyone is in, at least two people.\n2. Tap “Do the draw”.\n\nEveryone gets one name by email. The organiser never sees the pairs, so you stay surprised too.",
+                    'title' => 'Who may not draw each other',
+                    'body' => "When you join, tap the names of the people you may not draw, your partner for example.\n\nAs organiser you set couples on the group page, under “Who may not draw each other?”: tap a name, then who they may not draw. Tap again to undo it.",
                 ],
                 [
-                    'title' => 'If someone drops out',
-                    'body' => 'Remove them from the group, or choose “Redraw this person”. Only the pairs it touches are redrawn, and only those people get a new email.',
+                    'title' => 'Drawing, yourself or automatically',
+                    'body' => "Tap “Draw” once at least two people are in. Or let it happen by itself under “Draw automatically”: at a moment you choose, or as soon as enough people are in.\n\nThe organiser does not see the pairs, so you are surprised too. If an automatic draw cannot happen because of the exclusions, you get an email saying why.",
                 ],
                 [
-                    'title' => 'Attaching my wish list to the group',
-                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “More”, then “Secret Friend”, and “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in one step.",
+                    'title' => 'Finding out who you have',
+                    'body' => 'After the draw everybody gets an email. The name is not in it: open your page and tap the card to see who you are buying for.',
+                ],
+                [
+                    'title' => 'Giving hints and attaching a wish list',
+                    'body' => "On your page, tap what you like and write a line of hints, such as your size or what you would rather not get. It takes half a minute and works without an account.\n\nHave a wish list? Choose it under “Your wish list” when you start the group, or afterwards on the group page. Whoever drew you sees all of it, without you seeing who it is. No list yet? [Make one](lists-help/saving) in one step.",
+                ],
+                [
+                    'title' => 'Asking a question anonymously',
+                    'body' => 'Not sure about a size or a taste? Ask the person you drew a question from your page. They see the question, not who asks, and the answer comes by email and on your page.',
+                ],
+                [
+                    'title' => 'Ideas within budget',
+                    'body' => 'Under the list of the person you drew there are searches based on their hints and the theme, already limited to the group’s budget.',
+                ],
+                [
+                    'title' => 'Seeing how far the group is',
+                    'body' => "Every page shows how many people have a list or hints, how many have bought, and how many days are left. Never who.\n\nYou also see how often your Secret Santa looked at your list. Whoever still has something to do gets a short email on Monday. You can turn those extra emails off at the bottom of your page.",
+                ],
+                [
+                    'title' => 'Joining later, or somebody drops out',
+                    'body' => "Whoever opens the link after the draw is slotted in and gets a name straight away. One other person is emailed a new name.\n\nSomebody drops out? Remove them from the group, or choose “Redraw for this person”. Only the people it affects get a new email.",
+                ],
+                [
+                    'title' => 'Guess who had you',
+                    'body' => 'From the day of the gifts you get one guess on your page at who your Secret Santa was. Then you see who it was, and you can send a thank-you.',
+                ],
+                [
+                    'title' => 'Again next year',
+                    'body' => 'As organiser, “Same group, new year” starts the same group again. Everybody gets an email and is in again with one button, and nobody gets who they had last year. In early November we send you a reminder.',
                 ],
                 [
                     'title' => 'A reminder ahead',

@@ -280,32 +280,60 @@ Iedereen speelt één keer.',
 
         'santa' => [
             'title' => 'Geheime Vriend',
-            'blurb' => 'Lootjes trekken zonder briefjes: een groep, een budget, een datum, en iedereen krijgt één naam.',
-            'seo_description' => 'Lootjes trekken voor Geheime Vriend of Secret Santa: start een groep, nodig iedereen uit met een link, trek, en koppel een verlanglijst.',
+            'blurb' => 'Lootjes trekken zonder briefjes: een groep, een link, en iedereen draait een kaart om met één naam.',
+            'seo_description' => 'Lootjes trekken voor Geheime Vriend of Secret Santa: start een groep zonder account, nodig uit met een link, trek automatisch, stel anoniem vragen en raad wie jou had.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Een groep starten',
-                    'body' => "1. Ga naar [Geheime Vriend](santa).\n2. Tik op “Start een groep”.\n3. Geef de groep een naam, een budget en de datum waarop jullie de cadeaus geven.\n\nJij bent de organisator.",
+                    'body' => "1. Ga naar [Geheime Vriend](santa).\n2. Geef de groep een naam. Een budget, de datum van de cadeaus en een thema mag je erbij zetten.\n3. Nog niet aangemeld? Vul je e-mailadres en je naam in. Een account is niet nodig: we mailen je een link waarmee je je groep terugvindt.\n\nJij bent de organisator, en je doet zelf ook mee.",
                     'shot' => 'santa',
                     'alt' => 'De pagina Geheime Vriend, met de knop om een groep te starten.',
                 ],
                 [
                     'title' => 'Iedereen uitnodigen',
-                    'body' => "1. Kopieer de uitnodigingslink van de groep.\n2. Stuur hem naar iedereen die meedoet.\n3. Wie de link opent, vult een naam en een e-mailadres in. Een account is niet nodig.",
+                    'body' => "1. Kopieer de uitnodigingslink van de groep, of deel hem meteen via WhatsApp.\n2. Wie de link opent, vult een naam en een e-mailadres in. Een account is niet nodig.\n3. Op dezelfde pagina tikt iedereen aan wie die niet mag trekken, en waar die van houdt.",
                 ],
                 [
-                    'title' => 'Trekken',
-                    'body' => "1. Wacht tot iedereen erbij staat, minstens twee mensen.\n2. Tik op “Trekken”.\n\nIedereen krijgt per mail één naam. De organisator ziet de koppels niet, dus ook jij blijft verrast.",
+                    'title' => 'Wie mag elkaar niet trekken',
+                    'body' => "Bij het meedoen tik je de namen aan van wie je niet mag trekken, bijvoorbeeld je partner.\n\nAls organisator stel je koppels in op de groepspagina, onder “Wie mag elkaar niet trekken?”: tik een naam aan en daarna wie die niet mag trekken. Nog eens tikken heft het op.",
                 ],
                 [
-                    'title' => 'Als er iemand afvalt',
-                    'body' => 'Haal die persoon uit de groep, of kies “Opnieuw trekken voor deze persoon”. Alleen de koppels die het raakt worden opnieuw getrokken, en alleen die mensen krijgen een nieuwe mail.',
+                    'title' => 'Trekken, zelf of automatisch',
+                    'body' => "Tik op “Trekken” zodra er minstens twee mensen zijn. Of laat het vanzelf gebeuren onder “Automatisch trekken”: op een moment dat je kiest, of zodra er genoeg mensen meedoen.\n\nDe organisator ziet de koppels niet, dus ook jij blijft verrast. Lukt een automatische trekking niet door de uitsluitingen, dan krijg je een mail met de reden.",
                 ],
                 [
-                    'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Meer”, dan op “Geheime Vriend” en op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in één stap.",
+                    'title' => 'Ontdekken wie je hebt',
+                    'body' => 'Na de trekking krijgt iedereen een mail. De naam staat er niet in: open je pagina en tik op de kaart om te zien voor wie je koopt.',
+                ],
+                [
+                    'title' => 'Tips geven en een verlanglijst koppelen',
+                    'body' => "Tik op je pagina aan waar je van houdt en schrijf een regel met tips, zoals je maat of wat je liever niet krijgt. Dat duurt een halve minuut en werkt zonder account.\n\nHeb je een verlanglijst? Kies hem onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Wie jou trok, ziet dat allemaal, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in één stap.",
+                ],
+                [
+                    'title' => 'Anoniem een vraag stellen',
+                    'body' => 'Twijfel je over een maat of een smaak? Stel op je pagina een vraag aan wie je getrokken hebt. Die ziet de vraag, niet wie ze stelt, en het antwoord komt per mail en op je pagina.',
+                ],
+                [
+                    'title' => 'Ideeën binnen budget',
+                    'body' => 'Onder de lijst van wie je getrokken hebt staan zoekopdrachten op basis van hun tips en het thema, meteen beperkt tot het budget van de groep.',
+                ],
+                [
+                    'title' => 'Zien hoe ver de groep staat',
+                    'body' => "Op elke pagina zie je hoeveel mensen een lijstje of tips hebben, hoeveel er al gekocht hebben, en hoeveel dagen het nog duurt. Nooit wie.\n\nJe ziet ook hoe vaak je Geheime Vriend naar je lijstje keek. Wie nog iets te doen heeft, krijgt op maandag een korte mail. Die extra mails zet je onderaan je pagina uit.",
+                ],
+                [
+                    'title' => 'Later meedoen, of iemand valt af',
+                    'body' => "Wie de link opent na de trekking, wordt ertussen gezet en krijgt meteen een naam. Eén iemand anders krijgt een nieuwe naam gemaild.\n\nValt er iemand af? Haal die persoon uit de groep, of kies “Opnieuw trekken voor deze persoon”. Alleen wie het raakt, krijgt een nieuwe mail.",
+                ],
+                [
+                    'title' => 'Raad wie jou had',
+                    'body' => 'Vanaf de dag van de cadeaus mag je op je pagina één keer raden wie jouw Geheime Vriend was. Daarna zie je wie het was, en kun je een bedankje sturen.',
+                ],
+                [
+                    'title' => 'Volgend jaar opnieuw',
+                    'body' => 'Als organisator start je met “Zelfde groep, nieuw jaar” dezelfde groep opnieuw. Iedereen krijgt een mail en doet met één knop weer mee, en niemand krijgt wie die vorig jaar had. Begin november sturen we je een herinnering.',
                 ],
                 [
                     'title' => 'Een herinnering vooraf',

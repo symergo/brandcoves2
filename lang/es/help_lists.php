@@ -265,32 +265,60 @@ Cada uno juega una vez.',
 
         'santa' => [
             'title' => 'Amigo invisible',
-            'blurb' => 'Sortear nombres sin papelitos: un grupo, un presupuesto, una fecha, y cada uno recibe un nombre.',
-            'seo_description' => 'Sortear nombres para el Amigo invisible: crea un grupo, invita a todos con un enlace, sortea, y une una lista de deseos.',
+            'blurb' => 'Sortear nombres sin papelitos: un grupo, un enlace, y cada uno gira una carta con un nombre.',
+            'seo_description' => 'Sortear nombres para el Amigo invisible: crea un grupo sin cuenta, invita con un enlace, sortea automáticamente, haz preguntas anónimas y adivina quién te tocó.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Crear un grupo',
-                    'body' => "1. Ve a [Amigo invisible](santa).\n2. Toca «Crear un grupo».\n3. Ponle al grupo un nombre, un presupuesto y la fecha en que dais los regalos.\n\nTú organizas.",
+                    'body' => "1. Ve a [Amigo invisible](santa).\n2. Ponle un nombre al grupo. Puedes añadir un presupuesto, la fecha de los regalos y un tema.\n3. ¿Sin iniciar sesión? Escribe tu correo y tu nombre. No hace falta cuenta: te enviamos un enlace para volver a tu grupo.\n\nTú organizas, y también participas.",
                     'shot' => 'santa',
                     'alt' => 'La página del Amigo invisible, con el botón para crear un grupo.',
                 ],
                 [
                     'title' => 'Invitar a todos',
-                    'body' => "1. Copia el enlace de invitación del grupo.\n2. Envíaselo a todos los que participan.\n3. Quien lo abre rellena un nombre y un correo. No hace falta cuenta.",
+                    'body' => "1. Copia el enlace de invitación del grupo, o compártelo directamente por WhatsApp.\n2. Quien abre el enlace escribe un nombre y un correo. No hace falta cuenta.\n3. En la misma página cada uno toca a quién no puede tocarle, y lo que le gusta.",
                 ],
                 [
-                    'title' => 'Sortear',
-                    'body' => "1. Espera a que estén todos, al menos dos personas.\n2. Toca «Hacer el sorteo».\n\nCada uno recibe un nombre por correo. Quien organiza nunca ve las parejas, así que tú también te llevas la sorpresa.",
+                    'title' => 'A quién no puede tocarle quién',
+                    'body' => "Al unirte, toca los nombres de quienes no pueden tocarte, por ejemplo tu pareja.\n\nQuien organiza marca las parejas en la página del grupo, en «¿Quién no puede tocarle a quién?»: toca un nombre y luego a quién no puede tocarle. Toca otra vez para deshacerlo.",
                 ],
                 [
-                    'title' => 'Si alguien se retira',
-                    'body' => 'Quítalo del grupo, o elige «Volver a sortear para esta persona». Solo se vuelven a sortear las parejas afectadas, y solo esas personas reciben un correo nuevo.',
+                    'title' => 'Sortear, a mano o automáticamente',
+                    'body' => "Toca «Sortear» cuando haya al menos dos personas. O deja que se haga solo en «Sorteo automático»: en el momento que elijas, o en cuanto haya suficientes personas.\n\nQuien organiza no ve las parejas, así que también se lleva la sorpresa. Si un sorteo automático no puede hacerse por las exclusiones, recibes un correo con el motivo.",
                 ],
                 [
-                    'title' => 'Unir mi lista de deseos al grupo',
-                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Más», luego «Amigo invisible» y «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en un paso.",
+                    'title' => 'Descubrir a quién tienes',
+                    'body' => 'Tras el sorteo todos reciben un correo. El nombre no aparece: abre tu página y toca la carta para ver para quién compras.',
+                ],
+                [
+                    'title' => 'Dar pistas y unir una lista de deseos',
+                    'body' => "En tu página, toca lo que te gusta y escribe una línea de pistas, como tu talla o lo que prefieres no recibir. Lleva medio minuto y funciona sin cuenta.\n\n¿Tienes una lista de deseos? Elígela en «Tu lista de deseos» al crear el grupo, o después en la página del grupo. Quien te ha tocado lo ve todo, sin que tú veas quién es. ¿Aún sin lista? [Crea una](lists-help/saving) en un paso.",
+                ],
+                [
+                    'title' => 'Preguntar de forma anónima',
+                    'body' => '¿Dudas con una talla o un gusto? Pregunta desde tu página a la persona que te ha tocado. Ve la pregunta, no quién la hace, y la respuesta llega por correo y a tu página.',
+                ],
+                [
+                    'title' => 'Ideas dentro del presupuesto',
+                    'body' => 'Bajo la lista de la persona que te ha tocado hay búsquedas basadas en sus pistas y en el tema, ya limitadas al presupuesto del grupo.',
+                ],
+                [
+                    'title' => 'Ver cómo va el grupo',
+                    'body' => "Cada página muestra cuántas personas tienen lista o pistas, cuántas han comprado ya, y cuántos días faltan. Nunca quién.\n\nTambién ves cuántas veces tu amigo invisible ha mirado tu lista. Quien aún tiene algo pendiente recibe un correo breve los lunes. Esos correos extra se desactivan al final de tu página.",
+                ],
+                [
+                    'title' => 'Unirse más tarde, o alguien se retira',
+                    'body' => "Quien abre el enlace después del sorteo entra en la cadena y recibe un nombre al momento. Solo otra persona recibe un nombre nuevo por correo.\n\n¿Alguien se retira? Quítalo del grupo, o elige «Volver a sortear para esta persona». Solo quienes se ven afectados reciben un correo nuevo.",
+                ],
+                [
+                    'title' => 'Adivina quién te tocó',
+                    'body' => 'Desde el día de los regalos tienes un intento en tu página para adivinar quién fue tu amigo invisible. Después ves quién era, y puedes enviar un agradecimiento.',
+                ],
+                [
+                    'title' => 'Otra vez el año que viene',
+                    'body' => 'Quien organiza reinicia el mismo grupo con «Mismo grupo, nuevo año». Todos reciben un correo y vuelven a participar con un botón, y a nadie le toca quien tuvo el año pasado. A principios de noviembre te enviamos un recordatorio.',
                 ],
                 [
                     'title' => 'Un recordatorio antes',

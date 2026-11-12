@@ -348,7 +348,7 @@ A band under the three ways in, linking to `/santa?new=1`, which opens the creat
 
 ### Not built, and worth knowing
 
-- The help topic at `/lists-help/santa` still describes the flow from before this day.
+- The help topic at `/lists-help/santa` was rewritten the same day to cover all of the above (four languages); its screenshot is still the old start page.
 - "Ideas within budget" are searches, not picked products.
 - A member without an account still cannot attach a wish list (that needs to own one); tips are
   their way of giving the Santa something.
