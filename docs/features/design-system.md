@@ -658,3 +658,5 @@ Owner: "review other parts of the site in the same way: simplify the user experi
 - **Product**: "Naar de winkel" beside the price (the cheapest buyable offer); the shop description shows four lines until asked. The `<h1>` is unchanged: it is the cleaned full title on purpose.
 - **Product card**: the link under the card is grey instead of red.
 - **Secret Friend**: the member page and the join page are one centred column; the reveal card is centred.
+- **Alle Coves, pictures** (same day, owner: "add images to the cards (products or drawings)"): each card shows a product from the Cove, its drawing when no pick has a picture in stock, or the section icon (`CovesController::picture()`).
+- **Product heading** (owner: "product page: use display titles"): the `<h1>` is the written display title, or the feed title cut to what the product is (`ProductTitle::short()`, always a prefix, never invented). The full title is printed small under it and stays the document title.

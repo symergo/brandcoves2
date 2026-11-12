@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../../Components/CoveIcon'
+import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 import { useTranslations } from '../../useTranslations'
 
 interface Cove {
@@ -7,6 +8,9 @@ interface Cove {
     intro: string | null
     url: string
     date: string | null
+    /** A product from the Cove, or null; then `scene` names its drawing, when it has one. */
+    image?: string | null
+    scene?: string | null
 }
 
 interface Section {
@@ -112,10 +116,26 @@ export default function CovesIndex({ sections }: Props) {
                         <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {section.coves.slice(0, 6).map((cove) => (
                                 <li key={cove.url}>
-                                    <Link href={cove.url} className="group flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink">
-                                        {cove.date && <span className="text-xs text-ink-soft">{cove.date}</span>}
-                                        <span className={`font-medium group-hover:underline ${cove.date ? 'mt-1' : ''}`}>{cove.title}</span>
-                                        {cove.intro && <span className="mt-2 line-clamp-2 text-sm text-ink-soft">{cove.intro}</span>}
+                                    <Link href={cove.url} className="group flex h-full items-center gap-4 rounded-card border border-line bg-card p-4 transition hover:border-ink">
+                                        {/*
+                                          A product from the Cove, its drawing, or the
+                                          section's icon (owner, 2026-11-12): the same
+                                          tile the homepage puts beside a Cove.
+                                        */}
+                                        <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+                                            {cove.image ? (
+                                                <img src={cove.image} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
+                                            ) : cove.scene ? (
+                                                <SceneIllustration name={cove.scene as SceneKey} className="h-12 w-auto text-accent" />
+                                            ) : (
+                                                <CoveIcon name={icons[section.key]} className="h-9 w-9 text-accent" />
+                                            )}
+                                        </span>
+                                        <span className="flex min-w-0 flex-col">
+                                            {cove.date && <span className="text-xs text-ink-soft">{cove.date}</span>}
+                                            <span className="line-clamp-2 font-medium group-hover:underline">{cove.title}</span>
+                                            {cove.intro && <span className="mt-1 line-clamp-2 text-sm text-ink-soft">{cove.intro}</span>}
+                                        </span>
                                     </Link>
                                 </li>
                             ))}

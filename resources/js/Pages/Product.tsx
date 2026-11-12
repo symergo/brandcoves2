@@ -37,6 +37,8 @@ interface Props {
     product: {
         id: number
         title: string
+        /** The heading shown: a written display title, or the feed title cut short. */
+        shortTitle?: string
         brand: string | null
         /** The brand's own page, when it has one. Null for most brands. */
         brandUrl: string | null
@@ -207,7 +209,16 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                             )}
                         </div>
                     )}
-                    <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{product.title}</h1>
+                    {/*
+                      The display title as the heading (owner, 2026-11-12): a
+                      shop's feed title ran to four lines of keywords. The full
+                      title stays on the page, small, for whoever needs the
+                      exact variant, and in the document title.
+                    */}
+                    <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{product.shortTitle ?? product.title}</h1>
+                    {product.shortTitle && product.shortTitle !== product.title && (
+                        <p className="mt-2 text-sm text-ink-soft">{product.title}</p>
+                    )}
 
                     {/*
                       What it is a gift for, and which way its taste goes

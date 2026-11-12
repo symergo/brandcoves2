@@ -244,7 +244,8 @@ class CovesController extends Controller
             ->published()
             ->orderByDesc('published_at')
             ->limit(self::PER_SECTION)
-            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb']);
+            ->with(['picks' => fn ($q) => $q->orderBy('rank')->with('group:id,image_url,in_stock')])
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene']);
 
         if ($coves->isEmpty()) {
             return null;
@@ -253,7 +254,7 @@ class CovesController extends Controller
         return [
             'key' => 'shop',
             'url' => $current->url('shops'),
-            'coves' => $coves->map(fn (DailyPickSet $cove): array => [
+            'coves' => $coves->map(fn (DailyPickSet $cove): array => $this->picture($cove) + [
                 'title' => $cove->theme_title,
                 'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
                 'url' => $current->url($cove->kind->path((string) $cove->slug, $current->get())),
@@ -271,6 +272,22 @@ class CovesController extends Controller
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * What a card shows beside its title (owner, 2026-11-12: "add images to
+     * the cards (products or drawings)"): a product from the Cove, or the
+     * Cove's own drawing when none of its picks has a picture in stock.
+     *
+     * @return array{image: string|null, scene: string|null}
+     */
+    private function picture(DailyPickSet $cove): array
+    {
+        $image = $cove->picks
+            ->first(fn ($pick) => $pick->group?->image_url !== null && $pick->group->in_stock)
+            ?->group->image_url;
+
+        return ['image' => $image, 'scene' => $image === null ? $cove->scene?->value : null];
+    }
+
     private function community(CurrentMarket $current): ?array
     {
         $coves = app(CommunityCoves::class)->newest($current->get(), self::PER_SECTION);
@@ -303,7 +320,10 @@ class CovesController extends Controller
             ->forMarket($current->get())
             ->published()
             ->limit($limit)
-            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title', 'theme_blurb']);
+            // The first pick that has a picture and is in stock, as the homepage
+            // chooses a Cove's image; its drawing (`scene`) when there is none.
+            ->with(['picks' => fn ($q) => $q->orderBy('rank')->with('group:id,image_url,in_stock')])
+            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title', 'theme_blurb', 'scene']);
 
         if ($coves->isEmpty()) {
             return null;
@@ -327,7 +347,7 @@ class CovesController extends Controller
                 'gift', 'occasion' => 'gift-ideas',
                 default => 'guides',
             }),
-            'coves' => $coves->map(fn (DailyPickSet $cove): array => [
+            'coves' => $coves->map(fn (DailyPickSet $cove): array => $this->picture($cove) + [
                 'title' => $cove->theme_title,
                 // Tokens flattened to their labels, exactly as `/guides` and the
                 // Discover hub do it: a link inside a card whose whole surface

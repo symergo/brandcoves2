@@ -89,6 +89,36 @@ final class ProductTitle
      * the failure that prefixing there produces. The heading below is for the
      * one place the string stands alone.
      */
+    /**
+     * A feed title cut down to what the product is, for the product page's
+     * heading when nobody has written a `display_title` (owner, 2026-11-12:
+     * "product page: use display titles").
+     *
+     * Shops write titles for their own search box: "UNBOX 2 Stuks Airfryer
+     * Siliconen Bakje - Airfryer Accessoires - Airfryer Bakpapier - ...". What
+     * the thing *is* stands before the first separator, so that is kept, up to
+     * `$max` characters and never cut inside a word. A title that is already
+     * short comes back whole. Nothing is invented: it is always a prefix.
+     */
+    public static function short(ProductGroup $group, int $max = 70): string
+    {
+        $full = self::heading($group);
+
+        if (mb_strlen($full) <= $max) {
+            return $full;
+        }
+
+        // The first " - ", " – ", " | " or ", " that leaves at least a few words.
+        if (preg_match('/^(.{18,}?)(?:\s[-–|]\s|,\s)/u', $full, $m) === 1 && mb_strlen($m[1]) <= $max) {
+            return rtrim($m[1]);
+        }
+
+        $cut = mb_substr($full, 0, $max + 1);
+        $space = mb_strrpos($cut, ' ');
+
+        return rtrim(mb_substr($cut, 0, $space === false ? $max : $space), ' ,-–|');
+    }
+
     public static function card(ProductGroup $group): string
     {
         return self::deShout(trim($group->title), $group->brand);

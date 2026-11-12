@@ -94,6 +94,16 @@ class ProductGroup extends Model
     }
 
     /**
+     * The product page's visible title: the written one, or the feed title cut
+     * to what the product is ({@see ProductTitle::short()}). The page prints
+     * the full title under it, and the document title keeps the full one.
+     */
+    public function shortHeading(): string
+    {
+        return $this->display_title ?? ProductTitle::short($this);
+    }
+
+    /**
      * The gift tags an editor gave this product, empty for the untagged.
      *
      * @return list<string>

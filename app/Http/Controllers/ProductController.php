@@ -91,6 +91,10 @@ class ProductController extends Controller
                  * words; only what a person reads is cleaned.
                  */
                 'title' => $productGroup->heading(),
+                // The heading the page shows: a written display title, or the
+                // feed title cut to what the product is. `title` stays the
+                // full one, printed small under it and used for the tab.
+                'shortTitle' => $productGroup->shortHeading(),
                 'brand' => $productGroup->brand,
                 /*
                  * Null when the brand has no page of its own — which is most of
