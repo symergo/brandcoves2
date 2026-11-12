@@ -151,7 +151,7 @@ return [
         'coves_volume' => ':count zoekopdrachten per maand',
 
         // The Secret Friend band on the homepage (2026-11-12).
-        'santa_title' => 'Geheime Vriend: trek namen in één minuut',
+        'santa_title' => 'Geheime Vriend (Secret Santa): trek namen in één minuut',
         'santa_body' => 'Voor familie, vrienden of collega’s. Deel één link, iedereen geeft zijn naam op, en elk ontdekt voor wie die koopt. Zonder account, zonder hoedje.',
         'santa_cta' => 'Start een groep',
         'santa_step1' => 'Maak een groep',
@@ -1044,8 +1044,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Geheime Vriend, online geloot',
-        'seo_description' => 'Maak een groep, loot de namen online, en je ziet alleen voor wie jij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
+        'seo_title' => 'Geheime Vriend (Secret Santa): online lootjes trekken',
+        'seo_description' => 'Geheime Vriend of Secret Santa organiseren: maak een groep, trek de lootjes online, en je ziet alleen voor wie jij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
         'title' => 'Geheime Vriend',
         'subtitle' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
         'create' => 'Start een groep',
@@ -1192,8 +1192,8 @@ return [
         'invite_others' => 'Nog iemand vergeten? Deel de link',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
-            'kicker' => 'Lootjes trekken, online',
-            'lead' => 'Trek namen met familie, vrienden of collega’s. Iedereen ontdekt voor wie die koopt, en niemand ziet de rest.',
+            'kicker' => 'Secret Santa · lootjes trekken, online',
+            'lead' => 'Ook bekend als Secret Santa of lootjes trekken. Trek namen met familie, vrienden of collega’s: iedereen ontdekt voor wie die koopt, en niemand ziet de rest.',
             'how_title' => 'Zo werkt het',
             'step1_title' => 'Start een groep',
             'step1_body' => 'Geef je groep een naam. Budget en datum kun je er meteen of later bij zetten.',

@@ -220,7 +220,7 @@ return [
         'coves_volume' => ':count searches a month',
 
         // The Secret Friend band on the homepage (2026-11-12).
-        'santa_title' => 'Secret Friend: draw names in one minute',
+        'santa_title' => 'Secret Friend (Secret Santa): draw names in one minute',
         'santa_body' => 'For family, friends or colleagues. Share one link, everybody gives a name, and each finds out who they are buying for. No account, no hat.',
         'santa_cta' => 'Start a group',
         'santa_step1' => 'Make a group',
@@ -1221,8 +1221,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Secret Friend, drawn online',
-        'seo_description' => 'Set up a group, draw the names online, and everybody sees only who they are buying for. No hat, no spreadsheet, no accidental spoilers.',
+        'seo_title' => 'Secret Friend (Secret Santa): draw names online',
+        'seo_description' => 'Run a Secret Friend or Secret Santa: set up a group, draw the names online, and everybody sees only who they are buying for. No hat, no spreadsheet, no accidental spoilers.',
         'title' => 'Secret Friend',
         'subtitle' => 'One group, one draw, nobody knows who has who.',
         'create' => 'Start a group',
@@ -1369,8 +1369,8 @@ return [
         'invite_others' => 'Forgot somebody? Share the link',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
-            'kicker' => 'Draw names, online',
-            'lead' => 'Draw names with family, friends or colleagues. Everybody finds out who they are buying for, and nobody sees the rest.',
+            'kicker' => 'Secret Santa · draw names, online',
+            'lead' => 'Also known as Secret Santa. Draw names with family, friends or colleagues: everybody finds out who they are buying for, and nobody sees the rest.',
             'how_title' => 'How it works',
             'step1_title' => 'Start a group',
             'step1_body' => 'Give your group a name. Add a budget and a date now or later.',

@@ -152,7 +152,7 @@ return [
         'coves_volume' => ':count recherches par mois',
 
         // The Secret Friend band on the homepage (2026-11-12).
-        'santa_title' => 'Ami secret : tirez les noms en une minute',
+        'santa_title' => 'Ami secret (Secret Santa) : tirez les noms en une minute',
         'santa_body' => 'En famille, entre amis ou collègues. Partagez un lien, chacun donne son nom et découvre pour qui il achète. Sans compte, sans chapeau.',
         'santa_cta' => 'Créer un groupe',
         'santa_step1' => 'Créez un groupe',
@@ -1038,8 +1038,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Ami Secret, tiré au sort en ligne',
-        'seo_description' => 'Créez un groupe, tirez les noms en ligne, et vous ne voyez que la personne pour qui vous achetez. Sans chapeau, sans tableur, sans fuite.',
+        'seo_title' => 'Ami Secret (Secret Santa) : tirage au sort en ligne',
+        'seo_description' => 'Organisez un Ami Secret ou Secret Santa : créez un groupe, tirez les noms en ligne, et vous ne voyez que la personne pour qui vous achetez. Sans chapeau, sans tableur, sans fuite.',
         'title' => 'Ami Secret',
         'subtitle' => 'Un groupe, un tirage, personne ne sait qui a qui.',
         'create' => 'Créer un groupe',
@@ -1186,8 +1186,8 @@ return [
         'invite_others' => 'Quelqu’un a été oublié ? Partagez le lien',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
-            'kicker' => 'Tirage au sort, en ligne',
-            'lead' => 'Tirez les noms en famille, entre amis ou collègues. Chacun découvre pour qui il achète, et personne ne voit le reste.',
+            'kicker' => 'Secret Santa · tirage au sort, en ligne',
+            'lead' => 'Aussi appelé Secret Santa ou Père Noël secret. Tirez les noms en famille, entre amis ou collègues : chacun découvre pour qui il achète, et personne ne voit le reste.',
             'how_title' => 'Comment ça marche',
             'step1_title' => 'Créez un groupe',
             'step1_body' => 'Donnez un nom à votre groupe. Budget et date s’ajoutent tout de suite ou plus tard.',

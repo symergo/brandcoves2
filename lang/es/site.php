@@ -151,7 +151,7 @@ return [
         'coves_volume' => ':count búsquedas al mes',
 
         // The Secret Friend band on the homepage (2026-11-12).
-        'santa_title' => 'Amigo invisible: sortea los nombres en un minuto',
+        'santa_title' => 'Amigo invisible (Secret Santa): sortea los nombres en un minuto',
         'santa_body' => 'Para familia, amigos o compañeros. Comparte un enlace, cada uno da su nombre y descubre para quién compra. Sin cuenta, sin papelitos.',
         'santa_cta' => 'Crear un grupo',
         'santa_step1' => 'Crea un grupo',
@@ -1037,8 +1037,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Amigo invisible, sorteado online',
-        'seo_description' => 'Crea un grupo, sortea los nombres online y cada persona solo ve a quién le toca. Sin sombrero, sin hoja de cálculo, sin filtraciones.',
+        'seo_title' => 'Amigo invisible (Secret Santa): sorteo online',
+        'seo_description' => 'Organiza un Amigo invisible o Secret Santa: crea un grupo, sortea los nombres online y cada persona solo ve a quién le toca. Sin sombrero, sin hoja de cálculo, sin filtraciones.',
         'title' => 'Amigo invisible',
         'subtitle' => 'Un grupo, un sorteo, nadie sabe a quién le ha tocado quién.',
         'create' => 'Crear un grupo',
@@ -1185,8 +1185,8 @@ return [
         'invite_others' => '¿Falta alguien? Comparte el enlace',
         // The start page and the group page, rebuilt 2026-11-12 (owner: "very unclear").
         'hub' => [
-            'kicker' => 'Sorteo de nombres, en línea',
-            'lead' => 'Sortea los nombres con familia, amigos o compañeros. Cada uno descubre para quién compra, y nadie ve el resto.',
+            'kicker' => 'Secret Santa · sorteo de nombres, en línea',
+            'lead' => 'También conocido como Secret Santa. Sortea los nombres con familia, amigos o compañeros: cada uno descubre para quién compra, y nadie ve el resto.',
             'how_title' => 'Cómo funciona',
             'step1_title' => 'Crea un grupo',
             'step1_body' => 'Ponle un nombre a tu grupo. El presupuesto y la fecha, ahora o más tarde.',
