@@ -2,6 +2,7 @@ import { router, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import ToolIcon from './ToolIcon'
 
 /**
  * One quiet line under the header while the signed-in address is not
@@ -76,8 +77,11 @@ export default function ConfirmEmailNotice() {
     }
 
     return (
-        <div role="status" className="border-b border-line text-xs text-ink-soft">
-            <div className="mx-auto flex w-full max-w-6xl items-center gap-x-3 px-4 py-1.5">
+        // A soft tint and a small envelope (owner, later that evening: "Color
+        // background ... and add icon"): still one thin line, but seen.
+        <div role="status" className="border-b border-accent/20 bg-accent/10 text-xs text-ink">
+            <div className="mx-auto flex w-full max-w-6xl items-center gap-x-2 px-4 py-1.5">
+                <ToolIcon name="mailAccount" className="h-4 w-4 shrink-0 text-accent" />
                 <p className="min-w-0 flex-1">
                     {t('auth.confirm_notice')}{' '}
                     {state === 'sent' ? (
@@ -98,7 +102,7 @@ export default function ConfirmEmailNotice() {
                     onClick={dismiss}
                     aria-label={t('auth.confirm_dismiss')}
                     title={t('auth.confirm_dismiss')}
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-base leading-none hover:bg-line hover:text-ink"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-base leading-none text-ink-soft hover:bg-accent/20 hover:text-ink"
                 >
                     ×
                 </button>
