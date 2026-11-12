@@ -8,6 +8,7 @@ use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Enums\SantaStatus;
+use App\Mail\SecretSantaAssignmentMail;
 use App\Models\ProductGroup;
 use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
@@ -16,6 +17,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -502,20 +504,47 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
-    public function joining_after_the_draw_is_refused(): void
+    public function somebody_joining_after_the_draw_is_slotted_into_the_chain(): void
     {
         $group = $this->group();
         $this->join($group, 'Sam', 'sam@example.test');
         $this->join($group, 'Ash', 'ash@example.test');
 
         $this->actingAs($group->organiser)->post("/be-nl/santa/{$group->id}/draw");
+        $before = $group->members()->get()->mapWithKeys(fn ($m) => [$m->id => (int) $m->assigned_member_id]);
+        Mail::fake();
 
-        // Otherwise the new member has nobody to buy for, and nobody buying for
-        // them — a silent hole nobody notices until the day.
+        // It was refused until 2026-11-12. Now one giver hands over their
+        // giftee: nobody is left without, and only two people get a mail.
+        $late = $this->join($group, 'Late', 'late@example.test');
+
+        $after = $group->members()->get()->mapWithKeys(fn ($m) => [$m->id => (int) $m->assigned_member_id]);
+
+        $this->assertCount(3 + 1, $after);
+        // Still one chain: everybody gives once and receives once.
+        $this->assertEqualsCanonicalizing($after->keys()->all(), $after->values()->all());
+        $this->assertSame(1, $before->filter(fn ($giftee, $giver) => $after[$giver] !== $giftee)->count());
+        $this->assertNotNull($late->fresh()->assigned_member_id);
+        Mail::assertQueued(SecretSantaAssignmentMail::class, 2);
+    }
+
+    #[Test]
+    public function a_late_joiner_is_refused_once_everybody_has_bought(): void
+    {
+        $group = $this->group();
+        $this->join($group, 'Sam', 'sam@example.test');
+
+        $this->actingAs($group->organiser)->post("/be-nl/santa/{$group->id}/draw");
+        $group->members()->update(['marked_done_at' => now()]);
+        auth()->logout();
+
+        // Every gift is already bought for somebody: nobody can change.
         $this->post("/be-nl/santa/{$group->id}/join/{$group->invite_token}", [
             'display_name' => 'Late',
             'email' => 'late@example.test',
-        ])->assertForbidden();
+        ])->assertSessionHas('error', __('site.santa.late_impossible'));
+
+        $this->assertSame(2, $group->members()->count());
     }
 
     #[Test]

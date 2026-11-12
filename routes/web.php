@@ -892,8 +892,11 @@ Route::prefix('{market}')->group(function () {
     | Throttled: every member-facing route is guarded by a token alone.
     */
     Route::middleware('auth')->group(function () {
-        Route::post('/santa', [SecretSantaController::class, 'store'])->name('santa.store');
         Route::post('/santa/{group}/draw', [SecretSantaController::class, 'draw'])->name('santa.draw');
+        // Couples by tapping two names, when the draw happens by itself, and next year.
+        Route::post('/santa/{group}/exclusions', [SecretSantaController::class, 'toggleExclusion'])->name('santa.exclusions');
+        Route::post('/santa/{group}/settings', [SecretSantaController::class, 'settings'])->name('santa.settings');
+        Route::post('/santa/{group}/again', [SecretSantaController::class, 'again'])->name('santa.again');
         Route::delete('/santa/{group}', [SecretSantaController::class, 'destroy'])->name('santa.destroy');
 
         /*
@@ -931,6 +934,25 @@ Route::prefix('{market}')->group(function () {
         Route::get('/santa/{group}/me/{token}', [SecretSantaController::class, 'me'])->name('santa.me');
         Route::post('/santa/{group}/me/{token}/done', [SecretSantaController::class, 'markDone'])->name('santa.done');
         Route::post('/santa/{group}/list', [SecretSantaController::class, 'attachList'])->name('santa.list');
+
+        // The game around the draw (2026-11-12). The member's token is the
+        // credential, as it is for the page itself: no account needed.
+        Route::post('/santa/{group}/me/{token}/in', [SecretSantaController::class, 'rejoin'])->name('santa.rejoin');
+        Route::post('/santa/{group}/me/{token}/reveal', [SecretSantaController::class, 'reveal'])->name('santa.reveal');
+        Route::post('/santa/{group}/me/{token}/hints', [SecretSantaController::class, 'hints'])->name('santa.hints');
+        Route::post('/santa/{group}/me/{token}/questions', [SecretSantaController::class, 'ask'])->name('santa.ask');
+        Route::post('/santa/{group}/me/{token}/questions/{question}', [SecretSantaController::class, 'answer'])
+            ->whereNumber('question')
+            ->name('santa.answer');
+        Route::post('/santa/{group}/me/{token}/guess', [SecretSantaController::class, 'guessSanta'])->name('santa.guess');
+        Route::post('/santa/{group}/me/{token}/thanks', [SecretSantaController::class, 'thanks'])->name('santa.thanks');
+        Route::post('/santa/{group}/me/{token}/mute', [SecretSantaController::class, 'mute'])->name('santa.mute');
+    });
+
+    // Starting a group needs no account since 2026-11-12: a visitor's name and
+    // address on the form make one (SecretSantaController::store).
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/santa', [SecretSantaController::class, 'store'])->name('santa.store');
     });
 
     /*

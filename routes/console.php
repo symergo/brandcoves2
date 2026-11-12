@@ -18,6 +18,7 @@ use App\Jobs\SendCoveDigest;
 use App\Jobs\SendListPriceDigests;
 use App\Jobs\SendOccasionReminders;
 use App\Jobs\WidenGiftAngles;
+use App\Services\Gift\SantaGame;
 use App\Services\Ingestion\CatalogueRun;
 use App\Services\Search\SearchTermStats;
 use Illuminate\Support\Facades\Schedule;
@@ -490,4 +491,28 @@ Schedule::command('bc:post-instagram --only=guides')
     ->name('post-instagram-guides')
     ->twiceDailyAt(12, 17, 20)
     ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Secret Friend, without anybody pressing a button (2026-11-12).
+ *
+ * - A group may set a moment for its draw; due ones are drawn every five minutes.
+ * - Mondays: how far each group is, to members who still have something to do.
+ * - Early November: last season's organisers are asked to go again.
+ *
+ * See App\Services\Gift\SantaGame and docs/features/secret-santa.md.
+ */
+Schedule::call(fn () => app(SantaGame::class)->drawDue())
+    ->name('santa-draw-due')
+    ->everyFiveMinutes()
+    ->onOneServer();
+
+Schedule::call(fn () => app(SantaGame::class)->sendProgress())
+    ->name('santa-progress')
+    ->weeklyOn(1, '08:10')
+    ->onOneServer();
+
+Schedule::call(fn () => app(SantaGame::class)->sendYearly())
+    ->name('santa-yearly')
+    ->yearlyOn(11, 3, '08:30')
     ->onOneServer();

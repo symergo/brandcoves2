@@ -5,26 +5,30 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListKind;
-use App\Enums\SantaStatus;
 use App\Mail\SecretSantaAssignmentMail;
 use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
+use App\Models\SecretSantaQuestion;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Auth\InstantAccount;
 use App\Services\Gift\DrawImpossible;
 use App\Services\Gift\GiftTarget;
+use App\Services\Gift\SantaGame;
 use App\Services\Gift\SantaRepair;
-use App\Services\Gift\SecretSantaDraw;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\ListName;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Number;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -128,11 +132,13 @@ class SecretSantaController extends Controller
             ->all();
     }
 
-    public function show(Request $request, CurrentMarket $current, string $market, string $group): Response
+    public function show(Request $request, CurrentMarket $current, string $market, string $group, SantaGame $game): Response
     {
         $santa = $this->find($group);
         $me = $this->membership($request, $santa);
         $isOrganiser = $santa->isOrganiser($request->user());
+        $all = $santa->members()->orderBy('display_name')->get();
+        $excludes = $isOrganiser ? $game->exclusionMap($all) : [];
 
         // Never indexed, like every page under a group id: who is in a draw
         // and who drew whom is nobody else's business. See SharedListController.
@@ -149,6 +155,17 @@ class SecretSantaController extends Controller
                 'drawn' => $santa->status->isDrawn(),
                 // The short form, `/s/{code}`, since 2026-09-13; see inviteByCode().
                 'inviteUrl' => url($current->url("s/{$santa->invite_token}")),
+                // A draw that happens by itself: at a moment, or once enough are in.
+                'drawAt' => $santa->draw_at?->toIso8601String(),
+                'drawWhenCount' => $santa->draw_when_count,
+                'exchangePassed' => $santa->exchangePassed(),
+                'progress' => $game->progress($santa),
+                // After the exchange: how many guessed who had them, never who.
+                'guesses' => ! $santa->exchangePassed() ? null : [
+                    'made' => $all->whereNotNull('guessed_at')->count(),
+                    'right' => $all->filter(fn (SecretSantaMember $m) => $m->guessed_at !== null
+                        && $game->santaOf($santa, $m)?->id === (int) $m->guess_member_id)->count(),
+                ],
             ],
             'isOrganiser' => $isOrganiser,
 
@@ -160,25 +177,34 @@ class SecretSantaController extends Controller
              * pairings outright, which quietly makes one player a spectator of
              * everyone else's game.
              */
-            'members' => $santa->members()->orderBy('display_name')->get()
+            'members' => $all
                 ->map(fn (SecretSantaMember $member) => [
                     'id' => $member->id,
                     'name' => $member->display_name,
+                    // False for somebody copied from last year who has not said "I'm in" yet.
                     'joined' => $member->joined_at !== null,
-                    'hasList' => $member->wishlist_id !== null,
+                    // A list, ticked interests or a hint: their Santa has something to go on.
+                    'hasList' => $game->hasSomethingToGoOn($member),
                     // Aggregate progress, not who bought what.
                     'done' => $member->marked_done_at !== null,
-                ]),
+                    // Who they may not draw: the organiser sets couples by tapping names.
+                    'excludes' => $excludes[$member->id] ?? [],
+                ])->values(),
 
             'me' => $me === null ? null : $this->mine($me, $current),
             'myLists' => $this->myLists($request, $current),
         ]);
     }
 
-    public function store(Request $request, CurrentMarket $current): RedirectResponse
+    /**
+     * Start a group. No account needed since 2026-11-12: a visitor gives a
+     * name and an address on the same form and is signed in on the spot
+     * ({@see InstantAccount}), because "sign in first" in front of the form
+     * is where an organiser decides the group chat will do.
+     */
+    public function store(Request $request, CurrentMarket $current, InstantAccount $instant, SantaGame $game): RedirectResponse
     {
         $user = $request->user();
-        abort_if($user === null, 403);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
@@ -187,7 +213,35 @@ class SecretSantaController extends Controller
             'exchange_date' => ['nullable', 'date'],
             'theme' => ['nullable', 'string', 'max:120'],
             'wishlist_id' => ['nullable', 'uuid'],
+            'draw_at' => ['nullable', 'date'],
+            'draw_when_count' => ['nullable', 'integer', 'min:3', 'max:200'],
+            'organiser_name' => [$user === null ? 'required' : 'nullable', 'string', 'max:80'],
+            'organiser_email' => [$user === null ? 'required' : 'nullable', 'string', 'email:rfc', 'max:190'],
         ]);
+
+        if ($user === null) {
+            // A hidden field filled in, or a form sent faster than anybody
+            // types: told nothing, like the sign-in form does.
+            if ($request->filled('website') || (int) $request->input('elapsed_ms', 0) < 1500) {
+                return back();
+            }
+
+            $key = 'santa-create:'.$request->ip();
+
+            if (RateLimiter::tooManyAttempts($key, 5)) {
+                throw ValidationException::withMessages([
+                    'organiser_email' => __('site.auth.too_many', ['seconds' => RateLimiter::availableIn($key)]),
+                ]);
+            }
+            RateLimiter::hit($key, 3600);
+
+            $user = $instant->start($request, $validated['organiser_email'], $validated['organiser_name'], $current->get());
+
+            // The address has an account: typing it proves nothing.
+            if ($user === null) {
+                throw ValidationException::withMessages(['organiser_email' => __('site.santa.sign_in_first')]);
+            }
+        }
 
         /*
          * Checked before anything is written. A list that is not theirs is
@@ -209,6 +263,8 @@ class SecretSantaController extends Controller
             'budget_max' => isset($validated['budget_max']) ? (int) round((float) $validated['budget_max'] * 100) : null,
             'exchange_date' => $validated['exchange_date'] ?? null,
             'theme' => $validated['theme'] ?? null,
+            'draw_at' => $this->drawMoment($validated['draw_at'] ?? null),
+            'draw_when_count' => $validated['draw_when_count'] ?? null,
         ]);
 
         // The organiser plays too. Almost nobody wants to run one without being
@@ -228,6 +284,15 @@ class SecretSantaController extends Controller
     }
 
     /**
+     * The moment typed into a `datetime-local` field, which carries no zone:
+     * read as the time on the wall in the markets we serve.
+     */
+    private function drawMoment(?string $value): ?Carbon
+    {
+        return blank($value) ? null : Carbon::parse($value, 'Europe/Brussels')->utc();
+    }
+
+    /**
      * The invite link, opened.
      *
      * This route was `POST` only. The URL the organiser shares — the one that
@@ -240,7 +305,7 @@ class SecretSantaController extends Controller
      * No account required, deliberately. Asking someone to sign up before they
      * can be in an office Secret Santa is how most of the office does not join.
      */
-    public function invite(Request $request, CurrentMarket $current, string $market, string $group, string $token): Response|RedirectResponse
+    public function invite(Request $request, CurrentMarket $current, string $market, string $group, string $token, SantaGame $game): Response|RedirectResponse
     {
         $santa = $this->find($group);
 
@@ -256,7 +321,17 @@ class SecretSantaController extends Controller
 
         $user = $request->user();
 
-        app(PageMeta::class)->set(title: $santa->title, robots: 'noindex, nofollow');
+        // What a chat app shows under the pasted link: the group by name, and
+        // the day and budget when it has them. Still never indexed.
+        app(PageMeta::class)->set(
+            title: __('site.santa.invite_text', ['title' => $santa->title]),
+            description: implode(' · ', array_filter([
+                __('site.santa.invite_preview'),
+                $santa->exchange_date?->locale($santa->market->language())->translatedFormat('j F Y'),
+                $game->budget($santa),
+            ])),
+            robots: 'noindex, nofollow',
+        );
 
         return Inertia::render('Santa/Join', [
             'group' => [
@@ -274,7 +349,10 @@ class SecretSantaController extends Controller
                  */
                 'drawn' => $santa->status->isDrawn(),
                 'members' => $santa->members()->count(),
+                'drawAt' => $santa->draw_at?->toIso8601String(),
             ],
+
+            'interestKeys' => SantaGame::INTERESTS,
 
             // Names only — who else is in is not a secret, and it is what tells
             // somebody they are joining the right group.
@@ -287,36 +365,72 @@ class SecretSantaController extends Controller
         ]);
     }
 
-    public function join(Request $request, CurrentMarket $current, string $market, string $group, string $token): RedirectResponse
+    public function join(Request $request, CurrentMarket $current, string $market, string $group, string $token, SantaGame $game): RedirectResponse
     {
         $santa = $this->find($group);
 
         abort_unless(hash_equals($santa->invite_token, $token), 404);
 
-        // Joining after the draw would leave the new member with nobody to buy
-        // for and nobody buying for them.
-        abort_if($santa->status->isDrawn(), 403, __('site.santa.already_drawn'));
-
         $validated = $request->validate([
             'display_name' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email:rfc', 'max:190'],
+            // Names tapped on the page (or typed, as before): matched by name
+            // or address at the draw.
             'exclusions' => ['sometimes', 'array', 'max:20'],
             'exclusions.*' => ['string', 'max:190'],
+            'interests' => ['sometimes', 'array', 'max:8'],
+            'interests.*' => ['string', 'in:'.implode(',', SantaGame::INTERESTS)],
+            'hints' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $email = mb_strtolower($validated['email']);
+        $known = SecretSantaMember::query()->where('group_id', $santa->id)->where('email', $email)->first();
+
+        // Already in and already holding a name: this is them coming back.
+        if ($known !== null && $known->removed_at === null && $known->assigned_member_id !== null) {
+            return redirect()->to($current->url("santa/{$santa->id}/me/{$known->join_token}"));
+        }
+
         $member = SecretSantaMember::updateOrCreate(
-            ['group_id' => $santa->id, 'email' => mb_strtolower($validated['email'])],
+            ['group_id' => $santa->id, 'email' => $email],
             [
                 'display_name' => $validated['display_name'],
                 'user_id' => $request->user()?->id,
                 'joined_at' => now(),
                 'exclusions' => array_map(mb_strtolower(...), $validated['exclusions'] ?? []),
+                'interests' => array_values($validated['interests'] ?? []),
+                'hints' => $validated['hints'] ?? null,
             ],
         );
 
+        /*
+         * After the draw (2026-11-12). It used to be refused: a member added
+         * afterwards had nobody to buy for. Now one giver who has not bought
+         * yet hands over their giftee, so two people get a mail and nobody
+         * else's name changes. Refused only when no giver can change any more.
+         */
+        if ($santa->status->isDrawn()) {
+            abort_if($member->removed_at !== null, 403, __('site.santa.already_drawn'));
+
+            try {
+                $game->lateJoin($santa, $member);
+            } catch (DrawImpossible) {
+                $member->update(['removed_at' => now()]);
+
+                return back()->with('error', __('site.santa.late_impossible'));
+            }
+
+            return redirect()
+                ->to($current->url("santa/{$santa->id}/me/{$member->join_token}"))
+                ->with('success', __('site.santa.joined_late'));
+        }
+
+        // "Draw once we are with ten": this may have been the tenth.
+        $drawn = $game->drawIfFull($santa);
+
         return redirect()
             ->to($current->url("santa/{$santa->id}/me/{$member->join_token}"))
-            ->with('success', __('site.santa.joined'));
+            ->with('success', __($drawn ? 'site.santa.joined_drawn' : 'site.santa.joined'));
     }
 
     /**
@@ -326,57 +440,40 @@ class SecretSantaController extends Controller
      * state: some people know who they have, the rest do not, and re-running it
      * would change the assignments of people who were already emailed.
      */
-    public function draw(Request $request, CurrentMarket $current, string $market, string $group, SecretSantaDraw $draw): RedirectResponse
+    public function draw(Request $request, CurrentMarket $current, string $market, string $group, SantaGame $game): RedirectResponse
     {
         $santa = $this->find($group);
 
         abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
         abort_if($santa->status->isDrawn(), 403, __('site.santa.already_drawn'));
 
-        $members = $santa->members()->get();
-
-        $exclusions = $this->exclusionMap($members);
-
         try {
-            $assignments = $draw->assign($members->pluck('id')->all(), $exclusions);
+            // Shared with a draw that happens by itself: {@see SantaGame::draw()}.
+            $game->draw($santa);
         } catch (DrawImpossible $e) {
-            $blocked = $e->blockedBy === null ? null : $members->firstWhere('id', $e->blockedBy);
+            // Naming the member who cannot be matched is the difference between
+            // "try again" and "go and talk to your brother about his exclusions".
+            $blocked = $e->blockedBy === null ? null : $santa->members()->whereKey($e->blockedBy)->first();
 
             return back()->with('error', $blocked === null
                 ? $e->getMessage()
                 : $e->getMessage().' ('.$blocked->display_name.')');
         }
 
-        /*
-         * All or nothing.
-         *
-         * A half-finished draw is the worst state this feature can reach: some
-         * people know who they have, the rest do not, and re-running it would
-         * change assignments that have already been emailed — and an email
-         * cannot be unsent.
-         */
-        DB::transaction(function () use ($santa, $members, $assignments): void {
-            foreach ($members as $member) {
-                $member->update(['assigned_member_id' => (string) $assignments[$member->id]]);
-            }
-
-            $santa->update(['status' => SantaStatus::Drawn, 'drawn_at' => now()]);
-        });
-
-        // Only after the transaction commits. Mail queued inside it would go out
-        // even if the write rolled back.
-        $this->notify($santa, $members->fresh(), $current);
-
         return back()->with('success', __('site.santa.drawn'));
     }
 
     /**
-     * Remove somebody, and close the hole they leave.
+     * Somebody leaves.
      *
-     * Before the draw this is a deletion and nothing else. After it, the draw
-     * has to be repaired around them — their giver takes on their giftee — and
-     * that is the whole reason this is not just an `update()`. See
-     * {@see SantaRepair} for why a full re-draw would be the wrong answer.
+     * Before the draw this is bookkeeping. After it, every member is holding an
+     * email that names one person, and a sent email cannot be unsent — so the
+     * chain is repaired around the gap rather than drawn again, and only the
+     * people whose assignment actually moved are told.
+     *
+     * Organiser-only for now. A member removing themselves is the same
+     * mechanics behind a different permission, and it wants its own
+     * confirmation copy.
      */
     public function removeMember(
         Request $request,
@@ -430,7 +527,7 @@ class SecretSantaController extends Controller
 
             foreach ($changed as $giverId => $gifteeId) {
                 $members->firstWhere('id', $giverId)
-                    ?->update(['assigned_member_id' => (string) $gifteeId]);
+                    ?->update(['assigned_member_id' => (string) $gifteeId, 'revealed_at' => null]);
             }
         });
 
@@ -497,6 +594,7 @@ class SecretSantaController extends Controller
                 $members->firstWhere('id', $giverId)?->update([
                     'assigned_member_id' => (string) $gifteeId,
                     'redrawn_at' => now(),
+                    'revealed_at' => null,
                 ]);
             }
         });
@@ -543,17 +641,57 @@ class SecretSantaController extends Controller
      * token identifies exactly one person, which is the whole of the
      * authorisation — same model as `/l/{token}` and `/for/{token}`.
      */
-    public function me(Request $request, CurrentMarket $current, string $market, string $group, string $token): Response
+    public function me(Request $request, CurrentMarket $current, string $market, string $group, string $token, SantaGame $game): Response
     {
         $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
 
-        $member = $santa->members()->where('join_token', $token)->first();
+        $giftee = $member->assigned_member_id === null
+            ? null
+            : SecretSantaMember::query()->find($member->assigned_member_id);
 
-        if ($member === null) {
-            throw new NotFoundHttpException;
+        /*
+         * "Your Secret Friend looked at your list." Counted at most once an
+         * hour, and only once the card is turned: before that the Santa has
+         * not seen whose list it is. The first look is mailed, because it is
+         * the moment a thin list can still be fixed.
+         */
+        if ($giftee !== null && $member->revealed_at !== null
+            && ($giftee->list_viewed_at === null || $giftee->list_viewed_at->lt(now()->subHour()))) {
+            $first = $giftee->list_views === 0;
+            $giftee->forceFill(['list_views' => $giftee->list_views + 1, 'list_viewed_at' => now()])->save();
+
+            if ($first) {
+                $language = $santa->market->language();
+                $game->note($santa, $giftee, 'viewed',
+                    __('site.santa.mail.viewed_subject', [], $language),
+                    [__($game->hasSomethingToGoOn($giftee) ? 'site.santa.mail.viewed_body' : 'site.santa.mail.viewed_body_empty', [], $language)],
+                    __('site.santa.mail.open_mine', [], $language),
+                );
+            }
         }
 
         app(PageMeta::class)->set(title: $santa->title, robots: 'noindex, nofollow');
+
+        $mine = $this->mine($member, $current);
+
+        if ($giftee !== null && $mine['giftee'] !== null) {
+            $mine['giftee'] += [
+                'interests' => array_values((array) $giftee->interests),
+                'hints' => $giftee->hints,
+                'ideas' => $this->ideas($santa, $giftee, $current),
+                // What I asked them, and what they answered.
+                'asked' => SecretSantaQuestion::query()
+                    ->where('group_id', $santa->id)
+                    ->where('giftee_member_id', $giftee->id)
+                    ->oldest()
+                    ->get()
+                    ->filter(fn (SecretSantaQuestion $q) => (int) $q->asker_member_id === $member->id)
+                    ->map(fn (SecretSantaQuestion $q) => ['id' => $q->id, 'question' => $q->question, 'answer' => $q->answer])
+                    ->values()
+                    ->all(),
+            ];
+        }
 
         return Inertia::render('Santa/Me', [
             'group' => [
@@ -563,9 +701,336 @@ class SecretSantaController extends Controller
                 'budgetMax' => $santa->budget_max,
                 'exchangeDate' => $santa->exchange_date?->toDateString(),
                 'drawn' => $santa->status->isDrawn(),
+                'drawAt' => $santa->draw_at?->toIso8601String(),
+                'exchangePassed' => $santa->exchangePassed(),
+                'progress' => $game->progress($santa),
             ],
-            'me' => $this->mine($member, $current),
+            'me' => $mine + [
+                // False for somebody copied in from last year until they press
+                // "I'm in": a button, never the page view, because a mail
+                // scanner opens every link and must not sign people up.
+                'joined' => $member->joined_at !== null,
+                'interests' => array_values((array) $member->interests),
+                'hints' => $member->hints,
+                'listViews' => $member->list_views,
+                'muted' => $member->muted_at !== null,
+                // Questions from whoever drew me, without their name.
+                'inbox' => SecretSantaQuestion::query()
+                    ->where('group_id', $santa->id)
+                    ->where('giftee_member_id', $member->id)
+                    ->oldest()
+                    ->get()
+                    ->map(fn (SecretSantaQuestion $q) => ['id' => $q->id, 'question' => $q->question, 'answer' => $q->answer])
+                    ->all(),
+                'guess' => $this->guess($santa, $member, $game),
+                'thanked' => $member->thanked_at !== null,
+            ],
+            'interestKeys' => SantaGame::INTERESTS,
         ]);
+    }
+
+    /**
+     * Guessing who had you: open from the exchange day, one guess, and the
+     * answer only after it.
+     *
+     * @return array{options: list<array{id: int, name: string}>, guessedId: int|null, santaName: string|null, correct: bool|null}|null
+     */
+    private function guess(SecretSantaGroup $santa, SecretSantaMember $member, SantaGame $game): ?array
+    {
+        if (! $santa->status->isDrawn() || ! $santa->exchangePassed()) {
+            return null;
+        }
+
+        $guessed = $member->guessed_at !== null;
+        $had = $guessed ? $game->santaOf($santa, $member) : null;
+
+        return [
+            'options' => $santa->members()->where('id', '!=', $member->id)->orderBy('display_name')->get()
+                ->map(fn (SecretSantaMember $m) => ['id' => $m->id, 'name' => $m->display_name])->all(),
+            'guessedId' => $guessed ? (int) $member->guess_member_id : null,
+            'santaName' => $had?->display_name,
+            'correct' => $guessed ? $had?->id === (int) $member->guess_member_id : null,
+        ];
+    }
+
+    /**
+     * Searches that fit the budget, from what the giftee ticked and the
+     * group's theme. Links, not products: the search page already knows how
+     * to show a price honestly.
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    private function ideas(SecretSantaGroup $santa, SecretSantaMember $giftee, CurrentMarket $current): array
+    {
+        $terms = array_map(
+            fn (string $key) => __("site.santa.interest.{$key}"),
+            array_values(array_intersect(SantaGame::INTERESTS, (array) $giftee->interests)),
+        );
+
+        if (filled($santa->theme)) {
+            $terms[] = (string) $santa->theme;
+        }
+
+        $max = $santa->budget_max === null ? '' : '&max='.(int) ceil($santa->budget_max / 100);
+
+        return array_map(fn (string $term) => [
+            'label' => $term,
+            'url' => $current->url('search').'?q='.rawurlencode(mb_strtolower($term)).$max,
+        ], array_slice($terms, 0, 8));
+    }
+
+    private function byToken(SecretSantaGroup $santa, string $token): SecretSantaMember
+    {
+        $member = $santa->members()->where('join_token', $token)->first();
+
+        if ($member === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return $member;
+    }
+
+    /** "I'm in again", pressed by somebody copied in from last year's group. */
+    public function rejoin(Request $request, string $market, string $group, string $token, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        if ($member->joined_at === null) {
+            $member->update(['joined_at' => now()]);
+            $game->drawIfFull($santa);
+        }
+
+        return back()->with('success', __('site.santa.joined'));
+    }
+
+    /** The card is turned: from here the page shows the name. */
+    public function reveal(Request $request, string $market, string $group, string $token): RedirectResponse
+    {
+        $member = $this->byToken($this->find($group), $token);
+
+        if ($member->assigned_member_id !== null && $member->revealed_at === null) {
+            $member->update(['revealed_at' => now()]);
+        }
+
+        return back();
+    }
+
+    /** Tips for whoever drew you: a few ticks and a line, for people who make no list. */
+    public function hints(Request $request, string $market, string $group, string $token): RedirectResponse
+    {
+        $member = $this->byToken($this->find($group), $token);
+
+        $validated = $request->validate([
+            'interests' => ['present', 'array', 'max:8'],
+            'interests.*' => ['string', 'in:'.implode(',', SantaGame::INTERESTS)],
+            'hints' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $member->update(['interests' => array_values($validated['interests']), 'hints' => $validated['hints'] ?? null]);
+
+        return back()->with('success', __('site.santa.hints_saved'));
+    }
+
+    /** A question to the person you drew. They see the question, never who asked. */
+    public function ask(Request $request, string $market, string $group, string $token, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        abort_if($member->assigned_member_id === null, 403, __('site.santa.not_drawn'));
+
+        $validated = $request->validate(['question' => ['required', 'string', 'min:3', 'max:300']]);
+
+        $giftee = $santa->members()->whereKey((int) $member->assigned_member_id)->firstOrFail();
+
+        $asked = SecretSantaQuestion::query()->where('group_id', $santa->id)->where('giftee_member_id', $giftee->id)->get()
+            ->filter(fn (SecretSantaQuestion $q) => (int) $q->asker_member_id === $member->id)
+            ->count();
+
+        if ($asked >= SecretSantaQuestion::MAX_PER_ASKER) {
+            return back()->with('error', __('site.santa.ask_limit'));
+        }
+
+        SecretSantaQuestion::create([
+            'group_id' => $santa->id,
+            'giftee_member_id' => $giftee->id,
+            'asker_member_id' => (string) $member->id,
+            'question' => $validated['question'],
+        ]);
+
+        $language = $santa->market->language();
+        $game->note($santa, $giftee, 'question',
+            __('site.santa.mail.question_subject', [], $language),
+            [__('site.santa.mail.question_body', [], $language), '"'.$validated['question'].'"'],
+            __('site.santa.mail.question_cta', [], $language),
+        );
+
+        return back()->with('success', __('site.santa.asked', ['name' => $giftee->display_name]));
+    }
+
+    /** The giftee answers; the answer goes back to whoever asked, by mail and on their page. */
+    public function answer(Request $request, string $market, string $group, string $token, int $question, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        $asked = SecretSantaQuestion::query()
+            ->where('group_id', $santa->id)
+            ->where('giftee_member_id', $member->id)
+            ->whereKey($question)
+            ->firstOrFail();
+
+        $validated = $request->validate(['answer' => ['required', 'string', 'max:500']]);
+
+        $asked->update(['answer' => $validated['answer'], 'answered_at' => now()]);
+
+        $asker = $santa->members()->whereKey((int) $asked->asker_member_id)->first();
+
+        if ($asker !== null) {
+            $language = $santa->market->language();
+            $game->note($santa, $asker, 'answer',
+                __('site.santa.mail.answer_subject', ['name' => $member->display_name], $language),
+                ['"'.$asked->question.'"', '"'.$validated['answer'].'"'],
+                __('site.santa.mail.open_mine', [], $language),
+            );
+        }
+
+        return back()->with('success', __('site.santa.answered'));
+    }
+
+    /** One guess at who had you, from the exchange day on. */
+    public function guessSanta(Request $request, string $market, string $group, string $token): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        abort_unless($santa->status->isDrawn() && $santa->exchangePassed(), 403);
+
+        $validated = $request->validate(['member_id' => ['required', 'integer']]);
+
+        abort_unless($santa->members()->whereKey($validated['member_id'])->where('id', '!=', $member->id)->exists(), 422);
+
+        if ($member->guessed_at === null) {
+            $member->update(['guess_member_id' => $validated['member_id'], 'guessed_at' => now()]);
+        }
+
+        return back();
+    }
+
+    /** A thank-you to whoever had you, once, after the exchange. */
+    public function thanks(Request $request, string $market, string $group, string $token, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        abort_unless($santa->status->isDrawn() && $santa->exchangePassed() && $member->thanked_at === null, 403);
+
+        $validated = $request->validate(['message' => ['required', 'string', 'min:2', 'max:500']]);
+
+        $member->update(['thanks' => $validated['message'], 'thanked_at' => now()]);
+
+        $had = $game->santaOf($santa, $member);
+
+        if ($had !== null) {
+            $language = $santa->market->language();
+            $game->note($santa, $had, 'thanks',
+                __('site.santa.mail.thanks_subject', ['name' => $member->display_name], $language),
+                ['"'.$validated['message'].'"'],
+                __('site.santa.mail.open_mine', [], $language),
+            );
+        }
+
+        return back()->with('success', __('site.santa.thanks_sent'));
+    }
+
+    /**
+     * No more of the friendly mails (questions, progress, "looked at your
+     * list"). A button on the member's page, which is where the link in those
+     * mails lands: a GET would be pressed by every mail scanner. The
+     * assignment mail is not affected, since without it there is no game.
+     */
+    public function mute(Request $request, CurrentMarket $current, string $market, string $group, string $token): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->byToken($santa, $token);
+
+        $on = ! $request->boolean('off');
+        $member->update(['muted_at' => $on ? now() : null]);
+
+        return back()->with('success', __($on ? 'site.santa.muted' : 'site.santa.unmuted'));
+    }
+
+    /**
+     * Two people who may not draw each other, set by the organiser by tapping
+     * two names. Symmetric, and stored as addresses so a changed display name
+     * does not undo it. Pressing again lifts it.
+     */
+    public function toggleExclusion(Request $request, string $market, string $group, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+        abort_if($santa->status->isDrawn(), 403, __('site.santa.already_drawn'));
+
+        $validated = $request->validate(['a' => ['required', 'integer'], 'b' => ['required', 'integer', 'different:a']]);
+
+        $members = $santa->members()->get();
+        $a = $members->firstWhere('id', $validated['a']);
+        $b = $members->firstWhere('id', $validated['b']);
+
+        abort_if($a === null || $b === null, 404);
+
+        $apart = in_array($b->id, $game->exclusionMap($members)[$a->id] ?? [], true);
+
+        foreach ([[$a, $b], [$b, $a]] as [$one, $other]) {
+            $names = [mb_strtolower((string) $other->email), mb_strtolower((string) $other->display_name)];
+            $kept = array_values(array_filter(
+                array_map(mb_strtolower(...), (array) $one->exclusions),
+                fn (string $entry) => ! in_array($entry, $names, true),
+            ));
+
+            $one->update(['exclusions' => $apart ? $kept : [...$kept, mb_strtolower((string) $other->email)]]);
+        }
+
+        return back();
+    }
+
+    /** When the draw happens by itself: at a moment, once enough are in, or neither. */
+    public function settings(Request $request, string $market, string $group): RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+        abort_if($santa->status->isDrawn(), 403, __('site.santa.already_drawn'));
+
+        $validated = $request->validate([
+            'draw_at' => ['nullable', 'date'],
+            'draw_when_count' => ['nullable', 'integer', 'min:3', 'max:200'],
+        ]);
+
+        $santa->update([
+            'draw_at' => $this->drawMoment($validated['draw_at'] ?? null),
+            'draw_when_count' => $validated['draw_when_count'] ?? null,
+        ]);
+
+        return back()->with('success', __('site.santa.settings_saved'));
+    }
+
+    /** The same people, a year on. See {@see SantaGame::again()}. */
+    public function again(Request $request, CurrentMarket $current, string $market, string $group, SantaGame $game): RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+        abort_unless($santa->status->isDrawn(), 403, __('site.santa.not_drawn'));
+
+        // Pressed twice, or from the November mail after starting it by hand.
+        $new = SecretSantaGroup::query()->where('previous_group_id', $santa->id)->first() ?? $game->again($santa);
+
+        return redirect()
+            ->to($current->url("santa/{$new->id}"))
+            ->with('success', __('site.santa.again_started'));
     }
 
     /**
@@ -750,6 +1215,8 @@ class SecretSantaController extends Controller
         return [
             'joinToken' => $member->join_token,
             'name' => $member->display_name,
+            // Until the card is turned, no page prints the name.
+            'revealed' => $member->revealed_at !== null,
             'done' => $member->marked_done_at !== null,
             'hasList' => $member->wishlist_id !== null,
             'wishlistId' => $member->wishlist_id,
@@ -822,14 +1289,14 @@ class SecretSantaController extends Controller
      * id in the path was saying nothing the token did not. Both routes land
      * in the same two methods, so a link already sent keeps working.
      */
-    public function inviteByCode(Request $request, CurrentMarket $current, string $market, string $token): Response|RedirectResponse
+    public function inviteByCode(Request $request, CurrentMarket $current, string $market, string $token, SantaGame $game): Response|RedirectResponse
     {
-        return $this->invite($request, $current, $market, $this->byInvite($token)->id, $token);
+        return $this->invite($request, $current, $market, $this->byInvite($token)->id, $token, $game);
     }
 
-    public function joinByCode(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
+    public function joinByCode(Request $request, CurrentMarket $current, string $market, string $token, SantaGame $game): RedirectResponse
     {
-        return $this->join($request, $current, $market, $this->byInvite($token)->id, $token);
+        return $this->join($request, $current, $market, $this->byInvite($token)->id, $token, $game);
     }
 
     private function byInvite(string $token): SecretSantaGroup

@@ -43,6 +43,7 @@ class SecretSantaGroup extends Model
             'status' => SantaStatus::class,
             'exchange_date' => 'date',
             'drawn_at' => 'datetime',
+            'draw_at' => 'datetime',
         ];
     }
 
@@ -81,6 +82,18 @@ class SecretSantaGroup extends Model
     public function organiser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    /** The exchange day is here or behind us: guessing who had you opens. */
+    public function exchangePassed(): bool
+    {
+        return $this->exchange_date !== null && $this->exchange_date->startOfDay()->lte(now());
+    }
+
+    /** `/be-nl/santa/{id}/...`, without a request: mails and commands build links too. */
+    public function path(string $rest = ''): string
+    {
+        return '/'.$this->market->value.'/santa/'.$this->id.($rest === '' ? '' : '/'.$rest);
     }
 
     public function isOrganiser(?User $user): bool

@@ -34,7 +34,7 @@ class MagicLinkController extends Controller
     private const MIN_FORM_MS = 1200;
 
     /** Session key: the hash of the last link this browser asked for. See confirm(). */
-    private const REQUESTED_HERE = 'magic_link_requested';
+    public const REQUESTED_HERE = 'magic_link_requested';
 
     public function show(Request $request): Response
     {

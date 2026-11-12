@@ -1,8 +1,10 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
+import { useState } from 'react'
 import InfoTip from '../../Components/InfoTip'
 import { useConfirm } from '../../Components/Modal'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
+import { Countdown, Progress } from '../../Components/SantaGame'
 import ShareRow from '../../Components/ShareRow'
 import { formatBudget, formatDay, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -13,6 +15,8 @@ interface Member {
     joined: boolean
     hasList: boolean
     done: boolean
+    /** Ids they may not draw; only filled for the organiser. */
+    excludes: number[]
     /* No giftee, ever. See below. */
 }
 
@@ -26,6 +30,11 @@ interface Props {
         theme: string | null
         drawn: boolean
         inviteUrl: string
+        drawAt: string | null
+        drawWhenCount: number | null
+        exchangePassed: boolean
+        progress: { members: number; ready: number; done: number }
+        guesses: { made: number; right: number } | null
     }
     isOrganiser: boolean
     members: Member[]
@@ -36,6 +45,7 @@ interface Props {
         hasList: boolean
         /** The list this member attached, if any. */
         wishlistId: string | null
+        revealed: boolean
         giftee: { name: string } | null
     } | null
     /** The lists this person could attach: their own, about themselves. */
@@ -88,12 +98,15 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                   wishlist showed the link and offered the share sheet. Same row
                   as everywhere else now.
                 */}
-                {!group.drawn && (
+                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-3" />
+
+                {/* Still shown after the draw: a latecomer is slotted into the chain. */}
+                {!group.exchangePassed && (
                     <div className="mt-4 rounded-card border border-line bg-card p-4">
                         <ShareRow
                             url={group.inviteUrl}
                             text={t('santa.invite_text', { title: group.title })}
-                            label={t('santa.invite')}
+                            label={group.drawn ? t('santa.invite_others') : t('santa.invite')}
                             hint={t('santa.invite_hint')}
                         />
                     </div>
@@ -103,8 +116,11 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
             {me && (
                 <div className="mt-6 rounded-card border border-line bg-card p-4 text-sm">
                     <Link href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
+                        {/* No name here until they turned their card on their own page. */}
                         {group.drawn && me.giftee
-                            ? t('santa.you_have', { name: me.giftee.name })
+                            ? me.revealed
+                                ? t('santa.you_have', { name: me.giftee.name })
+                                : t('santa.email_reveal_cta')
                             : t('santa.not_drawn')}
                     </Link>
 
@@ -159,19 +175,22 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
             <section className="mt-10">
                 <h2 className="text-lg font-medium">{t('santa.members')}</h2>
 
-                {group.drawn && (
-                    <p className="mt-1 text-sm text-ink-soft">
-                        {t('santa.done_count', {
-                            done: String(done),
-                            total: String(members.length),
-                        })}
+                <Progress drawn={group.drawn} progress={group.progress} />
+
+                {group.guesses && group.guesses.made > 0 && (
+                    <p className="mt-2 text-sm text-ink-soft">
+                        {t('santa.guesses_stat', { right: String(group.guesses.right), made: String(group.guesses.made) })}
                     </p>
                 )}
 
                 <ul className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
                     {members.map((member) => (
                         <li key={member.id} className="flex items-center gap-4 p-4">
-                            <span className="flex-1 text-sm font-medium">{member.name}</span>
+                            <span className="flex-1 text-sm font-medium">
+                                {member.name}
+                                {/* Copied from last year, has not said "I'm in" yet. */}
+                                {!member.joined && <span className="ml-2 text-xs font-normal text-ink-soft">({t('santa.invited')})</span>}
+                            </span>
 
                             {/*
                               Aggregate facts only: whether they have a list, and
@@ -248,6 +267,23 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                     ))}
                 </ul>
 
+                {isOrganiser && !group.drawn && members.length > 1 && <Couples groupId={group.id} members={members} />}
+                {isOrganiser && !group.drawn && <AutoDraw group={group} />}
+
+                {/* The same people, a year on: one press, from the organiser. */}
+                {isOrganiser && group.drawn && (
+                    <div className="mt-6 rounded-card border border-accent/40 bg-accent/5 p-4">
+                        <p className="text-sm text-ink-soft">{t('santa.again_hint')}</p>
+                        <button
+                            type="button"
+                            onClick={() => router.post(`/${market.key}/santa/${group.id}/again`)}
+                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                        >
+                            {t('santa.again')}
+                        </button>
+                    </div>
+                )}
+
                 {isOrganiser && (
                     <div className="mt-6 flex flex-wrap items-center gap-3">
                         {!group.drawn && (
@@ -304,5 +340,133 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
                 )}
             </section>
         </>
+    )
+}
+
+/**
+ * Who may not draw whom, set by tapping two names (owner, 2026-11-12). It was
+ * a line each member typed on joining, with other people's addresses in it.
+ * Symmetric: a couple is two people who may not draw each other.
+ */
+function Couples({ groupId, members }: { groupId: string; members: Member[] }) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const [picked, setPicked] = useState<number | null>(null)
+    const first = members.find((m) => m.id === picked) ?? null
+    const pairs = members.reduce((count, m) => count + m.excludes.length, 0)
+
+    return (
+        <details className="mt-6 rounded-card border border-line bg-card p-4" open={pairs > 0}>
+            <summary className="cursor-pointer text-sm font-medium">{t('santa.couples_title')}</summary>
+            <p className="mt-2 text-sm text-ink-soft">{t('santa.couples_hint')}</p>
+            <p className="mt-3 text-sm font-medium">{first ? t('santa.couples_for', { name: first.name }) : t('santa.couples_pick')}</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+                {members.map((member) => {
+                    const isFirst = member.id === picked
+                    const apart = first !== null && first.excludes.includes(member.id)
+
+                    return (
+                        <li key={member.id}>
+                            <button
+                                type="button"
+                                aria-pressed={isFirst || apart}
+                                onClick={() => {
+                                    if (first === null || isFirst) {
+                                        setPicked(isFirst ? null : member.id)
+
+                                        return
+                                    }
+
+                                    router.post(
+                                        `/${market.key}/santa/${groupId}/exclusions`,
+                                        { a: first.id, b: member.id },
+                                        { preserveScroll: true },
+                                    )
+                                }}
+                                className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                                    isFirst
+                                        ? 'border-accent bg-accent text-white'
+                                        : apart
+                                          ? 'border-ink bg-ink text-white line-through'
+                                          : 'border-line bg-cream hover:border-ink'
+                                }`}
+                            >
+                                {member.name}
+                            </button>
+                        </li>
+                    )
+                })}
+            </ul>
+        </details>
+    )
+}
+
+/** A moment typed in a `datetime-local` field wants "2026-12-01T20:00", in the visitor's own time. */
+function localMoment(iso: string | null): string {
+    if (!iso) return ''
+
+    const d = new Date(iso)
+    const pad = (v: number) => String(v).padStart(2, '0')
+
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** The draw without the organiser coming back: at a moment, or once enough are in. */
+function AutoDraw({ group }: { group: Props['group'] }) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const form = useForm({ draw_at: localMoment(group.drawAt), draw_when_count: group.drawWhenCount === null ? '' : String(group.drawWhenCount) })
+    const field = 'mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2'
+
+    return (
+        <details className="mt-4 rounded-card border border-line bg-card p-4" open={group.drawAt !== null || group.drawWhenCount !== null}>
+            <summary className="cursor-pointer text-sm font-medium">{t('santa.draw_auto')}</summary>
+            <p className="mt-2 text-sm text-ink-soft">{t('santa.draw_auto_hint')}</p>
+
+            {group.drawAt && (
+                <p className="mt-2 text-sm font-medium">
+                    {t('santa.draw_at_set', {
+                        when: new Date(group.drawAt).toLocaleString(market.hrefLang, { dateStyle: 'long', timeStyle: 'short' }),
+                    })}
+                </p>
+            )}
+            {group.drawWhenCount !== null && (
+                <p className="mt-2 text-sm font-medium">{t('santa.draw_when_set', { count: String(group.drawWhenCount) })}</p>
+            )}
+
+            <form
+                className="mt-3 grid gap-4 sm:grid-cols-2"
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    form.post(`/${market.key}/santa/${group.id}/settings`, { preserveScroll: true })
+                }}
+            >
+                <label className="block">
+                    <span className="text-sm font-medium">{t('santa.draw_at_label')}</span>
+                    <input type="datetime-local" value={form.data.draw_at} onChange={(e) => form.setData('draw_at', e.target.value)} className={field} />
+                </label>
+                <label className="block">
+                    <span className="text-sm font-medium">{t('santa.draw_when_label')}</span>
+                    <input
+                        type="number"
+                        min={3}
+                        max={200}
+                        value={form.data.draw_when_count}
+                        onChange={(e) => form.setData('draw_when_count', e.target.value)}
+                        className={field}
+                    />
+                </label>
+                {Object.entries(form.errors).map(([name, message]) => (
+                    <p key={name} className="text-sm text-danger sm:col-span-2" role="alert">
+                        {message}
+                    </p>
+                ))}
+                <div className="sm:col-span-2">
+                    <button disabled={form.processing} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-ink disabled:opacity-50">
+                        {t('santa.save')}
+                    </button>
+                </div>
+            </form>
+        </details>
     )
 }

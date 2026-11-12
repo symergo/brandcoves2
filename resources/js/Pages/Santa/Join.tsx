@@ -4,6 +4,7 @@ import { formatBudget, formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
+import { Countdown, InterestPicker } from '../../Components/SantaGame'
 
 interface Props {
     group: {
@@ -16,9 +17,11 @@ interface Props {
         theme: string | null
         drawn: boolean
         members: number
+        drawAt: string | null
     }
     members: string[]
     you: { name: string | null; email: string | null }
+    interestKeys: string[]
 }
 
 /**
@@ -33,14 +36,18 @@ interface Props {
  * Secret Santa is how most of the office does not join; the email is what the
  * draw needs to reach them, and the join token is what gets them back in.
  */
-export default function SantaJoin({ group, members, you }: Props) {
+export default function SantaJoin({ group, members, you, interestKeys }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     const form = useForm({
         display_name: you.name ?? '',
         email: you.email ?? '',
-        exclusions: '',
+        // Names tapped below (owner, 2026-11-12): it was a line of names or
+        // addresses to type, which asked people for addresses they do not have.
+        exclusions: [] as string[],
+        interests: [] as string[],
+        hints: '',
     })
 
     const budget =
@@ -83,6 +90,8 @@ export default function SantaJoin({ group, members, you }: Props) {
 
                 {group.theme && <p className="mt-3 text-ink-soft">{group.theme}</p>}
 
+                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-4" />
+
                 {/*
                   Who else is in. Not a secret, and it is what tells somebody
                   they have opened the right group rather than a stranger's.
@@ -91,30 +100,22 @@ export default function SantaJoin({ group, members, you }: Props) {
                     <p className="mt-4 text-sm text-ink-soft">{members.join(', ')}</p>
                 )}
 
-                {group.drawn ? (
-                    /*
-                      Said before they type anything. Joining closes at the draw
-                      — a member added afterwards has nobody to buy for and
-                      nobody buying for them — and discovering that from a 403
-                      after filling in a form is the worst version of it.
-                    */
+                {/*
+                  Joining after the draw is fine since 2026-11-12: one giver
+                  hands over their giftee, so the latecomer gets a name at
+                  once. Said before they type anything.
+                */}
+                {group.drawn && (
                     <p className="mt-8 rounded-card border border-amber/40 bg-amber/10 p-4">
-                        {t('santa.already_drawn')}
+                        {t('santa.late_note')}
                     </p>
-                ) : (
+                )}
+
+                {(
                     <form
-                        className="mt-8 space-y-4 rounded-card border border-line bg-card p-5"
+                        className="mt-6 space-y-4 rounded-card border border-line bg-card p-5"
                         onSubmit={(e) => {
                             e.preventDefault()
-                            // A line of names, as people actually write them,
-                            // turned into the array the endpoint validates.
-                            form.transform((data) => ({
-                                ...data,
-                                exclusions: data.exclusions
-                                    .split(',')
-                                    .map((value) => value.trim())
-                                    .filter(Boolean),
-                            }))
 
                             // The short route; the page was opened by this code.
                             form.post(`/${market.key}/s/${group.token}`)
@@ -155,17 +156,58 @@ export default function SantaJoin({ group, members, you }: Props) {
                             )}
                         </div>
 
+                        {/* Who may I not draw: the names already in, to tap. */}
+                        {members.length > 0 && (
+                            <fieldset>
+                                <legend className="block text-sm font-medium">{t('santa.exclusions')}</legend>
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {members.map((name) => {
+                                        const on = form.data.exclusions.includes(name)
+
+                                        return (
+                                            <li key={name}>
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={on}
+                                                    onClick={() =>
+                                                        form.setData(
+                                                            'exclusions',
+                                                            on ? form.data.exclusions.filter((v) => v !== name) : [...form.data.exclusions, name],
+                                                        )
+                                                    }
+                                                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                                                        on ? 'border-ink bg-ink text-white line-through' : 'border-line bg-cream hover:border-ink'
+                                                    }`}
+                                                >
+                                                    {name}
+                                                </button>
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                                <p className="mt-1 text-xs text-ink-soft">{t('santa.exclusions_hint')}</p>
+                            </fieldset>
+                        )}
+
+                        {/* A list in a few taps: what whoever draws me has to go on. */}
+                        <fieldset>
+                            <legend className="block text-sm font-medium">{t('santa.interests_title')}</legend>
+                            <p className="mb-2 mt-1 text-xs text-ink-soft">{t('santa.interests_hint')}</p>
+                            <InterestPicker keys={interestKeys} value={form.data.interests} onChange={(v) => form.setData('interests', v)} />
+                        </fieldset>
+
                         <div>
-                            <label className="block text-sm font-medium" htmlFor="exclusions">
-                                {t('santa.exclusions')}
+                            <label className="block text-sm font-medium" htmlFor="hints">
+                                {t('santa.hints_label')}
                             </label>
                             <input
-                                id="exclusions"
-                                value={form.data.exclusions}
-                                onChange={(e) => form.setData('exclusions', e.target.value)}
+                                id="hints"
+                                maxLength={500}
+                                value={form.data.hints}
+                                onChange={(e) => form.setData('hints', e.target.value)}
+                                placeholder={t('santa.hints_placeholder')}
                                 className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
                             />
-                            <p className="mt-1 text-xs text-ink-soft">{t('santa.exclusions_hint')}</p>
                         </div>
 
                         <button

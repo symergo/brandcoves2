@@ -13,7 +13,9 @@
 {{ __('site.santa.email_changed_intro') }}
 
 @endif
-{{ __('site.santa.email_intro', ['name' => $gifteeName]) }}
+{{-- No name in the mail since 2026-11-12: the member's page turns the card.
+     It also means a mail read over a shoulder gives nothing away. --}}
+{{ __('site.santa.email_intro') }}
 
 @if ($budget)
 {{ __('site.santa.email_budget', ['budget' => $budget]) }}
@@ -24,13 +26,11 @@
 @endif
 
 @if ($gifteeHasList)
-{{ __('site.santa.email_list') }}
-@else
-{{ __('site.santa.email_no_list') }}
+{{ __('site.santa.email_list_yes') }}
 @endif
 
 <x-mail::button :url="$meUrl">
-{{ __('site.santa.their_list', ['name' => $gifteeName]) }}
+{{ __('site.santa.email_reveal_cta') }}
 </x-mail::button>
 
 {{--

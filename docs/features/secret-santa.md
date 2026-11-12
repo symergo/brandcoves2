@@ -284,3 +284,75 @@ saying so (`santa.draw_needs_two`) rather than a button that simply does nothing
 
 The group card on `/santa` reads ":count people" rather than a bare number, and no longer prints a
 dangling separator when there is no exchange date (2026-09-06).
+
+## The game around the draw (2026-11-12)
+
+Owner, after asking how it could be "more easy to use and more addictive": "You can build all. And on
+top, feature the secret santa on home". What was added, and the rule each piece keeps.
+
+`app/Services/Gift/SantaGame.php` is the one place that reads members, writes assignments and sends
+mail. The organiser's button, a draw that happens by itself and a late joiner all go through it.
+`SecretSantaDraw` and `SantaRepair` stay pure.
+
+### Easier
+
+- **No account to start a group.** A visitor gives a name and an address on the create form and is
+  signed in on the spot (`App\Services\Auth\InstantAccount`, the unconfirmed sign-in of
+  [auth.md](auth.md)). An address that already has an account is told to sign in: typing it proves
+  nothing. Hidden field, minimum time and five an hour per IP, as on the sign-in form.
+- **Names to tap.** The join page shows who is in as chips; tapped names are the exclusions. The
+  organiser sets couples on the group page by tapping two names (`POST /santa/{group}/exclusions`,
+  symmetric, stored as addresses so a renamed member stays excluded).
+- **A draw that happens by itself.** `draw_at` (a moment; `SantaGame::drawDue()` every five minutes)
+  or `draw_when_count` (checked at each join). A scheduled draw that is impossible clears the moment
+  and mails the organiser why, once.
+- **Tips in a few taps.** `interests` (keys from `SantaGame::INTERESTS`) and one free line, `hints`,
+  on the join page and the member's page. "Has something to go on" is now a list **or** tips
+  (`SantaGame::hasSomethingToGoOn()`), which is what the group page and the progress count.
+- **Late joiners.** Joining after the draw was a 403. `SantaRepair::insert()` picks one giver who has
+  not marked "bought" and writes `G -> new`, `new -> T`: two mails, nobody else's name changes.
+  Refused only when every giver has bought.
+- **The invite preview** carries the group's name, day and budget (`PageMeta` on the join page; still
+  `noindex`).
+
+### More reasons to come back
+
+- **The reveal.** The assignment mail no longer names anybody: it says a name is waiting, and the
+  member's page turns a card (`revealed_at`). No page prints the name before that, the group page
+  included. A changed assignment is a new card. A mail read over a shoulder gives nothing away.
+- **Questions without a name.** `secret_santa_questions`: the giftee is plain, the asker is
+  encrypted and hidden, because asker plus giftee is the pairing. Eight per Santa per group. The
+  giftee is mailed the question; the asker is mailed the answer.
+- **"Your Secret Friend looked at your list."** Counted once an hour at most, only after the card is
+  turned; the first look is mailed.
+- **Progress** on every page as a bar, and a Monday mail (`SantaGame::sendProgress()`) only to
+  members with something left to do: an unanswered question, no tips, an unturned card, nothing
+  bought. Aggregates only, as before.
+- **Ideas within budget**: searches from the giftee's interests and the group theme, capped at the
+  budget (`/search?q=…&max=…`). Links, not products, so no price is printed here.
+- **Guess who had you.** From the exchange day: one guess, then the answer, then a thank-you that is
+  mailed to the Santa. The group page shows how many guessed right, never who.
+- **The same group next year.** `SantaGame::again()` copies the group and its members; only the
+  organiser counts as in, the others get a mail and are in by pressing "I'm in" on their page (a
+  button, not the page view: mail scanners open links). Whoever does not
+  sits the draw out. The draw avoids last year's pairing when the members' own rules allow it.
+  `SantaGame::sendYearly()` mails last season's organisers on 3 November.
+- **A countdown** to the draw, then to the exchange.
+
+Members can turn the friendly mails off (`muted_at`): the link in every such mail lands on the foot
+of their page, where the button is. A button rather than a GET, because mail scanners open links. The assignment mail is not one of them.
+
+### On the homepage
+
+A band under the three ways in, linking to `/santa?new=1`, which opens the create form.
+
+### Not built, and worth knowing
+
+- The help topic at `/lists-help/santa` still describes the flow from before this day.
+- "Ideas within budget" are searches, not picked products.
+- A member without an account still cannot attach a wish list (that needs to own one); tips are
+  their way of giving the Santa something.
+- Files: `app/Services/Gift/SantaGame.php`, `app/Services/Auth/InstantAccount.php`,
+  `app/Models/SecretSantaQuestion.php`, `app/Mail/SantaNoteMail.php`,
+  `resources/js/Components/SantaGame.tsx`, `tests/Feature/SantaGameTest.php`, migration
+  `2026_11_12_000100_secret_friend_becomes_a_game.php`.

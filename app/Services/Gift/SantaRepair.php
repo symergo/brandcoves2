@@ -161,6 +161,48 @@ class SantaRepair
     }
 
     /**
+     * Somebody joins after the draw: slot them into the chain.
+     *
+     * Pick one giver G with giftee T, and write `G -> new`, `new -> T`. Two
+     * assignments, two mails, and everybody else keeps the name they were
+     * told. T is told nothing: T's giver changed, and T never knew who it was.
+     *
+     * `$eligible` are the givers who may be asked to change: the caller leaves
+     * out whoever already said they bought, because their gift is for T.
+     *
+     * @param  array<int, int>  $assignments  giver => giftee
+     * @param  list<int>  $eligible
+     * @param  array<int, list<int>>  $exclusions
+     * @return array<int, int> the two changed assignments
+     *
+     * @throws DrawImpossible
+     */
+    public function insert(array $assignments, int $joining, array $eligible, array $exclusions = [], ?callable $shuffle = null): array
+    {
+        $shuffle ??= function (array $items): array {
+            shuffle($items);
+
+            return $items;
+        };
+
+        foreach ($shuffle(array_values($eligible)) as $giver) {
+            if (! array_key_exists($giver, $assignments) || $giver === $joining) {
+                continue;
+            }
+
+            $giftee = $assignments[$giver];
+
+            if (in_array($joining, $exclusions[$giver] ?? [], true) || in_array($giftee, $exclusions[$joining] ?? [], true)) {
+                continue;
+            }
+
+            return [$giver => $joining, $joining => $giftee];
+        }
+
+        throw new DrawImpossible(__('site.santa.impossible'), $joining);
+    }
+
+    /**
      * Re-draw a subset from scratch, returning only what actually moved.
      *
      * @param  list<int>  $members

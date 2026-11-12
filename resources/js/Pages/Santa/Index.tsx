@@ -1,9 +1,10 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { SharedProps } from '../../types'
 import { formatDay } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
+import { Honeypot, useFormClock } from '../../Components/BotTrap'
 import Button from '../../Components/Button'
 import InfoTip from '../../Components/InfoTip'
 import PageHeader from '../../Components/PageHeader'
@@ -34,9 +35,26 @@ interface Props {
 export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const [creating, setCreating] = useState(false)
+    // Open for a visitor without an account: the form is the page's point,
+    // and since 2026-11-12 it needs no sign-in. Opened by `?new` too, which is
+    // where the homepage band sends people.
+    const [creating, setCreating] = useState(!isSignedIn)
+
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).has('new')) {
+            setCreating(true)
+        }
+    }, [])
+
+    const elapsed = useFormClock(creating)
 
     const form = useForm({
+        // Only asked of somebody who is not signed in: they get an account on
+        // the spot (SecretSantaController::store).
+        organiser_email: '',
+        organiser_name: '',
+        website: '',
+        draw_at: '',
         title: '',
         budget_max: '',
         exchange_date: '',
@@ -63,14 +81,7 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                 <p className="mt-3 text-lg text-ink-soft">{t('santa.subtitle')}</p>
             </PageHeader>
 
-            {!isSignedIn ? (
-                <p className="mt-8 max-w-2xl rounded-card border border-line bg-card p-6">
-                    <SignInLink hint={t('santa.create')} className="font-medium underline">
-                        {t('nav.sign_in')}
-                    </SignInLink>{' '}
-                    <span className="text-ink-soft">{t('santa.create')}</span>
-                </p>
-            ) : (
+            {(
                 <div className="mt-8">
                     <button
                         type="button"
@@ -100,9 +111,45 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                             className="mt-6 grid gap-4 rounded-card border border-line bg-card p-6 sm:grid-cols-2"
                             onSubmit={(e) => {
                                 e.preventDefault()
+                                // How long the form was open: the bot trap, see Components/BotTrap.
+                                form.transform((data) => ({ ...data, elapsed_ms: elapsed() }))
                                 form.post(`/${market.key}/santa`)
                             }}
                         >
+                            {!isSignedIn && (
+                                <>
+                                    <Honeypot value={form.data.website} onChange={(v) => form.setData('website', v)} />
+                                    <label className="block">
+                                        <span className="text-sm font-medium">{t('santa.organiser_email')}</span>
+                                        <input
+                                            type="email"
+                                            autoComplete="email"
+                                            required
+                                            value={form.data.organiser_email}
+                                            onChange={(e) => form.setData('organiser_email', e.target.value)}
+                                            className={field}
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="text-sm font-medium">{t('santa.organiser_name')}</span>
+                                        <input
+                                            autoComplete="name"
+                                            required
+                                            maxLength={80}
+                                            value={form.data.organiser_name}
+                                            onChange={(e) => form.setData('organiser_name', e.target.value)}
+                                            className={field}
+                                        />
+                                    </label>
+                                    <p className="text-sm text-ink-soft sm:col-span-2">
+                                        {t('santa.organiser_hint')}{' '}
+                                        <SignInLink hint={t('santa.create')} className="underline hover:text-ink">
+                                            {t('nav.sign_in')}
+                                        </SignInLink>
+                                    </p>
+                                </>
+                            )}
+
                             <label className="block sm:col-span-2">
                                 <span className="text-sm font-medium">{t('santa.group_name')}</span>
                                 <input
@@ -188,6 +235,19 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                             {Object.entries(form.errors).map(([field, message]) => (
                                 <p key={field} className="text-sm text-danger sm:col-span-2" role="alert">{message}</p>
                             ))}
+
+                            <label className="block">
+                                <span className="text-sm font-medium">
+                                    {t('santa.draw_at_label')}
+                                    <InfoTip className="ml-1">{t('santa.draw_auto_hint')}</InfoTip>
+                                </span>
+                                <input
+                                    type="datetime-local"
+                                    value={form.data.draw_at}
+                                    onChange={(e) => form.setData('draw_at', e.target.value)}
+                                    className={field}
+                                />
+                            </label>
 
                             <div className="sm:col-span-2">
                                 <Button type="submit" busy={form.processing}>

@@ -1,6 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react'
 import PageHeader from '../../Components/PageHeader'
 import SantaBadge from '../../Components/SantaBadge'
+import { AskBox, Countdown, GuessSanta, HintsForm, Progress, QuestionInbox, RevealCard, type GuessState, type SantaQuestion } from '../../Components/SantaGame'
 import SaveToList from '../../Components/SaveToList'
 import { formatBudget, formatDay, formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -26,6 +27,9 @@ interface Props {
         budgetMax: Cents | null
         exchangeDate: string | null
         drawn: boolean
+        drawAt: string | null
+        exchangePassed: boolean
+        progress: { members: number; ready: number; done: number }
     }
     me: {
         joinToken: string
@@ -33,8 +37,28 @@ interface Props {
         done: boolean
         hasList: boolean
         listUrl: string | null
-        giftee: { name: string; isLinked: boolean; wishes: Wish[] } | null
+        /** False until the card is turned: nothing below prints the name before that. */
+        revealed: boolean
+        /** False for somebody copied in from last year who has not pressed "I'm in" yet. */
+        joined: boolean
+        interests: string[]
+        hints: string | null
+        listViews: number
+        muted: boolean
+        inbox: SantaQuestion[]
+        guess: GuessState | null
+        thanked: boolean
+        giftee: {
+            name: string
+            isLinked: boolean
+            wishes: Wish[]
+            interests: string[]
+            hints: string | null
+            ideas: { label: string; url: string }[]
+            asked: SantaQuestion[]
+        } | null
     }
+    interestKeys: string[]
 }
 
 /**
@@ -43,10 +67,14 @@ interface Props {
  * Reached by join token so it works without an account — requiring a login to
  * be in an office Secret Santa is how most of the office does not join.
  */
-export default function SantaMe({ group, me }: Props) {
+export default function SantaMe({ group, me, interestKeys }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
+    // Everything a member does on this page goes through their own token.
+    const mine = `${base}/santa/${group.id}/me/${me.joinToken}`
+    const showGiftee = group.drawn && me.giftee !== null && me.revealed
+    const hasTips = me.interests.length > 0 || Boolean(me.hints)
 
     return (
         <>
@@ -67,7 +95,7 @@ export default function SantaMe({ group, me }: Props) {
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
                         {t('santa.not_drawn')}
                     </p>
-                ) : me.giftee ? (
+                ) : me.giftee && me.revealed ? (
                     <p className="mt-3 text-lg">
                         {t('santa.you_have', { name: me.giftee.name })}
                     </p>
@@ -82,7 +110,48 @@ export default function SantaMe({ group, me }: Props) {
                         .filter(Boolean)
                         .join(' · ')}
                 </p>
+
+                <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} className="mt-3" />
+                <Progress drawn={group.drawn} progress={group.progress} />
             </PageHeader>
+
+            {/* The game around the draw (owner, 2026-11-12), most pressing first:
+                a question waiting for me, then the card to turn. */}
+            <div className="max-w-2xl">
+                {/* Copied in from last year's group: in again with one press.
+                    A button, not the page view: mail scanners open links. */}
+                {!me.joined && !group.drawn && (
+                    <div className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-5">
+                        <p className="font-medium">{t('santa.mail.again_subject', { title: group.title })}</p>
+                        <button
+                            type="button"
+                            onClick={() => router.post(`${mine}/in`, {}, { preserveScroll: true })}
+                            className="mt-3 rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark"
+                        >
+                            {t('santa.mail.again_cta')}
+                        </button>
+                    </div>
+                )}
+
+                <QuestionInbox baseUrl={mine} questions={me.inbox} />
+
+                {group.drawn && me.giftee && !me.revealed && <RevealCard name={me.giftee.name} revealUrl={`${mine}/reveal`} />}
+
+                {me.guess && <GuessSanta baseUrl={mine} guess={me.guess} thanked={me.thanked} />}
+
+                {/* Tips in a few taps, for everybody who will never make a list.
+                    Open while empty, folded once filled in. */}
+                {!group.exchangePassed && (
+                    <HintsForm url={`${mine}/hints`} keys={interestKeys} interests={me.interests} hints={me.hints} open={!hasTips && !me.hasList} />
+                )}
+
+                {me.listViews > 0 && !group.exchangePassed && (
+                    <p className="mt-4 text-sm text-ink-soft">
+                        {me.listViews === 1 ? t('santa.list_views_one') : t('santa.list_views_many', { count: String(me.listViews) })}{' '}
+                        {!me.hasList && !hasTips && t('santa.list_views_nudge')}
+                    </p>
+                )}
+            </div>
 
             {/*
               Your own list, pushed before anything else.
@@ -91,8 +160,8 @@ export default function SantaMe({ group, me }: Props) {
               whoever drew you has nothing to go on until you do. Without this
               nudge Secret Santa degrades into "here is a name, good luck".
             */}
-            {!me.hasList && (
-                <section className="mt-8 rounded-card border border-accent/40 bg-accent/5 p-4">
+            {!me.hasList && !group.exchangePassed && (
+                <section className="mt-8 max-w-2xl rounded-card border border-line bg-card p-4">
                     <h2 className="font-medium">{t('santa.build_yours')}</h2>
                     <p className="mt-1 text-sm text-ink-soft">{t('santa.build_yours_hint')}</p>
                     <a
@@ -104,8 +173,25 @@ export default function SantaMe({ group, me }: Props) {
                 </section>
             )}
 
-            {group.drawn && me.giftee && (
+            {showGiftee && me.giftee && (
                 <section className="mt-10">
+                    {/* What they ticked and wrote about themselves, before their list. */}
+                    {(me.giftee.interests.length > 0 || me.giftee.hints) && (
+                        <div className="mb-8 max-w-2xl rounded-card border border-line bg-card p-5">
+                            <h2 className="font-medium">{t('santa.their_tips', { name: me.giftee.name })}</h2>
+                            {me.giftee.interests.length > 0 && (
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {me.giftee.interests.map((key) => (
+                                        <li key={key} className="rounded-full border border-line bg-cream px-3 py-1 text-sm">
+                                            {t(`santa.interest.${key}`)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            {me.giftee.hints && <p className="mt-3">{me.giftee.hints}</p>}
+                        </div>
+                    )}
+
                     <h2 className="text-lg font-medium">
                         {t('santa.their_list', { name: me.giftee.name })}
                     </h2>
@@ -184,6 +270,29 @@ export default function SantaMe({ group, me }: Props) {
                         </ul>
                     )}
 
+                    {/* Searches that fit the budget, from what they ticked. */}
+                    {me.giftee.ideas.length > 0 && (
+                        <div className="mt-8">
+                            <h2 className="text-lg font-medium">{t('santa.ideas_title')}</h2>
+                            <p className="mt-1 text-sm text-ink-soft">{t('santa.ideas_hint', { name: me.giftee.name })}</p>
+                            <ul className="mt-3 flex flex-wrap gap-2">
+                                {me.giftee.ideas.map((idea) => (
+                                    <li key={idea.url}>
+                                        <a href={idea.url} className="inline-block rounded-full border border-accent/50 bg-card px-4 py-2 text-sm font-medium text-accent-dark hover:bg-accent hover:text-white">
+                                            {idea.label}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {!group.exchangePassed && (
+                        <div className="max-w-2xl">
+                            <AskBox baseUrl={mine} name={me.giftee.name} asked={me.giftee.asked} />
+                        </div>
+                    )}
+
                     {!me.done && (
                         <button
                             type="button"
@@ -201,6 +310,17 @@ export default function SantaMe({ group, me }: Props) {
                     )}
                 </section>
             )}
+
+            {/* The friendly mails, off or on again; the assignment mail is not one of them. */}
+            <p id="mails" className="mt-12 border-t border-line pt-6 text-sm text-ink-soft">
+                <button
+                    type="button"
+                    onClick={() => router.post(`${mine}/mute`, me.muted ? { off: 1 } : {}, { preserveScroll: true })}
+                    className="underline hover:text-ink"
+                >
+                    {me.muted ? t('santa.unmute_link') : t('santa.mute_link')}
+                </button>
+            </p>
         </>
     )
 }

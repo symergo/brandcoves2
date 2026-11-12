@@ -32,6 +32,12 @@ class SecretSantaMember extends Model
             'exclusions' => 'array',
             'joined_at' => 'datetime',
             'marked_done_at' => 'datetime',
+            'revealed_at' => 'datetime',
+            'interests' => 'array',
+            'list_viewed_at' => 'datetime',
+            'guessed_at' => 'datetime',
+            'thanked_at' => 'datetime',
+            'muted_at' => 'datetime',
         ];
     }
 

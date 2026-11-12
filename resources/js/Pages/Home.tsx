@@ -226,6 +226,39 @@ export default function Home({ today, amazonEvent = null, mine = null, latest = 
             </section>
 
             {/*
+              Secret Friend, featured (owner, 2026-11-12): the one tool here a
+              whole group uses together, and every member it brings in leaves
+              with a list of their own. A band rather than a fourth card: the
+              three ways in above are one per audience, this is an occasion.
+            */}
+            <section
+                className="mt-10 grid gap-6 rounded-card border border-accent/40 bg-accent/5 p-6 sm:p-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                aria-labelledby="santa-heading"
+            >
+                <div>
+                    <h2 id="santa-heading" className="flex items-center gap-3 text-xl font-semibold tracking-tight sm:text-2xl">
+                        <ToolIcon name="santa" className="h-8 w-8 shrink-0 text-accent" duo />
+                        {t('home.santa_title')}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-ink-soft">{t('home.santa_body')}</p>
+                    <ol className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
+                        {[t('home.santa_step1'), t('home.santa_step2'), t('home.santa_step3')].map((step, index) => (
+                            <li key={step} className="flex items-center gap-2">
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-white">{index + 1}</span>
+                                {step}
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+                <Link
+                    href={`${base}/santa?new=1`}
+                    className="inline-block rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-dark"
+                >
+                    {t('home.santa_cta')} →
+                </Link>
+            </section>
+
+            {/*
               The Daily, right under the three ways in, the last of which is
               "Gewoon rondkijken?" (owner, 2026-10-02). It stood fifth, after
               the Coves cards, until then.

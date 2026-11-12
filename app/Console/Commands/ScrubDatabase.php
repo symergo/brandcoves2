@@ -141,8 +141,15 @@ class ScrubDatabase extends Command
                     display_name = 'Member ' || id,
                     assigned_member_id = NULL,
                     exclusions = '[]'::jsonb,
+                    hints = NULL,
+                    thanks = NULL,
+                    guess_member_id = NULL,
                     join_token = gen_random_uuid()
             SQL);
+
+            // What a Santa asked and what was answered: free text between two
+            // people, and the asker is ciphertext this machine cannot read.
+            DB::statement('DELETE FROM secret_santa_questions');
 
             // `::text`: the column stopped being a uuid on 2026-09-13.
             DB::statement('UPDATE secret_santa_groups SET invite_token = gen_random_uuid()::text');
