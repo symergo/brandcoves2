@@ -306,7 +306,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Seeing how far the group is',
-                    'body' => "Every page shows how many people have a list or hints, how many have bought, and how many days are left. Never who.\n\nYou also see how often your Secret Santa looked at your list. Whoever still has something to do gets a short email on Monday. You can turn those extra emails off at the bottom of your page.",
+                    'body' => "Every page shows how many people have a list or hints, how many have bought, and how many days are left. Never who.\n\nYou also see how often your Secret Friend looked at your list. Whoever still has something to do gets a short email on Monday. You can turn those extra emails off at the bottom of your page.",
                 ],
                 [
                     'title' => 'Joining later, or somebody drops out',
@@ -314,7 +314,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Guess who had you',
-                    'body' => 'From the day of the gifts you get one guess on your page at who your Secret Santa was. Then you see who it was, and you can send a thank-you.',
+                    'body' => 'From the day of the gifts you get one guess on your page at who your Secret Friend was. Then you see who it was, and you can send a thank-you.',
                 ],
                 [
                     'title' => 'Again next year',
