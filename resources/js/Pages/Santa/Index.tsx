@@ -84,18 +84,19 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
             <Head title={t('santa.title')} />
 
             {/*
-              The homepage's own look (fourth pass, 2026-11-12: "simpler, but
-              nicely styled"): the orange band with the wrapped present, the
-              words and the form on it as one white card, and the three steps
-              under it as the white cards the homepage uses for its ways in.
+              The words and the form on the left, the wrapped present from the
+              homepage on the right, the three steps under them as white cards.
+              On the page's own cream: an orange band stood behind this for an
+              hour on 2026-11-12 and the owner had it removed ("Dont do the
+              orange bands").
             */}
-            <section className={`grid items-center gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-12 -mt-6 bg-hero pt-8 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-12 sm:pb-12`} aria-labelledby="santa-title">
+            <section className={`grid items-center gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:gap-12`} aria-labelledby="santa-title">
                 <div className="min-w-0">
-                    <p className="text-sm font-semibold tracking-wide text-ink uppercase">{t('santa.hub.kicker')}</p>
+                    <p className="text-sm font-semibold tracking-wide text-accent-dark uppercase">{t('santa.hub.kicker')}</p>
                     <h1 id="santa-title" className="mt-2 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl">
                         {t('santa.title')}
                     </h1>
-                    <p className="mt-4 max-w-2xl text-lg text-ink">{t('santa.hub.lead')}</p>
+                    <p className="mt-4 max-w-2xl text-lg text-ink-soft">{t('santa.hub.lead')}</p>
 
                     <div className="mt-7 max-w-2xl">
                     {groups.length > 0 && (
@@ -103,7 +104,7 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                             <h2 id="santa-groups" className="font-semibold text-ink">
                                 {t('santa.hub.your_groups')}
                             </h2>
-                            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-card bg-card shadow-[0_8px_24px_rgb(42_18_19/0.08)]">
+                            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
                                 {groups.map((group) => (
                                     <li key={group.id}>
                                         <Link href={group.url} className="flex items-center gap-3 p-4 transition hover:bg-cream">
@@ -130,13 +131,13 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                     )}
 
                     {!creating ? (
-                        <Button type="button" variant="light" onClick={() => setCreating(true)}>
+                        <Button type="button" onClick={() => setCreating(true)}>
                             {t('santa.hub.start_another')}
                         </Button>
                     ) : (
                         <form
                             id="santa-create"
-                            className="rounded-card bg-card p-5 sm:p-6 shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
+                            className="rounded-card border border-line bg-card p-5 sm:p-6 shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
                             onSubmit={(e) => {
                                 e.preventDefault()
                                 // How long the form was open: the bot trap, see Components/BotTrap.

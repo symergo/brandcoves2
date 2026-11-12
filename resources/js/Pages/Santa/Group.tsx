@@ -86,14 +86,14 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists, i
               that card. Everything occasional (my list, couples, the automatic
               draw, deleting) is a line that opens, not a box.
             */}
-            {/* The band from the homepage, with this group's name on it and my own row as its white card. */}
-            <div className={`-mt-6 bg-hero pt-8 pb-10 shadow-[0_0_0_100vmax_var(--color-hero)] [clip-path:inset(0_-100vmax)] sm:-mt-10 sm:pt-12 sm:pb-12`}>
+            {/* The group's name and where it stands. No orange band behind it (owner, 2026-11-12). */}
+            <div>
                 <div className="mx-auto max-w-2xl">
-                    <Link href={`/${market.key}/santa`} className="text-sm text-ink hover:underline">
+                    <Link href={`/${market.key}/santa`} className="text-sm text-ink-soft hover:underline">
                         ← {t('santa.title')}
                     </Link>
                     <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance text-ink sm:text-3xl">{group.title}</h1>
-                    <p className="mt-2 text-ink">
+                    <p className="mt-2 text-ink-soft">
                         {[
                             group.drawn ? t('santa.hub.status_drawn') : t('santa.hub.status_open'),
                             group.budgetMax !== null ? formatBudget(group.budgetMax, market) : null,
@@ -103,7 +103,7 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists, i
                             .filter(Boolean)
                             .join(' · ')}
                     </p>
-                    <p className="mt-1 [&>span]:text-ink">
+                    <p className="mt-1">
                         <Countdown drawn={group.drawn} drawAt={group.drawAt} exchangeDate={group.exchangeDate} />
                     </p>
 
@@ -116,7 +116,7 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists, i
                     {me && group.drawn && me.giftee && (
                         <Link
                             href={`${base}/me/${me.joinToken}`}
-                            className="mt-6 flex items-center gap-4 rounded-card bg-card p-4 transition hover:bg-cream shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
+                            className="mt-6 flex items-center gap-4 rounded-card border border-line bg-card p-4 transition hover:border-ink"
                         >
                             <ToolIcon name="santa" className="h-9 w-9 shrink-0 text-accent" duo />
                             <span className="min-w-0 flex-1">
