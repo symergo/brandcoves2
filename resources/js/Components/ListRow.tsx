@@ -17,12 +17,14 @@ import ToolIcon from './ToolIcon'
  *
  * ## The phone layout
  *
- * On a phone the row is two lines (owner, 2026-11-13): the picture on the left
- * and the actions, icons only, on the right, and under them the name, the meta
- * line and the badges across the full width. Before, the text shared its line
- * with the actions and kept clear of them with right padding, so "Voor Zoon of
- * dochter" broke over two lines beside three buttons. From `sm` up it is one
- * line: picture, text, and the actions at the end with their words.
+ * On a phone the row is two lines (owner, 2026-11-13): the actions, icons
+ * only, on a line of their own at the right, and under them the picture with
+ * the name, the meta line and the badges beside it, across the full width.
+ * Before, the text shared its line with the actions and kept clear of them
+ * with right padding, so "Voor Zoon of dochter" broke over two lines beside
+ * three buttons. From `sm` up it is one line: picture, text, and the actions
+ * at the end with their words. The actions come second in the markup and are
+ * moved up with `order`, so a keyboard still reaches the list's name first.
  */
 export default function ListRow({
     href,
@@ -45,10 +47,10 @@ export default function ListRow({
             <span className="min-w-0">{children}</span>
         </>
     )
-    const linkClass = 'group flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'
+    const linkClass = 'group flex min-w-0 flex-1 items-center gap-3'
 
     return (
-        <div className="relative flex gap-3 p-4 sm:items-center">
+        <div className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:gap-3">
             {external ? (
                 <a href={href} className={linkClass}>
                     {body}
@@ -58,7 +60,7 @@ export default function ListRow({
                     {body}
                 </Link>
             )}
-            {actions && <div className="absolute top-5.5 right-4 flex items-center gap-1.5 sm:static sm:gap-2">{actions}</div>}
+            {actions && <div className="order-first flex items-center justify-end gap-1.5 sm:order-none sm:gap-2">{actions}</div>}
         </div>
     )
 }
