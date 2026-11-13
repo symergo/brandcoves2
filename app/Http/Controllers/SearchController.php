@@ -15,6 +15,7 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
+use App\Models\SearchLog;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
@@ -50,6 +51,42 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
+    /**
+     * The related-word pills stop once the term has this many words.
+     *
+     * Each pill adds a word to the term, and the page it leads to offers
+     * pills of its own, so the pages a crawler could reach had no end: on
+     * 2026-11-13 crawlers were asking for terms of twenty title words, 1,166
+     * of 1,649 searches in half an hour took five seconds or more, and
+     * gift-idea pages for people timed out behind them. Four words is further
+     * than a person refines ("koptelefoon over-ear bluetooth sony"); from
+     * there the search box is the way on.
+     */
+    public const PILLS_UNTIL = 4;
+
+    /**
+     * Past this many words a term is not searched for a crawler: it gets the
+     * search for its first PILLS_UNTIL words, a page that exists anyway. The
+     * addresses already collected keep being asked for, and each one cost
+     * seconds of database time. A person on the site (they carry its session
+     * cookie) and a search engine are searched as asked: a pasted product
+     * title or a gift sentence can be this long.
+     */
+    public const LONG_TERM = 8;
+
+    private static function words(string $term): int
+    {
+        return trim($term) === '' ? 0 : count(preg_split('/\s+/u', trim($term)) ?: []);
+    }
+
+    /** The test SearchQuery uses for the search log, plus Google and Bing. */
+    private static function aPersonOrASearchEngine(Request $request): bool
+    {
+        return Crawlers::isSearchEngine($request->userAgent())
+            || (! Crawlers::looksLikeOne($request->userAgent())
+                && $request->cookies->has((string) config('session.cookie')));
+    }
+
     /** Suggestions a gift search shows: one page, like any search (search.per_page, 2026-11-07). */
     private const GIFT_RESULTS = 20;
 
@@ -91,6 +128,17 @@ class SearchController extends Controller
         }
 
         $query = SearchQuery::fromRequest($request, $current->get());
+
+        /*
+         * A term longer than anybody types, asked for by something that is
+         * not a person on the site or a search engine: answered with the
+         * search for its first words instead (2026-11-13). See LONG_TERM.
+         */
+        if (self::words($query->term) > self::LONG_TERM && ! self::aPersonOrASearchEngine($request)) {
+            $short = implode(' ', array_slice(preg_split('/\s+/u', trim($query->term)) ?: [], 0, self::PILLS_UNTIL));
+
+            return redirect()->to(SearchUrl::for($current->get(), $short));
+        }
 
         /*
          * A pasted Amazon URL is a search term too.
@@ -619,7 +667,10 @@ class SearchController extends Controller
                     $query->term,
                     $query->page > 1 ? ['page' => $query->page] : [],
                 )),
-                robots: null,
+                // Every variant is indexable, except a term longer than a
+                // question (SearchLog's rule): those are pill chains and
+                // pasted titles, not pages anybody looks for (2026-11-13).
+                robots: self::words($query->term) > SearchLog::MAX_WORDS ? 'noindex, follow' : null,
             )
             ->addJsonLd(StructuredData::website(url('/'), $current->get()));
     }
@@ -674,7 +725,7 @@ class SearchController extends Controller
     private function terms(SearchQuery $query, SearchResult $result, CurrentMarket $current): array
     {
         // The same rule as the copy, said once rather than three times.
-        if ($this->isThin($query, $result)) {
+        if ($this->isThin($query, $result) || self::words($query->term) >= self::PILLS_UNTIL) {
             return [];
         }
 
