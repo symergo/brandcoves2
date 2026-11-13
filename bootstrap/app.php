@@ -9,6 +9,7 @@ use App\Http\Middleware\CacheAnonymousPage;
 use App\Http\Middleware\EndProvisionalSession;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LimitHeavyCrawlers;
 use App\Http\Middleware\RedirectLegacyHost;
 use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
@@ -63,6 +64,9 @@ return Application::configure(basePath: dirname(__DIR__))
          * TrustProxies and still well before routing.
          */
         $middleware->append(RedirectLegacyHost::class);
+
+        // Before routing and sessions: a refused crawler should cost nothing.
+        $middleware->append(LimitHeavyCrawlers::class);
 
         $middleware->web(append: [
             // Order matters: the market must be resolved before Inertia shares

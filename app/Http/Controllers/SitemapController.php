@@ -7,8 +7,10 @@ namespace App\Http\Controllers;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
+use App\Http\Middleware\LimitHeavyCrawlers;
 use App\Services\Search\SearchTermStats;
 use App\Services\Seo\Alternates;
+use App\Support\SearchUrl;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -318,16 +320,13 @@ class SitemapController extends Controller
             )),
         );
 
-        $lines = $allow
-            ? [
-                'User-agent: *',
-                'Allow: /',
-                ...$unpublished,
-                // The click-out redirector must never be crawled: it is an
-                // outbound affiliate hop, and crawling it burns budget on
-                // redirects while looking like link-selling to a search engine.
-                'Disallow: /*/go/',
-                /*
+        $rules = [
+            ...$unpublished,
+            // The click-out redirector must never be crawled: it is an
+            // outbound affiliate hop, and crawling it burns budget on
+            // redirects while looking like link-selling to a search engine.
+            'Disallow: /*/go/',
+            /*
                  * Filtered, sorted and paginated variants used to be blocked
                  * here as well (`?sort=`, `brand[`, `merchant[`, `page=`).
                  * Removed 2026-09-12: the owner asked for every page and every
@@ -335,20 +334,45 @@ class SitemapController extends Controller
                  * follow is not. The head carries no noindex on them any more
                  * either; the canonical consolidates the filtered ones.
                  */
-                /*
+            /*
                  * Capability URLs. Each carries a token that *is* the access,
                  * so a crawler that finds one — a forum post, a chat preview —
                  * would list a family's gift list, a person's taste profile or
                  * a Secret Santa draw under a real name. The pages say
                  * `noindex` too; this stops the fetch before it happens.
                  */
-                'Disallow: /*/l/',
-                'Disallow: /*/for/',
-                'Disallow: /*/q/',
-                'Disallow: /*/santa/',
-                // `/*/invitations/` went with list-invitation redemption on
-                // 2026-09-14: there is no such route left to protect.
-                'Disallow: /admin',
+            'Disallow: /*/l/',
+            'Disallow: /*/for/',
+            'Disallow: /*/q/',
+            'Disallow: /*/santa/',
+            // `/*/invitations/` went with list-invitation redemption on
+            // 2026-09-14: there is no such route left to protect.
+            'Disallow: /admin',
+        ];
+
+        /*
+         * Three crawlers get a group of their own (owner, 2026-11-13): no
+         * search pages, and slowly. A crawler obeys only the most specific
+         * group that names it, so the rules for everybody are repeated in it.
+         * App\Http\Middleware\LimitHeavyCrawlers enforces the same.
+         */
+        $search = array_map(
+            fn (string $segment): string => 'Disallow: /*/'.$segment.'/',
+            SearchUrl::segments(),
+        );
+
+        $lines = $allow
+            ? [
+                'User-agent: *',
+                'Allow: /',
+                ...$rules,
+                '',
+                ...array_map(fn (string $name): string => 'User-agent: '.$name, array_values(LimitHeavyCrawlers::CRAWLERS)),
+                'Crawl-delay: 10',
+                'Allow: /',
+                'Disallow: /*/search',
+                ...$search,
+                ...$rules,
                 '',
                 'Sitemap: '.url('/sitemap.xml'),
             ]
