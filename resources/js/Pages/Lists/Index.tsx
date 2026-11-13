@@ -370,7 +370,6 @@ function SavedCoveListRow({ cove }: { cove: SavedCoveRow }) {
             {confirmDialog}
             <ListRow
                 href={cove.url}
-                slots={2}
                 thumb={
                     cove.image ? (
                         <img src={cove.image} alt="" loading="lazy" className={pictureBox} />

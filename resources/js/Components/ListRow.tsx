@@ -17,10 +17,12 @@ import ToolIcon from './ToolIcon'
  *
  * ## The phone layout
  *
- * On a phone the actions sit in the row's top-right corner, icons only, and
- * the text column keeps clear of them with right padding sized to how many
- * there are (`actions`: 36px icons with a 6px gap). From `sm` up they sit at
- * the end of the row, in the flow, with their words.
+ * On a phone the row is two lines (owner, 2026-11-13): the picture on the left
+ * and the actions, icons only, on the right, and under them the name, the meta
+ * line and the badges across the full width. Before, the text shared its line
+ * with the actions and kept clear of them with right padding, so "Voor Zoon of
+ * dochter" broke over two lines beside three buttons. From `sm` up it is one
+ * line: picture, text, and the actions at the end with their words.
  */
 export default function ListRow({
     href,
@@ -28,7 +30,6 @@ export default function ListRow({
     thumb,
     children,
     actions,
-    slots = 0,
 }: {
     href: string
     /** A real anchor: somebody else's list opens by share link, a page people keep in a tab. */
@@ -37,18 +38,14 @@ export default function ListRow({
     /** The text column: the name first, then a meta line and badges. */
     children: ReactNode
     actions?: ReactNode
-    /** How many row actions there are, for the room kept for them on a phone. */
-    slots?: 0 | 1 | 2 | 3
 }) {
-    // Static class names, so Tailwind sees them.
-    const room = ['', 'pr-12 sm:pr-0', 'pr-24 sm:pr-0', 'pr-32 sm:pr-0'][actions ? slots : 0]
     const body = (
         <>
             {thumb}
             <span className="min-w-0">{children}</span>
         </>
     )
-    const linkClass = `group flex min-w-0 flex-1 items-center gap-3 ${room}`
+    const linkClass = 'group flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'
 
     return (
         <div className="relative flex gap-3 p-4 sm:items-center">
@@ -61,7 +58,7 @@ export default function ListRow({
                     {body}
                 </Link>
             )}
-            {actions && <div className="absolute top-3 right-3 flex items-center gap-1.5 sm:static sm:gap-2">{actions}</div>}
+            {actions && <div className="absolute top-5.5 right-4 flex items-center gap-1.5 sm:static sm:gap-2">{actions}</div>}
         </div>
     )
 }

@@ -95,7 +95,6 @@ export default function ListSummaryRow({
     const [sharing, setSharing] = useState(false)
     const [confirm, confirmDialog] = useConfirm()
     const canAdd = !theirs || list.role === 'editor'
-    const slots = ((canAdd ? 1 : 0) + (theirs ? 0 : 2)) as 0 | 1 | 2 | 3
 
     const remove = async () => {
         if (await confirm({ message: t('lists.delete_confirm'), confirmLabel: t('lists.delete'), danger: true })) {
@@ -116,7 +115,6 @@ export default function ListSummaryRow({
             <ListRow
                 href={list.url}
                 thumb={<ListThumb covers={list.covers} kind={list.kind} />}
-                slots={slots}
                 actions={
                     canAdd || !theirs ? (
                         <>
