@@ -96,6 +96,7 @@ export default function ListSummaryRow({
     const [confirm, confirmDialog] = useConfirm()
     const canAdd = !theirs || list.role === 'editor'
 
+    const slots = ((canAdd ? 1 : 0) + (theirs ? 0 : 2)) as 0 | 1 | 2 | 3
     const itemsLabel = list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })
 
     /*
@@ -129,6 +130,7 @@ export default function ListSummaryRow({
             <ListRow
                 href={list.url}
                 thumb={<ListThumb covers={list.covers} kind={list.kind} count={list.itemCount} countLabel={itemsLabel} />}
+                slots={slots}
                 actions={
                     canAdd || !theirs ? (
                         <>

@@ -17,14 +17,14 @@ import ToolIcon from './ToolIcon'
  *
  * ## The phone layout
  *
- * On a phone the row is two lines (owner, 2026-11-13): the actions, icons
- * only, on a line of their own at the right, and under them the picture with
- * the name, the meta line and the badges beside it, across the full width.
- * Before, the text shared its line with the actions and kept clear of them
- * with right padding, so "Voor Zoon of dochter" broke over two lines beside
- * three buttons. From `sm` up it is one line: picture, text, and the actions
- * at the end with their words. The actions come second in the markup and are
- * moved up with `order`, so a keyboard still reaches the list's name first.
+ * On a phone the actions, icons only, sit on the line of the name, at the
+ * right (owner, 2026-11-13). Only the name keeps clear of them, with right
+ * padding sized to how many there are (`slots`: 36px icons with a 6px gap);
+ * the line under it, who the list is for and its badges, runs under the
+ * icons to the edge of the row. Before, the whole text column kept clear, so
+ * the badges wrapped in a narrow column while the space under the icons
+ * stayed empty. From `sm` up the actions sit at the end of the row, in the
+ * flow, with their words.
  */
 export default function ListRow({
     href,
@@ -32,6 +32,7 @@ export default function ListRow({
     thumb,
     children,
     actions,
+    slots = 0,
 }: {
     href: string
     /** A real anchor: somebody else's list opens by share link, a page people keep in a tab. */
@@ -40,17 +41,26 @@ export default function ListRow({
     /** The text column: the name first, then a meta line and badges. */
     children: ReactNode
     actions?: ReactNode
+    /** How many row actions there are, for the room the name keeps for them on a phone. */
+    slots?: 0 | 1 | 2 | 3
 }) {
+    // Static class names, so Tailwind sees them. The first child is the name.
+    const room = [
+        '',
+        '[&>*:first-child]:pr-10 sm:[&>*:first-child]:pr-0',
+        '[&>*:first-child]:pr-20 sm:[&>*:first-child]:pr-0',
+        '[&>*:first-child]:pr-31 sm:[&>*:first-child]:pr-0',
+    ][actions ? slots : 0]
     const body = (
         <>
             {thumb}
-            <span className="min-w-0">{children}</span>
+            <span className={`min-w-0 flex-1 ${room}`}>{children}</span>
         </>
     )
     const linkClass = 'group flex min-w-0 flex-1 items-center gap-3'
 
     return (
-        <div className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:gap-3">
+        <div className="relative flex gap-3 p-4 sm:items-center">
             {external ? (
                 <a href={href} className={linkClass}>
                     {body}
@@ -60,7 +70,7 @@ export default function ListRow({
                     {body}
                 </Link>
             )}
-            {actions && <div className="order-first flex items-center justify-end gap-1.5 sm:order-none sm:gap-2">{actions}</div>}
+            {actions && <div className="absolute top-2.5 right-4 flex items-center gap-1.5 sm:static sm:gap-2">{actions}</div>}
         </div>
     )
 }
@@ -84,12 +94,8 @@ const hide = (e: { currentTarget: HTMLImageElement }) => {
     e.currentTarget.style.visibility = 'hidden'
 }
 
-/**
- * The size of a product picture on a list (ListItemCard): 64px, 80px on a wide
- * screen. A list's own picture is the same size since 2026-11-13 (owner); it
- * was 48px.
- */
-const pictureSize = 'h-16 w-16 lg:h-20 lg:w-20'
+/** A list's picture is 48px. 64px, the size of a product on a list, was tried on 2026-11-13 and taken back the same day (owner). */
+const pictureSize = 'h-12 w-12'
 
 /**
  * The box a product picture sits in: white (owner, 2026-09-27: "background of
@@ -100,7 +106,7 @@ const pictureSize = 'h-16 w-16 lg:h-20 lg:w-20'
 export const pictureBox = `${pictureSize} shrink-0 rounded-lg border border-line bg-white object-contain p-1`
 
 /**
- * A list's picture, the size of a product picture on a list: up to four
+ * A list's picture, 48px: up to four
  * products as a 2×2 collage (what is in it at a glance, while every name starts at the same place), one product on its
  * own, or the kind's mark on a list with no pictures yet.
  */
@@ -171,7 +177,7 @@ function ListPicture({ covers, kind }: { covers: string[]; kind: ListKind | stri
 
     return (
         <span aria-hidden className={`flex ${pictureSize} shrink-0 items-center justify-center rounded-lg text-accent`}>
-            <ToolIcon name={kindIcons[(kind as ListKind) ?? 'mine'] ?? 'list'} className="h-9 w-9 lg:h-10 lg:w-10" duo />
+            <ToolIcon name={kindIcons[(kind as ListKind) ?? 'mine'] ?? 'list'} className="h-7 w-7" duo />
         </span>
     )
 }
