@@ -6,7 +6,7 @@ import { rowActionClasses } from './Button'
 import { listActionItems } from './listActions'
 import type { ListKind } from './ListKindBadge'
 import ListPills from './ListPills'
-import ListRow, { ListRowBadges, ListRowMeta, ListRowTitle, ListThumb } from './ListRow'
+import ListRow, { ListRowBadges, ListRowTitle, ListThumb } from './ListRow'
 import Menu, { MoreButtonContent } from './Menu'
 import Modal, { useConfirm } from './Modal'
 import ShareSettings, { type ShareableList } from './ShareSettings'
@@ -96,6 +96,20 @@ export default function ListSummaryRow({
     const [confirm, confirmDialog] = useConfirm()
     const canAdd = !theirs || list.role === 'editor'
 
+    const itemsLabel = list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })
+
+    /*
+     * Who the list is for: on a list about somebody, the recipient (not on
+     * that person's own page, which says so in its title); on a wish list
+     * somebody shared with me, its owner, because that is the person I shop
+     * for. Then the occasion's day.
+     */
+    const about = [
+        list.kind !== 'mine' && list.recipient && !onPersonPage ? list.recipient.name : null,
+        theirs && list.kind === 'mine' && list.ownerName ? list.ownerName : null,
+        list.eventDate ? formatDay(list.eventDate, market, { year: 'auto' }) : null,
+    ].filter((part): part is string => !!part)
+
     const remove = async () => {
         if (await confirm({ message: t('lists.delete_confirm'), confirmLabel: t('lists.delete'), danger: true })) {
             // `stay`: back to the page the row is on (a person's page), not to
@@ -114,7 +128,7 @@ export default function ListSummaryRow({
         <>
             <ListRow
                 href={list.url}
-                thumb={<ListThumb covers={list.covers} kind={list.kind} />}
+                thumb={<ListThumb covers={list.covers} kind={list.kind} count={list.itemCount} countLabel={itemsLabel} />}
                 actions={
                     canAdd || !theirs ? (
                         <>
@@ -167,24 +181,16 @@ export default function ListSummaryRow({
                 }
             >
                 <ListRowTitle>{list.title}</ListRowTitle>
-                <ListRowMeta>
-                    {list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })}
-                    {/*
-                      Who the list is for: on a list about somebody, the
-                      recipient (not on that person's own page, which says so
-                      in its title); on a wish list somebody shared with me,
-                      its owner, because that is the person I shop for.
-                    */}
-                    {list.kind !== 'mine' && list.recipient && !onPersonPage && ` · ${list.recipient.name}`}
-                    {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
-                    {/* The occasion's day: a person's page showed it, Mijn Coves did not. */}
-                    {list.eventDate && ` · ${formatDay(list.eventDate, market, { year: 'auto' })}`}
-                </ListRowMeta>
                 {/* Somebody else's wish list is how I shop for them: say so. */}
                 {theirs && list.kind === 'mine' && list.ownerName && (
                     <span className="mt-0.5 block text-sm text-accent-dark">{t('lists.shop_for', { name: list.ownerName })}</span>
                 )}
+                {/*
+                  One line under the name (owner, 2026-11-13): who and when,
+                  then the badges. The number of items is on the picture.
+                */}
                 <ListRowBadges>
+                    {about.length > 0 && <span className="text-sm text-ink-soft">{about.join(' · ')}</span>}
                     <ListPills
                         kind={list.kind as ListKind}
                         role={theirs ? 'contributor' : 'owner'}

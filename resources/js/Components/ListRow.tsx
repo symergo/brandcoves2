@@ -104,7 +104,47 @@ export const pictureBox = `${pictureSize} shrink-0 rounded-lg border border-line
  * products as a 2×2 collage (what is in it at a glance, while every name starts at the same place), one product on its
  * own, or the kind's mark on a list with no pictures yet.
  */
-export function ListThumb({ covers = [], kind = null }: { covers?: string[]; kind?: ListKind | string | null }) {
+export function ListThumb({
+    covers = [],
+    kind = null,
+    count,
+    countLabel,
+}: {
+    covers?: string[]
+    kind?: ListKind | string | null
+    /** How many things are on the list, shown in a circle on the picture's corner. */
+    count?: number
+    /** The count in words ("3 items"), for a screen reader and the tooltip. */
+    countLabel?: string
+}) {
+    const picture = <ListPicture covers={covers} kind={kind} />
+
+    if (count === undefined) {
+        return picture
+    }
+
+    /*
+     * The count sits on the picture (owner, 2026-11-13), not in the line under
+     * the name: that line is then free for who the list is for and its
+     * badges. Filled when there is something on the list, quiet when empty.
+     */
+    return (
+        <span className="relative shrink-0">
+            {picture}
+            <span
+                title={countLabel}
+                className={`absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-2xs leading-none font-semibold ring-2 ring-card ${
+                    count > 0 ? 'bg-accent text-white' : 'bg-line text-ink-soft'
+                }`}
+            >
+                <span aria-hidden>{count > 99 ? '99+' : count}</span>
+                {countLabel && <span className="sr-only">{countLabel}</span>}
+            </span>
+        </span>
+    )
+}
+
+function ListPicture({ covers, kind }: { covers: string[]; kind: ListKind | string | null }) {
     if (covers.length > 1) {
         return (
             // White between the cells too: the hairline gap drew a grey cross
