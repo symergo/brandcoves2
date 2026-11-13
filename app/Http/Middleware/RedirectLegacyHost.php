@@ -32,6 +32,9 @@ class RedirectLegacyHost
      */
     private const ALWAYS_DIRECT = ['health', 'up'];
 
+    /** The WordPress login, its remote-call endpoint and its folders. */
+    private const WORDPRESS = '#^(?:wp-login\.php|xmlrpc\.php|wp-(?:admin|content|includes)(?:/|$))#i';
+
     public function handle(Request $request, Closure $next): Response
     {
         $canonical = (string) config('giftcoves.canonical_host', '');
@@ -50,6 +53,18 @@ class RedirectLegacyHost
 
         if (in_array($request->path(), self::ALWAYS_DIRECT, true)) {
             return $next($request);
+        }
+
+        /*
+         * WordPress probes end here (2026-11-13). v1 was a WordPress site and
+         * its login is still tried, hundreds of times an hour, by scripts
+         * guessing passwords. Redirected, each try cost two requests: the 301
+         * here and a 404 on the new domain. There is nothing of WordPress to
+         * move, so they get that 404 at once, as plain text. Cloudflare blocks
+         * the same paths on the new domain; this one is not behind it.
+         */
+        if (preg_match(self::WORDPRESS, $request->path()) === 1) {
+            return response('Not found.', 404, ['Content-Type' => 'text/plain']);
         }
 
         /*

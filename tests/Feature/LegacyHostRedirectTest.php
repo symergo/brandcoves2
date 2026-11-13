@@ -102,4 +102,19 @@ class LegacyHostRedirectTest extends TestCase
 
         $this->get('http://brandcoves.com/be-nl')->assertOk();
     }
+
+    #[Test]
+    public function wordpress_probes_on_the_old_domain_are_not_redirected(): void
+    {
+        // Password-guessing scripts: a 404 at once, not a 301 and then a 404 on the new domain
+        foreach (['/wp-login.php', '/xmlrpc.php', '/wp-admin/', '/wp-admin', '/wp-content/plugins/x.php', '/wp-includes/js/a.js', '/WP-Login.php'] as $path) {
+            $this->get('http://brandcoves.com'.$path)->assertNotFound()->assertSee('Not found.');
+        }
+
+        $this->post('http://brandcoves.com/wp-login.php')->assertNotFound();
+
+        // Anything else still moves, a path that only starts the same way included
+        $this->get('http://brandcoves.com/wp-administratie')->assertStatus(301);
+        $this->get('http://brandcoves.com/be-nl/brand/sony')->assertStatus(301);
+    }
 }
