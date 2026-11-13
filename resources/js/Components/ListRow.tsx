@@ -45,11 +45,13 @@ export default function ListRow({
     slots?: 0 | 1 | 2 | 3
 }) {
     // Static class names, so Tailwind sees them. The first child is the name.
+    // On a phone the last line also keeps its distance from the icons above it.
+    const air = 'max-sm:[&>*:last-child:not(:first-child)]:mt-3.5'
     const room = [
         '',
-        '[&>*:first-child]:pr-10 sm:[&>*:first-child]:pr-0',
-        '[&>*:first-child]:pr-20 sm:[&>*:first-child]:pr-0',
-        '[&>*:first-child]:pr-31 sm:[&>*:first-child]:pr-0',
+        `[&>*:first-child]:pr-10 sm:[&>*:first-child]:pr-0 ${air}`,
+        `[&>*:first-child]:pr-20 sm:[&>*:first-child]:pr-0 ${air}`,
+        `[&>*:first-child]:pr-31 sm:[&>*:first-child]:pr-0 ${air}`,
     ][actions ? slots : 0]
     const body = (
         <>

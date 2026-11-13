@@ -7,7 +7,7 @@ import { listActionItems } from './listActions'
 import type { ListKind } from './ListKindBadge'
 import ListPills from './ListPills'
 import ListRow, { ListRowBadges, ListRowTitle, ListThumb } from './ListRow'
-import Menu, { MoreButtonContent } from './Menu'
+import Menu, { MenuItem, MoreButtonContent } from './Menu'
 import Modal, { useConfirm } from './Modal'
 import ShareSettings, { type ShareableList } from './ShareSettings'
 import ToolIcon from './ToolIcon'
@@ -96,7 +96,8 @@ export default function ListSummaryRow({
     const [confirm, confirmDialog] = useConfirm()
     const canAdd = !theirs || list.role === 'editor'
 
-    const slots = ((canAdd ? 1 : 0) + (theirs ? 0 : 2)) as 0 | 1 | 2 | 3
+    // My own list: share and ⋯ (adding is in the ⋯ menu). Somebody else's I may add to: the plus alone.
+    const slots = (theirs ? (canAdd ? 1 : 0) : 2) as 0 | 1 | 2 | 3
     const itemsLabel = list.itemCount === 1 ? t('lists.one_item') : t('lists.items', { count: n(list.itemCount) })
 
     /*
@@ -134,7 +135,13 @@ export default function ListSummaryRow({
                 actions={
                     canAdd || !theirs ? (
                         <>
-                            {canAdd && (
+                            {/*
+                              On somebody else's list the plus is the only
+                              action, so it stays a button. On my own it is the
+                              first item of the ⋯ menu (owner, 2026-11-13):
+                              three buttons left a phone no room for the name.
+                            */}
+                            {canAdd && theirs && (
                                 <button
                                     type="button"
                                     onClick={() => setAdding(true)}
@@ -163,8 +170,18 @@ export default function ListSummaryRow({
                                         button={<MoreButtonContent word={t('people.more')} />}
                                         buttonClassName={rowAction}
                                     >
-                                        {(close) =>
-                                            listActionItems({
+                                        {(close) => (
+                                            <>
+                                                <MenuItem
+                                                    icon={<ToolIcon name="plus" className="h-4 w-4" />}
+                                                    onSelect={() => {
+                                                        close()
+                                                        setAdding(true)
+                                                    }}
+                                                >
+                                                    {t('lists.add_product')}
+                                                </MenuItem>
+                                                {listActionItems({
                                                 list: { ...list, shared, recipient: list.recipient },
                                                 base,
                                                 t,
@@ -173,8 +190,9 @@ export default function ListSummaryRow({
                                                     close()
                                                     void remove()
                                                 },
-                                            })
-                                        }
+                                            })}
+                                            </>
+                                        )}
                                     </Menu>
                                 </>
                             )}
