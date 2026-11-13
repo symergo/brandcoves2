@@ -108,6 +108,8 @@ class TitleBrand
         $index = [];
 
         foreach ($this->known ?? self::catalogueBrands() as $folded => $display) {
+            // A brand that is only digits ("1880", "47") is an integer as an array key
+            $folded = (string) $folded;
             $first = preg_split('/[^a-z0-9&.\'+]+/', $folded, 2)[0] ?? '';
 
             if ($first !== '') {

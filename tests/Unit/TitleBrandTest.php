@@ -65,4 +65,14 @@ class TitleBrandTest extends TestCase
         $this->assertNull($this->brands()->infer(''));
         $this->assertNull($this->brands()->infer(null));
     }
+
+    #[Test]
+    public function a_brand_that_is_only_digits_does_not_break_the_lookup(): void
+    {
+        // PHP turns the array key '1880' into an integer; search gave a 500 on it (2026-11-13)
+        $brands = new TitleBrand(['1880' => '1880', 'sony' => 'Sony']);
+
+        $this->assertSame('1880', $brands->infer('1880 Turrón de Jijona 250 g'));
+        $this->assertSame('Sony', $brands->infer('Sony WH-1000XM5'));
+    }
 }
