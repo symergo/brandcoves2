@@ -166,10 +166,14 @@ final class OtherBrandLinks implements PlaceholderFunction
         return $present;
     }
 
-    /** A slug without its hyphens: "black-decker" and "blackdecker" are one brand. */
-    public static function fold(string $slug): string
+    /**
+     * A slug without its hyphens: "black-decker" and "blackdecker" are one brand.
+     * Takes an integer too: a brand that is only digits ("101") is an integer
+     * once it has been an array key, and that gave a 500 on the search page.
+     */
+    public static function fold(string|int $slug): string
     {
-        return str_replace('-', '', $slug);
+        return str_replace('-', '', (string) $slug);
     }
 
     /**
@@ -181,6 +185,8 @@ final class OtherBrandLinks implements PlaceholderFunction
     public static function sameFamily(string $slug, array $present): bool
     {
         foreach (array_keys($present) as $own) {
+            $own = (string) $own; // a brand of only digits is an integer as an array key
+
             if (str_starts_with($slug, $own.'-') || str_starts_with($own, $slug.'-')) {
                 return true;
             }

@@ -46,9 +46,12 @@ final class ResultCategories
 
         // Stable for equal counts, so a page names the same categories on
         // every render.
-        uksort($counts, fn (string $a, string $b) => [$counts[$b], $a] <=> [$counts[$a], $b]);
+        // int|string, and strings again on the way out: a feed category that is
+        // only digits ("5121") is an integer as an array key, and every caller
+        // types a category as a string.
+        uksort($counts, fn (int|string $a, int|string $b) => [$counts[$b], (string) $a] <=> [$counts[$a], (string) $b]);
 
-        return array_slice(array_keys($counts), 0, $limit);
+        return array_map(strval(...), array_slice(array_keys($counts), 0, $limit));
     }
 
     /**

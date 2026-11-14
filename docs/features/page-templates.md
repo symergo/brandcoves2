@@ -380,6 +380,9 @@ for Dutch, English and French alike:
 - Categories count only when they hold a real share of the page (`ResultCategories::significant()`): the first,
   then any that two results carry. One cuddly toy among Stanley tool cases had brought toy brands into
   "alternative brands for Stanley".
+- **A brand or category of only digits** ("101", "5121") is an integer once PHP has used it as an array key.
+  `OtherBrandLinks::fold()` and `sameFamily()` accept that and `ResultCategories::top()` hands back strings
+  (2026-11-14, after a result of the brand "101" gave a 500 on a search page).
 - **Broader, and with categories** (the same day): `:other_brand_links` takes brands in turns from the three
   categories most results carry, and the sentence names the printable ones: "Zoek je alternatieve merken voor
   Lenovo (tablet)?" (`2026_11_08_000200_search_copy_names_the_categories`). Still one cached query.

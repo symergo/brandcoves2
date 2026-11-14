@@ -3,7 +3,8 @@
 An open product catalogue organised into Coves (lists of products; editorial Coves add writing) and
 shared between people. Affiliate feeds supply products; they are not the boundary of what the site
 holds. Direction and where each part stands: [docs/strategy.md](../docs/strategy.md).
-A clean-room rebuild of the v1 WordPress site at `../brandcoves` (referenced for *scope and product
+A clean-room rebuild of the v1 WordPress site (code on GitHub `symergo/brandcoves`; its local folder
+`../brandcoves` was deleted on 2026-11-14, its secrets and keys are in `../OVH access/brandcoves`) (referenced for *scope and product
 thinking* only — no code is ported).
 
 ## Feature documentation rule

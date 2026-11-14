@@ -37,6 +37,12 @@ class BolConnector implements LiveConnector, PooledSearch, PopularityConnector
 
     private const TOKEN_CACHE_KEY = 'bc:bol:token';
 
+    /** Kept this many seconds short of the token's own lifetime: a call in flight must not outlive it. */
+    private const TOKEN_MARGIN = 30;
+
+    /** For an answer that does not say how long its token lives. */
+    private const TOKEN_FALLBACK_TTL = 240;
+
     private const API_BASE = 'https://api.bol.com/marketing/catalog/v1';
 
     public function source(): Source
@@ -632,34 +638,64 @@ class BolConnector implements LiveConnector, PooledSearch, PopularityConnector
     }
 
     /**
-     * OAuth2 client-credentials token, cached slightly short of its real
-     * lifetime so a request never races the expiry.
+     * OAuth2 client-credentials token, cached for as long as bol says it lives
+     * (`expires_in`), less a margin so a request never races the expiry.
+     *
+     * The lifetime is read from each answer instead of assumed (owner,
+     * 2026-11-14): it was a fixed four minutes, which signed in again while the
+     * token was still good. An answer without a usable `expires_in` falls back
+     * to those four minutes. A failed sign-in is not cached, so the next call
+     * tries again.
      */
     private function accessToken(int $timeout = 8): ?string
     {
-        return Cache::remember($this->tokenCacheKey(), 240, function () use ($timeout): ?string {
-            try {
-                $response = Http::asForm()
-                    ->timeout($timeout)
-                    ->withBasicAuth(
-                        (string) config('giftcoves.connectors.bol.client_id'),
-                        (string) config('giftcoves.connectors.bol.client_secret'),
-                    )
-                    ->post(self::TOKEN_URL, ['grant_type' => 'client_credentials']);
+        $cached = Cache::get($this->tokenCacheKey());
 
-                if ($response->failed()) {
-                    Log::warning('bol token request failed', ['status' => $response->status()]);
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
 
-                    return null;
-                }
+        try {
+            $response = Http::asForm()
+                ->timeout($timeout)
+                ->withBasicAuth(
+                    (string) config('giftcoves.connectors.bol.client_id'),
+                    (string) config('giftcoves.connectors.bol.client_secret'),
+                )
+                ->post(self::TOKEN_URL, ['grant_type' => 'client_credentials']);
 
-                return $response->json('access_token');
-            } catch (Throwable $e) {
-                Log::warning('bol token request threw', ['error' => $e->getMessage()]);
+            if ($response->failed()) {
+                Log::warning('bol token request failed', ['status' => $response->status()]);
 
                 return null;
             }
-        });
+
+            $token = $response->json('access_token');
+
+            if (! is_string($token) || $token === '') {
+                Log::warning('bol token answer held no token');
+
+                return null;
+            }
+
+            Cache::put($this->tokenCacheKey(), $token, self::tokenLifetime($response->json('expires_in')));
+
+            return $token;
+        } catch (Throwable $e) {
+            Log::warning('bol token request threw', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /** Seconds to keep a token that bol says lives `$expiresIn` seconds. */
+    private static function tokenLifetime(mixed $expiresIn): int
+    {
+        if (! is_numeric($expiresIn) || (int) $expiresIn <= self::TOKEN_MARGIN) {
+            return self::TOKEN_FALLBACK_TTL;
+        }
+
+        return (int) $expiresIn - self::TOKEN_MARGIN;
     }
 
     /**
@@ -867,7 +903,7 @@ class BolConnector implements LiveConnector, PooledSearch, PopularityConnector
      * config holds now.
      *
      * Called when an administrator changes the client id or secret in the
-     * admin. Without it the old token stays valid for up to four minutes, and a
+     * admin. Without it the old token stays valid for its whole lifetime, and a
      * wrong new secret only shows itself once that token expires, long after the
      * person who typed it has moved on.
      */

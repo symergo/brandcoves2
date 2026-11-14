@@ -324,6 +324,48 @@ class BolConnectorTest extends TestCase
     }
 
     #[Test]
+    public function the_token_is_kept_for_as_long_as_bol_says_it_lives(): void
+    {
+        Http::fake([
+            'login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 600]),
+            'api.bol.com/*' => Http::response($this->searchResponse()),
+        ]);
+
+        $this->connector->search('koptelefoon', Market::BeNl);
+
+        // Past the four minutes it used to be kept, still inside the ten bol gave it.
+        $this->travel(9)->minutes();
+        $this->connector->search('boormachine', Market::BeNl);
+        Http::assertSentCount(3); // one sign-in, two searches
+
+        // Thirty seconds before the end it is no longer trusted.
+        $this->travel(29)->seconds();
+        $this->assertSame('tok', Cache::get('bc:bol:token'));
+        $this->travel(2)->seconds();
+        $this->assertFalse(Cache::has('bc:bol:token'));
+    }
+
+    #[Test]
+    public function a_token_without_a_lifetime_is_kept_four_minutes_and_a_failed_login_not_at_all(): void
+    {
+        Http::fake([
+            'login.bol.com/*' => Http::sequence()
+                ->push([], 500)
+                ->push(['access_token' => 'tok']),
+            'api.bol.com/*' => Http::response($this->searchResponse()),
+        ]);
+
+        $this->assertSame([], $this->connector->search('koptelefoon', Market::BeNl));
+        $this->assertFalse(Cache::has('bc:bol:token'));
+
+        $this->connector->search('koptelefoon', Market::BeNl);
+        $this->assertSame('tok', Cache::get('bc:bol:token'));
+
+        $this->travel(241)->seconds();
+        $this->assertFalse(Cache::has('bc:bol:token'));
+    }
+
+    #[Test]
     public function results_are_cached_so_a_burst_costs_one_call(): void
     {
         Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);

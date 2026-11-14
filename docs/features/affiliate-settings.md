@@ -41,8 +41,8 @@ credential away again is a separate switch, since an empty field cannot mean bot
 ## A change takes effect at once
 
 - **bol's cached login is cleared** when its client id or secret changes
-  (`BolConnector::forgetAccessToken()`). Otherwise the old token stays valid for up to four minutes
-  and a wrong new secret only shows itself once it expires.
+  (`BolConnector::forgetAccessToken()`). Otherwise the old token stays valid for the rest of its
+  lifetime (bol's `expires_in`, less 30 seconds) and a wrong new secret only shows itself once it expires.
 - **The queue workers are told to restart** (`queue:restart`) whenever anything changed. Horizon's
   workers boot once, so without it a job would keep calling bol with the old values until the next
   deploy. Each worker finishes its current job first.

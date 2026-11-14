@@ -320,6 +320,43 @@ class SearchCopyShopsAndBrandsTest extends TestCase
     }
 
     #[Test]
+    public function a_brand_of_only_digits_in_the_results_does_not_break_the_page(): void
+    {
+        // Production, 2026-11-14: a result of the brand "101" gave a 500. PHP
+        // makes a numeric array key an integer, and the brands in the results
+        // are kept as keys.
+        $items = [$this->group('101'), $this->group('101')];
+
+        $this->stock('Bose', 'Koptelefoons', 3);
+        $this->stock('1880', 'Koptelefoons', 2);
+        $this->brandPage('Bose');
+        $this->brandPage('1880');
+
+        $context = new SearchContext(Market::BeNl, $items, 2, 'koptelefoon');
+
+        $this->assertSame(['Bose', '1880'], array_column((new OtherBrandLinks)->resolve($context)->items, 'label'));
+        $this->assertSame(['Bose', '1880'], array_column((new OtherBrandsByCategory)->resolve($context)->items[0]['links'], 'label'));
+    }
+
+    #[Test]
+    public function a_category_of_only_digits_does_not_break_the_page(): void
+    {
+        // The same PHP rule as the brand above, for a feed that names its
+        // categories by number.
+        $items = [$this->group('Aurex', '5121'), $this->group('Aurex', '5121')];
+
+        $this->stock('Bose', '5121', 3);
+        $this->brandPage('Bose');
+
+        $context = new SearchContext(Market::BeNl, $items, 2, 'koptelefoon');
+
+        $this->assertSame(['5121'], ResultCategories::significant($items));
+        $this->assertSame(['Bose'], array_column((new OtherBrandLinks)->resolve($context)->items, 'label'));
+        (new OtherBrandsByCategory)->resolve($context);
+        (new OtherBrandCategories)->resolve($context);
+    }
+
+    #[Test]
     public function other_brands_are_listed_per_kind_of_product(): void
     {
         // The "custom" case (owner, 2026-11-11): very different results, and

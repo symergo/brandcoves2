@@ -249,19 +249,20 @@ class GiftIntentParser
      */
     private function longestFirst(array $phrases): array
     {
-        uksort($phrases, fn (string $a, string $b) => mb_strlen($b) <=> mb_strlen($a));
+        // int|string: a phrase of only digits ("18") is an integer as an array key.
+        uksort($phrases, fn (int|string $a, int|string $b) => mb_strlen((string) $b) <=> mb_strlen((string) $a));
 
         return $phrases;
     }
 
-    private function contains(string $s, string $phrase): bool
+    private function contains(string $s, int|string $phrase): bool
     {
-        return (bool) preg_match($this->pattern($phrase), $s);
+        return (bool) preg_match($this->pattern((string) $phrase), $s);
     }
 
-    private function remove(string $s, string $phrase): string
+    private function remove(string $s, int|string $phrase): string
     {
-        return preg_replace($this->pattern($phrase), ' ', $s) ?? $s;
+        return preg_replace($this->pattern((string) $phrase), ' ', $s) ?? $s;
     }
 
     private function pattern(string $phrase): string

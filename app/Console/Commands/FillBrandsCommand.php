@@ -85,7 +85,7 @@ class FillBrandsCommand extends Command
         $this->info(sprintf('%d offers without a brand; %d %s a brand (%d brands).',
             $seen, $filled, $write ? 'got' : 'would get', count($brands)));
         $this->line('Most filled: '.implode(', ', array_map(
-            fn (string $b, int $n) => "{$b} {$n}",
+            fn (int|string $b, int $n) => "{$b} {$n}", // a brand of only digits is an integer as a key
             array_slice(array_keys($brands), 0, 15),
             array_slice(array_values($brands), 0, 15),
         )));
