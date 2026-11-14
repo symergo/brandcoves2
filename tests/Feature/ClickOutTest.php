@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Feed;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -50,6 +51,29 @@ class ClickOutTest extends TestCase
             // a cached permanent redirect would send tomorrow's clicks to a
             // dead link and lose the attribution.
             ->assertStatus(302);
+    }
+
+    #[Test]
+    public function a_stored_bol_link_leaves_with_the_site_id_of_today(): void
+    {
+        config(['giftcoves.connectors.bol.partner_site_id' => ['BE' => '1543348', 'NL' => '1543348']]);
+
+        $product = $this->seedOffer();
+        $stored = 'https://partner.bol.com/click/click?'.http_build_query([
+            'p' => '2', 't' => 'url', 's' => '25421', 'f' => 'TXL', 'name' => 'giftcoves-be-nl',
+            'url' => 'https://www.bol.com/be/nl/p/een-ding/9300000012345678/',
+        ]);
+        DB::table('products')->where('id', $product->id)->update(['affiliate_url' => $stored]);
+
+        $location = (string) $this->get("/be-nl/go/{$product->id}")->assertStatus(302)->headers->get('Location');
+
+        $this->assertStringContainsString('s=1543348', $location);
+        $this->assertStringNotContainsString('25421', $location);
+        // The rest of the link is the stored one.
+        $this->assertStringContainsString(urlencode('https://www.bol.com/be/nl/p/een-ding/9300000012345678/'), $location);
+        $this->assertStringContainsString('name=giftcoves-be-nl', $location);
+        // And what is stored is not rewritten by reading it.
+        $this->assertSame($stored, DB::table('products')->where('id', $product->id)->value('affiliate_url'));
     }
 
     #[Test]

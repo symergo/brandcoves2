@@ -7,7 +7,9 @@ namespace App\Services\Guides;
 use App\Enums\Market;
 use App\Models\GuideTopic;
 use App\Models\PopularRank;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -46,6 +48,9 @@ class TopicMiner
      * on the largest market first.
      */
     private const SUPPLY_SATURATION = 30;
+
+    /** The longest one topic's supply count may take, in milliseconds. See `availableProducts()`. */
+    private const COUNT_TIMEOUT_MS = 8000;
 
     /**
      * Words that carry no topic.
@@ -348,7 +353,40 @@ class TopicMiner
             ->select('p.group_id')
             ->limit(self::SUPPLY_SATURATION);
 
-        return DB::query()->fromSub($matching, 'capped')->count();
+        /*
+         * And a ceiling on the time, since 2026-11-14.
+         *
+         * On production that day this query took 48 to 318 seconds per topic
+         * against be-nl (1.6 million groups), where it had been measured at
+         * under 300ms on the catalogue of September. Why it got that slow has
+         * not been measured; what is certain is that a count nobody is waiting
+         * for must not hold a queue worker for five minutes. So each count
+         * gets COUNT_TIMEOUT_MS, and one that runs out keeps the number the
+         * topic already had, or counts as "enough" for a topic seen for the
+         * first time: a search term slow to count is almost always one that
+         * matches a great deal.
+         */
+        try {
+            return (int) DB::transaction(function () use ($matching): int {
+                DB::statement('SET LOCAL statement_timeout = '.self::COUNT_TIMEOUT_MS);
+
+                return DB::query()->fromSub($matching, 'capped')->count();
+            });
+        } catch (QueryException $e) {
+            // 57014: query_canceled, which is what a statement timeout raises.
+            if ($e->getCode() !== '57014') {
+                throw $e;
+            }
+
+            Log::warning('Topic supply count ran out of time', ['market' => $market->value, 'topic' => $topic]);
+
+            $known = GuideTopic::query()
+                ->where('market', $market->value)
+                ->where('topic', $topic)
+                ->value('available_products');
+
+            return $known === null ? self::SUPPLY_SATURATION : (int) $known;
+        }
     }
 
     /**

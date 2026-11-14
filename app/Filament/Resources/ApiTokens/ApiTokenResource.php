@@ -163,16 +163,18 @@ class ApiTokenResource extends Resource
                     }),
 
                 /*
-                 * Deleting is for tidying up, and only after revocation.
-                 *
-                 * A revoked row is the answer to "when did this stop working",
-                 * which is the first thing anyone wants during an incident. A
-                 * live key deleted outright would stop working *and* leave no
-                 * trace that it had ever existed.
+                 * Any key can be deleted (owner, 2026-11-14). It used to be
+                 * offered only after revoking, to keep the row that answers
+                 * "when did this stop working". Revoke still exists for when
+                 * that record is wanted, and the confirmation says which of
+                 * the two this is: a live key deleted here stops working at
+                 * once and leaves no trace.
                  */
                 DeleteAction::make()
-                    ->visible(fn (ApiToken $r) => $r->revoked_at !== null)
-                    ->modalDescription('The key is already revoked. This only removes the record of it.'),
+                    ->modalHeading(fn (ApiToken $r) => 'Delete '.$r->name)
+                    ->modalDescription(fn (ApiToken $r) => $r->isUsable()
+                        ? 'This key is live. Deleting it stops it working immediately, whatever uses it will get 401s, and no record of the key is kept. Revoke it instead to keep the record.'
+                        : 'The key no longer works. This only removes the record of it.'),
             ])
             ->defaultSort('id', 'desc');
     }

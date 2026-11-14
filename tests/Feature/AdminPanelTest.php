@@ -11,6 +11,8 @@ use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Filament\Resources\IngestionJobs\IngestionJobResource;
+use App\Filament\Resources\IngestionJobs\Pages\ListIngestionJobs;
+use App\Filament\Resources\IngestionJobs\Tables\IngestionJobsTable;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\ApiToken;
 use App\Models\CommunityAnswer;
@@ -18,6 +20,8 @@ use App\Models\CommunityQuestion;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\Feedback;
+use App\Models\IngestionJob;
+use App\Models\Merchant;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -360,6 +364,69 @@ class AdminPanelTest extends TestCase
 
         $this->withToken($plaintext)->getJson('/api/editorial')->assertStatus(401);
         $this->assertNotNull($token->refresh()->revoked_at);
+    }
+
+    #[Test]
+    public function a_live_key_can_be_deleted_without_revoking_it_first(): void
+    {
+        ['token' => $plaintext, 'model' => $token] = ApiToken::issue('no longer needed', [ApiToken::READ]);
+
+        $this->withToken($plaintext)->getJson('/api/editorial')->assertOk();
+
+        Livewire::actingAs($this->user(admin: true))
+            ->test(ListApiTokens::class)
+            ->assertActionVisible(TestAction::make('delete')->table($token))
+            ->callAction(TestAction::make('delete')->table($token));
+
+        $this->assertNull(ApiToken::query()->find($token->id));
+        $this->withToken($plaintext)->getJson('/api/editorial')->assertStatus(401);
+    }
+
+    #[Test]
+    public function an_ingestion_job_names_its_feed_and_its_shop(): void
+    {
+        IngestionJobsTable::forgetFeeds();
+
+        $shop = Merchant::create([
+            'source' => Source::Awin->value,
+            'external_id' => 'shop',
+            'name' => 'Koffiehuis',
+            'domain' => 'koffiehuis.be',
+        ]);
+
+        $feed = Feed::create([
+            'source' => Source::Awin,
+            'external_feed_id' => '18755',
+            'market' => Market::BeNl,
+            'merchant_id' => $shop->id,
+            'label' => 'Koffiehuis BE productfeed',
+            'enabled' => true,
+            'last_row_count' => 4321,
+        ]);
+
+        $job = IngestionJob::create(['job_key' => $feed->jobKey(), 'source' => Source::Awin, 'market' => Market::BeNl]);
+        // A job whose feed has since been removed still lists, under its key.
+        $orphan = IngestionJob::create(['job_key' => 'awin:99999:be-nl', 'source' => Source::Awin, 'market' => Market::BeNl]);
+
+        $component = Livewire::actingAs($this->user(admin: true))->test(ListIngestionJobs::class);
+
+        $component
+            ->assertCanSeeTableRecords([$job, $orphan])
+            ->assertSee('Koffiehuis BE productfeed')
+            ->assertSee('koffiehuis.be')
+            ->assertSee('4,321')
+            ->assertSee('awin:99999:be-nl');
+
+        // Found by the shop's name, which the job row itself does not hold.
+        $component->searchTable('koffiehuis')
+            ->assertCanSeeTableRecords([$job])
+            ->assertCanNotSeeTableRecords([$orphan]);
+
+        $component->searchTable('')->filterTable('merchant', $shop->id)
+            ->assertCanSeeTableRecords([$job])
+            ->assertCanNotSeeTableRecords([$orphan]);
+
+        IngestionJobsTable::forgetFeeds();
     }
 
     /** The plaintext the reveal modal was handed, if one is mounted. */

@@ -39,7 +39,7 @@ followed by a grid, and the rules the pairing follows, are in
 Each edition points at one article Cove, `daily_pick_sets.featured_cove_id`: the market's most
 recently published guide, seasonal guide or advice article (`EditionBuilder::featured()`). The
 edition no longer builds a guide. Topics are still mined from what people searched on the site
-(`BuildDailyEdition` runs `TopicMiner::mine()` and seeds the seasonal topics every morning), but each
+(`RefreshTopicQueue` runs `TopicMiner::mine()` and seeds the seasonal topics every morning, see below), but each
 guide is its own Cove, planned, curated and built through the planner; see
 [cove-planner.md](cove-planner.md).
 
@@ -712,3 +712,23 @@ view. An edit made outside the builder shows at once (the stored value carries a
 text and falls back to a live render). The lists that name today's edition (`/coves`, Discover,
 the rail) cache for minutes, are forgotten when an edition is built, and never outlive the drop
 time. Why each piece is shaped that way: [speed.md](speed.md), "Cove pages".
+
+## The topic mining left the build job (2026-11-14)
+
+be-nl had no Daily Cove on 12, 13 and 14 November and be-fr none on 13 and 14, with nothing on the
+plan to say why. `BuildDailyEdition` mined the search log before it built: one product count per
+searched topic (`TopicMiner::availableProducts()`). On a catalogue grown to 1.6 million be-nl groups
+each count took 48 to 318 seconds (Postgres slow-query log, 14 November), the job spent its whole
+900 seconds counting and was killed before the build began. A job killed by its timeout writes
+neither an edition nor `last_build_note`, which is why the plans showed nothing. It is the failure of
+August again (see `TopicMinerSupplyTest`), reached by a different road.
+
+- **The build no longer mines.** `BuildDailyEdition` builds and nothing else. The edition never read
+  the topic queue; it only waited for it.
+- **`RefreshTopicQueue` is on the schedule**, one market every twelve minutes from 08:15 UTC, after
+  the builds and the publishing. It seeds the seasonal topics first, then mines, and logs
+  `Topic queue refreshed`. It is the same job the "Refresh queue" button dispatches.
+- **One count cannot take minutes.** Each supply count runs under an 8-second statement timeout. One
+  that runs out keeps the number the topic already had, or counts as enough (30) for a new topic,
+  and logs `Topic supply count ran out of time`. Why the query got slow has not been measured; that
+  needs an `EXPLAIN` on production.

@@ -13,6 +13,7 @@ use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshCachedValue;
 use App\Jobs\RefreshPersonaTopLists;
 use App\Jobs\RefreshRecentSearches;
+use App\Jobs\RefreshTopicQueue;
 use App\Jobs\RunEditorialAutomation;
 use App\Jobs\SendCoveDigest;
 use App\Jobs\SendListPriceDigests;
@@ -210,6 +211,7 @@ foreach (Market::cases() as $index => $market) {
  *   07:30–07:54  due Coves published
  *   07:40        list price digest
  *   08:10        occasion reminders
+ *   08:15–09:03  topic queue refreshed, one market every twelve minutes
  *   09:00        the Daily drops (a property of the edition, not a job)
  *   09:15–09:31  Cove digest mails
  *
@@ -219,6 +221,23 @@ foreach (Market::cases() as $index => $market) {
  * the catalogue run is late they read a catalogue a few hours old, which is
  * what they did before whenever grouping failed.
  */
+
+/*
+ * Mine the search log into guide topics and seed the seasonal ones.
+ *
+ * Its own job since 2026-11-14. It was the first step of `BuildDailyEdition`,
+ * where a slow morning of counting cost be-nl and be-fr their Daily Cove three
+ * days running. After the builds and the publishing, so it competes with
+ * neither; twelve minutes apart because a market may use most of its fifteen.
+ * Tomorrow's 06:00 automation drafts from what this leaves.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new RefreshTopicQueue($market))
+        ->name('refresh-topic-queue-'.$market->value)
+        ->dailyAt(sprintf('%02d:%02d', 8 + intdiv(15 + $index * 12, 60), (15 + $index * 12) % 60))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
 
 /*
  * The editorial pipeline, walked once per market.

@@ -68,3 +68,13 @@ reach the config, a stored secret is never rendered, the ids are, a save that do
 keeps it, a new bol secret clears the cached login and restarts the workers, a stored secret can be
 handed back to Coolify, an untouched save restarts nothing, a malformed id is refused, and secrets
 are encrypted at rest.
+
+## bol's website code (2026-11-14)
+
+GiftCoves has its own bol website code, **1543348**, for Belgium and the Netherlands alike. Until
+then the defaults were the two ids of the first site (25421 and 1005548), so a sale through GiftCoves
+was booked under that site. The two settings stay separate, in case the countries ever differ again.
+
+A bol offer is stored with its whole tracker link, site id included. So that a change of id reaches
+every link at once, `Product::affiliate_url` is read through `MerchantLinks::withCurrentBolSite()`,
+which puts in the id configured today; what is stored is left alone.

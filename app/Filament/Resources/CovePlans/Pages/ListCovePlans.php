@@ -19,6 +19,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -173,12 +174,46 @@ class ListCovePlans extends ListRecords
                  * table. Counted inside the chosen market, or the number belongs
                  * to a view that no click reproduces.
                  */
-                ->badge(fn () => $this->scopeToActiveMarket(static::getResource()::getEloquentQuery())
+                // And inside the chosen month, for the same reason.
+                ->badge(fn () => $this->scopeToActiveMonth($this->scopeToActiveMarket(static::getResource()::getEloquentQuery()))
                     ->tap(fn ($q) => PlanState::scope($q, $state))
                     ->count());
         }
 
         return $tabs;
+    }
+
+    /** A market's count too is of the month shown, or the strip counts rows the table does not have. */
+    protected function countInMarket(Market $market): int
+    {
+        return $this->scopeToActiveMonth(parent::modifyQueryWithActiveTab(static::getResource()::getEloquentQuery()))
+            ->where('market', $market->value)
+            ->count();
+    }
+
+    /**
+     * The month the table's filter is on, applied to a count.
+     *
+     * Before the filters have loaded (the first render) it is this month,
+     * which is what the filter starts on.
+     *
+     * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
+     * @return Builder<covariant \Illuminate\Database\Eloquent\Model>
+     */
+    private function scopeToActiveMonth(Builder $query): Builder
+    {
+        if (! is_array($this->tableFilters) || ! array_key_exists('month', $this->tableFilters)) {
+            return CovePlanResource::scopeToMonth($query, (int) now()->year, (int) now()->month);
+        }
+
+        $year = data_get($this->tableFilters, 'month.year');
+        $month = data_get($this->tableFilters, 'month.month');
+
+        return CovePlanResource::scopeToMonth(
+            $query,
+            filled($year) ? (int) $year : null,
+            filled($month) ? (int) $month : null,
+        );
     }
 
     /**

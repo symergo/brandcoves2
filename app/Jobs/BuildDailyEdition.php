@@ -8,8 +8,6 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Services\Cove\CoveCaches;
 use App\Services\Cove\EditionBuilder;
-use App\Services\Guides\SeasonalTopics;
-use App\Services\Guides\TopicMiner;
 use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -61,8 +59,6 @@ class BuildDailyEdition implements ShouldBeUnique, ShouldQueue
     public function __construct(public Market $market, public ?string $date = null) {}
 
     public function handle(
-        TopicMiner $miner,
-        SeasonalTopics $seasonal,
         EditionBuilder $builder,
         AutomationSettingsStore $automation,
     ): void {
@@ -81,9 +77,19 @@ class BuildDailyEdition implements ShouldBeUnique, ShouldQueue
          * and it is now a decision somebody can make on a screen rather than a
          * deploy.
          *
-         * The mining below is deliberately outside the gate: it is a fact about
-         * the day rather than about the column, and the topic queue should keep
-         * advancing in a market that has paused its Daily.
+         * ## The topic mining is no longer in this job (2026-11-14)
+         *
+         * It used to run here first: count the products behind every topic
+         * people searched for, then build. The edition never read the result
+         * (`PlanDrafter` does), but it waited for it, and on a catalogue that
+         * had grown to 1.6 million groups each count took two to five minutes.
+         * be-nl and be-fr spent the job's whole fifteen minutes counting, were
+         * killed by the timeout before the build started, and so left neither
+         * an edition nor a reason on the plan: no Daily Cove on 12, 13 and 14
+         * November. The same thing had happened in August (see
+         * TopicMinerSupplyTest). The mining is `RefreshTopicQueue` now, on the
+         * schedule after the morning's builds, where a slow count delays
+         * nothing a reader is waiting for.
          *
          * ## Known: this gate fails closed
          *
@@ -106,16 +112,6 @@ class BuildDailyEdition implements ShouldBeUnique, ShouldQueue
          * switches" is not, and only the first should skip a build. See
          * docs/features/cove-automation.md.
          */
-        // Mine first. The edition itself does not read the topic queue —
-        // `PlanDrafter` drafts from it, by score — but yesterday's searches are
-        // what score a topic, and this nightly pass is what counts them.
-        $candidates = $miner->mine($this->market);
-
-        // Then the calendar, which knows about seasons the log cannot see yet —
-        // barbecue demand peaks in June and a log-only queue would commission the
-        // barbecue Cove in July.
-        $inSeason = $seasonal->seed($this->market);
-
         if (! $automation->enabled('build', $this->market, CoveKind::Daily)) {
             Log::info('Daily Cove build is switched off for this market', ['market' => $this->market->value]);
 
@@ -134,8 +130,6 @@ class BuildDailyEdition implements ShouldBeUnique, ShouldQueue
         Log::info('Daily Cove built', [
             'market' => $this->market->value,
             'date' => $this->date ?? 'today',
-            'topic_candidates' => $candidates,
-            'topics_in_season' => $inSeason,
             'edition' => $edition?->id,
             'picks' => $edition?->picks()->count() ?? 0,
             // The Cove this edition points a reader at. `featured_cove_id`

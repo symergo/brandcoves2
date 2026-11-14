@@ -85,6 +85,44 @@ final class MerchantLinks
     }
 
     /**
+     * A stored bol tracker link, carrying the site id configured today.
+     *
+     * A bol offer is stored with its whole tracker link, site id included, and
+     * a stored offer can be weeks old. When the site id changes (2026-11-14:
+     * GiftCoves got its own, the links held bstore's) every stored link would
+     * keep crediting the old one until its offer happened to be refreshed. So
+     * the id is put in when the link is read, by the country of the bol
+     * address inside it. Anything that is not a bol tracker link comes back
+     * untouched, and so does one for a country without an id.
+     */
+    public static function withCurrentBolSite(string $url): string
+    {
+        if (! str_starts_with($url, 'https://partner.bol.com/')) {
+            return $url;
+        }
+
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+
+        $target = is_string($query['url'] ?? null) ? $query['url'] : '';
+        $path = (string) parse_url($target, PHP_URL_PATH);
+        $country = match (true) {
+            str_starts_with($path, '/be/') => 'BE',
+            str_starts_with($path, '/nl/') => 'NL',
+            default => null,
+        };
+
+        $siteId = $country === null ? null : config("giftcoves.connectors.bol.partner_site_id.{$country}");
+
+        if (blank($siteId) || ! isset($query['s']) || (string) $query['s'] === (string) $siteId) {
+            return $url;
+        }
+
+        $query['s'] = (string) $siteId;
+
+        return 'https://partner.bol.com/click/click?'.http_build_query($query);
+    }
+
+    /**
      * bol's click redirector, for the country in the link's own path.
      *
      * By the link rather than by the page: an article on be-fr may point at

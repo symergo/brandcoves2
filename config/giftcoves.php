@@ -1812,13 +1812,17 @@ return [
              * wrong costs nothing visible: the click works, the visitor buys,
              * and the commission goes to nobody.
              *
-             * Two ids because the Belgian and Dutch partner programmes are
-             * separate accounts. Defaults are the ids v1 has been earning on.
-             * Not secrets — they appear in every outbound link.
+             * One id per country, because the setting was built for the two
+             * the first site (bstore) earns on: 25421 for Belgium, 1005548 for
+             * the Netherlands. GiftCoves has a website code of its own,
+             * 1543348, for both (owner, 2026-11-14), so a sale here is no
+             * longer booked under bstore. Not a secret: it is in every
+             * outbound link. A link stored with an older id is sent out with
+             * today's, see MerchantLinks::withCurrentBolSite().
              */
             'partner_site_id' => [
-                'BE' => env('BOL_PARTNER_SITE_ID_BE', '25421'),
-                'NL' => env('BOL_PARTNER_SITE_ID_NL', '1005548'),
+                'BE' => env('BOL_PARTNER_SITE_ID_BE', '1543348'),
+                'NL' => env('BOL_PARTNER_SITE_ID_NL', '1543348'),
             ],
 
             // bol documents 10 requests/second. A token bucket can emit

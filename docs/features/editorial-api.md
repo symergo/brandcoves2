@@ -49,8 +49,12 @@ unrecoverable — so the reveal refuses to close on a click-away or an Escape, a
 
 Minting is the only special case. Everything after it is ordinary: change a key's abilities without
 rotating the secret (the realistic path is a key that drafted for a fortnight and has earned
-publish — and rotating it to say so means editing it wherever it is deployed), revoke, and delete
-only once revoked.
+publish — and rotating it to say so means editing it wherever it is deployed), revoke, and delete.
+
+**Any key can be deleted, live or not (2026-11-14).** Delete used to be offered only once a key was
+revoked. Now it is on every row, and the confirmation says what it means for a live key: it stops
+working at once and no record of it is kept. Revoke first when the record of *when it stopped* is
+wanted.
 
 **On the command line**, which is what you want in a deploy script or when the panel is not up yet:
 
@@ -347,9 +351,9 @@ without one.
 answered `202` and queued nothing at all — the failure mode this API is most prone to, because
 every step of it looks like it worked.
 
-A Daily still goes through `BuildDailyEdition`, because that job also mines yesterday's searches
-for topics and seeds the seasonal ones. Both are facts about the *day*, and an editor building next
-Tuesday should not advance the topic queue.
+A Daily still goes through `BuildDailyEdition`. Until 2026-11-14 that job also mined yesterday's
+searches for topics and seeded the seasonal ones; both are `RefreshTopicQueue` now, on the schedule
+after the morning's builds, so building a Daily no longer touches the topic queue.
 
 `readBack` follows the kind too: a Daily points at the API endpoint that reports what the builder
 actually managed to put on the page, and every permanent kind points at its own URL.

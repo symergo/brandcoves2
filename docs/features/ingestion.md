@@ -236,6 +236,14 @@ Or from `/admin/feeds`: **Ingest now** and **Reset cursor** per feed, with live
 progress under **Ingestion jobs** (polls every 10s) and a sidebar badge counting
 failing feeds.
 
+**The job list names the feed and the shop (2026-11-14).** A job row holds only its key
+(`awin:12345:be-nl`). The list now shows the feed's own name with the key under it, the shop and its
+domain, the source and the affiliate account the feed is downloaded through, whether the feed is
+enabled, and the rows of its last run. It can be searched by key, feed name or shop name and
+filtered by source and by shop. There is no foreign key between a job and its feed (the key is
+derived, `Feed::jobKey()`), so `IngestionJobsTable::feedFor()` reads all feeds once per request and
+matches them by key; a job whose feed was removed still lists, under its key.
+
 Scheduled: the catalogue run at 04:10 and 16:10, prune rank history at 03:30. Twice a day rather
 than hourly because Awin regenerates a feed once or twice a day, so an hourly run re-downloaded an
 unchanged file (see `routes/console.php`). Since 2026-09-28 grouping is no longer at a fixed 05:00

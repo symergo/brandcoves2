@@ -88,6 +88,10 @@ Four decisions worth keeping:
   disagree — tab on `be-nl`, filter on `be-fr` — and the empty table that results is a puzzle
   rather than an answer. The `kind` filter stayed only because the kind strip predates this and
   removing it is a separate decision.
+- **The list opens on this month (2026-11-14).** A filter of year and month, both set to today's
+  until changed; "Whole year" and "Any year" widen it. Only dated plans have a month: a persona, a
+  guide or a shop page has no date and stays listed whatever month is chosen
+  (`CovePlanResource::scopeToMonth()`). The tab and market badges count inside the month too.
 - **The strips cross-filter each other's badges.** Standing on the Netherlands, the kind counts are
   Dutch counts. A badge that ignored the other axis would be a number no click can reproduce.
 - **The market never narrows a record lookup.** Editing or deleting a row arrives with an id, and

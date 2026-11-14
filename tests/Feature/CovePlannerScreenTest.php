@@ -171,6 +171,39 @@ class CovePlannerScreenTest extends TestCase
         $this->assertSame(0, CovePlan::query()->count());
     }
 
+    #[Test]
+    public function the_list_opens_on_this_month_and_can_be_moved_to_another(): void
+    {
+        $this->travelTo('2026-11-14 10:00:00');
+
+        $thisMonth = $this->plan(CoveKind::Daily, ['drop_date' => '2026-11-20']);
+        $nextMonth = $this->plan(CoveKind::Daily, ['drop_date' => '2026-12-03']);
+        $lastYear = $this->plan(CoveKind::Daily, ['drop_date' => '2025-11-20']);
+        // A guide has no date, so no month can hide it.
+        $undated = $this->plan(CoveKind::Guide, ['slug' => 'zonder-datum']);
+
+        $component = Livewire::actingAs($this->admin())->test(ListCovePlans::class);
+
+        $component
+            ->assertCanSeeTableRecords([$thisMonth, $undated])
+            ->assertCanNotSeeTableRecords([$nextMonth, $lastYear]);
+
+        // The draft tab counts what the table shows: this month's and the undated one.
+        $this->assertSame('2', (string) $component->instance()->getTabs()[PlanState::Draft->value]->getBadge());
+
+        $component->filterTable('month', ['year' => 2026, 'month' => 12])
+            ->assertCanSeeTableRecords([$nextMonth, $undated])
+            ->assertCanNotSeeTableRecords([$thisMonth, $lastYear]);
+
+        // A whole year, and then everything.
+        $component->filterTable('month', ['year' => 2026, 'month' => null])
+            ->assertCanSeeTableRecords([$thisMonth, $nextMonth, $undated])
+            ->assertCanNotSeeTableRecords([$lastYear]);
+
+        $component->filterTable('month', ['year' => null, 'month' => null])
+            ->assertCanSeeTableRecords([$thisMonth, $nextMonth, $lastYear, $undated]);
+    }
+
     /** @param array<string, mixed> $attributes */
     private function plan(CoveKind $kind, array $attributes = []): CovePlan
     {

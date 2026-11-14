@@ -8,6 +8,7 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Jobs\BuildDailyEdition;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
@@ -16,7 +17,9 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Guides\TopicMiner;
 use Carbon\CarbonImmutable;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -137,6 +140,25 @@ class DailyCoveTest extends TestCase
     }
 
     // ── The edition ───────────────────────────────────────────────────────
+
+    #[Test]
+    public function the_build_does_not_wait_for_the_topic_mining(): void
+    {
+        // Production, 12 to 14 November 2026: the job counted products for
+        // every searched topic before it built, ran out of its fifteen minutes
+        // doing so, and be-nl and be-fr had no Daily Cove for three days.
+        $this->mock(TopicMiner::class)->shouldNotReceive('mine');
+        $this->mock(EditionBuilder::class)->shouldReceive('build')->once()->andReturn(null);
+
+        BuildDailyEdition::dispatchSync(Market::BeNl);
+
+        // The mining still happens every morning, as a job of its own, after the builds.
+        $refresh = collect(app(Schedule::class)->events())
+            ->first(fn ($event) => $event->description === 'refresh-topic-queue-be-nl');
+
+        $this->assertNotNull($refresh);
+        $this->assertSame('15 8 * * *', $refresh->expression);
+    }
 
     #[Test]
     public function building_the_same_day_twice_produces_one_edition(): void

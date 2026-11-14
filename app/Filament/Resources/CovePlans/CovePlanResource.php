@@ -38,8 +38,10 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use UnitEnum;
 
@@ -402,6 +404,47 @@ class CovePlanResource extends Resource
         ]);
     }
 
+    /**
+     * Dated plans of one year and month; a plan without a date always stays.
+     *
+     * Shared by the table's month filter and by the tab badges of the list
+     * page, so a badge counts what the table under it shows.
+     *
+     * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
+     * @return Builder<covariant \Illuminate\Database\Eloquent\Model>
+     */
+    public static function scopeToMonth(Builder $query, ?int $year, ?int $month): Builder
+    {
+        if ($year === null && $month === null) {
+            return $query;
+        }
+
+        return $query->where(fn (Builder $q) => $q
+            ->whereNull('drop_date')
+            ->orWhere(fn (Builder $dated) => $dated
+                ->when($year !== null, fn (Builder $d) => $d->whereYear('drop_date', $year))
+                ->when($month !== null, fn (Builder $d) => $d->whereMonth('drop_date', $month))));
+    }
+
+    /**
+     * The years that hold a dated plan, and this year, newest first.
+     *
+     * @return array<int, string>
+     */
+    public static function plannedYears(): array
+    {
+        $years = CovePlan::query()
+            ->whereNotNull('drop_date')
+            ->selectRaw('distinct extract(year from drop_date)::int as year')
+            ->pluck('year')
+            ->map(fn ($year) => (int) $year)
+            ->push((int) now()->year)
+            ->unique()
+            ->sortDesc();
+
+        return $years->mapWithKeys(fn (int $year) => [$year => (string) $year])->all();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -497,6 +540,51 @@ class CovePlanResource extends Resource
                 TextColumn::make('author.email')->label('By')->toggleable(),
             ])
             ->filters([
+                /*
+                 * By year and month, on this month until somebody changes it
+                 * (owner, 2026-11-14). The list had grown to every day of the
+                 * year in one table, and the question it is opened with is
+                 * "what is planned now".
+                 *
+                 * Only dated plans have a month. A persona, a guide or a shop
+                 * page has no date, and hiding those behind a month that can
+                 * never match them would make them unreachable, so they stay
+                 * in the list whatever month is chosen. "Whole year" and "Any
+                 * year" widen it again.
+                 */
+                Filter::make('month')
+                    ->schema([
+                        Select::make('year')
+                            ->label('Year')
+                            ->options(fn () => self::plannedYears())
+                            ->placeholder('Any year')
+                            ->default(fn () => (int) now()->year),
+                        Select::make('month')
+                            ->label('Month')
+                            ->options(fn () => collect(range(1, 12))
+                                ->mapWithKeys(fn (int $m) => [$m => CarbonImmutable::create(2000, $m, 1)->format('F')])
+                                ->all())
+                            ->placeholder('Whole year')
+                            ->default(fn () => (int) now()->month),
+                    ])
+                    ->columns(2)
+                    ->query(fn (Builder $query, array $data): Builder => self::scopeToMonth(
+                        $query,
+                        filled($data['year'] ?? null) ? (int) $data['year'] : null,
+                        filled($data['month'] ?? null) ? (int) $data['month'] : null,
+                    ))
+                    ->indicateUsing(function (array $data): ?string {
+                        $year = filled($data['year'] ?? null) ? (int) $data['year'] : null;
+                        $month = filled($data['month'] ?? null) ? (int) $data['month'] : null;
+
+                        return match (true) {
+                            $year !== null && $month !== null => CarbonImmutable::create($year, $month, 1)->format('F Y'),
+                            $year !== null => (string) $year,
+                            $month !== null => CarbonImmutable::create(2000, $month, 1)->format('F').', any year',
+                            default => null,
+                        };
+                    }),
+
                 SelectFilter::make('kind')->options(collect(CoveKind::cases())
                     ->mapWithKeys(fn (CoveKind $k) => [$k->value => $k->label()])->all()),
                 // No market filter: the market tab strip on the list page is

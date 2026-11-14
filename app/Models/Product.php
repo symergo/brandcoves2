@@ -9,8 +9,10 @@ use App\Enums\IdentityKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Services\Affiliate\MerchantLinks;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -53,6 +55,21 @@ class Product extends Model
             'first_seen_at' => 'datetime',
             'last_seen_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The link as it leaves the site: a bol tracker link carries the site id
+     * configured today, not the one it was stored with. Read-only; what is
+     * stored is left as the connector wrote it. See
+     * MerchantLinks::withCurrentBolSite().
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function affiliateUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value === null ? null : MerchantLinks::withCurrentBolSite($value),
+        );
     }
 
     /** @return BelongsTo<ProductGroup, $this> */
