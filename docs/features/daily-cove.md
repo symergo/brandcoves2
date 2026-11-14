@@ -728,7 +728,13 @@ August again (see `TopicMinerSupplyTest`), reached by a different road.
 - **`RefreshTopicQueue` is on the schedule**, one market every twelve minutes from 08:15 UTC, after
   the builds and the publishing. It seeds the seasonal topics first, then mines, and logs
   `Topic queue refreshed`. It is the same job the "Refresh queue" button dispatches.
-- **One count cannot take minutes.** Each supply count runs under an 8-second statement timeout. One
-  that runs out keeps the number the topic already had, or counts as enough (30) for a new topic,
-  and logs `Topic supply count ran out of time`. Why the query got slow has not been measured; that
-  needs an `EXPLAIN` on production.
+- **The count itself is fast again.** Measured on production the same day (5.8 million products):
+  `SELECT DISTINCT group_id ... LIMIT 30` made Postgres walk the whole `products_group_id_price_index`
+  with the text match as a filter, never touching the text index. A common word finished in 0.6s; a
+  rare one ("bofix", 143 matching products) was cancelled after 120 seconds, and topics are mostly
+  rare words. The DISTINCT now sits outside the LIMIT, and for this statement the planner is kept off
+  sequential and b-tree scans (`SET LOCAL enable_seqscan / enable_indexscan = off`), which leaves the
+  bitmap scan of the text index: no match 4ms, "bofix" 0.5s, "lego" 0.8s, "zwart" 1.4s.
+- **And one count cannot take minutes.** Each runs under a 30-second statement timeout. One that runs
+  out keeps the number the topic already had, or counts as enough (30) for a new topic, and logs
+  `Topic supply count ran out of time`.

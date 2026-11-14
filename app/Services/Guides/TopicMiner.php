@@ -50,7 +50,10 @@ class TopicMiner
     private const SUPPLY_SATURATION = 30;
 
     /** The longest one topic's supply count may take, in milliseconds. See `availableProducts()`. */
-    private const COUNT_TIMEOUT_MS = 8000;
+    private const COUNT_TIMEOUT_MS = 30000;
+
+    /** Matching offers read per group wanted, since one product has several offers. */
+    private const OFFERS_PER_GROUP = 20;
 
     /**
      * Words that carry no topic.
@@ -349,28 +352,51 @@ class TopicMiner
             ->where('g.in_stock', true)
             ->whereNotNull('g.min_price')
             ->whereNotNull('g.image_url')
-            ->distinct()
+            // No DISTINCT here, and more rows than groups are wanted: see below.
             ->select('p.group_id')
-            ->limit(self::SUPPLY_SATURATION);
+            ->limit(self::SUPPLY_SATURATION * self::OFFERS_PER_GROUP);
 
         /*
-         * And a ceiling on the time, since 2026-11-14.
+         * Why this was slow, measured on production on 2026-11-14 (5.8 million
+         * products, 20 GB), and what the three settings below are for.
          *
-         * On production that day this query took 48 to 318 seconds per topic
-         * against be-nl (1.6 million groups), where it had been measured at
-         * under 300ms on the catalogue of September. Why it got that slow has
-         * not been measured; what is certain is that a count nobody is waiting
-         * for must not hold a queue worker for five minutes. So each count
-         * gets COUNT_TIMEOUT_MS, and one that runs out keeps the number the
-         * topic already had, or counts as "enough" for a topic seen for the
-         * first time: a search term slow to count is almost always one that
-         * matches a great deal.
+         * The query used to be `SELECT DISTINCT group_id ... LIMIT 30`. To give
+         * distinct groups in order, Postgres walked `products_group_id_price_index`
+         * across every market and applied the text match to each row as a
+         * filter, betting it would meet thirty matching groups early. For a
+         * common word it did ("koptelefoon": 633ms). For a rare one it had to
+         * walk most of the table to find out there were not thirty: "bofix",
+         * 143 matching products, was cancelled after 120 seconds. The text
+         * index was never used. Topics are mostly rare words, which is why the
+         * Daily job ran out of its fifteen minutes.
+         *
+         * 1. DISTINCT moved outside the LIMIT, so nothing asks for an order and
+         *    the text index can drive: no match 4ms, "bofix" 0.5s.
+         * 2. That alone left the common words to a sequential scan ("lego":
+         *    24 seconds), so for this one statement the planner may not scan
+         *    the table or walk a b-tree, which leaves it the bitmap scan of the
+         *    text index: "lego" 0.8s, "zwart" 1.4s.
+         * 3. A ceiling on the time all the same (COUNT_TIMEOUT_MS). One that
+         *    runs out keeps the number the topic already had, or counts as
+         *    enough for a topic seen for the first time.
+         *
+         * The inner LIMIT counts offers, not groups, so OFFERS_PER_GROUP of
+         * them are read per group wanted. A topic whose first 600 matching
+         * offers belong to fewer than thirty products is counted a little
+         * short; it saturates on the next run or it was thin anyway.
          */
         try {
             return (int) DB::transaction(function () use ($matching): int {
                 DB::statement('SET LOCAL statement_timeout = '.self::COUNT_TIMEOUT_MS);
+                DB::statement('SET LOCAL enable_seqscan = off');
+                DB::statement('SET LOCAL enable_indexscan = off');
 
-                return DB::query()->fromSub($matching, 'capped')->count();
+                $groups = (int) DB::query()
+                    ->fromSub($matching, 'capped')
+                    ->selectRaw('count(distinct group_id) as n')
+                    ->value('n');
+
+                return min($groups, self::SUPPLY_SATURATION);
             });
         } catch (QueryException $e) {
             // 57014: query_canceled, which is what a statement timeout raises.
