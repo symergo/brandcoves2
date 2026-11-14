@@ -311,3 +311,16 @@ cost more before its last change. A price that rose and fell back to where it st
 drop from the higher price, which is the trade accepted for keeping no history.
 
 `bc:prune-price-history` became `bc:prune-rank-history`; only `popular_ranks` is a time series now.
+
+## A value that does not fit its column (2026-11-14)
+
+Postgres refuses a whole insert for one value that is too long. On 2026-11-14 one row in an Awin
+feed (Fnac, be-fr) carried a value over 255 characters, the chunk of offers it arrived in was lost,
+and after the retries `IngestFeed` gave the run up. The log names the type (`varchar(255)`), not the
+column, so every plain string column is now guarded where offers are written (`OfferUpserter`):
+
+- `brand`, `merchant_category` and `ean` are cut to 255 characters.
+- An `image_url` over 1,024 is stored as no picture: a cut URL is a broken one.
+- An `external_id` over 255 skips the offer (it is the row's key and cannot be cut).
+- A brand-and-title identity key over 255 becomes no identity (`IdentityResolver`), so the offer
+  stays ungrouped. Cutting it could merge two products whose titles only differ after the cut.

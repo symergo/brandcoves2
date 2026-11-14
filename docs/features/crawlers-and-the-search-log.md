@@ -100,3 +100,12 @@ different question from what is *demand*, and they stay because a real person ty
 - [popular-searches.md](popular-searches.md) — the read-time rules and the page they protect
 - [search.md](search.md) — the vocabulary row the chips come from
 - [seo.md](seo.md) — which search URLs are indexable at all
+
+## Four crawlers are limited by name (2026-11-13, Amzn-SearchBot added 2026-11-14)
+
+Amazonbot, SemrushBot, ExaSearchBot and Amzn-SearchBot made most of the search requests while
+gift-idea pages for people timed out, and none of them is a search engine people find the site
+through. `App\Http\Middleware\LimitHeavyCrawlers` refuses them search pages (403) and gives each
+ten other pages a minute, counted per crawler name because they come from many addresses (429 with
+`Retry-After` above that). `robots.txt` carries the same rules in a group of their own and is always
+served. To add one: a line in `LimitHeavyCrawlers::CRAWLERS`; robots.txt follows from it.

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Three crawlers that cost more than they bring (owner, 2026-11-13).
+ * Crawlers that cost more than they bring (owner, 2026-11-13; Amzn-SearchBot added 2026-11-14).
  *
  * On 2026-11-13 Amazonbot, SemrushBot and ExaSearchBot made 1,460 of the 2,340
  * search requests in an hour, most of them for terms pasted together from
@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
  * pages for people timed out. None of the three is a search engine people
  * find the site through.
  *
- * So for these three, by name:
+ * So for these, by name:
  *  - search pages are refused (403). robots.txt says the same, see
  *    SitemapController::robots(); this is for when it is not read.
  *  - every other page is capped per crawler, not per address: they come from
@@ -36,6 +36,8 @@ final class LimitHeavyCrawlers
         'amazonbot' => 'Amazonbot',
         'semrushbot' => 'SemrushBot',
         'exasearchbot' => 'ExaSearchBot',
+        // Amazon's second crawler (owner, 2026-11-14): 299 searches run in an hour.
+        'amzn-searchbot' => 'Amzn-SearchBot',
     ];
 
     public const PER_MINUTE = 10;

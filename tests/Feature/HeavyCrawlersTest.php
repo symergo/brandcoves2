@@ -68,6 +68,15 @@ class HeavyCrawlersTest extends TestCase
     }
 
     #[Test]
+    public function amazons_search_crawler_is_one_of_them(): void
+    {
+        $amzn = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-SearchBot/0.1) Chrome/119.0.6045.214 Safari/537.36';
+
+        $this->withHeader('User-Agent', $amzn)->get('/be-nl/zoek/lego')->assertStatus(403);
+        $this->withHeader('User-Agent', $amzn)->get('/be-nl/about')->assertOk();
+    }
+
+    #[Test]
     public function robots_tells_them_the_same(): void
     {
         config(['giftcoves.robots_allow' => true]);
@@ -75,7 +84,7 @@ class HeavyCrawlersTest extends TestCase
         $robots = $this->get('/robots.txt')->assertOk()->getContent();
         [$everybody, $three] = explode("\n\n", $robots);
 
-        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nCrawl-delay: 10\n", $three);
+        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nCrawl-delay: 10\n", $three);
         $this->assertStringContainsString('Disallow: /*/zoek/', $three);
         $this->assertStringContainsString('Disallow: /*/recherche/', $three);
         $this->assertStringContainsString('Disallow: /*/search', $three);

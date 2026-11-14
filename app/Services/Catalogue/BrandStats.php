@@ -6,7 +6,6 @@ namespace App\Services\Catalogue;
 
 use App\Enums\Market;
 use App\Support\ChangedRowsUpsert;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -30,70 +29,57 @@ class BrandStats
      */
     public function refresh(Market $market): int
     {
-        $rows = $this->aggregate($market);
+        $bySlug = $this->spellingsBySlug($market);
 
-        if ($rows === []) {
+        if ($bySlug === []) {
             return 0;
         }
 
-        $total = array_sum(array_map(fn (array $row) => $row['product_count'], $rows));
+        $total = 0;
+
+        foreach ($bySlug as $variants) {
+            $total += array_sum(array_column($variants, 'product_count'));
+        }
+
         $now = now();
 
-        foreach (array_chunk($rows, 200) as $chunk) {
-            $payload = [];
+        /*
+         * Written 200 brands at a time as they are folded, never held as one
+         * list (2026-11-14). The whole market's rows in one array, each with
+         * its spellings and categories, is what ran the nightly job out of
+         * its 128 MB twice that morning, and the catalogue only grows.
+         */
+        $payload = [];
 
-            foreach ($chunk as $row) {
-                $payload[] = [
-                    'market' => $market->value,
-                    'brand' => $row['brand'],
-                    'slug' => $row['slug'],
-                    'aliases' => json_encode($row['aliases']),
-                    'product_count' => $row['product_count'],
-                    'merchant_count' => $row['merchant_count'],
-                    // Share of the market's catalogue, for ordering the index.
-                    'share' => $total > 0 ? $row['product_count'] / $total : 0.0,
-                    'min_price' => $row['min_price'],
-                    'max_price' => $row['max_price'],
-                    'discounted_count' => $row['discounted_count'],
-                    'in_stock_count' => $row['in_stock_count'],
-                    'best_discount_percent' => $row['best_discount_percent'],
-                    'top_merchant_id' => $row['top_merchant_id'],
-                    'top_category' => $row['top_category'],
-                    'categories' => json_encode($row['categories']),
-                    'computed_at' => $now,
-                ];
+        foreach ($this->rows($market, $bySlug) as $row) {
+            $payload[] = [
+                'market' => $market->value,
+                'brand' => $row['brand'],
+                'slug' => $row['slug'],
+                'aliases' => json_encode($row['aliases']),
+                'product_count' => $row['product_count'],
+                'merchant_count' => $row['merchant_count'],
+                // Share of the market's catalogue, for ordering the index.
+                'share' => $total > 0 ? $row['product_count'] / $total : 0.0,
+                'min_price' => $row['min_price'],
+                'max_price' => $row['max_price'],
+                'discounted_count' => $row['discounted_count'],
+                'in_stock_count' => $row['in_stock_count'],
+                'best_discount_percent' => $row['best_discount_percent'],
+                'top_merchant_id' => $row['top_merchant_id'],
+                'top_category' => $row['top_category'],
+                'categories' => json_encode($row['categories']),
+                'computed_at' => $now,
+            ];
+
+            if (count($payload) === 200) {
+                $this->write($payload);
+                $payload = [];
             }
+        }
 
-            // Keyed on the slug, not the brand: `brand` is a display name that
-            // can change spelling between runs, and keying on it would insert a
-            // second row for the same slug the first time a feed's punctuation
-            // shifted — which is exactly the collision the unique index caught.
-            //
-            // Written only where a figure changed (2026-09-28), so an unchanged
-            // brand keeps its row and its `computed_at`, which the sitemap
-            // gives crawlers as the brand page's last change: it now means
-            // that. `share` is left out of the comparison and compared with a
-            // tolerance instead: it is every brand's fraction of the whole
-            // market, so one product more anywhere moves every brand's share
-            // in the sixth decimal, and an exact test would rewrite them all.
-            // It only orders the brand index, which a 1% drift does not.
-            ChangedRowsUpsert::run(
-                'brand_stats',
-                $payload,
-                ['market', 'slug'],
-                [
-                    'brand', 'aliases', 'product_count', 'merchant_count', 'share',
-                    'min_price', 'max_price', 'discounted_count', 'in_stock_count',
-                    'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
-                    'computed_at',
-                ],
-                [
-                    'brand', 'aliases', 'product_count', 'merchant_count',
-                    'min_price', 'max_price', 'discounted_count', 'in_stock_count',
-                    'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
-                ],
-                orWhen: 'abs(brand_stats.share - excluded.share) > 0.01 * greatest(brand_stats.share, excluded.share)',
-            );
+        if ($payload !== []) {
+            $this->write($payload);
         }
 
         /*
@@ -109,7 +95,7 @@ class BrandStats
          * 65,535 bindings. Rows already at zero are skipped rather than
          * rewritten with the same zeros every night.
          */
-        $present = array_map(fn (array $row) => $row['slug'], $rows);
+        $present = array_map(strval(...), array_keys($bySlug));
 
         DB::update(
             <<<'SQL'
@@ -124,10 +110,49 @@ class BrandStats
                   AND (b.product_count <> 0 OR b.merchant_count <> 0 OR b.discounted_count <> 0
                        OR b.in_stock_count <> 0 OR b.best_discount_percent IS NOT NULL)
             SQL,
-            [$now, $market->value, json_encode(array_values($present))],
+            [$now, $market->value, json_encode($present)],
         );
 
-        return count($rows);
+        return count($bySlug);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $payload
+     */
+    private function write(array $payload): void
+    {
+
+        // Keyed on the slug, not the brand: `brand` is a display name that
+        // can change spelling between runs, and keying on it would insert a
+        // second row for the same slug the first time a feed's punctuation
+        // shifted — which is exactly the collision the unique index caught.
+        //
+        // Written only where a figure changed (2026-09-28), so an unchanged
+        // brand keeps its row and its `computed_at`, which the sitemap
+        // gives crawlers as the brand page's last change: it now means
+        // that. `share` is left out of the comparison and compared with a
+        // tolerance instead: it is every brand's fraction of the whole
+        // market, so one product more anywhere moves every brand's share
+        // in the sixth decimal, and an exact test would rewrite them all.
+        // It only orders the brand index, which a 1% drift does not.
+        ChangedRowsUpsert::run(
+            'brand_stats',
+            $payload,
+            ['market', 'slug'],
+            [
+                'brand', 'aliases', 'product_count', 'merchant_count', 'share',
+                'min_price', 'max_price', 'discounted_count', 'in_stock_count',
+                'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
+                'computed_at',
+            ],
+            [
+                'brand', 'aliases', 'product_count', 'merchant_count',
+                'min_price', 'max_price', 'discounted_count', 'in_stock_count',
+                'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
+            ],
+            orWhen: 'abs(brand_stats.share - excluded.share) > 0.01 * greatest(brand_stats.share, excluded.share)',
+        );
+
     }
 
     /**
@@ -138,9 +163,9 @@ class BrandStats
      * median is above the current minimum. A badge and a sentence that disagree
      * about whether something is reduced is worse than neither.
      *
-     * @return list<array<string, mixed>>
+     * @return array<int|string, list<array<string, mixed>>> slug => the figures of each spelling folding to it
      */
-    private function aggregate(Market $market): array
+    private function spellingsBySlug(Market $market): array
     {
         $discount = '((previous_price - min_price)::numeric / previous_price) * 100';
         $isDiscounted = 'previous_price IS NOT NULL AND min_price IS NOT NULL AND previous_price > 0 AND min_price < previous_price';
@@ -158,7 +183,7 @@ class BrandStats
             ->whereNotNull('brand')
             ->where('brand', '<>', '')
             ->groupBy('brand')
-            ->get();
+            ->cursor();
 
         /*
          * Folded by slug, in PHP.
@@ -197,6 +222,17 @@ class BrandStats
             ];
         }
 
+        return $bySlug;
+    }
+
+    /**
+     * One `brand_stats` row per slug, one at a time.
+     *
+     * @param  array<int|string, list<array<string, mixed>>>  $bySlug
+     * @return \Generator<int, array<string, mixed>>
+     */
+    private function rows(Market $market, array $bySlug): \Generator
+    {
         /*
          * Two set-based queries for the whole market, then folded per slug.
          *
@@ -205,28 +241,40 @@ class BrandStats
          * ran ten thousand aggregates a night. The same facts come out of one
          * pass over products and one over groups, grouped by spelling, and the
          * per-slug work below is a sum over that brand's spellings in memory.
+         *
+         * Read row by row into plain nested arrays of numbers (2026-11-14):
+         * as collections of one object per (brand, shop) and (brand, category)
+         * pair they took most of the job's memory.
          */
-        $merchantsByBrand = DB::table('products')
+        $merchantsByBrand = [];
+
+        $merchantRows = DB::table('products')
             ->join('product_groups', 'product_groups.id', '=', 'products.group_id')
             ->where('product_groups.market', $market->value)
             ->whereNotNull('product_groups.brand')
             ->whereNotNull('products.merchant_id')
             ->selectRaw('product_groups.brand, products.merchant_id, count(*) AS offers')
             ->groupBy('product_groups.brand', 'products.merchant_id')
-            ->get()
-            ->groupBy('brand');
+            ->cursor();
 
-        $categoriesByBrand = DB::table('product_groups')
+        foreach ($merchantRows as $row) {
+            $merchantsByBrand[$row->brand][(int) $row->merchant_id] = (int) $row->offers;
+        }
+
+        $categoriesByBrand = [];
+
+        $categoryRows = DB::table('product_groups')
             ->where('market', $market->value)
             ->whereNotNull('brand')
             ->whereNotNull('category')
             ->where('category', '<>', '')
             ->selectRaw('brand, category, count(*) AS n')
             ->groupBy('brand', 'category')
-            ->get()
-            ->groupBy('brand');
+            ->cursor();
 
-        $out = [];
+        foreach ($categoryRows as $row) {
+            $categoriesByBrand[$row->brand][$row->category] = (int) $row->n;
+        }
 
         foreach ($bySlug as $slug => $variants) {
             // PHP turns a numeric-string array key into an int, so a brand named
@@ -247,7 +295,7 @@ class BrandStats
             $maxPrices = array_values(array_filter(array_column($variants, 'max_price'), fn ($p) => $p !== null));
             $discounts = array_values(array_filter(array_column($variants, 'best_discount_percent'), fn ($p) => $p !== null));
 
-            $out[] = [
+            yield [
                 'brand' => $canonical,
                 'slug' => $slug,
                 // Includes the canonical spelling: the brand page filters on this
@@ -271,8 +319,6 @@ class BrandStats
                 'top_category' => $categories[0]['category'] ?? null,
             ];
         }
-
-        return $out;
     }
 
     /**
@@ -283,16 +329,16 @@ class BrandStats
      * by several shops.
      */
     /**
-     * @param  Collection<string, Collection<int, object>>  $merchantsByBrand  spelling => (merchant_id, offers) rows
+     * @param  array<int|string, array<int, int>>  $merchantsByBrand  spelling => merchant id => offers
      * @param  list<string>  $brands  every spelling folding to this slug
      */
-    private function topMerchant(Collection $merchantsByBrand, array $brands): ?int
+    private function topMerchant(array $merchantsByBrand, array $brands): ?int
     {
         $offers = [];
 
         foreach ($brands as $brand) {
-            foreach ($merchantsByBrand->get($brand, collect()) as $row) {
-                $offers[(int) $row->merchant_id] = ($offers[(int) $row->merchant_id] ?? 0) + (int) $row->offers;
+            foreach ($merchantsByBrand[$brand] ?? [] as $merchantId => $n) {
+                $offers[$merchantId] = ($offers[$merchantId] ?? 0) + $n;
             }
         }
 
@@ -315,26 +361,27 @@ class BrandStats
      * catalogue rather than a description, and a sentence listing nine of
      * anything stops being read at the third.
      *
+     * @param  array<int|string, array<int|string, int>>  $categoriesByBrand  spelling => category => groups
      * @param  list<string>  $brands
      * @return list<array{category: string, count: int}>
      */
-    private function categories(Collection $categoriesByBrand, array $brands): array
+    private function categories(array $categoriesByBrand, array $brands): array
     {
         $counts = [];
 
         foreach ($brands as $brand) {
-            foreach ($categoriesByBrand->get($brand, collect()) as $row) {
-                $counts[(string) $row->category] = ($counts[(string) $row->category] ?? 0) + (int) $row->n;
+            foreach ($categoriesByBrand[$brand] ?? [] as $category => $n) {
+                $counts[$category] = ($counts[$category] ?? 0) + $n;
             }
         }
 
         // Most first, then by name, so a tie does not reshuffle the sentence
         // between two nightly runs and read as a page that keeps changing its
         // mind. The first entry is also `top_category`.
-        uksort($counts, fn (string $a, string $b) => [$counts[$b], $a] <=> [$counts[$a], $b]);
+        uksort($counts, fn (int|string $a, int|string $b) => [$counts[$b], (string) $a] <=> [$counts[$a], (string) $b]);
 
         return array_slice(
-            array_map(fn (string $category, int $n) => ['category' => $category, 'count' => $n], array_keys($counts), $counts),
+            array_map(fn (int|string $category, int $n) => ['category' => (string) $category, 'count' => $n], array_keys($counts), $counts),
             0,
             4,
         );

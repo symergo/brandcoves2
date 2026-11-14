@@ -76,7 +76,17 @@ final class IdentityResolver
             return null;
         }
 
-        return new Identity($brandKey.'|'.$titleKey, IdentityKind::Title);
+        $key = $brandKey.'|'.$titleKey;
+
+        // The key columns hold 255 characters. A feed title of several hundred
+        // gets no identity rather than a cut one (2026-11-14): two long titles
+        // that only differ after the cut would otherwise be merged into one
+        // product, and uncut it fails the whole chunk it arrives in.
+        if (mb_strlen($key) > 255) {
+            return null;
+        }
+
+        return new Identity($key, IdentityKind::Title);
     }
 
     public static function normaliseBrand(?string $brand): ?string

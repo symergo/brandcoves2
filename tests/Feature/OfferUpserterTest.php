@@ -53,6 +53,44 @@ class OfferUpserterTest extends TestCase
     }
 
     #[Test]
+    public function a_value_too_long_for_its_column_does_not_lose_the_chunk(): void
+    {
+        /*
+         * 2026-11-14: one row of an Awin feed carried a value over 255
+         * characters, Postgres refused the whole insert, and after the retries
+         * the feed's run was given up.
+         */
+        config(['giftcoves.identity.allow_title_fallback' => true]);
+
+        $long = new Offer(
+            source: Source::Bol,
+            externalId: 'long-1',
+            market: Market::NlNl,
+            title: 'Sony '.str_repeat('draadloze oordopjes met ruisonderdrukking ', 12),
+            affiliateUrl: 'https://partner.bol.com/click/click?p=2&t=url&url=x',
+            price: 4999,
+            brand: 'Sony',
+            merchantName: 'bol',
+            merchantExternalId: 'bol',
+            merchantDeepLink: 'https://www.bol.com/nl/nl/p/x/long-1/',
+            merchantCategory: str_repeat('Elektronica > Audio > ', 20),
+            imageUrl: 'https://example.test/'.str_repeat('a', 1100).'.jpg',
+            availability: Availability::InStock,
+        );
+
+        $result = $this->upserter()->upsert([$long, $this->offer('9000000001', 1999)]);
+
+        $this->assertSame(2, $result['written']);
+
+        $row = DB::table('products')->where('external_id', 'long-1')->first();
+        $this->assertSame(255, mb_strlen($row->merchant_category));
+        $this->assertNull($row->image_url);
+        // No identity rather than a cut one that could merge two products
+        $this->assertNull($row->identity_key);
+        $this->assertNull($row->identity_kind);
+    }
+
+    #[Test]
     public function a_feed_that_lists_the_same_product_twice_does_not_kill_the_run(): void
     {
         /*

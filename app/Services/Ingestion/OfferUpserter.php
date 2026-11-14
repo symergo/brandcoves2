@@ -26,7 +26,22 @@ class OfferUpserter
     /** @var array<string, int> merchant external_id => id, per run */
     private array $merchantCache = [];
 
+    /** What a plain string column on `products` holds. */
+    private const VARCHAR = 255;
+
     public function __construct(private readonly TitleBrand $titleBrand) {}
+
+    /**
+     * A feed value cut to what its column holds.
+     *
+     * Postgres refuses the whole statement for one value that is too long, so
+     * one over-long value in an Awin feed lost its entire chunk and, after the
+     * retries, the feed's run (IngestFeed, 2026-11-14).
+     */
+    private static function fit(?string $value): ?string
+    {
+        return $value === null ? null : mb_substr($value, 0, self::VARCHAR);
+    }
 
     /**
      * @param  list<Offer>  $offers
@@ -51,6 +66,13 @@ class OfferUpserter
                 continue;
             }
 
+            if (mb_strlen($offer->externalId) > self::VARCHAR) {
+                // It is the row's key, so it cannot be cut. Not seen in a real feed.
+                $skipped++;
+
+                continue;
+            }
+
             $identity = IdentityResolver::resolve($offer->ean, $offer->brand, $offer->title);
 
             $rows[] = [
@@ -66,8 +88,8 @@ class OfferUpserter
                 // resolved above from the source's own brand: for an offer
                 // without a barcode the brand is part of the grouping key, and
                 // filling it first would regroup products.
-                'brand' => $offer->brand ?? $this->titleBrand->infer($offer->title),
-                'merchant_category' => $offer->merchantCategory,
+                'brand' => self::fit($offer->brand ?? $this->titleBrand->infer($offer->title)),
+                'merchant_category' => self::fit($offer->merchantCategory),
                 'price' => $offer->price,
                 'reference_price' => $offer->referencePrice,
                 // Three prices instead of a history (2026-09-12). On insert the
@@ -78,11 +100,12 @@ class OfferUpserter
                 'previous_price' => null,
                 'price_changed_at' => null,
                 'currency' => $offer->currency,
-                'image_url' => $offer->imageUrl,
+                // A picture address that does not fit is no picture: a cut URL is a broken one.
+                'image_url' => $offer->imageUrl !== null && mb_strlen($offer->imageUrl) > 1024 ? null : $offer->imageUrl,
                 'affiliate_url' => $offer->affiliateUrl,
                 'merchant_deep_link' => $offer->merchantDeepLink,
                 'availability' => $offer->availability->value,
-                'ean' => $offer->ean,
+                'ean' => self::fit($offer->ean),
                 'mpn' => $offer->mpn,
                 'commission_rate' => $offer->commissionRate,
                 'identity_key' => $identity?->key,

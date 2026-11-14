@@ -612,6 +612,17 @@ brands. It now takes one pass over `products` grouped by spelling and merchant, 
 `product_groups` grouped by spelling and category, and folds per slug in memory. Same facts;
 the tie-breaks (lowest merchant id, then category name) are stable between runs.
 
+## The nightly aggregate writes as it goes (2026-11-14)
+
+On 2026-11-14 `RefreshBrandStats` ran out of its 128 MB twice (04:46 and 06:21 UTC) and was then
+given up after too many attempts, so that market's brand figures were a day old. The job held three
+whole-market lists at once: one object per (brand, shop) pair, one per (brand, category) pair, and
+every finished brand row with its spellings and categories before the first write.
+
+`BrandStats::refresh()` now reads the two pair queries row by row into nested arrays of numbers,
+and `rows()` hands over one brand at a time, written 200 at a time. Only the per-spelling figures
+(`spellingsBySlug()`) stay in memory for the whole run. Same rows, same tie-breaks.
+
 ## Cached (2026-09-27)
 
 "Coves mentioning this brand" (a regex over every published article) is cached an hour per market
