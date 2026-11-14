@@ -1200,6 +1200,8 @@ return [
             'status_open' => 'Pas encore tiré',
             'status_drawn' => 'Tirage fait',
             'start_another' => 'Créer un autre groupe',
+            // The heading above the form that starts a group (owner, 2026-11-14)
+            'new_group' => 'Nouveau groupe',
             'form_title' => 'Créez votre groupe',
             'form_hint' => 'Seul un nom est nécessaire. Le reste peut attendre.',
             'name_placeholder' => 'Famille Dupont, Noël 2026',

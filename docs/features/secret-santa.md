@@ -386,3 +386,6 @@ same row. Forty an hour per group, because this is a form that mails an address 
 **Fourth pass** ("But nicely styled"): the homepage's own vocabulary rather than a new one. Both pages open on the orange band with the wrapped present; the start form and "for you" are white cards on it; the three steps are the white cards the homepage uses for its ways in; the draw is the orange call-to-action card with the red button.
 
 **Tips on the group page** (owner, later that evening: "Remove the page for tips. Put it in the section below: je verlanglijst / tips"). Before the draw a signed-in member no longer has a row leading to a page of their own: that page was only a place to give tips. The tips form (`HintsForm`, `bare`) sits under "Je verlanglijst / tips" on the group page, next to the list picker. The row comes back once there is a card to turn. The member page itself stays: it is the only page a member without an account has, and after the draw it is where the game is played.
+
+2026-11-14 (owner): the form that starts a group has a heading above its card, "Nieuwe groep"
+(`santa.hub.new_group`, in all four languages), the way the list of groups has "Je groepen".

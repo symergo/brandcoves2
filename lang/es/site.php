@@ -1199,6 +1199,8 @@ return [
             'status_open' => 'Aún sin sortear',
             'status_drawn' => 'Sorteado',
             'start_another' => 'Crear otro grupo',
+            // The heading above the form that starts a group (owner, 2026-11-14)
+            'new_group' => 'Nuevo grupo',
             'form_title' => 'Crea tu grupo',
             'form_hint' => 'Solo hace falta un nombre. Lo demás puede esperar.',
             'name_placeholder' => 'Familia García, Navidad 2026',

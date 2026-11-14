@@ -135,8 +135,14 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                             {t('santa.hub.start_another')}
                         </Button>
                     ) : (
+                        <>
+                        {/* Says what the card is, like "Your groups" above the list (owner, 2026-11-14) */}
+                        <h2 id="santa-new" className="mb-2 font-semibold text-ink">
+                            {t('santa.hub.new_group')}
+                        </h2>
                         <form
                             id="santa-create"
+                            aria-labelledby="santa-new"
                             className="rounded-card border border-line bg-card p-5 sm:p-6 shadow-[0_8px_24px_rgb(42_18_19/0.08)]"
                             onSubmit={(e) => {
                                 e.preventDefault()
@@ -282,6 +288,7 @@ export default function SantaIndex({ groups, isSignedIn, myLists }: Props) {
                                 )}
                             </p>
                         </form>
+                        </>
                     )}
                     </div>
                 </div>

@@ -1206,6 +1206,8 @@ return [
             'status_open' => 'Nog niet getrokken',
             'status_drawn' => 'Getrokken',
             'start_another' => 'Nog een groep starten',
+            // The heading above the form that starts a group (owner, 2026-11-14)
+            'new_group' => 'Nieuwe groep',
             'form_title' => 'Start je groep',
             'form_hint' => 'Alleen een naam is nodig. De rest kan later.',
             'name_placeholder' => 'Familie Peeters, Kerst 2026',

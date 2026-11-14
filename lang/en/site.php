@@ -1383,6 +1383,8 @@ return [
             'status_open' => 'Not drawn yet',
             'status_drawn' => 'Drawn',
             'start_another' => 'Start another group',
+            // The heading above the form that starts a group (owner, 2026-11-14)
+            'new_group' => 'New group',
             'form_title' => 'Start your group',
             'form_hint' => 'Only a name is needed. The rest can wait.',
             'name_placeholder' => 'The Smith family, Christmas 2026',
