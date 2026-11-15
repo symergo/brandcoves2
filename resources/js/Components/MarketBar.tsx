@@ -29,8 +29,8 @@ const HIDDEN_KEY = 'bc_market_bar_hidden'
  *
  * The server decides (App\Support\MarketPreference::bar()), in two cases:
  *
- * - **No choice on file.** The bar says which country we are showing and
- *   offers the others. When this page is the country the browser language
+ * - **No choice on file.** The bar says which country we are showing (it
+ *   listed the others too until 2026-11-15). When this page is the country the browser language
  *   points at, closing it means "yes, that is right" and records it
  *   (`remember`), by the switcher's own POST, so it does not come back.
  * - **Another country than the one you chose**, or than the one your browser
@@ -76,7 +76,6 @@ export default function MarketBar() {
         return null
     }
 
-    const currentLanguage = current.languages.find((l) => l.market === market.key)
 
     /*
      * The other countries, the suggested one first. A country is entered in
@@ -89,18 +88,9 @@ export default function MarketBar() {
         ? markets.find((c) => c.languages.some((l) => l.market === marketBar.suggest))
         : undefined
 
-    const others = markets
-        .filter((c) => c.country !== current.country)
-        .sort((a, b) => Number(b === suggestedCountry) - Number(a === suggestedCountry))
-
-    const go = (country: (typeof markets)[number]) => {
-        if (country === suggestedCountry && marketBar.suggest) {
-            chooseMarket(marketBar.suggest)
-            return
-        }
-
-        const sameLanguage = country.languages.find((l) => l.language === currentLanguage?.language)
-        chooseMarket((sameLanguage ?? country.languages[0]).market)
+    // The one country the bar offers: straight to the market the server suggested.
+    const go = () => {
+        if (marketBar.suggest) chooseMarket(marketBar.suggest)
     }
 
     const close = () => {
@@ -137,9 +127,7 @@ export default function MarketBar() {
                 the question, a short button and the close. The full sentence, the country in the
                 button and the other countries come back from `sm`, where there is room. */}
             <div
-                className={`mx-auto flex max-w-[96rem] items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3 ${
-                    suggestedCountry ? 'sm:flex-wrap' : 'flex-wrap'
-                }`}
+                className="mx-auto flex max-w-[96rem] items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3"
             >
                 {suggestedCountry ? (
                     <p className="flex min-w-0 flex-1 items-center gap-x-2 text-ink sm:flex-none sm:flex-wrap sm:gap-x-3 sm:gap-y-1.5 sm:py-1">
@@ -151,7 +139,7 @@ export default function MarketBar() {
                         </span>
                         <button
                             type="button"
-                            onClick={() => go(suggestedCountry)}
+                            onClick={go}
                             aria-label={t('market_bar.go', { country: suggestedCountry.name })}
                             className="flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 font-semibold whitespace-nowrap text-white transition hover:bg-accent-dark sm:min-h-9 sm:gap-2 sm:px-4"
                         >
@@ -176,23 +164,9 @@ export default function MarketBar() {
                 )}
 
                 <div className="ml-auto flex items-center gap-1">
-                    {others.filter((country) => country !== suggestedCountry).map((country) => (
-                        <button
-                            key={country.country}
-                            type="button"
-                            onClick={() => go(country)}
-                            className={`min-h-9 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap text-ink-soft transition hover:text-ink ${
-                                suggestedCountry ? 'hidden sm:flex' : 'flex'
-                            }`}
-                        >
-                            <FlagIcon
-                                country={country.country as FlagCountry}
-                                className="block h-3 w-[18px] rounded-[2px] ring-1 ring-line"
-                            />
-                            {country.name}
-                        </button>
-                    ))}
-
+                    {/* No other countries here (owner, 2026-11-15: "don't show the other
+                        countries"): the bar says which country the page is for and, when it
+                        guides, offers the visitor's own. Any other is in the header's switcher. */}
                     <button
                         type="button"
                         onClick={close}

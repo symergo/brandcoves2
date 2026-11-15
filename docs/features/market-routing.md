@@ -95,8 +95,13 @@ one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top shou
 
 On a phone the guiding bar is one line (owner, the same day; it stood three lines tall): the question
 alone ("Looking for Belgium?"), a short button with the flag ("Switch", its full name as `aria-label`)
-and the close. The full sentence, "Go to Belgium" and the other countries show from `sm` up; on a phone
-the other countries are in the header's switcher. Texts: `market_bar.elsewhere_short`, `go_short`.
+and the close. The full sentence and "Go to Belgium" show from `sm` up. Texts: `market_bar.elsewhere_short`, `go_short`.
+
+**No other countries in the bar (owner, the same day: "don't show the other countries").** Neither
+state lists them any more. The quiet bar is the page's country and the close; the guiding one is the
+question, the visitor's own country as the button, and the close. Every other market is one tap away
+in the header's switcher, which is where a deliberate change belongs. Where this file still describes
+"the other countries as buttons", that is the bar before this date.
 
 It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when
 someone from NL lands on a be page and the reverse"): a Dutch visitor on a Belgian page is offered the
