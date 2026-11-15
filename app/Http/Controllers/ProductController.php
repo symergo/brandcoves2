@@ -21,6 +21,7 @@ use App\Services\Images\ShopImageSizes;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
 use App\Services\Seo\BrandLinker;
+use App\Services\Seo\Indexing;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
@@ -268,15 +269,19 @@ class ProductController extends Controller
              */
             // Indexable whether or not an offer is buyable today (owner's
             // decision, 2026-09-12); a product that comes back in stock is
-            // then already known to the index.
-            robots: null,
+            // then already known to the index. One exception since
+            // 2026-11-15, the English market: App\Services\Seo\Indexing.
+            robots: $robots = Indexing::product($group, $offers),
         );
 
         // From the row in hand, not from the path: resolving by path re-fetches
         // this group before finding its siblings. One query instead of two, on
         // the page a crawler asks for most.
+        // A page that asks to be left out of the index claims no twins either.
         $meta->setAlternates(
-            app(Alternates::class)->forProducts([$group->id => $group->identity_key])[$group->id] ?? [],
+            $robots === null
+                ? app(Alternates::class)->forProducts([$group->id => $group->identity_key])[$group->id] ?? []
+                : [],
         );
 
         $meta->addJsonLd(StructuredData::product($group, $offers, $market, $url));

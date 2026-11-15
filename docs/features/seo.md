@@ -92,11 +92,37 @@ What that means in code:
 | Brand page 2 onwards | none | the bare brand page |
 | Empty result, empty popular-searches page | none | itself |
 | Product, with or without a buyable offer | none | itself |
+| Product on the **English** market with nothing to buy (2026-11-15, see below) | **noindex, follow** | itself |
 | Guide with an empty shortlist | none | itself |
 | Previews, shared lists, Secret Santa, quiz, taste profile, magic link, an unanswered or held board question, 404 | **noindex** | — |
 | A Community Cove until it has been up a week, holds eight things and three people saved it (2026-09-26, [community-coves.md](community-coves.md#indexing-not-at-first)) | **noindex, follow** | itself |
 
-The last row is the exception the rule allows for: those pages are private or
+### The English catalogue (2026-11-15)
+
+The owner's worry: Google sees thin English pages beside a strong be-nl. A read-only count on
+production that day showed where the thin part is, and where it is not:
+
+| market | published Coves | product groups | with no offer at all |
+|---|---:|---:|---:|
+| be-nl | 151 | 2,404,692 | 3% |
+| be-fr | 112 | 2,064,703 | 3% |
+| nl-nl | 147 | 1,225,150 | 2% |
+| en | 97 | 33,135 | **39%** |
+
+The English Coves hold up: as many picks and as much text each as the Dutch ones, 98% of the picks
+buyable. The catalogue does not: 31 English products are sold by more than one shop (72,209 on be-nl),
+and two in five product pages have nothing to buy.
+
+So an English product page without a buyable offer is `noindex, follow` and claims no language twins
+(`App\Services\Seo\Indexing`, called from `ProductController::seo()`). The other markets keep the
+2026-09-12 rule. Buyable twins already left an unbuyable one out of their hreflang set
+(`Alternates::forProducts()` pairs presentable products only), and when the English twin is missing
+`x-default` falls to the first remaining market, be-nl (`Alternates::defaultFor()`), so nothing else
+had to change. Not done, and the next thing to look at if Search Console still shows English pages
+"crawled, not indexed": English search and brand pages with few or no results. Tests:
+`SeoTest::an_english_product_with_nothing_to_buy_stays_out_of_the_index`.
+
+The Community Cove row is the exception the rule allows for: those pages are private or
 transient, not thin. `robots.txt` keeps `/*/go/` (an outbound affiliate hop is not a page, and
 crawling it burns budget on redirects while looking like link-selling) and the capability URLs, and
 nothing else; the `?sort=`, `brand[`,

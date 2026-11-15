@@ -657,6 +657,32 @@ class SeoTest extends TestCase
             ->assertDontSee('noindex', false);
     }
 
+    /**
+     * The one exception to "every page is indexable" (2026-11-15): two in five
+     * English product pages had nothing to buy, where elsewhere it is one in
+     * forty. See App\Services\Seo\Indexing.
+     */
+    #[Test]
+    public function an_english_product_with_nothing_to_buy_stays_out_of_the_index(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+        $group = $this->seedCatalogue();
+
+        // The same product on the English market, with its offers.
+        $group->forceFill(['market' => Market::En])->save();
+        $group->offers()->update(['market' => Market::En->value]);
+        $page = "/en/p/{$group->id}/{$group->slug}";
+
+        // Something to buy: indexed like everywhere else.
+        $this->get($page)->assertOk()->assertDontSee('noindex', false);
+
+        // Sold out everywhere: out of the index, its links still followed, and no twins claimed.
+        $group->offers()->update(['availability' => 'out_of_stock']);
+        $html = (string) $this->get($page)->assertOk()->getContent();
+        $this->assertStringContainsString('<meta name="robots" content="noindex, follow"', $html);
+        $this->assertStringNotContainsString('hreflang="', strstr($html, '</head>', true) ?: $html);
+    }
+
     #[Test]
     public function a_daily_edition_pairs_with_the_same_date_elsewhere_and_claims_nothing_it_lacks(): void
     {
