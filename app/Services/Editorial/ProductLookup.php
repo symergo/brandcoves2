@@ -120,13 +120,15 @@ class ProductLookup
 
         return $query
             /*
-             * Surprise first when nothing was asked for.
+             * The products most shops sell first (owner, 2026-11-15:
+             * "surprising first is not needed").
              *
-             * The Cove is a column about odd finds, so "show me the catalogue"
-             * should open on the odd end of it rather than on whichever rows
-             * happen to have the lowest ids.
+             * It used to open on the highest `surprise_score`, the odd end of
+             * the catalogue. An author looking for "waterkoker" wants the
+             * kettles people can compare, and a product several shops carry is
+             * the better known one and the one with a price to compare.
              */
-            ->orderByDesc('surprise_score')
+            ->orderByDesc('merchant_count')
             ->orderBy('id')
             ->limit(min($limit, 100))
             ->get();

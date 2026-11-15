@@ -566,3 +566,7 @@ it had enough: quick for a common word, the whole market for a rare one. `Produc
 now collects the matching group ids from the full-text index first (`id = any(array(...))`, the
 shape `SuggestionEngine::pool()` uses). Locally on 70,000 groups: 9.0 s to 33 ms for the rare word,
 the same ids in the same order for six test words.
+
+Since the same day the results come with the products most shops sell first, not the highest
+`surprise_score` (owner: "surprising first is not needed"): an author searching a word wants the
+products people can compare.
