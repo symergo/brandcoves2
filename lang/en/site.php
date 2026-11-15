@@ -122,6 +122,7 @@ return [
     'list_from_mail' => [
         'note' => 'You are looking at this list from an email. Sign in to change it or to see everything on it.',
         'sign_in' => 'Sign in',
+        'other_account' => 'You are looking at this list from an email. It belongs to another account than the one you are signed in with, so you can view it here but not change it.',
         'empty' => 'Nothing on this list yet.',
         'sold_out' => 'Sold out',
     ],

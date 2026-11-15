@@ -21,9 +21,11 @@ interface Item {
 interface Props {
     list: { title: string; items: Item[] }
     loginUrl: string
+    /** Signed in, with another account than the one this list belongs to. */
+    otherAccount: boolean
 }
 
-export default function FromMail({ list, loginUrl }: Props) {
+export default function FromMail({ list, loginUrl, otherAccount }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -34,13 +36,21 @@ export default function FromMail({ list, loginUrl }: Props) {
                 <h1 className="text-2xl font-semibold text-ink">{list.title}</h1>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft">
-                    <p className="min-w-0 flex-1">{t('list_from_mail.note')}</p>
-                    <a
-                        href={loginUrl}
-                        className="flex min-h-9 shrink-0 items-center rounded-full bg-accent px-4 font-semibold text-white hover:bg-accent-dark"
-                    >
-                        {t('list_from_mail.sign_in')}
-                    </a>
+                    {otherAccount ? (
+                        // No button: they are signed in already, and signing in again
+                        // with this account would only bring them back here.
+                        <p className="min-w-0 flex-1">{t('list_from_mail.other_account')}</p>
+                    ) : (
+                        <>
+                            <p className="min-w-0 flex-1">{t('list_from_mail.note')}</p>
+                            <a
+                                href={loginUrl}
+                                className="flex min-h-9 shrink-0 items-center rounded-full bg-accent px-4 font-semibold text-white hover:bg-accent-dark"
+                            >
+                                {t('list_from_mail.sign_in')}
+                            </a>
+                        </>
+                    )}
                 </div>
 
                 {list.items.length === 0 ? (

@@ -31,8 +31,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * and a link to the product. What it never shows: who claimed what (the owner
  * of a wish list must not learn it, invariant 4), contributions, the delivery
  * address, the people the list is shared with, or any control that changes
- * something. Everything else is behind "Sign in", which comes back to the full
- * list.
+ * something. Everything else is behind "Sign in", which leads the list's owner
+ * to the full list.
  *
  * The access is a signed URL ({@see self::url()}), valid for {@see self::DAYS}
  * days: long enough for a mail read late, short enough that a forwarded one
@@ -75,8 +75,18 @@ final class ListFromMailController extends Controller
             return redirect($full);
         }
 
-        // Signing in from here comes back to the full list (both sign-in routes end in intended()).
-        $request->session()->put('url.intended', url($full));
+        /*
+         * Signing in from here comes back to this same link (both sign-in
+         * routes end in intended()), not to the full list. The link then sorts
+         * it out: the owner is redirected to the full list above, and somebody
+         * who signs in with another account than the list's sees this page
+         * again, told so, instead of the 404 the full list gives an account it
+         * does not belong to. That happened to the owner on the first test
+         * (2026-11-15): the list was opened from the link, the sign-in was a
+         * Google account other than the list's, and the full list said "not
+         * found" a second after it had been on screen.
+         */
+        $request->session()->put('url.intended', $request->fullUrl());
 
         app(PageMeta::class)->set(
             title: $wishlist->displayTitle(),
@@ -102,6 +112,8 @@ final class ListFromMailController extends Controller
                     ->all(),
             ],
             'loginUrl' => $current->url('login'),
+            // Signed in, and still here: this list belongs to another account than theirs.
+            'otherAccount' => $request->user() !== null,
         ]);
     }
 }

@@ -80,6 +80,7 @@ return [
     'list_from_mail' => [
         'note' => 'Je bekijkt deze lijst via een e-mail. Log in om ze aan te passen of alles te zien.',
         'sign_in' => 'Inloggen',
+        'other_account' => 'Je bekijkt deze lijst via een e-mail. Ze hoort bij een ander account dan dat waarmee je bent ingelogd; je kan ze hier bekijken, maar niet aanpassen.',
         'empty' => 'Nog niets op deze lijst.',
         'sold_out' => 'Uitverkocht',
     ],

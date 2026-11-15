@@ -81,6 +81,7 @@ return [
     'list_from_mail' => [
         'note' => 'Vous consultez cette liste depuis un e-mail. Connectez-vous pour la modifier ou tout voir.',
         'sign_in' => 'Se connecter',
+        'other_account' => 'Vous consultez cette liste depuis un e-mail. Elle appartient à un autre compte que celui avec lequel vous êtes connecté : vous pouvez la consulter ici, mais pas la modifier.',
         'empty' => 'Rien sur cette liste pour l’instant.',
         'sold_out' => 'Épuisé',
     ],

@@ -50,10 +50,30 @@ class ListFromMailTest extends TestCase
                 ->missing('list.items.0.claim')
                 ->missing('collaborators')
                 ->missing('deliveryAddress')
-                ->where('loginUrl', '/be-nl/login'));
+                ->where('loginUrl', '/be-nl/login')
+                ->where('otherAccount', false));
 
-        // Signing in from there comes back to the full list.
-        $this->assertSame(url("/be-nl/lists/{$list->id}"), session('url.intended'));
+        // Signing in from there comes back to this link, which then sorts out who they are.
+        $this->assertSame(ListFromMailController::url($list), session('url.intended'));
+    }
+
+    /**
+     * The owner's first test on production (2026-11-15): the list opened from
+     * the link, they signed in with a Google account other than the list's,
+     * and were sent to the full list, which answered 404.
+     */
+    #[Test]
+    public function signing_in_with_another_account_keeps_the_read_only_list_and_says_so(): void
+    {
+        $list = $this->list();
+
+        $this->actingAs(User::factory()->create())
+            ->get(ListFromMailController::url($list))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Lists/FromMail')
+                ->where('list.title', 'Mijn wensen')
+                ->where('otherAccount', true));
     }
 
     #[Test]

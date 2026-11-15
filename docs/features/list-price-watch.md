@@ -154,6 +154,14 @@ goes to the list's ordinary address, which asks a signed-out visitor to sign in.
 notification keeps the ordinary address. Tests: `ListFromMailTest`, and the mail's link in
 `ListPriceWatchTest`.
 
+**Signing in from that page with another account (the owner's first test, the same evening).** The
+"Sign in" on the read-only page came back to the full list, and the full list answers 404 to an account
+it does not belong to: the owner opened the link, signed in with a Google account other than the
+list's, and got "not found" for a list that had been on screen a second before. Signing in now comes
+back to the mail's link itself. The list's owner is redirected from there to the full list; anybody
+else stays on the read-only page, which then says the list belongs to another account than the one
+they are signed in with, and shows no sign-in button.
+
 Not built: a link that signs the reader in by itself, like a magic
 link. What stands against it: the mail stays in an inbox for weeks and gets forwarded, and whoever
 holds it would be in the account; a magic link lives 15 minutes for that reason. See auth.md, "Bots,

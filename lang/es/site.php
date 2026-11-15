@@ -80,6 +80,7 @@ return [
     'list_from_mail' => [
         'note' => 'Estás viendo esta lista desde un correo. Inicia sesión para cambiarla o verlo todo.',
         'sign_in' => 'Iniciar sesión',
+        'other_account' => 'Estás viendo esta lista desde un correo. Pertenece a otra cuenta distinta de la que has usado para iniciar sesión: puedes verla aquí, pero no cambiarla.',
         'empty' => 'Todavía no hay nada en esta lista.',
         'sold_out' => 'Agotado',
     ],
