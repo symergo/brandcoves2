@@ -30,7 +30,14 @@ class PlanGiftLandingPages implements ShouldQueue
 {
     use Queueable, RunsOneAtATime;
 
-    public int $timeout = 1800;
+    /**
+     * An hour, the most the `batch` queue allows (config/horizon.php). It was
+     * half an hour, and on 2026-11-15 three of the four markets ran out of it:
+     * about 400 engine runs, each then four to five seconds. The engine's
+     * query is three to four times faster since that day, so this is room,
+     * not the fix.
+     */
+    public int $timeout = 3600;
 
     public function __construct(public Market $market) {}
 

@@ -162,3 +162,18 @@ none. The plan's noindex `/gift/for?…` page for briefs too specific for a land
   `Pages/Gift/Wizard.tsx` (Open as a page)
 - `config/giftcoves.php` (`gift_landings`), `lang/*/site.php` (`gift_landing`)
 - Tests: `tests/Unit/TasteBriefTest.php`, `BriefUrlTest`, `GiftLandingTest`
+
+## The nightly run was running out of time (2026-11-15)
+
+`PlanGiftLandingPages` failed for three of the four markets on 2026-11-15, cut off at its half hour.
+It makes about 400 engine runs per market, and the engine's candidate query then took four to five
+seconds each (270 logged runs in one window, 1,240 seconds).
+
+Measured on production (nl-nl, "cooking"): Postgres expected 104,000 candidate ids where there were
+16,000, hash-joined them against every giftable group in the price band and read all 788,000 of
+those. 9.7 seconds warm, 13.4 cold. `SuggestionEngine::pool()` now passes the ids as
+`= ANY(ARRAY(...))`, so the groups are fetched by primary key: 2.3 seconds, the remainder being the
+text search on `products`. The same rows come back. Find a gift uses the same query and gains the same.
+
+The job's limit is an hour now, the most the `batch` queue allows. Not yet seen: a full night's run
+with the new query.

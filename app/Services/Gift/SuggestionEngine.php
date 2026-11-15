@@ -629,7 +629,24 @@ class SuggestionEngine
                     ->whereRaw('crowd_tags ??| ?::text[]', [$array]));
             }
 
-            $groups->whereIn('product_groups.id', $byText);
+            /*
+             * `= ANY(ARRAY(...))`, not `IN (...)` (2026-11-15).
+             *
+             * Measured on production that day, nl-nl, "cooking": with IN,
+             * Postgres expected 104,000 candidate ids where there were 16,000,
+             * so it hash-joined them against every giftable group in the price
+             * band, and read all 788,000 of those to keep 11,000. 9.7 seconds
+             * warm, 13.4 cold. As an array the ids are worked out once and the
+             * groups are fetched by primary key: 2.3 seconds, what is left
+             * being the text search itself. Same rows either way.
+             *
+             * It is what made PlanGiftLandingPages run out of its half hour:
+             * about 400 of these per market.
+             */
+            $groups->whereRaw(
+                'product_groups.id = any(array('.$byText->toSql().'))',
+                $byText->getBindings(),
+            );
         }
 
         // Comparable products first: a suggestion the shopper can price against
