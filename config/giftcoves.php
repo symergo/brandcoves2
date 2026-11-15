@@ -616,6 +616,25 @@ return [
     | CountListSignals (nightly): crowd tags on products, and products linked by
     | the lists they share. See docs/features/list-signals.md.
     */
+    /*
+     * Interest tags inferred from a product's category, for products nobody
+     * judged (App\Services\Gift\AutoTagger, docs/features/gift-tags.md).
+     */
+    'auto_tags' => [
+        // Judged products a category needs before it can say anything.
+        // Twenty: with fewer, three odd products are a "majority".
+        'min_products' => 20,
+
+        // The share of them that must carry the interest. 0.6 is a clear
+        // majority; a mixed category ("Cadeaus", "Overige") stays under it
+        // and tags nothing.
+        'min_share' => 0.6,
+
+        // How strong an inferred interest counts beside an editor's (1.0)
+        // and the crowd's (list_signals.weight, 0.75).
+        'weight' => 0.6,
+    ],
+
     'list_signals' => [
         // Different people who must agree before a tag, a link or a crowd
         // pick counts. One person, or a few friends, cannot move what

@@ -146,6 +146,9 @@ php artisan bc:find-matches --full    # propose products that may be one (same b
                                       # number or similar title within a brand) for a person to
                                       # confirm at /admin, Match review. Nothing merges on its own.
                                       # Runs 05:40 and 17:40; --full once after the first deploy
+php artisan bc:auto-tag               # give unjudged products the interest most judged products in
+                                      # their category carry (auto_tags, weighed under a judged tag).
+                                      # Dry run unless --write; --rules lists the categories. Nightly 04:10
 php artisan bc:plan-gift-landings     # record which /gift-ideas/for/{who}/{interest} pages the
                                       # catalogue can fill (8+ products). Runs nightly at 05:40
 php artisan bc:plan-demand-personas   # draft gift personas from what people search gifts for.

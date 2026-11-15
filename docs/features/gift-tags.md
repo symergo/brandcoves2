@@ -222,6 +222,37 @@ What it costs: a product that fits an interest and was never tagged for it is no
 for that interest. So tagging has to keep up with the catalogue: the tagging queue for new products
 (below), and the Cove step (next section).
 
+## Automatic tags: the interest a category implies (2026-11-16)
+
+Owner: "keep tag first and implement automatic tagging where possible". Tags-first assumed the
+catalogue was tagged. It was not: the judged tags cover the catalogue of September (about 343,000
+products), and on 2026-11-15 the tagging queue held 1.67 million unjudged giftable products in
+be-nl alone, 1.55 million in be-fr and 0.8 million in nl-nl, all first seen in the last sixty days.
+None of them could be a candidate for an interest that had gone tags-first.
+
+`App\Services\Gift\AutoTagger` fills that from what the judging already says, with no hand-written
+list. Per market, a category earns a rule when at least 20 judged products sit in it and at least
+60% of them carry the same interest (`giftcoves.auto_tags`); every unjudged, giftable product in
+that category then gets that interest, at most two per category. A mixed category clears no bar
+and tags nothing. It never reads the category's words, so it works for Dutch, French and English
+feeds alike.
+
+- **A column of its own**, `product_groups.auto_tags` (GIN index), never `gift_tags`: a judged tag
+  stays what somebody decided. Only products nobody judged (`gift_tags` empty, `gift_tags_at` null);
+  a product judged since, or whose category lost its rule, loses its automatic tags on the next run.
+- **Interests only.** Recipients and occasions were judged per product; a category says too little.
+- **The engine** takes them as candidates, counts them towards "enough tagged" for tags-first, and
+  scores the interest at 0.6 (`auto_tags.weight`): under the crowd's 0.75, which is about the very
+  product, and under an editor's 1.0. A judged product goes first; inferred ones fill the page.
+- **Not read by** the search page's "volgens onze redactie" sentence (`:gift_links`), which claims
+  an editor's judgment, nor by the tagging queue: an automatically tagged product is still waiting
+  to be judged.
+- **Runs** nightly at 04:10 (`bc:auto-tag --write`); `bc:auto-tag` alone counts what would change,
+  `--rules` lists the categories. In ranges of 100,000 ids, one short statement each.
+
+Not known until the first production run: how many categories earn a rule per market, and so how
+much of the backlog this reaches. nl-nl had few judged products, so it will have few rules.
+
 ## Tagged when a Cove is built (2026-11-15)
 
 Picking products for a Cove and tagging them were two jobs, so a Cove could be published full of

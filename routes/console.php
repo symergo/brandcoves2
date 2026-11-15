@@ -411,6 +411,22 @@ Schedule::command('bc:plan-coves')
     ->onOneServer();
 
 /*
+ * Automatic interest tags for products nobody judged (AutoTagger,
+ * docs/features/gift-tags.md).
+ *
+ * 04:10: before the morning catalogue run plans the gift landing pages, which
+ * read the tags, and at an hour with few visitors, since the first run writes
+ * to millions of rows. In the background, so a long run does not hold up the
+ * other schedules of that minute.
+ */
+Schedule::command('bc:auto-tag --write')
+    ->name('auto-tag')
+    ->dailyAt('04:10')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onOneServer();
+
+/*
  * Every persona's top 10 of the week (docs/features/persona-top-ten.md).
  *
  * Monday at 08:20: after the catalogue run, so the ranking reads this

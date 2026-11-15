@@ -96,7 +96,7 @@ class SuggestionEngine
         'min_price', 'max_price', 'previous_price', 'in_stock', 'giftable',
         'giftable_reason', 'surprise_score', 'surprise_breakdown', 'first_seen_at',
         'created_at', 'updated_at', 'worth_showing', 'display_title', 'gift_tags',
-        'crowd_tags', 'merged_into_id',
+        'crowd_tags', 'auto_tags', 'merged_into_id',
     ];
 
     private ?HasEverything $hasEverythingWords = null;
@@ -650,6 +650,13 @@ class SuggestionEngine
                     ->select('id')
                     ->where('market', $market)
                     ->whereRaw('crowd_tags ??| ?::text[]', [$array]));
+
+                // What the product's category implies, for the products nobody
+                // judged (AutoTagger, 2026-11-16).
+                $candidates->union(DB::table('product_groups')
+                    ->select('id')
+                    ->where('market', $market)
+                    ->whereRaw('auto_tags ??| ?::text[]', [$array]));
             }
 
             $byText = $candidates;
@@ -708,7 +715,8 @@ class SuggestionEngine
                         ->where('market', $market)
                         ->where('giftable', true)
                         ->where('in_stock', true)
-                        ->whereRaw('gift_tags ??| ?::text[]', [$this->pgTextArray([$tag])])
+                        // Judged or inferred from the category: both fill a pool.
+                        ->whereRaw('(gift_tags ??| ?::text[] or auto_tags ??| ?::text[])', [$this->pgTextArray([$tag]), $this->pgTextArray([$tag])])
                         ->limit($minimum),
                     'tagged',
                 )->count(),
@@ -818,6 +826,8 @@ class SuggestionEngine
         $tags = $group->giftTags();
         $crowd = $group->crowdTags();
         $crowdWeight = (float) config('giftcoves.list_signals.weight', 0.75);
+        $auto = $group->autoTags();
+        $autoWeight = (float) config('giftcoves.auto_tags.weight', 0.6);
 
         foreach ($slots as $slotIndex => $slot) {
             /*
@@ -836,6 +846,16 @@ class SuggestionEngine
                  * at the product. See docs/features/list-signals.md.
                  */
                 $strengths[$slotIndex] = $crowdWeight;
+                $matched[] = $slot['interest'];
+            } elseif (in_array(GiftTags::interest($slot['interest']), $auto, true)) {
+                /*
+                 * Nobody judged this product; most judged products in its
+                 * category carry the interest (AutoTagger). Below the crowd,
+                 * which is about this very product, and well below an
+                 * editor: a judged product goes first, an inferred one fills
+                 * the page behind it.
+                 */
+                $strengths[$slotIndex] = $autoWeight;
                 $matched[] = $slot['interest'];
             }
 

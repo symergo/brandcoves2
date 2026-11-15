@@ -124,6 +124,18 @@ class ProductGroup extends Model
         return array_values((array) ($this->crowd_tags ?? []));
     }
 
+    /**
+     * Interest tags inferred from this product's category (AutoTagger), for a
+     * product nobody judged. Kept apart from `gift_tags` and read at less
+     * weight: an inference from other products, not a look at this one.
+     *
+     * @return list<string>
+     */
+    public function autoTags(): array
+    {
+        return array_values((array) ($this->auto_tags ?? []));
+    }
+
     protected function casts(): array
     {
         return [
@@ -132,6 +144,7 @@ class ProductGroup extends Model
             'surprise_breakdown' => 'array',
             'gift_tags' => 'array',
             'crowd_tags' => 'array',
+            'auto_tags' => 'array',
             'in_stock' => 'boolean',
             'giftable' => 'boolean',
             'giftable_override' => 'boolean',
