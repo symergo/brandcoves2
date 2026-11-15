@@ -64,7 +64,8 @@ a search engine indexes and a person reads before they ever arrive. 86 strings a
 - **The footer disclosure**, `site.footer.affiliate`, which opened with "GiftCoves compares offers
   across shops" on every page of the site. The commission sentence after it is untouched — that one
   is required. The same string is rendered by `PageNarrative` and the Cove digest email, so the edit
-  lands there too, intentionally: one service, one description of it.
+  lands there too, intentionally: one service, one description of it. Since 2026-11-15 `PageNarrative` (search and
+  brand pages) no longer renders it: the footer below it says the same on every page (owner).
 - **Meta titles and descriptions** for search, brands, the brand index, products, `/shops`, the Cove
   index, the Gift Finder, Ask, scan and guides. `shops.seo_title` was "The online shops we compare
   prices across"; the brand index was "All brands, prices compared across every shop".

@@ -1,4 +1,3 @@
-import { useTranslations } from '../useTranslations'
 import { type Paragraph as ParagraphType, Paragraph } from './Parts'
 
 export interface Narrative {
@@ -33,8 +32,6 @@ export interface Narrative {
  * page, it is a broken one.
  */
 export default function PageNarrative({ narrative }: { narrative: Narrative }) {
-    const { t } = useTranslations()
-
     if (narrative.sections.length === 0) {
         return null
     }
@@ -71,8 +68,7 @@ export default function PageNarrative({ narrative }: { narrative: Narrative }) {
                     </section>
                 ))}
             </div>
-
-            <p className="mt-8 text-xs text-ink-soft">{t('footer.affiliate')}</p>
+            {/* No affiliate line here (owner, 2026-11-15): the footer of every page already says it. */}
         </div>
     )
 }
