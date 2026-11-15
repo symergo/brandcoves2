@@ -81,10 +81,14 @@ final class MarketPreference
      * sits in the flow above the header, so the page is readable around it
      * and ignoring it is allowed. Components/MarketBar draws it.
      *
+     * Since 2026-11-15 the bar only ever guides: it shows when there is another
+     * country to offer, and never just to confirm the one on screen.
+     *
      * Null, no bar, when:
      * - the visitor is a crawler: it keeps no cookie, so the bar would sit in
      *   every page it indexes;
      * - the URL carries no market (the market shown was not read from it);
+     * - nothing is on file and this page is the country we would have guessed;
      * - a choice is on file, this page is in that country, and the visitor is
      *   not in another one (see the note in the method). A language difference
      *   within one country (be-nl read by a be-fr visitor) is not worth a bar:
@@ -147,13 +151,20 @@ final class MarketPreference
                 : ['suggest' => $stored->value, 'remember' => false];
         }
 
+        /*
+         * Nothing stored, and this page is the country we would have guessed:
+         * no bar (owner, 2026-11-15: "don't show the quiet bar, show the flag
+         * after the logo"). Until then a bar confirmed the country here and
+         * closing it recorded the market. With the guess coming from the
+         * country the visitor is in it had nothing left to correct, and the
+         * header's flag says which country the page is for. So `remember` is
+         * always false now; the field stays because the page reads it.
+         */
         $guess = self::guess($request);
-        $guessedThisCountry = $guess->country() === $current->country();
 
-        return [
-            'suggest' => $guessedThisCountry ? null : $guess->value,
-            'remember' => $guessedThisCountry,
-        ];
+        return $guess->country() === $current->country()
+            ? null
+            : ['suggest' => $guess->value, 'remember' => false];
     }
 
     /**

@@ -92,9 +92,10 @@ class MarketRoutingTest extends TestCase
     {
         $inBelgium = ['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE', 'Accept-Language' => 'nl-NL,nl;q=0.9'];
 
-        // On the Belgian page the guess is right: closing the bar may record it.
+        // On the Belgian page the guess is right: no bar at all (2026-11-15; it confirmed the
+        // country until then). The header's flag says which country the page is for.
         $this->withHeaders($inBelgium)->get('/be-nl')
-            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => null, 'remember' => true]));
+            ->assertInertia(fn ($page) => $page->where('marketBar', null));
 
         // On a Dutch page the bar offers Belgium, although the browser language says the Netherlands.
         $this->withHeaders($inBelgium)->get('/nl-nl')
@@ -221,14 +222,14 @@ class MarketRoutingTest extends TestCase
     #[Test]
     public function a_first_visit_gets_a_bar_and_no_dialog(): void
     {
-        // The browser points at the Netherlands and the page is Dutch: a bar,
-        // and closing it means "yes, that is right", so it may record it.
+        // The browser points at the Netherlands and the page is Dutch: nothing to
+        // guide to, so no bar (2026-11-15; until then a quiet bar confirmed it).
         $this->withHeaders(['User-Agent' => self::BROWSER, 'Accept-Language' => 'nl-NL,nl;q=0.9'])
             ->get('/nl-nl')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->missing('askMarket')
-                ->where('marketBar', ['suggest' => null, 'remember' => true]));
+                ->where('marketBar', null));
 
         // Nothing a dialog would need reaches the page any more.
         $this->withHeaders(['User-Agent' => self::BROWSER])

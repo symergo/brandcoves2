@@ -7,6 +7,7 @@ import ConfirmEmailNotice from '../Components/ConfirmEmailNotice'
 import CookieBanner from '../Components/CookieBanner'
 import ContributeBar from '../Components/ContributeBar'
 import CoveIcon from '../Components/CoveIcon'
+import FlagIcon, { type FlagCountry } from '../Components/FlagIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
 import MarketBar from '../Components/MarketBar'
@@ -168,8 +169,10 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
 function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, auth, unreadCount, analytics, amazonAssociate, languageLinks } = page.props
+    const { market, markets, auth, unreadCount, analytics, amazonAssociate, languageLinks } = page.props
     const { t } = useTranslations()
+    // The country this page is for: its flag stands after the logo.
+    const marketCountry = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? null
 
     /*
      * Every page is 1536px wide at most, header and footer with it so the edges
@@ -457,6 +460,26 @@ function Chrome({ children }: PropsWithChildren) {
                         />
                         GiftCoves
                     </Link>
+
+                    {/* The country this page is for, after the logo (owner,
+                        2026-11-15), where the quiet bar above the header said
+                        it until then. Below `xl` only: from there the country
+                        button on the right already shows the flag, and two
+                        flags in one row say nothing more. Not at 320px, where
+                        the row has no pixel left (see the gap note above). */}
+                    {marketCountry && (
+                        <span
+                            role="img"
+                            aria-label={marketCountry.name}
+                            title={marketCountry.name}
+                            className="-ml-0.5 shrink-0 max-[359px]:hidden sm:-ml-3 xl:hidden"
+                        >
+                            <FlagIcon
+                                country={marketCountry.country as FlagCountry}
+                                className="block h-3.5 w-[21px] rounded-[2px] ring-1 ring-line"
+                            />
+                        </span>
+                    )}
 
                     {/* Beside the logo since 2026-09-26, and not on the search
                         page, whose own field is the first thing on it: two

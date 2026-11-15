@@ -72,7 +72,10 @@ export default function MarketBar() {
 
     const current = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? null
 
-    if (!open || marketBar === null || current === null) {
+    // Only ever a guide (owner, 2026-11-15: "don't show the quiet bar, show the
+    // flag after the logo"): without a country to offer there is no bar. The
+    // header's flag (SiteLayout) says which country the page is for.
+    if (!open || marketBar === null || current === null || !marketBar.suggest) {
         return null
     }
 

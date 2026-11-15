@@ -219,9 +219,10 @@ class ContributeTest extends TestCase
     #[Test]
     public function the_bar_waits_for_the_market_bar_and_skips_crawlers(): void
     {
-        // No market chosen and a browser pointing elsewhere: the market bar
-        // asks first.
-        $this->withHeader('Accept-Language', 'fr-BE')
+        // No market chosen and a browser pointing at another country: the
+        // market bar guides first. (A browser pointing at this country gets no
+        // market bar since 2026-11-15, so nothing to wait for.)
+        $this->withHeader('Accept-Language', 'nl-NL,nl;q=0.9')
             ->get('/be-nl')
             ->assertInertia(fn ($page) => $page->whereNot('marketBar', null)->where('contributeBar', false));
 

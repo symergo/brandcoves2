@@ -103,6 +103,16 @@ question, the visitor's own country as the button, and the close. Every other ma
 in the header's switcher, which is where a deliberate change belongs. Where this file still describes
 "the other countries as buttons", that is the bar before this date.
 
+**No quiet bar; the flag after the logo (owner, the same day: "don't show the quiet bar, show the flag
+after the logo").** A visitor on the country we would have guessed gets no bar at all:
+`MarketPreference::bar()` returns null there, and `remember` is always false now (closing a bar no
+longer records a market; only the guiding button and the header's switcher do). The quiet bar dated
+from the guess by browser language, which was often wrong; with the country it had nothing left to
+correct. Which country a page is for is said by the flag after the logo in the header
+(`SiteLayout`), shown below `xl` (from `xl` the country button on the right carries the flag) and not
+under 360px, where the header row has no room. One consequence: the "Denk mee" bar, which waits for
+the market bar, now shows on a first visit at home.
+
 It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when
 someone from NL lands on a be page and the reverse"): a Dutch visitor on a Belgian page is offered the
 Netherlands, a Belgian on a Dutch page Belgium. Crawlers never get it.

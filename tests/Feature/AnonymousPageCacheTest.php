@@ -102,8 +102,8 @@ class AnonymousPageCacheTest extends TestCase
     #[Test]
     public function a_market_choice_is_its_own_entry(): void
     {
-        // A Dutch-speaking browser on a Belgian page with nothing chosen: the
-        // bar asks whether Belgium is right.
+        // A Dutch-speaking browser on a Belgian page with nothing chosen: no
+        // bar (it asked whether Belgium is right until 2026-11-15).
         $unchosen = $this->guest()->get(self::PAGE);
         $this->assertSame('miss', $unchosen->headers->get(CacheAnonymousPage::HEADER));
 
@@ -116,7 +116,7 @@ class AnonymousPageCacheTest extends TestCase
         $this->assertSame('hit', $again->headers->get(CacheAnonymousPage::HEADER));
 
         $this->forgetCookies();
-        $unchosen->assertInertia(fn ($page) => $page->where('marketBar.suggest', null));
+        $unchosen->assertInertia(fn ($page) => $page->where('marketBar', null));
     }
 
     #[Test]
