@@ -108,9 +108,11 @@ after the logo").** A visitor on the country we would have guessed gets no bar a
 `MarketPreference::bar()` returns null there, and `remember` is always false now (closing a bar no
 longer records a market; only the guiding button and the header's switcher do). The quiet bar dated
 from the guess by browser language, which was often wrong; with the country it had nothing left to
-correct. Which country a page is for is said by the flag after the logo in the header
-(`SiteLayout`), shown below `xl` (from `xl` the country button on the right carries the flag) and not
-under 360px, where the header row has no room. One consequence: the "Denk mee" bar, which waits for
+correct. Which country a page is for is said by the flag right after the name in the header, and
+pressing it opens the list of countries and languages (owner: "after the name: GiftCoves, and clicking
+it allow to change"). It is `MarketButton` in its `compact` form (flag and a small arrow), on every
+screen from 360px; the bordered country button at the right of the desktop header went with it, so
+there is one place for it. Under 360px the header row has no room and the menu lists the countries. One consequence: the "Denk mee" bar, which waits for
 the market bar, now shows on a first visit at home.
 
 It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when

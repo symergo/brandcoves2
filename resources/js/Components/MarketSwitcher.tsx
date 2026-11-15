@@ -70,8 +70,13 @@ function Check() {
  * The header's country-and-language button. A menu button (`Menu`): it opens
  * with Enter, Space or the arrows, the arrows move between the rows, Escape
  * closes and returns focus to it.
+ *
+ * `compact` is the one after the name in the header (owner, 2026-11-15: the
+ * flag "after the name: GiftCoves, and clicking it allow to change"): the flag
+ * and a small arrow, no border and no language letters, so it reads as part of
+ * the logo line and fits a phone's header. The menu it opens is the same.
  */
-export default function MarketButton() {
+export default function MarketButton({ compact = false }: { compact?: boolean }) {
     const { market, markets } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const country = currentCountry(markets, market.key)
@@ -109,14 +114,21 @@ export default function MarketButton() {
         <Menu
             label={t('nav.market_button', { current: where || market.language.toUpperCase() })}
             width={232}
-            buttonClassName="market-button flex h-9 items-center gap-1.5 rounded-lg border border-line px-2 text-sm font-medium text-ink hover:border-ink"
+            buttonClassName={
+                compact
+                    ? 'market-button flex h-9 items-center gap-0.5 rounded-lg px-1 text-ink hover:bg-line/40 max-[389px]:px-0.5'
+                    : 'market-button flex h-9 items-center gap-1.5 rounded-lg border border-line px-2 text-sm font-medium text-ink hover:border-ink'
+            }
             button={
                 <>
                     {country && (
-                        <FlagIcon country={country.country as FlagCountry} className="block h-4 w-6 rounded-[2px] ring-1 ring-line" />
+                        <FlagIcon
+                            country={country.country as FlagCountry}
+                            className={`block rounded-[2px] ring-1 ring-line ${compact ? 'h-3.5 w-[21px]' : 'h-4 w-6'}`}
+                        />
                     )}
-                    <span>{market.language.toUpperCase()}</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" className="h-3.5 w-3.5 text-ink-soft">
+                    {!compact && <span>{market.language.toUpperCase()}</span>}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" className={`text-ink-soft ${compact ? 'h-3 w-3 max-[389px]:hidden' : 'h-3.5 w-3.5'}`}>
                         <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </>
