@@ -110,7 +110,7 @@ mean "their child, who may be forty".
 ## Storage and retrieval
 
 `product_groups.gift_tags`, a jsonb array, empty by default, with a GIN index. Untagged is the
-empty array, which is nearly every row. Nothing automated writes it: not the grouper, not a job,
+empty array (nearly every row until the whole-catalogue pass of 2026-09-28, below). Nothing automated writes it: not the grouper, not a job,
 not a model. The engine asks `gift_tags ?| ARRAY[...]`, written `??|` in PHP because a bare `?`
 is a placeholder to PDO; the default jsonb operator class indexes it. Until 2026-09-27 it was
 spelled as the function `jsonb_exists_any()`, which means the same and which no index serves: the
@@ -201,6 +201,15 @@ How it runs, and why that way:
 
 A product that gets no tag at all stays in `gift_tags = '[]'` and still looks untagged. That is
 right: nothing was decided about it.
+
+## Tagged when a Cove is built (2026-11-15)
+
+Picking products for a Cove and tagging them were two jobs, so a Cove could be published full of
+untagged products: on this date 1,671 products in published Coves had none. The Cove skill
+(`.claude/skills/giftcoves-seed-coves/SKILL.md`, "Tag what you picked") now tags the untagged
+products on a shortlist as part of the run, by this brief, and those 1,671 were tagged in one pass.
+Owner's call, after the search page started reading the tags (`:gift_links`,
+[page-templates.md](page-templates.md)).
 
 ## The tagging queue (2026-09-28)
 

@@ -132,13 +132,14 @@ wholesale** — send the full list every time, or use `POST /coves/{id}/editoria
 ## The flow
 
 An instruction is a **selector plus a target stage**, and naming a stage implies every
-earlier one not already satisfied. "Feed the planner and publish" is all five; "build the
+earlier one not already satisfied. "Feed the planner and publish" is all six; "build the
 coves for which the products are picked" starts at the writing.
 
 | Stage | Call |
 |---|---|
 | plan | `GET /calendar` → `POST /coves/drafts` (or `POST /calendar/draft` for one named day, `POST /seasons/{topic}/plan` for a season) |
 | curate | `POST /coves/{id}/items`, `PATCH /coves/{id}/items`, `POST /coves/{id}/suggest` |
+| tag | `POST /products/tags` for every product on the shortlist that has no gift tags (see below) |
 | write | `GET /coves/{id}/brief` → write → `POST /coves/{id}/editorial` |
 | approve | `POST /coves/{id}/approve` — needs `editorial.publish` |
 | build | happens on the day, or `POST /coves/{id}/build` |
@@ -147,6 +148,26 @@ coves for which the products are picked" starts at the writing.
 20/min per token, so a thirty-Cove run made one call at a time spends most of an hour being
 paced. `dryRun: true` answers "what would this publish" before it publishes. Every response
 is per id and never a bare count.
+
+### Tag what you picked
+
+Part of every run that picks or writes products (owner, 2026-11-15), for the kinds with a
+shortlist: daily, persona, guide, seasonal. Once the shortlist is settled, and before you
+report the Cove as done, give every product on it that has no gift tags its tags. You have
+just judged who each product suits in order to write about it; the tags are that judgment
+in the form the rest of the site reads (Find a gift, the gift landing pages, and the
+"a good gift for ..." sentence under the search results, which only appears for tagged
+products).
+
+- Which ones: `GET /products/untagged?market=<m>&limit=200` lists the untagged products on
+  editorial surfaces; keep the rows whose `id` is on your shortlist. A product that already
+  has tags is left alone: `POST /products/tags` replaces what a product had.
+- How to judge and post: `.claude/skills/giftcoves-tag-products/SKILL.md` and its
+  `reference/brief.md`. Same rules, same vocabulary, same `POST /products/tags` body. Never
+  `"giftable": false` for a product you put in a Cove yourself; if it is not a gift, it
+  should not be on the shortlist.
+- One batch per market, after the Cove's own writes, at the same 3 s pace.
+- Say in the report how many products were tagged.
 
 ### Write from the brief, not from these notes
 
