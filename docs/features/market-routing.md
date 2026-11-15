@@ -94,7 +94,8 @@ the choice, and the visitor lands on the same page in that market where it exist
 one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top should not jump out).
 
 On a phone the guiding bar is one line (owner, the same day; it stood three lines tall): the question
-alone ("Looking for Belgium?"), a short button with the flag ("Switch", its full name as `aria-label`)
+alone ("Looking for Belgium?"), a short button that ends in the flag ("Ga naar [flag]", "Go to [flag]"; it read "[flag] Wissel" for an
+hour; its full name is the `aria-label`)
 and the close. The full sentence and "Go to Belgium" show from `sm` up. Texts: `market_bar.elsewhere_short`, `go_short`.
 
 **No other countries in the bar (owner, the same day: "don't show the other countries").** Neither

@@ -146,9 +146,12 @@ export default function MarketBar() {
                             aria-label={t('market_bar.go', { country: suggestedCountry.name })}
                             className="flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 font-semibold whitespace-nowrap text-white transition hover:bg-accent-dark sm:min-h-9 sm:gap-2 sm:px-4"
                         >
+                            {/* On a phone the flag comes last, as the end of the sentence:
+                                "Ga naar [flag]" (owner, 2026-11-15; it was "[flag] Wissel").
+                                From `sm` it leads, before "Naar België". */}
                             <FlagIcon
                                 country={suggestedCountry.country as FlagCountry}
-                                className="block h-3 w-[18px] rounded-[2px] ring-1 ring-white/60"
+                                className="order-last block h-3 w-[18px] rounded-[2px] ring-1 ring-white/60 sm:order-none"
                             />
                             <span className="sm:hidden">{t('market_bar.go_short')}</span>
                             <span className="hidden sm:inline">

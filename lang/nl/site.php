@@ -95,9 +95,9 @@ return [
         'elsewhere' => 'Zoek je :country? Deze pagina toont winkels en prijzen voor :current.',
         'go' => 'Naar :country',
         // On a phone the banner is one line (2026-11-15): the question alone and a
-        // short button. The flag on the button says which country.
+        // short button that ends in the flag: "Ga naar [flag]".
         'elsewhere_short' => 'Zoek je :country?',
-        'go_short' => 'Wissel',
+        'go_short' => 'Ga naar',
     ],
 
     'home' => [
