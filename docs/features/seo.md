@@ -79,7 +79,9 @@ own, where the questions are genuinely written per page. See
 ## Every public page is indexable (2026-09-12)
 
 The owner's rule, stated on 2026-09-12: **every page is indexable, every internal
-link may be followed, and every link that leaves the site is `nofollow`.** It
+link may be followed, and every link that leaves the site is `nofollow`.** Two exceptions since
+2026-11-15, both below: English product pages with nothing to buy, and which product links on a
+search page are followed. It
 replaces the crawl-budget table that stood here, kept below for the record.
 
 What that means in code:
@@ -96,6 +98,26 @@ What that means in code:
 | Guide with an empty shortlist | none | itself |
 | Previews, shared lists, Secret Santa, quiz, taste profile, magic link, an unanswered or held board question, 404 | **noindex** | — |
 | A Community Cove until it has been up a week, holds eight things and three people saved it (2026-09-26, [community-coves.md](community-coves.md#indexing-not-at-first)) | **noindex, follow** | itself |
+
+### Search results: which product links a crawler follows (2026-11-15)
+
+Owner: "minder crawl budget naar producten en meer naar search results". The first request was
+`nofollow` on every link from a search page to a product page. Weighed against it: products left the
+sitemap on 2026-11-07, so internal links are how a crawler finds them and search pages are the largest
+source; an internal `nofollow` saves no link value (the share of a nofollowed link is dropped, not
+given to the others); and it is a hint, not a lock.
+
+What was built is the narrower form: a search result's link to its product page is followed only when
+more than one shop sells the product (`Indexing::followFromSearch()`, the `follow` field of a card,
+`rel="nofollow"` in `ProductCard`), about 3% of the catalogue. That is the page where we have something
+a shop has not, the comparison. Every product page stays indexable and stays linked, followed, from
+the Coves that pick it and from brand pages; only the crawl from search pages narrows. This is the one
+exception to "every internal link may be followed" above.
+
+Look at Search Console's crawl stats (Settings, Crawl stats, by page type is not offered: compare
+`/p/` against `/zoek/`, `/search/`, `/chercher/` in the sample) three weeks after it goes live. If
+products still take the visit, the next step is the one that does remove pages from the index: a
+threshold for product pages themselves, as the English market has below.
 
 ### The English catalogue (2026-11-15)
 

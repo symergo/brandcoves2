@@ -22,6 +22,12 @@ export interface GroupCard {
     maxPrice: number | null
     offerCount: number
     merchantCount: number
+    /**
+     * False on a search result whose product page a crawler is not asked to
+     * follow: a product one shop sells (App\Services\Seo\Indexing, 2026-11-15).
+     * Absent everywhere else, which means follow.
+     */
+    follow?: boolean
     inStock: boolean
     discountPercent: number | null
     /**
@@ -82,6 +88,9 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [broken, setBroken] = useState(false)
+    // A crawler is asked to follow the link to the product page only where the
+    // server says so (search results: products more than one shop sells).
+    const productRel = group.follow === false ? 'nofollow' : undefined
     // First failure: a resized address (proxy or the shop's own size), so fall
     // back to the shop's plain URL. Second: that too, so the placeholder.
     const [proxyFailed, setProxyFailed] = useState(false)
@@ -185,7 +194,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                             <span className="absolute inset-0 z-10" aria-hidden />
                         </a>
                     ) : (
-                        <Link href={productUrl}>
+                        <Link href={productUrl} rel={productRel}>
                             {group.title}
                             <span className="absolute inset-0 z-10" aria-hidden />
                         </Link>
@@ -221,6 +230,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
             {buy && (
                 <Link
                     href={productUrl}
+                    rel={productRel}
                     // Grey, not red (site review, 2026-11-12): twenty red lines made the grid shout.
                     className="relative z-20 flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-sm text-ink-soft transition hover:bg-cream hover:text-ink"
                 >

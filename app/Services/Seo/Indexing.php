@@ -34,11 +34,33 @@ use App\Models\ProductGroup;
  * the argument for it holds, a product that comes back in stock is then already known to the index.
  *
  * To widen or drop the exception, change {@see self::MARKETS}; nothing else knows which markets it covers.
+ *
+ * Also here, since the same day: which product links on a search page a crawler is asked to follow
+ * ({@see self::followFromSearch()}). That steers crawling; it takes no page out of the index.
  */
 final class Indexing
 {
     /** The markets in which a product page with nothing to buy stays out of the index. */
     private const MARKETS = [Market::En];
+
+    /**
+     * Whether a search result's link to its product page may be followed by a crawler.
+     *
+     * Owner, 2026-11-15: "minder crawl budget naar producten en meer naar search results". A search page links
+     * to up to 48 product pages, and there are 5.7 million of them against a few thousand search pages worth
+     * ranking, so a crawler that follows every card spends its visit on products. The link is followed only
+     * where the product page has something a shop's own page has not: the comparison, so a product sold by
+     * more than one shop (72,209 of 2.4 million on be-nl that day, 3%). Every other card's link is `nofollow`.
+     *
+     * What this is not: the product pages stay indexable, stay in nobody's robots.txt, and are still linked
+     * (followed) from the Coves that pick them and from brand pages; a visitor notices nothing. `nofollow` is
+     * a hint that steers a crawl, not a lock, and it passes no link value to the pages it does link, which is
+     * the price of it (docs/features/seo.md says what was weighed). To undo it, return true here.
+     */
+    public static function followFromSearch(ProductGroup $group): bool
+    {
+        return $group->merchant_count > 1;
+    }
 
     /**
      * The robots value of a product page: null to be indexed, as everywhere.

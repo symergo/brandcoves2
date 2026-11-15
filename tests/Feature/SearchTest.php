@@ -71,6 +71,8 @@ class SearchTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->has('results.items', 1)
                 ->where('results.items.0.merchantCount', 2)
+                // Two shops to compare: a crawler may follow the card to the product page.
+                ->where('results.items.0.follow', true)
                 ->where('results.items.0.offerCount', 2)
                 // Cheapest across shops, in cents.
                 ->where('results.items.0.minPrice', 32999)
@@ -309,6 +311,8 @@ class SearchTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->has('results.items', 1)
                 ->where('results.items.0.merchantCount', 2)
+                // Two shops to compare: a crawler may follow the card to the product page.
+                ->where('results.items.0.follow', true)
             );
     }
 
@@ -322,6 +326,12 @@ class SearchTest extends TestCase
 
         $this->assertGreaterThan($comparable, $all, 'the filter must actually narrow the set');
         $this->assertSame(3, $comparable, 'Sony, Philips and Nedis are each sold by two shops');
+
+        // A crawler is asked to follow a card to its product page only where shops can be
+        // compared (2026-11-15, App\Services\Seo\Indexing): the rest carry rel="nofollow".
+        foreach ($this->search(['sort' => 'newest'])->viewData('page')['props']['results']['items'] as $item) {
+            $this->assertSame($item['merchantCount'] > 1, $item['follow'], $item['title']);
+        }
     }
 
     #[Test]
