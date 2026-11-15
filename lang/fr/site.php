@@ -77,6 +77,14 @@ return [
         'how_it_works' => 'Comment ça marche',
     ],
 
+    // One list opened from the link in a mail, without signing in (2026-11-15).
+    'list_from_mail' => [
+        'note' => 'Vous consultez cette liste depuis un e-mail. Connectez-vous pour la modifier ou tout voir.',
+        'sign_in' => 'Se connecter',
+        'empty' => 'Rien sur cette liste pour l’instant.',
+        'sold_out' => 'Épuisé',
+    ],
+
     'market_bar' => [
         'label' => 'Votre pays',
         'showing' => 'Boutiques et prix : :country.',

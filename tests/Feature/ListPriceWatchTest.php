@@ -230,7 +230,10 @@ class ListPriceWatchTest extends TestCase
                 && $section['drops'][0]['was'] === 32999
                 && $section['drops'][0]['now'] === 29000
                 && $section['drops'][0]['percent'] === 12
-                && str_contains($section['drops'][0]['url'], "/be-nl/p/{$group->id}/");
+                && str_contains($section['drops'][0]['url'], "/be-nl/p/{$group->id}/")
+                // The list's link opens it without signing in (2026-11-15).
+                && str_contains($section['url'], "/be-nl/lists/{$list->id}/from-mail?expires=")
+                && str_contains($section['url'], '&signature=');
         });
 
         $notice = Notification::query()->where('kind', 'list_price_digest')->firstOrFail();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\Market;
+use App\Http\Controllers\ListFromMailController;
 use App\Mail\ListPriceDigestMail;
 use App\Models\Notification;
 use App\Models\User;
@@ -179,7 +180,9 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
             $item = $change['item'];
             $line = [
                 'title' => $item->displayTitle(),
-                'url' => url($item->snapshot_url ?? $item->group?->path() ?? "/{$list->market->value}/lists/{$list->id}"),
+                'url' => $item->snapshot_url !== null || $item->group !== null
+                    ? url($item->snapshot_url ?? $item->group->path())
+                    : ListFromMailController::url($list),
                 'was' => $change['was'],
                 'now' => $change['now'],
                 'percent' => $change['percent'],
@@ -198,7 +201,9 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
 
         return [
             'title' => $list->displayTitle($language),
-            'url' => url("/{$list->market->value}/lists/{$list->id}"),
+            // Opens this one list without signing in (2026-11-15): the plain
+            // address answered 404 to a reader who was not signed in.
+            'url' => ListFromMailController::url($list),
             'drops' => $drops,
             'back' => $back,
         ];

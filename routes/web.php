@@ -43,6 +43,7 @@ use App\Http\Controllers\InviteAcceptController;
 use App\Http\Controllers\InviteNotWantedController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ListFromMailController;
 use App\Http\Controllers\ListHelpController;
 use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
@@ -460,6 +461,10 @@ Route::prefix('{market}')->group(function () {
 
     Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
     Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');
+    // One list, read-only, from the signed link in a mail about it (2026-11-15).
+    Route::get('/lists/{list}/from-mail', ListFromMailController::class)
+        ->whereUuid('list')
+        ->name('lists.from-mail');
 
     /*
      * "My people": saved people and friends on one list (2026-09-26, see

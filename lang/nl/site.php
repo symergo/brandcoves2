@@ -76,6 +76,14 @@ return [
         'how_it_works' => 'Hoe het werkt',
     ],
 
+    // One list opened from the link in a mail, without signing in (2026-11-15).
+    'list_from_mail' => [
+        'note' => 'Je bekijkt deze lijst via een e-mail. Log in om ze aan te passen of alles te zien.',
+        'sign_in' => 'Inloggen',
+        'empty' => 'Nog niets op deze lijst.',
+        'sold_out' => 'Uitverkocht',
+    ],
+
     'market_bar' => [
         'label' => 'Je land',
         'showing' => 'Winkels en prijzen voor :country.',

@@ -118,6 +118,14 @@ return [
 
     // The bar above the header on a first visit, or on another country's
     // page (Components/MarketBar). :country is a name from the switcher.
+    // One list opened from the link in a mail, without signing in (2026-11-15).
+    'list_from_mail' => [
+        'note' => 'You are looking at this list from an email. Sign in to change it or to see everything on it.',
+        'sign_in' => 'Sign in',
+        'empty' => 'Nothing on this list yet.',
+        'sold_out' => 'Sold out',
+    ],
+
     'market_bar' => [
         'label' => 'Your country',
         'showing' => 'Shops and prices for :country.',

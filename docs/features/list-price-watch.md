@@ -143,7 +143,18 @@ back to the list afterwards (`redirect()->guest()`, and both sign-in routes end 
 account, which signing in cannot open. The return trip lives in the browser session: a magic link
 opened in another browser lands on My Coves instead.
 
-Asked the same day and not built: letting the mail's link sign the reader in by itself, like a magic
+**Then the mail's link opens the list without signing in (owner, the same day: "open only the
+list").** The list link in the mail, and an item's fallback link, is a signed address,
+`/{market}/lists/{id}/from-mail?expires=…&signature=…` (`ListFromMailController::url()`), valid for
+30 days. It shows that one list read-only: title, items, current price, a link to each product, and a
+"Sign in" that comes back to the full list. It never shows who claimed what (invariant 4),
+contributions, the delivery address or the people the list is shared with, and has no control that
+changes anything. Signed in with access, it redirects to the full list. Expired or tampered with, it
+goes to the list's ordinary address, which asks a signed-out visitor to sign in. The in-app
+notification keeps the ordinary address. Tests: `ListFromMailTest`, and the mail's link in
+`ListPriceWatchTest`.
+
+Not built: a link that signs the reader in by itself, like a magic
 link. What stands against it: the mail stays in an inbox for weeks and gets forwarded, and whoever
 holds it would be in the account; a magic link lives 15 minutes for that reason. See auth.md, "Bots,
 and mail scanners opening the link". Test:
