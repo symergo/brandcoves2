@@ -556,3 +556,13 @@ A Cove's prose is rendered when it is built and stored with it, so publishing ov
 other way still shows at once: the stored value carries a fingerprint of the text, and a mismatch
 renders live. See
 [speed.md](speed.md), "Cove pages".
+
+## The product search timed out on rare words (2026-11-15)
+
+`GET /products?q=` took over 100 seconds on production for "verrekijker" and about 5 for "bluetooth
+speaker". It asked for groups in `surprise_score` order where an offer matches the word (an EXISTS
+per group), so Postgres walked the market's groups from the top and probed each one's offers until
+it had enough: quick for a common word, the whole market for a rare one. `ProductLookup::search()`
+now collects the matching group ids from the full-text index first (`id = any(array(...))`, the
+shape `SuggestionEngine::pool()` uses). Locally on 70,000 groups: 9.0 s to 33 ms for the rare word,
+the same ids in the same order for six test words.

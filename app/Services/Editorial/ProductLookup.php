@@ -75,18 +75,29 @@ class ProductLookup
              * `bc_text_config` so the stemming matches the market's language —
              * a Dutch query stemmed as English finds nothing.
              */
-            $query->whereExists(fn ($sub) => $sub
-                ->select(DB::raw(1))
-                ->from('products')
-                ->whereColumn('products.group_id', 'product_groups.id')
-                ->where('products.status', ProductStatus::Active->value)
-                ->whereRaw(
-                    // Bound, not read off the row. See
-                    // TopicMiner::availableProducts — this is the difference
-                    // between the full-text index and a sequential scan.
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
-                    [$market->value, trim($term)],
-                ));
+            /*
+             * The matching groups' ids first, as an array, not an EXISTS per
+             * group (2026-11-15).
+             *
+             * With EXISTS and the `surprise_score` order below, Postgres walked
+             * the market's groups from the most surprising down and probed each
+             * one's offers for the word, stopping at the limit. A common word
+             * fills the limit quickly; a rare one ("verrekijker") walks the whole
+             * market first: over 100 seconds on production, a timeout for the
+             * author. As an array the full-text index answers once and the
+             * groups come by primary key, whatever the word. Same rows, same
+             * order. SuggestionEngine::pool() has the same shape for the same
+             * reason.
+             */
+            $query->whereRaw(
+                'product_groups.id = any(array(select group_id from products'
+                .' where market = ? and status = ? and group_id is not null'
+                // Bound, not read off the row. See
+                // TopicMiner::availableProducts - this is the difference
+                // between the full-text index and a sequential scan.
+                .' and search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)))',
+                [$market->value, ProductStatus::Active->value, $market->value, trim($term)],
+            );
         }
 
         if ($category !== null) {
