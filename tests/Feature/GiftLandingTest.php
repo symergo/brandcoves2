@@ -18,6 +18,7 @@ use App\Models\ProductGroup;
 use App\Services\Gift\GiftLandingPlanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -63,6 +64,12 @@ class GiftLandingTest extends TestCase
 
         // Dad's own page exists because one of his pairs does.
         $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, null));
+
+        // The planner keeps the engine's answer for the page, so no visitor waits for the engine to run again.
+        $kept = Cache::get($cooking->verdictsKey());
+        $this->assertCount(8, $kept);
+        $this->assertSame(['id', 'fits', 'chosenByOthers'], array_keys($kept[0]));
+        $this->assertNotNull(Cache::get(GiftLanding::lookup(Market::BeNl, RecipientType::Father, null)->verdictsKey()));
     }
 
     #[Test]

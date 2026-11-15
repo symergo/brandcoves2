@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Enums\RecipientType;
 use App\Models\GiftLanding;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -45,10 +46,11 @@ class GiftLandingPlanner
         foreach (RecipientType::cases() as $recipient) {
             foreach ($this->interests($recipient) as $interest) {
                 $brief = BriefUrl::toBrief($market, $recipient, $interest, limit: $this->pageSize());
-                $count = $this->count($brief);
+                $suggestions = $this->engine->suggest($brief);
+                $count = $this->fitting($brief, $suggestions);
 
                 if ($count >= $this->minimum()) {
-                    $this->record($market, $recipient, $interest, $brief, $count);
+                    $this->record($market, $recipient, $interest, $brief, $count, $suggestions);
                     $counts[$recipient->value][$interest->value] = $count;
                 }
             }
@@ -75,6 +77,14 @@ class GiftLandingPlanner
      */
     public function count(TasteBrief $brief): int
     {
+        return $this->fitting($brief, $this->engine->suggest($brief));
+    }
+
+    /**
+     * @param  list<Suggestion>  $suggestions  the engine's answer to this brief
+     */
+    private function fitting(TasteBrief $brief, array $suggestions): int
+    {
         $recipientTag = $brief->relationship === null ? null : GiftTags::recipient($brief->relationship);
         $needRecipient = (int) config('giftcoves.gift_landings.min_recipient_matches', 0);
 
@@ -82,7 +92,7 @@ class GiftLandingPlanner
         $forRecipient = 0;
         $seen = [];
 
-        foreach ($this->engine->suggest($brief) as $suggestion) {
+        foreach ($suggestions as $suggestion) {
             if ($suggestion->matchedInterests === [] || isset($seen[$suggestion->group->id])) {
                 continue;
             }
@@ -115,14 +125,18 @@ class GiftLandingPlanner
             limit: $this->pageSize(),
         );
 
-        $count = $this->count($brief);
+        $suggestions = $this->engine->suggest($brief);
+        $count = $this->fitting($brief, $suggestions);
 
         if ($count >= $this->minimum()) {
-            $this->record($market, $recipient, null, $brief, $count);
+            $this->record($market, $recipient, null, $brief, $count, $suggestions);
         }
     }
 
-    private function record(Market $market, RecipientType $recipient, ?Interest $interest, TasteBrief $brief, int $count): void
+    /**
+     * @param  list<Suggestion>  $suggestions  what the engine just answered for this brief
+     */
+    private function record(Market $market, RecipientType $recipient, ?Interest $interest, TasteBrief $brief, int $count, array $suggestions): void
     {
         $now = Carbon::now();
         $path = BriefUrl::path($market, $recipient, $interest);
@@ -154,6 +168,26 @@ class GiftLandingPlanner
             ['market', 'path'],
             ['recipient', 'interest', 'brief', 'product_count', 'checked_at', 'updated_at'],
         );
+
+        /*
+         * Keep the answer for the page (2026-11-15). The engine has just run
+         * for exactly the brief the page will ask about, and the new
+         * `checked_at` retires yesterday's stored answer, so without this the
+         * first visitor of the day (or a crawler walking the links from the
+         * search pages) waited 5 to 15 seconds per page while it ran again.
+         * Six hours longer than the page's own day: tomorrow's run reaches
+         * this page at a slightly different minute, and the gap between the
+         * two must not be a cold page.
+         */
+        $page = GiftLanding::lookup($market, $recipient, $interest);
+
+        if ($page !== null) {
+            Cache::put(
+                $page->verdictsKey(),
+                GiftLanding::verdicts($suggestions),
+                (int) config('giftcoves.gift_landings.cache_ttl', 86400) + 6 * 3600,
+            );
+        }
     }
 
     /**

@@ -177,3 +177,25 @@ text search on `products`. The same rows come back. Find a gift uses the same qu
 
 The job's limit is an hour now, the most the `batch` queue allows. Not yet seen: a full night's run
 with the new query.
+
+## The first visit of the day was slow (2026-11-15)
+
+Measured on production after a deploy: 5 to 15 seconds for a page nobody had opened that day, 0.15
+seconds once stored; one answered 500 after 83 seconds while the server was busy. That same day the
+search pages started linking these pages (`:gift_links`), so a crawler would have met them cold.
+Two causes, two changes:
+
+- **The page ran the engine again.** The stored answer is keyed on `checked_at`, which the nightly
+  plan renews, so every night retired every page's answer, and the plan threw away the one it had
+  just worked out. Now `GiftLandingPlanner::record()` stores it under the page's key
+  (`GiftLanding::verdictsKey()`), six hours longer than the page's own day so the gap between two
+  nights' runs is never a cold page. Only a `?budget=` page still runs the engine on a visit.
+- **The engine spent 1.5 to 2 seconds keeping its picks varied.** `SuggestionEngine::diversify()`
+  compared every candidate with every pick so far on each round and cut both titles into words each
+  time: 83,000 comparisons for 300 candidates and 24 picks. It now keeps each candidate's penalty and
+  raises it by the newest pick alone, with each title cut once: 7,200 comparisons, about 85 ms. The
+  picks are the same, in the same order: 27 briefs over three markets were compared id by id and
+  score by score before and after. Find a gift and the nightly plan (about 400 engine runs per
+  market) gain the same.
+
+What is left of a cold engine run is the text search on `products` (the candidate query above).

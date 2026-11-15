@@ -94,13 +94,11 @@ class GiftLandingController extends Controller
          * the old key held ids only.
          */
         $verdicts = Cache::remember(
-            sprintf('bc:gift-landing:v2:%d:%d:%s', $page->id, $page->checked_at->getTimestamp(), BriefUrl::budgetParam($budget[0] ?? null, $budget[1] ?? null) ?? 'all'),
+            $page->verdictsKey(BriefUrl::budgetParam($budget[0] ?? null, $budget[1] ?? null)),
             (int) config('giftcoves.gift_landings.cache_ttl', 86400),
-            fn (): array => array_map(fn (Suggestion $s) => [
-                'id' => $s->group->id,
-                'fits' => $s->fits(),
-                'chosenByOthers' => $s->chosenByOthers(),
-            ], $engine->suggest($brief)),
+            // Only a budget, or a page the night's plan has not reached, runs the engine
+            // here: the planner stores its own answer for the page itself.
+            fn (): array => GiftLanding::verdicts($engine->suggest($brief)),
         );
 
         $ids = array_map(fn (array $v) => (int) $v['id'], $verdicts);

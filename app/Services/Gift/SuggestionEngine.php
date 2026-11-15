@@ -1226,6 +1226,26 @@ class SuggestionEngine
         /** @var array<string, int> $taken interest => picks so far */
         $taken = [];
 
+        /*
+         * Each candidate's penalty is kept and raised as picks are made, and
+         * each title is cut into words once (2026-11-15).
+         *
+         * The loop used to work the penalty out from nothing on every round:
+         * every candidate against every pick so far, cutting both titles into
+         * words each time. For 300 candidates and 24 picks that is 83,000
+         * comparisons and 166,000 regex splits, 1.5 to 2 seconds of a gift
+         * page's build, measured. The penalty is a maximum over the picks, so
+         * raising it by the newest pick alone gives the same number: 7,200
+         * comparisons, the same picks in the same order.
+         */
+        $penalties = [];
+        $words = [];
+
+        foreach ($pool as $index => $candidate) {
+            $penalties[$index] = 0.0;
+            $words[$index] = $this->titleWords($candidate->group->title);
+        }
+
         while (count($picked) < $limit && $pool !== []) {
             $bestIndex = null;
             $bestValue = -INF;
@@ -1239,15 +1259,9 @@ class SuggestionEngine
             );
 
             foreach (($eligible !== [] ? $eligible : $pool) as $index => $candidate) {
-                $penalty = 0.0;
-
-                foreach ($picked as $chosen) {
-                    $penalty = max($penalty, $this->similarity($candidate, $chosen));
-                }
-
                 // Scores are out of 100 and similarity is 0-1, so the penalty is
                 // scaled to the same range or it would never bite.
-                $value = ($lambda * $candidate->score) - ((1 - $lambda) * $penalty * 100);
+                $value = ($lambda * $candidate->score) - ((1 - $lambda) * $penalties[$index] * 100);
 
                 if ($value > $bestValue) {
                     $bestValue = $value;
@@ -1259,14 +1273,20 @@ class SuggestionEngine
                 break;
             }
 
-            $picked[] = $pool[$bestIndex];
-            $interest = $this->interestOf($pool[$bestIndex]);
+            $chosen = $pool[$bestIndex];
+            $picked[] = $chosen;
+            $interest = $this->interestOf($chosen);
 
             if ($interest !== null) {
                 $taken[$interest] = ($taken[$interest] ?? 0) + 1;
             }
 
             unset($pool[$bestIndex]);
+
+            // How like the newest pick each remaining candidate is.
+            foreach ($pool as $index => $candidate) {
+                $penalties[$index] = max($penalties[$index], $this->similarity($candidate, $chosen, $words[$index], $words[$bestIndex]));
+            }
         }
 
         return $picked;
@@ -1295,8 +1315,11 @@ class SuggestionEngine
      * notices — two headphones from different brands still read as "you showed
      * me headphones twice". Title overlap catches the rest, and matters most
      * where the feed's category field is empty, which is often.
+     *
+     * @param  list<string>  $wordsA  the title's words, from {@see self::titleWords()}
+     * @param  list<string>  $wordsB
      */
-    private function similarity(Suggestion $a, Suggestion $b): float
+    private function similarity(Suggestion $a, Suggestion $b, array $wordsA, array $wordsB): float
     {
         $score = 0.0;
 
@@ -1308,24 +1331,31 @@ class SuggestionEngine
             $score += 0.2;
         }
 
-        $score += 0.4 * $this->titleOverlap($a->group->title, $b->group->title);
+        $score += 0.4 * $this->titleOverlap($wordsA, $wordsB);
 
         return min(1.0, $score);
     }
 
-    private function titleOverlap(string $left, string $right): float
+    /**
+     * A title as its distinct words of three letters or more.
+     *
+     * @return list<string>
+     */
+    private function titleWords(string $title): array
     {
-        $tokenise = static function (string $text): array {
-            $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
-            // Two-letter tokens are model numbers and noise words; they make
-            // unrelated products look similar.
-            return array_values(array_unique(array_filter($words, fn (string $w) => mb_strlen($w) > 2)));
-        };
+        // Two-letter tokens are model numbers and noise words; they make
+        // unrelated products look similar.
+        return array_values(array_unique(array_filter($words, fn (string $w) => mb_strlen($w) > 2)));
+    }
 
-        $a = $tokenise($left);
-        $b = $tokenise($right);
-
+    /**
+     * @param  list<string>  $a  distinct words
+     * @param  list<string>  $b  distinct words
+     */
+    private function titleOverlap(array $a, array $b): float
+    {
         if ($a === [] || $b === []) {
             return 0.0;
         }
@@ -1333,8 +1363,9 @@ class SuggestionEngine
         $shared = count(array_intersect($a, $b));
 
         // Jaccard, so a long title cannot look similar to everything just by
-        // containing more words.
-        return $shared / count(array_unique([...$a, ...$b]));
+        // containing more words. Both lists are distinct, so the union is the
+        // two sizes less what they share.
+        return $shared / (count($a) + count($b) - $shared);
     }
 
     /** LIKE wildcards inside user text are literal characters, not operators. */
