@@ -17,6 +17,7 @@ use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Seo\StructuredData;
 use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -322,6 +323,43 @@ class SearchTest extends TestCase
 
         $this->assertGreaterThan($comparable, $all, 'the filter must actually narrow the set');
         $this->assertSame(3, $comparable, 'Sony, Philips and Nedis are each sold by two shops');
+    }
+
+    /** The first five results as products in the page's structured data (owner, 2026-11-15). */
+    #[Test]
+    public function the_first_five_results_are_marked_up_as_products(): void
+    {
+        $response = $this->search(['sort' => 'newest'])->assertOk();
+        $items = $response->viewData('page')['props']['results']['items'];
+        $this->assertNotEmpty($items);
+
+        preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', (string) $response->getContent(), $m);
+        $products = array_values(array_filter(
+            array_map(fn (string $json) => json_decode($json, true), $m[1]),
+            fn ($node) => ($node['@type'] ?? null) === 'Product',
+        ));
+
+        // In the order of the page, each pointing at its own product page with the price its card shows.
+        // (The test catalogue is smaller than five; the cap is checked on its own below.)
+        $this->assertCount(min(5, count($items)), $products);
+        foreach ($products as $i => $product) {
+            $this->assertStringContainsString("/p/{$items[$i]['id']}/", $product['url']);
+            $this->assertSame(number_format($items[$i]['minPrice'] / 100, 2, '.', ''), $product['offers']['lowPrice']);
+            $this->assertSame('EUR', $product['offers']['priceCurrency']);
+        }
+
+        // Never more than five, and a product nobody sells is named without an offer.
+        $seven = [];
+        foreach (range(1, 7) as $n) {
+            $seven[] = (new ProductGroup)->forceFill([
+                'id' => $n, 'market' => Market::BeNl, 'slug' => "ding-{$n}", 'title' => "Ding {$n}",
+                'in_stock' => $n !== 2, 'min_price' => 1000 * $n, 'max_price' => 1500 * $n, 'offer_count' => $n,
+            ]);
+        }
+        $snippets = StructuredData::productSnippets($seven, Market::BeNl);
+        $this->assertCount(5, $snippets);
+        $this->assertSame('10.00', $snippets[0]['offers']['lowPrice']);
+        $this->assertArrayNotHasKey('offers', $snippets[1]);
     }
 
     #[Test]

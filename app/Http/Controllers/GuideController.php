@@ -471,6 +471,12 @@ class GuideController extends Controller
             ));
         }
 
+        // The first five picks as products, beside the list above (owner, 2026-11-15);
+        // see StructuredData::productSnippets().
+        foreach (StructuredData::productSnippets($guide->picks->loadMissing('group')->pluck('group'), $current->get()) as $snippet) {
+            $meta->addJsonLd($snippet);
+        }
+
         if (is_array($guide->faq) && $guide->faq !== []) {
             // Plain text: a crawler reads an acceptedAnswer literally, so an
             // anchor tag there is markup in a field that expects prose.

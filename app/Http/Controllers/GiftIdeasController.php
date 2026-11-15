@@ -248,6 +248,11 @@ class GiftIdeasController extends Controller
             canonical: $url,
         );
 
+        // The first five picks as products (owner, 2026-11-15); see StructuredData::productSnippets().
+        foreach (StructuredData::productSnippets($persona->picks->loadMissing('group')->pluck('group'), $current->get()) as $snippet) {
+            app(PageMeta::class)->addJsonLd($snippet);
+        }
+
         app(PageMeta::class)->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.gift_ideas.title'), 'url' => url($current->url('gift-ideas'))],

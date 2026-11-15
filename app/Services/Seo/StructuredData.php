@@ -83,6 +83,76 @@ class StructuredData
     }
 
     /**
+     * Product data for the first products of a page that lists several: a search result, a Cove.
+     *
+     * Owner, 2026-11-15: "add product snippets for the first 5 items". One `Product` per item, each with the
+     * address of its own page, so a search engine can read what the page's first results are and what they
+     * cost. Five and not all of them: the first five are what a visitor sees without scrolling, and a result
+     * page of 48 would carry 48 blocks of markup on every request.
+     *
+     * The same rule as {@see self::product()}: only what the page visibly shows. The card of each of these
+     * shows the name, the picture and the lowest price, so that is what is said here, from the product's own
+     * stored figures (`min_price`, `max_price`, `offer_count`), never from text. A product nobody sells right
+     * now is named without an offer, not left out: it is still one of the first five.
+     *
+     * Good to know when judging it later: Google documents product rich results for a page about one product,
+     * and treats a page listing several as a list. This markup is valid there and readable by anything that
+     * reads schema.org, but a price under a search result of ours in Google is not something it promises.
+     *
+     * @param  iterable<ProductGroup|null>  $groups  in the order the page shows them
+     * @return list<array<string, mixed>>
+     */
+    public static function productSnippets(iterable $groups, Market $market, int $limit = 5): array
+    {
+        $snippets = [];
+
+        foreach ($groups as $group) {
+            if (count($snippets) >= $limit) {
+                break;
+            }
+
+            // A pick whose product has gone, or one that is not a catalogue product, has no page to point at.
+            if (! $group instanceof ProductGroup) {
+                continue;
+            }
+
+            $data = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Product',
+                'name' => $group->heading(),
+                'url' => url($group->path()),
+            ];
+
+            if ($group->image_url !== null) {
+                $data['image'] = $group->image_url;
+            }
+
+            if ($group->brand !== null) {
+                $data['brand'] = ['@type' => 'Brand', 'name' => $group->brand];
+            }
+
+            if ($group->identity_kind?->value === 'ean') {
+                $data['gtin13'] = $group->identity_key;
+            }
+
+            if ($group->in_stock && $group->min_price !== null) {
+                $data['offers'] = [
+                    '@type' => 'AggregateOffer',
+                    'priceCurrency' => $market->currency(),
+                    'lowPrice' => number_format($group->min_price / 100, 2, '.', ''),
+                    'highPrice' => number_format(max($group->max_price ?? 0, $group->min_price) / 100, 2, '.', ''),
+                    'offerCount' => max(1, (int) $group->offer_count),
+                    'availability' => 'https://schema.org/InStock',
+                ];
+            }
+
+            $snippets[] = $data;
+        }
+
+        return $snippets;
+    }
+
+    /**
      * Breadcrumbs, so a listing shows a readable path rather than a bare URL.
      *
      * @param  list<array{name: string, url: string}>  $crumbs

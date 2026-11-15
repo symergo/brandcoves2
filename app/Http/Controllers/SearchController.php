@@ -673,6 +673,11 @@ class SearchController extends Controller
                 robots: self::words($query->term) > SearchLog::MAX_WORDS ? 'noindex, follow' : null,
             )
             ->addJsonLd(StructuredData::website(url('/'), $current->get()));
+
+        // The first five results as products (owner, 2026-11-15); see StructuredData::productSnippets().
+        foreach (StructuredData::productSnippets($result->groups->items(), $current->get()) as $snippet) {
+            app(PageMeta::class)->addJsonLd($snippet);
+        }
     }
 
     /**

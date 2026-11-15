@@ -64,6 +64,16 @@ Rules that keep it honest, because fabricated markup is a manual-action risk:
 - Prices are formatted as decimal strings, not floats: `329.99` serialised from
   a float lands as `329.99000000000001` often enough to matter.
 
+**The first five items of a list page are marked up as products (2026-11-15).** Owner: "add product
+snippets for the first 5 items". Search result pages and the Coves (Daily, gift ideas, guides) each send
+one `Product` per item for their first five, with the product page's address, picture, brand, barcode
+where it is a real one, and the lowest and highest price and shop count from the product's own stored
+figures (`StructuredData::productSnippets()`). Only what the card on the page shows; a product nobody
+sells is named without an offer. Guides keep their `ItemList` beside it. Google documents product rich
+results for a page about one product, so a price under one of our search results is not promised by
+this; the markup is valid for a list and readable by anything that reads schema.org. Test:
+`SearchTest::the_first_five_results_are_marked_up_as_products`.
+
 Also emitted: `BreadcrumbList` on product pages, `WebSite` with a `SearchAction`
 so a listing can offer a search box.
 
