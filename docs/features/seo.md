@@ -66,10 +66,13 @@ Rules that keep it honest, because fabricated markup is a manual-action risk:
 
 **The first five items of a list page are marked up as products (2026-11-15).** Owner: "add product
 snippets for the first 5 items". Search result pages and the Coves (Daily, gift ideas, guides) each send
-one `Product` per item for their first five, with the product page's address, picture, brand, barcode
+one list (`ItemList`) whose first five entries are a `Product` each (five loose `Product` blocks for an
+hour: a page with a Product of its own tells Google it is about that product, and one product would have
+said so of a list page), with the product page's address, picture, brand, barcode
 where it is a real one, and the lowest and highest price and shop count from the product's own stored
-figures (`StructuredData::productSnippets()`). Only what the card on the page shows; a product nobody
-sells is named without an offer. Guides keep their `ItemList` beside it. Google documents product rich
+figures (`StructuredData::productList()`; a guide's existing list of every pick gets its first five
+turned into products, `withProducts()`). Only what the card on the page shows; a product nobody
+sells is named without an offer. Google documents product rich
 results for a page about one product, so a price under one of our search results is not promised by
 this; the markup is valid for a list and readable by anything that reads schema.org. Test:
 `SearchTest::the_first_five_results_are_marked_up_as_products`.

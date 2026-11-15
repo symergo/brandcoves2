@@ -248,9 +248,10 @@ class GiftIdeasController extends Controller
             canonical: $url,
         );
 
-        // The first five picks as products (owner, 2026-11-15); see StructuredData::productSnippets().
-        foreach (StructuredData::productSnippets($persona->picks->loadMissing('group')->pluck('group'), $current->get()) as $snippet) {
-            app(PageMeta::class)->addJsonLd($snippet);
+        // The first five picks as a list of products (owner, 2026-11-15); see StructuredData::productList().
+        $products = StructuredData::productList($persona->picks->loadMissing('group')->pluck('group'), $current->get(), app(PageMeta::class)->toArray()['title'] ?? null, app(PageMeta::class)->toArray()['canonical'] ?? null);
+        if ($products !== null) {
+            app(PageMeta::class)->addJsonLd($products);
         }
 
         app(PageMeta::class)->addJsonLd(StructuredData::breadcrumbs([

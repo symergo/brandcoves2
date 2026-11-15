@@ -395,9 +395,10 @@ class DailyCoveController extends Controller
          * URLs for a day and the archive copy competes with the live page for
          * the same query.
          */
-        // The first five picks as products (owner, 2026-11-15); see StructuredData::productSnippets().
-        foreach (StructuredData::productSnippets($edition->picks->loadMissing('group')->pluck('group'), $current->get()) as $snippet) {
-            $meta->addJsonLd($snippet);
+        // The first five picks as a list of products (owner, 2026-11-15); see StructuredData::productList().
+        $products = StructuredData::productList($edition->picks->loadMissing('group')->pluck('group'), $current->get(), $meta->toArray()['title'] ?? null, $meta->toArray()['canonical'] ?? null);
+        if ($products !== null) {
+            $meta->addJsonLd($products);
         }
 
         $meta->addJsonLd(StructuredData::breadcrumbs([

@@ -460,21 +460,20 @@ class GuideController extends Controller
         // worse than staying quiet — so a kind with no shortlist emits no
         // ItemList at all rather than an empty one.
         if ($items !== []) {
-            $meta->addJsonLd(StructuredData::itemList(
-                array_map(fn (array $item) => [
-                    'name' => $item['title'],
-                    'url' => url($item['url']),
-                    'image' => $item['image'],
-                ], $items),
-                $guide->theme_title,
-                $url,
+            // The list names every pick; its first five are products, with what their cards
+            // show (owner, 2026-11-15; StructuredData::withProducts()).
+            $meta->addJsonLd(StructuredData::withProducts(
+                StructuredData::itemList(
+                    array_map(fn (array $item) => [
+                        'name' => $item['title'],
+                        'url' => url($item['url']),
+                        'image' => $item['image'],
+                    ], $items),
+                    $guide->theme_title,
+                    $url,
+                ),
+                StructuredData::productSnippets($guide->picks->loadMissing('group')->pluck('group'), $current->get()),
             ));
-        }
-
-        // The first five picks as products, beside the list above (owner, 2026-11-15);
-        // see StructuredData::productSnippets().
-        foreach (StructuredData::productSnippets($guide->picks->loadMissing('group')->pluck('group'), $current->get()) as $snippet) {
-            $meta->addJsonLd($snippet);
         }
 
         if (is_array($guide->faq) && $guide->faq !== []) {

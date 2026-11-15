@@ -85,7 +85,8 @@ class StructuredData
     /**
      * Product data for the first products of a page that lists several: a search result, a Cove.
      *
-     * Owner, 2026-11-15: "add product snippets for the first 5 items". One `Product` per item, each with the
+     * Owner, 2026-11-15: "add product snippets for the first 5 items". The pages do not send these loose:
+     * {@see self::productList()} and {@see self::withProducts()} put them in a list. One `Product` per item, each with the
      * address of its own page, so a search engine can read what the page's first results are and what they
      * cost. Five and not all of them: the first five are what a visitor sees without scrolling, and a result
      * page of 48 would carry 48 blocks of markup on every request.
@@ -150,6 +151,64 @@ class StructuredData
         }
 
         return $snippets;
+    }
+
+    /**
+     * The first products of a list page as one list: an ItemList whose entries are the products.
+     *
+     * One list and not five loose `Product` blocks (2026-11-15, the same day they were added): Google reads a
+     * page with one Product as a page about that product, and supports its product results for such pages
+     * only. A search result or a Cove is a list, and this says so: "a list, these are its first entries, each
+     * has a page of its own". It is also the shape Google's own list formats ask for. Null when there is
+     * nothing to list, because an empty ItemList claims the page ranks nothing.
+     *
+     * @param  iterable<ProductGroup|null>  $groups  in the order the page shows them
+     * @return array<string, mixed>|null
+     */
+    public static function productList(iterable $groups, Market $market, ?string $name, ?string $url, int $limit = 5): ?array
+    {
+        $products = self::productSnippets($groups, $market, $limit);
+
+        if ($products === []) {
+            return null;
+        }
+
+        return array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'name' => $name,
+            'url' => $url,
+            'itemListElement' => array_map(fn (int $i, array $product) => [
+                '@type' => 'ListItem',
+                'position' => $i + 1,
+                'item' => array_diff_key($product, ['@context' => true]),
+            ], array_keys($products), $products),
+        ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * An existing ItemList with its entries turned into products where we have them (the guides, whose list
+     * names every pick): an entry whose address is one of the products' becomes that product.
+     *
+     * @param  array<string, mixed>  $list  from {@see self::itemList()}
+     * @param  list<array<string, mixed>>  $products  from {@see self::productSnippets()}
+     * @return array<string, mixed>
+     */
+    public static function withProducts(array $list, array $products): array
+    {
+        $byUrl = [];
+        foreach ($products as $product) {
+            $byUrl[$product['url']] = array_diff_key($product, ['@context' => true]);
+        }
+
+        $list['itemListElement'] = array_map(
+            fn (array $entry): array => isset($byUrl[$entry['url'] ?? ''])
+                ? ['@type' => 'ListItem', 'position' => $entry['position'], 'item' => $byUrl[$entry['url']]]
+                : $entry,
+            $list['itemListElement'],
+        );
+
+        return $list;
     }
 
     /**

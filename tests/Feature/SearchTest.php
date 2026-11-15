@@ -334,10 +334,15 @@ class SearchTest extends TestCase
         $this->assertNotEmpty($items);
 
         preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', (string) $response->getContent(), $m);
-        $products = array_values(array_filter(
-            array_map(fn (string $json) => json_decode($json, true), $m[1]),
-            fn ($node) => ($node['@type'] ?? null) === 'Product',
-        ));
+        $nodes = array_map(fn (string $json) => json_decode($json, true), $m[1]);
+
+        // One list, not loose products: a page with a Product of its own says it is about that product.
+        $this->assertSame([], array_filter($nodes, fn ($node) => ($node['@type'] ?? null) === 'Product'));
+        $lists = array_values(array_filter($nodes, fn ($node) => ($node['@type'] ?? null) === 'ItemList'));
+        $this->assertCount(1, $lists);
+        $this->assertSame(range(1, count($lists[0]['itemListElement'])), array_column($lists[0]['itemListElement'], 'position'));
+        $products = array_column($lists[0]['itemListElement'], 'item');
+        $this->assertSame(['Product'], array_values(array_unique(array_column($products, '@type'))));
 
         // In the order of the page, each pointing at its own product page with the price its card shows.
         // (The test catalogue is smaller than five; the cap is checked on its own below.)
@@ -360,6 +365,12 @@ class SearchTest extends TestCase
         $this->assertCount(5, $snippets);
         $this->assertSame('10.00', $snippets[0]['offers']['lowPrice']);
         $this->assertArrayNotHasKey('offers', $snippets[1]);
+
+        // A guide's list of every pick: the entries we have a product for become that product.
+        $list = StructuredData::itemList([['name' => 'Ding 1', 'url' => $snippets[0]['url'], 'image' => null], ['name' => 'Iets anders', 'url' => 'https://example.test/x', 'image' => null]], 'Gids', 'https://example.test/gids');
+        $merged = StructuredData::withProducts($list, $snippets)['itemListElement'];
+        $this->assertSame('Product', $merged[0]['item']['@type']);
+        $this->assertSame('Iets anders', $merged[1]['name']);
     }
 
     #[Test]

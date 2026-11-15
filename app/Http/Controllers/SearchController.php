@@ -674,9 +674,10 @@ class SearchController extends Controller
             )
             ->addJsonLd(StructuredData::website(url('/'), $current->get()));
 
-        // The first five results as products (owner, 2026-11-15); see StructuredData::productSnippets().
-        foreach (StructuredData::productSnippets($result->groups->items(), $current->get()) as $snippet) {
-            app(PageMeta::class)->addJsonLd($snippet);
+        // The first five results as a list of products (owner, 2026-11-15); see StructuredData::productList().
+        $products = StructuredData::productList($result->groups->items(), $current->get(), app(PageMeta::class)->toArray()['title'] ?? null, app(PageMeta::class)->toArray()['canonical'] ?? null);
+        if ($products !== null) {
+            app(PageMeta::class)->addJsonLd($products);
         }
     }
 
