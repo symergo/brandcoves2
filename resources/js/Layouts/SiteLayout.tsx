@@ -9,6 +9,7 @@ import ContributeBar from '../Components/ContributeBar'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
+import SignInLink from '../Components/SignInLink'
 import MarketBar from '../Components/MarketBar'
 import MarketButton, { MarketList } from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuGroup } from '../Components/NavMenu'
@@ -555,40 +556,52 @@ function Chrome({ children }: PropsWithChildren) {
                           room for it. "Inloggen" as a word did not fit in
                           any language at 360px, hence the icon.
                         */}
-                        <button
-                            type="button"
-                            className="flex h-11 items-center gap-0.5 rounded-lg px-1.5 text-ink hover:bg-line/40"
-                            aria-expanded={accountOpen}
-                            aria-controls="account-sheet"
-                            onClick={() => {
-                                setMenuOpen(false)
-                                setAccountOpen(!accountOpen)
-                            }}
-                        >
-                            <span aria-hidden className="relative">
-                                {auth.user ? (
+                        {/* Nobody signed in: the icon is the way to sign in (owner,
+                            2026-11-15: "the account icon should be a login link
+                            when no one is logged in"). It opened the account
+                            sheet until then, where "Sign in" was the last of six
+                            rows. SignInLink opens the sign-in dialog over the
+                            page being read and is a plain link to the login page
+                            without JavaScript. No arrow: it opens nothing to
+                            choose from. What the sheet held for a visitor (My
+                            Coves, help) is in the menu beside it. */}
+                        {auth.user === null ? (
+                            <SignInLink className="flex h-11 items-center rounded-lg px-1.5 text-ink hover:bg-line/40">
+                                <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/40">
+                                    <ToolIcon name="signin" className="h-4 w-4" />
+                                </span>
+                                <span className="sr-only">{t('nav.sign_in')}</span>
+                            </SignInLink>
+                        ) : (
+                            <button
+                                type="button"
+                                className="flex h-11 items-center gap-0.5 rounded-lg px-1.5 text-ink hover:bg-line/40"
+                                aria-expanded={accountOpen}
+                                aria-controls="account-sheet"
+                                onClick={() => {
+                                    setMenuOpen(false)
+                                    setAccountOpen(!accountOpen)
+                                }}
+                            >
+                                <span aria-hidden className="relative">
                                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white ring-2 ring-accent/25 ring-offset-1 ring-offset-cream">
                                         {(auth.user.name?.trim() || auth.user.email).slice(0, 1).toUpperCase()}
                                     </span>
-                                ) : (
-                                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/40">
-                                        <ToolIcon name="signin" className="h-4 w-4" />
-                                    </span>
-                                )}
-                                {auth.user && unreadCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 rounded-full bg-ink px-1 text-2xs leading-4 font-semibold text-white">
-                                        {unreadCount > 9 ? '9+' : unreadCount}
-                                    </span>
-                                )}
-                            </span>
-                            <ToolIcon
-                                name="chevron"
-                                className={`h-3.5 w-3.5 transition-transform max-[359px]:hidden ${accountOpen ? 'rotate-180' : ''}`}
-                            />
-                            <span className="sr-only">
-                                {auth.user && unreadCount > 0 ? `${t('nav.account')} (${t('nav.notifications')}: ${unreadCount})` : t('nav.account')}
-                            </span>
-                        </button>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 rounded-full bg-ink px-1 text-2xs leading-4 font-semibold text-white">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </span>
+                                <ToolIcon
+                                    name="chevron"
+                                    className={`h-3.5 w-3.5 transition-transform max-[359px]:hidden ${accountOpen ? 'rotate-180' : ''}`}
+                                />
+                                <span className="sr-only">
+                                    {unreadCount > 0 ? `${t('nav.account')} (${t('nav.notifications')}: ${unreadCount})` : t('nav.account')}
+                                </span>
+                            </button>
+                        )}
                     </div>
 
                     <div className="hidden shrink-0 items-center gap-2 xl:flex">

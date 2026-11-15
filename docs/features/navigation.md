@@ -762,3 +762,13 @@ two spans over the input rather than the `placeholder` attribute, which CSS cann
 7rem the magnifier link stays. Enter submits; the separate submit button went, the magnifier in
 front already says what the box does. Measured at 1280 and 1440: Dutch and French both get the
 full sentence.
+
+## The account icon signs a visitor in (2026-11-15)
+
+Owner: "the account icon/link should be a login link when no one is logged in." On a phone and a tablet
+the round icon at the right of the header opened the account sheet for everybody; for a visitor that
+sheet was My Coves, help and, last of the rows, "Sign in". Now the icon is `SignInLink` when nobody is
+signed in: it opens the sign-in dialog over the page being read, and is a plain link to the login page
+without JavaScript. It has no arrow, since it opens nothing to choose from. Signed in, it is the button
+it was (initial, unread count, arrow, the sheet). The desktop header already had "Inloggen" as its own
+button. What the sheet held for a visitor is in the menu beside the icon.
