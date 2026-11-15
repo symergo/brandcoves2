@@ -624,7 +624,7 @@ class WishlistController extends Controller
         string $market,
         string $list,
         ContributionView $contributor,
-    ): Response {
+    ): Response|RedirectResponse {
         $owner = Owner::fromRequest($request);
 
         // Collaborators see it too — a co-giver invited to help choose has to
@@ -637,6 +637,27 @@ class WishlistController extends Controller
         $wishlist = Wishlist::query()->find($list);
 
         if ($wishlist === null || ! ListAccess::allows($wishlist, $owner)) {
+            /*
+             * Not signed in, and the list belongs to an account: ask them to
+             * sign in and bring them back here, instead of a 404 (owner,
+             * 2026-11-15). The price update mail links to the owner's own
+             * list, and whoever opened it signed out, or on another device
+             * than the one they use the site on, was told the page does not
+             * exist. The same goes for a reminder or a bookmark of your own
+             * list. `guest()` remembers this address, and both sign-in routes
+             * end in `redirect()->intended()`.
+             *
+             * Signed in and still not allowed, it stays a 404: a list that is
+             * not yours is not confirmed to exist with anything on it. A list
+             * kept by a visitor without an account (no owner_user_id) also
+             * stays a 404: signing in cannot open it. What a signed-out visitor
+             * can learn from the redirect is that an address is a list of some
+             * account, and a list's key is a uuid nobody can guess.
+             */
+            if ($wishlist !== null && $wishlist->owner_user_id !== null && $request->user() === null) {
+                return redirect()->guest($current->url('login'));
+            }
+
             throw new NotFoundHttpException;
         }
 

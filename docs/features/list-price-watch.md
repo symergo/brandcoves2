@@ -129,3 +129,22 @@ wobble. Existing lists keep what their owner set: nothing was switched on retroa
 mail's reason line no longer says "you switched it on" but "this list watches its prices; new lists
 do unless you switch it off", in all four languages. A list with no signed-in owner has nobody to
 mail, so nothing changes for guests.
+
+## The mail's link when you are not signed in (2026-11-15)
+
+The mail links to the owner's own list (`/{market}/lists/{id}`). Opened signed out, on another device
+or after the session ended, that page answered **404**: `WishlistController::show()` gives a list you
+may not see the same answer as a list that does not exist, and a signed-out visitor is not the owner.
+The owner reported it from a real mail.
+
+Now a signed-out visitor of a list that belongs to an account is sent to the sign-in page and comes
+back to the list afterwards (`redirect()->guest()`, and both sign-in routes end in
+`redirect()->intended()`). Signed in and not allowed is still a 404, and so is a list kept without an
+account, which signing in cannot open. The return trip lives in the browser session: a magic link
+opened in another browser lands on My Coves instead.
+
+Asked the same day and not built: letting the mail's link sign the reader in by itself, like a magic
+link. What stands against it: the mail stays in an inbox for weeks and gets forwarded, and whoever
+holds it would be in the account; a magic link lives 15 minutes for that reason. See auth.md, "Bots,
+and mail scanners opening the link". Test:
+`WishlistTest::a_signed_out_visitor_of_an_accounts_list_is_asked_to_sign_in_and_comes_back_to_it`.

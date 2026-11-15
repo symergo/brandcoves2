@@ -287,6 +287,28 @@ class WishlistTest extends TestCase
             ->assertNotFound();
     }
 
+    /**
+     * The price update mail links to the owner's own list. Opened signed out
+     * (another device, an expired session) it answered 404 until 2026-11-15.
+     */
+    #[Test]
+    public function a_signed_out_visitor_of_an_accounts_list_is_asked_to_sign_in_and_comes_back_to_it(): void
+    {
+        $me = $this->user();
+        $list = Wishlist::create(['owner_user_id' => $me->id, 'title' => 'Mine', 'market' => Market::BeNl]);
+        $page = "/be-nl/lists/{$list->id}";
+
+        $this->get($page)->assertRedirect('/be-nl/login');
+        // Where the sign-in routes send them afterwards (redirect()->intended()).
+        $this->assertSame(url($page), session('url.intended'));
+
+        // A list that does not exist is still a 404, signed out or not.
+        $this->get('/be-nl/lists/'.Str::uuid())->assertNotFound();
+
+        // Signed in as the owner: the list. As somebody else: still a 404 (the test above).
+        $this->actingAs($me)->get($page)->assertOk();
+    }
+
     #[Test]
     public function a_private_list_is_not_reachable_by_its_share_token(): void
     {
