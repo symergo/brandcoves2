@@ -202,6 +202,26 @@ How it runs, and why that way:
 A product that gets no tag at all stays in `gift_tags = '[]'` and still looks untagged. That is
 right: nothing was decided about it.
 
+## Tags first: the engine skips the text search where tags can fill the pool (2026-11-15)
+
+Owner's decision, on advice. The engine found candidates two ways at once: the interest's angle
+words searched in the text of every offer (a guess), and the interest's tag (a decision). The guess
+was the way in when about 2,700 products were tagged. Since the whole-catalogue pass it had become
+the expensive half: on production, be-nl "music", the words matched 634,000 offers, the database
+read 160,000 pages to check them, and the one query took 39 to 55 seconds, past a web request's 30.
+Gift landing pages for music and gaming answered 500 when not cached, and the nightly plan ran out
+of its hour. The same interest by tag: 4,559 products in 27 ms.
+
+Now `SuggestionEngine::pool()` leaves the text search out when **every** interest asked has at
+least `giftcoves.gift.tags_first_minimum` (300, the candidate pool) tagged products that are
+giftable and in stock (`enoughTagged()`, counted to the minimum, kept an hour). The crowd's tags
+still count as candidates. Text still runs for an interest with fewer tagged products, for a
+free-text interest with no tag, and with the setting at zero.
+
+What it costs: a product that fits an interest and was never tagged for it is no longer a candidate
+for that interest. So tagging has to keep up with the catalogue: the tagging queue for new products
+(below), and the Cove step (next section).
+
 ## Tagged when a Cove is built (2026-11-15)
 
 Picking products for a Cove and tagging them were two jobs, so a Cove could be published full of

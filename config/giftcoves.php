@@ -964,6 +964,16 @@ return [
          */
         'results' => 8,
 
+        /*
+         * Tags first (owner, 2026-11-15). When an interest has at least this
+         * many tagged products, giftable and in stock, the engine takes its
+         * candidates from the tags alone and skips the text search over every
+         * offer, which took up to 55 seconds for interests whose words are
+         * common ("music", "gaming"). 300 is the candidate pool: enough tagged
+         * products to fill it. Zero switches this off.
+         */
+        'tags_first_minimum' => 300,
+
         // Maximal Marginal Relevance. Without diversification the top four are
         // near-duplicates, because whatever scores well scores well for the same
         // reasons. 0.65 favours relevance while still breaking up clusters.

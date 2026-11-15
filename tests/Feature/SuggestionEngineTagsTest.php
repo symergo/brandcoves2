@@ -62,6 +62,37 @@ class SuggestionEngineTagsTest extends TestCase
     }
 
     #[Test]
+    public function an_interest_with_enough_tagged_products_is_answered_by_the_tags_alone(): void
+    {
+        $tagged = [
+            $this->giftable('Hario V60 set', 3500, ['interest:coffee'])->id,
+            $this->giftable('Handgemaakte mok', 2500, ['interest:coffee'])->id,
+        ];
+        // The title answers the coffee angle; nobody tagged it.
+        $byText = $this->giftable('Koffiemolen handmatig', 3000)->id;
+        $brief = fn () => new TasteBrief(market: Market::BeNl, interests: ['coffee']);
+        $ids = fn () => array_map(fn ($p) => $p->group->id, $this->engine()->suggest($brief()));
+
+        // Too few tagged to fill a pool (the default asks for 300): the text search still runs.
+        $this->assertContains($byText, $ids());
+
+        // Enough tagged: they are the candidates, and the text guess is left out.
+        config(['giftcoves.gift.tags_first_minimum' => 2]);
+        $this->assertEqualsCanonicalizing($tagged, $ids());
+
+        // An interest nobody tagged enough still reads the text.
+        $smartwatch = $this->giftable('Smartwatch sport GPS', 3500)->id;
+        $this->assertContains($smartwatch, array_map(
+            fn ($p) => $p->group->id,
+            $this->engine()->suggest(new TasteBrief(market: Market::BeNl, interests: ['tech'])),
+        ));
+
+        // Switched off: back to text and tags together.
+        config(['giftcoves.gift.tags_first_minimum' => 0]);
+        $this->assertContains($byText, $ids());
+    }
+
+    #[Test]
     public function a_tag_on_the_first_interest_outranks_a_text_match_on_the_second(): void
     {
         $tagged = $this->giftable('Handgemaakte mok', 3500, ['interest:coffee']);

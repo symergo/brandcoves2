@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Services\Charts\ChartDemand;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -614,20 +615,44 @@ class SuggestionEngine
              * a group in its own market (invariant 2), and the pool is already
              * this market's.
              */
+            /*
+             * Tags first (owner, 2026-11-15): when every interest asked has
+             * enough tagged products to fill the pool, the text search is
+             * left out and the tagged products are the candidates.
+             *
+             * The text search was the way in when almost nothing was tagged.
+             * Since the whole-catalogue pass of 2026-09-28 nearly every
+             * giftable product carries an editor's verdict on its interests,
+             * and the guess had become the expensive half: measured on
+             * production, be-nl "music", the angle words ("oordopjes",
+             * "draagbare speaker") matched 634,000 offers, 160,000 data pages
+             * were read to check them, and the query took 39 to 55 seconds,
+             * past the 30 a web request gets. The same interest by tag: 4,559
+             * products in 27 ms. An interest with few tagged products, or a
+             * free-text one with no tag at all, still searches the text.
+             */
+            $candidates = count($tags) === count($wanted) && $this->enoughTagged($brief->market->value, $tags)
+                ? null
+                : $byText;
+
             if ($tags !== []) {
                 $array = $this->pgTextArray($tags);
 
-                $byText->union(DB::table('product_groups')
+                $byTag = DB::table('product_groups')
                     ->select('id')
                     ->where('market', $market)
-                    ->whereRaw('gift_tags ??| ?::text[]', [$array]));
+                    ->whereRaw('gift_tags ??| ?::text[]', [$array]);
+
+                $candidates = $candidates === null ? $byTag : $candidates->union($byTag);
 
                 // What people's lists taught the catalogue (CountListSignals).
-                $byText->union(DB::table('product_groups')
+                $candidates->union(DB::table('product_groups')
                     ->select('id')
                     ->where('market', $market)
                     ->whereRaw('crowd_tags ??| ?::text[]', [$array]));
             }
+
+            $byText = $candidates;
 
             /*
              * `= ANY(ARRAY(...))`, not `IN (...)` (2026-11-15).
@@ -653,6 +678,48 @@ class SuggestionEngine
         // a second shop is a suggestion they can act on. Applied by the caller,
         // because the demand slice orders itself differently.
         return $groups;
+    }
+
+    /**
+     * Whether each of these interest tags has enough tagged products, giftable
+     * and in stock, to fill the candidate pool on its own.
+     *
+     * Counted to the minimum and no further, and kept an hour: tagging moves
+     * by batches, not by the minute. `giftcoves.gift.tags_first_minimum`; zero
+     * switches tags-first off and every search reads the text again.
+     *
+     * @param  list<string>  $tags
+     */
+    private function enoughTagged(string $market, array $tags): bool
+    {
+        $minimum = (int) config('giftcoves.gift.tags_first_minimum', self::CANDIDATE_POOL);
+
+        if ($minimum <= 0 || $tags === []) {
+            return false;
+        }
+
+        foreach ($tags as $tag) {
+            $count = Cache::remember(
+                "bc:gift:tagged:{$market}:{$tag}:{$minimum}",
+                3600,
+                fn (): int => DB::query()->fromSub(
+                    DB::table('product_groups')
+                        ->select('id')
+                        ->where('market', $market)
+                        ->where('giftable', true)
+                        ->where('in_stock', true)
+                        ->whereRaw('gift_tags ??| ?::text[]', [$this->pgTextArray([$tag])])
+                        ->limit($minimum),
+                    'tagged',
+                )->count(),
+            );
+
+            if ($count < $minimum) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
