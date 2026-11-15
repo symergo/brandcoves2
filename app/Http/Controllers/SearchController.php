@@ -36,7 +36,6 @@ use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Search\WaitShops;
 use App\Services\Seo\BrandLinker;
-use App\Services\Seo\Indexing;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
@@ -1125,9 +1124,6 @@ class SearchController extends Controller
             'merchantCount' => $group->merchant_count,
             'inStock' => $group->in_stock,
             'discountPercent' => $group->discountPercent(),
-            // Whether a crawler is asked to follow this card's link to the product
-            // page (2026-11-15): only where shops can be compared. See Indexing.
-            'follow' => Indexing::followFromSearch($group),
             // The cheapest shop, when CheapestOffer::attach() ran: the card opens it.
             'buy' => CheapestOffer::present($group),
         ];

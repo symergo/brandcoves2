@@ -22,12 +22,6 @@ export interface GroupCard {
     maxPrice: number | null
     offerCount: number
     merchantCount: number
-    /**
-     * False on a search result whose product page a crawler is not asked to
-     * follow: a product one shop sells (App\Services\Seo\Indexing, 2026-11-15).
-     * Absent everywhere else, which means follow.
-     */
-    follow?: boolean
     inStock: boolean
     discountPercent: number | null
     /**
@@ -88,9 +82,12 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [broken, setBroken] = useState(false)
-    // A crawler is asked to follow the link to the product page only where the
-    // server says so (search results: products more than one shop sells).
-    const productRel = group.follow === false ? 'nofollow' : undefined
+    // A crawler is not asked to follow a card to its product page (owner,
+    // 2026-11-15): this card is the grid of a search or brand page, and product
+    // pages are to be reached from the links in Coves only, so a crawl of the
+    // grids goes to more search results and not to the 5.7 million products.
+    // The page stays indexable; docs/features/seo.md has what was weighed.
+    const productRel = 'nofollow'
     // First failure: a resized address (proxy or the shop's own size), so fall
     // back to the shop's plain URL. Second: that too, so the placeholder.
     const [proxyFailed, setProxyFailed] = useState(false)
