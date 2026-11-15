@@ -109,6 +109,14 @@ class MarketRoutingTest extends TestCase
             ->get('/en')
             ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'nl-nl', 'remember' => false]));
 
+        // And between the two countries (owner, the same day: "do the same when someone from NL
+        // lands on a be page and the reverse"). The reverse, Belgium on a Dutch page, is above.
+        $inTheNetherlands = ['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'NL', 'Accept-Language' => 'nl-NL,nl;q=0.9'];
+        foreach (['/be-nl', '/be-fr'] as $belgianPage) {
+            $this->withHeaders($inTheNetherlands)->get($belgianPage)
+                ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'nl-nl', 'remember' => false]));
+        }
+
         // Somebody who chose the English market is left alone: a choice wins over a guess.
         $this->withCookie(MarketPreference::COOKIE, 'en')
             ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE'])

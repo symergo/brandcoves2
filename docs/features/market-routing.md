@@ -93,8 +93,9 @@ Belgium"), the other countries quiet beside it. Pressing it is the switcher's PO
 the choice, and the visitor lands on the same page in that market where it exists. The calm bar, the
 one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top should not jump out).
 
-It covers every case with a suggestion, not only English pages: a Belgian opening a Dutch link gets the
-same banner. Someone who chose the English market and sits in Belgium gets none: a choice wins over a
+It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when
+someone from NL lands on a be page and the reverse"): a Dutch visitor on a Belgian page is offered the
+Netherlands, a Belgian on a Dutch page Belgium. Someone who chose the English market and sits in Belgium gets none: a choice wins over a
 guess. Crawlers never get it. Texts: `market_bar.elsewhere` and `market_bar.go` in `lang/*/site.php`.
 
 ## Remembering the choice
