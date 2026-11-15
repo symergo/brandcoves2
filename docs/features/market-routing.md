@@ -80,6 +80,23 @@ second is what a market is. It fixes the common Belgian case described below (br
 - The header is trusted like `CF-Connecting-IP`: a request straight to the server can forge it, and
   gains only its own redirect.
 
+## The bar guides a visitor to their own country (2026-11-15)
+
+Owner: "When a visitor from Belgium or the Netherlands lands on an English page, show a top banner to
+guide them to the proper country page." The bar already appeared there, since geolocation made the
+guess Belgian or Dutch while the page is the English market, but it read as it does for a visitor at
+home: "Shops and prices for Europe" with the other countries as small buttons, one of them outlined.
+
+When `marketBar.suggest` is set, the bar now says so: tinted, "Looking for Belgium? This page shows
+shops and prices for Europe (English).", and the suggested country as a filled button ("Go to
+Belgium"), the other countries quiet beside it. Pressing it is the switcher's POST, so it also records
+the choice, and the visitor lands on the same page in that market where it exists. The calm bar, the
+one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top should not jump out).
+
+It covers every case with a suggestion, not only English pages: a Belgian opening a Dutch link gets the
+same banner. Someone who chose the English market and sits in Belgium gets none: a choice wins over a
+guess. Crawlers never get it. Texts: `market_bar.elsewhere` and `market_bar.go` in `lang/*/site.php`.
+
 ## Remembering the choice
 
 `Accept-Language` is the browser's language list and nothing else — no geolocation, no account

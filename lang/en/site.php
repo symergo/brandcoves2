@@ -123,6 +123,10 @@ return [
         'showing' => 'Shops and prices for :country.',
         'keep' => 'Keep :country',
         'hide' => 'Hide',
+        // The visitor is in, or chose, another country than this page's (2026-11-15):
+        // the bar then says so and offers that country as its one clear button.
+        'elsewhere' => 'Looking for :country? This page shows shops and prices for :current.',
+        'go' => 'Go to :country',
     ],
 
     'home' => [

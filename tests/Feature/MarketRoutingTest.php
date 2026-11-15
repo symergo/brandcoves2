@@ -99,6 +99,21 @@ class MarketRoutingTest extends TestCase
         // On a Dutch page the bar offers Belgium, although the browser language says the Netherlands.
         $this->withHeaders($inBelgium)->get('/nl-nl')
             ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-nl', 'remember' => false]));
+
+        // On an English page too (owner, 2026-11-15: guide a Belgian or Dutch visitor to their own
+        // country page). The page turns this into the banner with "Go to Belgium".
+        $this->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE', 'Accept-Language' => 'en-GB,en;q=0.9'])
+            ->get('/en')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-nl', 'remember' => false]));
+        $this->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'NL', 'Accept-Language' => 'en-GB,en;q=0.9'])
+            ->get('/en')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'nl-nl', 'remember' => false]));
+
+        // Somebody who chose the English market is left alone: a choice wins over a guess.
+        $this->withCookie(MarketPreference::COOKIE, 'en')
+            ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE'])
+            ->get('/en')
+            ->assertInertia(fn ($page) => $page->where('marketBar', null));
     }
 
     #[Test]

@@ -118,30 +118,52 @@ export default function MarketBar() {
         // The page's own colour, like the Denk mee bar (owner, 2026-10-05:
         // the bars on top should not jump out). It was white, a strip that
         // stood out once the page itself became a soft orange.
+        //
+        // Except when the visitor is in, or chose, another country than this
+        // page's (owner, 2026-11-15: "show a top banner to guide them to the
+        // proper country page", asked for a Belgian or Dutch visitor on an
+        // English page). Then the bar is the one thing to notice: tinted, saying
+        // which country the page is for, with that visitor's country as a
+        // filled button. The other countries stay as quiet buttons beside it.
         <aside
             aria-label={t('market_bar.label')}
-            className="border-b border-line bg-cream text-sm"
+            className={`border-b text-sm ${suggestedCountry ? 'border-accent/40 bg-accent/10' : 'border-line bg-cream'}`}
         >
             <div className="mx-auto flex max-w-[96rem] flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3">
-                <p className="flex min-w-0 items-center gap-2 text-ink-soft">
-                    <FlagIcon
-                        country={current.country as FlagCountry}
-                        className="block h-3 w-[18px] shrink-0 rounded-[2px] ring-1 ring-line"
-                    />
-                    <span>{t('market_bar.showing', { country: current.name })}</span>
-                </p>
+                {suggestedCountry ? (
+                    <p className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 py-1 text-ink">
+                        <span className="font-medium">
+                            {t('market_bar.elsewhere', { country: suggestedCountry.name, current: current.name })}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => go(suggestedCountry)}
+                            className="flex min-h-9 items-center gap-2 rounded-full bg-accent px-4 font-semibold whitespace-nowrap text-white transition hover:bg-accent-dark"
+                        >
+                            <FlagIcon
+                                country={suggestedCountry.country as FlagCountry}
+                                className="block h-3 w-[18px] rounded-[2px] ring-1 ring-white/60"
+                            />
+                            {t('market_bar.go', { country: suggestedCountry.name })}
+                        </button>
+                    </p>
+                ) : (
+                    <p className="flex min-w-0 items-center gap-2 text-ink-soft">
+                        <FlagIcon
+                            country={current.country as FlagCountry}
+                            className="block h-3 w-[18px] shrink-0 rounded-[2px] ring-1 ring-line"
+                        />
+                        <span>{t('market_bar.showing', { country: current.name })}</span>
+                    </p>
+                )}
 
                 <div className="ml-auto flex items-center gap-1">
-                    {others.map((country) => (
+                    {others.filter((country) => country !== suggestedCountry).map((country) => (
                         <button
                             key={country.country}
                             type="button"
                             onClick={() => go(country)}
-                            className={`flex min-h-9 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap transition ${
-                                country === suggestedCountry
-                                    ? 'border border-accent font-medium text-ink'
-                                    : 'text-ink-soft hover:text-ink'
-                            }`}
+                            className="flex min-h-9 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap text-ink-soft transition hover:text-ink"
                         >
                             <FlagIcon
                                 country={country.country as FlagCountry}

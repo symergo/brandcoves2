@@ -82,6 +82,10 @@ return [
         'showing' => 'Boutiques et prix : :country.',
         'keep' => 'Garder :country',
         'hide' => 'Masquer',
+        // The visitor is in, or chose, another country than this page's (2026-11-15):
+        // the bar then says so and offers that country as its one clear button.
+        'elsewhere' => 'Vous cherchez :country ? Cette page affiche les boutiques et les prix pour :current.',
+        'go' => 'Voir :country',
     ],
 
     'home' => [

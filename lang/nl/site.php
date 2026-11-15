@@ -81,6 +81,10 @@ return [
         'showing' => 'Winkels en prijzen voor :country.',
         'keep' => ':country houden',
         'hide' => 'Verbergen',
+        // The visitor is in, or chose, another country than this page's (2026-11-15):
+        // the bar then says so and offers that country as its one clear button.
+        'elsewhere' => 'Zoek je :country? Deze pagina toont winkels en prijzen voor :current.',
+        'go' => 'Naar :country',
     ],
 
     'home' => [
