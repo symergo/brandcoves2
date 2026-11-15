@@ -133,22 +133,36 @@ export default function MarketBar() {
             aria-label={t('market_bar.label')}
             className={`border-b text-sm ${suggestedCountry ? 'border-accent/40 bg-accent/10' : 'border-line bg-cream'}`}
         >
-            <div className="mx-auto flex max-w-[96rem] flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3">
+            {/* One line on a phone when it guides (owner, 2026-11-15: it stood three lines tall):
+                the question, a short button and the close. The full sentence, the country in the
+                button and the other countries come back from `sm`, where there is room. */}
+            <div
+                className={`mx-auto flex max-w-[96rem] items-center gap-x-3 gap-y-1 py-1.5 pr-1 pl-4 sm:pr-3 ${
+                    suggestedCountry ? 'sm:flex-wrap' : 'flex-wrap'
+                }`}
+            >
                 {suggestedCountry ? (
-                    <p className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 py-1 text-ink">
-                        <span className="font-medium">
+                    <p className="flex min-w-0 flex-1 items-center gap-x-2 text-ink sm:flex-none sm:flex-wrap sm:gap-x-3 sm:gap-y-1.5 sm:py-1">
+                        <span className="min-w-0 truncate font-medium sm:hidden">
+                            {t('market_bar.elsewhere_short', { country: suggestedCountry.name })}
+                        </span>
+                        <span className="hidden font-medium sm:inline">
                             {t('market_bar.elsewhere', { country: suggestedCountry.name, current: current.name })}
                         </span>
                         <button
                             type="button"
                             onClick={() => go(suggestedCountry)}
-                            className="flex min-h-9 items-center gap-2 rounded-full bg-accent px-4 font-semibold whitespace-nowrap text-white transition hover:bg-accent-dark"
+                            aria-label={t('market_bar.go', { country: suggestedCountry.name })}
+                            className="flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 font-semibold whitespace-nowrap text-white transition hover:bg-accent-dark sm:min-h-9 sm:gap-2 sm:px-4"
                         >
                             <FlagIcon
                                 country={suggestedCountry.country as FlagCountry}
                                 className="block h-3 w-[18px] rounded-[2px] ring-1 ring-white/60"
                             />
-                            {t('market_bar.go', { country: suggestedCountry.name })}
+                            <span className="sm:hidden">{t('market_bar.go_short')}</span>
+                            <span className="hidden sm:inline">
+                                {t('market_bar.go', { country: suggestedCountry.name })}
+                            </span>
                         </button>
                     </p>
                 ) : (
@@ -167,7 +181,9 @@ export default function MarketBar() {
                             key={country.country}
                             type="button"
                             onClick={() => go(country)}
-                            className="flex min-h-9 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap text-ink-soft transition hover:text-ink"
+                            className={`min-h-9 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap text-ink-soft transition hover:text-ink ${
+                                suggestedCountry ? 'hidden sm:flex' : 'flex'
+                            }`}
                         >
                             <FlagIcon
                                 country={country.country as FlagCountry}

@@ -93,6 +93,11 @@ Belgium"), the other countries quiet beside it. Pressing it is the switcher's PO
 the choice, and the visitor lands on the same page in that market where it exists. The calm bar, the
 one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top should not jump out).
 
+On a phone the guiding bar is one line (owner, the same day; it stood three lines tall): the question
+alone ("Looking for Belgium?"), a short button with the flag ("Switch", its full name as `aria-label`)
+and the close. The full sentence, "Go to Belgium" and the other countries show from `sm` up; on a phone
+the other countries are in the header's switcher. Texts: `market_bar.elsewhere_short`, `go_short`.
+
 It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when
 someone from NL lands on a be page and the reverse"): a Dutch visitor on a Belgian page is offered the
 Netherlands, a Belgian on a Dutch page Belgium. Crawlers never get it.

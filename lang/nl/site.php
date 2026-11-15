@@ -85,6 +85,10 @@ return [
         // the bar then says so and offers that country as its one clear button.
         'elsewhere' => 'Zoek je :country? Deze pagina toont winkels en prijzen voor :current.',
         'go' => 'Naar :country',
+        // On a phone the banner is one line (2026-11-15): the question alone and a
+        // short button. The flag on the button says which country.
+        'elsewhere_short' => 'Zoek je :country?',
+        'go_short' => 'Wissel',
     ],
 
     'home' => [
