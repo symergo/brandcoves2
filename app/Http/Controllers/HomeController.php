@@ -112,7 +112,7 @@ class HomeController extends Controller
     }
 
     /**
-     * Your own Coves on this market, last changed first, and your people.
+     * Your own Coves, last changed first, and your people.
      *
      * Only lists you own: a list somebody shared with you is on Mijn Coves,
      * where it is marked as theirs. The people are My people's rows, in its
@@ -131,8 +131,13 @@ class HomeController extends Controller
         $owner = Owner::fromRequest($request);
         $language = $current->get()->language();
 
+        /*
+         * Whatever market they were made in (2026-11-15). This filtered on the
+         * market of the page until then, so somebody whose lists were made on
+         * /nl-nl saw an empty band on /be-nl while My Coves listed them all. A
+         * list belongs to a person, not to a market (docs/features/wishlists.md).
+         */
         $coves = $owner->scope(Wishlist::query())
-            ->where('market', $current->get()->value)
             ->with(['items' => fn ($q) => $q->whereNotNull('snapshot_image_url')->latest('created_at')->limit(4)])
             ->withCount('items')
             ->latest('updated_at')

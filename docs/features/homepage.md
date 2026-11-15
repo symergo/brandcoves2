@@ -681,7 +681,9 @@ field's own width pushed the column past the screen.
 "When logged in, the homepage should be personalized with the coves and the people of the logged in
 person." A band under the hero, `ForYou` in `Home.tsx`, fed by `mine` from `HomeController::mine()`:
 
-- **Mijn Coves:** your own lists on this market, last changed first, six at most, each with its
+- **Mijn Coves:** your own lists, whatever market they were made in (it filtered on the page's market
+  until 2026-11-15, which left the band empty for somebody reading another market; a list belongs to a
+  person, see [wishlists.md](wishlists.md)), last changed first, six at most, each with its
   four covers and item count. Lists somebody shared with you stay on Mijn Coves, where they are
   marked as theirs.
 - **Mijn mensen:** the first six rows of `MyPeople::for()`, so the order is the people page's

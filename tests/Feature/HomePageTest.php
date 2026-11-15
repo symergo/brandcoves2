@@ -94,7 +94,9 @@ class HomePageTest extends TestCase
     #[Test]
     public function signed_in_the_page_shows_your_own_coves_and_people(): void
     {
-        // Owner, 2026-11-07. Only your own lists on this market, and the
+        // Owner, 2026-11-07. Only your own lists, whatever market they were
+        // made in (2026-11-15: a list belongs to a person, not to a market, and
+        // the band was empty for somebody reading another market), and the
         // people My people lists; a visitor gets nothing personal, which is
         // also what lets the anonymous page cache keep serving the page.
         $me = User::factory()->create();
@@ -107,7 +109,9 @@ class HomePageTest extends TestCase
 
         $mine = $this->actingAs($me)->get('/be-nl')->assertOk()->viewData('page')['props']['mine'];
 
-        $this->assertSame(['Mijn wensen'], array_column($mine['coves'], 'title'));
+        $titles = array_column($mine['coves'], 'title');
+        sort($titles);
+        $this->assertSame(['Elders', 'Mijn wensen'], $titles);
         $this->assertSame(['Lien'], array_column($mine['people'], 'name'));
 
         auth()->logout();
