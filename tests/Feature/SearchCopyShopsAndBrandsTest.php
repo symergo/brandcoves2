@@ -497,7 +497,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         // Two share the interest: the page for the recipient those products are tagged for.
         $b->update(['gift_tags' => ['interest:coffee']]);
         $links = (new GiftLinks)->resolve($context([$a, $b, $c]))->items;
-        $this->assertSame([['label' => 'Cadeaus voor papa die van koffie houdt', 'url' => '/be-nl/gift-ideas/for/papa/koffie']], $links);
+        $this->assertSame([['label' => 'papa die van koffie houdt', 'url' => '/be-nl/gift-ideas/for/papa/koffie']], $links);
 
         // Nobody named: the interest's fullest page.
         $a->update(['gift_tags' => ['interest:coffee']]);
@@ -508,7 +508,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $a->update(['gift_tags' => ['recipient:father', 'interest:fishing']]);
         $b->update(['gift_tags' => ['recipient:father', 'interest:fishing']]);
         $links = (new GiftLinks)->resolve($context([$a, $b, $c]))->items;
-        $this->assertSame([['label' => 'Cadeaus voor papa', 'url' => '/be-nl/gift-ideas/for/papa']], $links);
+        $this->assertSame([['label' => 'papa', 'url' => '/be-nl/gift-ideas/for/papa']], $links);
     }
 
     #[Test]
@@ -524,7 +524,7 @@ class SearchCopyShopsAndBrandsTest extends TestCase
         $migration->up();
 
         $this->assertSame(
-            [':term als cadeau', 'Producten uit deze resultaten passen bij :gift_links.', 'Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', 'Daarna'],
+            [':term als cadeau', 'Volgens onze redactie vind je in deze resultaten een goed cadeau voor :gift_links.', 'Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', 'Daarna'],
             DB::table('page_blocks as b')->join('page_block_variants as v', 'v.block_id', '=', 'b.id')
                 ->where('b.page', 'search')->where('b.language', 'nl')->orderBy('b.position')->pluck('v.body')->all(),
         );

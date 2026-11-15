@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
  * results are tagged for (owner, 2026-11-15; `:gift_links`):
  *
  *     Koffiemolen als cadeau
- *     Producten uit deze resultaten passen bij Cadeaus voor papa die van koffie houdt.
+ *     Volgens onze redactie vind je in deze resultaten een goed cadeau voor papa die van koffie houdt.
  *     Wil je koffiemolen als cadeau geven of zelf krijgen? Bewaar koffiemolen op je cadeaulijst.
  *
  * It goes in the ":term als cadeau" section, above the sentence that saves
@@ -22,9 +22,9 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     private const COPY = [
-        'nl' => ['Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', 'Producten uit deze resultaten passen bij :gift_links.'],
-        'en' => ['Want to give :term as a gift, or get it yourself? :save_search_link.', 'Products in these results fit :gift_links.'],
-        'fr' => ['Vous voulez offrir :term ou le recevoir vous-même ? :save_search_link.', 'Des produits de ces résultats conviennent pour :gift_links.'],
+        'nl' => ['Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', 'Volgens onze redactie vind je in deze resultaten een goed cadeau voor :gift_links.'],
+        'en' => ['Want to give :term as a gift, or get it yourself? :save_search_link.', 'According to our editors, these results hold a good gift for :gift_links.'],
+        'fr' => ['Vous voulez offrir :term ou le recevoir vous-même ? :save_search_link.', 'Selon notre rédaction, vous trouverez dans ces résultats un bon cadeau pour :gift_links.'],
     ];
 
     public function up(): void

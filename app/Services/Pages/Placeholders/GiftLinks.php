@@ -12,6 +12,7 @@ use App\Models\ProductGroup;
 use App\Services\Gift\GiftLandingCopy;
 use App\Services\Pages\Context\PageContext;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
  * The gift landing pages these results are tagged for (owner, 2026-11-15:
@@ -20,8 +21,9 @@ use Illuminate\Support\Facades\Cache;
  * An editor tagged products with who they suit and what that person loves
  * (`recipient:father`, `interest:coffee`; docs/features/gift-tags.md). This
  * reads those tags off the products on the page and links the landing pages
- * they point at: "Cadeaus voor papa die van koffie houdt". No other shop
- * comparison has the tags, so no other search page has this sentence.
+ * they point at, each named as the person it is for: "een goed cadeau voor
+ * papa die van koffie houdt, een collega die van koffie houdt". No other
+ * shop comparison has the tags, so no other search page has this sentence.
  *
  * ## Which pages
  *
@@ -59,7 +61,7 @@ final class GiftLinks implements PlaceholderFunction
 
     public function help(): string
     {
-        return 'The "gifts for dad who loves coffee" pages that match the gift tags on these results: an interest at least two products here carry, for the recipient they are tagged for most. At most three. Empty when the results carry no such tags, which hides the block.';
+        return 'The gift pages that match the gift tags on these results, each named as the person it is for ("dad who loves coffee"), so write it after "a good gift for": an interest at least two products here carry, for the recipient they are tagged for most. At most three. Empty when the results carry no such tags, which hides the block.';
     }
 
     public function level(): Level
@@ -75,8 +77,8 @@ final class GiftLinks implements PlaceholderFunction
     public function sample(): Value
     {
         return Value::links([
-            ['label' => 'Cadeaus voor papa die van koffie houdt', 'url' => '#'],
-            ['label' => 'Cadeaus voor een collega die van koffie houdt', 'url' => '#'],
+            ['label' => 'papa die van koffie houdt', 'url' => '#'],
+            ['label' => 'een collega die van koffie houdt', 'url' => '#'],
         ]);
     }
 
@@ -189,8 +191,13 @@ final class GiftLinks implements PlaceholderFunction
 
                     $interest = $page->interest instanceof Interest ? $page->interest : null;
 
+                    // The person, not the page's title: "papa die van koffie houdt", so the links
+                    // read as the end of a sentence ("een goed cadeau voor ...") rather than as a
+                    // row of headings dropped into one.
+                    $copy = new GiftLandingCopy($market, $page->recipient, $interest);
+
                     $pages[$interest?->value ?? ''][$page->recipient->value] = [
-                        'label' => (new GiftLandingCopy($market, $page->recipient, $interest))->heading(),
+                        'label' => $interest === null ? $copy->recipientName() : Str::lcfirst($copy->bare()),
                         'url' => (string) $page->path,
                     ];
                 });
