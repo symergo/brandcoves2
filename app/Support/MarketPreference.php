@@ -85,9 +85,10 @@ final class MarketPreference
      * - the visitor is a crawler: it keeps no cookie, so the bar would sit in
      *   every page it indexes;
      * - the URL carries no market (the market shown was not read from it);
-     * - a choice is on file and this page is in that country. A language
-     *   difference within one country (be-nl read by a be-fr visitor) is not
-     *   worth a bar: it is the same shops.
+     * - a choice is on file, this page is in that country, and the visitor is
+     *   not in another one (see the note in the method). A language difference
+     *   within one country (be-nl read by a be-fr visitor) is not worth a bar:
+     *   it is the same shops.
      *
      * Otherwise two fields:
      * - `suggest`: a market to offer first. The stored choice when this page
@@ -119,6 +120,28 @@ final class MarketPreference
         $stored = self::stored($request);
 
         if ($stored !== null) {
+            /*
+             * Where the visitor is, when that is another country than this
+             * page's, even though they chose a market (owner, 2026-11-15:
+             * "still suggest it when they choose differently, but suggestion
+             * can be clicked away"). Somebody in Belgium who chose the English
+             * market is offered Belgium; closing the bar keeps it closed
+             * (MarketBar remembers that in the browser). Their choice still
+             * decides where `/` sends them: this offers, it does not move.
+             *
+             * From the country alone, not from the browser language: with a
+             * choice on file a language is no reason to ask again. And when
+             * their choice is in that same country, it is the one offered: a
+             * Belgian who chose French is not offered Belgium in Dutch.
+             */
+            $here = Market::fromCountry($request->header(self::COUNTRY_HEADER), $request->header('Accept-Language'));
+
+            if ($here !== null && $here->country() !== $current->country()) {
+                $offer = $stored->country() === $here->country() ? $stored : $here;
+
+                return ['suggest' => $offer->value, 'remember' => false];
+            }
+
             return $stored->country() === $current->country()
                 ? null
                 : ['suggest' => $stored->value, 'remember' => false];

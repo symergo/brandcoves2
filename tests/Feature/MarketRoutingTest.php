@@ -117,11 +117,38 @@ class MarketRoutingTest extends TestCase
                 ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'nl-nl', 'remember' => false]));
         }
 
-        // Somebody who chose the English market is left alone: a choice wins over a guess.
+        // Somebody who chose the English market is still offered the country they are in (owner:
+        // "still suggest it when they choose differently, but suggestion can be clicked away").
+        // Closing it only hides it; their choice is not rewritten.
+        $chosen = $this->withCookie(MarketPreference::COOKIE, 'en')
+            ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE', 'Accept-Language' => 'en-GB,en;q=0.9'])
+            ->get('/en');
+        $chosen->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-nl', 'remember' => false]));
+        $chosen->assertCookieMissing(MarketPreference::COOKIE);
+
+        // The root still follows the choice: the bar offers, it does not move anybody.
         $this->withCookie(MarketPreference::COOKIE, 'en')
+            ->withHeaders(['CF-IPCountry' => 'BE'])
+            ->get('/')->assertRedirect('/en');
+
+        // A Belgian who chose French and opens a Dutch page is offered Belgium in French, not in Dutch.
+        $this->withCookie(MarketPreference::COOKIE, 'be-fr')
+            ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE', 'Accept-Language' => 'nl-BE,nl;q=0.9'])
+            ->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-fr', 'remember' => false]));
+
+        // At home on the market they chose: no bar.
+        $this->withCookie(MarketPreference::COOKIE, 'be-nl')
             ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE'])
-            ->get('/en')
+            ->get('/be-nl')
             ->assertInertia(fn ($page) => $page->where('marketBar', null));
+
+        // A Belgian travelling in the Netherlands, on the Belgian market they chose: offered the
+        // Netherlands, once, because that is where they are.
+        $this->withCookie(MarketPreference::COOKIE, 'be-nl')
+            ->withHeaders(['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'NL'])
+            ->get('/be-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'nl-nl', 'remember' => false]));
     }
 
     #[Test]

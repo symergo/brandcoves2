@@ -7,6 +7,10 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 /** Session key holding the market whose bar was closed without recording. */
+// Where a closed bar is remembered, per market. localStorage since 2026-11-15
+// (it was sessionStorage): the bar now also offers the country a visitor is in
+// to somebody who chose another market, and that offer must stay away once it
+// is clicked away, not come back with every new browser session.
 const HIDDEN_KEY = 'bc_market_bar_hidden'
 
 /**
@@ -50,7 +54,7 @@ export default function MarketBar() {
     /*
      * A bar hidden without recording anything stays hidden for this session,
      * per market: someone reading a Dutch list closed it once and should not
-     * meet it on every item they open. sessionStorage, not a cookie, because
+     * meet it on every item they open. The browser's own storage, not a cookie, because
      * it is a convenience and the server has no business knowing it. It is
      * read after the first paint, so a hidden bar can show for a frame on a
      * full page load; the alternative was a server-side flag, i.e. state the
@@ -60,7 +64,7 @@ export default function MarketBar() {
         if (marketBar === null || marketBar.remember) return
 
         try {
-            if (window.sessionStorage.getItem(HIDDEN_KEY) === market.key) setOpen(false)
+            if (window.localStorage.getItem(HIDDEN_KEY) === market.key) setOpen(false)
         } catch {
             // Storage blocked: the bar just shows, which is the safe side.
         }
@@ -108,7 +112,7 @@ export default function MarketBar() {
         }
 
         try {
-            window.sessionStorage.setItem(HIDDEN_KEY, market.key)
+            window.localStorage.setItem(HIDDEN_KEY, market.key)
         } catch {
             // Nothing to do: it comes back on the next page, harmlessly.
         }

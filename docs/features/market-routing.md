@@ -95,8 +95,16 @@ one for a visitor at home, is unchanged (owner, 2026-10-05: the bars on top shou
 
 It covers every case with a suggestion, not only English pages (owner, the same day: "do the same when
 someone from NL lands on a be page and the reverse"): a Dutch visitor on a Belgian page is offered the
-Netherlands, a Belgian on a Dutch page Belgium. Someone who chose the English market and sits in Belgium gets none: a choice wins over a
-guess. Crawlers never get it. Texts: `market_bar.elsewhere` and `market_bar.go` in `lang/*/site.php`.
+Netherlands, a Belgian on a Dutch page Belgium. Crawlers never get it.
+
+**A choice does not silence it (owner, the same day: "still suggest it when they choose differently,
+but suggestion can be clicked away").** Someone in Belgium who chose the English market is still
+offered Belgium, and a Belgian travelling in the Netherlands is offered the Netherlands on the Belgian
+pages they chose. This goes by the country alone, never by the browser language, and when their choice
+is in the country they are in, that choice is what is offered (a Belgian who chose French is not
+offered Belgium in Dutch). The choice still decides where `/` sends them; the bar offers and moves
+nobody. Closing it hides it for that market in `localStorage` (it was `sessionStorage`), so an offer
+that was clicked away stays away instead of returning with every browser session. Texts: `market_bar.elsewhere` and `market_bar.go` in `lang/*/site.php`.
 
 ## Remembering the choice
 
@@ -170,7 +178,7 @@ someone sent you is different: a Belgian closing the bar on a Dutch list is sayi
 "the Netherlands is my home". Recording it would be the silent repointing the rule above forbids,
 merely with a click in front of it. So closing records only when there is nothing on file and the
 page is the country we would have guessed anyway; everywhere else it hides the bar in
-`sessionStorage` (per market, a per-browser convenience the server never sees), and the bar offers
+`localStorage` (`sessionStorage` until 2026-11-15) (per market, a per-browser convenience the server never sees), and the bar offers
 the visitor's own country first.
 
 **Why the other case does record.** Without it, a visitor who agrees with the guess and closes the
@@ -186,7 +194,7 @@ nothing new can write the cookie. A failed fetch is swallowed: the bar is alread
 comes back on the next page, which is the honest result of a choice that was not recorded.
 
 **The SSR paint.** The prop is computed on the server and is not lazy, so the bar is in the first
-paint and the page does not jump when it arrives. A bar hidden in `sessionStorage` is read after
+paint and the page does not jump when it arrives. A bar hidden in `localStorage` is read after
 hydration, so it can show for one frame on a full page load; the alternative was a server-side flag,
 which is state that only the switcher may write.
 
