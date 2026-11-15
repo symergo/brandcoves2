@@ -257,8 +257,8 @@ better alternative. Then do what the owner decides, and do not bring it up again
   `nl-nl` are the same *language* and different *markets*. `App\Enums\Market` is the single source of
   truth; `SetMarket` middleware resolves it from the `/{market}/` route prefix.
 - **A chosen market beats a guessed one, and only the switcher chooses.** When a URL carries no
-  market, `MarketPreference::resolve()` decides: the `bc_market` cookie first, `Accept-Language`
-  second. Write that cookie **only** from an explicit switcher POST — never from `SetMarket`, or
+  market, `MarketPreference::resolve()` decides: the `bc_market` cookie first, then a guess (the
+  country Cloudflare reports in `CF-IPCountry`, then `Accept-Language`; geolocation since 2026-11-15). Write that cookie **only** from an explicit switcher POST — never from `SetMarket`, or
   opening a friend's shared `/nl-nl/...` link silently repoints the visitor's home market. See
   [docs/features/market-routing.md](../docs/features/market-routing.md).
 - **Enum-ish columns are `string` + a CHECK constraint**, not native Postgres enums. Altering a PG

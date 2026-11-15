@@ -46,6 +46,61 @@ class MarketRoutingTest extends TestCase
             ->assertRedirect('/nl-nl');
     }
 
+    /*
+     * Geolocation (owner, 2026-11-15): the country Cloudflare reports comes
+     * before the browser language. See MarketPreference::guess().
+     */
+
+    #[Test]
+    public function the_root_sends_a_first_visit_to_the_market_of_the_country_they_are_in(): void
+    {
+        // The case it was added for: in Belgium, with a browser that says "Nederlands (Nederland)".
+        $this->withHeaders(['CF-IPCountry' => 'BE', 'Accept-Language' => 'nl-NL,nl;q=0.9'])
+            ->get('/')->assertRedirect('/be-nl');
+
+        // Belgium has two markets: the browser language picks between them.
+        $this->withHeaders(['CF-IPCountry' => 'BE', 'Accept-Language' => 'fr-FR,fr;q=0.9'])
+            ->get('/')->assertRedirect('/be-fr');
+
+        $this->withHeaders(['CF-IPCountry' => 'NL', 'Accept-Language' => 'fr-BE,fr;q=0.9'])
+            ->get('/')->assertRedirect('/nl-nl');
+
+        // In Belgium with an English browser: the Belgian shops in Dutch, not the English market (owner).
+        $this->withHeaders(['CF-IPCountry' => 'BE', 'Accept-Language' => 'en-GB,en;q=0.9'])
+            ->get('/')->assertRedirect('/be-nl');
+
+        // A country we have no market in: the language decides, as it always did.
+        $this->withHeaders(['CF-IPCountry' => 'FR', 'Accept-Language' => 'fr-FR,fr;q=0.9'])
+            ->get('/')->assertRedirect('/be-fr');
+        $this->withHeaders(['CF-IPCountry' => 'US', 'Accept-Language' => 'en-US,en;q=0.9'])
+            ->get('/')->assertRedirect('/en');
+        $this->withHeaders(['CF-IPCountry' => 'XX', 'Accept-Language' => 'nl-NL,nl;q=0.9'])
+            ->get('/')->assertRedirect('/nl-nl');
+    }
+
+    #[Test]
+    public function a_chosen_market_wins_over_the_country_the_visitor_is_in(): void
+    {
+        // A Belgian on holiday in the Netherlands stays in the Belgian shop.
+        $this->withCookie(MarketPreference::COOKIE, 'be-fr')
+            ->withHeaders(['CF-IPCountry' => 'NL', 'Accept-Language' => 'nl-NL,nl;q=0.9'])
+            ->get('/')->assertRedirect('/be-fr');
+    }
+
+    #[Test]
+    public function the_market_bar_goes_by_the_country_the_visitor_is_in(): void
+    {
+        $inBelgium = ['User-Agent' => self::BROWSER, 'CF-IPCountry' => 'BE', 'Accept-Language' => 'nl-NL,nl;q=0.9'];
+
+        // On the Belgian page the guess is right: closing the bar may record it.
+        $this->withHeaders($inBelgium)->get('/be-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => null, 'remember' => true]));
+
+        // On a Dutch page the bar offers Belgium, although the browser language says the Netherlands.
+        $this->withHeaders($inBelgium)->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('marketBar', ['suggest' => 'be-nl', 'remember' => false]));
+    }
+
     #[Test]
     public function the_root_redirect_is_temporary(): void
     {

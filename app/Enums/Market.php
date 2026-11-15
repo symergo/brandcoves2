@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Support\MarketPreference;
+
 /**
  * Every market the site serves. Single source of truth.
  *
@@ -501,6 +503,79 @@ enum Market: string
     public static function values(): array
     {
         return array_map(fn (self $m) => $m->value, self::cases());
+    }
+
+    /**
+     * The market of the country a visitor is in, or null when we have no market there.
+     *
+     * Added 2026-11-15 (owner: "add geolocation"). Until then the first guess came from the browser language
+     * alone, and a Belgian whose browser says "Nederlands" (nl-NL, the common setting) landed on the Dutch
+     * catalogue: other shops, other prices. The country answers the question the language cannot: which shops
+     * deliver here.
+     *
+     * `$country` is the two-letter code Cloudflare puts in `CF-IPCountry` ({@see MarketPreference::guess()}).
+     * A country with two markets (Belgium) is decided by the browser language, most preferred first, and falls
+     * to the first one listed when the visitor reads neither. A country without a market of its own returns
+     * null, so the caller falls back to the language as before: a French speaker in France still gets a French
+     * page, and "XX" (unknown) or "T1" (Tor) match nothing. The English market has no country (`INT`), so no
+     * code ever selects it here. Published markets only, like the negotiation below.
+     */
+    public static function fromCountry(?string $country, ?string $acceptLanguage = null): ?self
+    {
+        $country = strtoupper(trim((string) $country));
+
+        // A real country code is two letters; this also keeps `INT`, the English market's own, out of reach
+        if (preg_match('/^[A-Z]{2}$/', $country) !== 1) {
+            return null;
+        }
+
+        $markets = array_values(array_filter(
+            self::published(),
+            fn (self $market): bool => $market->country() === $country,
+        ));
+
+        if (count($markets) < 2) {
+            return $markets[0] ?? null;
+        }
+
+        foreach (self::languagesIn($acceptLanguage) as $language) {
+            foreach ($markets as $market) {
+                if ($market->language() === $language) {
+                    return $market;
+                }
+            }
+        }
+
+        return $markets[0];
+    }
+
+    /**
+     * The languages of an Accept-Language header, most preferred first: "fr-BE,nl;q=0.8" gives fr, nl.
+     *
+     * @return list<string>
+     */
+    private static function languagesIn(?string $header): array
+    {
+        $tags = [];
+        foreach (explode(',', (string) $header) as $position => $part) {
+            $bits = explode(';', trim($part));
+            $language = strtolower(explode('-', trim($bits[0]))[0]);
+            if ($language === '') {
+                continue;
+            }
+            $quality = 1.0;
+            foreach (array_slice($bits, 1) as $param) {
+                if (str_starts_with(trim($param), 'q=')) {
+                    $quality = (float) substr(trim($param), 2);
+                }
+            }
+            $tags[] = ['language' => $language, 'q' => $quality, 'position' => $position];
+        }
+
+        // Highest quality first; the header's own order between equals
+        usort($tags, fn (array $a, array $b) => [$b['q'], $a['position']] <=> [$a['q'], $b['position']]);
+
+        return array_values(array_unique(array_column($tags, 'language')));
     }
 
     /**

@@ -39,6 +39,40 @@ class MarketTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('countryCases')]
+    public function it_finds_the_market_of_a_country(?string $country, ?string $language, ?Market $expected): void
+    {
+        $this->assertSame($expected, Market::fromCountry($country, $language));
+    }
+
+    public static function countryCases(): array
+    {
+        return [
+            // The case geolocation was added for: a Belgian whose browser says "Nederlands (Nederland)"
+            'Belgium, Dutch browser set to the Netherlands' => ['BE', 'nl-NL,nl;q=0.9', Market::BeNl],
+            'Belgium, French browser' => ['BE', 'fr-FR,fr;q=0.9,nl;q=0.5', Market::BeFr],
+            'Belgium, French preferred by quality' => ['BE', 'nl;q=0.4,fr;q=0.9', Market::BeFr],
+            'Belgium, a language we have no Belgian market in' => ['BE', 'de-DE,de;q=0.9', Market::BeNl],
+            // Owner, 2026-11-15: "Belgium - english can go to be-nl". The shops are Belgian; not the English market
+            'Belgium, English browser' => ['BE', 'en-GB,en;q=0.9', Market::BeNl],
+            'Belgium, no language at all' => ['BE', null, Market::BeNl],
+            'the Netherlands, whatever the browser says' => ['NL', 'fr-BE,fr;q=0.9', Market::NlNl],
+            'lower case' => ['nl', null, Market::NlNl],
+            // No market of its own: the caller falls back to the language
+            'France' => ['FR', 'fr-FR', null],
+            'the United States' => ['US', 'en-US', null],
+            // Spain has a market, but it is not published
+            'Spain' => ['ES', 'es-ES', null],
+            'unknown to Cloudflare' => ['XX', 'nl-BE', null],
+            'Tor' => ['T1', 'nl-BE', null],
+            // The English market has no country; its internal code must not be selectable
+            'the international code' => ['INT', 'en', null],
+            'no header' => [null, 'nl-BE', null],
+            'empty' => ['', 'nl-BE', null],
+        ];
+    }
+
+    #[Test]
     public function quality_values_are_respected(): void
     {
         // The lower-q French tag must not beat the higher-q Dutch one.

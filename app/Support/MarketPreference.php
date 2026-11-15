@@ -16,11 +16,12 @@ use Symfony\Component\HttpFoundation\Cookie;
  *
  * ## Why a cookie exists at all
  *
- * `/` negotiates from `Accept-Language`, which is the browser's language list
- * and nothing else — no geolocation, no account setting. That is a reasonable
- * first guess and a terrible permanent answer: a Belgian machine whose browser
- * language is plain "Nederlands" reports `nl-NL`, so it lands on the Dutch
- * catalogue, and before this cookie existed nothing remembered the correction.
+ * `/` guesses: since 2026-11-15 from the country Cloudflare reports ({@see self::guess()}),
+ * before that from `Accept-Language` alone, the browser's language list. Either is a
+ * reasonable first guess and a terrible permanent answer. With the language alone a
+ * Belgian machine whose browser language is plain "Nederlands" reports `nl-NL` and landed
+ * on the Dutch catalogue; with the country a traveller or a VPN user lands in the wrong
+ * one. Before this cookie existed nothing remembered the correction.
  * Clicking the Belgian flag worked for exactly as long as the visitor stayed on
  * the page; the next visit to the bare domain re-ran the same negotiation and
  * sent them straight back. The switcher looked broken because its effect had no
@@ -123,7 +124,7 @@ final class MarketPreference
                 : ['suggest' => $stored->value, 'remember' => false];
         }
 
-        $guess = Market::fromAcceptLanguage($request->header('Accept-Language'));
+        $guess = self::guess($request);
         $guessedThisCountry = $guess->country() === $current->country();
 
         return [
@@ -149,8 +150,32 @@ final class MarketPreference
      */
     public static function resolve(Request $request): Market
     {
-        return self::stored($request)
-            ?? Market::fromAcceptLanguage($request->header('Accept-Language'));
+        return self::stored($request) ?? self::guess($request);
+    }
+
+    /** The header in which Cloudflare gives the visitor's country, as a two-letter code. */
+    public const COUNTRY_HEADER = 'CF-IPCountry';
+
+    /**
+     * Our best guess for a visitor who has not chosen: the country they are in, then their browser language.
+     *
+     * The country first since 2026-11-15 (owner: "add geolocation"); {@see Market::fromCountry()} says why and
+     * what happens in a country with two markets or none. giftcoves.com is behind Cloudflare, which adds the
+     * country to every request when "IP Geolocation" is on for the zone; without the header (the setting off, a
+     * local run, a request straight to the server) this is the language negotiation it always was.
+     *
+     * Nothing is stored: the country is read from this request and forgotten. It stays a guess, so it can never
+     * overrule a stored choice ({@see self::resolve()}), and the market bar still asks the visitor to confirm it.
+     *
+     * The header is trusted without knowing the request came through Cloudflare, like the address in
+     * UseCloudflareClientIp. All a caller can gain by forging it is their own redirect to another market.
+     */
+    public static function guess(Request $request): Market
+    {
+        $language = $request->header('Accept-Language');
+
+        return Market::fromCountry($request->header(self::COUNTRY_HEADER), $language)
+            ?? Market::fromAcceptLanguage($language);
     }
 
     /**

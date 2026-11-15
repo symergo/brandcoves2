@@ -37,8 +37,9 @@ French visitor.
 
 ## Root redirect
 
-`/` sends the visitor to `MarketPreference::resolve()` — **the stored choice first, then a guess from
-`Accept-Language`** — and issues a **302, never a 301**. The destination varies per visitor; caching
+`/` sends the visitor to `MarketPreference::resolve()` — **the stored choice first, then a guess**
+(`MarketPreference::guess()`: the country the visitor is in, then `Accept-Language`) — and issues a
+**302, never a 301**. The destination varies per visitor; caching
 it into permanence would pin someone to a market they never chose.
 
 For the same reason the response carries `Cache-Control: no-store, private`. It varies on a cookie
@@ -52,6 +53,32 @@ wrong merchants, so anything unrecognised falls back rather than being approxima
 
 Negotiation only ever selects a **published** market. A Spanish `Accept-Language` resolves to the
 default, not to `es`.
+
+## Geolocation (2026-11-15)
+
+Owner: "add geolocation". The guess now starts from the country Cloudflare reports in `CF-IPCountry`
+(`Market::fromCountry()`), and only falls back to the language negotiation above when that gives no
+market:
+
+| Visitor is in | Lands on |
+|---|---|
+| Belgium | `be-nl` or `be-fr`, whichever language the browser prefers; `be-nl` when it reads neither, an English browser included (owner, 2026-11-15: "Belgium - english can go to be-nl") |
+| the Netherlands | `nl-nl` |
+| anywhere else, unknown (`XX`), Tor (`T1`), or no header | what `Accept-Language` gives, as before |
+
+Why: the language says what a visitor can read, the country says which shops deliver to them, and the
+second is what a market is. It fixes the common Belgian case described below (browser set to
+"Nederlands", so `nl-NL`, so the Dutch catalogue).
+
+- It needs **IP Geolocation** switched on for the zone in Cloudflare (Network). Without the header
+  nothing changes: the guess is the language negotiation it always was.
+- It is still a guess. A stored choice wins over it, the market bar still asks a first-time visitor to
+  confirm, and nothing about the country is stored.
+- A traveller or a VPN user gets the wrong country; the bar and the switcher are their way out.
+- The market pages are in the anonymous page cache, but the bar is computed per request
+  (`CacheAnonymousPage::variant()`), so one visitor's country never reaches another's page.
+- The header is trusted like `CF-Connecting-IP`: a request straight to the server can forge it, and
+  gains only its own redirect.
 
 ## Remembering the choice
 
