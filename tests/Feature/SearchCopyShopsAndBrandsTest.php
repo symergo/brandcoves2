@@ -14,6 +14,7 @@ use App\Enums\Source;
 use App\Jobs\ReadItemLink;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
+use App\Models\GiftLanding;
 use App\Models\Merchant;
 use App\Models\PageBlock;
 use App\Models\Product;
@@ -25,6 +26,7 @@ use App\Services\Pages\Context\ResultCategories;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Placeholders\CoveLinks;
+use App\Services\Pages\Placeholders\GiftLinks;
 use App\Services\Pages\Placeholders\GuideLinks;
 use App\Services\Pages\Placeholders\OtherBrandCategories;
 use App\Services\Pages\Placeholders\OtherBrandLinks;
@@ -460,6 +462,72 @@ class SearchCopyShopsAndBrandsTest extends TestCase
 
         $this->assertSame(['Cadeaus voor de muziekliefhebber', 'Cadeaus voor de student'], array_column($links, 'label'));
         $this->assertSame('/be-nl/gift-ideas/muziekliefhebber', $links[0]['url']);
+    }
+
+    private function landing(string $recipient, ?string $interest, string $path, int $count): void
+    {
+        GiftLanding::create([
+            'market' => Market::BeNl->value,
+            'recipient' => $recipient,
+            'interest' => $interest,
+            'path' => $path,
+            'brief' => ['relationship' => $recipient, 'interests' => array_filter([$interest])],
+            'product_count' => $count,
+            'checked_at' => now(),
+        ]);
+    }
+
+    #[Test]
+    public function the_gift_pages_the_results_are_tagged_for_are_linked(): void
+    {
+        Cache::flush();
+        $this->landing('mother', 'coffee', '/be-nl/gift-ideas/for/mama/koffie', 20);
+        $this->landing('father', 'coffee', '/be-nl/gift-ideas/for/papa/koffie', 9);
+        $this->landing('father', null, '/be-nl/gift-ideas/for/papa', 24);
+
+        $a = $this->group('Aurex');
+        $b = $this->group('Belka');
+        $c = $this->group('Cando');
+        $context = fn (array $items) => new SearchContext(Market::BeNl, $items, count($items), 'koffiemolen');
+
+        // One tagged product says something about that product, not about the search.
+        $a->update(['gift_tags' => ['interest:coffee', 'recipient:father']]);
+        $this->assertSame([], (new GiftLinks)->resolve($context([$a, $b, $c]))->items);
+
+        // Two share the interest: the page for the recipient those products are tagged for.
+        $b->update(['gift_tags' => ['interest:coffee']]);
+        $links = (new GiftLinks)->resolve($context([$a, $b, $c]))->items;
+        $this->assertSame([['label' => 'Cadeaus voor papa die van koffie houdt', 'url' => '/be-nl/gift-ideas/for/papa/koffie']], $links);
+
+        // Nobody named: the interest's fullest page.
+        $a->update(['gift_tags' => ['interest:coffee']]);
+        $links = (new GiftLinks)->resolve($context([$a, $b, $c]))->items;
+        $this->assertSame(['/be-nl/gift-ideas/for/mama/koffie'], array_column($links, 'url'));
+
+        // No interest shared, a recipient is: that recipient's own page. An interest without a page links nothing.
+        $a->update(['gift_tags' => ['recipient:father', 'interest:fishing']]);
+        $b->update(['gift_tags' => ['recipient:father', 'interest:fishing']]);
+        $links = (new GiftLinks)->resolve($context([$a, $b, $c]))->items;
+        $this->assertSame([['label' => 'Cadeaus voor papa', 'url' => '/be-nl/gift-ideas/for/papa']], $links);
+    }
+
+    #[Test]
+    public function the_gift_sentence_goes_above_the_one_that_saves_the_search_once(): void
+    {
+        foreach ([[1, 'heading', ':term als cadeau'], [2, 'paragraph', 'Wil je :term als cadeau geven of zelf krijgen? :save_search_link.'], [3, 'heading', 'Daarna']] as [$position, $kind, $body]) {
+            PageBlock::create(['page' => 'search', 'region' => 'below_grid', 'language' => 'nl', 'kind' => $kind, 'position' => $position, 'conditions' => [], 'enabled' => true])
+                ->variants()->create(['body' => $body, 'weight' => 1, 'enabled' => true]);
+        }
+
+        $migration = require database_path('migrations/2026_11_15_000400_search_copy_links_gift_pages.php');
+        $migration->up();
+        $migration->up();
+
+        $this->assertSame(
+            [':term als cadeau', 'Producten uit deze resultaten passen bij :gift_links.', 'Wil je :term als cadeau geven of zelf krijgen? :save_search_link.', 'Daarna'],
+            DB::table('page_blocks as b')->join('page_block_variants as v', 'v.block_id', '=', 'b.id')
+                ->where('b.page', 'search')->where('b.language', 'nl')->orderBy('b.position')->pluck('v.body')->all(),
+        );
     }
 
     #[Test]

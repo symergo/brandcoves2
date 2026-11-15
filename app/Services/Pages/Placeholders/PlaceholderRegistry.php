@@ -48,6 +48,7 @@ final class PlaceholderRegistry
         OtherBrandCategories::class,
         SaveSearchLink::class,
         CoveLinks::class,
+        GiftLinks::class,
     ];
 
     /** @var array<string, PlaceholderFunction>|null */
