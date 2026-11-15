@@ -993,6 +993,23 @@ class EditorialApiTest extends TestCase
         ]);
     }
 
+    #[Test]
+    public function a_search_puts_the_best_match_first(): void
+    {
+        // Only its description names a kettle: it matches, weakly.
+        $weak = $this->find('Theeset van glas', 3000, 'keuken', 99);
+        Product::query()->where('group_id', $weak->id)->update(['description' => 'Past op elke waterkoker.']);
+        $strong = $this->find('Waterkoker 1,7 liter', 3000, 'keuken', 10);
+        $this->find('Broodrooster', 3000, 'keuken', 80);
+
+        $ids = $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/products?market='.Market::BeNl->value.'&q=waterkoker')
+            ->assertOk()
+            ->json('data.*.id');
+
+        $this->assertSame([$strong->id, $weak->id], $ids);
+    }
+
     private function find(
         string $title,
         int $price,

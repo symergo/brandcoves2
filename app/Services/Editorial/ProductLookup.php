@@ -38,6 +38,9 @@ class ProductLookup
     /** A page of results. Enough to choose from, small enough to read. */
     private const PER_PAGE = 24;
 
+    /** Matching offers ranked for one search; see the note where it is used. */
+    private const MATCH_CAP = 5000;
+
     public function __construct(private readonly SearchService $search) {}
 
     /**
@@ -89,15 +92,42 @@ class ProductLookup
              * order. SuggestionEngine::pool() has the same shape for the same
              * reason.
              */
-            $query->whereRaw(
-                'product_groups.id = any(array(select group_id from products'
-                .' where market = ? and status = ? and group_id is not null'
+            $tsquery = 'websearch_to_tsquery(bc_text_config(?), ?)';
+
+            $offers = DB::table('products')
+                ->select('group_id', 'search_vector')
+                ->where('market', $market->value)
+                ->where('status', ProductStatus::Active->value)
+                ->whereNotNull('group_id')
                 // Bound, not read off the row. See
                 // TopicMiner::availableProducts - this is the difference
                 // between the full-text index and a sequential scan.
-                .' and search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)))',
-                [$market->value, ProductStatus::Active->value, $market->value, trim($term)],
-            );
+                ->whereRaw("search_vector @@ {$tsquery}", [$market->value, trim($term)])
+                ->limit(self::MATCH_CAP);
+
+            /*
+             * Best match first (owner, 2026-11-16: "sorting should be best
+             * match").
+             *
+             * `ts_rank` over the offer's vector, where the title weighs most
+             * and the description least, so "waterkoker" puts the kettles
+             * before the tea sets that mention one. A group takes its best
+             * offer's rank.
+             *
+             * Ranked over at most MATCH_CAP matching offers: a word that
+             * matches hundreds of thousands ("oordopjes") would otherwise be
+             * read and ranked in full, which is the 50-second query the gift
+             * engine had. For a word that common, any few thousand matches
+             * hold plenty with it in the title.
+             */
+            $matched = DB::query()
+                ->fromSub($offers, 'offers')
+                ->selectRaw("group_id, max(ts_rank(search_vector, {$tsquery})) as match_rank", [$market->value, trim($term)])
+                ->groupBy('group_id');
+
+            $query->joinSub($matched, 'matched', 'matched.group_id', '=', 'product_groups.id')
+                ->select('product_groups.*')
+                ->orderByDesc('matched.match_rank');
         }
 
         if ($category !== null) {
@@ -119,17 +149,8 @@ class ProductLookup
         }
 
         return $query
-            /*
-             * The products most shops sell first (owner, 2026-11-15:
-             * "surprising first is not needed").
-             *
-             * It used to open on the highest `surprise_score`, the odd end of
-             * the catalogue. An author looking for "waterkoker" wants the
-             * kettles people can compare, and a product several shops carry is
-             * the better known one and the one with a price to compare.
-             */
-            ->orderByDesc('merchant_count')
-            ->orderBy('id')
+            // After the match, or with no word at all: a stable order.
+            ->orderBy('product_groups.id')
             ->limit(min($limit, 100))
             ->get();
     }

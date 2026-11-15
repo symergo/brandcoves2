@@ -567,6 +567,8 @@ now collects the matching group ids from the full-text index first (`id = any(ar
 shape `SuggestionEngine::pool()` uses). Locally on 70,000 groups: 9.0 s to 33 ms for the rare word,
 the same ids in the same order for six test words.
 
-Since the same day the results come with the products most shops sell first, not the highest
-`surprise_score` (owner: "surprising first is not needed"): an author searching a word wants the
-products people can compare.
+Since 2026-11-16 a search comes back best match first (owner: "sorting should be best match";
+neither the highest `surprise_score` nor the most shops, both tried and both dropped the day before).
+The order is `ts_rank` over the offers' search vector, where the title weighs most; a group takes
+its best offer's rank. At most 5,000 matching offers are ranked per search, so a word that matches
+hundreds of thousands stays quick. With no search word the order is by id.
