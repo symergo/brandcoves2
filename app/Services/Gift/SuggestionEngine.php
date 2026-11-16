@@ -54,6 +54,9 @@ class SuggestionEngine
      */
     private const CANDIDATE_POOL = 300;
 
+    /** Matching offers read by the text search per pool; see pool(). */
+    private const TEXT_CAP = 20000;
+
     /** Inferred (auto-tagged) candidates read per pool; see pool(). */
     private const INFERRED_CAP = 3000;
 
@@ -590,7 +593,18 @@ class SuggestionEngine
                 ->whereRaw(
                     'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
                     [$market, $tsquery]
-                );
+                )
+                /*
+                 * Capped, without an order (2026-11-16). An interest's words
+                 * can match hundreds of thousands of offers ("oordopjes":
+                 * 634,000 in be-nl), and checking every one took up to 55
+                 * seconds; in the markets with few tags, where the text is
+                 * still the way in, pages kept answering 500. Without an
+                 * order Postgres stops at the cap. A rare word is under it
+                 * and loses nothing; a common one keeps more than enough
+                 * candidates for a pool of 300.
+                 */
+                ->limit(self::TEXT_CAP);
 
             /*
              * Candidate ids first, as a UNION, not an OR on the group row
@@ -755,19 +769,32 @@ class SuggestionEngine
 
         foreach ($tags as $tag) {
             $count = Cache::remember(
-                "bc:gift:tagged:{$market}:{$tag}:{$minimum}",
+                "bc:gift:tagged:v2:{$market}:{$tag}:{$minimum}",
                 3600,
-                fn (): int => DB::query()->fromSub(
-                    DB::table('product_groups')
-                        ->select('id')
-                        ->where('market', $market)
-                        ->where('giftable', true)
-                        ->where('in_stock', true)
-                        // Judged or inferred from the category: both fill a pool.
-                        ->whereRaw('(gift_tags ??| ?::text[] or auto_tags ??| ?::text[])', [$this->pgTextArray([$tag]), $this->pgTextArray([$tag])])
-                        ->limit($minimum),
-                    'tagged',
-                )->count(),
+                function () use ($market, $tag, $minimum): int {
+                    $total = 0;
+
+                    // Judged, then inferred from the category: both fill a pool. One
+                    // lookup per column, so each can use that column's own index.
+                    foreach (['gift_tags', 'auto_tags'] as $column) {
+                        $total += DB::query()->fromSub(
+                            DB::table('product_groups')
+                                ->select('id')
+                                ->where('market', $market)
+                                ->where('giftable', true)
+                                ->where('in_stock', true)
+                                ->whereRaw("{$column} ??| ?::text[]", [$this->pgTextArray([$tag])])
+                                ->limit($minimum),
+                            'tagged',
+                        )->count();
+
+                        if ($total >= $minimum) {
+                            break;
+                        }
+                    }
+
+                    return $total;
+                },
             );
 
             if ($count < $minimum) {

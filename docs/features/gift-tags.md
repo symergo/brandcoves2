@@ -274,6 +274,11 @@ pets, "Bakvorm" to baking). Two things were wrong, both fixed the same day:
   cold took 8 to 20 seconds. The pool now reads at most 3,000 inferred candidates per interest, in no
   particular order (`SuggestionEngine::INFERRED_CAP`); judged and crowd-tagged ones are read in full.
 
+- **The text search is capped too.** Where an interest has too few tags (most of be-fr and nl-nl), the
+  text is still the way in, and its unbounded match was the original 55-second query: be-fr music
+  answered 500 after 90 seconds that morning. It now reads at most 20,000 matching offers, in no
+  order (`TEXT_CAP`). The "enough tagged" count became one lookup per tag column instead of an OR.
+
 Still true after the fix: a rule is only as good as the judging behind it, and be-fr and en have
 little judging. Judging a few thousand products there would earn many more categories a rule.
 
