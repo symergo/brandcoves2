@@ -68,6 +68,11 @@ class AutoTaggerTest extends TestCase
 
         $this->assertSame(['Kookboek' => ['interest:cooking', 'interest:reading']], $tagger->rules(Market::BeNl));
 
+        // A category on the skip list earns no rule, however the judges voted.
+        config(['giftcoves.auto_tags.skip_categories' => ['kookboek']]);
+        $this->assertSame([], $tagger->rules(Market::BeNl));
+        config(['giftcoves.auto_tags.skip_categories' => []]);
+
         // A dry run counts and writes nothing.
         $this->assertSame(['rules' => 1, 'tagged' => 1, 'cleared' => 0], $tagger->apply(Market::BeNl, false));
         $this->assertSame([], $new->fresh()->autoTags());
@@ -103,6 +108,12 @@ class AutoTaggerTest extends TestCase
         $this->assertSame([$judged->id, $inferred->id], array_map(fn ($p) => $p->group->id, $picks));
         $this->assertGreaterThan($picks[1]->breakdown['interest_fit'], $picks[0]->breakdown['interest_fit']);
         $this->assertGreaterThan(0, $picks[1]->breakdown['interest_fit']);
+
+        // A judged product gets into the pool before any number of newer inferred ones.
+        $this->assertStringContainsString(
+            'case when product_groups.gift_tags',
+            (new \ReflectionMethod(SuggestionEngine::class, 'judgedFirst'))->invoke(app(SuggestionEngine::class), ProductGroup::query(), ['coffee'])->toSql(),
+        );
 
         // Inferred products count towards "enough tagged", so tags-first holds with them.
         config(['giftcoves.gift.tags_first_minimum' => 2]);

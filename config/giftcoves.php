@@ -633,6 +633,28 @@ return [
         // How strong an inferred interest counts beside an editor's (1.0)
         // and the crowd's (list_signals.weight, 0.75).
         'weight' => 0.6,
+
+        /*
+         * Categories that never get a rule, whatever the judged products in
+         * them say. From the spot check after the first run (2026-11-16);
+         * each one tagged products the interest's page should not show.
+         *
+         * - Masturbator: the judged ones were filed under wellness, so 862
+         *   adult products became candidates for "wellness" gift pages.
+         * - Mobiele telefoon & smartphone & GPS & e-book: 99,000 products,
+         *   mostly phone cases, inferred "tech" from the phones among them.
+         * - Verkleedkleding: judged as children's costumes; the unjudged
+         *   ones were printed T-shirts for adults.
+         * - Informatique (be-fr): a feed files gift vouchers there.
+         *
+         * Compared in lower case, in every market.
+         */
+        'skip_categories' => [
+            'Masturbator',
+            'Mobiele telefoon & smartphone & GPS & e-book',
+            'Verkleedkleding',
+            'Informatique',
+        ],
     ],
 
     'list_signals' => [

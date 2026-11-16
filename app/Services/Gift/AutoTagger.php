@@ -87,8 +87,14 @@ class AutoTagger
         );
 
         $rules = [];
+        $skipped = array_map('mb_strtolower', (array) config('giftcoves.auto_tags.skip_categories', []));
 
         foreach ($rows as $row) {
+            // Categories where the judged majority misleads; the list and the reasons are in the config.
+            if (in_array(mb_strtolower((string) $row->category), $skipped, true)) {
+                continue;
+            }
+
             if (count($rules[$row->category] ?? []) < self::PER_CATEGORY) {
                 $rules[$row->category][] = $row->tag;
             }

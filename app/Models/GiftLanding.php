@@ -69,7 +69,9 @@ class GiftLanding extends Model
      */
     public function verdictsKey(?string $budget = null): string
     {
-        return sprintf('bc:gift-landing:v2:%d:%d:%s', $this->id, $this->checked_at->getTimestamp(), $budget ?? 'all');
+        // v3 since 2026-11-16: the answers stored that night were built from a pool the
+        // automatic tags had flooded (SuggestionEngine::judgedFirst()), and must not be served.
+        return sprintf('bc:gift-landing:v3:%d:%d:%s', $this->id, $this->checked_at->getTimestamp(), $budget ?? 'all');
     }
 
     /**

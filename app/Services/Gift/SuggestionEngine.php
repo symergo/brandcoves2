@@ -430,7 +430,7 @@ class SuggestionEngine
         $queries = $this->flatten($slots);
 
         if (count($slots) < 2) {
-            $pool = $this->pool($brief, $queries)
+            $pool = $this->judgedFirst($this->pool($brief, $queries), $brief->interests)
                 ->orderByDesc('first_seen_at')
                 ->orderByDesc('id')
                 ->limit(self::CANDIDATE_POOL)
@@ -459,7 +459,7 @@ class SuggestionEngine
 
         foreach ($slots as $slot) {
             $pool = $pool->concat(
-                $this->pool($brief, $slot['queries'], $slot['interest'])
+                $this->judgedFirst($this->pool($brief, $slot['queries'], $slot['interest']), [$slot['interest']])
                     ->orderByDesc('first_seen_at')
                     ->orderByDesc('id')
                     ->limit($share)
@@ -685,6 +685,42 @@ class SuggestionEngine
         // a second shop is a suggestion they can act on. Applied by the caller,
         // because the demand slice orders itself differently.
         return $groups;
+    }
+
+    /**
+     * Judged products into the pool before inferred ones (2026-11-16).
+     *
+     * The pool is the newest 300 candidates. The night the automatic tags
+     * arrived, 418,000 books carried `interest:reading` by inference and the
+     * newest 300 of those were textbooks: "gifts for a friend who loves
+     * reading" opened on "Cardiopulmonary Bypass and Mechanical Support",
+     * with the judged gift books never reaching the scorer. The score
+     * already weighs an inferred tag lower, but a product that is not in the
+     * pool is never scored. So: an editor's tag first, then the crowd's,
+     * then everything else (inferred tags and text matches), each newest
+     * first. Inferred products still fill a pool the judged ones cannot.
+     *
+     * @param  Builder<ProductGroup>  $pool
+     * @param  list<string>  $interests
+     * @return Builder<ProductGroup>
+     */
+    private function judgedFirst(Builder $pool, array $interests): Builder
+    {
+        $tags = array_map(
+            fn (string $interest) => GiftTags::interest($interest),
+            array_values(array_filter($interests, fn (string $i) => Interest::tryFrom(mb_strtolower(trim($i))) !== null)),
+        );
+
+        if ($tags === []) {
+            return $pool;
+        }
+
+        $array = $this->pgTextArray($tags);
+
+        return $pool->orderByRaw(
+            'case when product_groups.gift_tags ??| ?::text[] then 0 when product_groups.crowd_tags ??| ?::text[] then 1 else 2 end',
+            [$array, $array],
+        );
     }
 
     /**

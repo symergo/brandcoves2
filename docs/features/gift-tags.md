@@ -250,8 +250,28 @@ feeds alike.
 - **Runs** nightly at 04:10 (`bc:auto-tag --write`); `bc:auto-tag` alone counts what would change,
   `--rules` lists the categories. In ranges of 100,000 ids, one short statement each.
 
-Not known until the first production run: how many categories earn a rule per market, and so how
-much of the backlog this reaches. nl-nl had few judged products, so it will have few rules.
+### The first run, and what the spot check found (2026-11-16)
+
+The 04:10 run tagged 1,237,706 products in be-nl (291 categories), 339,235 in nl-nl (23), 310,691
+in be-fr (26) and 2,444 in en (2). Share of giftable products with a judged or inferred tag
+afterwards: be-nl 74%, nl-nl 41%, be-fr 19%, en 24%. Judged tags that morning: 57,859 in be-nl,
+4,159 in nl-nl, 2,861 in be-fr, 788 in en. Most of the tagged products are books (reading) and
+records (music): about a million of the 1.9 million.
+
+Most rules read right ("Eau de parfum" to beauty and perfume, "Koksmes" to cooking, "Dierenmand" to
+pets, "Bakvorm" to baking). Two things were wrong, both fixed the same day:
+
+- **Inferred products pushed the judged ones out of the pool.** The engine's pool is the newest 300
+  candidates, and 418,000 inferred books are newer than the judged gift books: "for a friend who
+  loves reading" opened on medical and geology textbooks. `SuggestionEngine::judgedFirst()` now
+  orders the pool an editor's tag first, the crowd's second, the rest after, each newest first.
+  The landing pages' stored answers moved to a new key (`v3`) so that night's are not served.
+- **Four categories misled** and are on `auto_tags.skip_categories`, with the reason for each in
+  the config: adult products inferred as wellness, phone cases as tech, adults' printed T-shirts as
+  children's costumes, gift vouchers in a French "Informatique". The next run clears their tags.
+
+Still true after the fix: a rule is only as good as the judging behind it, and be-fr and en have
+little judging. Judging a few thousand products there would earn many more categories a rule.
 
 ## Tagged when a Cove is built (2026-11-15)
 
