@@ -54,6 +54,9 @@ class SuggestionEngine
      */
     private const CANDIDATE_POOL = 300;
 
+    /** Inferred (auto-tagged) candidates read per pool; see pool(). */
+    private const INFERRED_CAP = 3000;
+
     /** Angle queries per retrieval. Beyond this the tsquery stops being selective. */
     private const MAX_QUERIES = 24;
 
@@ -651,12 +654,21 @@ class SuggestionEngine
                     ->where('market', $market)
                     ->whereRaw('crowd_tags ??| ?::text[]', [$array]));
 
-                // What the product's category implies, for the products nobody
-                // judged (AutoTagger, 2026-11-16).
+                /*
+                 * What the product's category implies, for the products nobody
+                 * judged (AutoTagger, 2026-11-16). Capped, and deliberately
+                 * without an order: 423,000 records carry an inferred
+                 * `interest:music` in be-nl, and reading them all to keep the
+                 * newest 300 took 8 to 20 seconds a page the morning after
+                 * the first run. Inferred products are filler behind the
+                 * judged ones (judgedFirst()), so any few thousand will do,
+                 * and without an order Postgres stops reading at the cap.
+                 */
                 $candidates->union(DB::table('product_groups')
                     ->select('id')
                     ->where('market', $market)
-                    ->whereRaw('auto_tags ??| ?::text[]', [$array]));
+                    ->whereRaw('auto_tags ??| ?::text[]', [$array])
+                    ->limit(self::INFERRED_CAP));
             }
 
             $byText = $candidates;

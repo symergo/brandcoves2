@@ -270,6 +270,10 @@ pets, "Bakvorm" to baking). Two things were wrong, both fixed the same day:
   the config: adult products inferred as wellness, phone cases as tech, adults' printed T-shirts as
   children's costumes, gift vouchers in a French "Informatique". The next run clears their tags.
 
+- **Reading every inferred candidate was slow.** With 423,000 records inferred as music, a page built
+  cold took 8 to 20 seconds. The pool now reads at most 3,000 inferred candidates per interest, in no
+  particular order (`SuggestionEngine::INFERRED_CAP`); judged and crowd-tagged ones are read in full.
+
 Still true after the fix: a rule is only as good as the judging behind it, and be-fr and en have
 little judging. Judging a few thousand products there would earn many more categories a rule.
 
