@@ -33,6 +33,8 @@ interface Props {
         drawAt: string | null
         drawWhenCount: number | null
         exchangePassed: boolean
+        /** Whether people can still be brought in: always before the draw. */
+        takesNewMembers: boolean
         progress: { members: number; ready: number; done: number }
         guesses: { made: number; right: number } | null
     }
@@ -218,10 +220,10 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists, i
                             ))}
                         </ul>
 
-                        {isOrganiser && !group.exchangePassed && <AddMember groupId={group.id} />}
+                        {isOrganiser && group.takesNewMembers && <AddMember groupId={group.id} />}
                     </div>
 
-                    {!group.exchangePassed && (
+                    {group.takesNewMembers && (
                         <div className="mt-4">
                             <ShareRow
                                 url={group.inviteUrl}

@@ -437,6 +437,33 @@ class SantaGameTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('group.guesses', ['made' => 1, 'right' => 1]));
     }
 
+    /**
+     * Reported 2026-11-20: a group whose exchange day was the day it was made
+     * opened without the invite link and without the "add somebody" row,
+     * because both were hidden from the exchange day on, drawn or not.
+     */
+    #[Test]
+    public function a_group_nobody_has_drawn_in_yet_can_always_be_shared(): void
+    {
+        $today = $this->group(['exchange_date' => now()->toDateString()]);
+
+        $this->get("/be-nl/santa/{$today->id}")
+            ->assertInertia(fn ($page) => $page->where('group.takesNewMembers', true));
+
+        $noDay = $this->group();
+
+        $this->get("/be-nl/santa/{$noDay->id}")
+            ->assertInertia(fn ($page) => $page->where('group.takesNewMembers', true));
+
+        // Drawn, and the day is here: a latecomer would have nobody shopping for them.
+        $this->join($today, 'Sam');
+        $this->join($today, 'Ash');
+        $this->draw($today);
+
+        $this->get("/be-nl/santa/{$today->id}")
+            ->assertInertia(fn ($page) => $page->where('group.takesNewMembers', false));
+    }
+
     #[Test]
     public function the_same_group_a_year_on_avoids_who_you_had(): void
     {

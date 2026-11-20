@@ -162,6 +162,8 @@ class SecretSantaController extends Controller
                 'drawAt' => $santa->draw_at?->toIso8601String(),
                 'drawWhenCount' => $santa->draw_when_count,
                 'exchangePassed' => $santa->exchangePassed(),
+                // The invite link and the "add somebody" row: always before the draw.
+                'takesNewMembers' => $santa->takesNewMembers(),
                 'progress' => $game->progress($santa),
                 // After the exchange: how many guessed who had them, never who.
                 'guesses' => ! $santa->exchangePassed() ? null : [

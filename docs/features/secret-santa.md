@@ -389,3 +389,19 @@ same row. Forty an hour per group, because this is a form that mails an address 
 
 2026-11-14 (owner): the form that starts a group has a heading above its card, "Nieuwe groep"
 (`santa.hub.new_group`, in all four languages), the way the list of groups has "Je groepen".
+
+## A group nobody has drawn in yet can always be shared (2026-11-20)
+
+Owner: "when i create a secret friend list without date, i dont get a way to share the list or add
+people to the list". The group in question had today as its exchange day. The invite link and the
+"add somebody" row were both shown on `! exchangePassed()`, and that is true from midnight on the
+exchange day, so the page opened with no way to get anybody in, before any name was drawn.
+
+`SecretSantaGroup::takesNewMembers()` now decides both, and the page reads `group.takesNewMembers`:
+always before the draw, whatever the date; after the draw, until the exchange day, as before.
+`exchangePassed()` keeps its one meaning (guessing who had you opens on the day).
+
+Not solved here: a group's day cannot be changed after it is made, so a wrong day stays wrong. And
+both forms that start a group were checked: neither sends a day by itself when the field is left
+alone (they send none), so the day on that group was put in the field somehow. A phone's date
+picker fills in today when it is opened and closed, which is the likely way.

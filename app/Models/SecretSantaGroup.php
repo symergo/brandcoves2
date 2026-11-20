@@ -90,6 +90,22 @@ class SecretSantaGroup extends Model
         return $this->exchange_date !== null && $this->exchange_date->startOfDay()->lte(now());
     }
 
+    /**
+     * Whether the group page still offers the invite link and the "add
+     * somebody" row.
+     *
+     * Always before the draw, whatever the date says: a group nobody has drawn
+     * in yet is still being put together. It was `! exchangePassed()` alone,
+     * and that is true from midnight on the exchange day, so a group made with
+     * today as its day (reported 2026-11-20) opened with no way to get anybody
+     * in. After the draw, until the exchange day: a latecomer on the day
+     * itself has nobody left to shop for them.
+     */
+    public function takesNewMembers(): bool
+    {
+        return ! $this->status->isDrawn() || ! $this->exchangePassed();
+    }
+
     /** `/be-nl/santa/{id}/...`, without a request: mails and commands build links too. */
     public function path(string $rest = ''): string
     {
