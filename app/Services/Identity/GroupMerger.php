@@ -51,7 +51,13 @@ final class GroupMerger
 {
     public function __construct(private readonly ProductGrouper $grouper) {}
 
-    public function merge(ProductGroup $loser, ProductGroup $winner, ?User $by = null, ?string $reason = null): void
+    /**
+     * @param  bool  $retireMarketSearches  False for merges made in bulk by a job (an eBay listing joining
+     *                                      its real product, 2026-11-22), which retires only the search
+     *                                      it serves: retiring every cached search of a market per merge,
+     *                                      dozens a minute, is the recomputation storm of 2026-10-25.
+     */
+    public function merge(ProductGroup $loser, ProductGroup $winner, ?User $by = null, ?string $reason = null, bool $retireMarketSearches = true): void
     {
         $this->guard($loser, $winner);
 
@@ -159,7 +165,9 @@ final class GroupMerger
 
         // One card where there were two: cached searches of the market would
         // still list the loser's id (and drop it at render, a card short).
-        SearchGenerations::bumpMarket($loser->market);
+        if ($retireMarketSearches) {
+            SearchGenerations::bumpMarket($loser->market);
+        }
 
         $loser->refresh();
         $winner->refresh();

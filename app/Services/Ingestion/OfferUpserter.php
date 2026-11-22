@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ingestion;
 
 use App\Enums\ProductStatus;
+use App\Enums\Source;
 use App\Models\Feed;
 use App\Models\Merchant;
 use App\Services\Catalogue\DescriptionLimit;
@@ -74,7 +75,11 @@ class OfferUpserter
                 continue;
             }
 
-            $identity = IdentityResolver::resolve($offer->ean, $offer->brand, $offer->title);
+            $identity = IdentityResolver::resolve($offer->ean, $offer->brand, $offer->title)
+                // eBay only: a listing with neither barcode nor brand is a product of its own, so it
+                // shows straight after the live search (owner, 2026-11-22). Feed shops keep the rule
+                // that such an offer stays ungrouped.
+                ?? ($offer->source === Source::Ebay ? IdentityResolver::listing(Source::Ebay->value, $offer->externalId) : null);
 
             $rows[] = [
                 'source' => $offer->source->value,

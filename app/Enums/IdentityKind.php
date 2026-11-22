@@ -20,6 +20,14 @@ enum IdentityKind: string
      */
     case Title = 'title';
 
+    /**
+     * One marketplace listing, a product of its own (2026-11-22). For an eBay offer with neither a
+     * barcode nor a brand, so it shows in search straight after the live search; merged into the
+     * real product once its item detail gives an identity (FetchEbayItemDetails). Never shared by
+     * two offers, so it never compares prices.
+     */
+    case Listing = 'listing';
+
     /** @return list<string> */
     public static function values(): array
     {

@@ -132,9 +132,30 @@ ungrouped. The owner asked whether eBay had another identifying field; the item 
 - **Offers stored before** wait until searched again, or `bc:ebay-details --write` queues them,
   newest first, within today's cap; run it on later days for the rest.
 
-Still invisible after this: listings without a brand at all (knock-offs, generic goods). Showing
-those as products of one offer each was discussed and set aside until the details had run (owner,
-2026-11-22: "Finish details first").
+### Every eBay listing a product straight after the live search (2026-11-22)
+
+The owner then asked for eBay listings to show **immediately after the live search**, like bol's,
+whose barcodes group them at once. Fetching the details inline was rejected: 0.5 to 1 s more per
+live search, and the daily quota would cover about 80 to 100 such searches. Instead:
+
+- **An eBay offer with neither a barcode nor a brand is a product of its own**
+  (`IdentityKind::Listing`, key `listing:ebay:{item id}`, `IdentityResolver::listing()`), set in
+  `OfferUpserter` and grouped in the same request as bol's. Feed shops keep the old rule (no
+  identity, not shown). Such a product never compares prices; the same item from two sellers shows
+  twice until their details make them one.
+- **Once its detail gives a real identity**, `FetchEbayItemDetails` moves the offer to the real
+  product and merges the listing product into it with `GroupMerger`: list items, alerts and Cove
+  picks move along, and the listing product's address answers 301. This is the owner's condition
+  ("solve the issue with the pointing to empty product"). `GroupMerger::merge()` takes
+  `retireMarketSearches: false` here: retiring every cached search of the market per merge, dozens a
+  minute, is the overload of 2026-10-25; the job retires only the search that queued it.
+- **A detail without a brand** (a knock-off) leaves the listing as its own product, never under the
+  brand it is "compatible" with. An ended listing (404) gets no product.
+- **Offers stored before** become listing products when their search runs again or
+  `bc:ebay-details` reaches them.
+- The new kind needed both `identity_kind` CHECK constraints widened
+  (`2026_11_22_000500_allow_listing_identities`, added `NOT VALID` then validated so six million
+  offers are checked without holding writes).
 
 ## No charts
 

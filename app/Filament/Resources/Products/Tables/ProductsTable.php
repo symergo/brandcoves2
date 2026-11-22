@@ -103,6 +103,8 @@ class ProductsTable
                     ->color(fn (?IdentityKind $state) => match ($state) {
                         IdentityKind::Ean => 'success',
                         IdentityKind::Title => 'warning',
+                        // One eBay listing, a product of its own until its detail gives a real identity
+                        IdentityKind::Listing => 'gray',
                         default => 'danger',
                     })
                     ->tooltip(fn (Product $r) => $r->identity_key ?? 'No EAN and no usable brand+title — left ungrouped on purpose'),

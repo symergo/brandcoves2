@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Jobs\FetchEbayItemDetails;
+use App\Models\ProductGroup;
+use App\Models\WishlistItem;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\Ebay\EbayConnector;
 use App\Services\Connectors\Ebay\EbayItemDetails;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Identity\GroupMerger;
+use App\Services\Identity\IdentityResolver;
 use App\Services\Ingestion\IncomingGrouper;
 use App\Services\Search\SearchGenerations;
 use App\Services\Search\SearchQuery;
@@ -88,7 +93,7 @@ class EbayItemDetailsTest extends TestCase
 
         $before = SearchGenerations::term(Market::Es, 'lego');
 
-        (new FetchEbayItemDetails(Market::Es, [$id], 'lego'))->handle(app(EbayConnector::class), app(EbayItemDetails::class), app(IncomingGrouper::class));
+        (new FetchEbayItemDetails(Market::Es, [$id], 'lego'))->handle(app(EbayConnector::class), app(EbayItemDetails::class), app(IncomingGrouper::class), app(GroupMerger::class));
 
         // The search that queued it cached an empty result before the product existed: retired now
         $this->assertNotSame($before, SearchGenerations::term(Market::Es, 'lego'));
@@ -169,8 +174,8 @@ class EbayItemDetailsTest extends TestCase
             public function search(string $query, Market $market, int $limit = 24): array
             {
                 return [
-                    new Offer(Source::Ebay, 'v1|11|0', $market, 'LEGO 40918 Winter Snow Globe', 'https://www.ebay.es/itm/11', price: 4999),
-                    new Offer(Source::Ebay, 'v1|12|0', $market, 'LEGO 21335 Faro', 'https://www.ebay.es/itm/12', price: 19999, ean: '5702016912371'),
+                    new Offer(Source::Ebay, 'v1|11|0', $market, 'LEGO 40918 Winter Snow Globe', 'https://www.ebay.es/itm/11', price: 4999, imageUrl: 'https://i.ebayimg.com/11.jpg', availability: Availability::InStock),
+                    new Offer(Source::Ebay, 'v1|12|0', $market, 'LEGO 21335 Faro', 'https://www.ebay.es/itm/12', price: 19999, imageUrl: 'https://i.ebayimg.com/12.jpg', ean: '5702016912371', availability: Availability::InStock),
                 ];
             }
 
@@ -185,9 +190,50 @@ class EbayItemDetailsTest extends TestCase
             }
         });
 
-        app(SearchService::class)->search(new SearchQuery(market: Market::Es, term: 'lego', logged: false), waitForLive: true);
+        $result = app(SearchService::class)->search(new SearchQuery(market: Market::Es, term: 'lego', logged: false), waitForLive: true);
+
+        // Both in the same call: the bare listing as a product of its own, not waiting for its detail
+        $this->assertCount(2, $result->groups->items());
+        $this->assertSame(1, DB::table('product_groups')->where('market', 'es')->where('identity_kind', 'listing')->count());
 
         Queue::assertPushed(FetchEbayItemDetails::class, fn (FetchEbayItemDetails $job): bool => $job->market === Market::Es && $job->externalIds === ['v1|11|0'] && $job->term === 'lego');
+    }
+
+    #[Test]
+    public function a_stored_listing_without_a_brand_becomes_a_product_of_its_own(): void
+    {
+        $id = 'v1|888|0';
+        $this->storeOffer($id, 'Ladrillo de construcción jardín botánico compatible 21353');
+        $this->fakeEbay(['itemId' => $id, 'brand' => '- Sans marque/Générique -']);
+
+        $this->runJob([$id]);
+
+        $offer = DB::table('products')->where('external_id', $id)->first();
+        $this->assertSame(IdentityResolver::listing('ebay', $id)->key, $offer->identity_key);
+        $this->assertNotNull($offer->group_id, 'shown, as a product of its own and never as LEGO');
+        $this->assertSame('listing', DB::table('product_groups')->where('id', $offer->group_id)->value('identity_kind'));
+    }
+
+    #[Test]
+    public function a_listing_product_merges_into_its_real_product_and_takes_what_was_saved_to_it(): void
+    {
+        $id = 'v1|777|0';
+        $this->storeOffer($id, 'LEGO 40918 Winter Snow Globe GWP exclusivo nuevo');
+        $listing = IdentityResolver::listing('ebay', $id);
+        DB::table('products')->where('external_id', $id)->update(['identity_key' => $listing->key, 'identity_kind' => 'listing']);
+        app(IncomingGrouper::class)->attachIds(Market::Es, 'ebay', [$id]);
+        $listingProduct = ProductGroup::query()->where('identity_key', $listing->key)->sole();
+
+        // Saved to somebody's list in the minute before its detail arrived
+        $saved = WishlistItem::factory()->of($listingProduct)->create();
+
+        $this->fakeEbay(['itemId' => $id, 'brand' => 'LEGO', 'mpn' => '40918']);
+        $this->runJob([$id]);
+
+        $real = ProductGroup::query()->where('market', 'es')->where('identity_kind', 'title')->sole();
+        $this->assertSame($real->id, DB::table('products')->where('external_id', $id)->value('group_id'));
+        $this->assertSame($real->id, $saved->fresh()->group_id, 'the list item moved along, not left on an empty product');
+        $this->assertSame($real->id, $listingProduct->fresh()->merged_into_id, 'its old address answers 301');
     }
 
     /** @param  array<string, mixed>  $item */

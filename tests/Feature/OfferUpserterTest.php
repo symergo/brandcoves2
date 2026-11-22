@@ -189,7 +189,10 @@ class OfferUpserterTest extends TestCase
 
         $row = DB::table('products')->where('external_id', 'ebay-1')->first();
         $this->assertSame('Sony', $row->brand);
-        $this->assertSame(IdentityResolver::resolve(null, null, $offer->title)?->key, $row->identity_key);
+        // Not grouped by the brand read from the title: an eBay offer without a brand of its own is its
+        // own listing product since 2026-11-22, until its item detail gives the real one
+        $this->assertNotSame(IdentityResolver::resolve(null, 'Sony', $offer->title)?->key, $row->identity_key);
+        $this->assertSame(IdentityResolver::listing('ebay', 'ebay-1')->key, $row->identity_key);
     }
 
     #[Test]

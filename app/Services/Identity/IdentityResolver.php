@@ -45,6 +45,20 @@ final class IdentityResolver
     }
 
     /**
+     * One marketplace listing, a product of its own (2026-11-22).
+     *
+     * For an eBay offer that resolve() gave nothing, so it shows in search straight after the live
+     * search instead of waiting for its item detail. Unique to the listing, so it never merges two
+     * offers and never compares a price: the guards above stay intact. When the detail later gives a
+     * real identity, FetchEbayItemDetails merges this product into that one (GroupMerger), so a list
+     * item or alert on it moves along and its address answers 301.
+     */
+    public static function listing(string $source, string $externalId): Identity
+    {
+        return new Identity('listing:'.$source.':'.$externalId, IdentityKind::Listing);
+    }
+
+    /**
      * Brand + normalised title.
      *
      * Needed because a large share of feed rows carry no EAN at all — without
