@@ -1297,3 +1297,24 @@ be-nl offers (2.5 s cold) and reads the 12,161 matching offers from a 9.5 GB tab
 `products` table and its indexes are 22 GB on a server with 11.7 GB of memory, so a search whose
 pages are not in memory reads from disk. Raising Redis to 2 GB in Coolify (4.3 GB of memory was free)
 would give the result lists more room still.
+
+## Offer descriptions cut to 1,000 characters (owner, 2026-11-22)
+
+Disk: the `products` table was 22 GB of a 99 GB disk with 19 GB free, and a bol offer stored on
+average 860 bytes of description and 1,301 bytes of `search_vector`, most of that built from the
+description. bol's connector already cut at 2,000 characters and Awin's not at all; half of bol's
+descriptions were longer than 1,000. `App\Services\Catalogue\DescriptionLimit` cuts every offer
+ingestion writes to 1,000 characters on a word boundary (`OfferUpserter`), and
+`bc:trim-descriptions --write` cuts what was stored before, once, in id ranges that can be resumed
+with `--from`, running a plain `VACUUM (PARALLEL 0)` every 300,000 rewritten rows. Estimated gain
+1.5 to 2 GB inside the table. Locally, offers over 900 characters went from 1,340 to 897 bytes of
+description and from 1,672 to 1,172 bytes of search vector.
+
+What it cost: product pages show at most 1,000 characters of the shop's text instead of 1,800
+(`ProductDescription::LIMIT`), and search no longer matches words that only appear late in a long
+description, the weakest of its four weights. The PHP and SQL cuts must agree, or every feed run
+would rewrite the offers it cut: `DescriptionLimitTest` compares them.
+
+The freed space is reused by the table, which then stops growing until new offers have filled it; the
+file only shrinks with `VACUUM FULL products`, which locks the offers table (the site is down for it)
+and needs free disk for the rewritten copy.

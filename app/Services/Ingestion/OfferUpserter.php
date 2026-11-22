@@ -7,6 +7,7 @@ namespace App\Services\Ingestion;
 use App\Enums\ProductStatus;
 use App\Models\Feed;
 use App\Models\Merchant;
+use App\Services\Catalogue\DescriptionLimit;
 use App\Services\Catalogue\TitleBrand;
 use App\Services\Connectors\Offer;
 use App\Services\Identity\IdentityResolver;
@@ -82,7 +83,8 @@ class OfferUpserter
                 'merchant_id' => $this->merchantId($offer),
                 'feed_id' => $feed?->id,
                 'title' => $offer->title,
-                'description' => $offer->description,
+                // At most 1,000 characters, on a word boundary (DescriptionLimit, 2026-11-22: disk)
+                'description' => DescriptionLimit::cut($offer->description),
                 // The source's brand, or else one read from the start of the
                 // title (TitleBrand, 2026-09-30). Only after identity was
                 // resolved above from the source's own brand: for an offer
