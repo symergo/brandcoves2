@@ -198,11 +198,22 @@ final class CacheAnonymousPage
         $this->removeSessionCookies($response);
 
         if ($this->storable($request, $response, CookieJar::getQueuedCookies() != $queued)) {
+            /*
+             * Stored deflated (2026-11-22). A page is about 175 KB of HTML and page data; on
+             * production 1,883 of them filled ~380 MB of Redis's 1 GB, and as crawlers asked for
+             * new pages Redis evicted the least recently used keys, which were the cached search
+             * results for words nobody had searched in a few hours (893,435 keys evicted in six
+             * days). Those searches were then computed again while a visitor waited: 4 to 9 s for
+             * "lego" or "koptelefoon". Deflated a page is about a third of the size, for 7 ms once
+             * when stored and 0.5 ms each time it is served.
+             */
+            $body = (string) $response->getContent();
             Cache::put($key, [
                 'at' => now()->getTimestamp(),
                 'status' => $response->getStatusCode(),
                 'headers' => $this->storedHeaders($response),
-                'body' => (string) $response->getContent(),
+                'body' => gzdeflate($body, 6),
+                'deflated' => true,
             ], (int) config('giftcoves.page_cache.stale_seconds'));
 
             return $this->publicHeaders($this->mark($response, 'miss'));
@@ -346,6 +357,17 @@ final class CacheAnonymousPage
 
         if (! is_array($entry) || ! is_int($entry['at'] ?? null) || ! is_string($entry['body'] ?? null)) {
             return null;
+        }
+
+        // Stored deflated since 2026-11-22; an entry from before is plain text and read as it is.
+        if (($entry['deflated'] ?? false) === true) {
+            $body = @gzinflate($entry['body']);
+
+            if ($body === false) {
+                return null;
+            }
+
+            $entry['body'] = $body;
         }
 
         /** @var array{at: int, status: int, headers: array<string, list<string>>, body: string} $entry */

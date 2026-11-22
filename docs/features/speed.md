@@ -1274,3 +1274,26 @@ All expand-only and guarded, because a failing migration is an outage:
 - A deploy during an ingest: the log says "Feed ingest paused for a restart", and the job is
   running again within a minute of the new container.
 - `/be-nl/daily` is there at 09:00; the list price digest and search alerts arrive in the morning.
+
+## Cached pages are stored compressed, so search results stay cached (2026-11-22)
+
+Owner asked to check the logs and speed. Common searches answered slowly the first time from outside:
+"koptelefoon" in 8.8 s and "lego" in 4.4 s, then in 0.4 s. Their result lists are meant to stay cached
+for up to 14 days and refresh in the background (`SearchService::staleWhileRevalidate()`), so they
+should not have been computed while somebody waited. They had been evicted: Redis is capped at 1 GB
+(`volatile-lru`) and had thrown out 893,435 keys in six days, with 54% of reads finding their key.
+What filled it was this page cache, 1,883 whole pages of about 175 to 260 KB for anonymous visitors,
+about 380 MB, renewed as crawlers asked for new pages. When Redis is full it drops the least recently
+used keys, and those are exactly the result lists of words nobody searched in the last hours.
+
+Pages are now stored deflated: about 3x smaller (175 KB to 56 KB measured), 7 ms once when stored,
+0.5 ms when served. Entries stored before are plain text and still served. The AI crawlers kept off
+search on the same day (crawlers-and-the-search-log.md) remove most of the long one-off searches that
+also wrote result lists.
+
+What a cold search costs, measured on production for "koptelefoon" in be-nl: the full-text index
+finds 21,341 offers in 15 ms; Postgres then intersects them with the index of all 2.58 million active
+be-nl offers (2.5 s cold) and reads the 12,161 matching offers from a 9.5 GB table (6.7 s cold). The
+`products` table and its indexes are 22 GB on a server with 11.7 GB of memory, so a search whose
+pages are not in memory reads from disk. Raising Redis to 2 GB in Coolify (4.3 GB of memory was free)
+would give the result lists more room still.
