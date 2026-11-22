@@ -12,7 +12,7 @@ import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
 import MarketBar from '../Components/MarketBar'
 import MarketButton, { MarketList } from '../Components/MarketSwitcher'
-import NavMenu, { type NavMenuGroup } from '../Components/NavMenu'
+import NavMenu, { type NavMenuGroup, type NavMenuItem } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
 import { type PropsWithChildren, type ReactNode, useEffect, useState } from 'react'
 import { isCleanTerm, searchHref } from '../searchUrl'
@@ -169,7 +169,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
 function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, auth, unreadCount, analytics, amazonAssociate, languageLinks } = page.props
+    const { market, auth, unreadCount, analytics, amazonAssociate, languageLinks, discoverMenu } = page.props
     const { t } = useTranslations()
 
     /*
@@ -264,32 +264,32 @@ function Chrome({ children }: PropsWithChildren) {
         groups: [
             {
                 items: [
-                    {
+                    discoverMenu.daily && {
                         // Today's edition. The archive is linked from that page
                         // and from every "all" link (owner, 2026-10-02).
                         href: `${base}/${market.coveSegment}`,
                         label: t('nav.daily'),
                         icon: <CoveIcon name="daily" className="h-5 w-5" />,
                     },
-                    {
+                    discoverMenu.surprise && {
                         href: `${base}/surprise`,
                         label: t('nav.surprise'),
                         icon: <CoveIcon name="surprise" className="h-5 w-5" />,
                     },
                     // Named as the page is named ("Gift ideas, by person").
-                    {
+                    discoverMenu.giftIdeas && {
                         href: `${base}/gift-ideas`,
                         label: t('nav.gift_ideas'),
                         icon: <CoveIcon name="persona" className="h-5 w-5" />,
                     },
-                    {
+                    discoverMenu.guides && {
                         href: `${base}/guides`,
                         label: t('nav.smart'),
                         icon: <CoveIcon name="idea" className="h-5 w-5" />,
                     },
                     // The same mark All Coves gives this band: what you read
                     // there comes from people, like Ask others.
-                    {
+                    discoverMenu.community && {
                         href: `${base}/coves/community`,
                         label: t('community.index_heading'),
                         icon: <CoveIcon name="ask" className="h-5 w-5" />,
@@ -299,15 +299,20 @@ function Chrome({ children }: PropsWithChildren) {
                      * shops together; /brands links on to the shops (/shops),
                      * and All Coves shows both bands.
                      */
-                    {
+                    discoverMenu.brands && {
                         href: `${base}/brands`,
                         label: t('nav.brands_shops'),
                         icon: <CoveIcon name="brand" className="h-5 w-5" />,
                     },
-                ],
+                    /*
+                     * Only the entries with something behind them in this market
+                     * (App\Services\Cove\DiscoverMenu, 2026-11-22): Spain opened
+                     * with eBay alone, and most entries led to an empty page.
+                     */
+                ].filter((item) => item !== false) as NavMenuItem[],
             },
         ] as NavMenuGroup[],
-        footer: { href: `${base}/coves`, label: t('nav.all_coves') },
+        footer: discoverMenu.coves ? { href: `${base}/coves`, label: t('nav.all_coves') } : undefined,
     }
 
     const myCoves = {
@@ -325,7 +330,7 @@ function Chrome({ children }: PropsWithChildren) {
     const discoverHrefs = [
         discover.href,
         ...discover.groups.flatMap((group) => group.items.map((item) => item.href)),
-        discover.footer.href,
+        ...(discover.footer ? [discover.footer.href] : []),
     ]
 
     /*
@@ -750,14 +755,16 @@ function Chrome({ children }: PropsWithChildren) {
                                     </div>
                                 ))}
 
-                                <Link
-                                    href={discover.footer.href}
-                                    aria-current={isHere(discover.footer.href) ? 'page' : undefined}
-                                    onClick={() => setMenuOpen(false)}
-                                    className="mt-2 flex min-h-11 items-center pl-3 font-medium text-accent"
-                                >
-                                    {discover.footer.label} →
-                                </Link>
+                                {discover.footer && (
+                                    <Link
+                                        href={discover.footer.href}
+                                        aria-current={isHere(discover.footer.href) ? 'page' : undefined}
+                                        onClick={() => setMenuOpen(false)}
+                                        className="mt-2 flex min-h-11 items-center pl-3 font-medium text-accent"
+                                    >
+                                        {discover.footer.label} →
+                                    </Link>
+                                )}
                             </div>
 
                             {phoneRow(myCoves)}

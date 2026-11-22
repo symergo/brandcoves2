@@ -772,3 +772,15 @@ signed in: it opens the sign-in dialog over the page being read, and is a plain 
 without JavaScript. It has no arrow, since it opens nothing to choose from. Signed in, it is the button
 it was (initial, unread count, arrow, the sheet). The desktop header already had "Inloggen" as its own
 button. What the sheet held for a visitor is in the menu beside the icon.
+
+## Discover lists only what has content (owner, 2026-11-22)
+
+"Hide the discover sections on page and menu if there is no content." Spain had just opened to
+visitors with eBay alone, and every Discover entry but one led to an empty page.
+`App\Services\Cove\DiscoverMenu` answers per market, with the query each page lists by, which entries
+have something behind them: a published daily edition, a product with a surprise score, a published
+persona or occasion page or a gift landing, a published article, a community list, brand statistics.
+Kept ten minutes per market and shared with every page as `discoverMenu`; `SiteLayout` leaves out the
+entries that are false, and "All Coves" when all are. With no entry left the menu has no dropdown and
+Discover is a plain link to the Discover page. That page already hid its empty bands; the taste tool
+and "ask others" stay, as tools rather than content.

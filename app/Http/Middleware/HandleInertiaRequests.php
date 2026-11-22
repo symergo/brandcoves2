@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Enums\Market;
 use App\Models\CoveSubscriber;
 use App\Models\Notification;
+use App\Services\Cove\DiscoverMenu;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
 use App\Services\Seo\PageMeta;
@@ -222,6 +223,10 @@ class HandleInertiaRequests extends Middleware
              * about it.
              */
             'markets' => app(MarketSwitcher::class)->payload(),
+
+            // Which Discover menu entries have something behind them here (DiscoverMenu, 2026-11-22):
+            // an empty one is left out of the menu rather than leading to an empty page
+            'discoverMenu' => app(DiscoverMenu::class)->for($market),
 
             /*
              * This page in the other markets, as ordinary links for the footer

@@ -121,6 +121,16 @@ export interface SharedProps {
     seoTitle: string | null
     market: CurrentMarket
     markets: SwitcherCountry[]
+    /** Which Discover menu entries have something behind them in this market (App\Services\Cove\DiscoverMenu) */
+    discoverMenu: {
+        daily: boolean
+        surprise: boolean
+        giftIdeas: boolean
+        guides: boolean
+        community: boolean
+        brands: boolean
+        coves: boolean
+    }
     /**
      * This page in the other markets, for the footer's plain links. The same
      * addresses as the hreflang tags in the head; empty when no twin exists.
