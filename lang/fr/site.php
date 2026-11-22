@@ -1058,8 +1058,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Ami Secret (Secret Santa) : tirage au sort en ligne',
-        'seo_description' => 'Organisez un Ami Secret ou Secret Santa : créez un groupe, tirez les noms en ligne, et vous ne voyez que la personne pour qui vous achetez. Sans chapeau, sans tableur, sans fuite.',
+        'seo_title' => 'Ami Secret (Secret Santa) : tirage en ligne',
+        'seo_description' => 'Ami Secret ou Secret Santa : créez un groupe, tirez les noms en ligne et ne voyez que pour qui vous achetez. Sans chapeau, sans tableur, sans fuite.',
         'title' => 'Ami Secret',
         'subtitle' => 'Un groupe, un tirage, personne ne sait qui a qui.',
         'create' => 'Créer un groupe',

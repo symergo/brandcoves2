@@ -1064,8 +1064,8 @@ return [
         // Public, and it explains itself to a visitor with no account,
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
-        'seo_title' => 'Geheime Vriend (Secret Santa): online lootjes trekken',
-        'seo_description' => 'Geheime Vriend of Secret Santa organiseren: maak een groep, trek de lootjes online, en je ziet alleen voor wie jij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
+        'seo_title' => 'Geheime Vriend (Secret Santa): lootjes trekken',
+        'seo_description' => 'Geheime Vriend of Secret Santa: maak een groep, trek online lootjes en zie alleen voor wie jij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
         'title' => 'Geheime Vriend',
         'subtitle' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
         'create' => 'Start een groep',

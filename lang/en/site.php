@@ -1242,7 +1242,7 @@ return [
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
         'seo_title' => 'Secret Friend (Secret Santa): draw names online',
-        'seo_description' => 'Run a Secret Friend or Secret Santa: set up a group, draw the names online, and everybody sees only who they are buying for. No hat, no spreadsheet, no accidental spoilers.',
+        'seo_description' => 'Run a Secret Friend or Secret Santa: make a group, draw names online, and everyone sees only who they buy for. No hat, no spreadsheet, no spoilers.',
         'title' => 'Secret Friend',
         'subtitle' => 'One group, one draw, nobody knows who has who.',
         'create' => 'Start a group',

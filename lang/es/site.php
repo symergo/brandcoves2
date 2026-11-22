@@ -1060,7 +1060,7 @@ return [
         // so it is indexable. It shipped with no title and no description
         // at all until 2026-09-05.
         'seo_title' => 'Amigo invisible (Secret Santa): sorteo online',
-        'seo_description' => 'Organiza un Amigo invisible o Secret Santa: crea un grupo, sortea los nombres online y cada persona solo ve a quién le toca. Sin sombrero, sin hoja de cálculo, sin filtraciones.',
+        'seo_description' => 'Amigo invisible o Secret Santa: crea un grupo, sortea online y cada uno solo ve a quién le toca. Sin sombrero, sin hoja de cálculo, sin filtraciones.',
         'title' => 'Amigo invisible',
         'subtitle' => 'Un grupo, un sorteo, nadie sabe a quién le ha tocado quién.',
         'create' => 'Crear un grupo',
