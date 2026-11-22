@@ -208,17 +208,16 @@ class LocalisationTest extends TestCase
         // Without hreflang the market versions of a page compete with each
         // other, and the wrong language can rank in the wrong country.
         //
-        // Published markets only: declaring an unpublished one tells a crawler
-        // there is an equivalent worth indexing, which is the opposite of
-        // hiding it.
+        // Indexable markets only: declaring one kept from search engines (Spain
+        // since 2026-11-22) tells a crawler there is an equivalent worth indexing.
         $response = $this->get('/be-nl')->assertOk();
 
-        foreach (Market::published() as $market) {
+        foreach (Market::indexable() as $market) {
             $response->assertSee('hreflang="'.$market->hrefLang().'"', escape: false);
             $response->assertSee('/'.$market->value.'"', escape: false);
         }
 
-        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isPublished());
+        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isIndexable());
 
         foreach ($hidden as $market) {
             $response->assertDontSee('hreflang="'.$market->hrefLang().'"', escape: false);

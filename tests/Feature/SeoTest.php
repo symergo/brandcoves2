@@ -606,17 +606,17 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_index_covers_every_published_market(): void
+    public function the_sitemap_index_covers_every_indexable_market(): void
     {
         $xml = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
-        foreach (Market::published() as $market) {
+        foreach (Market::indexable() as $market) {
             $this->assertStringContainsString("/sitemap-{$market->value}.xml", $xml);
         }
 
-        // An unpublished market has no supply, so its sitemap would spend crawl
-        // budget proving there is nothing there.
-        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isPublished());
+        // A market kept from search engines (Spain since 2026-11-22, open to visitors)
+        // has no sitemap: it would put its thin pages in front of a crawler.
+        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isIndexable());
 
         foreach ($hidden as $market) {
             $this->assertStringNotContainsString("/sitemap-{$market->value}.xml", $xml);

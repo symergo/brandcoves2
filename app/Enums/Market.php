@@ -49,27 +49,58 @@ enum Market: string
     }
 
     /**
-     * Whether this market is offered to the public.
+     * Whether this market is offered to visitors: the switcher, geolocation and
+     * language negotiation.
      *
-     * A market is a promise of somewhere to buy, and `es` cannot keep it: Awin
-     * reports no advertiser coverage for Spain, and bol does not operate there
-     * either (see {@see self::bolCountry()}), so it has no supply at all rather
-     * than a thin catalogue. Shipping it anyway would put an empty shop in the
-     * switcher and five market sitemaps in front of a crawler, one of which
-     * leads to nothing.
+     * A market is a promise of somewhere to buy. `es` was unpublished until
+     * 2026-11-22 because it had no supply at all (no Awin advertisers, no bol).
+     * eBay Spain became that supply on that day, with listings shown straight
+     * after a live search, and the owner opened it to visitors. Search engines are
+     * a separate decision: isIndexable().
      *
-     * Unpublished is *unadvertised*, not removed. `/es/` still routes, so the
-     * copy bank, guides and Cove plans can be prepared before it opens and the
-     * whole thing reverses by flipping this one arm. What it does not do is
-     * appear in the switcher, the sitemap, the hreflang set, or language
-     * negotiation.
+     * Unpublished is *unadvertised*, not removed: such a market still routes, so
+     * copy, guides and Cove plans can be prepared before it opens, and it reverses
+     * by changing one arm here. What it does not do is appear in the switcher or
+     * in language negotiation, and it is never indexable.
      */
     public function isPublished(): bool
     {
-        return match ($this) {
+        // Spain open to people since 2026-11-22 (owner: "make spanish version visible"),
+        // with eBay as its supply. Not yet to search engines: see isIndexable().
+        return true;
+    }
+
+    /**
+     * Whether search engines are invited in: the sitemap, hreflang, robots.txt and the
+     * footer's crawlable links to this page in other markets.
+     *
+     * Separate from isPublished() since 2026-11-22. The owner opened Spain to visitors
+     * (switcher, geolocation, language) while it had only eBay, a few hundred products,
+     * no Spanish guides or Coves and English legal pages, and chose to keep it from Google
+     * until it has more ("people only, not Google"): thousands of nearly empty Spanish
+     * twins in hreflang and a sitemap would be thin content Google judges the whole site
+     * by. Opening it is this one arm. Always a subset of the published markets.
+     */
+    public function isIndexable(): bool
+    {
+        return $this->isPublished() && match ($this) {
             self::Es => false,
             default => true,
         };
+    }
+
+    /**
+     * Markets search engines are shown. Use this for sitemaps, hreflang, robots.txt and
+     * crawlable cross-market links; published() for what a visitor is shown or sent to.
+     *
+     * @return list<self>
+     */
+    public static function indexable(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $market): bool => $market->isIndexable(),
+        ));
     }
 
     /**

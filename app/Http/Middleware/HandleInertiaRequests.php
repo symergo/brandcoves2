@@ -391,7 +391,9 @@ class HandleInertiaRequests extends Middleware
 
         $links = [];
 
-        foreach (Market::published() as $market) {
+        // Indexable only: these are crawlable links, and a market kept from search engines
+        // (Spain since 2026-11-22) must not be linked to them from every page
+        foreach (Market::indexable() as $market) {
             $href = $alternates[$market->hrefLang()] ?? null;
 
             if ($market === $current || $href === null) {

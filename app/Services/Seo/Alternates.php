@@ -238,7 +238,7 @@ class Alternates
             ->each(function ($row) use (&$bySlug, $prefix): void {
                 $market = Market::tryFrom((string) $row->market);
 
-                if ($market !== null && $market->isPublished()) {
+                if ($market !== null && $market->isIndexable()) {
                     $bySlug[(string) $row->slug][$market->hrefLang()] = url("/{$market->value}/{$prefix}/{$row->slug}");
                 }
             });
@@ -283,7 +283,7 @@ class Alternates
             ->each(function ($row) use (&$byDate): void {
                 $market = Market::tryFrom((string) $row->market);
 
-                if ($market !== null && $market->isPublished()) {
+                if ($market !== null && $market->isIndexable()) {
                     $byDate[(string) $row->drop_date][$market->hrefLang()] = url($market->covePath((string) $row->slug));
                 }
             });
@@ -504,7 +504,7 @@ class Alternates
             // A persona can be built for a market that is not open yet, the
             // same way an edition can — see `daily()`. Declaring it invites a
             // crawler to a market deliberately not being indexed.
-            if ($market !== null && $market->isPublished()) {
+            if ($market !== null && $market->isIndexable()) {
                 $alternates[$market->hrefLang()] = url("/{$market->value}/".$kind->path((string) $row->slug, $market));
             }
         }
@@ -563,7 +563,7 @@ class Alternates
 
             // A row can exist for a market that is not open yet — editions are
             // planned ahead of the market being published.
-            if ($market !== null && $market->isPublished()) {
+            if ($market !== null && $market->isIndexable()) {
                 // Each market's own word for the segment, not this one's — an
                 // hreflang pointing at /es/cadeau-van-de-dag/... names a URL
                 // that deliberately 404s.
@@ -586,7 +586,7 @@ class Alternates
         $term = SearchUrl::term($segments[2]);
         $alternates = [];
 
-        foreach (Market::published() as $market) {
+        foreach (Market::indexable() as $market) {
             $alternates[$market->hrefLang()] = url(SearchUrl::for($market, $term));
         }
 
@@ -601,7 +601,7 @@ class Alternates
         // An unpublished market must not appear in hreflang. Declaring it tells
         // a crawler the page has a Spanish equivalent worth indexing, which is
         // the opposite of hiding it.
-        foreach (Market::published() as $market) {
+        foreach (Market::indexable() as $market) {
             $alternates[$market->hrefLang()] = url(CurrentMarket::swapMarketInPath($path, $market));
         }
 

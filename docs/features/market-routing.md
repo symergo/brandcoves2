@@ -351,9 +351,25 @@ published markets only, found nothing and drew nothing. The shared `market` prop
 `country` and `countryName`, and the bar falls back to them. The header's country button had the
 same gap (no flag after the logo on `/es/`, only "ES") and falls back the same way since that evening.
 
-Opening it, once a source serves Spain: wait for **Market supply** to show `es` green, run
-`bc:refresh-discovery` and `bc:pull-charts` so the discovery pages and the guide queue are not empty,
-publish a first week of Spanish dailies, then flip `Market::isPublished()`.
+### `es` open to visitors, not to search engines — 2026-11-22, evening
+
+eBay Spain became the supply that day (campaign id set, listings shown straight after a live search,
+docs/features/ebay-connector.md), and the owner asked to make the Spanish version visible. Asked
+first, the owner chose **"people only, not Google"**: Spain had a few hundred products, no Spanish
+guides or Coves and English legal pages, and thousands of thin Spanish twins in hreflang and a
+sitemap would be judged by Google as part of the whole site.
+
+So publishing split in two:
+
+| | `Market::isPublished()` / `published()` | `Market::isIndexable()` / `indexable()` |
+|---|---|---|
+| Means | offered to visitors | shown to search engines |
+| Used by | switcher, the switcher's POST, a stored choice, geolocation, `Accept-Language`, the nightly jobs | sitemap index and per-market sitemap (404 when not indexable), `robots.txt`, hreflang (`Alternates`), the footer's crawlable language links |
+| `es` | yes | no |
+
+Opening Spain to search engines later is the one `self::Es => false` arm in `isIndexable()`. Before
+that: more supply than eBay, a first set of Spanish Coves and dailies, `bc:refresh-discovery` and
+`bc:pull-charts`, and Spanish legal pages.
 
 ## What is not scoped to a market
 

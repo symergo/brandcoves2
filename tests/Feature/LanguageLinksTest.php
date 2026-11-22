@@ -31,7 +31,8 @@ class LanguageLinksTest extends TestCase
     {
         $response = $this->get('/be-nl')->assertOk();
 
-        $expected = collect(Market::published())
+        // Crawlable links, so indexable markets only (Spain is kept from search engines since 2026-11-22)
+        $expected = collect(Market::indexable())
             ->reject(fn (Market $m) => $m === Market::BeNl)
             ->map(fn (Market $m) => [
                 'market' => $m->value,

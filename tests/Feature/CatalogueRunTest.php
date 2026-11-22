@@ -67,15 +67,15 @@ class CatalogueRunTest extends TestCase
     }
 
     #[Test]
-    public function the_afternoon_run_and_an_unpublished_market_plan_no_landing_pages(): void
+    public function the_afternoon_run_plans_no_landing_pages_and_the_morning_run_does(): void
     {
         $this->assertNotContains(PlanGiftLandingPages::class, array_map(
             fn ($step) => $step::class,
             CatalogueRun::stepsFor(Market::BeNl, morning: false),
         ));
 
-        $this->assertFalse(Market::Es->isPublished());
-        $this->assertNotContains(PlanGiftLandingPages::class, array_map(
+        // Spain too, published since 2026-11-22
+        $this->assertContains(PlanGiftLandingPages::class, array_map(
             fn ($step) => $step::class,
             CatalogueRun::stepsFor(Market::Es, morning: true),
         ));

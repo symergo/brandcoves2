@@ -306,8 +306,8 @@ class MarketRoutingTest extends TestCase
             ->assertNoContent()
             ->assertCookie(MarketPreference::COOKIE, 'nl-nl');
 
-        // Still validated like the switcher: an unpublished market is refused.
-        $this->postJson('/market', ['market' => 'es'])
+        // Still validated like the switcher: a market we do not have is refused.
+        $this->postJson('/market', ['market' => 'de-de'])
             ->assertUnprocessable()
             ->assertCookieMissing(MarketPreference::COOKIE);
     }
@@ -351,21 +351,21 @@ class MarketRoutingTest extends TestCase
     }
 
     #[Test]
-    public function an_unpublished_market_cannot_be_chosen(): void
+    public function only_a_market_the_switcher_offers_can_be_chosen(): void
     {
-        // The switcher never offers `es`, so a request naming it did not come
-        // from the switcher. Rejected server-side rather than trusted.
-        $this->post('/market', ['market' => 'es'])->assertSessionHasErrors('market');
+        // Spain is offered since 2026-11-22; a market that does not exist never is.
+        // Rejected server-side rather than trusted.
+        $this->post('/market', ['market' => 'es'])->assertSessionHasNoErrors()->assertCookie(MarketPreference::COOKIE, 'es');
         $this->post('/market', ['market' => 'de-de'])->assertSessionHasErrors('market');
     }
 
     #[Test]
-    public function a_choice_that_has_since_been_unpublished_is_ignored(): void
+    public function a_choice_naming_no_market_we_have_is_ignored(): void
     {
         // The cookie outlives deploys by a year, so it can name a market that
-        // has been withdrawn. Honouring it would pin the visitor to a catalogue
-        // with no supply — fall through to negotiation instead.
-        $this->withCookie(MarketPreference::COOKIE, 'es')
+        // has been withdrawn or never existed. Honouring it would pin the visitor
+        // nowhere: fall through to negotiation instead.
+        $this->withCookie(MarketPreference::COOKIE, 'de-de')
             ->withHeader('Accept-Language', 'fr-BE,fr;q=0.9')
             ->get('/')
             ->assertRedirect('/be-fr');
@@ -415,15 +415,15 @@ class MarketRoutingTest extends TestCase
     // Not offered in the switcher: MarketSwitcherTest::the_switcher_offers_every_published_market_once_and_nothing_else.
 
     #[Test]
-    public function an_unpublished_market_is_never_negotiated(): void
+    public function a_spanish_browser_is_sent_to_spain(): void
     {
-        // Sending a Spanish speaker to an empty catalogue is worse than sending
-        // them to the default, which at least has products.
+        // Until 2026-11-22 Spain was unpublished and a Spanish speaker went to the
+        // default. Published since, with eBay Spain as its supply.
         $this->withHeader('Accept-Language', 'es-ES,es;q=0.9')
             ->get('/')
-            ->assertRedirect('/'.Market::default()->value);
+            ->assertRedirect('/es');
 
-        $this->assertSame(Market::default(), Market::fromAcceptLanguage('es-ES,es;q=0.9'));
+        $this->assertSame(Market::Es, Market::fromAcceptLanguage('es-ES,es;q=0.9'));
     }
 
     #[Test]

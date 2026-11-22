@@ -25,11 +25,9 @@ class MarketTest extends TestCase
             'exact tag, Dutch NL' => ['nl-NL,nl;q=0.9', Market::NlNl],
             'exact tag, French BE' => ['fr-BE,fr;q=0.8', Market::BeFr],
             'language-only French' => ['fr,en;q=0.5', Market::BeFr],
-            // Spanish resolves to the default, not to `es`. That market is
-            // unpublished — no Awin coverage for Spain and bol does not operate
-            // there — so negotiating a visitor into it would land them on an
-            // empty catalogue. The default at least has products.
-            'language-only Spanish' => ['es', Market::default()],
+            // Spanish resolves to `es`, published since 2026-11-22 (it went to the
+            // default while Spain had no supply).
+            'language-only Spanish' => ['es', Market::Es],
             'English' => ['en-GB,en;q=0.9', Market::En],
             // Anything unrecognised falls back rather than being approximated —
             // a wrong guess shows the wrong currency and the wrong merchants.
@@ -61,8 +59,8 @@ class MarketTest extends TestCase
             // No market of its own: the caller falls back to the language
             'France' => ['FR', 'fr-FR', null],
             'the United States' => ['US', 'en-US', null],
-            // Spain has a market, but it is not published
-            'Spain' => ['ES', 'es-ES', null],
+            // Spain has a market, published since 2026-11-22
+            'Spain' => ['ES', 'es-ES', Market::Es],
             'unknown to Cloudflare' => ['XX', 'nl-BE', null],
             'Tor' => ['T1', 'nl-BE', null],
             // The English market has no country; its internal code must not be selectable

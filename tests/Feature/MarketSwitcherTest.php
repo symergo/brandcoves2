@@ -27,9 +27,8 @@ class MarketSwitcherTest extends TestCase
     {
         /*
          * A switcher entry is a promise that there is a shop on the other end.
-         * `es` routes and has no supply at all — Awin reports no advertiser
-         * coverage and bol does not operate there — so offering it would be a
-         * link to an empty catalogue.
+         * `es` was left out while it had no supply at all; it is offered since
+         * 2026-11-22, with eBay Spain behind it.
          *
          * Read the props rather than the HTML: the payload is JSON-encoded, so
          * "España" and "Français" arrive as \u escapes and a string match on
@@ -41,7 +40,7 @@ class MarketSwitcherTest extends TestCase
             ->flatMap(fn (array $country): array => array_column($country['languages'], 'market'))
             ->all();
 
-        $this->assertNotContains('es', $markets);
+        $this->assertContains('es', $markets);
         $this->assertContains('be-fr', $markets);
 
         /*

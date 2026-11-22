@@ -72,7 +72,7 @@ class SitemapController extends Controller
              */
             $entries = array_map(
                 fn (Market $market): string => url('/'.self::fileFor($market->value)),
-                Market::published(),
+                Market::indexable(),
             );
 
             $body = implode('', array_map(
@@ -109,7 +109,8 @@ class SitemapController extends Controller
     public function market(string $market): Response
     {
         $resolved = Market::tryFrom($market);
-        abort_if($resolved === null, 404);
+        // A market kept from search engines (Spain since 2026-11-22) has no sitemap, even asked for by name
+        abort_if($resolved === null || ! $resolved->isIndexable(), 404);
 
         $xml = Cache::remember(self::cacheKey($resolved), 3600, function () use ($resolved): string {
             $alternates = app(Alternates::class);
@@ -316,7 +317,7 @@ class SitemapController extends Controller
             fn (Market $market): string => 'Disallow: /'.$market->value.'/',
             array_values(array_filter(
                 Market::cases(),
-                fn (Market $market): bool => ! $market->isPublished(),
+                fn (Market $market): bool => ! $market->isIndexable(),
             )),
         );
 
