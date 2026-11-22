@@ -142,6 +142,9 @@ php artisan bc:withdraw-source --market=en --source=bol   # suppress the offers 
 php artisan bc:fill-brands             # give offers without a brand the known brand their title
                                       # starts with. Ingestion does it since 2026-09-30; this is
                                       # for what was stored before. Dry run unless --write
+php artisan bc:trim-descriptions      # cut stored offer descriptions to 1,000 characters, as
+                                      # ingestion does since 2026-11-22. Resumable (--from), VACUUMs
+                                      # as it goes. Dry run (an estimate) unless --write
 php artisan bc:find-matches --full    # propose products that may be one (same barcode, model
                                       # number or similar title within a brand) for a person to
                                       # confirm at /admin, Match review. Nothing merges on its own.
