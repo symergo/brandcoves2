@@ -201,6 +201,14 @@ class HandleInertiaRequests extends Middleware
                  * another market's word.
                  */
                 'coveSegment' => $market->coveSegment(),
+                /*
+                 * This page's country, for the market bar on a market the switcher leaves out.
+                 * The bar found the page's country in `markets`, which holds published markets
+                 * only, so on the unpublished /es/ it found nothing and showed no bar: a visitor
+                 * in Belgium was never offered Belgium there (2026-11-22).
+                 */
+                'country' => $market->country(),
+                'countryName' => __('site.nav.countries.'.strtolower($market->country())),
             ],
 
             /*

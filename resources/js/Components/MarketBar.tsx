@@ -70,12 +70,17 @@ export default function MarketBar() {
         }
     }, [marketBar, market.key])
 
-    const current = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? null
+    // An unpublished market (/es/) is not in the switcher's list, and finding nothing there hid
+    // the bar exactly where a visitor most needs to be sent elsewhere. Its own country stands in.
+    const current = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? {
+        country: market.country,
+        name: market.countryName,
+    }
 
     // Only ever a guide (owner, 2026-11-15: "don't show the quiet bar, show the
     // flag after the logo"): without a country to offer there is no bar. The
     // header's flag (SiteLayout) says which country the page is for.
-    if (!open || marketBar === null || current === null || !marketBar.suggest) {
+    if (!open || marketBar === null || !marketBar.suggest) {
         return null
     }
 

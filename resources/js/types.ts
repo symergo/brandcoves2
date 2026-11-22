@@ -29,6 +29,9 @@ export interface CurrentMarket {
      * table produces a 404 rather than a redirect.
      */
     coveSegment: string
+    /** This page's country (`BE`, `NL`, `INT`, `ES`) and its name, also for a market the switcher leaves out. */
+    country: string
+    countryName: string
 }
 
 export interface AuthUser {

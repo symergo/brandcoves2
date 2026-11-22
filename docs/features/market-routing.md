@@ -345,6 +345,11 @@ Where it stands:
 | Pages | Home, search (gift search included), gift ideas, guides, help, list help, contribute and about all render in Spanish. `/es/tips` is a 404 until a Spanish daily edition is published |
 | Still missing | Supply; Spanish legal pages (they fall back to English, see legal-pages.md); Spanish advice and shop Coves (`resources/content/*-coves.php` have none); old v1 `/es/` links are not redirected on purpose (`LegacyRedirects`) |
 
+The market bar ("Ga naar België") showed nothing on `/es/` until 2026-11-22, although the server
+offered Belgium: `MarketBar` looked the page's country up in the switcher list, which holds
+published markets only, found nothing and drew nothing. The shared `market` prop now carries
+`country` and `countryName`, and the bar falls back to them.
+
 Opening it, once a source serves Spain: wait for **Market supply** to show `es` green, run
 `bc:refresh-discovery` and `bc:pull-charts` so the discovery pages and the guide queue are not empty,
 publish a first week of Spanish dailies, then flip `Market::isPublished()`.
