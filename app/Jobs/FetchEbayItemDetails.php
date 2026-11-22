@@ -10,6 +10,7 @@ use App\Services\Connectors\Ebay\EbayConnector;
 use App\Services\Connectors\Ebay\EbayItemDetails;
 use App\Services\Identity\IdentityResolver;
 use App\Services\Ingestion\IncomingGrouper;
+use App\Services\Search\SearchGenerations;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Attributes\Queue;
@@ -38,8 +39,18 @@ class FetchEbayItemDetails implements ShouldQueue
 
     public int $timeout = 300;
 
-    /** @param  list<string>  $externalIds */
-    public function __construct(public readonly Market $market, public readonly array $externalIds) {}
+    /**
+     * @param  list<string>  $externalIds
+     * @param  string|null  $term  The search that queued this, whose cached result is retired once
+     *                             products appear; null from bc:ebay-details, which waits for the nightly grouping
+     * @param  list<string>  $brands  That search's brand filter, retired the same way
+     */
+    public function __construct(
+        public readonly Market $market,
+        public readonly array $externalIds,
+        public readonly ?string $term = null,
+        public readonly array $brands = [],
+    ) {}
 
     public function handle(EbayConnector $ebay, EbayItemDetails $details, IncomingGrouper $grouper): void
     {
@@ -65,6 +76,17 @@ class FetchEbayItemDetails implements ShouldQueue
         }
 
         $grouper->attachIds($this->market, Source::Ebay->value, $grouped);
+
+        /*
+         * The search that queued this cached its result when the listings were stored, before they
+         * had products: still empty, and current for up to `results_cache_ttl` (12 hours). Retire
+         * it so the next visitor sees the products (2026-11-22). Only that search: retiring every
+         * cached search of the market at once is what overloaded the site on 2026-10-25.
+         */
+        if ($grouped !== [] && $this->term !== null && trim($this->term) !== '') {
+            SearchGenerations::bumpTerm($this->market, $this->term);
+            SearchGenerations::bumpBrands($this->market, $this->brands);
+        }
     }
 
     /**

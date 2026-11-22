@@ -1134,7 +1134,7 @@ class SearchService
         ));
 
         if ($bare !== [] && (int) config('giftcoves.connectors.ebay.details_per_day', 2000) > 0) {
-            FetchEbayItemDetails::dispatch($query->market, $bare);
+            FetchEbayItemDetails::dispatch($query->market, $bare, $query->liveTerm(), $query->brands);
         }
 
         return $written;

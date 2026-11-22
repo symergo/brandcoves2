@@ -13,6 +13,7 @@ use App\Services\Connectors\Ebay\EbayItemDetails;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Ingestion\IncomingGrouper;
+use App\Services\Search\SearchGenerations;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,7 +86,12 @@ class EbayItemDetailsTest extends TestCase
         $this->storeOffer($id, 'LEGO 40918 Winter Snow Globe GWP exclusivo nuevo');
         $this->fakeEbay(['itemId' => $id, 'title' => 'LEGO 40918 Winter Snow Globe', 'brand' => 'LEGO', 'mpn' => '40918']);
 
-        (new FetchEbayItemDetails(Market::Es, [$id]))->handle(app(EbayConnector::class), app(EbayItemDetails::class), app(IncomingGrouper::class));
+        $before = SearchGenerations::term(Market::Es, 'lego');
+
+        (new FetchEbayItemDetails(Market::Es, [$id], 'lego'))->handle(app(EbayConnector::class), app(EbayItemDetails::class), app(IncomingGrouper::class));
+
+        // The search that queued it cached an empty result before the product existed: retired now
+        $this->assertNotSame($before, SearchGenerations::term(Market::Es, 'lego'));
 
         $offer = DB::table('products')->where('external_id', $id)->first();
         $this->assertSame('LEGO', $offer->brand);
@@ -181,7 +187,7 @@ class EbayItemDetailsTest extends TestCase
 
         app(SearchService::class)->search(new SearchQuery(market: Market::Es, term: 'lego', logged: false), waitForLive: true);
 
-        Queue::assertPushed(FetchEbayItemDetails::class, fn (FetchEbayItemDetails $job): bool => $job->market === Market::Es && $job->externalIds === ['v1|11|0']);
+        Queue::assertPushed(FetchEbayItemDetails::class, fn (FetchEbayItemDetails $job): bool => $job->market === Market::Es && $job->externalIds === ['v1|11|0'] && $job->term === 'lego');
     }
 
     /** @param  array<string, mixed>  $item */
