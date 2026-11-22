@@ -61,23 +61,28 @@ class EditionPresenter
     /**
      * The finds, as cards.
      *
-     * Filtered on `in_stock` at render rather than at build: a Cove is built
-     * once and served all day — forever, for a persona — and a pick that sold
-     * out at eleven would otherwise carry on being offered as an ordinary
-     * buyable product for the rest of its life.
+     * Stock is read at render rather than at build: a Cove is built once and
+     * served all day, forever for a persona, and a pick that sold out at eleven
+     * must not go on being offered as an ordinary buyable product. Until
+     * 2026-11-22 such a pick was dropped from the page; since then it is shown,
+     * marked as not in stock and without a price or a discount (owner: "it's ok
+     * to keep showing sold out products, just show it"), as a guide shows its
+     * unavailable picks. A Cove no longer shrinks when a shop runs out.
      *
      * @return list<array<string, mixed>>
      */
     public function finds(DailyPickSet $edition, CurrentMarket $current): array
     {
         return $edition->picks
-            ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
+            ->filter(fn (DailyPick $pick) => $pick->group !== null)
             ->map(fn (DailyPick $pick) => [
                 'id' => $pick->id,
                 'groupId' => $pick->group->id,
                 'title' => $pick->group->displayTitle(),
                 'image' => $pick->group->image_url,
-                'price' => $pick->group->min_price,
+                'inStock' => $pick->group->in_stock,
+                // No price for what cannot be bought: it would be a stale one
+                'price' => $pick->group->in_stock ? $pick->group->min_price : null,
                 'merchantCount' => $pick->group->merchant_count,
                 /*
                  * A stored zero is not a discount.
@@ -88,7 +93,7 @@ class EditionPresenter
                  * saving under one percent — and "−0%" is a badge that claims
                  * nothing while looking exactly like one that claims something.
                  */
-                'discountPercent' => $pick->discount_percent > 0 ? $pick->discount_percent : null,
+                'discountPercent' => $pick->group->in_stock && $pick->discount_percent > 0 ? $pick->discount_percent : null,
                 'blurb' => $pick->blurb,
                 'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
                 'mindblown' => $pick->mindblown_count,

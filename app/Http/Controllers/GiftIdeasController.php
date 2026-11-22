@@ -249,9 +249,7 @@ class GiftIdeasController extends Controller
         );
 
         // The first five picks as a list of products (owner, 2026-11-15); see StructuredData::productList().
-        // In stock only, as EditionPresenter::finds() shows them: a sold-out pick stays in the Cove but
-        // is filtered at render, and structured data must match the page (2026-11-22)
-        $products = StructuredData::productList($persona->picks->loadMissing('group')->pluck('group')->filter(fn ($group) => $group?->in_stock), $current->get(), app(PageMeta::class)->toArray()['title'] ?? null, app(PageMeta::class)->toArray()['canonical'] ?? null);
+        $products = StructuredData::productList($persona->picks->loadMissing('group')->pluck('group'), $current->get(), app(PageMeta::class)->toArray()['title'] ?? null, app(PageMeta::class)->toArray()['canonical'] ?? null);
         if ($products !== null) {
             app(PageMeta::class)->addJsonLd($products);
         }

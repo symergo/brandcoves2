@@ -146,13 +146,15 @@ class CovePlanCurationTest extends TestCase
     }
 
     #[Test]
-    public function a_curated_product_that_sells_out_is_dropped_at_render_not_at_build(): void
+    public function a_curated_product_that_sells_out_is_kept_and_shown_as_not_in_stock(): void
     {
         /*
          * Two different moments, and the difference matters. Dropping it at
          * build would silently shorten a locked page and lose the curator's
-         * note with it; keeping it and rendering it would offer a product
-         * nobody can buy. So the pick is written and the page filters it.
+         * note with it, so the pick is written. At render it was filtered out
+         * until 2026-11-22; since then it is shown, marked as not in stock and
+         * without a price (owner: "it's ok to keep showing sold out products,
+         * just show it"), so it is never offered as buyable.
          */
         $this->seedFinds();
         $soldOut = $this->find('Uitverkochte pers', 4500, 'Keuken', 5);
@@ -168,11 +170,14 @@ class CovePlanCurationTest extends TestCase
 
         $soldOut->update(['in_stock' => false]);
 
-        // ...and filtered at render.
+        // ...and shown at render, marked, with no price to buy at.
+        $finds = collect($this->get('/be-nl/tips')->assertOk()->viewData('page')['props']['finds']);
+        $find = $finds->firstWhere('groupId', $soldOut->id);
 
-        $this->get('/be-nl/tips')
-            ->assertOk()
-            ->assertDontSee('Uitverkochte pers');
+        $this->assertNotNull($find, 'still on the page');
+        $this->assertFalse($find['inStock']);
+        $this->assertNull($find['price']);
+        $this->assertNull($find['discountPercent']);
     }
 
     #[Test]

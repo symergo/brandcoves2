@@ -22,6 +22,8 @@ interface Find {
     title: string
     image: string | null
     price: Cents | null
+    /** False for a pick sold out since the Cove was built: shown, marked, without a price (2026-11-22) */
+    inStock: boolean
     merchantCount: number
     discountPercent: number | null
     blurb: string | null
@@ -201,7 +203,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                         <div className="mt-auto space-y-3 pt-4">
                             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                                 <span className="font-semibold">
-                                    {find.price === null ? '—' : formatPrice(find.price, market)}
+                                    {!find.inStock ? t('guides.unavailable') : find.price === null ? '—' : formatPrice(find.price, market)}
                                 </span>
                                 <SaveToList groupId={find.groupId} />
                             </div>
@@ -286,9 +288,11 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
 
                                     <div className="mt-3 flex flex-wrap items-center gap-3">
                                         <span className="font-semibold">
-                                            {find.price === null
-                                                ? '—'
-                                                : formatPrice(find.price, market)}
+                                            {!find.inStock
+                                                ? t('guides.unavailable')
+                                                : find.price === null
+                                                  ? '—'
+                                                  : formatPrice(find.price, market)}
                                         </span>
                                         <span className="ml-auto flex items-center gap-2">
                                             {reactionButtons(find)}

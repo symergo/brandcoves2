@@ -396,9 +396,7 @@ class DailyCoveController extends Controller
          * the same query.
          */
         // The first five picks as a list of products (owner, 2026-11-15); see StructuredData::productList().
-        // In stock only, as EditionPresenter::finds() shows them: a sold-out pick stays in the Cove but
-        // is filtered at render, and structured data must match the page (2026-11-22)
-        $products = StructuredData::productList($edition->picks->loadMissing('group')->pluck('group')->filter(fn ($group) => $group?->in_stock), $current->get(), $meta->toArray()['title'] ?? null, $meta->toArray()['canonical'] ?? null);
+        $products = StructuredData::productList($edition->picks->loadMissing('group')->pluck('group'), $current->get(), $meta->toArray()['title'] ?? null, $meta->toArray()['canonical'] ?? null);
         if ($products !== null) {
             $meta->addJsonLd($products);
         }

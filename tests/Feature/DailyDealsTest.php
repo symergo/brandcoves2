@@ -192,8 +192,8 @@ class DailyDealsTest extends TestCase
      */
     public static function surfacesShowingFinds(): array
     {
+        // The Daily page shows a sold-out find since 2026-11-22, marked: see the next test
         return [
-            'the Daily page' => ['/be-nl/tips', 'finds'],
             'the front page' => ['/be-nl', 'today.finds'],
         ];
     }
@@ -226,6 +226,28 @@ class DailyDealsTest extends TestCase
         $props = $this->get($url)->assertOk()->viewData('page')['props'];
 
         $this->assertSame(['Still here'], array_column(data_get($props, $path), 'title'));
+    }
+
+    #[Test]
+    public function a_sold_out_find_stays_on_the_daily_page_marked_and_without_a_price(): void
+    {
+        // Owner, 2026-11-22: "it's ok to keep showing sold out products, just show it". Never as buyable.
+        $edition = DailyPickSet::query()->firstOrFail();
+        $here = $this->group(['title' => 'Still here']);
+        $gone = $this->group(['title' => 'Sold out']);
+
+        foreach ([$here, $gone] as $i => $group) {
+            $edition->picks()->create(['group_id' => $group->id, 'rank' => $i + 1, 'slug' => 'pick-'.$group->id]);
+        }
+
+        $gone->forceFill(['in_stock' => false])->saveQuietly();
+
+        $finds = collect($this->get('/be-nl/tips')->assertOk()->viewData('page')['props']['finds'])->keyBy('title');
+
+        $this->assertSame(['Still here', 'Sold out'], $finds->keys()->all());
+        $this->assertTrue($finds['Still here']['inStock']);
+        $this->assertFalse($finds['Sold out']['inStock']);
+        $this->assertNull($finds['Sold out']['price']);
     }
 
     #[Test]

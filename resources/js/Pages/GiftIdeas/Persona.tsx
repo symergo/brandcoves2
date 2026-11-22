@@ -18,6 +18,8 @@ interface Find {
     title: string
     image: string | null
     price: Cents | null
+    /** False for a pick sold out since the Cove was built: shown, marked, without a price (2026-11-22) */
+    inStock: boolean
     merchantCount: number
     discountPercent: number | null
     blurb: string | null
@@ -199,9 +201,11 @@ export default function Persona({
 
                                                     <div className="mt-3 flex flex-wrap items-center gap-3">
                                                         <span className="font-semibold">
-                                                            {find.price === null
-                                                                ? '—'
-                                                                : formatPrice(find.price, market)}
+                                                            {!find.inStock
+                                                                ? t('guides.unavailable')
+                                                                : find.price === null
+                                                                  ? '—'
+                                                                  : formatPrice(find.price, market)}
                                                         </span>
                                                         <span className="ml-auto">
                                                             <SaveToList groupId={find.groupId} />
@@ -241,7 +245,7 @@ export default function Persona({
 
                                         <div className="mt-auto flex items-center justify-between pt-4">
                                             <span className="font-semibold">
-                                                {find.price === null ? '—' : formatPrice(find.price, market)}
+                                                {!find.inStock ? t('guides.unavailable') : find.price === null ? '—' : formatPrice(find.price, market)}
                                             </span>
                                             <SaveToList groupId={find.groupId} />
                                         </div>
