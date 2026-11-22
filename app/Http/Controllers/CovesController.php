@@ -218,7 +218,7 @@ class CovesController extends Controller
             'url' => $current->url('shops'),
             'coves' => $shops->map(fn (Merchant $shop): array => [
                 'title' => $shop->name,
-                'intro' => $shop->domain,
+                'intro' => $shop->domainFor($current->get()),
                 'url' => $current->url('search').'?merchant%5B%5D='.$shop->id,
                 'date' => null,
             ])->all(),

@@ -171,7 +171,7 @@ class ShopsController extends Controller
         return $shops->map(fn (Merchant $shop) => [
             'id' => $shop->id,
             'name' => $shop->displayName(),
-            'domain' => $shop->domain,
+            'domain' => $shop->domainFor($current->get()),
             // Their own favicon, never the affiliate network's — showing Awin's
             // mark for Coolblue and Krefel alike makes the directory useless.
             'logo' => $shop->faviconUrl(),

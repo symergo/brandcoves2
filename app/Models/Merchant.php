@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Market;
 use App\Enums\Source;
 use Database\Factories\MerchantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -58,6 +59,30 @@ class Merchant extends Model
      * Display only. `merchants.name` keeps the feed's spelling, because that is
      * what identifies the advertiser account when a feed is being debugged.
      */
+    /**
+     * The shop's web address as a visitor of this market should read it.
+     *
+     * eBay is one merchant row for every market (docs/features/ebay-connector.md), and its
+     * stored domain came from whichever offer was stored first: ebay.nl, which Spain's shop
+     * page then showed (owner, 2026-11-22: "Why ebay.nl?"). Its address follows the market's
+     * marketplace instead. Every other shop keeps its stored domain.
+     */
+    public function domainFor(Market $market): ?string
+    {
+        if ($this->source === Source::Ebay && ($marketplace = $market->ebayMarketplace()) !== null) {
+            $country = strtolower(substr($marketplace, 5)); // EBAY_ES => es
+
+            return match ($country) {
+                'gb' => 'ebay.co.uk',
+                'us' => 'ebay.com',
+                'benl', 'befr' => 'ebay.be',
+                default => 'ebay.'.$country,
+            };
+        }
+
+        return $this->domain;
+    }
+
     public function displayName(): string
     {
         return self::withoutCountrySuffix($this->name);
