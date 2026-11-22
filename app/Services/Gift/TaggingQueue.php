@@ -7,6 +7,7 @@ namespace App\Services\Gift;
 use App\Enums\Market;
 use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -54,16 +55,31 @@ class TaggingQueue
                 ->select('group_id')
                 ->whereNotNull('group_id')
                 ->where('created_at', '>=', $since)),
+            /*
+             * `giftable = true` written out rather than bound: Postgres uses the partial index
+             * product_groups_tagging_queue_idx only when the query states its condition, and a
+             * bound value in a prepared statement may not be matched against it.
+             */
             self::NEW => $query
-                ->where('giftable', true)
+                ->whereRaw('giftable = true')
                 ->where('first_seen_at', '>=', $since),
             default => throw new InvalidArgumentException("Unknown tagging source: {$source}"),
         };
     }
 
+    /**
+     * Kept five minutes (2026-11-22). The admin page asks for every market and source on each
+     * refresh, and twice (the table and the prompt); the API asks on every page it hands out.
+     * Five minutes stale is harmless for a number that says how much work is left, and a
+     * session working the queue pages by id, never by this count.
+     */
     public function count(Market $market, string $source, int $days): int
     {
-        return $this->query($market, $source, $days)->count();
+        return (int) Cache::remember(
+            "bc:tagging-queue:{$market->value}:{$source}:{$days}",
+            300,
+            fn (): int => $this->query($market, $source, $days)->count(),
+        );
     }
 
     /**

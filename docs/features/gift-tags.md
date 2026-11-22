@@ -334,6 +334,14 @@ and hands out a prompt to paste into a Claude session in this repository. That s
 - The page counts both queues for every market on each render: eight counts, about 100 ms each
   warm on production's 450,000 groups (up to a second cold), through the existing
   `(market, first_seen_at)` index. No new index for an admin page.
+- **That stopped holding at four million groups (2026-11-22).** The count read every candidate row
+  from the table to check `giftable` and `gift_tags_at`: 2.8 s for be-nl over 7 days, 20 to 34 s over
+  a year, and the page refreshed in 13 to 28 s with two counts ending in the 30 s timeout. Now a
+  partial index on `(market, first_seen_at) WHERE giftable = true AND gift_tags_at IS NULL`
+  (`product_groups_tagging_queue_idx`) answers it without touching the table, and it shrinks as
+  products are judged. The query states `giftable = true` literally, since Postgres matches a
+  partial index only on the condition as written. Counts are also kept five minutes, as the page
+  asks for each one twice per refresh.
 
 Files: `app/Services/Gift/TaggingQueue.php`, `app/Filament/Pages/ProductTagging.php`,
 `resources/views/filament/pages/product-tagging.blade.php`, `tests/Feature/TaggingQueueTest.php`,
