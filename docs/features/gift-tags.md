@@ -282,6 +282,28 @@ pets, "Bakvorm" to baking). Two things were wrong, both fixed the same day:
 Still true after the fix: a rule is only as good as the judging behind it, and be-fr and en have
 little judging. Judging a few thousand products there would earn many more categories a rule.
 
+### Judging to earn rules (2026-11-22)
+
+The weekly intake (about 50,000 to 60,000 new products per market) is more than judging product by
+product can keep up with. So instead of working the `new` queue in id order, the judging went where a
+rule was missing. Before: products with no tag of any kind were 79% of be-fr's gift products, 59% of
+nl-nl's, 33% of be-nl's and 80% of en's. Most of that sat in a few huge categories with almost no
+judgments (be-fr *Musique*: 347,000 untagged, 5 judged).
+
+Per market, the largest categories without a rule and with fewer than 20 judgments got enough random
+untagged products judged to reach 25. Categories with 20 or more judgments and still no rule were
+skipped, because they are mixed and more judging does not change that. That came to 2,361 products
+(four agents, one per market, on the brief) plus 88 to top up near misses. A read-only check
+afterwards, using the same bar as the AutoTagger, counted about 100 new rules reaching roughly 800,000
+untagged products (be-fr ~535,000, nl-nl ~167,000, be-nl ~100,000, en ~5,000). They take effect at the
+next 04:10 run.
+
+Watch these rules, which the vocabulary forced: *Thee* gets `drinks` (there is no tea value),
+nl-nl *Puzzel* gets `boardgames` (no puzzles value), be-nl *Motorhelm* gets `cars` (no motorcycling
+value). Values the judging asked for, most often first: bags/luggage, band and fan merchandise,
+anime, tea, motorcycling, phones, oral care, puzzles, costumes outside Halloween, aromatherapy, lunch,
+drones.
+
 ## Tagged when a Cove is built (2026-11-15)
 
 Picking products for a Cove and tagging them were two jobs, so a Cove could be published full of
