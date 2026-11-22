@@ -247,7 +247,7 @@ class CoveMarkup
      * The closing link of a product paragraph, in the owner's two forms.
      *
      * Every product paragraph in a Daily or a persona ended with one fixed
-     * line, "Meer [[search:Cat|noun]]." (and "More …", "Plus de …"). On
+     * line, "Meer [[search:Cat|noun]]." (and "More …", "Plus de …", "Más …"). On
      * 2026-10-05 the owner asked for "Meer [categorie] vergelijken" and "De
      * beste [categorie]", alternating. Hundreds of published plans carry the
      * old line, so it is rewritten here, at render, rather than in the stored
@@ -266,6 +266,8 @@ class CoveMarkup
             'nl' => ['Meer', ['Meer %s vergelijken.', 'De beste %s.']],
             'en' => ['More', ['Compare more %s.', 'The best %s.']],
             'fr' => ['Plus de', ['Comparer plus de %s.', 'Le meilleur des %s.']],
+            // Spanish added 2026-11-22, before the market opens, so its plans are written to the rule from the start
+            'es' => ['Más', ['Comparar más %s.', 'Lo mejor en %s.']],
             default => null,
         };
 

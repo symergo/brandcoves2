@@ -326,6 +326,29 @@ What an unpublished market is kept out of:
 The `Route::pattern` constraint deliberately still accepts it: hiding a market must not turn its URLs
 into 404s, or reopening it becomes a migration instead of a config change.
 
+### Getting `es` ready to open — 2026-11-22
+
+The owner asked for "the Spanish version of the site". It was already built and hidden, so the
+question was whether to open it. Not yet: Spain still has no source (no Awin feeds for `es`, bol does
+not operate there, eBay and Tradedoubler not serving), and opening it would put an `es-ES` twin of
+every page in hreflang and a fifth sitemap full of empty pages in front of Google, and send Spanish
+visitors (matched by geolocation since 2026-11-15) to a shop with nothing in it. The owner chose
+"prepare, don't open".
+
+Where it stands:
+
+| Part | State |
+|---|---|
+| Interface copy (`lang/es`) | Same as French: every key except the optional daily blurbs (`site.daily.observances.*.blurb`, `day_themes.*.blurb`), which French lacks too. A missing blurb renders as nothing |
+| Gift search words (`lang/es/intent.php`) | Spanish lists; more ways of saying it added 2026-11-22 (*reyes magos*, *regalo de boda*, *nieto*, *consola*, …) |
+| House lines after a product paragraph | "Comparar más [[search:…]]." / "Lo mejor en [[search:…]]." in the writer prompts and in `CoveMarkup::moreLine()` |
+| Pages | Home, search (gift search included), gift ideas, guides, help, list help, contribute and about all render in Spanish. `/es/tips` is a 404 until a Spanish daily edition is published |
+| Still missing | Supply; Spanish legal pages (they fall back to English, see legal-pages.md); Spanish advice and shop Coves (`resources/content/*-coves.php` have none); old v1 `/es/` links are not redirected on purpose (`LegacyRedirects`) |
+
+Opening it, once a source serves Spain: wait for **Market supply** to show `es` green, run
+`bc:refresh-discovery` and `bc:pull-charts` so the discovery pages and the guide queue are not empty,
+publish a first week of Spanish dailies, then flip `Market::isPublished()`.
+
 ## What is not scoped to a market
 
 Wish lists. A product, a price, an offer and a search result are statements about one country's

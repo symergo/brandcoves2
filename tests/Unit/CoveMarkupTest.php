@@ -582,6 +582,7 @@ Twee.',
         // The other languages' old lines too.
         $this->assertMatchesRegularExpression('/^(Compare more|The best) \[\[search:Kettles\|kettles\]\]\.$/', CoveMarkup::moreLine('More [[search:Kettles|kettles]].', Market::En));
         $this->assertMatchesRegularExpression('/^(Comparer plus de|Le meilleur des) \[\[search:Bougies\|bougies\]\]\.$/u', CoveMarkup::moreLine('Plus de [[search:Bougies|bougies]].', Market::BeFr));
+        $this->assertMatchesRegularExpression('/^(Comparar más|Lo mejor en) \[\[search:Velas\|velas\]\]\.$/u', CoveMarkup::moreLine('Más [[search:Velas|velas]].', Market::Es));
     }
 
     /**

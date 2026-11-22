@@ -192,7 +192,9 @@ class Defaults
           "De beste [[search:Category|noun]]."; English "Compare more
           [[search:Category|noun]]." and "The best [[search:Category|noun]].";
           French "Comparer plus de [[search:Category|noun]]." and "Le meilleur
-          des [[search:Category|noun]]." The noun is the category in the plural.
+          des [[search:Category|noun]]."; Spanish "Comparar más
+          [[search:Category|noun]]." and "Lo mejor en [[search:Category|noun]]."
+          The noun is the category in the plural.
           These lines are links to a search, not a verdict on the product above.
         TXT;
 
@@ -268,7 +270,9 @@ class Defaults
           "De beste [[search:Category|noun]]."; English "Compare more
           [[search:Category|noun]]." and "The best [[search:Category|noun]].";
           French "Comparer plus de [[search:Category|noun]]." and "Le meilleur
-          des [[search:Category|noun]]." The noun is the category in the plural.
+          des [[search:Category|noun]]."; Spanish "Comparar más
+          [[search:Category|noun]]." and "Lo mejor en [[search:Category|noun]]."
+          The noun is the category in the plural.
           These lines are links to a search, not a verdict on the product above.
         TXT;
 

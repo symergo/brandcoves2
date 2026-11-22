@@ -62,6 +62,9 @@ class GiftIntentParserTest extends TestCase
             'the owner\'s example, en' => [Market::En, 'Gift for my sister who loves gardening, €30–€50', $sisterGardening],
             'the owner\'s example, fr' => [Market::BeFr, 'cadeau pour ma sœur qui aime le jardinage, 30 à 50 €', $sisterGardening],
             'the owner\'s example, es' => [Market::Es, 'regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros', $sisterGardening],
+            'es: a phrase occasion and a console' => [Market::Es, 'regalo de navidad para mi nieto con playstation', [
+                'relationship' => 'child', 'occasion' => 'christmas', 'interests' => ['gaming'],
+            ]],
 
             'dad, sixty, cooking, a range in words' => [Market::NlNl, 'cadeau voor papa die graag kookt tussen 50 en 100 euro', [
                 'relationship' => 'father', 'interests' => ['cooking'], 'min' => 5000, 'max' => 10000,
