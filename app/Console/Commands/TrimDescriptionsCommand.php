@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Services\Catalogue\DescriptionLimit;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
