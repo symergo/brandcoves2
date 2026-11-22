@@ -36,7 +36,8 @@ use Throwable;
  *    bol's API through {@see BolPageImport}, the same path the editors' browser
  *    extension uses.
  * 3. **eBay**, by the item number in `/itm/…/{id}`: catalogue, then connector.
- * 4. **A feed merchant**, by host, then by the product's stored deep link. A
+ * 4. **A feed merchant**, by host, then by the shop's product id in the link
+ *    ({@see ShopProductId}), or for a shop without ids by the stored deep link's path. A
  *    merchant we know but a product we do not falls through to reading the
  *    page: the merchant's feed simply has not got it.
  *
@@ -191,6 +192,37 @@ class LinkRouter
             return null;
         }
 
+        /*
+         * By the shop's own product id where its links carry one (2026-11-22, ShopProductId):
+         * tracking parameters, the language in the path and a renamed slug no longer matter,
+         * and the index on bc_shop_product_id() is small. A link of such a shop with no id in
+         * it (its home page, a category) finds nothing here rather than falling back to the
+         * path, which without the old whole-URL index would read every offer of a large shop.
+         * The conditions are written out because Postgres uses a partial index only when the
+         * query states its condition.
+         */
+        if (ShopProductId::knows($host)) {
+            $id = ShopProductId::fromUrl($url);
+
+            $groupId = $id === null ? null : DB::table('products')
+                ->whereIn('merchant_id', $merchantIds)
+                ->where('market', $market->value)
+                ->whereRaw("status = 'active'")
+                ->whereNotNull('group_id')
+                ->whereRaw('bc_shop_product_id(merchant_deep_link) IS NOT NULL')
+                ->whereRaw('bc_shop_product_id(merchant_deep_link) = ?', [$id])
+                ->value('group_id');
+
+            $group = $groupId === null ? null : ProductGroup::query()->find($groupId);
+
+            return $group === null ? null : LinkResolution::group($group);
+        }
+
+        /*
+         * A small shop without an id in its links: host and path, as before. Its offers are
+         * read through (merchant_id, market, status), a few thousand rows at most; the
+         * whole-URL index that served this for every shop was dropped on 2026-11-22.
+         */
         $path = rtrim((string) parse_url($url, PHP_URL_PATH), '/');
 
         if ($path === '') {
@@ -204,16 +236,6 @@ class LinkRouter
             ->where('market', $market->value)
             ->where('status', ProductStatus::Active->value)
             ->whereNotNull('group_id')
-            /*
-             * The same conditions as the partial index
-             * `products_deep_link_prefix_idx`, which the LIKEs below use
-             * because each is anchored at the start. Postgres only takes a
-             * partial index when the query repeats its condition, so this one
-             * is here for the planner: a link over 2000 bytes cannot sit in a
-             * btree (see the migration 2026_09_28_001200) and is no product
-             * page anybody pastes.
-             */
-            ->whereRaw('octet_length(merchant_deep_link) < 2000')
             ->where(function ($q) use ($host, $escaped): void {
                 foreach (["https://{$host}", "https://www.{$host}", "http://{$host}", "http://www.{$host}"] as $origin) {
                     $q->orWhere('merchant_deep_link', 'like', $origin.$escaped)

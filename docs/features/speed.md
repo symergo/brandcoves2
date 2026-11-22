@@ -47,7 +47,7 @@ Things worth knowing about them:
   `CoveRail` and the index stops helping.
 - **`lower(brand)` must be spelled exactly that way** in a query for the expression index to apply.
   Both callers do (`whereIn(DB::raw('lower(brand)'), ...)`).
-- **The deep-link index uses `text_pattern_ops`**, because a plain btree cannot answer `LIKE
+- **The deep-link index (dropped 2026-11-22, see pasted-links.md: links are now found by the shop's product id) used `text_pattern_ops`**, because a plain btree cannot answer `LIKE
   'https://shop/path%'` outside the C collation. It only helps because every pattern in
   `feedMerchant()` is anchored at the start; a leading `%` would make it useless.
 - **The deep-link index skips links of 2000 bytes or more**, and `feedMerchant()` repeats that

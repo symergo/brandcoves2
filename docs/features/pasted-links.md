@@ -50,11 +50,33 @@ better, it is what the programmes allow, and it costs the shop nothing. `LinkRou
 | Amazon (`amazon.*`, `amzn.to`) | the ASIN in the URL → `amazon_products.identity_key` → the group in this market | **never**, not even to expand a short link |
 | bol (`/p/{slug}/{id}/`) | `products` (source bol, that id); else `BolPageImport` with the slug as title, the same path the editors' extension uses | never |
 | eBay (`/itm/…/{id}`) | `products`; else the connector's `fetchById`, stored and grouped like a live search result | never |
-| a feed merchant (`merchants.domain`) | the product whose `merchant_deep_link` has the same host and path (tracking parameters ignored) | only if the product is not in the feed |
+| a feed merchant (`merchants.domain`) | the shop's own product id in the link (`ShopProductId`, see below); for a shop without ids in its links, the product whose `merchant_deep_link` has the same host and path (tracking parameters ignored) | only if the product is not in the feed |
 | anything else | `PageReader` | yes |
 
 An Amazon link we cannot place stays a plain link with the title the person typed. Nothing from
 Amazon is stored (invariant 6; see [amazon-compliance.md](amazon-compliance.md)).
+
+## Feed shops by their product id (2026-11-22)
+
+A pasted link from Coolblue, FNAC, Action, DreamLand, Large, Vanden Borre or Krefel is found by the
+shop's own product id in it (`App\Services\PageReading\ShopProductId`), compared with the same id read
+from the stored deep links by the database function `bc_shop_product_id()` through a small index.
+Query parameters and fragments never matter, and neither does the language in the path: a Dutch
+Coolblue link (`/nl/product/970016/…`) finds the offer stored with `/fr/produit/970016/…`. Vanden
+Borre has no number in its links, so its last path segment, the product slug, stands in. Measured on
+a 1% sample of production's links: 98 to 100% of each shop's links carry an id.
+
+Why: the path was matched through a 1.3 GB index of whole URLs, unused between 2026-10-25 and
+2026-11-22, with 19 GB of the disk left. The id index is a few hundred MB at most. A link of one of
+these shops with no id in it (a home page, a category) finds nothing and the page is read as before;
+falling back to the path would read every offer of a shop with a million of them. Small shops
+without a pattern keep the path comparison, which reads only their few thousand offers.
+
+The patterns live twice, in PHP and in the SQL function, and `ShopProductIdTest` runs each shop's
+link shapes through both. Changing a pattern is a new migration that replaces the function and
+rebuilds the index. The function is PL/pgSQL on purpose: written in plain SQL with a sub-select it
+could not be inlined and cost 80 s over 713,000 offers locally, against 0.9 s; every offer an
+ingestion writes passes through it.
 
 ## Reading a page safely
 

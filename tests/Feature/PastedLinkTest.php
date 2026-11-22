@@ -360,6 +360,29 @@ class PastedLinkTest extends TestCase
     }
 
     #[Test]
+    public function a_large_shops_link_is_found_by_its_product_id_in_another_language_and_with_other_parameters(): void
+    {
+        [$owner, $list] = $this->list();
+        $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
+        $merchant = Merchant::query()->create([
+            'source' => Source::Awin->value, 'external_id' => '96637', 'name' => 'Coolblue BE', 'domain' => 'coolblue.be',
+        ]);
+        $this->offer(Source::Awin, 'aw-2', $group, [
+            'merchant_id' => $merchant->id,
+            'merchant_deep_link' => 'https://www.coolblue.be/fr/produit/970016/lenovo-legion-go-s.html',
+        ]);
+
+        // The stored link is the French page; the Dutch one, with tracking added, has another path and the same id
+        $this->actingAs($owner)->post('/be-nl/list-items', [
+            'wishlist_id' => $list->id, 'source' => 'manual',
+            'url' => 'https://www.coolblue.be/nl/product/970016/lenovo-legion-go-s.html?utm_source=mail#specs',
+        ]);
+
+        Http::assertNothingSent();
+        $this->assertSame($group->id, WishlistItem::query()->sole()->group_id);
+    }
+
+    #[Test]
     public function the_in_list_search_answers_a_pasted_link_without_fetching_it(): void
     {
         [$owner] = $this->list();
