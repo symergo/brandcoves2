@@ -487,16 +487,19 @@ function Chrome({ children }: PropsWithChildren) {
                         aria-label={t('nav.main')}
                     >
                         {flatLink(gift)}
-                        <NavMenu
-                            href={discover.href}
-                            label={discover.label}
-                            icon={discover.icon}
-                            groups={discover.groups}
-                            footer={discover.footer}
-                            current={discoverHrefs.some(isCurrent)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: discover.label })}
-                        />
+                        {/* Not at all where the market has nothing to discover yet (owner, 2026-11-22: "don't even show it") */}
+                        {discoverMenu.coves && (
+                            <NavMenu
+                                href={discover.href}
+                                label={discover.label}
+                                icon={discover.icon}
+                                groups={discover.groups}
+                                footer={discover.footer}
+                                current={discoverHrefs.some(isCurrent)}
+                                isCurrent={isCurrent}
+                                submenuLabel={t('nav.submenu', { section: discover.label })}
+                            />
+                        )}
                         {/*
                           Lists are anonymous-first — that is the whole design:
                           save a product, build a list, share it, all before
@@ -695,6 +698,7 @@ function Chrome({ children }: PropsWithChildren) {
                         <nav className="text-sm" aria-label={t('nav.main')}>
                             {phoneRow(gift)}
 
+                            {discoverMenu.coves && (
                             <div className="mb-4 border-b border-line pb-4">
                                 {/*
                                   The hub is the heading and the heading is a
@@ -766,6 +770,7 @@ function Chrome({ children }: PropsWithChildren) {
                                     </Link>
                                 )}
                             </div>
+                            )}
 
                             {phoneRow(myCoves)}
                         </nav>
@@ -867,9 +872,12 @@ function Chrome({ children }: PropsWithChildren) {
                                 header entry for this to agree with, and a footer
                                 link is not the place to introduce a name the rest
                                 of the site is not yet using. */}
-                            <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
-                                {t('brand.index_title')}
-                            </Link>
+                            {/* Not where the market has no brands yet (2026-11-22): it would open an empty page */}
+                            {discoverMenu.brands && (
+                                <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                    {t('brand.index_title')}
+                                </Link>
+                            )}
                             {/* Only what the header lacks (2026-09-26). Shop
                                 Smarter, Daily Cove and Surprise Cove are one
                                 tap away in the header on every page; a footer

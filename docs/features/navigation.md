@@ -785,3 +785,8 @@ six hours later) and shared with every page as `discoverMenu`; `SiteLayout` leav
 entries that are false, and "All Coves" when all are. With no entry left the menu has no dropdown and
 Discover is a plain link to the Discover page. That page already hid its empty bands; the taste tool
 and "ask others" stay, as tools rather than content.
+
+Then (owner, same evening, of a market with no Discover content at all: "don't even show it"): the
+header leaves **Discover out entirely**, on desktop and in the phone menu, when `discoverMenu.coves`
+is false, and the footer's brands link goes when `discoverMenu.brands` is false. The Discover page
+still answers at its address.
