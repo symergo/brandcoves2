@@ -43,9 +43,11 @@ regenerated after being copied).
 Meanwhile nothing is broken: `supports()` requires the pair, so eBay is simply absent from search,
 and the connector's own 17 tests pass ([ebay-connector.md](features/ebay-connector.md)).
 
-**Campaign ids are still blank**, so even once authentication succeeds every eBay click will earn
-nothing until they are set. That failure is invisible from the site — see the `Tracked link` column
-below.
+**Campaign ids: set on 2026-11-22.** One EPN campaign, 5339199870, in `EBAY_CAMPAIGN_ID_ES`, `_FR`
+and `_NL` on GiftCoves-prod (not on the preview environment); `bc:check-ebay` for es, be-fr and en then
+showed `Tracked link: yes`. Until that day eBay was serving be-fr (52,152 offers) and en (27,489) with
+untracked links that earned nothing. Offers stored before keep their old link until their search runs
+again. be-nl and nl-nl stay off (their marketplace variables are set blank on purpose).
 
 **What to provide**
 
