@@ -60,6 +60,19 @@ class IncomingGrouper
     }
 
     /**
+     * The same, for offers already stored, by their ids: FetchEbayItemDetails gives eBay
+     * offers an identity after the fact and has no Offer objects to pass (2026-11-22).
+     *
+     * @param  list<string>  $externalIds
+     */
+    public function attachIds(Market $market, string $source, array $externalIds): void
+    {
+        if ($externalIds !== []) {
+            $this->attachFrom($market, $source, array_values(array_unique($externalIds)));
+        }
+    }
+
+    /**
      * One source's offers, found by source, id and market together.
      *
      * Never by id and market alone, for two reasons.

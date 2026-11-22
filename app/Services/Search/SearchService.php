@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Enums\Source;
+use App\Jobs\FetchEbayItemDetails;
 use App\Jobs\PullLiveSearch;
 use App\Jobs\RefreshSearchCache;
 use App\Models\Merchant;
@@ -1120,6 +1122,20 @@ class SearchService
         // Group only what just arrived. A full market regroup on every search
         // would be absurd; this touches the handful of affected rows.
         $this->groupIncoming($query, $offers);
+
+        /*
+         * eBay listings without a brand or a barcode get no identity and so never become a
+         * product: their search result carries neither. Their item detail does, so it is
+         * asked in the background, once per listing (FetchEbayItemDetails, 2026-11-22).
+         */
+        $bare = array_values(array_map(
+            fn (Offer $offer): string => $offer->externalId,
+            array_filter($offers, fn (Offer $offer): bool => $offer->source === Source::Ebay && $offer->brand === null && $offer->ean === null),
+        ));
+
+        if ($bare !== [] && (int) config('giftcoves.connectors.ebay.details_per_day', 2000) > 0) {
+            FetchEbayItemDetails::dispatch($query->market, $bare);
+        }
 
         return $written;
     }

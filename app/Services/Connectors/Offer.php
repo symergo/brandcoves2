@@ -84,6 +84,38 @@ final readonly class Offer
     }
 
     /**
+     * The same offer with what the source's detail page said, where this one has nothing.
+     *
+     * eBay's search results carry no brand, barcode or part number; its item detail does
+     * (EbayItemDetails, 2026-11-22). Only empty fields are filled: what the source sent
+     * with the offer itself always wins.
+     */
+    public function withDetails(?string $brand, ?string $ean, ?string $mpn): self
+    {
+        return new self(
+            source: $this->source,
+            externalId: $this->externalId,
+            market: $this->market,
+            title: $this->title,
+            affiliateUrl: $this->affiliateUrl,
+            price: $this->price,
+            description: $this->description,
+            brand: $this->brand ?? $brand,
+            merchantName: $this->merchantName,
+            merchantExternalId: $this->merchantExternalId,
+            merchantDeepLink: $this->merchantDeepLink,
+            merchantCategory: $this->merchantCategory,
+            imageUrl: $this->imageUrl,
+            ean: $this->ean ?? $ean,
+            referencePrice: $this->referencePrice,
+            currency: $this->currency,
+            availability: $this->availability,
+            commissionRate: $this->commissionRate,
+            mpn: $this->mpn ?? $mpn,
+        );
+    }
+
+    /**
      * Whether this row is worth storing at all.
      *
      * A row without a usable affiliate URL cannot earn anything and cannot be

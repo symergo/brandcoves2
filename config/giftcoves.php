@@ -2037,6 +2037,13 @@ return [
             'burst' => 1,
 
             /*
+             * Item details fetched per day for listings whose search result had neither a brand
+             * nor a barcode (FetchEbayItemDetails, 2026-11-22). One request each, out of the same
+             * 5,000 a day as search, so this leaves search the larger share. 0 switches it off.
+             */
+            'details_per_day' => (int) env('EBAY_DETAILS_PER_DAY', 2000),
+
+            /*
              * Marketplace Account Deletion — eBay's compliance webhook.
              *
              * NOT optional, and not really about us. eBay requires every

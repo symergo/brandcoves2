@@ -106,6 +106,36 @@ The practical read: eBay widens *supply*, not *comparison*. It is a source of th
 reliably a second price on a card that already exists. The editorial index at `/api/editorial` says
 so in as many words, because a writer who does not know it will assume the connector is broken.
 
+### Item details in the background (2026-11-22)
+
+What made it urgent: Spain, where eBay is the only source, had 520 eBay offers and **0 products**,
+so a search for "lego" found nothing, and Belgian-French had about 38,000 of its 52,152 eBay offers
+ungrouped. The owner asked whether eBay had another identifying field; the item detail has three
+(`brand`, `gtin`, `mpn`), and says "no brand" for a knock-off ("- Sans marque/Générique -", with
+"compatible brand: LEGO" beside it), which reading the brand off the title cannot tell.
+
+- **Once per listing, never while a visitor waits.** `SearchService::fold()` queues
+  `FetchEbayItemDetails` for the eBay listings it just stored without a brand or a barcode. The job
+  asks the detail (`EbayConnector::itemDetail()`), keeps the answer in `ebay_item_details` (also an
+  empty one: "asked, nothing there", which an ended listing's 404 is too), writes brand, barcode and
+  part number onto the offer, gives it an identity where they now allow one, and groups it.
+- **One request each.** The 20-at-once endpoint (`getItems`) answered 403 for these keys. eBay
+  allows 5,000 Browse requests a day, shared with search, so details stop at
+  `connectors.ebay.details_per_day` (2,000, `EBAY_DETAILS_PER_DAY`; 0 turns it off), counted from
+  `ebay_item_details.fetched_at`. No retries in that call: a 404 retried would cost three.
+- **Kept across later searches.** A later search result for the same listing has no brand again,
+  and the upsert writes what changed, so it would wipe the brand. `EbayConnector::offersFrom()`
+  therefore fills every eBay result from `ebay_item_details` before it is stored
+  (`Offer::withDetails()`, empty fields only).
+- **The part number** goes to `products.mpn`, where `bc:find-matches` already looks to propose
+  merging eBay's LEGO 40918 with another shop's.
+- **Offers stored before** wait until searched again, or `bc:ebay-details --write` queues them,
+  newest first, within today's cap; run it on later days for the rest.
+
+Still invisible after this: listings without a brand at all (knock-offs, generic goods). Showing
+those as products of one offer each was discussed and set aside until the details had run (owner,
+2026-11-22: "Finish details first").
+
 ## No charts
 
 bol registers as both a `LiveConnector` and a `PopularityConnector` because it publishes a

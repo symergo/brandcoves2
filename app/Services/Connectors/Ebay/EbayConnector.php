@@ -196,6 +196,51 @@ class EbayConnector implements LiveConnector, PooledSearch
     }
 
     /**
+     * One listing's item detail, raw, for EbayItemDetails::parse().
+     *
+     * Null when eBay is not asked for this market, the `item` bucket is spent or the call
+     * failed: the caller stops and tries again another time. An empty array when eBay
+     * answered without an item (the listing ended): asked, nothing there.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function itemDetail(string $externalId, Market $market): ?array
+    {
+        if (! $this->supports($market) || trim($externalId) === '' || ! $this->limiter('item')->attempt()) {
+            return null;
+        }
+
+        $token = $this->accessToken();
+
+        if ($token === null) {
+            return null;
+        }
+
+        $path = '/item/'.rawurlencode($externalId);
+
+        try {
+            // No retry: a 404 would be asked three times out of the daily quota, and the job
+            // asks again on its next run anyway
+            $response = Http::timeout(8)->withToken($token)
+                ->withHeaders($this->headers($market))->get(self::API_BASE.$path);
+        } catch (Throwable $e) {
+            Log::warning('ebay request failed', ['path' => $path, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        // Ended or removed: an answer, not a failure, so it is remembered and never asked again.
+        // request() folds a 404 into null with the failures, which is why this asks itself.
+        if ($response->status() === 404) {
+            return [];
+        }
+
+        $item = $this->checked($response, $path, 'item')?->json();
+
+        return $item === null ? null : (is_array($item) ? $item : []);
+    }
+
+    /**
      * Re-check one stored offer, by the id eBay itself gave us.
      *
      * `products.external_id` holds the RESTful item id verbatim, and the item
@@ -224,7 +269,9 @@ class EbayConnector implements LiveConnector, PooledSearch
             }
         }
 
-        return $offers;
+        // Brand, barcode and part number from a detail fetched earlier, which a search
+        // result never carries; without this a later search would wipe them (EbayItemDetails)
+        return app(EbayItemDetails::class)->apply($offers);
     }
 
     /**
