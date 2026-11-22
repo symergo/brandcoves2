@@ -348,7 +348,8 @@ Where it stands:
 The market bar ("Ga naar België") showed nothing on `/es/` until 2026-11-22, although the server
 offered Belgium: `MarketBar` looked the page's country up in the switcher list, which holds
 published markets only, found nothing and drew nothing. The shared `market` prop now carries
-`country` and `countryName`, and the bar falls back to them.
+`country` and `countryName`, and the bar falls back to them. The header's country button had the
+same gap (no flag after the logo on `/es/`, only "ES") and falls back the same way since that evening.
 
 Opening it, once a source serves Spain: wait for **Market supply** to show `es` green, run
 `bc:refresh-discovery` and `bc:pull-charts` so the discovery pages and the guide queue are not empty,

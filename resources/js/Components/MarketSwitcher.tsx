@@ -49,13 +49,21 @@ import { useTranslations } from '../useTranslations'
  */
 
 /** The country this page is in, from the market it is on. */
-function currentCountry(markets: SwitcherCountry[], marketKey: string): SwitcherCountry | null {
+function currentCountry(markets: SwitcherCountry[], market: SharedProps['market']): SwitcherCountry {
     /*
      * Derived from the market rather than shipped as a prop, so one fact on
-     * the wire cannot disagree with itself. Null for `/es/`, which routes but
-     * is not offered: the button then shows only the language.
+     * the wire cannot disagree with itself. `/es/` routes but is not offered,
+     * so it is not in the list; its own country stands in, so its header shows
+     * Spain's flag after the logo like every other market (2026-11-22, owner:
+     * "missing the spanish flag"). Until then it showed only the language.
      */
-    return markets.find((c) => c.languages.some((l) => l.market === marketKey)) ?? null
+    return (
+        markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? {
+            country: market.country,
+            name: market.countryName,
+            languages: [],
+        }
+    )
 }
 
 function Check() {
@@ -79,8 +87,8 @@ function Check() {
 export default function MarketButton({ compact = false }: { compact?: boolean }) {
     const { market, markets } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const country = currentCountry(markets, market.key)
-    const language = country?.languages.find((l) => l.market === market.key)
+    const country = currentCountry(markets, market)
+    const language = country.languages.find((l) => l.market === market.key)
 
     // "België, Nederlands": the button's spoken name and its tooltip, since
     // what it shows is a flag and two letters.
