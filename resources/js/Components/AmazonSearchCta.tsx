@@ -10,6 +10,8 @@ export interface AmazonSearch {
      * front page, and the label must not quote words that do not exist.
      */
     hasTerm: boolean
+    /** The storefront's front page, tagged: where Amazon's mark in the search banner goes. */
+    home: string
 }
 
 /**

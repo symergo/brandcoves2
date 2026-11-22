@@ -697,34 +697,10 @@ export default function Search({
                         */}
                         <div className="flex shrink-0 items-start gap-2">
                             {/*
-                              Amazon first in the row, before the view switch
-                              (owner, 2026-11-07), the same shape as the buttons
-                              beside it: the shop's mark on a phone, mark and
-                              "Vergelijk met Amazon" from `sm` up. Still a plain
-                              anchor straight to the tagged search, never through
-                              our redirector (Amazon's rule), sponsored and
-                              nofollow, in a new tab.
+                              The "Vergelijk met Amazon" button that sat first in
+                              this row (2026-11-07) became the banner above the
+                              products on 2026-11-22 (owner).
                             */}
-                            {amazonSearch && !results.empty && (
-                                <a
-                                    href={amazonSearch.url}
-                                    target="_blank"
-                                    rel="sponsored noopener nofollow"
-                                    className={buttonClasses('secondary', 'sm', 'min-w-11 rounded-full sm:min-w-0')}
-                                >
-                                    <img
-                                        src={amazonSearch.icon}
-                                        alt=""
-                                        width={16}
-                                        height={16}
-                                        className="h-4 w-4 shrink-0 rounded-sm bg-white"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none'
-                                        }}
-                                    />
-                                    <span className="sr-only sm:not-sr-only">{t('search.amazon_compare_with')}</span>
-                                </a>
-                            )}
                             <ViewToggle view={view} go={go} />
 
                             <div className="relative" ref={panelRef}>
@@ -966,11 +942,9 @@ export default function Search({
 
 
                     {/*
-                      No row above the results any more: the Amazon comparison
-                      moved into the buttons beside the title on 2026-11-07
-                      (owner). The line that counted the lists a term is on went
-                      on 2026-10-25: it cost a query over every matching product
-                      on each new term, and crawlers ask for a new term every two
+                      The line that counted the lists a term is on went on
+                      2026-10-25: it cost a query over every matching product on
+                      each new term, and crawlers ask for a new term every two
                       seconds.
                     */}
 
@@ -995,6 +969,58 @@ export default function Search({
                             <Link href={intent.asWordsUrl} className="mt-3 inline-block text-sm text-accent-dark underline hover:text-ink">
                                 {t('search.intent_as_words')}
                             </Link>
+                        </div>
+                    )}
+
+                    {/*
+                      Amazon, as a banner just above the products (owner,
+                      2026-11-22). It replaced the "Vergelijk met Amazon" button
+                      beside the title, which had replaced a row here on
+                      2026-11-07; the card inside the grid stays. Two links: the
+                      sentence searches the term, Amazon's mark at the right
+                      opens the storefront's front page. Both tagged by the
+                      server, both plain anchors (never through our redirector,
+                      Amazon's rule), sponsored and nofollow, in a new tab. The
+                      mark is Amazon's own favicon from Amazon's site, not a copy
+                      of its logo: the Associates trademark rules allow the logo
+                      only in the forms Amazon supplies.
+
+                      Results pages only. An empty result has its own Amazon
+                      button below the "nothing found" text, and a gift search
+                      gets no Amazon link from the server at all.
+                    */}
+                    {amazonSearch && !results.empty && !placeholders && (
+                        <div className="mb-4 flex min-h-12 items-center gap-2 rounded-card border border-line bg-card pl-4 text-sm">
+                            <a
+                                href={amazonSearch.url}
+                                target="_blank"
+                                rel="sponsored noopener nofollow"
+                                className="flex min-h-12 min-w-0 flex-1 items-center gap-2 font-medium text-ink hover:text-accent-dark"
+                            >
+                                <span className="truncate">{t('search.amazon_banner', { term: q })}</span>
+                                <span aria-hidden="true" className="shrink-0 text-accent">
+                                    →
+                                </span>
+                            </a>
+                            <a
+                                href={amazonSearch.home}
+                                target="_blank"
+                                rel="sponsored noopener nofollow"
+                                aria-label={t('search.amazon_home', { host: amazonSearch.host.replace(/^www\./, '') })}
+                                title={amazonSearch.host.replace(/^www\./, '')}
+                                className="flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-r-card border-l border-line px-3 hover:bg-cream"
+                            >
+                                <img
+                                    src={amazonSearch.icon}
+                                    alt=""
+                                    width={24}
+                                    height={24}
+                                    className="h-6 w-6 rounded-sm bg-white"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none'
+                                    }}
+                                />
+                            </a>
                         </div>
                     )}
 

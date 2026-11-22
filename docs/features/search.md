@@ -1266,3 +1266,21 @@ Amazon · www.amazon.com.be →"). It is now the first of the buttons beside the
 switch, in their shape: Amazon's mark on a phone, mark and "Vergelijk met Amazon" from `sm` up
 (`search.amazon_compare_with`). Still a plain anchor to the tagged Amazon search, never through `/go/`,
 `sponsored nofollow`, in a new tab. The card in the grid and the link on an empty result are unchanged.
+
+## A banner above the products (owner, 2026-11-22)
+
+The button beside the title became a banner directly above the products: "Bekijk :term ook op
+Amazon →" (`search.amazon_banner`), with Amazon's mark at its right. Two links: the sentence opens the
+tagged search, the mark the storefront's tagged front page (`AmazonSearchLink::$homeUrl`, sent as
+`amazonSearch.home`; `search.amazon_home` is its label for a screen reader). Belgium goes to
+amazon.com.be and the Netherlands to amazon.nl, as before; `en` and `es` have no tag and get nothing.
+The card in the grid stays (owner's choice over one link per page), so a results page carries two
+Amazon links. Not on an empty result, which keeps its own button, and not on a gift search, which gets
+no Amazon link from the server.
+
+What it cost, said before it was built: the banner is 48px above the first product, about a tenth of
+a phone's first screen, and it puts a competitor in the most-seen spot before our own offers.
+
+The mark is Amazon's favicon, loaded from Amazon's site, not a copy of the Amazon logo: the
+Associates trademark rules allow the logo only in the forms Amazon supplies (owner chose the favicon
+over the official "Available at Amazon" badge).

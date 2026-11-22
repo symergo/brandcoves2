@@ -33,6 +33,8 @@ class AmazonSearchCtaTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('amazonSearch.host', 'www.amazon.nl')
                 ->where('amazonSearch.url', 'https://www.amazon.nl/s?k=koptelefoon&tag=giftcoves-21')
+                // Amazon's mark in the banner opens the storefront's front page, tagged too (2026-11-22)
+                ->where('amazonSearch.home', 'https://www.amazon.nl/?tag=giftcoves-21')
             );
 
         $this->get('/be-nl/search?q=koptelefoon')
@@ -40,6 +42,7 @@ class AmazonSearchCtaTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('amazonSearch.host', 'www.amazon.com.be')
                 ->where('amazonSearch.url', 'https://www.amazon.com.be/s?k=koptelefoon&tag=giftcoves05-21')
+                ->where('amazonSearch.home', 'https://www.amazon.com.be/?tag=giftcoves05-21')
             );
     }
 

@@ -375,6 +375,9 @@ return [
         'amazon_compare' => 'Compare :term prices on Amazon',
         'amazon_compare_short' => 'Compare prices on Amazon',
         'amazon_compare_with' => 'Compare with Amazon',
+        // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
+        'amazon_banner' => 'See :term on Amazon too',
+        'amazon_home' => 'Go to :host',
         'chip_with_out_of_stock' => 'Out of stock too',
         'chip_min' => 'From :price',
         'chip_max' => 'Up to :price',

@@ -43,6 +43,11 @@ final readonly class AmazonSearchLink
         public string $url,
         /** False when there was no term — the view drops the quoted words. */
         public bool $hasTerm,
+        /**
+         * The storefront's own front page, tagged: where Amazon's mark in the search page's
+         * banner goes (owner, 2026-11-22: "a logo link to the right local Amazon page").
+         */
+        public string $homeUrl,
     ) {}
 
     /**
@@ -109,21 +114,21 @@ final readonly class AmazonSearchLink
          * ampersand or an accent arrives intact rather than truncating the
          * query at the first `&`.
          */
+        $home = "https://{$host}/?".http_build_query(['tag' => $tag], '', '&', PHP_QUERY_RFC3986);
+
         if ($term === '') {
             // The storefront itself, tagged. `/s` with no `k` is a search
             // results page for nothing, which Amazon answers with an empty
             // grid — a worse landing than the shop's own front page.
-            $query = http_build_query(['tag' => $tag], '', '&', PHP_QUERY_RFC3986);
-
-            return new self($host, "https://{$host}/?{$query}", hasTerm: false);
+            return new self($host, $home, hasTerm: false, homeUrl: $home);
         }
 
         $query = http_build_query(['k' => $term, 'tag' => $tag], '', '&', PHP_QUERY_RFC3986);
 
-        return new self($host, "https://{$host}/s?{$query}", hasTerm: true);
+        return new self($host, "https://{$host}/s?{$query}", hasTerm: true, homeUrl: $home);
     }
 
-    /** @return array{host: string, url: string, icon: string, hasTerm: bool} */
+    /** @return array{host: string, url: string, icon: string, hasTerm: bool, home: string} */
     public function toArray(): array
     {
         return [
@@ -131,6 +136,7 @@ final readonly class AmazonSearchLink
             'url' => $this->url,
             'icon' => $this->iconUrl(),
             'hasTerm' => $this->hasTerm,
+            'home' => $this->homeUrl,
         ];
     }
 }
