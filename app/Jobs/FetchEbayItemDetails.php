@@ -40,7 +40,8 @@ class FetchEbayItemDetails implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 300;
+    // Under the `default` queue's retry_after (180 s), or a long batch is handed to a second worker and fetched twice. A batch is at most 50 listings at 5 requests a second.
+    public int $timeout = 150;
 
     /**
      * @param  list<string>  $externalIds
