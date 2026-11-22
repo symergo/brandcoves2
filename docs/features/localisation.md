@@ -240,3 +240,12 @@ behind a deletion.
   not the reader's current one.
 - **Slugs** are generated from the source title and are therefore in whatever
   language the feed supplied.
+
+## "Cove" is "colección" in Spanish (owner, 2026-11-22)
+
+The rule was that Coves keep their name in every language, like GiftCoves itself. For Spanish the
+owner asked for a better translation and chose **colección** over *cala* (the literal word, which reads
+as a small beach) and *lista* (already the word for a wish list). Only the Spanish strings changed
+(109 of them, in `lang/es/site.php` and `help_lists.php`), in sentence case because it is a noun there,
+not a name: "Mis colecciones", "Crear una colección", "Colección del día", "Colecciones de marca".
+"GiftCoves" itself is unchanged. Dutch, French and English keep "Cove".

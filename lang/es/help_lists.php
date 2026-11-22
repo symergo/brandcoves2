@@ -16,7 +16,7 @@ return [
         'back' => 'Todos los temas',
         'next' => 'Siguiente',
         'cta_search' => 'Buscar algo que guardar',
-        'cta_lists' => 'Ir a Mis Coves',
+        'cta_lists' => 'Ir a Mis colecciones',
     ],
 
     'topics' => [
@@ -29,7 +29,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Encuentra algo que quieras guardar',
-                    'body' => '[Busca](search), o recorre una [Cove](cove). Cada ficha de producto lleva un marcador sobre su foto.',
+                    'body' => '[Busca](search), o recorre una [colección](cove). Cada ficha de producto lleva un marcador sobre su foto.',
                     'shot' => 'find',
                     'alt' => 'Dos fichas de producto, cada una con un botón de marcador sobre su foto.',
                 ],
@@ -41,13 +41,13 @@ return [
                 ],
                 [
                     'title' => 'Abre tus listas',
-                    'body' => 'Todo lo que guardaste está en [Mis Coves](lists), en una sola página: Listas de deseos, Para otros, Regalar juntos y Guardadas, cada una con su número. Cada lista muestra qué contiene, si es privada y para quién es. Cuando baja un precio, la ficha lo dice.',
+                    'body' => 'Todo lo que guardaste está en [Mis colecciones](lists), en una sola página: Listas de deseos, Para otros, Regalar juntos y Guardadas, cada una con su número. Cada lista muestra qué contiene, si es privada y para quién es. Cuando baja un precio, la ficha lo dice.',
                     'shot' => 'lists',
-                    'alt' => 'La página Mis Coves, con dos listas y el botón para crear una.',
+                    'alt' => 'La página Mis colecciones, con dos listas y el botón para crear una.',
                 ],
                 [
                     'title' => 'Crear una lista en un paso',
-                    'body' => "1. Toca «Crear una Cove» en [Mis Coves](lists) o en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Para otra persona, escribe su nombre o toca a alguien que ya tengas.\n3. Toca «Crear una Cove» abajo. El nombre ya viene puesto; cámbialo antes si quieres.\n\nLa lista se abre con la casilla para añadir ya abierta: pega un enlace o busca. La ocasión, compartir y pedir ideas están en la propia lista: Compartir, y Ajustes bajo Más.\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalar juntos](lists-help/kinds).",
+                    'body' => "1. Toca «Crear una colección» en [Mis colecciones](lists) o en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Para otra persona, escribe su nombre o toca a alguien que ya tengas.\n3. Toca «Crear una colección» abajo. El nombre ya viene puesto; cámbialo antes si quieres.\n\nLa lista se abre con la casilla para añadir ya abierta: pega un enlace o busca. La ocasión, compartir y pedir ideas están en la propia lista: Compartir, y Ajustes bajo Más.\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalar juntos](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'Una lista nueva: la única pregunta, para quién es.',
                 ],
@@ -105,11 +105,11 @@ return [
             'sections' => [
                 [
                     'title' => 'El marcador',
-                    'body' => 'En cada ficha de producto, en la [búsqueda](search) y en cada [Cove](cove). Un toque guarda en la última lista donde guardaste, si no en tu lista por defecto. Una vez guardado, el marcador está relleno y dice Guardado, y otro toque abre el panel: marca otra lista, o desmarca una para quitarlo. En la página de un producto es el mismo botón con la palabra Guardar al lado, y en una Cove también.',
+                    'body' => 'En cada ficha de producto, en la [búsqueda](search) y en cada [colección](cove). Un toque guarda en la última lista donde guardaste, si no en tu lista por defecto. Una vez guardado, el marcador está relleno y dice Guardado, y otro toque abre el panel: marca otra lista, o desmarca una para quitarlo. En la página de un producto es el mismo botón con la palabra Guardar al lado, y en una colección también.',
                 ],
                 [
                     'title' => 'Añadir desde la lista',
-                    'body' => "1. Abre tu lista en [Mis Coves](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
+                    'body' => "1. Abre tu lista en [Mis colecciones](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
                     'shot' => 'add',
                     'alt' => 'El campo de búsqueda al principio de una lista para añadir un producto, con debajo el enlace para añadir un artículo offline.',
                 ],
