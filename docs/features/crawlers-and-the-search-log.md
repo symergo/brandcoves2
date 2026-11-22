@@ -109,3 +109,17 @@ through. `App\Http\Middleware\LimitHeavyCrawlers` refuses them search pages (403
 ten other pages a minute, counted per crawler name because they come from many addresses (429 with
 `Retry-After` above that). `robots.txt` carries the same rules in a group of their own and is always
 served. To add one: a line in `LimitHeavyCrawlers::CRAWLERS`; robots.txt follows from it.
+
+## AI crawlers kept off search pages (owner, 2026-11-22)
+
+In an hour sampled on 2026-11-22, 94% of the 9,242 requests were crawlers: GPTBot 2,431, ClaudeBot
+1,943, meta-externalagent 1,407, Reflectionbot 1,041, Bing 482, KakaoBot 447. Most of it was search
+pages for long terms pasted together from product titles, which are never cached and cost seconds of
+database time each: 71 searches took over 5 s, two timed out at 30 s, and the server sat at a load of
+4.5 to 5 on 6 cores.
+
+GPTBot, ClaudeBot, meta-externalagent, Reflectionbot and KakaoBot are now refused search pages (403)
+and have a robots.txt group saying so, but unlike the four above they are **not** slowed down
+anywhere else and get no Crawl-delay: product, brand, guide and gift pages are what an AI assistant
+can cite, and a search page is only a list of those. Google and Bing are on neither list. To add one:
+a line in `LimitHeavyCrawlers::SEARCH_ONLY`.

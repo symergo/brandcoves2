@@ -40,10 +40,34 @@ final class LimitHeavyCrawlers
         'amzn-searchbot' => 'Amzn-SearchBot',
     ];
 
+    /**
+     * Kept off search pages only, not slowed down anywhere else (owner, 2026-11-22).
+     *
+     * In an hour on 2026-11-22 these made most of the 6,406 search requests (94% of all
+     * traffic was crawlers): long terms pasted together from product titles, never cached,
+     * seconds of database time each. Two timed out at 30 s and the server sat at a load of
+     * 4.5 to 5 on 6 cores. A search page is a list of products that each have their own
+     * page, so an AI assistant loses nothing it can cite; product, brand, guide and gift
+     * pages stay open to them at full speed. Google and Bing are not on either list.
+     *
+     * Name in the user agent => the name in robots.txt.
+     */
+    public const SEARCH_ONLY = [
+        'gptbot' => 'GPTBot',
+        'claudebot' => 'ClaudeBot',
+        'meta-externalagent' => 'meta-externalagent',
+        'reflectionbot' => 'Reflectionbot',
+        'kakaobot' => 'KakaoBot',
+    ];
+
     public const PER_MINUTE = 10;
 
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $request->is('robots.txt') && self::isSearch($request) && self::matches($request->userAgent(), self::SEARCH_ONLY)) {
+            return response('Search pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
+        }
+
         $crawler = self::which($request->userAgent());
 
         if ($crawler === null || $request->is('robots.txt')) {
@@ -70,9 +94,15 @@ final class LimitHeavyCrawlers
 
     public static function which(?string $userAgent): ?string
     {
+        return self::matches($userAgent, self::CRAWLERS);
+    }
+
+    /** @param  array<string, string>  $list */
+    private static function matches(?string $userAgent, array $list): ?string
+    {
         $ua = strtolower((string) $userAgent);
 
-        foreach (array_keys(self::CRAWLERS) as $name) {
+        foreach (array_keys($list) as $name) {
             if (str_contains($ua, $name)) {
                 return $name;
             }

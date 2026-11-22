@@ -43,6 +43,27 @@ class HeavyCrawlersTest extends TestCase
     }
 
     #[Test]
+    public function ai_crawlers_get_no_search_pages_and_every_other_page_without_a_cap(): void
+    {
+        $gpt = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.4; +https://openai.com/gptbot)';
+        $meta = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 (compatible; meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))';
+
+        foreach ([$gpt, $meta] as $agent) {
+            $this->withHeader('User-Agent', $agent)->get('/be-nl/zoek/lego')->assertForbidden();
+            $this->withHeader('User-Agent', $agent)->get('/be-nl/search?q=lego')->assertForbidden();
+        }
+
+        // Unlike the heavy crawlers, no per-minute cap on the rest
+        for ($i = 0; $i <= LimitHeavyCrawlers::PER_MINUTE + 2; $i++) {
+            $this->withHeader('User-Agent', $gpt)->get('/be-nl/about')->assertOk();
+        }
+
+        config(['giftcoves.robots_allow' => true]);
+        $robots = $this->get('/robots.txt')->getContent();
+        $this->assertStringContainsString("User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: meta-externalagent\nUser-agent: Reflectionbot\nUser-agent: KakaoBot\nAllow: /\nDisallow: /*/search\n", $robots);
+    }
+
+    #[Test]
     public function people_and_search_engines_still_search(): void
     {
         $this->withHeader('User-Agent', self::GOOGLE)->get('/be-nl/zoek/lego')->assertOk();

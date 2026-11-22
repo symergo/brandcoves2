@@ -374,6 +374,16 @@ class SitemapController extends Controller
                 ...$search,
                 ...$rules,
                 '',
+                /*
+                 * AI crawlers: no search pages, everything else as for everybody, no
+                 * Crawl-delay (owner, 2026-11-22). LimitHeavyCrawlers::SEARCH_ONLY says why.
+                 */
+                ...array_map(fn (string $name): string => 'User-agent: '.$name, array_values(LimitHeavyCrawlers::SEARCH_ONLY)),
+                'Allow: /',
+                'Disallow: /*/search',
+                ...$search,
+                ...$rules,
+                '',
                 'Sitemap: '.url('/sitemap.xml'),
             ]
             // Staging: a full duplicate of the site would compete with the real
