@@ -117,12 +117,6 @@ class StructuredData
                 continue;
             }
 
-            // A sold-out pick stays in a Cove but is filtered at render (EditionPresenter), so the list a
-            // crawler is told about must leave it out too: structured data has to match what the page shows
-            if (! $group->in_stock) {
-                continue;
-            }
-
             $data = [
                 '@context' => 'https://schema.org',
                 '@type' => 'Product',
