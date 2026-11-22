@@ -22,12 +22,13 @@ use Illuminate\Support\Facades\Cache;
  * Each answer asks the same thing its page lists, as one EXISTS query; the Discover page itself
  * already hid its empty bands.
  *
- * Kept ten minutes per market, like the Discover page's bands: something published shows up in the
- * menu within that, and a page view costs one cache read.
+ * Kept six hours per market (owner, 2026-11-22): a page view costs one cache read, and the six EXISTS
+ * queries run four times a day. The price is that an entry whose page gets its first content (Spain's
+ * first daily edition, say) appears in the menu up to six hours later.
  */
 final class DiscoverMenu
 {
-    private const TTL = 600;
+    private const TTL = 6 * 3600;
 
     /** @return array{daily: bool, surprise: bool, giftIdeas: bool, guides: bool, community: bool, brands: bool, coves: bool} */
     public function for(Market $market): array

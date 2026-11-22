@@ -780,7 +780,8 @@ visitors with eBay alone, and every Discover entry but one led to an empty page.
 `App\Services\Cove\DiscoverMenu` answers per market, with the query each page lists by, which entries
 have something behind them: a published daily edition, a product with a surprise score, a published
 persona or occasion page or a gift landing, a published article, a community list, brand statistics.
-Kept ten minutes per market and shared with every page as `discoverMenu`; `SiteLayout` leaves out the
+Kept six hours per market (owner's choice; a page getting its first content shows in the menu up to
+six hours later) and shared with every page as `discoverMenu`; `SiteLayout` leaves out the
 entries that are false, and "All Coves" when all are. With no entry left the menu has no dropdown and
 Discover is a plain link to the Discover page. That page already hid its empty bands; the taste tool
 and "ask others" stay, as tools rather than content.
