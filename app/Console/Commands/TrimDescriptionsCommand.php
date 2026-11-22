@@ -72,11 +72,7 @@ class TrimDescriptionsCommand extends Command
         for ($start = $from; $start <= $max; $start += $step) {
             $end = $start + $step;
 
-            $cut += $changed = DB::update(
-                'UPDATE products SET description = '.DescriptionLimit::SQL
-                .' WHERE id >= ? AND id < ? AND char_length(description) > '.$limit,
-                [$start, $end],
-            );
+            $cut += $changed = $this->cutRange($start, $end, $limit);
             $sinceVacuum += $changed;
             $ranges++;
 
@@ -102,5 +98,32 @@ class TrimDescriptionsCommand extends Command
         $this->info(sprintf('Done: %s descriptions cut to %d characters.', number_format($cut), $limit));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * One range, retried when it deadlocks with an ingestion writing the same offers.
+     *
+     * Production, 2026-11-22: the first run stopped at ids 30.5 to 31 million on a deadlock
+     * with a feed's upsert. Postgres cancels one side and rolls it back whole, so a retry
+     * after a short wait is safe; past five tries the error stands and `--from` resumes.
+     */
+    private function cutRange(int $start, int $end, int $limit): int
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return DB::update(
+                    'UPDATE products SET description = '.DescriptionLimit::SQL
+                    .' WHERE id >= ? AND id < ? AND char_length(description) > '.$limit,
+                    [$start, $end],
+                );
+            } catch (QueryException $e) {
+                if ($e->getCode() !== '40P01' || $attempt >= 5) {
+                    throw $e;
+                }
+
+                $this->warn("  deadlock at ids {$start} to {$end}, try {$attempt} of 5; again in {$attempt} s");
+                sleep($attempt);
+            }
+        }
     }
 }
