@@ -251,7 +251,8 @@ class SearchThinLiveTest extends TestCase
     {
         $this->fakeBol([$this->bolProduct()]);
 
-        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)'])
+        // Applebot: GPTBot, the example until 2026-11-22, is now refused search pages outright (LimitHeavyCrawlers::SEARCH_ONLY)
+        $this->get('/be-nl/search?q=tuinkabouter', ['User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('results.items', 0));
 

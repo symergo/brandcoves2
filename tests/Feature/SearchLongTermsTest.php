@@ -113,8 +113,8 @@ class SearchLongTermsTest extends TestCase
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/145.0.0.0 Safari/537.36')
             ->get(SearchUrl::for(Market::BeNl, self::LONG))->assertRedirect($short);
 
-        // One that says what it is
-        $this->withHeader('User-Agent', 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.4; +https://openai.com/gptbot)')
+        // One that says what it is (Applebot: GPTBot, the example until 2026-11-22, is now refused search pages outright)
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)')
             ->get('/be-nl/search?'.http_build_query(['q' => self::LONG]))->assertRedirect($short);
 
         // Eight words is still a search
