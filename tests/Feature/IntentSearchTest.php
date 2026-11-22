@@ -20,6 +20,18 @@ class IntentSearchTest extends TestCase
 
     private const GIFT = 'cadeau voor mijn zus die van tuinieren houdt, €30-€50';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        /*
+         * A visitor, with the site's session cookie. Without it a request is taken for a crawler
+         * hiding its name, and a search of more than four words is redirected to its first four
+         * (SearchLongTermsTest), so these gift searches answered 302 instead of the page.
+         */
+        $this->withCookie((string) config('session.cookie'), 'a-visitor');
+    }
+
     #[Test]
     public function a_gift_search_is_shown_back_and_answered_by_the_brief(): void
     {
