@@ -48,13 +48,24 @@ class FetchEbayItemDetails implements ShouldQueue
      * @param  string|null  $term  The search that queued this, whose cached result is retired once
      *                             products appear; null from bc:ebay-details, which waits for the nightly grouping
      * @param  list<string>  $brands  That search's brand filter, retired the same way
+     * @param  int|null  $leftoverUntil  Set by `bc:ebay-details --leftover`: past the daily cap, spending
+     *                                   eBay's last calls of its day, but only until this time
+     *                                   (its reset), so a late job never eats the next day's
      */
     public function __construct(
         public readonly Market $market,
         public readonly array $externalIds,
         public readonly ?string $term = null,
         public readonly array $brands = [],
+        public readonly ?int $leftoverUntil = null,
     ) {}
+
+    private function mayAsk(EbayItemDetails $details): bool
+    {
+        return $this->leftoverUntil === null
+            ? $details->remainingToday() > 0
+            : now()->getTimestamp() < $this->leftoverUntil;
+    }
 
     public function handle(EbayConnector $ebay, EbayItemDetails $details, IncomingGrouper $grouper, GroupMerger $merger): void
     {
@@ -63,7 +74,7 @@ class FetchEbayItemDetails implements ShouldQueue
         $moved = [];
 
         foreach ($details->unknown($this->externalIds) as $externalId) {
-            if ($details->remainingToday() <= 0) {
+            if (! $this->mayAsk($details)) {
                 break;
             }
 

@@ -2053,6 +2053,15 @@ return [
             'details_per_day' => (int) env('EBAY_DETAILS_PER_DAY', 2000),
 
             /*
+             * Half an hour before eBay resets its count (23:30 Pacific), `bc:ebay-details
+             * --leftover` spends the calls eBay says are still left on listings never asked,
+             * past details_per_day: unused, they are gone at midnight anyway (owner,
+             * 2026-11-23). This many are kept back for the live searches of that last half
+             * hour; a busy evening hour asked eBay a few hundred times.
+             */
+            'leftover_reserve' => (int) env('EBAY_LEFTOVER_RESERVE', 300),
+
+            /*
              * Marketplace Account Deletion — eBay's compliance webhook.
              *
              * NOT optional, and not really about us. eBay requires every

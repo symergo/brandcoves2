@@ -76,6 +76,16 @@ Schedule::call(fn () => CatalogueRun::start(Market::cases(), morning: false))
     ->withoutOverlapping()
     ->onOneServer();
 
+// eBay's unused calls of the day, spent on item details for listings never asked, half an hour
+// before eBay resets its count at midnight Pacific (owner, 2026-11-23). In eBay's time zone, so
+// it follows the clock change. See docs/features/ebay-connector.md.
+Schedule::command('bc:ebay-details --leftover --write')
+    ->name('ebay-details-leftover')
+    ->dailyAt('23:30')
+    ->timezone('America/Los_Angeles')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // What people's lists teach the catalogue: crowd tags on products, and
 // products linked by the lists they share. Once a night, in the quiet hours,
 // after the personal-data prune (03:20) so deleted lists no longer count.

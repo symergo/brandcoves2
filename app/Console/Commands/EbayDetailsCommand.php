@@ -20,12 +20,18 @@ use Illuminate\Support\Facades\DB;
  * up to what is left of today's cap (`connectors.ebay.details_per_day`), in jobs of 50, market by
  * market in enum order, skipping markets eBay is not asked for; `--market` puts one first. Run it
  * again on later days for the rest: a listing asked once is never asked again. Reports unless `--write`.
+ *
+ * `--leftover` (2026-11-23, scheduled at 23:30 Pacific) spends instead what eBay itself says is
+ * left of its day, less `connectors.ebay.leftover_reserve`, past our cap: calls eBay resets unused
+ * at midnight Pacific are worth nothing after it. Only in the last hour of eBay's day, so a run by
+ * hand at noon cannot spend the calls live search needs for the afternoon.
  */
 class EbayDetailsCommand extends Command
 {
     protected $signature = 'bc:ebay-details
         {--market= : Only this market. Every market eBay serves by default}
         {--limit= : At most this many listings, below what is left of today\'s cap}
+        {--leftover : Spend what eBay says is left of its day instead, past the cap. Last hour before its reset only}
         {--write : Queue the jobs. Without this it only counts}';
 
     protected $description = 'Queue eBay item details for stored eBay offers without a product identity';
@@ -40,13 +46,36 @@ class EbayDetailsCommand extends Command
             return self::FAILURE;
         }
 
-        $budget = $details->remainingToday();
+        $until = null;
 
-        if ($this->option('limit') !== null) {
-            $budget = min($budget, max(0, (int) $this->option('limit')));
+        if ($this->option('leftover')) {
+            $reset = now(EbayItemDetails::EBAY_DAY_ZONE)->startOfDay()->addDay();
+
+            if (now()->diffInMinutes($reset) > 60) {
+                $this->warn('Not in the last hour of eBay\'s day (it resets at '.$reset->utc()->format('H:i').' UTC); nothing done.');
+
+                return self::SUCCESS;
+            }
+
+            $left = $ebay->callsLeft();
+
+            if ($left === null) {
+                $this->warn('eBay would not say how many calls are left; nothing done.');
+
+                return self::SUCCESS;
+            }
+
+            $budget = max(0, $left - (int) config('giftcoves.connectors.ebay.leftover_reserve', 300));
+            $until = $reset->getTimestamp();
+            $this->line("eBay has {$left} calls left until its reset; this run takes at most {$budget}.");
+        } else {
+            $budget = $details->remainingToday();
+            $this->line("Left of today's cap: {$budget}; this run takes at most ".min($budget, $this->limit() ?? $budget).'.');
         }
 
-        $this->line("Left of today's cap: {$details->remainingToday()}; this run takes at most {$budget}.");
+        if ($this->limit() !== null) {
+            $budget = min($budget, $this->limit());
+        }
 
         foreach ($market === null ? Market::cases() : [$market] as $each) {
             // A market eBay is not asked for (switched off, no marketplace) would spend the budget on nothing
@@ -76,7 +105,7 @@ class EbayDetailsCommand extends Command
 
             if ($this->option('write')) {
                 foreach (array_chunk($ids, 50) as $chunk) {
-                    FetchEbayItemDetails::dispatch($each, array_values($chunk));
+                    FetchEbayItemDetails::dispatch($each, array_values($chunk), leftoverUntil: $until);
                 }
             }
         }
@@ -86,5 +115,10 @@ class EbayDetailsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function limit(): ?int
+    {
+        return $this->option('limit') !== null ? max(0, (int) $this->option('limit')) : null;
     }
 }

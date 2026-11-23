@@ -241,6 +241,41 @@ class EbayConnector implements LiveConnector, PooledSearch
     }
 
     /**
+     * How many Browse calls eBay says are left in its current day, or null when it would not say.
+     *
+     * eBay's own count (its developer analytics), so it includes every call this
+     * application made from anywhere, staging included. Read by `bc:ebay-details --leftover`.
+     */
+    public function callsLeft(): ?int
+    {
+        $token = $this->accessToken();
+
+        if ($token === null) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(8)->withToken($token)
+                ->get('https://api.ebay.com/developer/analytics/v1_beta/rate_limit/', ['api_name' => 'browse']);
+        } catch (Throwable $e) {
+            Log::warning('ebay rate limit read failed', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        foreach ((array) $response->json('rateLimits', []) as $api) {
+            foreach ((array) ($api['resources'] ?? []) as $resource) {
+                // `buy.browse` is search and item; `buy.browse.item.bulk` is getItems, which we cannot use
+                if (($resource['name'] ?? null) === 'buy.browse' && isset($resource['rates'][0]['remaining'])) {
+                    return max(0, (int) $resource['rates'][0]['remaining']);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Re-check one stored offer, by the id eBay itself gave us.
      *
      * `products.external_id` holds the RESTful item id verbatim, and the item

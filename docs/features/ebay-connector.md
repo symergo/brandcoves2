@@ -138,6 +138,15 @@ ungrouped. The owner asked whether eBay had another identifying field; the item 
   until 2026-11-23, taking the offer's brand and identity down with them.
 - **Offers stored before** wait until searched again, or `bc:ebay-details --write` queues them,
   newest first, within today's cap; run it on later days for the rest.
+- **eBay's leftover calls are spent, not wasted** (owner, 2026-11-23). At 23:30 Pacific, half an
+  hour before eBay resets its count, `bc:ebay-details --leftover --write` asks eBay how many calls
+  are left (`EbayConnector::callsLeft()`), keeps `connectors.ebay.leftover_reserve` (300) for the
+  last half hour of live search, and queues the rest as details for listings never asked, past our
+  own cap. Each job stops at eBay's reset (`leftoverUntil`), so a late one never spends the next
+  day's calls. The command refuses outside the last hour of eBay's day, so a run by hand at noon
+  cannot spend what live search needs that afternoon. Most nights it finds little to do: searches
+  queue details for what they store, so only what the cap left over waits; on 2026-11-23 the
+  backlog was cleared by hand (1,357 listings).
 
 ### Every eBay listing a product straight after the live search (2026-11-22)
 

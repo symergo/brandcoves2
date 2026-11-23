@@ -43,7 +43,7 @@ final class EbayItemDetails
      * eBay's day: its call allowance resets at midnight Pacific time (08:00 UTC in
      * winter, 07:00 in summer), as its rate_limit endpoint reports.
      */
-    private const EBAY_DAY_ZONE = 'America/Los_Angeles';
+    public const EBAY_DAY_ZONE = 'America/Los_Angeles';
 
     /**
      * How many details may still be fetched in eBay's current day.

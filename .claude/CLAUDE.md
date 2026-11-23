@@ -147,7 +147,8 @@ php artisan bc:trim-descriptions      # cut stored offer descriptions to 1,000 c
                                       # as it goes. Dry run (an estimate) unless --write
 php artisan bc:ebay-details            # queue eBay item details (brand, barcode, part number) for
                                       # stored eBay offers without a product identity, within the
-                                      # daily cap. Searches queue their own. Dry run unless --write
+                                      # daily cap. Searches queue their own. Dry run unless --write.
+                                      # --leftover: eBay's unused calls, scheduled 23:30 Pacific
 php artisan bc:find-matches --full    # propose products that may be one (same barcode, model
                                       # number or similar title within a brand) for a person to
                                       # confirm at /admin, Match review. Nothing merges on its own.

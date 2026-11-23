@@ -158,6 +158,52 @@ class EbayItemDetailsTest extends TestCase
     }
 
     #[Test]
+    public function the_leftover_run_spends_what_ebay_says_is_left_less_the_reserve(): void
+    {
+        config(['giftcoves.connectors.ebay.leftover_reserve' => 300, 'giftcoves.connectors.ebay.details_per_day' => 0]);
+        foreach (['v1|11|0', 'v1|12|0', 'v1|13|0'] as $id) {
+            $this->storeOffer($id, 'LEGO set '.$id);
+        }
+        Http::fake([
+            'api.ebay.com/identity/*' => Http::response(['access_token' => 'tok', 'expires_in' => 7200]),
+            'api.ebay.com/developer/analytics/*' => Http::response(['rateLimits' => [['apiName' => 'Browse', 'resources' => [
+                ['name' => 'buy.browse.item.bulk', 'rates' => [['limit' => 5000, 'remaining' => 5000]]],
+                ['name' => 'buy.browse', 'rates' => [['limit' => 5000, 'remaining' => 302]]],
+            ]]]]),
+        ]);
+        Queue::fake();
+
+        // Noon in eBay's day: refused, and eBay is not even asked
+        $this->travelTo(CarbonImmutable::parse('2026-11-23 20:00:00', 'UTC'));
+        $this->artisan('bc:ebay-details --leftover --write')->assertSuccessful();
+        Queue::assertNothingPushed();
+        Http::assertNothingSent();
+
+        // 23:30 Pacific (07:30 UTC in winter): 302 left, 300 kept for search, so 2 of the 3
+        $this->travelTo(CarbonImmutable::parse('2026-11-24 07:30:00', 'UTC'));
+        $this->artisan('bc:ebay-details --leftover --write')->assertSuccessful();
+
+        Queue::assertPushed(FetchEbayItemDetails::class, fn (FetchEbayItemDetails $job) => count($job->externalIds) === 2
+            && $job->leftoverUntil === CarbonImmutable::parse('2026-11-24 08:00:00', 'UTC')->getTimestamp());
+    }
+
+    #[Test]
+    public function a_leftover_job_goes_past_the_cap_but_not_past_ebays_reset(): void
+    {
+        config(['giftcoves.connectors.ebay.details_per_day' => 0]);
+        $this->storeOffer('v1|21|0', 'LEGO Icons 10316 Rivendell');
+        $this->fakeEbay(['brand' => 'LEGO', 'mpn' => '10316']);
+
+        // After the reset it would be the next day's calls: nothing asked
+        dispatch_sync(new FetchEbayItemDetails(Market::Es, ['v1|21|0'], leftoverUntil: now()->subMinute()->getTimestamp()));
+        $this->assertSame(0, DB::table('ebay_item_details')->count());
+
+        // Before it, past a cap of 0
+        dispatch_sync(new FetchEbayItemDetails(Market::Es, ['v1|21|0'], leftoverUntil: now()->addMinutes(20)->getTimestamp()));
+        $this->assertSame('LEGO', DB::table('ebay_item_details')->where('external_id', 'v1|21|0')->value('brand'));
+    }
+
+    #[Test]
     public function a_later_search_result_keeps_the_details(): void
     {
         DB::table('ebay_item_details')->insert(['external_id' => 'v1|5|0', 'brand' => 'LEGO', 'gtin' => null, 'mpn' => '21335', 'fetched_at' => now()]);
