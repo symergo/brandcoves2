@@ -176,6 +176,15 @@ return [
         // set and a fresh clone cannot silently run on Postgres' 0.6 default.
         'trigram_threshold' => 0.45,
 
+        // The longest one database statement may run inside a web request, in
+        // milliseconds; 0 turns it off. Queue jobs, the scheduler and artisan are
+        // not limited. PHP's own time limit counts only PHP's CPU time, not time
+        // spent waiting on Postgres, so nothing stopped a stuck query: on
+        // 2026-11-23 three search counts ran over five minutes each, long after
+        // their visitors had a page, and held the server at a load of 11. A
+        // search statement takes well under two seconds; ten times that is stuck.
+        'web_statement_timeout_ms' => (int) env('DB_WEB_STATEMENT_TIMEOUT_MS', 20000),
+
         // The fuzzy title match runs only when the word match finds fewer
         // products than this: one page. Measured on production 2026-10-25,
         // 1.6M be-nl groups: the word match 8-110ms, the fuzzy one 1.7-3.3s,

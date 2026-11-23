@@ -215,9 +215,18 @@ class AppServiceProvider extends ServiceProvider
         $threshold = (float) config('giftcoves.search.trigram_threshold');
         $statement = sprintf('SET pg_trgm.word_similarity_threshold = %F', $threshold);
 
+        // A web request also gets a ceiling per statement (search.web_statement_timeout_ms
+        // says why). Never in the console: a queue job, a migration or bc:find-matches
+        // may legitimately run for minutes.
+        $timeout = (int) config('giftcoves.search.web_statement_timeout_ms');
+        if ($timeout > 0 && ! $this->app->runningInConsole()) {
+            $statement .= sprintf('; SET statement_timeout = %d', $timeout);
+        }
+
         $apply = function (Connection $connection) use ($statement): void {
             if ($connection->getDriverName() === 'pgsql') {
-                $connection->statement($statement);
+                // unprepared: two SETs in one round trip, which a prepared statement refuses
+                $connection->unprepared($statement);
             }
         };
 

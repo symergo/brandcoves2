@@ -1318,3 +1318,17 @@ would rewrite the offers it cut: `DescriptionLimitTest` compares them.
 The freed space is reused by the table, which then stops growing until new offers have filled it; the
 file only shrinks with `VACUUM FULL products`, which locks the offers table (the site is down for it)
 and needs free disk for the rewritten copy.
+
+## A ceiling on each database statement in a web request (2026-11-23)
+
+On 2026-11-23, under a scraper's load, three search counts ran over five minutes each, long after
+their visitors already had a page, and held the server at a load of 11. PHP's time limit counts
+only PHP's own CPU time, not time spent waiting on Postgres, so nothing stopped them.
+
+Every web request's connection now gets `SET statement_timeout` (20 s, from
+`giftcoves.search.web_statement_timeout_ms`, env `DB_WEB_STATEMENT_TIMEOUT_MS`, 0 turns it off),
+in the same round trip as the trigram threshold (AppServiceProvider::trigramThreshold()). A search
+statement takes well under 2 s, so ten times that is a stuck one; the visitor gets an error page
+instead of a page that never comes. The console is not limited: queue jobs, the scheduler,
+migrations and commands such as bc:find-matches may legitimately run for minutes.
+Test: WebStatementTimeoutTest.
