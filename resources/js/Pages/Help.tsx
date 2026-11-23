@@ -117,6 +117,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'guides', text: t('help.find_browse') },
                         { icon: 'guides', text: t('help.find_daily_archive') },
                         { icon: 'wishlist', text: t('help.find_product') },
+                        { icon: 'wishlist', text: t('help.find_amazon') },
                         { icon: 'whisperer', text: t('help.find_crowd') },
                         { icon: 'thumbsUp', text: t('help.find_thumbs') },
                     ]}

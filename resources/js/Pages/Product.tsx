@@ -70,6 +70,8 @@ interface Props {
      * has no EAN, or the market has no Associates tag — see AmazonSearchLink.
      */
     amazonSearch: AmazonSearch | null
+    /** The same product on Amazon by its matched ASIN, shown among the offers without a price. */
+    amazonLink?: string | null
     /**
      * The shop's own description, in paragraphs, plus whose it is. Null when no
      * offer on this group carries one worth a section — see ProductDescription.
@@ -115,7 +117,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, giftTags, alert, amazonSearch, description, signals }: Props) {
+export default function Product({ product, offers, giftTags, alert, amazonSearch, amazonLink, description, signals }: Props) {
     const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     // Which picture's resized address failed, not a flag: Inertia keeps this
@@ -443,7 +445,7 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
             <section id="offers" className="mt-12 scroll-mt-8">
                 <h2 className="mb-4 text-xl font-semibold">{t('product.all_offers')}</h2>
 
-                {offers.length === 0 ? (
+                {offers.length === 0 && !amazonLink ? (
                     <p className="rounded-card border border-line bg-card p-6 text-ink-soft">
                         {t('product.unavailable')}
                     </p>
@@ -507,6 +509,30 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                                 </a>
                             </li>
                         ))}
+
+                        {/*
+                          Amazon (owner, 2026-11-23): the same product by its
+                          matched ASIN, last and without a price. Amazon's price
+                          may not be shown or kept without its own API, so the
+                          row says where, not how much (AmazonMatches).
+                        */}
+                        {amazonLink && (
+                            <li className="flex flex-wrap items-center gap-4 p-4">
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-medium">Amazon</div>
+                                    <div className="truncate text-xs text-ink-soft">{t('product.amazon_no_price')}</div>
+                                </div>
+
+                                <a
+                                    href={amazonLink}
+                                    rel="sponsored noopener nofollow"
+                                    target="_blank"
+                                    className={buttonClasses('secondary', 'md')}
+                                >
+                                    {t('product.check_on_amazon')}
+                                </a>
+                            </li>
+                        )}
                     </ul>
                 )}
 

@@ -1769,6 +1769,23 @@ return [
     |--------------------------------------------------------------------------
     */
     'connectors' => [
+        /*
+         * ASIN Data API (Traject Data), for one thing only: which ASIN a barcode is on
+         * amazon.com.be and amazon.nl, so a product can link to the same product on
+         * Amazon without a price (docs/features/amazon-links.md, owner 2026-11-23).
+         * One credit per barcode asked. Asked in a queued job, never in a request,
+         * only for products a person (not a crawler) saw, and at most
+         * `lookups_per_day` a day across both storefronts. "Not on Amazon" is asked
+         * again after `recheck_days`, a found ASIN after the same.
+         */
+        'asindata' => [
+            'key' => env('ASINDATA_API_KEY'),
+            'lookups_per_day' => (int) env('ASINDATA_LOOKUPS_PER_DAY', 1000),
+            'recheck_days' => (int) env('ASINDATA_RECHECK_DAYS', 60),
+            // Seconds. A lookup the API has not cached can take a while on its side.
+            'timeout' => 30,
+        ],
+
         'awin' => [
             'enabled' => true,
             'chunk_size' => 1000,

@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchAlert;
 use App\Models\SearchLog;
+use App\Services\Amazon\AmazonMatches;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
@@ -1096,7 +1097,16 @@ class SearchController extends Controller
         $groups = collect($groups)->values();
         CheapestOffer::attach($groups);
 
-        return $groups->map(fn (ProductGroup $group) => $this->card($group))->all();
+        // "Bekijk op Amazon" on the cards whose barcode is matched, one query for
+        // the page; the page's unmatched barcodes are queued (AmazonMatches).
+        $market = app(CurrentMarket::class)->get();
+        $matches = app(AmazonMatches::class);
+        $matches->queueMissing($market, $groups, request()->userAgent());
+        $amazon = $matches->links($market, $groups);
+
+        return $groups->map(fn (ProductGroup $group) => $this->card($group) + [
+            'amazon' => $group->identity_kind?->value === 'ean' ? ($amazon[$group->identity_key] ?? null) : null,
+        ])->all();
     }
 
     /**

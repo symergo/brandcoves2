@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Services\Alerts\AlertEligibility;
+use App\Services\Amazon\AmazonMatches;
 use App\Services\Catalogue\ProductDescription;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Catalogue\ProductTitle;
@@ -165,7 +166,24 @@ class ProductController extends Controller
             'amazonSearch' => $productGroup->identity_kind?->value === 'ean'
                 ? AmazonSearchLink::for($current->get(), $productGroup->identity_key)?->toArray()
                 : null,
+
+            /*
+             * "Bekijk op Amazon" (2026-11-23): the same product on Amazon, by its
+             * matched ASIN, shown among the offers without a price. Null until the
+             * barcode has been matched; a person's visit queues that, in the
+             * background (docs/features/amazon-links.md).
+             */
+            'amazonLink' => $this->amazonLink($productGroup, $current),
         ]);
+    }
+
+    /** The Amazon link for this product, queuing its match when it has none yet. */
+    private function amazonLink(ProductGroup $group, CurrentMarket $current): ?string
+    {
+        $matches = app(AmazonMatches::class);
+        $matches->queueMissing($current->get(), [$group], request()->userAgent());
+
+        return $matches->links($current->get(), [$group])[$group->identity_key] ?? null;
     }
 
     /**

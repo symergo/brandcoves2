@@ -36,6 +36,8 @@ export interface GroupCard {
      * Null or absent: the card opens the product page, as before.
      */
     buy?: { url: string; shop: string; domain: string | null; beacon: string; offerId: number } | null
+    /** The same product on Amazon, by its matched ASIN, without a price (AmazonMatches). */
+    amazon?: string | null
 }
 
 /** A direct link skips our redirector, so the browser reports the click. */
@@ -236,6 +238,24 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                         : t('product.view_product')}
                     <span aria-hidden>→</span>
                 </Link>
+            )}
+
+            {/*
+              The same product on Amazon (owner, 2026-11-23): a link only, never a
+              price, because Amazon's price may not be shown or kept without its
+              own API. Same row as the one above, so the card does not grow a
+              second style of button.
+            */}
+            {group.amazon && (
+                <a
+                    href={group.amazon}
+                    target="_blank"
+                    rel="sponsored noopener nofollow"
+                    className="relative z-20 flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-sm text-ink-soft transition hover:bg-cream hover:text-ink"
+                >
+                    {t('product.check_on_amazon')}
+                    <span aria-hidden>↗</span>
+                </a>
             )}
         </article>
     )

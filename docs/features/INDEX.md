@@ -18,6 +18,7 @@ is true now.
 | [navigation.md](navigation.md) | Core / Frontend | Active — header is Find a gift, Discover ▾, My Coves and one country-and-language button (2026-09-26) |
 | [homepage.md](homepage.md) | Core / Frontend | Active |
 | [amazon-compliance.md](amazon-compliance.md) | Core / Compliance | Active — rules enforced in `Source`; read before touching Amazon data |
+| [amazon-links.md](amazon-links.md) | Commerce / Compliance | Active since 2026-11-23: "Bekijk op Amazon" on product pages and search cards (be-nl, be-fr, nl-nl), a barcode matched to its ASIN through ASIN Data API in the background; no price, ASIN only, capped per day |
 | [ingestion.md](ingestion.md) | Catalogue | Active |
 | [page-import.md](page-import.md) | Ingestion / Editorial | Active — Chrome extension in `extension/` |
 | [popularity-charts.md](popularity-charts.md) | Catalogue / Discovery | Active — bol; Amazon on the same seam |

@@ -125,6 +125,7 @@ email attached, so it collides with both.
 | **Barcode scanner** | ✅ live lookup | ✅ | A live lookup by EAN is exactly the permitted pattern |
 | **A pasted link on a list** | ⚠️ ASIN lookup only | ✅ | `LinkRouter`: an Amazon link is never fetched, not even a short link. The ASIN is looked up in `amazon_products`; a mapped group becomes the item, otherwise the item stays as typed and nothing from Amazon is stored. See [pasted-links.md](pasted-links.md) |
 | **Outbound links** | ✅ direct anchor | ✅ via redirector | `requiresDirectLink()` — see below |
+| **"Bekijk op Amazon"** (2026-11-23) | ✅ ASIN only, no price | n/a | `amazon_matches` holds storefront, barcode, ASIN, date; a direct tagged `/dp/ASIN` link on product pages and search cards. See [amazon-links.md](amazon-links.md) |
 | **Price "as of" disclaimer** | ✅ shown | n/a | `requiresPriceTimestamp()` |
 | **Search-result caching** | ⚠️ 15 min | ✅ | `maxPriceAgeSeconds()` — well inside the 24-hour limit |
 
