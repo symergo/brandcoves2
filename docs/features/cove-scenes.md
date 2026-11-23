@@ -27,6 +27,12 @@ date_added: 2026-09-05
 > Rendered at card size and at 64px before shipping, per the process below; the pumpkin's ribs
 > were moved off its face.
 
+> **2026-11-23:** `fast_delivery` (a parcel with speed lines and a lightning badge) and
+> `black_friday` (a dark shopping bag with a red sale tag) for the Amazon Prime and Black Friday
+> on Amazon articles, which showed the `article` sheet. Neither draws Amazon's own marks: the
+> Prime logo is a trademark, and the article body shows the real one as a picture.
+> `2026_11_23_000100_two_drawings_for_the_amazon_articles` widens the CHECK and froze the 68.
+
 # Cove scenes
 
 **A Cove names a drawing, and the drawing is drawn rather than photographed.**

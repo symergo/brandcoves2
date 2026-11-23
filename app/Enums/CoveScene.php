@@ -293,6 +293,18 @@ enum CoveScene: string
     case Payment = 'payment';
     case TrustMark = 'trust_mark';
 
+    /*
+    | Added 2026-11-23 for the Amazon Prime and Black Friday articles, which
+    | showed the generic `article` sheet. Neither draws Amazon's own marks: the
+    | Prime logo is a trademark, and the article shows the real one as a picture.
+    */
+
+    /** A parcel with speed lines and a lightning badge. Fast delivery for members. */
+    case FastDelivery = 'fast_delivery';
+
+    /** A dark shopping bag and a sale tag with a percent sign. Black Friday. */
+    case BlackFriday = 'black_friday';
+
     /**
      * Pages of an article, and nothing saying which one.
      *
@@ -375,6 +387,8 @@ enum CoveScene: string
             self::LateDelivery => 'Late delivery',
             self::Payment => 'Paying safely',
             self::TrustMark => 'Trust marks',
+            self::FastDelivery => 'Fast delivery and memberships',
+            self::BlackFriday => 'Black Friday and sales',
             self::Article => 'No particular subject',
         };
     }
@@ -445,6 +459,7 @@ enum CoveScene: string
                 self::Sinterklaas, self::GiftCard, self::Halloween, self::Costume,
                 self::ChristmasMarket, self::WishList, self::Repair, self::PrivateSale,
                 self::Subscription, self::LateDelivery, self::Payment, self::TrustMark,
+                self::FastDelivery, self::BlackFriday,
                 self::Article,
             ],
             CoveKind::Daily, CoveKind::Shop, CoveKind::Brand => [],

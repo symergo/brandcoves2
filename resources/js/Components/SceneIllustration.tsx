@@ -78,6 +78,9 @@ export type SceneKey =
     | 'late_delivery'
     | 'payment'
     | 'trust_mark'
+    // Added 2026-11-23: the Amazon Prime and Black Friday articles.
+    | 'fast_delivery'
+    | 'black_friday'
     | 'article'
 
 /**
@@ -1341,6 +1344,43 @@ const scenes: Record<SceneKey, ReactNode> = {
             <circle cx="80" cy="54" r="32" className="fill-ill-gold" />
             <circle cx="80" cy="54" r="24" className="fill-ill-cream" strokeDasharray="3 4" />
             <path d="M70 54l7 7 14-14" className="stroke-ill-green" strokeWidth={3} />
+        </>
+    ),
+
+    /*
+     * A parcel with speed lines and a lightning badge. Delivery that comes
+     * fast because you pay for a membership: the Amazon Prime articles. Not the
+     * Prime logo or Amazon's smile, which are trademarks.
+     */
+    fast_delivery: (
+        <>
+            {/* Speed lines, behind the parcel. */}
+            <path d="M12 58h24M6 72h30M16 86h20" strokeWidth={2.5} />
+            {/* The parcel. */}
+            <path d="M44 48h66v54H44z" className="fill-ill-kraft" />
+            <path d="M44 48l10-14h46l10 14" />
+            <path d="M72 34h10v68H72z" className="fill-ill-gold" />
+            {/* The badge. */}
+            <circle cx="124" cy="38" r="18" className="fill-ill-sky" />
+            <path d="M127 25l-10 15h8l-3 12 11-17h-8z" className="fill-ill-gold" />
+        </>
+    ),
+
+    /* A dark shopping bag and a sale tag with a percent sign. Black Friday. */
+    black_friday: (
+        <>
+            {/* The bag, with its handles. */}
+            <path d="M48 46v-8a13 13 0 0 1 26 0v8" />
+            <path d="M28 46h66l-5 60H33z" className="fill-ill-ink" />
+            {/* The tag, hanging off the bag. */}
+            <path d="M94 54l12 8" />
+            <g transform="rotate(16 120 76)">
+                <path d="M100 58h30l12 18-12 18h-30z" className="fill-ill-red" />
+                <circle cx="132" cy="76" r="3" className="fill-ill-cream" />
+                <path d="M106 86l16-20" className="stroke-ill-cream" strokeWidth={3} />
+                <circle cx="108" cy="68" r="3.5" className="stroke-ill-cream" />
+                <circle cx="120" cy="84" r="3.5" className="stroke-ill-cream" />
+            </g>
         </>
     ),
 
