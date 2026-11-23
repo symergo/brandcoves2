@@ -56,6 +56,9 @@ final class LimitHeavyCrawlers
         'gptbot' => 'GPTBot',
         'claudebot' => 'ClaudeBot',
         'meta-externalagent' => 'meta-externalagent',
+        // Meta's index for Meta AI search (2026-11-23): 573 search pages in 20 minutes, up to
+        // 17 s each. Link previews on Facebook and WhatsApp come from facebookexternalhit instead.
+        'meta-webindexer' => 'meta-webindexer',
         'reflectionbot' => 'Reflectionbot',
         'kakaobot' => 'KakaoBot',
     ];

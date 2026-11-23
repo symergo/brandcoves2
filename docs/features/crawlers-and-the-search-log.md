@@ -124,6 +124,10 @@ anywhere else and get no Crawl-delay: product, brand, guide and gift pages are w
 can cite, and a search page is only a list of those. Google and Bing are on neither list. To add one:
 a line in `LimitHeavyCrawlers::SEARCH_ONLY`.
 
+`meta-webindexer` joined them on 2026-11-23 (owner): Meta's index for Meta AI search made 573 search
+requests in 20 minutes, the slowest at 17 s, once meta-externalagent was refused. Facebook and
+WhatsApp link previews come from `facebookexternalhit`, which is on neither list.
+
 ## Search and shop clicks from outside Europe are challenged (owner, 2026-11-23)
 
 From 06:00 UTC on 2026-11-23 a scraper posing as Windows Chrome followed the site's own links:
