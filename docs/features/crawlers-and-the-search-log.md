@@ -123,3 +123,23 @@ and have a robots.txt group saying so, but unlike the four above they are **not*
 anywhere else and get no Crawl-delay: product, brand, guide and gift pages are what an AI assistant
 can cite, and a search page is only a list of those. Google and Bing are on neither list. To add one:
 a line in `LimitHeavyCrawlers::SEARCH_ONLY`.
+
+## Search and shop clicks from outside Europe are challenged (owner, 2026-11-23)
+
+From 06:00 UTC on 2026-11-23 a scraper posing as Windows Chrome followed the site's own links:
+search, product page, `/go`. 3,427 requests in 40 minutes from 3,084 IPs (residential proxies:
+Bangladesh, the US, Singapore, Pakistan...), about 27 times the usual rate. Its short, unfamiliar
+terms each started a live search (3 to 24 s a page, 453 over 3 s), and its `/go` clicks reach the
+affiliate networks as clicks nobody made. A user-agent rule cannot see it and a per-IP rate limit
+cannot either, since most IPs send one request.
+
+The tell that looked best, a Referer from this site with no cookie, is useless here: an anonymous
+visitor gets no cookie at all on purpose (CacheAnonymousPage), so that rule would refuse every real
+first visit. Location is what is left: 86% of its search and `/go` requests came from outside Europe.
+
+So a Cloudflare custom rule on the giftcoves.com zone (the fourth, after the data-centre challenge)
+gives a **Managed Challenge** to requests outside Europe (`ip.src.continent ne "EU"`) whose path
+contains `/go/`, `/zoek`, `/recherche`, `/search` or `/buscar`, except verified bots
+(`cf.client.bot`, so Google and Bing pass). Product, guide and gift pages stay open everywhere. A
+person outside Europe usually passes it without seeing anything, at worst after a second or two.
+It lives in Cloudflare only, not in this repo: Security > WAF > Custom rules.
