@@ -171,9 +171,15 @@ export default function LaneScroller({ children }: { children: ReactNode }) {
                     </button>
                 </div>
             )}
+            {/*
+              No scroll anchoring (2026-11-23): Amazon's column arrives a moment
+              after the page and goes first, and with anchoring on the browser
+              kept the shop already in view where it was, which pushed Amazon's
+              column half off the left edge on arrival.
+            */}
             <div
                 ref={row}
-                className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3 [overflow-anchor:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
                 {children}
             </div>
