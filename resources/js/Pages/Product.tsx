@@ -451,6 +451,45 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                     </p>
                 ) : (
                     <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                        {/*
+                          Amazon (owner, 2026-11-23): the same product by its
+                          matched ASIN, first among the offers ("put the amazon
+                          row on the product page first"), drawn like every other
+                          shop's row: Amazon's logo, the storefront as the shop's
+                          name (amazon.com.be), the title under it, and the very
+                          same button. Where the others show a price and stock it
+                          says those are on Amazon: Amazon's price may not be shown
+                          or kept without its own API (AmazonMatches).
+                        */}
+                        {amazonLink && (
+                            <li className="flex flex-wrap items-center gap-4 p-4">
+                                <img
+                                    src={amazonLink.icon}
+                                    alt=""
+                                    width={20}
+                                    height={20}
+                                    className="h-5 w-5 rounded bg-white"
+                                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                />
+
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-medium">{amazonLink.host}</div>
+                                    <div className="truncate text-xs text-ink-soft">{amazonLink.title}</div>
+                                </div>
+
+                                <div className="text-right text-xs text-ink-soft">{t('product.amazon_no_price')}</div>
+
+                                <a
+                                    href={amazonLink.url}
+                                    rel="sponsored noopener nofollow"
+                                    target="_blank"
+                                    className={buttonClasses('primary', 'md')}
+                                >
+                                    {t('product.go_to_shop')}
+                                </a>
+                            </li>
+                        )}
+
                         {offers.map((offer) => (
                             <li key={offer.id} className="flex flex-wrap items-center gap-4 p-4">
                                 {offer.merchantLogo && (
@@ -510,47 +549,6 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                             </li>
                         ))}
 
-                        {/*
-                          Amazon (owner, 2026-11-23): the same product by its
-                          matched ASIN, last and without a price. Amazon's price
-                          may not be shown or kept without its own API, so the
-                          row says where, not how much (AmazonMatches).
-                        */}
-                        {/*
-                          Drawn like every other shop's row (owner, 2026-11-23):
-                          logo, the storefront as the shop's name (amazon.com.be),
-                          the title under it, and the same button. Where the
-                          others show a price and stock, it says those are on
-                          Amazon.
-                        */}
-                        {amazonLink && (
-                            <li className="flex flex-wrap items-center gap-4 p-4">
-                                <img
-                                    src={amazonLink.icon}
-                                    alt=""
-                                    width={20}
-                                    height={20}
-                                    className="h-5 w-5 rounded bg-white"
-                                    onError={(e) => { e.currentTarget.style.display = 'none' }}
-                                />
-
-                                <div className="min-w-0 flex-1">
-                                    <div className="font-medium">{amazonLink.host}</div>
-                                    <div className="truncate text-xs text-ink-soft">{amazonLink.title}</div>
-                                </div>
-
-                                <div className="text-right text-xs text-ink-soft">{t('product.amazon_no_price')}</div>
-
-                                <a
-                                    href={amazonLink.url}
-                                    rel="sponsored noopener nofollow"
-                                    target="_blank"
-                                    className={buttonClasses('primary', 'md')}
-                                >
-                                    {t('product.check_on_amazon')}
-                                </a>
-                            </li>
-                        )}
                     </ul>
                 )}
 
