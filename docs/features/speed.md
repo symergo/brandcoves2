@@ -60,6 +60,18 @@ Things worth knowing about them:
 
 ### Queries rewritten
 
+**The word match no longer uses the market index (2026-11-23).** In `SearchService::wordMatch()`
+the offers' market and status are written as `market || ''` and `status || ''`, so the planner
+cannot answer them from `products_market_status_index`. It did: it built a bitmap of every active
+offer in the market (2.7 million in be-nl) to AND with the word index's few thousand hits. Same
+rows, measured on production: koptelefoon 1.4-1.6 s to 0.5 s, barbie 0.6-1.0 s to 0.06-0.1 s,
+airfryer 0.8-1.0 s to 0.1-0.25 s. The price: a word matching very many offers in every market
+(lego) reads all of them before keeping this market's, faster warm (1.75 s to 1.0 s) but 5.9 s
+the first time from disk; the results cache then holds it for days. A word index that includes
+the market would remove that, at the cost of building it over every offer. Found with
+`pg_stat_statements`: this query (`computeResultIds()`) was the largest consumer of database time,
+1.04 million calls averaging 1.8 s since 2026-10-25.
+
 **Alternates across markets (804 ms).** `Alternates::forProducts()` and the per-product lookup
 asked `WHERE identity_key IN (...)` with no condition on `market`. The only index on `identity_key`
 is the unique `(market, identity_key)`, and a btree cannot be entered on its second column alone, so

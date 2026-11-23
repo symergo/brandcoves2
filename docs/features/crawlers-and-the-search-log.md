@@ -128,6 +128,11 @@ a line in `LimitHeavyCrawlers::SEARCH_ONLY`.
 requests in 20 minutes, the slowest at 17 s, once meta-externalagent was refused. Facebook and
 WhatsApp link previews come from `facebookexternalhit`, which is on neither list.
 
+`Claude-SearchBot`, Anthropic's crawler for Claude's web search, joined them the same evening
+(owner): 348 of the 609 search requests in 20 minutes, 1.5 s each at the median, with long terms
+pasted together from product titles. The `claudebot` entry does not match its name. Kept off search
+pages only, so its answers can still cite the product, brand and guide pages.
+
 ## Search and shop clicks from outside Europe are challenged (owner, 2026-11-23)
 
 From 06:00 UTC on 2026-11-23 a scraper posing as Windows Chrome followed the site's own links:

@@ -567,10 +567,25 @@ class SearchService
         // is what makes the group correlation safe to drop: offers only ever
         // join a group in their own market (invariant 2), so this selects the
         // same rows the correlated form did.
+        //
+        // Market and status are written as expressions (`market || ''`) so the
+        // planner cannot answer them from `products_market_status_index`
+        // (2026-11-23). It did: it built a bitmap of every active offer in the
+        // market (2.7 million in be-nl) to AND with the word index's few
+        // thousand hits, and that bitmap was most of the query. Checked row by
+        // row on the word index's hits instead, the same rows come back,
+        // measured on production: "koptelefoon" 1.4-1.6 s -> 0.5 s, "barbie"
+        // 0.6-1.0 s -> 0.06-0.1 s, "airfryer" 0.8-1.0 s -> 0.1-0.25 s.
+        // The cost: a word matching very many offers in every market ("lego")
+        // now reads all of them before keeping this market's; warm it is still
+        // faster (1.75 s -> 1.0 s), cold the first time it was 5.9 s. A results
+        // cache entry then lasts for days, so that is rare. A word index that
+        // includes the market would remove it, at the price of building one
+        // over every offer.
         $byText = DB::table('products')
             ->select('group_id')
-            ->where('market', $market)
-            ->where('status', 'active')
+            ->whereRaw("(products.market::text || '') = ?", [$market])
+            ->whereRaw("(products.status::text || '') = 'active'")
             ->whereNotNull('group_id')
             ->whereRaw(
                 'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',

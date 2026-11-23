@@ -55,6 +55,9 @@ final class LimitHeavyCrawlers
     public const SEARCH_ONLY = [
         'gptbot' => 'GPTBot',
         'claudebot' => 'ClaudeBot',
+        // Anthropic's crawler for Claude's web search (2026-11-23): 348 of the 609 search
+        // requests in 20 minutes, 1.5 s each at the median. Not matched by "claudebot".
+        'claude-searchbot' => 'Claude-SearchBot',
         'meta-externalagent' => 'meta-externalagent',
         // Meta's index for Meta AI search (2026-11-23): 573 search pages in 20 minutes, up to
         // 17 s each. Link previews on Facebook and WhatsApp come from facebookexternalhit instead.
