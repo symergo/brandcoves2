@@ -151,6 +151,22 @@ class EbayItemDetailsTest extends TestCase
     }
 
     #[Test]
+    public function a_list_of_part_numbers_is_not_a_part_number(): void
+    {
+        // Real, production 2026-11-23: products.mpn is varchar(64) and these writes failed
+        $list = '740821-0001, 740821-0002, 740821-5001S, 740821-5002S, 750030-0001, 750030-0002';
+
+        $this->assertNull(EbayItemDetails::parse(['brand' => 'Dell', 'mpn' => $list])['mpn']);
+
+        // A row stored before the check still carries one: it must not reach the offer either
+        DB::table('ebay_item_details')->insert(['external_id' => 'v1|6|0', 'brand' => 'Dell', 'gtin' => null, 'mpn' => $list, 'fetched_at' => now()]);
+        [$applied] = app(EbayItemDetails::class)->apply([new Offer(Source::Ebay, 'v1|6|0', Market::Es, 'Dell charger', 'https://www.ebay.es/itm/6')]);
+
+        $this->assertSame('Dell', $applied->brand);
+        $this->assertNull($applied->mpn);
+    }
+
+    #[Test]
     public function a_search_queues_details_only_for_listings_without_brand_or_barcode(): void
     {
         Queue::fake();

@@ -86,7 +86,8 @@ final class EbayItemDetails
         return array_map(function (Offer $offer) use ($known): Offer {
             $row = $offer->source === Source::Ebay ? $known->get($offer->externalId) : null;
 
-            return $row === null ? $offer : $offer->withDetails($row->brand, $row->gtin, $row->mpn);
+            // Through partNumber() again: rows stored before 2026-11-23 kept up to 255 characters
+            return $row === null ? $offer : $offer->withDetails($row->brand, $row->gtin, self::partNumber($row->mpn));
         }, $offers);
     }
 
@@ -137,7 +138,7 @@ final class EbayItemDetails
         return [
             'brand' => $brand === null ? null : mb_substr($brand, 0, 255),
             'gtin' => $gtin,
-            'mpn' => $mpn === null ? null : mb_substr($mpn, 0, 255),
+            'mpn' => self::partNumber($mpn),
         ];
     }
 
@@ -149,6 +150,19 @@ final class EbayItemDetails
             ['external_id'],
             ['brand', 'gtin', 'mpn', 'fetched_at'],
         );
+    }
+
+    /**
+     * A part number, or nothing when the field holds more than one.
+     *
+     * `products.mpn` is varchar(64), and a longer value is never one part number: it is a
+     * seller listing every model a charger fits ("740821-0001, 740821-0002, ...") or a whole
+     * description. Cutting it to 64 would hand the match finder a made-up identifier, so it
+     * is dropped. These writes failed in production on 2026-11-23 until this check.
+     */
+    public static function partNumber(?string $mpn): ?string
+    {
+        return $mpn === null || mb_strlen($mpn) > 64 ? null : $mpn;
     }
 
     private static function clean(mixed $value): ?string

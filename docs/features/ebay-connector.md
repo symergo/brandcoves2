@@ -128,7 +128,10 @@ ungrouped. The owner asked whether eBay had another identifying field; the item 
   therefore fills every eBay result from `ebay_item_details` before it is stored
   (`Offer::withDetails()`, empty fields only).
 - **The part number** goes to `products.mpn`, where `bc:find-matches` already looks to propose
-  merging eBay's LEGO 40918 with another shop's.
+  merging eBay's LEGO 40918 with another shop's. Over 64 characters it is dropped, not cut
+  (`EbayItemDetails::partNumber()`): sellers fill the field with every model a charger fits,
+  which is no part number, and `products.mpn` is varchar(64). Those writes failed in production
+  until 2026-11-23, taking the offer's brand and identity down with them.
 - **Offers stored before** wait until searched again, or `bc:ebay-details --write` queues them,
   newest first, within today's cap; run it on later days for the rest.
 
