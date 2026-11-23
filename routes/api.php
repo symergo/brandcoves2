@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CovePlanController;
 use App\Http\Controllers\Api\CoveQueueController;
 use App\Http\Controllers\Api\CoveStageController;
 use App\Http\Controllers\Api\EditionController;
+use App\Http\Controllers\Api\EditorialImageController;
 use App\Http\Controllers\Api\EditorialIndexController;
 use App\Http\Controllers\Api\GuideEditorialController;
 use App\Http\Controllers\Api\InterestCandidatesController;
@@ -217,6 +218,9 @@ Route::prefix('editorial')
             Route::post('/coves/stages/{stage}', [CoveStageController::class, 'run']);
 
             Route::post('/guides', [GuideEditorialController::class, 'store']);
+
+            // A picture for an article, kept on our server (App\Services\Images\EditorialImages).
+            Route::post('/images', [EditorialImageController::class, 'store']);
 
             /*
              * Products into the catalogue, from a page in a browser.

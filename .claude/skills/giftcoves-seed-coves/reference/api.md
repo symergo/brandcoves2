@@ -71,6 +71,8 @@ time rather than as a silently skipped pick at build time.
     POST /coves                        create or upsert a plan
     POST /coves/{planId}/editorial     prose only; requires the plan's `revision`
     POST /guides                       a buying or advice guide (written straight to daily_pick_sets)
+    POST /images                       a picture for an article: `file` or `url`, and `alt`; answers our
+                                       address and the [[image:…]] line (docs/features/editorial-images.md)
 
 ## Publish
 

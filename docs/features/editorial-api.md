@@ -30,7 +30,7 @@ Three ability strings, not roles:
 | Ability | What it unlocks | Why separate |
 |---|---|---|
 | `editorial.read` | Product lookup, ripe topics, plans, guides, published editions | The grounding calls. Useful on their own, safe on their own. |
-| `editorial.write` | Create and rewrite drafts | **Nothing in this group can reach a reader.** |
+| `editorial.write` | Create and rewrite drafts; keep a picture for an article (`POST /images`, [editorial-images.md](editorial-images.md)) | **Nothing in this group can reach a reader.** A stored picture is shown only once an approved article names it. |
 | `editorial.publish` | Approve a plan, publish a guide, queue a build, write a product's display title or gift tags | The calls that put something in front of people. |
 
 A role called "editor" would collapse write and publish the first time anyone needed the safer

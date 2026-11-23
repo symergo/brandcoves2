@@ -20,10 +20,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class MediaController extends Controller
 {
-    public function __invoke(string $file): BinaryFileResponse
+    /**
+     * `items/`: photos on list items and pictures copied from a pasted page.
+     * `editorial/`: pictures for articles (App\Services\Images\EditorialImages).
+     * The route allows only those two folders.
+     */
+    public function __invoke(string $folder, string $file): BinaryFileResponse
     {
         $disk = Storage::disk(ImageStore::DISK);
-        $path = 'items/'.$file;
+        $path = $folder.'/'.$file;
 
         if (! $disk->exists($path)) {
             throw new NotFoundHttpException;
@@ -32,8 +37,9 @@ class MediaController extends Controller
         return response()->file($disk->path($path), [
             'Content-Type' => 'image/webp',
             'X-Content-Type-Options' => 'nosniff',
-            // The name is a random UUID and a file is never rewritten in place:
-            // a new photo gets a new name. Safe to keep for a year.
+            // The name is a random UUID or the picture's own hash, and a file is
+            // never rewritten in place: a new picture gets a new name. Safe to
+            // keep for a year.
             'Cache-Control' => 'public, max-age=31536000, immutable',
         ]);
     }

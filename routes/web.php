@@ -133,8 +133,10 @@ Route::post('/webhooks/ebay/account-deletion', [AccountDeletionController::class
  * Unprefixed, because a picture belongs to no market. The name is a random
  * UUID and the file is never rewritten, so it may be cached for a year.
  */
-Route::get('/media/items/{file}', MediaController::class)
-    ->where('file', '[0-9a-f-]{36}\.webp')
+Route::get('/media/{folder}/{file}', MediaController::class)
+    ->whereIn('folder', ['items', 'editorial'])
+    // items: a random UUID (36). editorial: the sha1 of the picture (40).
+    ->where('file', '[0-9a-f-]{36,40}\.webp')
     ->withoutMiddleware(StatelessRoutes::SKIPPED)
     ->name('media');
 

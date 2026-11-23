@@ -232,6 +232,11 @@ and a link to an official source, only on the domains in `giftcoves.editorial_so
 
     [[source:https://www.consuwijzer.nl/|ConsuWijzer]]
 
+**Put the picture on our server first** (since 2026-11-23): `POST /api/editorial/images` with a
+`file` or a `url`, plus `alt`, answers our own address and the `[[image:…]]` line to paste. A
+picture linked from another site disappears when they move it; ours does not. JPEG, PNG, WebP or
+GIF; never SVG, never Amazon (docs/features/editorial-images.md).
+
 **Authored articles only (since 2026-11-07, for the gift-card guides):** a photograph on a line
 of its own, and a link to the shop where something is sold. Both https, no credentials or port.
 The picture's description is its alt text and is required. A shop link may be any shop, Amazon
