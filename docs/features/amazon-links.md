@@ -85,10 +85,10 @@ Owner: "just do a search with the api on amazon when a search is made". `App\Ser
   named); the owner supplied it and a test search came back in Dutch. Because be-nl and be-fr
   share amazon.com.be, `amazon_searches` is keyed on storefront, language and term, and keeps
   the titles with the search, not only on the product.
-- **Order.** No `sort_by`: Amazon's own relevance order. The manual's values are most_recent,
-  price_low_to_high, price_high_to_low, featured, average_review (`ASINDATA_SEARCH_SORT`);
-  `bestseller_rankings` is not one of them. `direct_search` is left off, so Amazon still
-  corrects a typo in the term.
+- **Order.** `sort_by=bestseller_rankings` (owner's decision, 2026-11-23; `ASINDATA_SEARCH_SORT`).
+  The manual's listed values are most_recent, price_low_to_high, price_high_to_low, featured and
+  average_review; bestseller_rankings is not among them, so the API may treat it as Amazon's own
+  order. `direct_search` is left off, so Amazon still corrects a typo in the term.
 
 **Credits.** On 2026-11-23 the account showed `topup_credits_remaining: 89`. Every search and
 every barcode lookup costs one, so the daily caps should follow the plan bought, not the defaults.

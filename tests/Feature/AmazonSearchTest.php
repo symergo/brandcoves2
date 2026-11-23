@@ -82,9 +82,9 @@ class AmazonSearchTest extends TestCase
             json_decode((string) DB::table('amazon_searches')->where('language', 'nl_BE')->where('term', 'lego technic')->value('items'), true),
         );
 
-        // Asked in the market's language (be-nl: Dutch), in Amazon's own order, without ads.
+        // Asked in the market's language (be-nl: Dutch), best sellers first (owner), without ads.
         Http::assertSent(fn ($request) => str_contains($request->url(), 'language=nl_BE')
-            && ! str_contains($request->url(), 'sort_by=')
+            && str_contains($request->url(), 'sort_by=bestseller_rankings')
             && str_contains($request->url(), 'exclude_sponsored=true'));
 
         // The same term again is answered from the database, even after the cache is

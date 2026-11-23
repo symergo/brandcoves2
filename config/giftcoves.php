@@ -1786,12 +1786,12 @@ return [
             // (AmazonSearch): new terms asked per day, and how long a term's answer is kept.
             'searches_per_day' => (int) env('ASINDATA_SEARCHES_PER_DAY', 100),
             'search_cache_days' => (int) env('ASINDATA_SEARCH_CACHE_DAYS', 7),
-            // Amazon's order of results. Empty: Amazon's own relevance order, the right
-            // one for a search. The manual's valid values are most_recent,
+            // Amazon's order of results: `bestseller_rankings` (owner's decision,
+            // 2026-11-23). The manual's listed values are most_recent,
             // price_low_to_high, price_high_to_low, featured, average_review;
-            // `bestseller_rankings` is not one of them and is ignored (checked
-            // 2026-11-23 against docs.trajectdata.com/asindataapi/…/parameters/search).
-            'search_sort' => (string) env('ASINDATA_SEARCH_SORT', ''),
+            // bestseller_rankings is not among them, so the API may treat it as
+            // Amazon's own order. Empty also gives Amazon's own relevance order.
+            'search_sort' => (string) env('ASINDATA_SEARCH_SORT', 'bestseller_rankings'),
             // Seconds. A lookup the API has not cached can take a while on its side.
             'timeout' => 30,
         ],
