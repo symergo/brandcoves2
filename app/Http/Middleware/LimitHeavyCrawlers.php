@@ -66,15 +66,6 @@ final class LimitHeavyCrawlers
         'kakaobot' => 'KakaoBot',
     ];
 
-    /**
-     * Of CRAWLERS, the ones also refused product pages (owner, 2026-11-23: "stop all
-     * bots from amazon from searching or opening product pages"). A product page is
-     * a price comparison; Amazon's crawlers have no business reading it. They keep
-     * the rest of the site at CRAWLERS' pace, and robots.txt gives them a group of
-     * their own that says the same.
-     */
-    public const NO_PRODUCT_PAGES = ['amazonbot', 'amzn-searchbot'];
-
     public const PER_MINUTE = 10;
 
     public function handle(Request $request, Closure $next): Response
@@ -93,7 +84,13 @@ final class LimitHeavyCrawlers
             return response('Search pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
         }
 
-        if (in_array($crawler, self::NO_PRODUCT_PAGES, true) && preg_match('#^[a-z-]+/p/#', $request->path()) === 1) {
+        /*
+         * Product pages too (owner, 2026-11-23: "stop all bots from amazon from
+         * searching or opening product pages", then "also block semrush and exa").
+         * A product page is a price comparison; none of these four has business
+         * reading it.
+         */
+        if (preg_match('#^[a-z-]+/p/#', $request->path()) === 1) {
             return response('Product pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
         }
 

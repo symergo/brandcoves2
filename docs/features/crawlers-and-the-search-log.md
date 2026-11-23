@@ -154,10 +154,11 @@ person outside Europe usually passes it without seeing anything, at worst after 
 It lives in Cloudflare only, not in this repo: Security > WAF > Custom rules.
 
 
-## Amazon's crawlers off product pages too (owner, 2026-11-23)
+## The heavy crawlers off product pages too (owner, 2026-11-23)
 
-"Stop all bots from amazon from searching or opening product pages." Amazonbot and Amzn-SearchBot
-keep CRAWLERS' rules (no search pages, ten other pages a minute) and are also refused product
-pages (`/{market}/p/…`, 403): `LimitHeavyCrawlers::NO_PRODUCT_PAGES`. robots.txt gives the two a
-group of their own with `Disallow: /*/p/`. In the 24 hours before, only Amazonbot was seen (75
-requests). SemrushBot and ExaSearchBot are unchanged.
+"Stop all bots from amazon from searching or opening product pages", then "also block semrush and
+exa". All four of `LimitHeavyCrawlers::CRAWLERS` (Amazonbot, Amzn-SearchBot, SemrushBot,
+ExaSearchBot) keep their rules (no search pages, ten other pages a minute) and are also refused
+product pages (`/{market}/p/…`, 403). Their robots.txt group says `Disallow: /*/p/`. In the 24
+hours before, only Amazonbot of the two Amazon crawlers was seen (75 requests). Search engines and
+the AI crawlers are not affected.
