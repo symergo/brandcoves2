@@ -71,7 +71,7 @@ interface Props {
      */
     amazonSearch: AmazonSearch | null
     /** The same product on Amazon by its matched ASIN, shown among the offers without a price. */
-    amazonLink?: string | null
+    amazonLink?: { url: string; host: string; icon: string; title: string } | null
     /**
      * The shop's own description, in paragraphs, plus whose it is. Null when no
      * offer on this group carries one worth a section — see ProductDescription.
@@ -516,18 +516,36 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                           may not be shown or kept without its own API, so the
                           row says where, not how much (AmazonMatches).
                         */}
+                        {/*
+                          Drawn like every other shop's row (owner, 2026-11-23):
+                          logo, the storefront as the shop's name (amazon.com.be),
+                          the title under it, and the same button. Where the
+                          others show a price and stock, it says those are on
+                          Amazon.
+                        */}
                         {amazonLink && (
                             <li className="flex flex-wrap items-center gap-4 p-4">
+                                <img
+                                    src={amazonLink.icon}
+                                    alt=""
+                                    width={20}
+                                    height={20}
+                                    className="h-5 w-5 rounded bg-white"
+                                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                />
+
                                 <div className="min-w-0 flex-1">
-                                    <div className="font-medium">Amazon</div>
-                                    <div className="truncate text-xs text-ink-soft">{t('product.amazon_no_price')}</div>
+                                    <div className="font-medium">{amazonLink.host}</div>
+                                    <div className="truncate text-xs text-ink-soft">{amazonLink.title}</div>
                                 </div>
 
+                                <div className="text-right text-xs text-ink-soft">{t('product.amazon_no_price')}</div>
+
                                 <a
-                                    href={amazonLink}
+                                    href={amazonLink.url}
                                     rel="sponsored noopener nofollow"
                                     target="_blank"
-                                    className={buttonClasses('secondary', 'md')}
+                                    className={buttonClasses('primary', 'md')}
                                 >
                                     {t('product.check_on_amazon')}
                                 </a>

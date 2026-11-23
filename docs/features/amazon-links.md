@@ -7,8 +7,10 @@ amazon' link", and "add it to search as well, but without price". Code:
 
 ## What a visitor sees
 
-- **Product page:** a last row among the offers, "Amazon · Prijs en voorraad op Amazon", with a
-  "Bekijk op Amazon" button. No price, no stock.
+- **Product page:** a last row among the offers, drawn like every other shop's (owner, 2026-11-23):
+  Amazon's favicon, the storefront as the shop's name (amazon.com.be), the title under it (Amazon's
+  when a search saved one, else ours), "Prijs en voorraad op Amazon" where the others show a price,
+  and the same primary button, "Bekijk op Amazon". No price, no stock.
 - **Search result card:** a row under "Alle aanbiedingen": "Bekijk op Amazon ↗", for a product
   already matched.
 - **Search page, "Ook op Amazon":** Amazon's own products for the term, up to eight, under ours

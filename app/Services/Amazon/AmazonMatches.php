@@ -70,6 +70,37 @@ class AmazonMatches
     }
 
     /**
+     * The product page's Amazon row, drawn like every other shop's (owner,
+     * 2026-11-23): the storefront as the shop's name (amazon.com.be), Amazon's own
+     * favicon as its logo, a title under it and the tagged link. Amazon's title when
+     * a search saved one for this ASIN, else ours. Null without a match.
+     *
+     * @return array{url: string, host: string, icon: string, title: string}|null
+     */
+    public function offer(Market $market, ProductGroup $group): ?array
+    {
+        $url = $this->links($market, [$group])[$group->identity_key] ?? null;
+        $storefront = $this->storefront($market);
+
+        if ($url === null || $storefront === null) {
+            return null;
+        }
+
+        $asin = (string) DB::table('amazon_matches')->where('storefront', $storefront)->where('gtin', $group->identity_key)->value('asin');
+        $title = trim((string) DB::table('amazon_products')->where('asin', $asin)->value('classified_title'));
+
+        return [
+            'url' => $url,
+            'host' => $storefront,
+            // Amazon's own favicon from Amazon's site, as the Amazon banner on search
+            // uses (AmazonSearchLink::iconUrl()): the trademark rules allow Amazon's
+            // marks only in the forms Amazon supplies.
+            'icon' => 'https://www.'.$storefront.'/favicon.ico',
+            'title' => $title !== '' ? $title : $group->displayTitle(),
+        ];
+    }
+
+    /**
      * Queue a lookup for the barcodes among these that were never asked, or asked
      * longer than `recheck_days` ago. Nothing for a crawler: a credit is spent on a
      * product a person looked at. Nothing without an API key.

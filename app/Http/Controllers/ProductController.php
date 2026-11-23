@@ -177,13 +177,17 @@ class ProductController extends Controller
         ]);
     }
 
-    /** The Amazon link for this product, queuing its match when it has none yet. */
-    private function amazonLink(ProductGroup $group, CurrentMarket $current): ?string
+    /**
+     * The Amazon row for this product, queuing its match when it has none yet.
+     *
+     * @return array{url: string, host: string, icon: string, title: string}|null
+     */
+    private function amazonLink(ProductGroup $group, CurrentMarket $current): ?array
     {
         $matches = app(AmazonMatches::class);
         $matches->queueMissing($current->get(), [$group], request()->userAgent());
 
-        return $matches->links($current->get(), [$group])[$group->identity_key] ?? null;
+        return $matches->offer($current->get(), $group);
     }
 
     /**

@@ -108,7 +108,12 @@ class AmazonMatchesTest extends TestCase
 
         $this->withHeader('User-Agent', self::PERSON)->get("/be-nl/p/{$group->id}/{$group->slug}")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('amazonLink', 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21'));
+            // Drawn like the other shops: the storefront as its name, Amazon's icon, a title.
+            ->assertInertia(fn ($page) => $page
+                ->where('amazonLink.url', 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21')
+                ->where('amazonLink.host', 'amazon.com.be')
+                ->where('amazonLink.icon', 'https://www.amazon.com.be/favicon.ico')
+                ->where('amazonLink.title', 'Technic racewagen'));
 
         $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=racewagen')
             ->assertOk()
