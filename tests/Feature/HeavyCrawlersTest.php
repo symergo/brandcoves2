@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Market;
 use App\Http\Middleware\LimitHeavyCrawlers;
+use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -105,14 +107,34 @@ class HeavyCrawlersTest extends TestCase
     }
 
     #[Test]
+    public function amazons_crawlers_are_refused_product_pages_and_others_are_not(): void
+    {
+        $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
+        $amzn = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-SearchBot/0.1) Chrome/119.0.6045.214 Safari/537.36';
+        $page = "/be-nl/p/{$group->id}/{$group->slug}";
+
+        $this->withHeader('User-Agent', self::AMAZON)->get($page)->assertStatus(403);
+        $this->withHeader('User-Agent', $amzn)->get($page)->assertStatus(403);
+        $this->withHeader('User-Agent', self::SEMRUSH)->get($page)->assertOk();
+        $this->withHeader('User-Agent', self::GOOGLE)->get($page)->assertOk();
+    }
+
+    #[Test]
     public function robots_tells_them_the_same(): void
     {
         config(['giftcoves.robots_allow' => true]);
 
         $robots = $this->get('/robots.txt')->assertOk()->getContent();
-        [$everybody, $three] = explode("\n\n", $robots);
+        [$everybody, $three, $amazon] = explode("\n\n", $robots);
 
-        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nCrawl-delay: 10\n", $three);
+        $this->assertStringContainsString("User-agent: SemrushBot\nUser-agent: ExaSearchBot\nCrawl-delay: 10\n", $three);
+        $this->assertStringNotContainsString('Disallow: /*/p/', $three);
+
+        // Amazon's two: a group of their own, product pages refused too (owner, 2026-11-23)
+        $this->assertStringStartsWith("User-agent: Amazonbot\nUser-agent: Amzn-SearchBot\nCrawl-delay: 10\n", $amazon);
+        $this->assertStringContainsString('Disallow: /*/p/', $amazon);
+        $this->assertStringContainsString('Disallow: /*/zoek/', $amazon);
+        $this->assertStringContainsString('Disallow: /*/go/', $amazon);
         $this->assertStringContainsString('Disallow: /*/zoek/', $three);
         $this->assertStringContainsString('Disallow: /*/recherche/', $three);
         $this->assertStringContainsString('Disallow: /*/search', $three);
