@@ -705,15 +705,15 @@ class CoveMarkup
     /**
      * A shop's page for `[[shop:…]]`: any https address that passes
      * `external()`, Amazon's included (owner, 2026-11-07). An Amazon address on
-     * this market's storefront is given our Associates tag when it has none
-     * (`tagAmazon()`), since an untagged Amazon link earns nothing and looks
-     * exactly like one that does.
+     * a storefront we hold a tag for is given that tag when it has none
+     * (`tagAmazon()`), whatever the page's market, since an untagged Amazon
+     * link earns nothing and looks exactly like one that does.
      */
     public static function shop(string $value, ?Market $market = null): ?string
     {
         $url = self::external($value);
 
-        if ($url === null || $market === null || ! self::isAmazon($url)) {
+        if ($url === null || ! self::isAmazon($url)) {
             return $url;
         }
 
@@ -727,14 +727,32 @@ class CoveMarkup
         return preg_match('/(^|\.)amazon\.[a-z.]+$/', $host) === 1;
     }
 
-    /** Add this market's Associates tag to an Amazon address on its own storefront that has none. */
-    private static function tagAmazon(string $url, Market $market): string
+    /**
+     * Add the Associates tag of the storefront an Amazon address points at, when it has none.
+     *
+     * By the address's storefront, not by the page's market (owner, 2026-11-23: "links to
+     * Belgium or Dutch prime pages should always have affiliate tags"). A tag is issued per
+     * storefront, so an amazon.nl link on a Belgian page earns under the amazon.nl tag and an
+     * amazon.com.be link on an English page under the amazon.com.be tag. Until then only the
+     * page market's own storefront was tagged, and those links left untagged. A storefront we
+     * hold no tag for (amazon.de, amazon.fr…) stays untagged: there is no right tag to add,
+     * and another storefront's tag would earn nothing there.
+     */
+    private static function tagAmazon(string $url, ?Market $market = null): string
     {
-        $config = (array) config("giftcoves.amazon_search.markets.{$market->value}", []);
-        $host = mb_strtolower(trim((string) ($config['host'] ?? '')));
-        $tag = trim((string) ($config['tag'] ?? ''));
+        $linked = preg_replace('/^www\./', '', mb_strtolower((string) parse_url($url, PHP_URL_HOST)));
+        $tag = '';
 
-        if ($tag === '' || mb_strtolower((string) parse_url($url, PHP_URL_HOST)) !== $host) {
+        foreach ((array) config('giftcoves.amazon_search.markets', []) as $config) {
+            $host = preg_replace('/^www\./', '', mb_strtolower(trim((string) ($config['host'] ?? ''))));
+
+            if ($host !== '' && $host === $linked && trim((string) ($config['tag'] ?? '')) !== '') {
+                $tag = trim((string) $config['tag']);
+                break;
+            }
+        }
+
+        if ($tag === '') {
             return $url;
         }
 

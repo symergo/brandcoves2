@@ -13,7 +13,7 @@ address for a registered shop, and the address unchanged for anything else.
 |---|---|
 | bol | `partner.bol.com/click/click`, site id by the country in the link's path (`/be/` or `/nl/`), the form `BolConnector` builds for the feed. By the link, not the page: a Belgian article may link bol.com/nl, and that sale belongs to the NL site. |
 | Awin advertisers (`merchants` with `source = awin`: Coolblue BE and NL, Dreamland, Fnac, Krefel, Vanden Borre) | `awin1.com/cread.php?awinmid=…&awinaffid=…&ued=…`. Advertiser id from `merchants.external_id`; publisher id from the Awin account of the feed with the same name (`feeds.label` = `merchants.name`), so Vanden Borre uses its own account. A shop is matched on its domain without a leading `www`/language label, so `nl.fnac.be` covers `fr.fnac.be`. Cached for an hour. |
-| Amazon | Its Associates tag in the address, added where the link is written (`CoveMarkup::shop()`), as before. |
+| Amazon | Its Associates tag in the address, added where the link is written (`CoveMarkup::shop()`). Since 2026-11-23 the tag follows the storefront linked to, not the page's market (owner: links to the Belgian or Dutch Prime pages always earn): an amazon.nl link on a Belgian or English page gets the amazon.nl tag. A storefront with no tag of ours (amazon.de, amazon.fr…) stays untagged. |
 | eBay | **Not wrapped.** eBay's tracked form needs a rotation id per marketplace that this repo has never verified; a wrong one silently earns nothing. Add it here once confirmed. |
 
 A registered shop whose ids are missing in an environment comes back unchanged, and an account other

@@ -296,6 +296,31 @@ class CoveMarkupTest extends TestCase
     }
 
     #[Test]
+    public function a_shop_link_to_amazon_carries_the_tag_of_the_storefront_it_points_at(): void
+    {
+        /*
+         * Owner, 2026-11-23: links to the Belgian or Dutch Prime pages always earn,
+         * whichever market's page they are on. A tag belongs to a storefront, so
+         * the address decides it, not the page.
+         */
+        config()->set('giftcoves.amazon_search.markets', [
+            'nl-nl' => ['host' => 'www.amazon.nl', 'tag' => 'giftcoves-21'],
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
+            'en' => ['host' => 'www.amazon.de', 'tag' => ''],
+        ]);
+
+        // On a Belgian page, the Dutch store gets the Dutch tag.
+        $this->assertSame('https://www.amazon.nl/prime?tag=giftcoves-21', CoveMarkup::shop('https://www.amazon.nl/prime', Market::BeNl));
+        // On an English page, which has no tag of its own, the Belgian store still gets the Belgian tag.
+        $this->assertSame('https://www.amazon.com.be/prime?language=fr_BE&tag=giftcoves05-21', CoveMarkup::shop('https://www.amazon.com.be/prime?language=fr_BE', Market::En));
+        // Without www. as well.
+        $this->assertSame('https://amazon.nl/blackfriday?tag=giftcoves-21', CoveMarkup::shop('https://amazon.nl/blackfriday', Market::Es));
+        // A storefront we hold no tag for stays as it is; so does a link that already carries a tag.
+        $this->assertSame('https://www.amazon.de/amazonprime', CoveMarkup::shop('https://www.amazon.de/amazonprime', Market::BeNl));
+        $this->assertSame('https://www.amazon.nl/prime?tag=someone-21', CoveMarkup::shop('https://www.amazon.nl/prime?tag=someone-21', Market::NlNl));
+    }
+
+    #[Test]
     public function an_amazon_token_is_reduced_to_its_label_in_plain_text(): void
     {
         // A meta description or an email must never print the token, and must
