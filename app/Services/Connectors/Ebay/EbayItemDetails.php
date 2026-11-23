@@ -39,11 +39,25 @@ final class EbayItemDetails
     /** Part numbers and barcodes that say "none". */
     private const NONE = '/^(does not apply|no aplica|non applicable|ne s applique pas|niet van toepassing|nicht zutreffend|non applicabile|n a|na|none|ninguno|aucun|-)$/u';
 
-    /** How many details may still be fetched today. */
+    /**
+     * eBay's day: its call allowance resets at midnight Pacific time (08:00 UTC in
+     * winter, 07:00 in summer), as its rate_limit endpoint reports.
+     */
+    private const EBAY_DAY_ZONE = 'America/Los_Angeles';
+
+    /**
+     * How many details may still be fetched in eBay's current day.
+     *
+     * Counted from eBay's midnight, not ours (owner, 2026-11-23). Counted from
+     * midnight UTC, the cap ran out overnight while eBay still had calls left for
+     * eight more hours: on 2026-11-23 it said 0 left at 07:00 UTC with 1,970 of
+     * eBay's 5,000 unused, an hour before eBay reset them anyway.
+     */
     public function remainingToday(): int
     {
         $cap = (int) config('giftcoves.connectors.ebay.details_per_day', 2000);
-        $used = DB::table('ebay_item_details')->where('fetched_at', '>=', now()->startOfDay())->count();
+        $since = now(self::EBAY_DAY_ZONE)->startOfDay()->utc();
+        $used = DB::table('ebay_item_details')->where('fetched_at', '>=', $since)->count();
 
         return max(0, $cap - $used);
     }

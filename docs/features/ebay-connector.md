@@ -122,7 +122,11 @@ ungrouped. The owner asked whether eBay had another identifying field; the item 
 - **One request each.** The 20-at-once endpoint (`getItems`) answered 403 for these keys. eBay
   allows 5,000 Browse requests a day, shared with search, so details stop at
   `connectors.ebay.details_per_day` (2,000, `EBAY_DETAILS_PER_DAY`; 0 turns it off), counted from
-  `ebay_item_details.fetched_at`. No retries in that call: a 404 retried would cost three.
+  `ebay_item_details.fetched_at`. The day is eBay's, from midnight Pacific time (08:00 UTC in
+  winter, 07:00 in summer), since 2026-11-23: counted from midnight UTC, the cap ran out overnight
+  while eBay still had calls left that it would reset unused. eBay's own count:
+  `GET https://api.ebay.com/developer/analytics/v1_beta/rate_limit/?api_name=browse` with the
+  application token. No retries in that call: a 404 retried would cost three.
 - **Kept across later searches.** A later search result for the same listing has no brand again,
   and the upsert writes what changed, so it would wipe the brand. `EbayConnector::offersFrom()`
   therefore fills every eBay result from `ebay_item_details` before it is stored

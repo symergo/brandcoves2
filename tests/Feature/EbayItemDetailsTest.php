@@ -21,6 +21,7 @@ use App\Services\Ingestion\IncomingGrouper;
 use App\Services\Search\SearchGenerations;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -136,6 +137,24 @@ class EbayItemDetailsTest extends TestCase
         $this->runJob(['v1|1|0', 'v1|2|0']);
 
         $this->assertSame(1, DB::table('ebay_item_details')->count());
+    }
+
+    #[Test]
+    public function the_cap_follows_ebays_day_which_starts_at_midnight_pacific(): void
+    {
+        config(['giftcoves.connectors.ebay.details_per_day' => 10]);
+        $details = app(EbayItemDetails::class);
+        $row = fn (string $id, string $at) => DB::table('ebay_item_details')->insert(['external_id' => $id, 'brand' => null, 'gtin' => null, 'mpn' => null, 'fetched_at' => $at]);
+
+        // Winter: eBay's day began at 08:00 UTC. A fetch at 07:59 belongs to the day before
+        $this->travelTo(CarbonImmutable::parse('2026-11-23 12:00:00', 'UTC'));
+        $row('v1|a|0', '2026-11-23 07:59:00');
+        $row('v1|b|0', '2026-11-23 08:01:00');
+        $this->assertSame(9, $details->remainingToday());
+
+        // At 07:59 UTC it is still the eBay day that began at 08:00 UTC yesterday: both count
+        $this->travelTo(CarbonImmutable::parse('2026-11-23 07:59:30', 'UTC'));
+        $this->assertSame(8, $details->remainingToday());
     }
 
     #[Test]
