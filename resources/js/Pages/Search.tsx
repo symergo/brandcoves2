@@ -8,6 +8,7 @@ import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
+import AmazonProductCard, { type AmazonItem } from '../Components/AmazonProductCard'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
@@ -143,7 +144,7 @@ interface Props {
      * follow-up request of their own: undefined while it runs, null when this page
      * asks none, an empty list when Amazon found nothing. See AmazonSearch.
      */
-    amazon?: { asin: string; title: string; image: string | null; url: string }[] | null
+    amazon?: AmazonItem[] | null
     /** Null without a term. See SearchController::watch(). */
     watch: WatchState | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
@@ -279,6 +280,36 @@ export default function Search({
 
         return [...live.lanes.filter(hasNew), ...live.lanes.filter((lane) => !hasNew(lane))]
     }, [storedLanes, storedResults, live])
+
+    /*
+     * Amazon's products among ours (owner, 2026-11-23: "mix the amazon products
+     * with the other", mixed by relevance in every order and filter). Neither list
+     * scores the other, so relevance is each list's own order, interleaved evenly:
+     * Amazon's best match lands near our best, its second near our second, and so
+     * on down the page. They arrive a moment after the page (a follow-up request
+     * of their own), so the cards after each one shift once; the owner chose that
+     * over making every search wait for Amazon.
+     */
+    const amazonHost = amazonSearch ? amazonSearch.host.replace(/^www\./, '') : ''
+    const mixed = useMemo<({ kind: 'ours'; g: GroupCard; index: number } | { kind: 'amazon'; item: AmazonItem })[]>(() => {
+        const ours = results.items
+        const theirs = amazon ?? []
+        const out: ({ kind: 'ours'; g: GroupCard; index: number } | { kind: 'amazon'; item: AmazonItem })[] = []
+        const step = (ours.length + 1) / (theirs.length + 1)
+        let j = 0
+
+        for (let i = 0; i <= ours.length; i++) {
+            while (j < theirs.length && Math.round((j + 1) * step) <= i) {
+                out.push({ kind: 'amazon', item: theirs[j] })
+                j++
+            }
+            if (i < ours.length) {
+                out.push({ kind: 'ours', g: ours[i], index: i })
+            }
+        }
+
+        return out
+    }, [results, amazon])
 
     /*
      * The box follows the query, not only the first one.
@@ -1116,6 +1147,72 @@ export default function Search({
                             </p>
                         )}
                         <LaneScroller>
+                            {/*
+                              Amazon's column (owner, 2026-11-23: "add also amazon
+                              column to the by store view"), first, as on the
+                              product page. Drawn like the shops' columns: the
+                              storefront as the name, Amazon's mark, a row per
+                              product. Where the others show a price, each row says
+                              "Bekijk op Amazon": Amazon's price may not be shown
+                              without its own API. No hide button and no save
+                              button: Amazon's products are not in our catalogue.
+                            */}
+                            {amazon && amazon.length > 0 && amazonSearch && (
+                                <section
+                                    className="w-60 shrink-0 snap-start overflow-hidden rounded-card border border-line bg-card sm:w-72 xl:w-80"
+                                    aria-label={amazonHost}
+                                >
+                                    <div className="flex items-center gap-2 border-b border-line bg-cream py-1.5 pr-1.5 pl-3">
+                                        <h2 className="flex min-w-0 flex-1 items-center gap-2 py-1 font-medium">
+                                            <img
+                                                src={amazonSearch.icon}
+                                                alt=""
+                                                loading="lazy"
+                                                width={20}
+                                                height={20}
+                                                className="h-5 w-5 shrink-0 rounded bg-white object-contain"
+                                                onError={(e) => {
+                                                    e.currentTarget.hidden = true
+                                                }}
+                                            />
+                                            <span className="min-w-0">
+                                                <span className="block truncate">{amazonHost}</span>
+                                                <span className="block truncate text-xs font-normal text-ink-soft">
+                                                    {t('search.links_to', { shop: amazonHost })}
+                                                </span>
+                                            </span>
+                                        </h2>
+                                    </div>
+                                    <ul className="divide-y divide-line">
+                                        {amazon.map((item) => (
+                                            <li key={item.asin} className="relative">
+                                                <a
+                                                    href={item.url}
+                                                    target="_blank"
+                                                    rel="sponsored noopener nofollow"
+                                                    className="group flex gap-3 p-3 transition hover:bg-cream"
+                                                >
+                                                    {item.image && (
+                                                        <img src={item.image} alt="" className="h-14 w-14 shrink-0 object-contain" loading="lazy" />
+                                                    )}
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="line-clamp-2 text-sm text-ink-soft">{item.title}</span>
+                                                        <span className="mt-1.5 flex items-center">
+                                                            <span
+                                                                aria-hidden
+                                                                className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition group-hover:border-accent group-hover:bg-accent group-hover:text-white"
+                                                            >
+                                                                <ToolIcon name="shop" className="h-4 w-4" />
+                                                            </span>
+                                                            <span className="text-sm font-semibold text-ink">{t('product.check_on_amazon')}</span>
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )}
                             {lanes.filter((lane) => !hiddenShops.includes(lane.shop)).map(({ shop, logo, domain, items }) => (
                                 /*
                                   Each shop is a card, not a stretch of column.
@@ -1348,9 +1445,11 @@ export default function Search({
                         </>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                            {results.items.map((g, i) => (
-                                <Fragment key={g.id}>
-                                    <ProductCard group={g} brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null} />
+                            {mixed.map((entry) => entry.kind === 'amazon' ? (
+                                <AmazonProductCard key={`amazon-${entry.item.asin}`} item={entry.item} host={amazonHost} />
+                            ) : (
+                                <Fragment key={entry.g.id}>
+                                    <ProductCard group={entry.g} brandUrl={entry.g.brand ? brandLinks[entry.g.brand.toLowerCase()] : null} />
                                     {/*
                                       The Amazon hand-off as a card, in the 3rd
                                       to 6th tile (see `amazonAfter`), or after
@@ -1360,57 +1459,12 @@ export default function Search({
                                       page: it replaced the toolbar button and,
                                       on a phone, a button under the products.
                                     */}
-                                    {amazonSearch && i === amazonAfter && (
+                                    {amazonSearch && entry.index === amazonAfter && (
                                         <AmazonSearchCard link={amazonSearch} label={amazonLabel} />
                                     )}
                                 </Fragment>
                             ))}
                         </div>
-                    )}
-
-                    {/*
-                      Amazon's own products for this term (owner, 2026-11-23), below
-                      ours and above the pager, so their arrival after the page moves
-                      nothing a visitor is already looking at. Name, Amazon's picture
-                      and a tagged link to the product; never a price, which may not
-                      be shown without Amazon's own API. Plain anchors, never our
-                      redirector (Amazon's rule), sponsored, in a new tab.
-                    */}
-                    {amazon && amazon.length > 0 && (
-                        <section className="mt-10" aria-labelledby="on-amazon">
-                            <h2 id="on-amazon" className="text-lg font-semibold">
-                                {t('search.on_amazon')}
-                            </h2>
-                            <p className="mt-1 text-sm text-ink-soft">{t('search.on_amazon_note')}</p>
-                            <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                                {amazon.map((item) => (
-                                    <li key={item.asin}>
-                                        <a
-                                            href={item.url}
-                                            target="_blank"
-                                            rel="sponsored noopener nofollow"
-                                            className="flex h-full flex-col rounded-card border border-line bg-card p-3 transition hover:border-ink-soft"
-                                        >
-                                            {item.image && (
-                                                <img
-                                                    src={item.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="aspect-square w-full rounded bg-white object-contain"
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.display = 'none'
-                                                    }}
-                                                />
-                                            )}
-                                            <span className="mt-2 line-clamp-2 text-sm font-medium">{item.title}</span>
-                                            <span className="mt-auto pt-2 text-sm text-ink-soft">
-                                                {t('product.check_on_amazon')} <span aria-hidden>↗</span>
-                                            </span>
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
                     )}
 
                     {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (

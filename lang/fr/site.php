@@ -305,8 +305,6 @@ return [
         'amazon_compare_with' => 'Comparer avec Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'Voir aussi :term sur Amazon',
-        'on_amazon' => 'Aussi sur Amazon',
-        'on_amazon_note' => 'Le prix et la disponibilité sont sur Amazon.',
         'amazon_home' => 'Aller sur :host',
         'chip_with_out_of_stock' => 'Aussi en rupture de stock',
         'chip_min' => 'À partir de :price',

@@ -13,8 +13,15 @@ amazon' link", and "add it to search as well, but without price". Code:
   and the very same button, "Naar de winkel". No price, no stock.
 - **Search result card:** a row under "Alle aanbiedingen": "Bekijk op Amazon ↗", for a product
   already matched.
-- **Search page, "Ook op Amazon":** Amazon's own products for the term, up to eight, under ours
-  and above the pager: name, Amazon's picture, a tagged `/dp/ASIN` link. No price. See below.
+- **Search page, mixed in** (owner, 2026-11-23: "mix the amazon products with the other", by
+  relevance in every order and filter): up to eight of Amazon's own products for the term appear
+  as cards among ours, `AmazonProductCard`. Neither list scores the other, so each keeps its own
+  order and the two are interleaved evenly: Amazon's best near our best, and so on. The card is
+  built like ours, with "Bekijk op Amazon · amazon.com.be" where ours show the price and shop.
+  Amazon's answer arrives a moment after the page, so the cards after each Amazon card shift once;
+  the owner chose that over making every search wait. A price sort or filter does not move them.
+- **By-store view:** an Amazon column first (owner, same day), drawn like the shops' columns, each
+  row saying "Bekijk op Amazon" where the others show a price.
 - Only on be-nl and be-fr (amazon.com.be) and nl-nl (amazon.nl), and only for a product with a
   barcode that Amazon carries on that storefront. The link is `https://www.<storefront>/dp/<ASIN>`
   with our Associates tag, `rel="sponsored noopener nofollow"`, a new tab.
@@ -58,7 +65,7 @@ shown, never read. The risk was raised before it was built: Amazon may treat pro
 from PA-API as a breach of the Associates agreement, and the penalty is the account behind every
 tag. If PA-API access arrives, the search section should move to it.
 
-## "Ook op Amazon": Amazon's search under ours (2026-11-23)
+## Amazon's search among ours (2026-11-23)
 
 Owner: "just do a search with the api on amazon when a search is made". `App\Services\Amazon\AmazonSearch`.
 

@@ -304,8 +304,6 @@ return [
         'amazon_compare_with' => 'Vergelijk met Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'Bekijk :term ook op Amazon',
-        'on_amazon' => 'Ook op Amazon',
-        'on_amazon_note' => 'Prijs en voorraad zie je op Amazon zelf.',
         'amazon_home' => 'Naar :host',
         'chip_with_out_of_stock' => 'Ook niet op voorraad',
         'chip_min' => 'Vanaf :price',
