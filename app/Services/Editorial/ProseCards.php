@@ -116,6 +116,9 @@ final class ProseCards
                             'alt' => $image['alt'],
                             // Where it is sold: the page offers to save it as an offline item.
                             'buy' => $image['buy'],
+                            // Or the picture is itself a link (`link:` third part), with its rel.
+                            'link' => $image['link'],
+                            'linkRel' => $image['linkRel'],
                         ],
                     ];
                 }

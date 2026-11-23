@@ -53,7 +53,7 @@ interface Block {
      * line. `token` is the image proxy's when it serves that host, else null
      * and the address is used as given. `alt` is required by the token.
      */
-    image?: { src: string; token: string | null; alt: string; buy?: string | null } | null
+    image?: ArticleImageBlock | null
     /**
      * A table instead of a paragraph, from a block of `| a | b |` lines.
      * `html` is empty then. Cells are safe HTML from CoveMarkup, escaped
@@ -513,7 +513,21 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
  * stays centred above the text: 15rem beside text leaves a column too narrow
  * to read.
  */
-function ArticleImage({ image }: { image: { src: string; token: string | null; alt: string; buy?: string | null } }) {
+/**
+ * `buy`: where the pictured thing is sold, offered as a save-to-list button.
+ * `link`: the picture is itself a link there (a `link:` third part, 2026-11-23),
+ * with the rel the server decided (`sponsored` when it is paid).
+ */
+interface ArticleImageBlock {
+    src: string
+    token: string | null
+    alt: string
+    buy?: string | null
+    link?: string | null
+    linkRel?: string | null
+}
+
+function ArticleImage({ image }: { image: ArticleImageBlock }) {
     const [proxyFailed, setProxyFailed] = useState(false)
     const [broken, setBroken] = useState(false)
 
@@ -521,16 +535,26 @@ function ArticleImage({ image }: { image: { src: string; token: string | null; a
         return null
     }
 
+    const picture = (
+        <img
+            {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
+            alt={image.alt}
+            loading="lazy"
+            className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3 md:max-h-48 md:w-full"
+            onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
+        />
+    )
+
     return (
         <figure className="my-6 flex justify-center md:float-left md:my-1 md:mr-6 md:mb-4 md:block md:w-60">
             <div className="relative">
-                <img
-                    {...pictureAttributes(image.src, image.token, proxyFailed, 640, '(min-width: 768px) 640px, 100vw', [320, 480, 640, 960])}
-                    alt={image.alt}
-                    loading="lazy"
-                    className="max-h-80 w-auto max-w-full rounded-card border border-line bg-white object-contain p-3 md:max-h-48 md:w-full"
-                    onError={() => (image.token && !proxyFailed ? setProxyFailed(true) : setBroken(true))}
-                />
+                {image.link ? (
+                    <a href={image.link} rel={image.linkRel ?? 'nofollow noopener'} target="_blank" className="block rounded-card focus-visible:outline-2 focus-visible:outline-accent">
+                        {picture}
+                    </a>
+                ) : (
+                    picture
+                )}
                 {/*
                   Save the card to a list as an offline item (owner, 2026-11-07):
                   its name (the picture's description), this picture, and the

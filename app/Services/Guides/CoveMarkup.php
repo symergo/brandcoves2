@@ -688,7 +688,13 @@ class CoveMarkup
      * `shop()`, so an Amazon address carries our tag; one that fails is left
      * off and the picture still shows.
      *
-     * @return array{src: string|null, alt: string, rejected: bool, buy: string|null}|null
+     * A third part written `link:URL` (2026-11-23, the Prime logo in the Amazon
+     * Prime articles) makes the picture itself a link to that page instead, with
+     * no save button: a logo is something to click, not something to put on a
+     * list. The address passes `shop()` and is tracked like a shop link in the
+     * text (`MerchantLinks::wrap()`), and `linkRel` says whether it is paid.
+     *
+     * @return array{src: string|null, alt: string, rejected: bool, buy: string|null, link: string|null, linkRel: string|null}|null
      */
     public function image(string $paragraph, ?Market $market = null): ?array
     {
@@ -697,9 +703,21 @@ class CoveMarkup
         }
 
         $src = self::external($m[1]);
-        $buy = isset($m[3]) && $m[3] !== '' ? self::shop($m[3], $market) : null;
+        $third = $m[3] ?? '';
+        $buy = $link = $linkRel = null;
 
-        return ['src' => $src, 'alt' => trim($m[2]), 'rejected' => $src === null, 'buy' => $buy];
+        if (str_starts_with($third, 'link:')) {
+            $href = self::shop(substr($third, 5), $market);
+
+            if ($href !== null) {
+                $link = $market === null ? $href : MerchantLinks::wrap($href, $market);
+                $linkRel = self::isAmazon($href) || $link !== $href ? 'sponsored nofollow noopener' : 'nofollow noopener';
+            }
+        } elseif ($third !== '') {
+            $buy = self::shop($third, $market);
+        }
+
+        return ['src' => $src, 'alt' => trim($m[2]), 'rejected' => $src === null, 'buy' => $buy, 'link' => $link, 'linkRel' => $linkRel];
     }
 
     /**

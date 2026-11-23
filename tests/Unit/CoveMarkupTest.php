@@ -321,6 +321,32 @@ class CoveMarkupTest extends TestCase
     }
 
     #[Test]
+    public function a_picture_with_a_link_part_is_a_tagged_link_and_offers_no_save_button(): void
+    {
+        // The Prime logo in the Prime articles: clicking it opens the Prime page
+        // of the reader's store, under our tag, and it is not something to save.
+        config()->set('giftcoves.amazon_search.markets', [
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
+        ]);
+
+        $image = $this->markupWithoutBrandPages()->image(
+            '[[image:https://giftcoves.com/media/editorial/abc.webp|Amazon Prime logo|link:https://www.amazon.com.be/prime]]',
+            Market::BeNl,
+        );
+
+        $this->assertNotNull($image);
+        $this->assertSame('https://www.amazon.com.be/prime?tag=giftcoves05-21', $image['link']);
+        $this->assertSame('sponsored nofollow noopener', $image['linkRel']);
+        $this->assertNull($image['buy']);
+        $this->assertSame('Amazon Prime logo', $image['alt']);
+
+        // The plain third part still means "where it is sold", with the save button and no link.
+        $sold = $this->markupWithoutBrandPages()->image('[[image:https://example.com/card.png|A gift card|https://www.bongo.be/nl]]', Market::BeNl);
+        $this->assertSame('https://www.bongo.be/nl', $sold['buy']);
+        $this->assertNull($sold['link']);
+    }
+
+    #[Test]
     public function an_amazon_token_is_reduced_to_its_label_in_plain_text(): void
     {
         // A meta description or an email must never print the token, and must

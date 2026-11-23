@@ -41,5 +41,9 @@ ability, not `publish`: a stored picture reaches nobody until an approved articl
 - **Never Amazon** (invariant 6): an Amazon address, or an address that redirects to one, is
   refused rather than copied. Fetches go through `SafeFetch` (public addresses only, size and time
   caps), like the image proxy and the page reader.
+- **A picture can be a link** (same day): `[[image:SRC|description|link:URL]]` wraps the picture in a
+  link to URL, tagged and tracked like a `[[shop:]]` link, with no save button. The plain third part
+  still means "where it is sold" and offers the save button. Used for the Prime logo, which opens the
+  Prime page of the reader's own Amazon store.
 - **Transparency is lost** (flattened onto white). Article pictures sit in a white frame, so a logo
   looks the same; a picture meant for a dark background would not.

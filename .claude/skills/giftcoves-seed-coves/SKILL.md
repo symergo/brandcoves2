@@ -251,6 +251,10 @@ puts it on a list as an offline item with that name, picture and link. Write the
 the thing's name when you give a third part, since it becomes the item's title.
     Koop hem bij [[shop:https://www.bongo.be/nl|Bongo]].
 
+A third part written `link:` makes the picture itself the link, with no save button (2026-11-23,
+the Prime logo): `[[image:https://giftcoves.com/media/editorial/….webp|Amazon Prime logo|link:https://www.amazon.com.be/prime]]`.
+Tagged and tracked like a shop link.
+
 An article body may be 60,000 characters (was 20,000); the advice prompt's 900-1300 words is a
 default, not a cap, when the owner asks for an extensive piece.
 
