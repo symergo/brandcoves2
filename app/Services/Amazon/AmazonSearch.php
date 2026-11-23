@@ -16,18 +16,27 @@ use Illuminate\Support\Facades\DB;
  * See docs/features/amazon-links.md.
  *
  * Asked through ASIN Data API in the search page's deferred follow-up request, so
- * the page is never held up by Amazon. Each term's answer is kept for
- * `search_cache_days` per storefront, so a repeated search costs nothing; at most
- * `searches_per_day` new searches a day; never for a crawler. A failed search is
- * remembered for an hour so a burst of visitors does not repeat it.
+ * the page is never held up by Amazon, in the market's language (amazon.com.be
+ * answers French unless asked for Dutch). Each answer is saved (owner, same day:
+ * "save the amazon products to database, without price"): the products in
+ * `amazon_products`, the term's answer as shown in `amazon_searches`, which then
+ * answers the same term for `search_cache_days`. At most `searches_per_day` new
+ * searches a day; never for a crawler. A failed search is remembered for an hour so
+ * a burst of visitors does not repeat it.
  *
- * What is kept is the ASIN, the title and Amazon's picture address, in the cache,
- * never in the catalogue (invariant 6), and never a price.
+ * Never a price: the client does not read one and no table has a column for one.
  */
 class AmazonSearch
 {
     /** How many Amazon products the section shows. */
     public const SHOWN = 8;
+
+    /**
+     * The language Amazon is asked in, per market. The `language` parameter is not
+     * in ASIN Data API's documentation; the owner supplied it (2026-11-23) and a test
+     * search with nl_BE on amazon.com.be came back in Dutch.
+     */
+    private const LANGUAGES = ['be-nl' => 'nl_BE', 'be-fr' => 'fr_BE', 'nl-nl' => 'nl_NL'];
 
     public function __construct(
         private readonly AsinDataClient $client,
@@ -38,6 +47,7 @@ class AmazonSearch
     public function applies(Market $market, ?string $term, ?string $userAgent): bool
     {
         return $this->matches->storefront($market) !== null
+            && isset(self::LANGUAGES[$market->value])
             && $this->client->configured()
             && trim((string) $term) !== ''
             && ! Crawlers::looksLikeOne($userAgent);
@@ -52,24 +62,29 @@ class AmazonSearch
     public function results(Market $market, string $term): array
     {
         $storefront = $this->matches->storefront($market);
+        $language = self::LANGUAGES[$market->value] ?? null;
 
-        if ($storefront === null) {
+        if ($storefront === null || $language === null) {
             return [];
         }
 
         $term = mb_substr(mb_strtolower(trim(preg_replace('/\s+/u', ' ', $term) ?? $term)), 0, 200);
-        $key = 'amazon-search:v1:'.$storefront.':'.sha1($term);
-        $rows = $this->stored($storefront, $term) ?? (Cache::has($key.':failed') ? [] : $this->ask($storefront, $term, $key));
+        $key = 'amazon-search:v2:'.$storefront.':'.$language.':'.sha1($term);
+        $rows = $this->stored($storefront, $language, $term)
+            ?? (Cache::has($key.':failed') ? [] : $this->ask($storefront, $language, $term, $key));
 
         $tag = trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", ''));
 
-        return array_map(fn (array $row): array => $row + [
+        return array_map(fn (array $row): array => [
+            'asin' => $row['asin'],
+            'title' => $row['title'],
+            'image' => $row['image'] ?? null,
             'url' => 'https://www.'.$storefront.'/dp/'.$row['asin'].($tag !== '' ? '?tag='.rawurlencode($tag) : ''),
         ], array_slice($rows, 0, self::SHOWN));
     }
 
     /** @return list<array{asin: string, title: string, image: string|null}> */
-    private function ask(string $storefront, string $term, string $key): array
+    private function ask(string $storefront, string $language, string $term, string $key): array
     {
         $day = now()->toDateString();
 
@@ -95,7 +110,7 @@ class AmazonSearch
             Cache::increment($used);
 
             try {
-                $rows = $this->client->search($storefront, $term);
+                $rows = $this->client->search($storefront, $term, $language, (string) config('giftcoves.connectors.asindata.search_sort', ''));
             } catch (AsinDataUnavailable $e) {
                 if ($e->stopForToday) {
                     Cache::put('asindata:stopped:'.$day, true, now()->endOfDay());
@@ -107,7 +122,7 @@ class AmazonSearch
             }
 
             $rows = array_slice($rows, 0, self::SHOWN);
-            $this->save($storefront, $term, $rows);
+            $this->save($storefront, $language, $term, $rows);
 
             return $rows;
         } finally {
@@ -116,57 +131,42 @@ class AmazonSearch
     }
 
     /**
-     * The term's stored answer while it is younger than `search_cache_days`, as rows
-     * read back from `amazon_products` in the stored order; null when there is none.
+     * The term's saved answer while it is younger than `search_cache_days`; null when
+     * there is none.
      *
      * @return list<array{asin: string, title: string, image: string|null}>|null
      */
-    private function stored(string $storefront, string $term): ?array
+    private function stored(string $storefront, string $language, string $term): ?array
     {
-        $search = DB::table('amazon_searches')
+        $items = DB::table('amazon_searches')
             ->where('storefront', $storefront)
+            ->where('language', $language)
             ->where('term', $term)
             ->where('searched_at', '>=', now()->subDays((int) config('giftcoves.connectors.asindata.search_cache_days', 7)))
-            ->first();
+            ->value('items');
 
-        if ($search === null) {
-            return null;
-        }
-
-        $asins = (array) json_decode((string) $search->asins, true);
-        $products = AmazonProduct::query()->whereIn('asin', $asins)->get(['asin', 'classified_title', 'image_url'])->keyBy('asin');
-        $rows = [];
-
-        foreach ($asins as $asin) {
-            $product = $products->get($asin);
-
-            if ($product !== null && trim((string) $product->classified_title) !== '') {
-                $rows[] = ['asin' => $asin, 'title' => (string) $product->classified_title, 'image' => $product->image_url];
-            }
-        }
-
-        return $rows;
+        return $items === null ? null : array_values((array) json_decode((string) $items, true));
     }
 
     /**
      * Keep the products in `amazon_products` (ASIN, title, picture address, the
-     * storefront it was seen on; never a price) and the term's answer in
-     * `amazon_searches` (owner, 2026-11-23). A title or picture a person imported
-     * from the product's own page is not overwritten by the search's shorter one.
+     * storefront it was seen on; never a price) and the term's answer, titles in the
+     * language asked, in `amazon_searches`. A title or picture a person imported
+     * from the product's own page is not overwritten by the search's.
      *
      * @param  list<array{asin: string, title: string, image: string|null}>  $rows
      */
-    private function save(string $storefront, string $term, array $rows): void
+    private function save(string $storefront, string $language, string $term, array $rows): void
     {
-        DB::transaction(function () use ($storefront, $term, $rows): void {
+        DB::transaction(function () use ($storefront, $language, $term, $rows): void {
             foreach ($rows as $row) {
                 $product = AmazonProduct::query()->firstOrNew(['asin' => $row['asin']]);
-                $seen = array_values(array_unique([...(array) ($product->seen_in_locales ?? []), $storefront]));
 
                 $product->fill([
                     'classified_title' => $product->classified_title ?: $row['title'],
+                    'classified_locale' => $product->classified_locale ?: $language,
                     'image_url' => $product->image_url ?: $row['image'],
-                    'seen_in_locales' => $seen,
+                    'seen_in_locales' => array_values(array_unique([...(array) ($product->seen_in_locales ?? []), $storefront])),
                     'imported_from' => $product->imported_from ?: 'asindata:search',
                 ]);
 
@@ -178,9 +178,9 @@ class AmazonSearch
             }
 
             DB::table('amazon_searches')->upsert(
-                [['storefront' => $storefront, 'term' => $term, 'asins' => json_encode(array_column($rows, 'asin')), 'searched_at' => now()]],
-                ['storefront', 'term'],
-                ['asins', 'searched_at'],
+                [['storefront' => $storefront, 'language' => $language, 'term' => $term, 'items' => json_encode(array_values($rows)), 'searched_at' => now()]],
+                ['storefront', 'language', 'term'],
+                ['items', 'searched_at'],
             );
         });
     }

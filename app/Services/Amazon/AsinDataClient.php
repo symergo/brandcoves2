@@ -78,20 +78,25 @@ class AsinDataClient
      *
      * @throws AsinDataUnavailable as lookup() does
      */
-    public function search(string $storefront, string $term): array
+    public function search(string $storefront, string $term, ?string $language = null, string $sort = ''): array
     {
         try {
             $response = Http::timeout((int) config('giftcoves.connectors.asindata.timeout', 30))
                 ->acceptJson()
-                ->get(self::URL, [
+                ->get(self::URL, array_filter([
                     'api_key' => (string) config('giftcoves.connectors.asindata.key'),
                     'type' => 'search',
                     'amazon_domain' => $storefront,
                     'search_term' => $term,
+                    // Titles in this language (nl_BE…). Not in the API's docs; it works.
+                    'language' => $language,
+                    // Empty (the default) for Amazon's own relevance order; see
+                    // config connectors.asindata.search_sort for the valid values.
+                    'sort_by' => $sort,
                     // Amazon's ads left out on their side, so the places go to real
                     // results; the `sponsored` check below stays as a second guard.
                     'exclude_sponsored' => 'true',
-                ]);
+                ], fn ($value) => $value !== null && $value !== ''));
         } catch (ConnectionException $e) {
             throw new AsinDataUnavailable('connection: '.$e->getMessage(), false);
         }

@@ -74,14 +74,21 @@ Owner: "just do a search with the api on amazon when a search is made". `App\Ser
 - **Saved** (owner, same day: "save the amazon products to database, without price"): each
   result goes to `amazon_products` (ASIN, `classified_title`, `image_url`, the storefront in
   `seen_in_locales`, `imported_from = asindata:search`; never a price, there is no column), and
-  the term's ordered ASINs to `amazon_searches` (storefront, term, asins, searched_at). A term is
+  the term's answer as shown to `amazon_searches` (storefront, language, term, items, searched_at). A term is
   answered from there for `search_cache_days`, also after a cache flush. A title or picture a
   person imported from the product's own page is not overwritten by the search's.
 - `exclude_sponsored=true` drops Amazon's ads on their side; the `sponsored` check stays as a
   second guard.
-- **Titles on be-nl are French.** amazon.com.be answers in French by default, and the API has no
-  `language` parameter (not in its docs; a search by the `/-/nl/` URL came back French too, tested
-  2026-11-23). amazon.nl answers in Dutch.
+- **Language.** Asked with `language` per market: be-nl `nl_BE`, be-fr `fr_BE`, nl-nl `nl_NL`.
+  amazon.com.be answers French without it. The parameter is not in the manual
+  (docs.trajectdata.com/asindataapi/product-data-api/parameters/search, the reference the owner
+  named); the owner supplied it and a test search came back in Dutch. Because be-nl and be-fr
+  share amazon.com.be, `amazon_searches` is keyed on storefront, language and term, and keeps
+  the titles with the search, not only on the product.
+- **Order.** No `sort_by`: Amazon's own relevance order. The manual's values are most_recent,
+  price_low_to_high, price_high_to_low, featured, average_review (`ASINDATA_SEARCH_SORT`);
+  `bestseller_rankings` is not one of them. `direct_search` is left off, so Amazon still
+  corrects a typo in the term.
 
 **Credits.** On 2026-11-23 the account showed `topup_credits_remaining: 89`. Every search and
 every barcode lookup costs one, so the daily caps should follow the plan bought, not the defaults.
