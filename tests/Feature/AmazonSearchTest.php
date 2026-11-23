@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,8 +69,19 @@ class AmazonSearchTest extends TestCase
             'url' => 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21',
         ]], $items);
 
-        // The same term again is answered from the cache: one credit per term.
-        $this->followUp('/be-nl/search?q=LEGO%20technic');
+        // Saved (owner, 2026-11-23): the product in amazon_products, without a price
+        // (there is no column for one), and the term's answer in amazon_searches.
+        $product = DB::table('amazon_products')->where('asin', 'B0CFVYBW3L')->first();
+        $this->assertSame('LEGO Technic racewagen', $product->classified_title);
+        $this->assertSame('https://m.media-amazon.com/b.jpg', $product->image_url);
+        $this->assertSame(['amazon.com.be'], json_decode($product->seen_in_locales, true));
+        $this->assertFalse(DB::table('amazon_products')->where('asin', 'B0GJDDY8FD')->exists(), 'a sponsored result is not kept');
+        $this->assertSame(['B0CFVYBW3L'], json_decode((string) DB::table('amazon_searches')->where('term', 'lego technic')->value('asins'), true));
+
+        // The same term again is answered from the database, even after the cache is
+        // emptied: one credit per term.
+        Cache::flush();
+        $this->assertSame('B0CFVYBW3L', $this->followUp('/be-nl/search?q=LEGO%20technic')->json('props.amazon.0.asin'));
         Http::assertSentCount(1);
     }
 

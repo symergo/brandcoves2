@@ -88,6 +88,9 @@ class AsinDataClient
                     'type' => 'search',
                     'amazon_domain' => $storefront,
                     'search_term' => $term,
+                    // Amazon's ads left out on their side, so the places go to real
+                    // results; the `sponsored` check below stays as a second guard.
+                    'exclude_sponsored' => 'true',
                 ]);
         } catch (ConnectionException $e) {
             throw new AsinDataUnavailable('connection: '.$e->getMessage(), false);

@@ -71,6 +71,17 @@ Owner: "just do a search with the api on amazon when a search is made". `App\Ser
   landing page or page 2 and later.
 - Pictures are Amazon's own addresses, shown as they are: never copied or proxied (the image
   proxy refuses Amazon). No price, no stock, no rating.
+- **Saved** (owner, same day: "save the amazon products to database, without price"): each
+  result goes to `amazon_products` (ASIN, `classified_title`, `image_url`, the storefront in
+  `seen_in_locales`, `imported_from = asindata:search`; never a price, there is no column), and
+  the term's ordered ASINs to `amazon_searches` (storefront, term, asins, searched_at). A term is
+  answered from there for `search_cache_days`, also after a cache flush. A title or picture a
+  person imported from the product's own page is not overwritten by the search's.
+- `exclude_sponsored=true` drops Amazon's ads on their side; the `sponsored` check stays as a
+  second guard.
+- **Titles on be-nl are French.** amazon.com.be answers in French by default, and the API has no
+  `language` parameter (not in its docs; a search by the `/-/nl/` URL came back French too, tested
+  2026-11-23). amazon.nl answers in Dutch.
 
 **Credits.** On 2026-11-23 the account showed `topup_credits_remaining: 89`. Every search and
 every barcode lookup costs one, so the daily caps should follow the plan bought, not the defaults.
