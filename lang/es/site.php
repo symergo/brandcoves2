@@ -306,6 +306,8 @@ return [
         'amazon_compare_with' => 'Comparar con Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'Mira :term también en Amazon',
+        'on_amazon' => 'También en Amazon',
+        'on_amazon_note' => 'El precio y la disponibilidad, en Amazon.',
         'amazon_home' => 'Ir a :host',
         'chip_with_out_of_stock' => 'También sin stock',
         'chip_min' => 'Desde :price',
@@ -2713,7 +2715,7 @@ return [
         'find_filters' => 'Desde una página de ideas de regalo, busca todo lo pensado para esa persona y esa afición. Los filtros aparecen encima de los resultados y cada uno se quita con un toque.',
         'find_pages' => 'Ideas de regalo según la persona y lo que le gusta, como «ideas de regalo para papá amante de la cocina», cada una en su propia página. «Encontrar un regalo» enlaza con la más cercana a tus respuestas con «Abrir como página».',
         'find_product' => 'La página de un producto muestra el precio en cada tienda, cuántas personas lo tienen en una lista y en qué colecciones aparece.',
-        'find_amazon' => 'Si Amazon vende el mismo producto en Bélgica o los Países Bajos, Ver en Amazon aparece entre las tiendas y bajo el producto en los resultados. El enlace abre el producto en Amazon, sin precio: lo ves en el propio Amazon.',
+        'find_amazon' => 'Si Amazon vende el mismo producto en Bélgica o los Países Bajos, Ver en Amazon aparece entre las tiendas y bajo el producto en los resultados. Bajo los resultados, También en Amazon muestra lo que Amazon encuentra para tu búsqueda. Estos enlaces abren el producto en Amazon, sin precio: lo ves en el propio Amazon.',
         'find_crowd' => 'Una idea marcada con «Elegido por otros para alguien como esta persona» está en las listas de al menos cinco personas distintas que buscan para el mismo tipo de persona, como un papá al que le gusta cocinar. Contamos personas, nunca mostramos de quién es la lista y por debajo de cinco no mostramos nada.',
         'find_thumbs' => 'Un pulgar arriba o abajo en una idea mejora las sugerencias. Arriba, la idea se queda y trae más como ella; abajo, se cambia por otra. Para una de tus personas lo recordamos solo para ella, y lo que rechazaste no vuelve para ella. Los pulgares de todos juntos solo cuentan para una idea cuando al menos cinco personas distintas votaron, y nunca mostramos quién.',
         'add_title' => 'Añadir lo que sea',

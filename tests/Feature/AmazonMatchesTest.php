@@ -119,6 +119,19 @@ class AmazonMatchesTest extends TestCase
     }
 
     #[Test]
+    public function a_search_page_queues_no_lookups(): void
+    {
+        // Owner, 2026-11-23: "don't do a batch". Only a product page asks, one barcode at a time.
+        Queue::fake();
+        $this->group(Market::BeNl, '5702017583518', 'Technic racewagen');
+        $this->group(Market::BeNl, '4006381333931', 'Technic racewagen twee');
+
+        $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=racewagen')->assertOk();
+
+        Queue::assertNothingPushed();
+    }
+
+    #[Test]
     public function markets_without_our_storefront_get_no_link_and_ask_nothing(): void
     {
         Queue::fake();

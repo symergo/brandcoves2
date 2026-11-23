@@ -1782,6 +1782,10 @@ return [
             'key' => env('ASINDATA_API_KEY'),
             'lookups_per_day' => (int) env('ASINDATA_LOOKUPS_PER_DAY', 1000),
             'recheck_days' => (int) env('ASINDATA_RECHECK_DAYS', 60),
+            // Amazon's own search, for the "Op Amazon" section under search results
+            // (AmazonSearch): new terms asked per day, and how long a term's answer is kept.
+            'searches_per_day' => (int) env('ASINDATA_SEARCHES_PER_DAY', 100),
+            'search_cache_days' => (int) env('ASINDATA_SEARCH_CACHE_DAYS', 7),
             // Seconds. A lookup the API has not cached can take a while on its side.
             'timeout' => 30,
         ],

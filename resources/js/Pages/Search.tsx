@@ -138,6 +138,12 @@ interface Props {
      * Associates tag for the market. Built server-side — see AmazonSearchLink.
      */
     amazonSearch: AmazonSearch | null
+    /**
+     * Amazon's own products for the term, without a price (2026-11-23), from a
+     * follow-up request of their own: undefined while it runs, null when this page
+     * asks none, an empty list when Amazon found nothing. See AmazonSearch.
+     */
+    amazon?: { asin: string; title: string; image: string | null; url: string }[] | null
     /** Null without a term. See SearchController::watch(). */
     watch: WatchState | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
@@ -227,6 +233,7 @@ export default function Search({
     tagFilters = [],
     landing,
     amazonSearch,
+    amazon,
     watch,
     pastedLink,
     terms,
@@ -1359,6 +1366,51 @@ export default function Search({
                                 </Fragment>
                             ))}
                         </div>
+                    )}
+
+                    {/*
+                      Amazon's own products for this term (owner, 2026-11-23), below
+                      ours and above the pager, so their arrival after the page moves
+                      nothing a visitor is already looking at. Name, Amazon's picture
+                      and a tagged link to the product; never a price, which may not
+                      be shown without Amazon's own API. Plain anchors, never our
+                      redirector (Amazon's rule), sponsored, in a new tab.
+                    */}
+                    {amazon && amazon.length > 0 && (
+                        <section className="mt-10" aria-labelledby="on-amazon">
+                            <h2 id="on-amazon" className="text-lg font-semibold">
+                                {t('search.on_amazon')}
+                            </h2>
+                            <p className="mt-1 text-sm text-ink-soft">{t('search.on_amazon_note')}</p>
+                            <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                {amazon.map((item) => (
+                                    <li key={item.asin}>
+                                        <a
+                                            href={item.url}
+                                            target="_blank"
+                                            rel="sponsored noopener nofollow"
+                                            className="flex h-full flex-col rounded-card border border-line bg-card p-3 transition hover:border-ink-soft"
+                                        >
+                                            {item.image && (
+                                                <img
+                                                    src={item.image}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="aspect-square w-full rounded bg-white object-contain"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none'
+                                                    }}
+                                                />
+                                            )}
+                                            <span className="mt-2 line-clamp-2 text-sm font-medium">{item.title}</span>
+                                            <span className="mt-auto pt-2 text-sm text-ink-soft">
+                                                {t('product.check_on_amazon')} <span aria-hidden>↗</span>
+                                            </span>
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
                     )}
 
                     {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (

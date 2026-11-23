@@ -377,6 +377,8 @@ return [
         'amazon_compare_with' => 'Compare with Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'See :term on Amazon too',
+        'on_amazon' => 'Also on Amazon',
+        'on_amazon_note' => 'Price and stock are on Amazon itself.',
         'amazon_home' => 'Go to :host',
         'chip_with_out_of_stock' => 'Out of stock too',
         'chip_min' => 'From :price',
@@ -2982,7 +2984,7 @@ return [
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. Find a gift links to the one closest to your answers with "Open as a page".',
         'find_product' => 'A product\'s page shows every shop\'s price, how many people keep it on a list, and the Coves it is in.',
-        'find_amazon' => 'When Amazon sells the same product in Belgium or the Netherlands, Check on Amazon appears among the shops and under the product in search results. The link opens the product on Amazon, without a price: you see that on Amazon itself.',
+        'find_amazon' => 'When Amazon sells the same product in Belgium or the Netherlands, Check on Amazon appears among the shops and under the product in search results. Under the results, Also on Amazon shows what Amazon itself finds for your search. These links open the product on Amazon, without a price: you see that on Amazon itself.',
         'find_crowd' => 'An idea marked "Chosen by others for someone like them" is on the lists of at least five different people shopping for the same kind of person, such as a dad who likes cooking. We count people, never show whose list it is, and show nothing below five.',
         'find_thumbs' => 'Thumbs up or down on an idea teaches the suggestions. Thumbs up keeps it and brings more like it; thumbs down swaps it for another. For one of your people we remember it for them only, and what you turned down never comes back for them. Everybody’s thumbs together move an idea only once at least five different people voted on it, and we never show who.',
         'add_title' => 'Adding anything',

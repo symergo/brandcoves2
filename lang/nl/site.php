@@ -304,6 +304,8 @@ return [
         'amazon_compare_with' => 'Vergelijk met Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'Bekijk :term ook op Amazon',
+        'on_amazon' => 'Ook op Amazon',
+        'on_amazon_note' => 'Prijs en voorraad zie je op Amazon zelf.',
         'amazon_home' => 'Naar :host',
         'chip_with_out_of_stock' => 'Ook niet op voorraad',
         'chip_min' => 'Vanaf :price',
@@ -2727,7 +2729,7 @@ return [
         'find_filters' => 'Zoek vanaf een pagina met cadeaus alles wat voor die persoon en die interesse bedoeld is. De filters staan boven de resultaten, en elk ervan haal je met één tik weg.',
         'find_pages' => 'Cadeaus per persoon en wat die graag doet, zoals "cadeaus voor papa die van koken houdt", elk op een eigen pagina. Cadeau vinden linkt naar de pagina die het dichtst bij je antwoorden ligt, met "Open als pagina".',
         'find_product' => 'De pagina van een product toont de prijs bij elke winkel, hoeveel mensen het op een lijst hebben, en in welke Coves het staat.',
-        'find_amazon' => 'Verkoopt Amazon in België of Nederland hetzelfde product, dan staat Bekijk op Amazon bij de winkels en onder het product in de zoekresultaten. Die link opent het product op Amazon, zonder prijs: die zie je op Amazon zelf.',
+        'find_amazon' => 'Verkoopt Amazon in België of Nederland hetzelfde product, dan staat Bekijk op Amazon bij de winkels en onder het product in de zoekresultaten. Onder de zoekresultaten tonen we ook wat Amazon zelf voor je zoekterm vindt, onder Ook op Amazon. Die links openen het product op Amazon, zonder prijs: die zie je op Amazon zelf.',
         'find_crowd' => 'Een idee met "Gekozen door anderen voor iemand zoals die persoon" staat op de lijsten van minstens vijf verschillende mensen die voor zo iemand zoeken, zoals een papa die graag kookt. We tellen mensen, tonen nooit wiens lijst het is, en onder de vijf tonen we niets.',
         'find_thumbs' => 'Met een duim omhoog of omlaag bij een idee leer je de suggesties bij. Omhoog houdt het idee en brengt meer zoals dit; omlaag ruilt het voor een ander. Voor iemand uit Mijn mensen onthouden we het alleen voor die persoon, en wat je afwees komt voor hen niet meer terug. De duimen van iedereen samen tellen pas mee voor een idee als minstens vijf verschillende mensen erover stemden, en we tonen nooit wie.',
         'add_title' => 'Alles toevoegen',

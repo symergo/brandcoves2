@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+/**
+ * "Ook op Amazon": Amazon's own products for a search, under ours, without a price,
+ * from a follow-up request of their own (App\Services\Amazon\AmazonSearch).
+ */
+class AmazonSearchTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const PERSON = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['giftcoves.connectors.asindata.key' => 'test-key']);
+        Http::preventStrayRequests();
+    }
+
+    #[Test]
+    public function the_page_asks_for_amazon_after_it_is_shown_and_never_for_a_crawler_or_another_market(): void
+    {
+        Http::fake();
+
+        $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=lego')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->missing('amazon')->etc());
+
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')->get('/be-nl/search?q=lego')
+            ->assertInertia(fn ($page) => $page->where('amazon', null)->etc());
+
+        $this->withHeader('User-Agent', self::PERSON)->get('/en/search?q=lego')
+            ->assertInertia(fn ($page) => $page->where('amazon', null)->etc());
+
+        // Showing the page asked Amazon nothing: that is the follow-up's job.
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function the_follow_up_shows_amazons_products_without_a_price_and_without_the_ads(): void
+    {
+        Http::fake(['api.asindataapi.com/*' => Http::response([
+            'request_info' => ['success' => true],
+            'search_results' => [
+                ['asin' => 'B0GJDDY8FD', 'title' => 'Robot kit', 'sponsored' => true, 'image' => 'https://m.media-amazon.com/a.jpg', 'price' => ['value' => 30]],
+                ['asin' => 'B0CFVYBW3L', 'title' => 'LEGO Technic racewagen', 'sponsored' => false, 'image' => 'https://m.media-amazon.com/b.jpg', 'price' => ['value' => 49.99]],
+            ],
+        ])]);
+
+        $items = $this->followUp('/be-nl/search?q=lego%20technic')->json('props.amazon');
+
+        $this->assertSame([[
+            'asin' => 'B0CFVYBW3L',
+            'title' => 'LEGO Technic racewagen',
+            'image' => 'https://m.media-amazon.com/b.jpg',
+            'url' => 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21',
+        ]], $items);
+
+        // The same term again is answered from the cache: one credit per term.
+        $this->followUp('/be-nl/search?q=LEGO%20technic');
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
+    public function the_daily_cap_is_kept(): void
+    {
+        config(['giftcoves.connectors.asindata.searches_per_day' => 0]);
+        Http::fake();
+
+        $this->assertSame([], $this->followUp('/nl-nl/search?q=lego')->json('props.amazon'));
+        Http::assertNothingSent();
+    }
+
+    private function followUp(string $url): TestResponse
+    {
+        $version = $this->withHeader('User-Agent', self::PERSON)->get($url)->viewData('page')['version'];
+
+        return $this->withHeader('User-Agent', self::PERSON)->get($url, [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) $version,
+            'X-Inertia-Partial-Component' => 'Search',
+            'X-Inertia-Partial-Data' => 'amazon',
+        ])->assertOk();
+    }
+}

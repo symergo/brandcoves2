@@ -305,6 +305,8 @@ return [
         'amazon_compare_with' => 'Comparer avec Amazon',
         // The banner above the search results, and Amazon's mark at its right, to the storefront (2026-11-22).
         'amazon_banner' => 'Voir aussi :term sur Amazon',
+        'on_amazon' => 'Aussi sur Amazon',
+        'on_amazon_note' => 'Le prix et la disponibilité sont sur Amazon.',
         'amazon_home' => 'Aller sur :host',
         'chip_with_out_of_stock' => 'Aussi en rupture de stock',
         'chip_min' => 'À partir de :price',
@@ -2713,7 +2715,7 @@ return [
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',
         'find_pages' => 'Des idées cadeaux selon la personne et ce qu\'elle aime, comme « idées cadeaux pour papa qui aime la cuisine », chacune sur sa propre page. Trouver un cadeau renvoie à la plus proche de vos réponses avec « Ouvrir en page ».',
         'find_product' => 'La page d\'un produit montre le prix dans chaque boutique, combien de personnes l\'ont dans une liste, et les Coves où il figure.',
-        'find_amazon' => 'Si Amazon vend le même produit en Belgique ou aux Pays-Bas, Voir sur Amazon apparaît parmi les boutiques et sous le produit dans les résultats. Le lien ouvre le produit sur Amazon, sans prix : vous le voyez sur Amazon même.',
+        'find_amazon' => 'Si Amazon vend le même produit en Belgique ou aux Pays-Bas, Voir sur Amazon apparaît parmi les boutiques et sous le produit dans les résultats. Sous les résultats, Aussi sur Amazon montre aussi ce qu\'Amazon trouve pour votre recherche. Ces liens ouvrent le produit sur Amazon, sans prix : vous le voyez sur Amazon même.',
         'find_crowd' => 'Une idée marquée « Choisi par d’autres pour quelqu’un comme cette personne » figure sur les listes d’au moins cinq personnes différentes qui cherchent pour le même genre de personne, comme un papa qui aime cuisiner. Nous comptons des personnes, ne montrons jamais de qui est la liste, et en dessous de cinq nous ne montrons rien.',
         'find_thumbs' => 'Un pouce levé ou baissé sur une idée affine les suggestions. Levé, l’idée reste et en amène d’autres du même genre ; baissé, elle est remplacée par une autre. Pour une de vos personnes, nous le retenons pour elle seule, et ce que vous avez refusé ne revient plus pour elle. Les pouces de tout le monde ne comptent pour une idée qu’une fois qu’au moins cinq personnes différentes ont voté, et nous ne montrons jamais qui.',
         'add_title' => 'Tout ajouter',

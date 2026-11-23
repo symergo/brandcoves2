@@ -17,6 +17,7 @@ use App\Models\ProductGroup;
 use App\Models\SearchAlert;
 use App\Models\SearchLog;
 use App\Services\Amazon\AmazonMatches;
+use App\Services\Amazon\AmazonSearch;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
@@ -225,6 +226,22 @@ class SearchController extends Controller
         $followUp = in_array('live', explode(',', (string) $request->header('X-Inertia-Partial-Data')), true);
         $searchQuery = $followUp ? $query->unlogged() : $query;
 
+        /*
+         * Amazon's products for this term (owner, 2026-11-23), asked in a follow-up
+         * request of their own after the page is shown, so a search never waits on
+         * Amazon. That request wants `amazon` and nothing else, so it is answered
+         * here, before any of the work below. AmazonSearch says what it costs.
+         */
+        $amazon = app(AmazonSearch::class);
+
+        if ((string) $request->header('X-Inertia-Partial-Data') === 'amazon') {
+            return Inertia::render('Search', [
+                'amazon' => fn (): array => $amazon->applies($current->get(), $query->term, $request->userAgent())
+                    ? $amazon->results($current->get(), (string) $query->term)
+                    : [],
+            ]);
+        }
+
         // Not the whole sentence of a gift search: Amazon would search
         // "cadeau voor mijn papa die graag kookt" word for word.
         $amazonSearch = $query->hasTerm() && $gift === null
@@ -286,6 +303,12 @@ class SearchController extends Controller
             'waitShops' => WaitShops::for($current->get()),
             'live' => $result->liveDeferred()
                 ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search, $current))
+                : null,
+
+            // Amazon's products, without a price, in a follow-up request of their own
+            // (see above): undefined while it runs, null when the page asks none.
+            'amazon' => $landing === null && $gift === null && $query->page <= 1 && $amazon->applies($current->get(), $query->term, $request->userAgent())
+                ? Inertia::defer(fn (): array => $amazon->results($current->get(), (string) $query->term), 'amazon')
                 : null,
 
             // No "Coves hierover" row above the products since 2026-11-07 (owner).
@@ -1097,12 +1120,11 @@ class SearchController extends Controller
         $groups = collect($groups)->values();
         CheapestOffer::attach($groups);
 
-        // "Bekijk op Amazon" on the cards whose barcode is matched, one query for
-        // the page; the page's unmatched barcodes are queued (AmazonMatches).
-        $market = app(CurrentMarket::class)->get();
-        $matches = app(AmazonMatches::class);
-        $matches->queueMissing($market, $groups, request()->userAgent());
-        $amazon = $matches->links($market, $groups);
+        // "Bekijk op Amazon" on the cards whose barcode is already matched, one
+        // query for the page. A search page queues no lookups (owner, 2026-11-23:
+        // "don't do a batch"): only a product page a person opens asks, one
+        // barcode at a time, so credits follow interest rather than result lists.
+        $amazon = app(AmazonMatches::class)->links(app(CurrentMarket::class)->get(), $groups);
 
         return $groups->map(fn (ProductGroup $group) => $this->card($group) + [
             'amazon' => $group->identity_kind?->value === 'ean' ? ($amazon[$group->identity_key] ?? null) : null,
