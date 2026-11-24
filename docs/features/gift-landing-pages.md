@@ -109,7 +109,8 @@ All from templates (`GiftLandingCopy`), never from a model: the page is a web re
 - **Sideways links only to recorded pages**: the same person's other interests, the same interest
   for other people, and the person's own page. Discover ("Of per persoon") links the person pages,
   and (until 2026-11-07) the sitemap listed them all. The gift ideas shelf (`/gift-ideas`) linked every person's page
-  too, until the owner took that row off on 2026-09-28: the shelf is for personas.
+  too, until the owner took that row off on 2026-09-28: the shelf is for personas. It is back since
+  2026-11-24 (owner: "Put the row back"), closest people first, with the line to /gift-ideas/for under it.
 
 Products are cached a day per page and budget, keyed on the night's `checked_at`, so the engine
 runs once per page per day, not once per visitor.

@@ -101,7 +101,8 @@ insert — at 06:00, with a constraint violation and no other symptom.
   from a brief ("gift ideas for dad who loves cooking"), since 2026-09-26. The `for` segment is what
   keeps the two apart: a persona address is one segment after `gift-ideas`, a landing page two or
   three, so neither can shadow the other. The shelf listed each recipient's landing page above the
-  personas until 2026-09-28, when the owner took that row off; Discover still links them. See
+  personas until 2026-09-28, when the owner took that row off, and again since 2026-11-24 (owner:
+  "Put the row back"); Discover links them too. See
   [gift-landing-pages.md](gift-landing-pages.md).
 
 **A persona can be a brief (2026-09-26).** A persona plan can carry a gift brief

@@ -2175,6 +2175,8 @@ return [
 
     // Cadeaupagina's: /gift-ideas/for/{ontvanger}/{interesse}. Zie de uitleg in lang/en/site.php.
     'gift_landing' => [
+        // The row of person pages on /gift-ideas (back since 2026-11-24).
+        'by_recipient' => "Ideeën per persoon",
         'heading' => 'Cadeaus voor :recipient :who :interest houdt',
         'title_short' => 'Cadeau voor :recipient :who :interest houdt',
         'title_bare' => ':Recipient :who :interest houdt',

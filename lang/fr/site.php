@@ -2169,6 +2169,8 @@ return [
 
     // Pages d'idées cadeaux : /gift-ideas/for/{destinataire}/{passion}. Voir lang/en/site.php.
     'gift_landing' => [
+        // The row of person pages on /gift-ideas (back since 2026-11-24).
+        'by_recipient' => "Des idées selon la personne",
         'heading' => 'Idées cadeaux pour :recipient :who :interest',
         'title_short' => 'Cadeau pour :recipient :who :interest',
         'title_bare' => ':Recipient :who :interest',

@@ -2170,6 +2170,8 @@ return [
 
     // Páginas de ideas de regalo: /gift-ideas/for/{destinatario}/{afición}. Ver lang/en/site.php.
     'gift_landing' => [
+        // The row of person pages on /gift-ideas (back since 2026-11-24).
+        'by_recipient' => "Ideas según para quién sea",
         'heading' => 'Ideas de regalo para :recipient :who :interest',
         'title_short' => 'Regalos para :recipient :who :interest',
         'title_bare' => ':Recipient :who :interest',

@@ -84,13 +84,38 @@ class GiftIdeasController extends Controller
 
         return Inertia::render('GiftIdeas/Index', [
             /*
-             * No row of "gift ideas for dad" links here any more (owner,
-             * 2026-09-28): the shelf is for personas. The recipient pages stay
-             * reachable from Discover ("Of per persoon") and the sitemap.
+             * The gift landing pages for a whole person ("gift ideas for dad"), each leading
+             * on to that person's interests. Taken off on 2026-09-28 (the shelf for personas
+             * only) and put back on 2026-11-24 (owner: "Put the row back") after it turned out
+             * the landing pages had no link from anywhere a visitor goes. Closest people first,
+             * as on /gift-ideas/for, which the line under the row opens.
              */
+            'forWhom' => $this->forWhomRow($current),
             'personas' => $personas->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
             'occasions' => $occasions->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
         ]);
+    }
+
+    /** The closest people first: the order a visitor scans for "who is it for". */
+    private const RECIPIENT_ORDER = ['partner', 'mother', 'father', 'friend', 'child', 'grandparent', 'sibling', 'colleague', 'teacher', 'host'];
+
+    /** @return list<array{label: string, url: string}> */
+    private function forWhomRow(CurrentMarket $current): array
+    {
+        $rank = array_flip(self::RECIPIENT_ORDER);
+
+        return GiftLanding::query()
+            ->forMarket($current->get())
+            ->whereNull('interest')
+            ->get(['recipient', 'path'])
+            ->filter(fn (GiftLanding $page) => $page->recipient instanceof RecipientType)
+            ->sortBy(fn (GiftLanding $page) => $rank[$page->recipient->value] ?? 99)
+            ->map(fn (GiftLanding $page) => [
+                'label' => (new GiftLandingCopy($current->get(), $page->recipient))->heading(),
+                'url' => $page->path,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -144,8 +169,7 @@ class GiftIdeasController extends Controller
         // A person whose own page the planner did not record still shows, under a plain name.
         $groups = array_values(array_filter($groups, fn (array $g) => $g['url'] !== null || $g['interests'] !== []));
 
-        // The closest people first: the order a visitor scans for "who is it for".
-        $order = ['partner', 'mother', 'father', 'friend', 'child', 'grandparent', 'sibling', 'colleague', 'teacher', 'host'];
+        $order = self::RECIPIENT_ORDER;
         usort($groups, fn (array $a, array $b) => (array_search($a['recipient'], $order, true) === false ? 99 : array_search($a['recipient'], $order, true))
             <=> (array_search($b['recipient'], $order, true) === false ? 99 : array_search($b['recipient'], $order, true)));
 

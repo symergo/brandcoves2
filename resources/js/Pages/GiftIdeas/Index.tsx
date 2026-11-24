@@ -15,6 +15,8 @@ interface Persona {
 
 interface Props {
     personas: Persona[]
+    /** Gift landing pages for a whole person: "Gift ideas for dad". Closest people first. */
+    forWhom?: { label: string; url: string }[]
     /** Gifts per occasion (Moederdag, a housewarming): a row of their own. Same card. */
     occasions?: Persona[]
 }
@@ -31,7 +33,7 @@ interface Props {
  * it always was, and a lone heading over it would announce a second row that
  * is not there.
  */
-export default function Index({ personas, occasions = [] }: Props) {
+export default function Index({ personas, forWhom = [], occasions = [] }: Props) {
     const { t } = useTranslations()
     const { market } = usePage<SharedProps>().props
     const twoRows = occasions.length > 0
@@ -43,14 +45,32 @@ export default function Index({ personas, occasions = [] }: Props) {
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift_ideas.title')}</h1>
                 <p className="mt-2 text-ink-soft">{t('gift_ideas.description')}</p>
-                {/* The way in to the pages per person and interest (2026-11-24): a link, not a row
-                    in the shelf, which the owner keeps for personas (2026-09-28). */}
+            </header>
+
+            {/* The pages per person, back on 2026-11-24 (owner: "Put the row back"), with the
+                line under it to every page per person and interest. */}
+            {forWhom.length > 0 && (
+                <nav aria-label={t('gift_landing.by_recipient')} className="mt-6">
+                    <h2 className="text-sm font-medium text-ink-soft">{t('gift_landing.by_recipient')}</h2>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                        {forWhom.map((page) => (
+                            <li key={page.url}>
+                                <Link href={page.url} className="rounded-full border border-line bg-card px-3 py-1 text-sm hover:border-ink/40">
+                                    {page.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            )}
+
+            <div>
                 <p className="mt-3">
                     <Link href={`/${market.key}/gift-ideas/for`} className="font-medium text-accent-dark hover:text-ink">
                         {t('gift_ideas.for_whom_link')} <span aria-hidden>&rarr;</span>
                     </Link>
                 </p>
-            </header>
+            </div>
 
             {personas.length === 0 && !twoRows ? (
                 <p className="mt-8 text-ink-soft">{t('gift_ideas.empty')}</p>

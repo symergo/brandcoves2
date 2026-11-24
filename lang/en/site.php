@@ -2485,6 +2485,8 @@ return [
      * docs/features/gift-landing-pages.md.
      */
     'gift_landing' => [
+        // The row of person pages on /gift-ideas (back since 2026-11-24).
+        'by_recipient' => "Ideas by who it is for",
         'heading' => 'Gift ideas for :recipient :who :interest',
         'title_short' => 'Gifts for :recipient :who :interest',
         'title_bare' => ':Recipient :who :interest',
