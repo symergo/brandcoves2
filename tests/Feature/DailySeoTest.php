@@ -95,6 +95,7 @@ class DailySeoTest extends TestCase
             ->patchJson("/api/editorial/coves/{$plan->id}", [
                 'focusKeyphrase' => 'accessoires vélo à offrir',
                 'metaDescription' => 'Panier, support de compteur et sacoche — des accessoires vélo à offrir.',
+                'blurb' => 'Surtout ce qui s’y accroche.',
             ])
             ->assertOk();
 
@@ -103,6 +104,8 @@ class DailySeoTest extends TestCase
         // House style at the write: no em dash.
         $this->assertStringNotContainsString('—', (string) $edition->meta_description);
         $this->assertSame('accessoires vélo à offrir', $plan->refresh()->focus_keyphrase);
+        // The blurb reaches the live page too: it was in English on a be-fr edition.
+        $this->assertSame('Surtout ce qui s’y accroche.', $edition->theme_blurb);
     }
 
     /** @param array<string, mixed> $extra */

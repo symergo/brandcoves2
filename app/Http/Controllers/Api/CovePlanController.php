@@ -212,6 +212,13 @@ class CovePlanController extends Controller
         $seo = array_filter([
             'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
             'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
+            /*
+             * The blurb too, on a Daily: the one line under its title, which the
+             * build copies from the plan unchanged. Found 2026-11-24 in English on
+             * a be-fr edition ("Mostly the things attached to it."); correcting the
+             * plan alone left the live page wrong until a rebuild.
+             */
+            'theme_blurb' => $plan->kind === CoveKind::Daily ? HouseStyle::plain($data['blurb'] ?? null) : null,
         ], fn ($v) => $v !== null);
 
         if ($seo !== [] && $plan->edition !== null) {
