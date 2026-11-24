@@ -89,6 +89,15 @@ headings with their answers under them — only the JSON-LD went. A Cove keeps i
 own, where the questions are genuinely written per page. See
 [page-templates.md](page-templates.md).
 
+**`Article` on guides, seasonal guides and advice articles (2026-11-24).** For "best X" and advice
+searches Google weighs who wrote a page and when, and these pages said neither.
+`StructuredData::article()`: headline, description, the social card as image, `datePublished`,
+`dateModified` (the row's `updated_at`, which moves on an edit and not on a price refresh; checked on
+production that day), language, and GiftCoves as author and publisher. The author is the house, an
+`Organization` with its about page, because the pieces are written by the editors rather than signed
+by a person; an invented byline is the kind of markup that earns a manual action. Not on a Shop Cove
+(a page about a shop) or a preview. Test: `CoveProseTest::a_guide_says_who_wrote_it_and_when_and_a_shop_cove_does_not`.
+
 ## Every public page is indexable (2026-09-12)
 
 The owner's rule, stated on 2026-09-12: **every page is indexable, every internal
@@ -503,8 +512,8 @@ already walks the same four language files.
 
 ## Not done yet
 
-- **`Article` markup** on Coves and guides — they emit `ItemList` and, where written, `FAQPage`, but
-  no `Article`.
+- **`Article` markup** on the Daily and persona Coves. Guides, seasonal guides and advice articles
+  have it since 2026-11-24 (below).
 - **Core Web Vitals have not been measured.**
 - **Cross-language product titles.** ~4.5% of `be-fr` titles are Dutch. The
   honest fix is at ingestion, where the offer still knows its feed — see

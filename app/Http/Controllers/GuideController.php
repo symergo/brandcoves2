@@ -456,6 +456,25 @@ class GuideController extends Controller
             robots: $preview ? 'noindex, nofollow' : null,
         );
 
+        /*
+         * Who wrote it and when (2026-11-24): an Article for the written kinds. Not
+         * for a Shop Cove, which is a page about a shop rather than a piece, and
+         * not for a preview, which is not published.
+         */
+        if (! $preview && $guide->kind !== CoveKind::Shop) {
+            $meta->addJsonLd(StructuredData::article(
+                headline: $guide->theme_title,
+                description: $guide->meta_description ?? $plain['blurb'],
+                url: $url,
+                image: $meta->toArray()['image'] ?? null,
+                published: $guide->published_at,
+                modified: $guide->updated_at,
+                market: $current->get(),
+                homeUrl: url($current->url()),
+                aboutUrl: url($current->url('about')),
+            ));
+        }
+
         // An ItemList of nothing asserts that this page ranks nothing, which is
         // worse than staying quiet — so a kind with no shortlist emits no
         // ItemList at all rather than an empty one.

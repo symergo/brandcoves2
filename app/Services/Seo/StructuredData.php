@@ -7,6 +7,7 @@ namespace App\Services\Seo;
 use App\Enums\Market;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use Carbon\CarbonInterface;
 
 /**
  * schema.org JSON-LD.
@@ -304,6 +305,52 @@ class StructuredData
             'name' => $name,
             'url' => $url,
         ];
+    }
+
+    /**
+     * A written piece: a guide, a seasonal guide or an advice article (2026-11-24).
+     *
+     * For "best X" and advice searches Google weighs who wrote a page and when;
+     * these pages said neither. The author is GiftCoves itself, as an organisation
+     * with its about page, because the pieces are written by the editors as a house
+     * rather than signed by a person, and an invented byline would be the kind of
+     * markup that earns a manual action. `dateModified` is the row's `updated_at`,
+     * which moves on an edit and not on a price refresh (checked on production the
+     * same day: no guide had moved in two weeks).
+     *
+     * @return array<string, mixed>
+     */
+    public static function article(
+        string $headline,
+        ?string $description,
+        string $url,
+        ?string $image,
+        ?CarbonInterface $published,
+        ?CarbonInterface $modified,
+        Market $market,
+        string $homeUrl,
+        string $aboutUrl,
+    ): array {
+        $house = ['@type' => 'Organization', 'name' => 'GiftCoves', 'url' => $homeUrl];
+
+        return array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            // Google shows at most 110 characters of a headline.
+            'headline' => mb_substr($headline, 0, 110),
+            'description' => $description,
+            'image' => $image === null ? null : [$image],
+            'datePublished' => $published?->toIso8601String(),
+            // Never before it was published: a row edited as a draft has an
+            // older updated_at than its publication.
+            'dateModified' => $published !== null && $modified !== null && $modified->lt($published)
+                ? $published->toIso8601String()
+                : $modified?->toIso8601String(),
+            'inLanguage' => $market->hrefLang(),
+            'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $url],
+            'author' => [...$house, 'url' => $aboutUrl],
+            'publisher' => $house,
+        ], fn ($value) => $value !== null);
     }
 
     /** @return array<string, mixed> */

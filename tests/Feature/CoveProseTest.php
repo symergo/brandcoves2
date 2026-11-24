@@ -191,6 +191,26 @@ class CoveProseTest extends TestCase
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /** @return array{0: DailyPickSet, 1: string} */
+    #[Test]
+    public function a_guide_says_who_wrote_it_and_when_and_a_shop_cove_does_not(): void
+    {
+        // An Article with its dates and the house as author (2026-11-24).
+        [$guide, $url] = $this->make('guide');
+        $article = collect($this->snapshot($url)['jsonLd'])
+            ->map(fn (string $json) => json_decode($json, true))
+            ->firstWhere('@type', 'Article');
+
+        $this->assertNotNull($article, 'a guide without Article markup');
+        $this->assertSame('Beste koptelefoons', $article['headline']);
+        $this->assertSame($guide->published_at->toIso8601String(), $article['datePublished']);
+        $this->assertSame('GiftCoves', $article['author']['name']);
+        $this->assertStringEndsWith('/be-nl/about', $article['author']['url']);
+        $this->assertSame('nl-BE', $article['inLanguage']);
+
+        [, $shopUrl] = $this->make('shop');
+        $this->assertStringNotContainsString('"Article"', implode('', $this->snapshot($shopUrl)['jsonLd']));
+    }
+
     private function make(string $which, ?string $editorial = null): array
     {
         [$a, $b] = [$this->groups[0], $this->groups[1]];
