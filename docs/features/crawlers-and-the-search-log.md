@@ -182,3 +182,12 @@ except the 14 western EU members: AT BE DE DK ES FI FR GR IE IT LU NL PT SE. Ver
 pass. The owner chose to exclude all western EU countries, knowing most of this scraper's traffic
 came from inside that set (France, Spain, Germany, Italy), so the rule reaches its UK, Swiss,
 Norwegian and eastern-EU share; the Amazon credits were protected by the follow-up instead.
+
+### DotBot joins the heavy crawlers (owner, 2026-11-24)
+
+Moz's link-index crawler for SEO tools made 573 requests on 2026-11-24, 163 of them search pages.
+Nobody finds the site through it, and bstore blocks it already. It is in
+`LimitHeavyCrawlers::CRAWLERS` now: search and product pages answer 403, other pages ten a minute,
+and robots.txt names it. The same day showed where the rest of the search load comes from: 940 of
+969 full search pages were crawlers (Bingbot 270, Applebot 245, DotBot 163), 1,825 s of server time
+against 66 s for people. Bing and Apple are search engines people use and stay open.

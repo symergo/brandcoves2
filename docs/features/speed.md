@@ -1344,3 +1344,16 @@ statement takes well under 2 s, so ten times that is a stuck one; the visitor ge
 instead of a page that never comes. The console is not limited: queue jobs, the scheduler,
 migrations and commands such as bc:find-matches may legitimately run for minutes.
 Test: WebStatementTimeoutTest.
+
+## An index for the "other brands" links (2026-11-24)
+
+`OtherBrandLinks::brandsIn()` counts in-stock products per category and brand. It used the category
+rail index, which holds every in-stock product of a category, branded or not, so Postgres read the
+table rows to find the brand. Books in nl-nl: 348,652 in stock, 9,538 with a brand, 132,000 pages
+(about 1 GB) read, 0.57 s warm and over the 20 s statement timeout cold. On 2026-11-24 it timed out
+eight times in two hours and took gift-idea pages with it (a 500 after 20 s).
+
+`product_groups_brands_per_category_idx` holds only branded in-stock products, on (market,
+category, brand): the same count reads 7,900 pages in 26 ms. Built by hand on production first
+(13 s, CONCURRENTLY, 19 MB), because a deploy runs migrations while the site is down; the migration
+(`2026_11_24_000100`) has IF NOT EXISTS and does nothing there.
