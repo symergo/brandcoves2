@@ -285,7 +285,9 @@ Route::prefix('{market}')->group(function () {
      */
     Route::get('/{segment}/{term}', SearchController::class)
         ->where(['segment' => implode('|', SearchUrl::segments()), 'term' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
-        ->middleware('throttle:60,1')
+        // Cached only for a search engine asking for one of the sitemap's search
+        // pages (2026-11-24); every other request is untouched. CacheAnonymousPage.
+        ->middleware(['throttle:60,1', CacheAnonymousPage::ALIAS.':'.CacheAnonymousPage::SITEMAP_SEARCH])
         ->name('search.term');
 
     // What the box accepts and how the camera does it. Next to /search rather

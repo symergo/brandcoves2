@@ -84,6 +84,10 @@ return [
         'enabled' => (bool) env('PAGE_CACHE_ENABLED', true),
         'fresh_seconds' => 600,
         'stale_seconds' => 3600,
+        // The sitemap's search pages, for search engines only (2026-11-24): a day
+        // fresh, two kept. See CacheAnonymousPage and bc:warm-sitemap-searches.
+        'crawler_fresh_seconds' => 86400,
+        'crawler_stale_seconds' => 172800,
     ],
 
     /*

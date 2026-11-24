@@ -1367,3 +1367,24 @@ offer in the market, and could not stop at the cap: "wie alles al heeft" in be-n
 past 60 s on production and the page answered 500 after the 20 s statement timeout. Written as
 `(products.market::text || '') = ?`, only the word index is used and market and status are
 checked per row: 2.8 s from a cold cache, stopping at the cap.
+
+## The sitemap's search pages, cached a day for search engines (2026-11-24)
+
+Owner: "let's pre-cache pages in the sitemap". Search pages are otherwise not in the page cache: a hit
+skips the search log, which the popular searches and the sitemap's terms are built from. Measured that
+day: Google and Bing fetched 91 search pages in 90 minutes, 90 of them different, at 1.2 s for half of
+them and up to 19 s, because a search engine waits for the live shops in one response. Caching every
+search page would almost never be hit; the ~20 submitted per market are the pages worth having ready.
+
+- `CacheAnonymousPage` with the parameter `sitemap-search` on the `search.term` route: eligible only
+  for a search engine (`Crawlers::isSearchEngine`) asking for a path `SitemapSearches::paths()` lists.
+  Crawler searches are never logged, so the counts lose nothing. Fresh a day
+  (`page_cache.crawler_fresh_seconds`), kept two. Everybody else on the route is a bypass.
+- `bc:warm-sitemap-searches`, every quarter of an hour, requests each page over the public address as
+  Googlebot, so the stored copy is exactly the one a search engine gets. A marker per commit and page
+  makes most runs request nothing: it works after a deploy (the cache key holds the commit) and once a
+  day. Over **IPv4**: Cloudflare's first rule skips the VPS's IPv4 address, and over IPv6 the VPS got
+  the challenge page (403). Production and the page cache only (`robots_allow`).
+- `SitemapSearches` is also what the sitemap lists, so the two cannot disagree.
+
+Test: `SitemapSearchCacheTest`.

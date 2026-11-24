@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\Market;
+use App\Services\Search\SitemapSearches;
 use App\Support\ContributeBar;
 use App\Support\CookieConsent;
+use App\Support\Crawlers;
 use App\Support\MarketPreference;
 use App\Support\SsrGateway;
 use Closure;
@@ -87,6 +89,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *
  * `X-Page-Cache` says which of hit, miss, stale or bypass happened.
  *
+ * ## The sitemap's search pages, for search engines only (2026-11-24)
+ *
+ * `page-cache:sitemap-search` on the search route (owner: "let's pre-cache pages in
+ * the sitemap"). Search pages are otherwise not cached: a hit skips the search log,
+ * which is what the popular searches and the sitemap terms are built from. In this
+ * mode only a search engine (Crawlers::isSearchEngine) asking for one of the
+ * sitemap's search pages (SitemapSearches) is eligible, which costs the log nothing
+ * because crawler searches are never logged, and the copy stays fresh for a day
+ * (`crawler_fresh_seconds`): a search engine waits for the live shops on a search
+ * page, 1.2 s at the median and up to 19 s, and asks for each page about once a day,
+ * so ten minutes would expire before the next visit. bc:warm-sitemap-searches fills
+ * it after a deploy and once a day. Every other request to the route is a bypass.
+ *
  * The stored entry is a plain array (body, status, headers): the cache refuses
  * to rebuild objects (`serializable_classes => false`, config/cache.php).
  */
@@ -98,6 +113,12 @@ final class CacheAnonymousPage
     public const ELIGIBLE = 'page_cache.eligible';
 
     public const HEADER = 'X-Page-Cache';
+
+    /** The middleware parameter for the sitemap's search pages, see the class docblock. */
+    public const SITEMAP_SEARCH = 'sitemap-search';
+
+    /** The mode of this request: null for the public pages, or SITEMAP_SEARCH. */
+    private ?string $scope = null;
 
     /** Bump to retire every stored page at once when the entry's shape changes. */
     private const VERSION = 'v1';
@@ -147,8 +168,9 @@ final class CacheAnonymousPage
         return $request?->attributes->get(self::ELIGIBLE) === true;
     }
 
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $scope = null): Response
     {
+        $this->scope = $scope;
         $key = $this->key($request);
 
         if ($key === null) {
@@ -214,7 +236,7 @@ final class CacheAnonymousPage
                 'headers' => $this->storedHeaders($response),
                 'body' => gzdeflate($body, 6),
                 'deflated' => true,
-            ], (int) config('giftcoves.page_cache.stale_seconds'));
+            ], $this->staleSeconds());
 
             return $this->publicHeaders($this->mark($response, 'miss'));
         }
@@ -264,6 +286,12 @@ final class CacheAnonymousPage
             return null;
         }
 
+        // Search engines on the sitemap's search pages only; everybody else is a bypass.
+        if ($this->scope === self::SITEMAP_SEARCH
+            && (! Crawlers::isSearchEngine($request->userAgent()) || ! SitemapSearches::includes($request, $market))) {
+            return null;
+        }
+
         $query = $this->query($request);
 
         if ($query === null) {
@@ -279,6 +307,7 @@ final class CacheAnonymousPage
             (string) config('giftcoves.commit_sha'),
             app(HandleInertiaRequests::class)->version($request),
             $this->variant($request, $market),
+            $this->scope,
         ]));
     }
 
@@ -379,7 +408,19 @@ final class CacheAnonymousPage
      */
     private function isFresh(array $entry): bool
     {
-        return now()->getTimestamp() - $entry['at'] < (int) config('giftcoves.page_cache.fresh_seconds');
+        $fresh = $this->scope === self::SITEMAP_SEARCH
+            ? (int) config('giftcoves.page_cache.crawler_fresh_seconds')
+            : (int) config('giftcoves.page_cache.fresh_seconds');
+
+        return now()->getTimestamp() - $entry['at'] < $fresh;
+    }
+
+    /** How long a stored copy is kept, stale copies included. */
+    private function staleSeconds(): int
+    {
+        return $this->scope === self::SITEMAP_SEARCH
+            ? (int) config('giftcoves.page_cache.crawler_stale_seconds')
+            : (int) config('giftcoves.page_cache.stale_seconds');
     }
 
     /**

@@ -8,7 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Http\Middleware\LimitHeavyCrawlers;
-use App\Services\Search\SearchTermStats;
+use App\Services\Search\SitemapSearches;
 use App\Services\Seo\Alternates;
 use App\Support\SearchUrl;
 use Carbon\Carbon;
@@ -214,10 +214,8 @@ class SitemapController extends Controller
              * never submits search results wholesale, which Google warns
              * against. Daily, because the list turns over.
              */
-            collect(app(SearchTermStats::class)->for($resolved)['latest'])
-                ->pluck('url')
-                ->filter()
-                ->unique()
+            // SitemapSearches: the same list the page cache keeps for search engines.
+            collect(SitemapSearches::paths($resolved))
                 ->each(function (string $path) use (&$urls): void {
                     $urls[] = [
                         'loc' => url($path),

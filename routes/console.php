@@ -76,6 +76,16 @@ Schedule::call(fn () => CatalogueRun::start(Market::cases(), morning: false))
     ->withoutOverlapping()
     ->onOneServer();
 
+// The sitemap's search pages into the page cache, as search engines get them (owner,
+// 2026-11-24). Every quarter of an hour, but a marker per deploy and page makes most runs
+// request nothing: it works after a deploy and once a day. See the command.
+Schedule::command('bc:warm-sitemap-searches')
+    ->name('warm-sitemap-searches')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onOneServer();
+
 // eBay's unused calls of the day, spent on item details for listings never asked, half an hour
 // before eBay resets its count at midnight Pacific (owner, 2026-11-23). In eBay's time zone, so
 // it follows the clock change. See docs/features/ebay-connector.md.
