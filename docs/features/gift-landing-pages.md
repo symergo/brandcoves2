@@ -253,3 +253,31 @@ host and a mum.
   `BriefUrl::toBrief()`): a stored, indexable page takes no word-search guesses. Find a gift keeps them.
 
 Test: `GiftLandingTest::adult_products_and_word_matches_stay_off_the_pages_and_erotica_is_for_a_partner_only`.
+
+The data half (2026-11-25): the 178 judged products whose category or title is erotic but whose tags
+lacked `interest:adult` got it over the editorial API (176 be-nl, 2 nl-nl), with their `vibe:` tags
+dropped since that value is gone. The category filter also catches "seks…" and penis pumps.
+
+## A budget per person, and a child's page only from children's things (2026-11-25)
+
+Same review: televisions and network switches on the page for a child who likes technology. Two causes.
+Retrieval is by interest, and the recipient is only five points of the score, so `tech` brought every
+television. And a page without a budget had the €500 giftability ceiling, with the scoring's sweet spot
+near it, so the dearest products led.
+
+- `gift_landings.default_budget`: the page without `?budget=` has a ceiling per recipient, in euros. Child
+  75, teacher 30, colleague and host 40, grandparent 100, everyone else 150. Set by `BriefUrl::toBrief()`
+  and the hub brief, so it is stored in `gift_landings.brief` and the planner counts within it. A chosen
+  `?budget=` band replaces it; the "any budget" link is the page itself, so it means "the usual budget for
+  this person".
+- A child's landing page (pair and hub) takes only products judged for a child: `interest:kids` or an age
+  band up to 12 (`GiftTags::YOUNG_CHILD`), by an editor or the crowd, or `recipient:child` with no age of
+  13 or older. That last condition because `recipient:child` means "their child, who may be forty"
+  (gift-tags.md), and production had a €508 VR headset and a men's tracksuit tagged so. On a landing page,
+  "kind" means up to 12; a teenager is another page (not built yet). Find a gift is untouched: its giver
+  reads the results and refines, a stored page cannot.
+
+Production on the day: 22,789 products with a young-child tag (21,061 be-nl, 925 be-fr, 516 nl-nl, 287
+en). The review estimated that about 82 of the 157 child pages keep their eight products.
+
+Test: `GiftLandingTest::a_childs_page_takes_child_products_within_the_childs_budget`.

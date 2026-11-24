@@ -58,7 +58,8 @@ class GiftLandingTest extends TestCase
         $this->assertNotNull($cooking);
         $this->assertSame(8, $cooking->product_count);
         $this->assertSame('/be-nl/gift-ideas/for/papa/koken', $cooking->path);
-        $this->assertEquals(['relationship' => 'father', 'interests' => ['cooking']], $cooking->brief);
+        // Dad's default ceiling, €150, since the page names no budget (2026-11-25).
+        $this->assertEquals(['relationship' => 'father', 'interests' => ['cooking'], 'budgetMax' => 15000], $cooking->brief);
 
         // Seven is a thin page.
         $this->assertNull(GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Gardening));
@@ -162,6 +163,36 @@ class GiftLandingTest extends TestCase
         foreach ([RecipientType::Teacher, RecipientType::Grandparent, RecipientType::Colleague, RecipientType::Mother, RecipientType::Child] as $who) {
             $this->assertNull(GiftLanding::lookup(Market::BeNl, $who, Interest::Adult), "an erotica page for {$who->value}");
         }
+    }
+
+    #[Test]
+    public function a_childs_page_takes_child_products_within_the_childs_budget(): void
+    {
+        // The tagging review of 2026-11-25: televisions on the page for a child who likes
+        // technology, retrieved by the interest and only five points down for the recipient.
+        $this->products(Market::BeNl, 'Koksmes', 9, ['interest:cooking']);
+        $forChild = $this->products(Market::BeNl, 'Kinderkookset', 8, ['interest:cooking', 'age:6-9'], price: 3000);
+        $tooDear = $this->products(Market::BeNl, 'Kinderkeukentje', 1, ['interest:cooking', 'recipient:child'], price: 12000)[0];
+        // "Their child", grown up: recipient:child with an adult age is not for a child's page.
+        $grownUp = $this->products(Market::BeNl, 'Wokpan', 1, ['interest:cooking', 'recipient:child', 'age:30-49'], price: 3000)[0];
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $child = GiftLanding::lookup(Market::BeNl, RecipientType::Child, Interest::Cooking);
+        $this->assertNotNull($child);
+        $this->assertSame(8, $child->product_count);
+
+        $shown = array_map(fn (array $v) => (int) $v['id'], Cache::get($child->verdictsKey()));
+        $this->assertEqualsCanonicalizing(array_map(fn ($g) => $g->id, $forChild), $shown, 'only products judged for a child');
+        $this->assertNotContains($tooDear->id, $shown, 'over the child default of €75');
+        $this->assertNotContains($grownUp->id, $shown, 'recipient:child with only an adult age');
+
+        // A chosen band still reaches it.
+        $this->get('/be-nl/gift-ideas/for/kind/koken?budget=100-')->assertOk()
+            ->assertInertia(fn ($page) => $page->where('picks.0.id', $tooDear->id));
+
+        // Dad's page is not limited to children's things.
+        $this->assertSame(9 + 8 + 1 + 1, GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking)->product_count);
     }
 
     #[Test]

@@ -575,6 +575,27 @@ class SuggestionEngine
                 ->whereRaw('product_groups.title !~* ?', [self::ADULT_TITLE]);
         }
 
+        /*
+         * A child's landing page takes only products somebody judged right for a child
+         * (2026-11-25, tagging review): tagged `recipient:child`, `interest:kids` or an
+         * age band up to 12, by an editor or by the crowd. The page for "a child who
+         * likes technology" showed televisions and network switches, because retrieval
+         * is by interest and the recipient was only five points of the score. Find a
+         * gift keeps the score: its giver can read the results and refine, a stored
+         * page cannot.
+         */
+        if ($brief->taggedOnly && $brief->relationship === 'child') {
+            // `recipient:child` is "their child, who may be forty" (gift-tags.md), so it
+            // counts only when no age tag says 13 or older: production had a €508 VR
+            // headset and a men's tracksuit tagged child with teen and adult ages only.
+            $young = $this->pgTextArray(GiftTags::YOUNG_CHILD);
+            $older = $this->pgTextArray(GiftTags::OLDER_THAN_CHILD);
+            $groups->where(fn ($q) => $q
+                ->whereRaw("jsonb_exists_any(coalesce(product_groups.gift_tags, '[]'::jsonb), ?::text[])", [$young])
+                ->orWhereRaw("jsonb_exists_any(coalesce(product_groups.crowd_tags, '[]'::jsonb), ?::text[])", [$young])
+                ->orWhereRaw("(coalesce(product_groups.gift_tags, '[]'::jsonb) ?? 'recipient:child' and not jsonb_exists_any(coalesce(product_groups.gift_tags, '[]'::jsonb), ?::text[]))", [$older]));
+        }
+
         if ($queries !== []) {
             $tsquery = implode(' OR ', array_map(fn (string $q) => trim($q), $queries));
 

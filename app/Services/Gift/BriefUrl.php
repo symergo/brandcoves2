@@ -144,7 +144,7 @@ final class BriefUrl
      */
     public static function toBrief(Market $market, RecipientType $recipient, ?Interest $interest, ?string $budget = null, int $limit = 4): TasteBrief
     {
-        [$min, $max] = self::budget($budget) ?? [null, null];
+        [$min, $max] = self::budget($budget) ?? [null, self::defaultCeiling($recipient)];
 
         return new TasteBrief(
             market: $market,
@@ -156,6 +156,17 @@ final class BriefUrl
             // A landing page is stored and indexable: tagged products only (2026-11-24).
             taggedOnly: true,
         );
+    }
+
+    /**
+     * The ceiling, in cents, of this recipient's landing page when no budget was
+     * chosen (`gift_landings.default_budget`). Null keeps the engine's own.
+     */
+    public static function defaultCeiling(RecipientType $recipient): ?int
+    {
+        $euros = config('giftcoves.gift_landings.default_budget.'.$recipient->value);
+
+        return is_numeric($euros) ? (int) $euros * 100 : null;
     }
 
     /**

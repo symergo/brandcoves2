@@ -77,6 +77,16 @@ class GiftTags
     public const AGE_BANDS = ['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'];
 
     /**
+     * Tags that say a product suits a child, meaning up to 12: a teenager (13-17) is
+     * not who "kind" or "child" names on a landing page (2026-11-25). The child
+     * landing pages take only products carrying one of these, or `recipient:child`
+     * with no age from OLDER_THAN_CHILD (SuggestionEngine::pool()).
+     */
+    public const YOUNG_CHILD = ['interest:kids', 'age:0-2', 'age:3-5', 'age:6-9', 'age:10-12'];
+
+    public const OLDER_THAN_CHILD = ['age:13-17', 'age:18-29', 'age:30-49', 'age:50-64', 'age:65+'];
+
+    /**
      * The whole vocabulary, grouped, in the order the wizard asks about it.
      *
      * `other` is not an occasion a product can be for. The extra occasions

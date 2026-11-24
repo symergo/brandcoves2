@@ -105,7 +105,8 @@ age groups, fixed on both sides, nothing typed): 0-2, 3-5, 6-9, 10-12, 13-17, 18
 giver to pick one of the same ranges as a step ("How old are they?"), so the two meet as the same
 string and nothing has to be folded. An age band stored on a person from before the groups existed
 matches nothing and scores neutral. Splitting age from `recipient` is what lets `recipient:child`
-mean "their child, who may be forty".
+mean "their child, who may be forty". A child's *landing page* means up to 12, so there `recipient:child` counts only
+without an age of 13 or older (gift-landing-pages.md, 2026-11-25).
 
 ## Storage and retrieval
 

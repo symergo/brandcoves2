@@ -121,8 +121,12 @@ class GiftLandingPlanner
         $brief = new TasteBrief(
             market: $market,
             interests: $best,
+            budgetMax: BriefUrl::defaultCeiling($recipient),
             relationship: $recipient->value,
             limit: $this->pageSize(),
+            // Stored and indexable like the pair pages (2026-11-25): tagged products
+            // only, so the child filter in SuggestionEngine::pool() applies here too.
+            taggedOnly: true,
         );
 
         $suggestions = $this->engine->suggest($brief);

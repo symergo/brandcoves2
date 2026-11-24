@@ -768,6 +768,25 @@ return [
         // Products on one page, and what the planner asks the engine for.
         'page_size' => 24,
 
+        // The price ceiling of a page that names no budget, in euros, per recipient
+        // (2026-11-25, tagging review). Without it the ceiling is gift.max_price
+        // (€500) and the scoring's sweet spot sits near it, so a child's page led
+        // with a €425 television. Roughly what people spend on each: a teacher's
+        // end-of-year present is not a colleague's farewell. `?budget=` still
+        // chooses another band; this is only the page without one.
+        'default_budget' => [
+            'child' => 75,
+            'teacher' => 30,
+            'colleague' => 40,
+            'host' => 40,
+            'grandparent' => 100,
+            'partner' => 150,
+            'mother' => 150,
+            'father' => 150,
+            'friend' => 150,
+            'sibling' => 150,
+        ],
+
         // A recipient's own page (/for/papa) is built from their best
         // interests: the ones with the most products, this many of them.
         'hub_interests' => 3,
