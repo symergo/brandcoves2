@@ -129,7 +129,9 @@ class GiftLandingController extends Controller
 
         return Inertia::render('GiftIdeas/Landing', [
             'heading' => $copy->heading(),
-            'intro' => $copy->intro(),
+            // Written for this page when an editor gave it words (2026-11-24); the
+            // template sentence otherwise. Paragraphs separated by blank lines.
+            'intro' => filled($page->intro) ? (string) $page->intro : $copy->intro(),
             'isRecipientPage' => $topic === null,
             // Who the page is for, sent with a thumb on a card: the crowd's
             // thumbs are counted per kind of person (find-a-gift.md).
@@ -191,7 +193,9 @@ class GiftLandingController extends Controller
             title: $copy->title(),
             // The recorded count, not what this budget shows: the description
             // is about the page, which is what the canonical names.
-            description: $copy->description(max($shown, $page->product_count)),
+            description: filled($page->meta_description)
+                ? (string) $page->meta_description
+                : $copy->description(max($shown, $page->product_count)),
             canonical: url($canonical),
         );
 

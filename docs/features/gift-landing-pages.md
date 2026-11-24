@@ -199,3 +199,18 @@ Two causes, two changes:
   market) gain the same.
 
 What is left of a cold engine run is the text search on `products` (the candidate query above).
+
+## Written copy for the strongest pages (2026-11-24)
+
+Owner, on advice: the ~1,700 pages such as `/be-nl/gift-ideas/for/partner/mode` match "cadeau voor ..."
+searches exactly, but every one carried the same templated sentence and they had been out of the
+sitemap since 2026-11-07. `gift_landings.intro` and `meta_description` (migration `2026_11_24_000200`)
+hold words written for one page; the page shows them instead of the template (paragraphs split on blank
+lines), and a page with written copy is listed in the market's sitemap (`SitemapController`). The rest
+stay indexable and linked, not submitted. The nightly planner upserts its own columns only, so it never
+overwrites them; a page that falls under the product minimum is still removed, copy and all.
+
+Set over the editorial API, as a publish: `GET /gift-landings?market=` lists every page with its copy,
+`POST /gift-landings/copy` `{market, pages: [{path, intro, metaDescription}]}` writes up to 100, all or
+nothing (an unknown path refuses the batch), `intro: null` returns a page to the template. Test:
+`GiftLandingTest::written_copy_replaces_the_template_survives_the_planner_and_enters_the_sitemap`.

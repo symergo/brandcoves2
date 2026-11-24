@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Http\Middleware\LimitHeavyCrawlers;
+use App\Models\GiftLanding;
 use App\Services\Search\SitemapSearches;
 use App\Services\Seo\Alternates;
 use App\Support\SearchUrl;
@@ -221,6 +222,27 @@ class SitemapController extends Controller
                         'loc' => url($path),
                         'priority' => '0.5',
                         'changefreq' => 'daily',
+                    ];
+                });
+
+            /*
+             * The gift landing pages an editor wrote copy for (2026-11-24): the
+             * strongest "cadeau voor ..." pages, each with an introduction of its
+             * own. The others stay indexable and linked, but are not submitted:
+             * 1,700 pages with one templated sentence each are what Google reads
+             * as near-duplicates. GiftLandingCopyController.
+             */
+            GiftLanding::query()
+                ->where('market', $resolved->value)
+                ->whereNotNull('intro')
+                ->orderBy('id')
+                ->get(['path', 'updated_at'])
+                ->each(function (GiftLanding $page) use (&$urls): void {
+                    $urls[] = [
+                        'loc' => url($page->path),
+                        'lastmod' => $page->updated_at?->toAtomString(),
+                        'priority' => '0.7',
+                        'changefreq' => 'weekly',
                     ];
                 });
 

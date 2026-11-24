@@ -11,6 +11,7 @@ use App\Enums\ProductStatus;
 use App\Enums\RecipientType;
 use App\Enums\Source;
 use App\Jobs\PlanGiftLandingPages;
+use App\Models\ApiToken;
 use App\Models\GiftLanding;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -70,6 +71,43 @@ class GiftLandingTest extends TestCase
         $this->assertCount(8, $kept);
         $this->assertSame(['id', 'fits', 'chosenByOthers'], array_keys($kept[0]));
         $this->assertNotNull(Cache::get(GiftLanding::lookup(Market::BeNl, RecipientType::Father, null)->verdictsKey()));
+    }
+
+    #[Test]
+    public function written_copy_replaces_the_template_survives_the_planner_and_enters_the_sitemap(): void
+    {
+        // Owner, 2026-11-24: the strongest landing pages get words of their own.
+        config(['giftcoves.robots_allow' => true]);
+        $this->products(Market::BeNl, 'Koksmes', 9, ['interest:cooking']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+        $key = ApiToken::issue('claude', [ApiToken::PUBLISH, ApiToken::READ])['token'];
+
+        $this->withToken($key)->getJson('/api/editorial/gift-landings?market=be-nl')
+            ->assertOk()
+            ->assertJsonFragment(['path' => '/be-nl/gift-ideas/for/papa/koken', 'intro' => null]);
+
+        $this->withToken($key)->postJson('/api/editorial/gift-landings/copy', [
+            'market' => 'be-nl',
+            'pages' => [['path' => '/be-nl/gift-ideas/for/papa/koken', 'intro' => "Een vader die kookt, heeft al een pan.\n\nWat hij mist, is een mes dat snijdt.", 'metaDescription' => 'Koksmessen en wat erbij hoort, voor een vader die graag kookt.']],
+        ])->assertOk()->assertJsonPath('written', 1);
+
+        // An unknown address refuses the whole batch.
+        $this->withToken($key)->postJson('/api/editorial/gift-landings/copy', [
+            'market' => 'be-nl',
+            'pages' => [['path' => '/be-nl/gift-ideas/for/papa/bestaat-niet', 'intro' => 'Iets.']],
+        ])->assertStatus(422);
+
+        // The nightly planner rewrites its own columns and leaves the words.
+        $this->travel(1)->days();
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $response = $this->get('/be-nl/gift-ideas/for/papa/koken')->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('intro', "Een vader die kookt, heeft al een pan.\n\nWat hij mist, is een mes dat snijdt.")->etc());
+        $this->assertStringContainsString('<meta name="description" content="Koksmessen en wat erbij hoort, voor een vader die graag kookt."', (string) $response->getContent());
+
+        $xml = (string) $this->get('/sitemap-be-nl.xml')->assertOk()->getContent();
+        $this->assertStringContainsString('<loc>'.url('/be-nl/gift-ideas/for/papa/koken').'</loc>', $xml);
+        $this->assertStringNotContainsString('<loc>'.url('/be-nl/gift-ideas/for/papa').'</loc>', $xml, 'a page without written copy is not submitted');
     }
 
     #[Test]

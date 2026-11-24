@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CoveStageController;
 use App\Http\Controllers\Api\EditionController;
 use App\Http\Controllers\Api\EditorialImageController;
 use App\Http\Controllers\Api\EditorialIndexController;
+use App\Http\Controllers\Api\GiftLandingCopyController;
 use App\Http\Controllers\Api\GuideEditorialController;
 use App\Http\Controllers\Api\InterestCandidatesController;
 use App\Http\Controllers\Api\ProductTitleController;
@@ -126,6 +127,9 @@ Route::prefix('editorial')
             Route::get('/guides/{guide}', [GuideEditorialController::class, 'show']);
 
             Route::get('/editions/{market}/{date}', [EditionController::class, 'show']);
+
+            // The gift landing pages and their written copy (2026-11-24).
+            Route::get('/gift-landings', [GiftLandingCopyController::class, 'index']);
         });
 
         /*
@@ -265,5 +269,9 @@ Route::prefix('editorial')
              */
             Route::post('/products/titles', [ProductTitleController::class, 'store']);
             Route::post('/products/tags', [ProductTitleController::class, 'storeTags']);
+
+            // Written introductions for gift landing pages: they reach readers and the
+            // sitemap at once, so a publish. GiftLandingCopyController.
+            Route::post('/gift-landings/copy', [GiftLandingCopyController::class, 'store']);
         });
     });

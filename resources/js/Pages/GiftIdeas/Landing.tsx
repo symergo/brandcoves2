@@ -92,7 +92,12 @@ export default function Landing({
 
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{heading}</h1>
-                <p className="mt-2 text-ink-soft">{intro}</p>
+                {/* A written introduction may run to a few paragraphs (2026-11-24). */}
+                {intro.split(/\n\s*\n/).map((paragraph, i) => (
+                    <p key={i} className="mt-2 max-w-3xl text-ink-soft">
+                        {paragraph}
+                    </p>
+                ))}
             </header>
 
             {/* A budget narrows this page; it does not make a new one. */}
