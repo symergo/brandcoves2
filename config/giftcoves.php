@@ -306,6 +306,21 @@ return [
             'min_hours' => 2,
 
             /*
+             * At most three words in a published term (2026-11-24).
+             *
+             * A scraper searches the first four words of product titles, from
+             * many addresses and on several days, so it passes the floor above:
+             * the sitemap submitted "co2 revolver speelgoedgeweer schots", "life
+             * like trains train" and "explain pain supercharged your" to Google
+             * as pages people look for. On production's log that day, almost
+             * every junk term had exactly four words and almost every real one
+             * one to three ("stoomreiniger", "airpods pro", "kerastase curl
+             * manifesto"). A real four-word search still works and is still
+             * logged; it is only not published or submitted.
+             */
+            'max_words' => 3,
+
+            /*
              * Twenty per column.
              *
              * It was 100 in one list for a day. A hundred rows is a keyword dump

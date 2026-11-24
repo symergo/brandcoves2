@@ -219,7 +219,9 @@ class SearchTermStats
         $query = DB::table('search_log')
             ->where('market', $market->value)
             ->where('result_count', '>', 0)
-            ->whereRaw('length(query) <= ?', [60]);
+            ->whereRaw('length(query) <= ?', [60])
+            // A title pasted by a scraper, not a search: see `max_words` in config.
+            ->whereRaw("array_length(regexp_split_to_array(trim(query), '\s+'), 1) <= ?", [(int) config('giftcoves.search.popular.max_words', 3)]);
 
         return $this->publishable($query, $market);
     }

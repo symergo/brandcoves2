@@ -161,6 +161,24 @@ class PopularSearchesTest extends TestCase
     }
 
     #[Test]
+    public function a_pasted_product_title_is_not_published(): void
+    {
+        // A scraper searches the first four words of product titles on several days
+        // (2026-11-24): past the privacy floor, and into the sitemap.
+        $this->log('co2 revolver speelgoedgeweer schots', 6);
+        $this->log('kerastase curl manifesto', 6);
+        $this->log('koptelefoon', 40);
+
+        $stats = app(SearchTermStats::class)->for(Market::BeNl);
+
+        foreach (['months', 'latest'] as $list) {
+            $terms = $list === 'months' ? array_column($stats['months'][0]['terms'], 'term') : array_column($stats['latest'], 'term');
+            $this->assertNotContains('co2 revolver speelgoedgeweer schots', $terms, "a four-word title fragment in {$list}");
+            $this->assertContains('kerastase curl manifesto', $terms, "a three-word search is still published in {$list}");
+        }
+    }
+
+    #[Test]
     public function a_search_that_found_nothing_is_not_offered_as_a_link(): void
     {
         $this->log('iets wat wij niet verkopen', 50, results: 0);
