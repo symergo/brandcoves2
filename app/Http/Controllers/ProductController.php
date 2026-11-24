@@ -69,6 +69,18 @@ class ProductController extends Controller
             return redirect()->to($current->url("p/{$productGroup->id}/{$productGroup->slug}"), 301);
         }
 
+        /*
+         * The Amazon row, asked for by the page's own JavaScript after it is shown
+         * (2026-11-23). Only a browser that runs the page asks, so a scraper that
+         * fetches the HTML alone queues no Amazon lookup and spends no credit: one
+         * fetching thousands of product pages an hour from residential proxies had
+         * spent the day's 1,000 lookups by 01:06. Answered here, before the offers
+         * and the rest of the page are worked out.
+         */
+        if ((string) request()->header('X-Inertia-Partial-Data') === 'amazonLink') {
+            return Inertia::render('Product', ['amazonLink' => fn (): ?array => $this->amazonLink($productGroup, $current)]);
+        }
+
         $offers = $productGroup->offers()
             ->with('merchant')
             ->where('status', ProductStatus::Active->value)
@@ -169,11 +181,15 @@ class ProductController extends Controller
 
             /*
              * "Bekijk op Amazon" (2026-11-23): the same product on Amazon, by its
-             * matched ASIN, shown among the offers without a price. Null until the
-             * barcode has been matched; a person's visit queues that, in the
-             * background (docs/features/amazon-links.md).
+             * matched ASIN, shown among the offers without a price. Deferred: the
+             * browser asks for it after the page is shown (see the top of this
+             * method), and that request is what queues an unmatched barcode
+             * (docs/features/amazon-links.md). Only for a barcode on a market with
+             * an Amazon storefront, so other pages make no follow-up request.
              */
-            'amazonLink' => $this->amazonLink($productGroup, $current),
+            'amazonLink' => $productGroup->identity_kind?->value === 'ean' && app(AmazonMatches::class)->storefront($current->get()) !== null
+                ? Inertia::defer(fn (): ?array => $this->amazonLink($productGroup, $current), 'amazonLink')
+                : null,
         ]);
     }
 

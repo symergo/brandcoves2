@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -82,20 +83,24 @@ class AmazonMatchesTest extends TestCase
     }
 
     #[Test]
-    public function a_persons_visit_queues_the_lookup_and_a_crawlers_does_not(): void
+    public function only_the_pages_own_follow_up_queues_the_lookup_never_the_html_or_a_crawler(): void
     {
         Queue::fake();
-        // Two products: the first visit to a page fills the shared page cache, and a
-        // later visit is served from it without running the controller at all.
-        $seenByBot = $this->group(Market::BeNl, '4006381333931');
         $group = $this->group(Market::BeNl, '5702017583518');
+        $url = "/be-nl/p/{$group->id}/{$group->slug}";
 
-        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')
-            ->get("/be-nl/p/{$seenByBot->id}/{$seenByBot->slug}")->assertOk();
+        // The page itself, as a scraper fetching HTML gets it: nothing queued, and the
+        // Amazon row left for the follow-up (2026-11-23).
+        $this->withHeader('User-Agent', self::PERSON)->get($url)->assertOk()
+            ->assertInertia(fn ($page) => $page->missing('amazonLink')->etc());
         Queue::assertNothingPushed();
 
-        $this->withHeader('User-Agent', self::PERSON)->get("/be-nl/p/{$group->id}/{$group->slug}")->assertOk();
+        // A crawler that did run the follow-up queues nothing either.
+        $this->followUp($url, 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)');
+        Queue::assertNothingPushed();
 
+        // A browser's follow-up does.
+        $this->followUp($url);
         Queue::assertPushed(LookUpAmazonMatches::class, fn (LookUpAmazonMatches $job) => $job->storefront === 'amazon.com.be' && $job->gtins === ['5702017583518']);
     }
 
@@ -106,14 +111,14 @@ class AmazonMatchesTest extends TestCase
         $group = $this->group(Market::BeNl, '5702017583518', 'Technic racewagen');
         DB::table('amazon_matches')->insert(['storefront' => 'amazon.com.be', 'gtin' => '5702017583518', 'asin' => 'B0CFVYBW3L', 'checked_at' => now()]);
 
-        $this->withHeader('User-Agent', self::PERSON)->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertOk()
-            // Drawn like the other shops: the storefront as its name, Amazon's icon, a title.
-            ->assertInertia(fn ($page) => $page
-                ->where('amazonLink.url', 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21')
-                ->where('amazonLink.host', 'amazon.com.be')
-                ->where('amazonLink.icon', 'https://www.amazon.com.be/favicon.ico')
-                ->where('amazonLink.title', 'Technic racewagen'));
+        // Drawn like the other shops: the storefront as its name, Amazon's icon, a title.
+        $row = $this->followUp("/be-nl/p/{$group->id}/{$group->slug}")->json('props.amazonLink');
+        $this->assertSame([
+            'url' => 'https://www.amazon.com.be/dp/B0CFVYBW3L?tag=giftcoves05-21',
+            'host' => 'amazon.com.be',
+            'icon' => 'https://www.amazon.com.be/favicon.ico',
+            'title' => 'Technic racewagen',
+        ], $row);
 
         $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=racewagen')
             ->assertOk()
@@ -147,6 +152,19 @@ class AmazonMatchesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('amazonLink', null));
         Queue::assertNothingPushed();
+    }
+
+    /** The request the product page's JavaScript makes for the deferred Amazon row. */
+    private function followUp(string $url, string $userAgent = self::PERSON): TestResponse
+    {
+        $version = $this->withHeader('User-Agent', $userAgent)->get($url)->viewData('page')['version'];
+
+        return $this->withHeader('User-Agent', $userAgent)->get($url, [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) $version,
+            'X-Inertia-Partial-Component' => 'Product',
+            'X-Inertia-Partial-Data' => 'amazonLink',
+        ])->assertOk();
     }
 
     private function group(Market $market, string $gtin, ?string $title = null): ProductGroup

@@ -32,7 +32,10 @@ ASIN Data API (Traject Data) answers one question per barcode: which ASIN is thi
 storefront. `type=product&amazon_domain=…&gtin=…`, one credit. The key is `ASINDATA_API_KEY`
 (locally `.claude/asindataapi.api`, gitignored).
 
-1. A **product page** a person opens reads its match and queues `LookUpAmazonMatches` for its
+1. A **product page** a person opens asks for its Amazon row in a follow-up request its own
+   JavaScript makes after the page is shown (2026-11-23): a scraper fetching only the HTML, which
+   had spent the day's 1,000 lookups by 01:06 from residential proxies, queues nothing. That
+   request reads the match and queues `LookUpAmazonMatches` for its
    barcode when it was never asked or asked more than `recheck_days` (60) ago. A search page
    shows the matches it has but queues nothing (owner, 2026-11-23: "don't do a batch"): a page of
    results would queue thirty barcodes at once. A crawler queues nothing: credits go to what people look at. A
