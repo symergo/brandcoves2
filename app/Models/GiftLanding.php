@@ -93,6 +93,7 @@ class GiftLanding extends Model
 
     public function toBrief(int $limit): TasteBrief
     {
-        return TasteBrief::fromArray($this->brief ?? [], $this->market, $limit);
+        // Tagged products only (2026-11-24): a stored, indexable page takes no word-search guesses.
+        return TasteBrief::fromArray($this->brief ?? [], $this->market, $limit)->taggedOnly();
     }
 }

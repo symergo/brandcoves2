@@ -60,6 +60,16 @@ class SuggestionEngine
     /** Inferred (auto-tagged) candidates read per pool; see pool(). */
     private const INFERRED_CAP = 3000;
 
+    /**
+     * Erotic categories and titles, kept out of every brief that does not ask for `adult`
+     * (2026-11-24, see pool()). Case-insensitive POSIX regexes, in the four languages the
+     * feeds use. "Sexy" alone is not on the list (Sexy Hair is a hair care brand), nor "lubricant" (bike-chain
+     * oil) or "anaal" (part of "kanaal").
+     */
+    private const ADULT_CATEGORY = 'vibrator|dildo|masturbat|sex ?toy|seksspeel|erotisch|erotiek|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|koppelspeelgoed|plug anal|anal plug';
+
+    private const ADULT_TITLE = 'vibrator|dildo|masturbat|sex ?toy|seksspeeltje|erotisch|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|pocket pussy|kunstvagina|sexy lingerie|lingerie sexy|body ?stocking|netkous|facesitting|tepelklem|nipple clamp';
+
     /** Angle queries per retrieval. Beyond this the tsquery stops being selective. */
     private const MAX_QUERIES = 24;
 
@@ -545,6 +555,26 @@ class SuggestionEngine
                 ->whereRaw('not '.TitleGender::sql($gender->other()));
         }
 
+        /*
+         * Adult products only when the brief asks for them (2026-11-24, owner: "Do 1 to
+         * 3" after the tagging review). The review found a masturbator and a strap-on on
+         * the page for a child who likes relaxing, an erotic gift set on the child's sweets
+         * page and erotic lingerie on the child's fishing page, and the same products on the
+         * teacher's, grandparent's and colleague's pages. They got there three ways: judged
+         * `wellness` without `interest:adult` (judged before that value existed), untagged
+         * and found by a word ("visnet"), and filed under an unrelated category ("Drysuit").
+         * So a product is adult when any of its tags says so, or its category or title is
+         * erotic, and it stays out of every brief that did not ask for `adult`.
+         */
+        if (! in_array('adult', array_map(fn (string $i) => mb_strtolower(trim($i)), $brief->interests), true)) {
+            foreach (['gift_tags', 'auto_tags', 'crowd_tags'] as $column) {
+                $groups->whereRaw("not (coalesce(product_groups.{$column}, '[]'::jsonb) ?? 'interest:adult')");
+            }
+
+            $groups->whereRaw("coalesce(product_groups.category, '') !~* ?", [self::ADULT_CATEGORY])
+                ->whereRaw('product_groups.title !~* ?', [self::ADULT_TITLE]);
+        }
+
         if ($queries !== []) {
             $tsquery = implode(' OR ', array_map(fn (string $q) => trim($q), $queries));
 
@@ -658,9 +688,15 @@ class SuggestionEngine
              * products in 27 ms. An interest with few tagged products, or a
              * free-text one with no tag at all, still searches the text.
              */
-            $candidates = count($tags) === count($wanted) && $this->enoughTagged($brief->market->value, $tags)
+            // A landing page takes tagged products only (TasteBrief::$taggedOnly).
+            $candidates = $brief->taggedOnly || (count($tags) === count($wanted) && $this->enoughTagged($brief->market->value, $tags))
                 ? null
                 : $byText;
+
+            if ($candidates === null && $tags === []) {
+                // Tagged only, and no interest the vocabulary knows: nothing qualifies.
+                return $groups->whereRaw('false');
+            }
 
             if ($tags !== []) {
                 $array = $this->pgTextArray($tags);

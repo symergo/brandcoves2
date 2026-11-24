@@ -59,6 +59,13 @@ final readonly class TasteBrief
         public ?string $recipientId = null,
         /** 'male' or 'female' when the giver said so ("Voor hem / Voor haar"); see gender(). */
         public ?string $gender = null,
+        /**
+         * Only products whose tags carry the brief's interests, never a word match
+         * (2026-11-24). For the gift landing pages, which are stored and indexable: the
+         * word search for "fishing" found "visnet", fishnet, and put erotic lingerie on
+         * the page for a child who likes fishing. Find a gift keeps the word search.
+         */
+        public bool $taggedOnly = false,
     ) {}
 
     /**
@@ -427,6 +434,12 @@ final readonly class TasteBrief
         return $this->with(query: $query === '' ? null : $query);
     }
 
+    /** The same brief, from tagged products only: see `$taggedOnly`. */
+    public function taggedOnly(): self
+    {
+        return new self(...[...get_object_vars($this), 'taggedOnly' => true]);
+    }
+
     public function withLimit(int $limit): self
     {
         return $this->with(limit: $limit);
@@ -467,6 +480,7 @@ final readonly class TasteBrief
             hasEverything: $this->hasEverything,
             recipientId: $this->recipientId,
             gender: $this->gender,
+            taggedOnly: $this->taggedOnly,
         );
     }
 
@@ -525,6 +539,7 @@ final readonly class TasteBrief
             hasEverything: $this->hasEverything,
             recipientId: $this->recipientId,
             gender: $this->gender,
+            taggedOnly: $this->taggedOnly,
         );
     }
 }

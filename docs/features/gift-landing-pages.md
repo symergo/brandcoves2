@@ -235,3 +235,21 @@ only, and the owner had taken it off the Gift Ideas shelf on 2026-09-28 (the she
 - A sentence in the Find a gift entry on /help, four languages.
 
 Test: `GiftLandingTest::the_pages_have_a_way_in_a_directory_the_sitemap_and_their_products`.
+
+## Adult products and word matches kept off (2026-11-24)
+
+The tagging review of that day (owner: "a tv is not for a child that likes technical stuff", then "Do 1
+to 3") found, live: a masturbator and a strap-on on `kind/ontspannen` (judged `wellness`, never
+`adult`), an erotic gift set on `kind/snoep-en-chocolade` and erotic lingerie on nl-nl `kind/vissen`
+(untagged, found by the word search; "visnet" is fishnet), the same products on the teacher's,
+grandparent's and colleague's pages, and 15 erotica pages for a teacher, a grandparent, a colleague, a
+host and a mum.
+
+- `SuggestionEngine::pool()` keeps a product out of every brief that does not ask for `adult` when any
+  of its tags (judged, inferred or the crowd's) is `interest:adult`, or its category or title is erotic
+  (`ADULT_CATEGORY`, `ADULT_TITLE`: titles too, because one lingerie set is filed under "Drysuit").
+- `gift_landings.excluded_pairs` blocks `adult` for every recipient but a partner.
+- Landing pages take tagged products only (`TasteBrief::$taggedOnly`, set by `GiftLanding::toBrief()` and
+  `BriefUrl::toBrief()`): a stored, indexable page takes no word-search guesses. Find a gift keeps them.
+
+Test: `GiftLandingTest::adult_products_and_word_matches_stay_off_the_pages_and_erotica_is_for_a_partner_only`.

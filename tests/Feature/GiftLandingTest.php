@@ -133,6 +133,38 @@ class GiftLandingTest extends TestCase
     }
 
     #[Test]
+    public function adult_products_and_word_matches_stay_off_the_pages_and_erotica_is_for_a_partner_only(): void
+    {
+        // The tagging review of 2026-11-24: a masturbator judged `wellness` on a child's
+        // page, lingerie found by the word "visnet", erotica pages for a teacher.
+        config(['giftcoves.gift_landings.excluded_interests' => array_values(array_diff(
+            Interest::values(),
+            [Interest::Cooking->value, Interest::Adult->value],
+        ))]);
+
+        $knives = $this->products(Market::BeNl, 'Koksmes', 9, ['interest:cooking']);
+        // Judged cooking, never adult, but filed and named as what it is.
+        $toy = $this->products(Market::BeNl, 'Fuck-O-Matic Automatische Masturbator', 1, ['interest:cooking'])[0];
+        $toy->update(['category' => 'Masturbator']);
+        // Untagged: only a word search could find it.
+        $untagged = $this->products(Market::BeNl, 'Koksmes van de week', 1, [])[0];
+        $this->products(Market::BeNl, 'Massagekaars', 9, ['interest:adult']);
+
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        $cooking = GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking);
+        $shown = array_map(fn (array $v) => (int) $v['id'], Cache::get($cooking->verdictsKey()));
+        $this->assertContains($knives[0]->id, $shown);
+        $this->assertNotContains($toy->id, $shown, 'an erotic product on a page that did not ask for one');
+        $this->assertNotContains($untagged->id, $shown, 'a word match on a stored landing page');
+
+        $this->assertNotNull(GiftLanding::lookup(Market::BeNl, RecipientType::Partner, Interest::Adult));
+        foreach ([RecipientType::Teacher, RecipientType::Grandparent, RecipientType::Colleague, RecipientType::Mother, RecipientType::Child] as $who) {
+            $this->assertNull(GiftLanding::lookup(Market::BeNl, $who, Interest::Adult), "an erotica page for {$who->value}");
+        }
+    }
+
+    #[Test]
     public function a_page_that_falls_under_the_minimum_is_removed_the_next_night(): void
     {
         $knives = $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);

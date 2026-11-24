@@ -153,6 +153,8 @@ final class BriefUrl
             budgetMax: $max,
             relationship: $recipient->value,
             limit: $limit,
+            // A landing page is stored and indexable: tagged products only (2026-11-24).
+            taggedOnly: true,
         );
     }
 

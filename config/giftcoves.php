@@ -780,8 +780,21 @@ return [
         // "A child who loves drinks" is a page selling alcohol to a child, and
         // coffee and hunting are not a child's hobby either. Every recipient had
         // all 38 interests until 2026-09-27.
+        //
+        // `adult` for everyone but a partner (2026-11-24): the tagging review found 15 live
+        // erotica pages for a teacher, a grandparent, a colleague, a host and a mum, in three
+        // markets, the teacher's opening on a dildo. Nobody searches "erotisch cadeau voor
+        // mijn zus" either.
         'excluded_pairs' => [
             'child' => ['drinks', 'coffee', 'hunting', 'adult'],
+            'mother' => ['adult'],
+            'father' => ['adult'],
+            'grandparent' => ['adult'],
+            'friend' => ['adult'],
+            'colleague' => ['adult'],
+            'sibling' => ['adult'],
+            'teacher' => ['adult'],
+            'host' => ['adult'],
         ],
 
         /*
