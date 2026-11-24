@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Console\Commands\WarmSitemapSearchesCommand;
 use App\Enums\Market;
 use App\Http\Middleware\CacheAnonymousPage;
 use App\Services\Search\SearchTermStats;
@@ -31,6 +32,7 @@ class SitemapSearchCacheTest extends TestCase
         parent::setUp();
 
         config(['giftcoves.page_cache.enabled' => true, 'giftcoves.robots_allow' => true]);
+        WarmSitemapSearchesCommand::$pause = 0;
 
         // One submitted search page on be-nl: lego.
         $this->app->instance(SearchTermStats::class, new class extends SearchTermStats

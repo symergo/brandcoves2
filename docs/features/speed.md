@@ -1385,6 +1385,9 @@ search page would almost never be hit; the ~20 submitted per market are the page
   makes most runs request nothing: it works after a deploy (the cache key holds the commit) and once a
   day. Over **IPv4**: Cloudflare's first rule skips the VPS's IPv4 address, and over IPv6 the VPS got
   the challenge page (403). Production and the page cache only (`robots_allow`).
+- Two seconds between pages: the search route allows 60 a minute per address and Cloudflare 15 in ten
+  seconds. The first run on production, back to back, had 23 of 58 refused (429); the next run retries
+  what failed, since only a success leaves a marker.
 - `SitemapSearches` is also what the sitemap lists, so the two cannot disagree.
 
 Test: `SitemapSearchCacheTest`.

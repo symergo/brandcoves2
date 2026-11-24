@@ -36,6 +36,9 @@ class WarmSitemapSearchesCommand extends Command
     /** Googlebot's own user agent: the cached copy must be the crawler's version of the page. */
     private const AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
+    /** Microseconds between pages; see the note at the request. A test sets it to nothing. */
+    public static int $pause = 2_000_000;
+
     public function handle(): int
     {
         if (! config('giftcoves.robots_allow') || ! config('giftcoves.page_cache.enabled')) {
@@ -67,6 +70,13 @@ class WarmSitemapSearchesCommand extends Command
                     ->withOptions(['force_ip_resolve' => 'v4'])
                     ->withHeaders(['User-Agent' => self::AGENT])
                     ->get(url($path));
+
+                /*
+                 * Two seconds between pages. The search route allows 60 requests a
+                 * minute per address and Cloudflare 15 in ten seconds; back to back,
+                 * the first run on production got 23 of 58 refused (429).
+                 */
+                usleep(self::$pause);
 
                 $how = (string) $response->header(CacheAnonymousPage::HEADER);
 
