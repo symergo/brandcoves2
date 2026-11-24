@@ -38,6 +38,12 @@ final class LimitHeavyCrawlers
         'exasearchbot' => 'ExaSearchBot',
         // Amazon's second crawler (owner, 2026-11-14): 299 searches run in an hour.
         'amzn-searchbot' => 'Amzn-SearchBot',
+        // Amazon's agent for pages a person asks its assistant about (Alexa+, Rufus).
+        // It reached search pages on 2026-11-23 (owner: "stop all bots from amazon").
+        'amzn-user' => 'Amzn-User',
+        // Any later Amazon agent named "Amzn-…", matched before it is seen. Last, so the
+        // named ones above keep their own rate-limit bucket.
+        'amzn-' => 'Amzn',
     ];
 
     /**

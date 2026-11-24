@@ -113,8 +113,13 @@ class HeavyCrawlersTest extends TestCase
         $amzn = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-SearchBot/0.1) Chrome/119.0.6045.214 Safari/537.36';
         $page = "/be-nl/p/{$group->id}/{$group->slug}";
 
-        foreach ([self::AMAZON, $amzn, self::SEMRUSH, self::EXA] as $agent) {
+        // Amzn-User (Amazon's assistant fetching for a person) and any later "Amzn-…" agent too.
+        $amznUser = 'Mozilla/5.0 (compatible; Amzn-User/0.1)';
+        $amznLater = 'Mozilla/5.0 (compatible; Amzn-NewAgent/1.0)';
+
+        foreach ([self::AMAZON, $amzn, $amznUser, $amznLater, self::SEMRUSH, self::EXA] as $agent) {
             $this->withHeader('User-Agent', $agent)->get($page)->assertStatus(403);
+            $this->withHeader('User-Agent', $agent)->get('/be-nl/zoek/lego')->assertStatus(403);
         }
 
         $this->withHeader('User-Agent', self::GOOGLE)->get($page)->assertOk();
@@ -129,7 +134,7 @@ class HeavyCrawlersTest extends TestCase
         $robots = $this->get('/robots.txt')->assertOk()->getContent();
         [$everybody, $three] = explode("\n\n", $robots);
 
-        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nCrawl-delay: 10\n", $three);
+        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nUser-agent: Amzn-User\nUser-agent: Amzn\nCrawl-delay: 10\n", $three);
         // Product pages refused too (owner, 2026-11-23)
         $this->assertStringContainsString('Disallow: /*/p/', $three);
         $this->assertStringContainsString('Disallow: /*/zoek/', $three);

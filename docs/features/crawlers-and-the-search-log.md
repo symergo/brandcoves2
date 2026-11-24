@@ -162,3 +162,9 @@ ExaSearchBot) keep their rules (no search pages, ten other pages a minute) and a
 product pages (`/{market}/p/…`, 403). Their robots.txt group says `Disallow: /*/p/`. In the 24
 hours before, only Amazonbot of the two Amazon crawlers was seen (75 requests). Search engines and
 the AI crawlers are not affected.
+
+Amzn-User, the agent Amazon's assistant (Alexa+, Rufus) uses to fetch a page a person asked about,
+joined the list on 2026-11-23 after it reached a search page (owner: "stop all bots from amazon").
+So did a catch-all on `amzn-`, so a later Amazon agent with that prefix is refused before it is
+first seen. Both in `LimitHeavyCrawlers::CRAWLERS`, so search and product pages answer 403 and
+robots.txt names them.
