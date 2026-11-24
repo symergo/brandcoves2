@@ -98,6 +98,23 @@ production that day), language, and GiftCoves as author and publisher. The autho
 by a person; an invented byline is the kind of markup that earns a manual action. Not on a Shop Cove
 (a page about a shop) or a preview. Test: `CoveProseTest::a_guide_says_who_wrote_it_and_when_and_a_shop_cove_does_not`.
 
+**Daily Coves: a search phrase, a description, one canonical per theme (2026-11-24).** Owner: "the
+titles of the daily coves, they don't look very descriptive", then "Do all". A Daily's title is a mood
+("Sur deux roues", "Petites choses volantes"), which nobody searches for, and its description was the
+blurb: a teaser, a template shared by most be-fr editions, or (once) English on a French page.
+
+- `focus_keyphrase` goes in front of the theme in the `<title>` (`site.daily.seo_title_keyphrase`):
+  "Accessoires vélo cadeau : Sur deux roues". The heading keeps the theme.
+- `meta_description` comes before the blurb as the description.
+- A repeated theme (be-fr ran "On rentre" ten times, be-nl "Naar binnen" six; 34 titles repeated)
+  names its first edition as canonical (`DailyCoveController::firstOfTheme()`), matched on the title
+  because older editions carry a numbered `theme_slug`.
+- The guide box on a Daily shows the article with the same `focus_keyphrase` first
+  (`EditionPresenter::guide()`), else the newest article as before. Fifteen evergreen guides were
+  written that day on the most repeated themes, with exactly the phrases their Dailies carry.
+- `POST /coves` takes both fields on a Daily, the build copies them from the plan, and `PATCH` writes
+  them (and the blurb) onto the live edition without a rebuild. Tests: `DailySeoTest`.
+
 ## Every public page is indexable (2026-09-12)
 
 The owner's rule, stated on 2026-09-12: **every page is indexable, every internal

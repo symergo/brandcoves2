@@ -133,7 +133,8 @@ time rather than as a silently skipped pick at build time.
                                       // (docs/features/has-everything.md)
   },
 
-  // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere:
+  // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere,
+  // except focusKeyphrase and metaDescription on a daily (2026-11-24):
   "focusKeyphrase": "…",              // max 120
   "searchQuestions": ["…?"],            // max 10 × 160: what people search, as questions.
                                       // The advice writer's headings and FAQ (2026-11-07)
@@ -223,7 +224,7 @@ all of these and is authoritative; this is the map.
 | **approve** | `POST /coves/{id}/approve` |
 | **build** | `POST /coves/{id}/build` · read back with `GET /coves/{id}/edition` |
 | **any, in bulk** | `POST /coves/stages/{curate\|approve\|build}` with a selector, `dryRun` supported |
-| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase`, `searchQuestions`, `brief` (`null` clears it; left out, untouched) |
+| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase`, `metaDescription`, `searchQuestions`, `brief` (`null` clears it; left out, untouched). On a Daily, `focusKeyphrase`, `metaDescription` and `blurb` also reach the live page at once (2026-11-24) |
 
 Two things to know before writing anything:
 

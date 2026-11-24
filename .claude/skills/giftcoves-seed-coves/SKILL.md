@@ -121,6 +121,15 @@ perfectly usable **different product** that every validation the server has will
 Article fields — `focusKeyphrase`, `searchQuestions`, `metaDescription`, `body`, `faq` — are **refused**
 on a non-article kind, not dropped. A Daily's or a persona's words go in `editorial`.
 
+**Except a Daily's two search fields (since 2026-11-24): send `focusKeyphrase` and `metaDescription`
+with every Daily.** The Daily's title is a mood ("Op twee wielen"); the search phrase goes in front of it
+in the page's `<title>` ("Fietsaccessoires cadeau: Op twee wielen"). Lowercase, 2 to 5 words, what a
+person types, built from the products, usually with "cadeau"; a repeated theme reuses the first
+edition's phrase (repeats point at the first edition as canonical). Use the phrase of an existing guide
+on the subject where there is one: the Daily then links to that guide. The description: 120 to 155
+characters naming what is in the list, no prices, no dashes. `PATCH /coves/{id}` sets both on a live
+Daily at once, without a rebuild.
+
 One slug namespace covers every kind in a market, so a slug another kind already
 holds is a 422 and never an upsert.
 
