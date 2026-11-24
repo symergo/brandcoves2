@@ -66,7 +66,7 @@ class SuggestionEngine
      * feeds use. "Sexy" alone is not on the list (Sexy Hair is a hair care brand), nor "lubricant" (bike-chain
      * oil) or "anaal" (part of "kanaal").
      */
-    private const ADULT_CATEGORY = 'vibrator|dildo|masturbat|sex ?toy|seksspeel|erotisch|erotiek|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|koppelspeelgoed|plug anal|anal plug';
+    private const ADULT_CATEGORY = 'vibrator|dildo|masturbat|sex ?toy|seks|penispomp|erotisch|erotiek|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|koppelspeelgoed|plug anal|anal plug';
 
     private const ADULT_TITLE = 'vibrator|dildo|masturbat|sex ?toy|seksspeeltje|erotisch|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|pocket pussy|kunstvagina|sexy lingerie|lingerie sexy|body ?stocking|netkous|facesitting|tepelklem|nipple clamp';
 
