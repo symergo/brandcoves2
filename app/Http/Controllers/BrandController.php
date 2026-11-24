@@ -10,25 +10,23 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Models\ProductGroup;
 use App\Services\Amazon\AmazonMatches;
 use App\Services\Amazon\AmazonSearch;
 use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
-use App\Services\Images\ImageProxy;
-use App\Services\Images\ShopImageSizes;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Search\AmazonSearchLink;
-use App\Services\Search\CheapestOffer;
 use App\Services\Search\LiveOfferCard;
+use App\Services\Search\ResultCards;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Search\SearchWatch;
 use App\Services\Search\WaitShops;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
@@ -259,7 +257,7 @@ class BrandController extends Controller
                 'empty' => $result->isEmpty(),
                 'currentPage' => $result->groups->currentPage(),
                 'hasMore' => $result->groups->hasMorePages(),
-                'items' => $this->cards($result->groups->items()),
+                'items' => app(ResultCards::class)->cards($result->groups->items(), $query->market),
             ],
             /*
              * Live sources that may not be mirrored — Amazon. Everything bol
@@ -286,6 +284,12 @@ class BrandController extends Controller
                 ? Inertia::defer(fn (): array => $amazon->results($market, $amazonTerm), 'amazon')
                 : null,
             'amazonShop' => $amazonOffered ? app(AmazonMatches::class)->storefront($market) : null,
+
+            // The by-store view and the follow bell, as on the search page (owner,
+            // 2026-11-24: "I don't see a grid/store button? And no follow icon").
+            // The bell follows the brand plus its words, as a search term.
+            'lanes' => $query->view === 'store' ? app(ResultCards::class)->lanes($search->storeLanes($query)) : null,
+            'watch' => SearchWatch::for($request->user(), $market, $amazonTerm),
 
             /*
              * "Search this brand on Amazon too".
@@ -1072,7 +1076,7 @@ class BrandController extends Controller
     private function liveUpdate(SearchQuery $query, SearchResult $shown, SearchService $search): array
     {
         $result = $search->search($query->unlogged());
-        $items = $this->cards($result->groups->items());
+        $items = app(ResultCards::class)->cards($result->groups->items(), $query->market);
 
         $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());
         $added = count(array_diff(array_map(fn (array $card) => (int) $card['id'], $items), $before));
@@ -1084,50 +1088,14 @@ class BrandController extends Controller
                 'hasMore' => $result->groups->hasMorePages(),
                 'items' => $items,
             ],
+            // The columns again in the by-store view: drawn from their own query,
+            // so the shops' products reach them only through this (see SearchController).
+            'lanes' => $query->view === 'store' ? app(ResultCards::class)->lanes($search->storeLanes($query)) : null,
             'added' => $added,
             'notice' => $added === 0 ? null : trans_choice('site.search.live_added', $added, [
                 'count' => $added,
                 'shops' => implode(', ', $shown->deferredShops),
             ]),
-        ];
-    }
-
-    /**
-     * A page of cards, each knowing its cheapest offer (one query for the
-     * page, CheapestOffer): the card's "Koop bij …" opens that shop.
-     *
-     * @param  iterable<ProductGroup>  $groups
-     * @return list<array<string, mixed>>
-     */
-    private function cards(iterable $groups): array
-    {
-        $groups = collect($groups)->values();
-        CheapestOffer::attach($groups);
-
-        return $groups->map(fn (ProductGroup $group) => $this->card($group))->all();
-    }
-
-    /** @return array<string, mixed> */
-    private function card(ProductGroup $group): array
-    {
-        return [
-            'id' => $group->id,
-            'title' => $group->displayTitle(),
-            'slug' => $group->slug,
-            'brand' => $group->brand,
-            'image' => $group->image_url,
-            'imageToken' => app(ImageProxy::class)->token($group->image_url),
-            // The shop's own picture per width, for the srcset while the proxy is
-            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
-            'imageSizes' => ShopImageSizes::for($group->image_url),
-            'minPrice' => $group->min_price,
-            'maxPrice' => $group->max_price,
-            'offerCount' => $group->offer_count,
-            'merchantCount' => $group->merchant_count,
-            'inStock' => $group->in_stock,
-            'discountPercent' => $group->discountPercent(),
-            // The cheapest shop, when CheapestOffer::attach() ran: the card opens it.
-            'buy' => CheapestOffer::present($group),
         ];
     }
 }

@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\AlertState;
 use App\Enums\EventType;
 use App\Enums\Interest;
 use App\Enums\Market;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AmazonProduct;
 use App\Models\Event;
-use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
-use App\Models\SearchAlert;
 use App\Models\SearchLog;
 use App\Services\Amazon\AmazonMatches;
 use App\Services\Amazon\AmazonSearch;
@@ -22,20 +19,19 @@ use App\Services\Catalogue\ProductSignals;
 use App\Services\Gift\GiftSearchDemand;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
-use App\Services\Images\ImageProxy;
-use App\Services\Images\ShopImageSizes;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
-use App\Services\Search\CheapestOffer;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Search\ParsedIntent;
+use App\Services\Search\ResultCards;
 use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Search\SearchWatch;
 use App\Services\Search\WaitShops;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
@@ -94,32 +90,6 @@ class SearchController extends Controller
 
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
-
-    /**
-     * @return array{watching: bool, id: int|null, maxPrice: int|null, requiresAccount: bool}|null
-     */
-    private function watch(Request $request, SearchQuery $query, CurrentMarket $current): ?array
-    {
-        if (! $query->hasTerm()) {
-            return null;
-        }
-
-        $user = $request->user();
-
-        $alert = $user === null ? null : SearchAlert::query()
-            ->where('user_id', $user->id)
-            ->where('market', $current->value())
-            ->where('term', SearchAlert::normalise($query->term))
-            ->where('state', AlertState::Active->value)
-            ->first(['id', 'max_price']);
-
-        return [
-            'watching' => $alert !== null,
-            'id' => $alert?->id,
-            'maxPrice' => $alert?->max_price,
-            'requiresAccount' => $user === null,
-        ];
-    }
 
     public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response|RedirectResponse
     {
@@ -284,7 +254,7 @@ class SearchController extends Controller
         $amazonOffered = $landing === null && $gift === null && $query->page <= 1
             && $amazon->applies($current->get(), $amazonTerm, $request->userAgent());
 
-        $results = $this->withSignals($gift ?? $this->present($result), $current);
+        $results = $this->withSignals($gift ?? app(ResultCards::class)->page($result, $current->get()), $current);
 
         return Inertia::render('Search', [
             'q' => $query->term,
@@ -337,7 +307,7 @@ class SearchController extends Controller
             // every search: these come from links, not from the box.
             'tagFilters' => $this->tagFilters($query, $current),
             'lanes' => $query->view === 'store'
-                ? $this->presentLanes($search->storeLanes($query))
+                ? app(ResultCards::class)->lanes($search->storeLanes($query))
                 : null,
             /*
              * The words that come up across these results, each a search of its
@@ -352,7 +322,7 @@ class SearchController extends Controller
              * See docs/features/search-alerts.md.
              */
             // A sentence is not a search worth watching for new products.
-            'watch' => $gift === null ? $this->watch($request, $query, $current) : null,
+            'watch' => $gift === null ? SearchWatch::for($request->user(), $current->get(), $query->term) : null,
 
             /*
              * The one shop we do not carry, offered on purpose.
@@ -826,7 +796,7 @@ class SearchController extends Controller
             'empty' => false,
             'currentPage' => 1,
             'hasMore' => false,
-            'items' => $this->cards(array_map(fn (Suggestion $s) => $s->group, $suggestions)),
+            'items' => app(ResultCards::class)->cards(array_map(fn (Suggestion $s) => $s->group, $suggestions), $current->get()),
         ];
     }
 
@@ -984,14 +954,14 @@ class SearchController extends Controller
     {
         // The same page size as the page on screen (one less with the Amazon card).
         $result = $search->search($query->unlogged(), perPage: $shown->groups->perPage());
-        $results = $this->withSignals($this->present($result), $current);
+        $results = $this->withSignals(app(ResultCards::class)->page($result, $current->get()), $current);
 
         $before = array_map(fn ($group) => (int) $group->id, $shown->groups->items());
         $added = count(array_diff(array_map(fn (array $card) => (int) $card['id'], $results['items']), $before));
 
         return [
             'results' => $results,
-            'lanes' => $query->view === 'store' ? $this->presentLanes($search->storeLanes($query)) : null,
+            'lanes' => $query->view === 'store' ? app(ResultCards::class)->lanes($search->storeLanes($query)) : null,
             'added' => $added,
             'notice' => $added === 0 ? null : trans_choice('site.search.live_added', $added, [
                 'count' => $added,
@@ -1027,158 +997,5 @@ class SearchController extends Controller
         }, $results['items']);
 
         return $results;
-    }
-
-    /**
-     * One page and whether another follows. No total and no last page (owner's
-     * decision, 2026-09-27): nothing counts the matches, and the page says
-     * neither a number nor a word standing in for one. See
-     * SearchService::page().
-     */
-    private function present(SearchResult $result): array
-    {
-        return [
-            'empty' => $result->isEmpty(),
-            'currentPage' => $result->groups->currentPage(),
-            'hasMore' => $result->groups->hasMorePages(),
-            'items' => $this->cards($result->groups->items()),
-        ];
-    }
-
-    /**
-     * One column per shop, each with the shop's own mark.
-     *
-     * `faviconUrl()` is a guess derived from the merchant's domain unless a
-     * `logo_url` was stored, so it is sent as a maybe and the browser decides —
-     * the client hides the image `onError`. It deliberately does not fall back
-     * to the affiliate network's icon: Awin's mark on every column identifies
-     * nothing, on the one view whose whole job is telling shops apart.
-     *
-     * @param  list<array{merchant: Merchant, groups: list<ProductGroup>}>  $lanes
-     * @return list<array<string, mixed>>
-     */
-    private function presentLanes(array $lanes): array
-    {
-        return array_map(
-            fn (array $lane) => [
-                'shop' => $lane['merchant']->displayName(),
-                'logo' => $lane['merchant']->faviconUrl(),
-                // Where the column's links go, said once in its header.
-                'domain' => $this->shopDomain($lane['offers'][0] ?? null),
-                'items' => array_values(array_filter(array_map(
-                    fn (ProductGroup $group, Product $offer) => $this->laneCard($group, $offer),
-                    $lane['groups'],
-                    $lane['offers'],
-                ))),
-            ],
-            $lanes,
-        );
-    }
-
-    /** The shop's own address without "www.", from its deep link; null when it has none. */
-    private function shopDomain(?Product $offer): ?string
-    {
-        $domain = $offer?->merchantDomain();
-
-        return $domain === null ? null : (string) preg_replace('/^www\./', '', $domain);
-    }
-
-    /**
-     * A row in a shop's column: the card, plus that shop's offer for it.
-     *
-     * The row opens the shop itself (owner, 2026-11-07: "link the products on
-     * the winkel view directly to the shop (affiliate link)"), so it carries
-     * the shop's own price rather than the cheapest of all shops.
-     *
-     * The shop's own affiliate link, as a plain anchor, never our redirector
-     * (owner, the same day: "don't use clickouts (not allowed by amazon), it
-     * should be clear that a link goes to the store"). So the URL is checked
-     * here, where the redirector would have (invariant 5:
-     * `hasSafeAffiliateUrl()`, https only), and the click is reported by the
-     * browser through the beacon, as Amazon's links on the product page are.
-     * The column's header names the shop's address once (`shopDomain()`): the
-     * affiliate URL itself is a network's tracking address (awin1.com) and
-     * says nothing about the shop. No safe link, no row: an offer with an
-     * unsafe URL is left out rather than drawn dead.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function laneCard(ProductGroup $group, Product $offer): ?array
-    {
-        if (! $offer->hasSafeAffiliateUrl()) {
-            return null;
-        }
-
-        return [
-            ...$this->card($group),
-            'shop' => [
-                'url' => $offer->affiliate_url,
-                'price' => $offer->price,
-                'direct' => true,
-                'beacon' => route('click.beacon', ['market' => $offer->market->value]),
-                'offerId' => $offer->id,
-                // Where the programme asks for it, as on the product page.
-                'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
-            ],
-        ];
-    }
-
-    /**
-     * A page of cards, each knowing its cheapest offer (one query for the
-     * page, CheapestOffer): the card's "Koop bij …" opens that shop.
-     *
-     * @param  iterable<ProductGroup>  $groups
-     * @return list<array<string, mixed>>
-     */
-    private function cards(iterable $groups): array
-    {
-        $groups = collect($groups)->values();
-        CheapestOffer::attach($groups);
-
-        // "Bekijk op Amazon" on the cards whose barcode is already matched, one
-        // query for the page. A search page queues no lookups (owner, 2026-11-23:
-        // "don't do a batch"): only a product page a person opens asks, one
-        // barcode at a time, so credits follow interest rather than result lists.
-        $amazon = app(AmazonMatches::class)->links(app(CurrentMarket::class)->get(), $groups);
-
-        return $groups->map(fn (ProductGroup $group) => $this->card($group) + [
-            'amazon' => $group->identity_kind?->value === 'ean' ? ($amazon[$group->identity_key] ?? null) : null,
-        ])->all();
-    }
-
-    /**
-     * The offer-comparison card.
-     *
-     * Everything a shopper needs to decide whether to open the product: what it
-     * is, the cheapest price, how many shops have it, and whether that price is
-     * actually a good one.
-     *
-     * @return array<string, mixed>
-     */
-    private function card(ProductGroup $group): array
-    {
-        return [
-            'id' => $group->id,
-            'title' => $group->displayTitle(),
-            'slug' => $group->slug,
-            'brand' => $group->brand,
-            'image' => $group->image_url,
-            // The same picture on our own address at the card's size, or null
-            // when it keeps the shop's URL (docs/features/image-proxy.md).
-            'imageToken' => app(ImageProxy::class)->token($group->image_url),
-            // The shop's own picture per width, for the srcset while the proxy is
-            // off (ShopImageSizes, 2026-10-25). Null where the server takes no size.
-            'imageSizes' => ShopImageSizes::for($group->image_url),
-            // Cents cross the wire exactly as stored; the client formats them
-            // for the market, so a float never enters the pipeline.
-            'minPrice' => $group->min_price,
-            'maxPrice' => $group->max_price,
-            'offerCount' => $group->offer_count,
-            'merchantCount' => $group->merchant_count,
-            'inStock' => $group->in_stock,
-            'discountPercent' => $group->discountPercent(),
-            // The cheapest shop, when CheapestOffer::attach() ran: the card opens it.
-            'buy' => CheapestOffer::present($group),
-        ];
     }
 }

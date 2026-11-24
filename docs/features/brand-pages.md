@@ -668,8 +668,14 @@ What the brand page keeps of its own:
   parameter the pills add to, and an empty field is the brand's own page again. The removable word
   chips that showed `q` went; the field shows it, and "clear filters" keeps it.
 - The breadcrumb, the brand heading, and the other brands as links, first in the Filters panel.
-- No brand facet (filtering a Sony page by brand is one option), and no by-store view: that needs
-  the shops' columns, which only SearchController computes.
+- No brand facet (filtering a Sony page by brand is one option).
+- The by-store view, the view button and the follow bell came the same day (owner: "I don't see a
+  grid/store button? And no follow icon"). The columns are `Components/StoreLanes.tsx` (moved out
+  of Search.tsx, with the hidden-shops memory), the server side is
+  `App\Services\Search\ResultCards` (cards, a page, the columns; moved out of SearchController,
+  and BrandController's own copy of the card went) and `SearchWatch` (the bell's state). The bell
+  follows the brand plus its words as a search term ("BlueBuilt", "BlueBuilt kabel"). The cards on a
+  brand page now carry the Amazon link like search's, since they come from the same presenter.
 - The articles that mention the brand moved from under the filter rail to under the products,
   since the rail is gone and the results take the whole width, as on search.
 - `waitShops` is sent too, for the line under the field while the page loads.

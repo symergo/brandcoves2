@@ -10,6 +10,8 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { AMAZON_SHOP, mixWithAmazon, type AmazonItem } from '../Components/AmazonProductCard'
+import StoreLanes, { type Lane, useHiddenShops, useLiveLanes } from '../Components/StoreLanes'
+import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import {
     AmazonBanner,
     amazonCardAfter,
@@ -23,7 +25,9 @@ import {
     TermPills,
     useFilterChips,
     useLiveResults,
+    useRestoredView,
     useResultNavigation,
+    ViewToggle,
     type Facets,
     type ResultPage,
 } from '../Components/SearchChrome'
@@ -61,7 +65,11 @@ interface Props {
     liveShops: string[]
     /** The market's biggest shops, named in the line under the search bar while the page loads. */
     waitShops?: string[]
-    live?: { results: ResultPage; added: number; notice: string | null } | null
+    live?: { results: ResultPage; lanes?: Lane[] | null; added: number; notice: string | null } | null
+    /** The shops' columns in the by-store view; null in the grid. */
+    lanes?: Lane[] | null
+    /** The follow bell, on the brand plus its words as a search term. See SearchWatch. */
+    watch?: WatchState | null
     /**
      * Offers from a source we may show but not store.
      *
@@ -104,16 +112,20 @@ interface Props {
  * copy below the grid.
  *
  * The brand facet is deliberately absent: filtering a Sony page by brand is a
- * control with one option. No by-store view: that needs the shops' columns, which
- * only the search controller computes.
+ * control with one option. The by-store view, the view button and the follow bell
+ * came the same day ("I don't see a grid/store button? And no follow icon"); the
+ * bell follows the brand plus its words as a search term.
  */
 export default function Brand({
     brand,
     terms,
     filters,
     sort,
+    view,
     facets,
     results: storedResults,
+    lanes: storedLanes = null,
+    watch = null,
     liveShops = [],
     waitShops = [],
     live,
@@ -152,6 +164,9 @@ export default function Brand({
 
     const livePending = liveShops.length > 0 && live === undefined
     const results = useLiveResults(storedResults, live)
+    const lanes = useLiveLanes(storedLanes, storedResults, live)
+    const { hidden: hiddenShops, hide: hideShop, show: showShop, showAll: showAllShops } = useHiddenShops()
+    useRestoredView(filters, view, go)
     const elapsed = useElapsed(searching)
     const placeholders = (searching && elapsed >= PLACEHOLDER_AFTER) || (livePending && storedResults.empty)
 
@@ -173,6 +188,8 @@ export default function Brand({
     const amazonAfter = amazonCardAfter(brandTerm, results.items.length)
 
     const chips = useFilterChips({ filters, facets, go, market, amazonShop, withBrands: false })
+    // The by-store view leaves shops out of the chips: its columns are the same state.
+    const shownChips = chips.filter((chip) => view !== 'store' || chip.kind !== 'merchant')
 
     return (
         <>
@@ -208,6 +225,8 @@ export default function Brand({
                     <h1 className="min-w-0 text-xl font-semibold tracking-tight sm:text-3xl">{t('brand.heading', { brand: brand.name })}</h1>
 
                     <div className="flex shrink-0 items-start gap-2">
+                        <ViewToggle view={view} go={go} />
+
                         <FiltersMenu count={chips.length}>
                             <ResultControls sort={sort} go={go} />
 
@@ -216,7 +235,17 @@ export default function Brand({
                                 filters={filters}
                                 go={go}
                                 showBrands={false}
+                                showShops={view !== 'store'}
                                 amazonShop={amazonShop}
+                                shopVisibility={
+                                    view === 'store' && lanes
+                                        ? {
+                                              shops: lanes.map((lane) => lane.shop),
+                                              hidden: hiddenShops,
+                                              setVisible: (shop, visible) => (visible ? showShop(shop) : hideShop(shop)),
+                                          }
+                                        : undefined
+                                }
                                 before={
                                     /*
                                       First in the panel, above the shops. It is the only
@@ -245,6 +274,8 @@ export default function Brand({
                                 }
                             />
                         </FiltersMenu>
+
+                        {watch && <WatchSearch term={brandTerm} watch={watch} compact />}
                     </div>
                 </div>
 
@@ -264,7 +295,7 @@ export default function Brand({
                 */}
                 <TermPills terms={terms} visit={visit} />
 
-                <FilterChips chips={chips} clearHref={q ? `${base}?q=${encodeURIComponent(q)}` : base} />
+                <FilterChips chips={shownChips} clearHref={q ? `${base}?q=${encodeURIComponent(q)}` : base} />
 
                 {amazonSearch && !results.empty && !placeholders && <AmazonBanner link={amazonSearch} term={brandTerm} />}
 
@@ -285,6 +316,8 @@ export default function Brand({
                             </div>
                         )}
                     </div>
+                ) : view === 'store' && lanes ? (
+                    <StoreLanes lanes={lanes} hidden={hiddenShops} hide={hideShop} showAll={showAllShops} amazon={amazon} amazonSearch={amazonSearch} />
                 ) : (
                     // No brandUrl: every card on this page is this brand, so a link
                     // back to the page you are on is noise.
@@ -295,7 +328,7 @@ export default function Brand({
                     />
                 )}
 
-                {!amazonOnly && <Pagination page={results} go={go} />}
+                {view === 'grid' && !amazonOnly && <Pagination page={results} go={go} />}
 
                 {/*
                   Offers we may show but not keep, in their own section: every card
