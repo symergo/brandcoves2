@@ -138,6 +138,30 @@ class DailySeoTest extends TestCase
             ->assertStatus(422);
     }
 
+    #[Test]
+    public function a_daily_points_at_the_guide_on_its_own_subject(): void
+    {
+        $newest = DailyPickSet::create([
+            'market' => Market::BeNl->value, 'kind' => CoveKind::Advice->value, 'slug' => 'iets-anders',
+            'theme_title' => 'Iets anders', 'theme_slug' => 'iets-anders', 'status' => PublishStatus::Published->value,
+            'published_at' => now()->subHour(),
+        ]);
+        $cycling = DailyPickSet::create([
+            'market' => Market::BeNl->value, 'kind' => CoveKind::Guide->value, 'slug' => 'cadeau-voor-fietser',
+            'theme_title' => 'Cadeaus voor fietsers', 'theme_slug' => 'cadeau-voor-fietser', 'status' => PublishStatus::Published->value,
+            'published_at' => now()->subDays(3), 'focus_keyphrase' => 'Fietsaccessoires cadeau',
+        ]);
+
+        $this->edition('op-twee-wielen', 'Op twee wielen', '2026-11-14', Market::BeNl, [
+            'focus_keyphrase' => 'fietsaccessoires cadeau', 'featured_cove_id' => $newest->id,
+        ]);
+        $this->edition('in-de-auto', 'In de auto', '2026-11-15', Market::BeNl, ['featured_cove_id' => $newest->id]);
+
+        $this->assertSame('Cadeaus voor fietsers', $this->get('/be-nl/tips/op-twee-wielen')->assertOk()->viewData('page')['props']['guide']['title']);
+        // No guide on its subject: the featured article, as before.
+        $this->assertSame('Iets anders', $this->get('/be-nl/tips/in-de-auto')->assertOk()->viewData('page')['props']['guide']['title']);
+    }
+
     /** @param array<string, mixed> $extra */
     private function edition(string $slug, string $title, string $date, Market $market, array $extra = []): DailyPickSet
     {

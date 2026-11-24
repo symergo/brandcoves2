@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Cove;
 
 use App\Enums\CoveScene;
+use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Support\CurrentMarket;
@@ -104,11 +105,36 @@ class EditionPresenter
     }
 
     /** @return array<string, mixed>|null */
+    private function onTheSubject(DailyPickSet $edition): ?DailyPickSet
+    {
+        $phrase = mb_strtolower(trim((string) $edition->focus_keyphrase));
+
+        if ($phrase === '') {
+            return null;
+        }
+
+        return DailyPickSet::query()
+            ->where('market', $edition->market)
+            ->articles()
+            ->where('id', '!=', $edition->id)
+            ->where('status', PublishStatus::Published->value)
+            ->where('published_at', '<=', now())
+            ->whereRaw('lower(focus_keyphrase) = ?', [$phrase])
+            ->withCount('picks')
+            ->latest('published_at')
+            ->first();
+    }
+
     public function guide(DailyPickSet $edition, CurrentMarket $current): ?array
     {
         // A self-reference since the fold: the guide a Daily points at is itself
         // a Cove. `featured_cove_id` replaced `guide_id`.
-        $guide = $edition->featured;
+        //
+        // The guide on the Daily's own subject first (2026-11-24): an article in the
+        // same market with the same search phrase, so "Op twee wielen" points at the
+        // guide on cycling gifts rather than at whatever article was newest the day
+        // it was built. Exact phrase, no guessing; the newest article otherwise, as before.
+        $guide = $this->onTheSubject($edition) ?? $edition->featured;
 
         if ($guide === null || ! $guide->kind->isArticle()) {
             return null;
