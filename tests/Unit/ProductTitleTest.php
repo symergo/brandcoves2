@@ -89,6 +89,17 @@ class ProductTitleTest extends TestCase
         );
     }
 
+    /** A written title is what the search result shows too, as the page's heading does (2026-11-24). */
+    #[Test]
+    public function the_listing_uses_a_written_title(): void
+    {
+        $group = $this->group('Radio Kenwood CR -M30DAB DAB+ - Batterie interne - Zwart', 'Kenwood', merchants: 2);
+        $group->forceFill(['display_title' => 'Kenwood CR-M30DAB radio DAB+ - Noir']);
+
+        $this->assertStringStartsWith('Kenwood CR-M30DAB radio DAB+ - Noir', ProductTitle::listing($group));
+        $this->assertStringNotContainsString('Zwart', ProductTitle::listing($group));
+    }
+
     /** One seller is not a comparison, and saying "at 1 shop" advertises that. */
     #[Test]
     public function the_listing_omits_the_count_for_a_single_seller(): void

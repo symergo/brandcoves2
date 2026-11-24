@@ -65,6 +65,16 @@ product and whose title is the one thing its owner may edit. Claim and activity 
 ("somebody claimed X") keep the snapshot too: those record what was said at a moment rather than
 showing the thing now.
 
+**The product page's `<title>` reads it too, since 2026-11-24.** `ProductTitle::listing()` built the
+search-result title from the feed title alone, so a be-fr product whose `<h1>` had been rewritten in
+French still met searchers as "Radio Kenwood CR -M30DAB ... - Zwart". It now starts from the written title
+when there is one, then adds the shop count as before. Test: `ProductTitleTest::the_listing_uses_a_written_title`.
+
+That day 2,019 written titles fixed indexed products named in the wrong language: 1,769 be-fr (Dutch
+names), 228 be-nl (French names), 4 nl-nl and 18 en. Films, music and books were left out on purpose:
+their title is the name of a work, and a Dutch edition renamed with its French release title would tell a
+French buyer the disc has French audio.
+
 ## Search finds both titles
 
 Owner's call: a visitor who reads "Hario handmolen" on a card and types it into the box must find

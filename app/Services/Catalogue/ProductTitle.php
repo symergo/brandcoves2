@@ -145,7 +145,13 @@ final class ProductTitle
      */
     public static function listing(ProductGroup $group): string
     {
-        $heading = self::heading($group);
+        /*
+         * The written title when there is one (2026-11-24), as the page's own <h1>
+         * already shows (ProductGroup::heading()). The search result is where a
+         * French visitor met "Radio Kenwood CR -M30DAB ... - Zwart" after the title
+         * had been rewritten in French for the page itself.
+         */
+        $heading = filled($group->display_title) ? trim((string) $group->display_title) : self::heading($group);
 
         if ($group->merchant_count <= 1) {
             return self::truncate($heading, self::LISTING_MAX);
