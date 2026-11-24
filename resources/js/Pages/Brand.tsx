@@ -222,7 +222,10 @@ export default function Brand({
             <section className="mt-8 min-w-0">
                 {/* Title and Filters on one row, as on the search page. */}
                 <div className="mb-4 flex items-start justify-between gap-3">
-                    <h1 className="min-w-0 text-xl font-semibold tracking-tight sm:text-3xl">{t('brand.heading', { brand: brand.name })}</h1>
+                    {/* What the page holds, not only whose (2026-11-24): "Producten van
+                        BlueBuilt" tells a reader and a search engine more than the bare
+                        name, which is in the breadcrumb right above. */}
+                    <h1 className="min-w-0 text-xl font-semibold tracking-tight sm:text-3xl">{t('brand.products_heading', { brand: brand.name })}</h1>
 
                     <div className="flex shrink-0 items-start gap-2">
                         <ViewToggle view={view} go={go} />

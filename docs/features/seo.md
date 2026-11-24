@@ -529,10 +529,17 @@ already walks the same four language files.
 
 - **`Article` markup** on the Daily and persona Coves. Guides, seasonal guides and advice articles
   have it since 2026-11-24 (below).
-- **Core Web Vitals have not been measured.**
-- **Cross-language product titles.** ~4.5% of `be-fr` titles are Dutch. The
-  honest fix is at ingestion, where the offer still knows its feed — see
-  [product-titles.md](product-titles.md#language-is-not-one-of-the-tests).
+- **Core Web Vitals: measured once, in the lab (2026-11-24).** Google's PageSpeed API was over its
+  keyless quota, so the browser's own observers at phone size against the live site: no layout shift
+  on the home, search, brand, product or guides page, even with the Amazon cards and live shops
+  arriving after the page; largest paint 0.7 to 1.3 s on all but the home page, which took 3.7 s on
+  a page-cache miss (3.3 s before the first byte) and 0.2 s when cached. Field data (what Google
+  ranks by) needs Search Console or a PageSpeed key.
+- **Cross-language product titles.** On 2026-11-24, 48,527 `be-fr` product pages had a Dutch title,
+  almost all from bol (asked in `fr-BE`, it answers in Dutch where it has no French name: 6.3% of its
+  be-fr offers). Since the single-shop rule that day only 1,843 of them stay indexed (1,829 with two
+  or more shops, 14 in a Cove). For those, the fix is to prefer another shop's French title for the
+  group; see [product-titles.md](product-titles.md#language-is-not-one-of-the-tests).
 - **`en` has no multi-merchant groups**, 0 of 16,531, so the comparison
   proposition and its `AggregateOffer` never appear in the English market.
 
