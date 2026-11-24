@@ -104,3 +104,26 @@ Owner: "just do a search with the api on amazon when a search is made". `App\Ser
 
 **Credits.** On 2026-11-23 the account showed `topup_credits_remaining: 89`. Every search and
 every barcode lookup costs one, so the daily caps should follow the plan bought, not the defaults.
+
+## Amazon in the shop filter and on brand pages (owner, 2026-11-24)
+
+"Amazon is not in the filters and not on the brand search pages."
+
+- **Shop filter.** Amazon is listed first among the shops, by its storefront (amazon.com.be,
+  amazon.nl), wherever its products could join the page (`amazonShop`). Its value in `merchant`
+  is the word `amazon` (`AmazonSearch::FILTER`), not an id: Amazon is no merchant of ours, so
+  `SearchQuery` drops it and our results ignore it; `AmazonSearch::filtersWith()` hands it back
+  so the box and its chip stay ticked. No shop ticked: Amazon mixed in, as before. Other shops
+  ticked and Amazon not: Amazon's products are not asked (`shownWith()`), since that is asking
+  for those shops. Only Amazon ticked: the grid shows Amazon's cards alone and no page buttons,
+  which page through ours.
+- **One brand ticked** puts the brand in front of the Amazon term ("Sony koptelefoon"), unless the
+  term names it already (`termFor()`). Amazon has no brand filter we can pass, and the term alone
+  mixed every brand's products into a Sony-filtered list. Several brands: the term alone.
+- **Brand pages** (`/brand/{slug}`, a search filtered to the brand) get the same deferred `amazon`
+  prop and shop-filter entry, asked for the brand name plus any narrowing words, mixed into the
+  grid by `mixWithAmazon()`, the function the search page uses. Not on a Brand Cove (an article,
+  no grid). Never for a crawler, and every new term counts against `searches_per_day`.
+
+Price filters, "discounted only" and sorting still leave Amazon mixed in: the owner chose "mixed by
+relevance everywhere" on 2026-11-23. Amazon's cards carry no price, so a price filter cannot judge them.

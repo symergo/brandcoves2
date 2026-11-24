@@ -6,7 +6,9 @@ namespace App\Services\Amazon;
 
 use App\Enums\Market;
 use App\Models\AmazonProduct;
+use App\Services\Search\SearchQuery;
 use App\Support\Crawlers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -42,6 +44,67 @@ class AmazonSearch
         private readonly AsinDataClient $client,
         private readonly AmazonMatches $matches,
     ) {}
+
+    /**
+     * The shop filter's value for Amazon (owner, 2026-11-24: "Amazon is not in the
+     * filters"). Not a merchant id: Amazon is no merchant of ours. SearchQuery reads
+     * `merchant` as ids and drops it, so our results ignore it.
+     */
+    public const FILTER = 'amazon';
+
+    /** Whether the request's shop filter has Amazon ticked. */
+    public static function picked(Request $request): bool
+    {
+        return in_array(self::FILTER, array_map('strval', (array) $request->query('merchant', [])), true);
+    }
+
+    /**
+     * What Amazon is searched for: the term, with the brand in front when the page is
+     * filtered to one brand that the term does not already name (2026-11-24). Amazon
+     * has no brand filter we can pass, so "koptelefoon" filtered to Sony asks for
+     * "Sony koptelefoon" rather than mixing every brand's headphones into a Sony list.
+     * Several brands ticked: the term alone, as before.
+     */
+    public static function termFor(SearchQuery $query): string
+    {
+        $term = trim($query->term);
+
+        if (count($query->brands) !== 1) {
+            return $term;
+        }
+
+        $brand = trim($query->brands[0]);
+
+        return $brand === '' || str_contains(mb_strtolower($term), mb_strtolower($brand))
+            ? $term
+            : trim($brand.' '.$term);
+    }
+
+    /**
+     * Whether Amazon's products join the page, given its shop filter: always without
+     * one, and with one only when Amazon is ticked too. Ticking only other shops is
+     * asking for those shops.
+     */
+    public static function shownWith(SearchQuery $query, bool $picked): bool
+    {
+        return $query->merchantIds === [] || $picked;
+    }
+
+    /**
+     * The page's filters with Amazon back among the ticked shops, so the checkbox and
+     * its chip stay ticked.
+     *
+     * @param  array<string, mixed>  $filters  SearchQuery::toArray()
+     * @return array<string, mixed>
+     */
+    public static function filtersWith(array $filters, bool $picked): array
+    {
+        if ($picked) {
+            $filters['merchant'] = [...($filters['merchant'] ?? []), self::FILTER];
+        }
+
+        return $filters;
+    }
 
     /** Whether this request may show Amazon's products at all. */
     public function applies(Market $market, ?string $term, ?string $userAgent): bool

@@ -8,7 +8,7 @@ import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed } from '../Components/SearchWait'
 import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import AmazonSearchCta, { AmazonSearchCard, type AmazonSearch } from '../Components/AmazonSearchCta'
-import AmazonProductCard, { type AmazonItem } from '../Components/AmazonProductCard'
+import AmazonProductCard, { AMAZON_SHOP as AMAZON, mixWithAmazon, type AmazonItem } from '../Components/AmazonProductCard'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
@@ -145,6 +145,12 @@ interface Props {
      * asks none, an empty list when Amazon found nothing. See AmazonSearch.
      */
     amazon?: AmazonItem[] | null
+    /**
+     * Amazon's storefront (amazon.com.be) when it is a shop in the shop filter (owner,
+     * 2026-11-24), null where Amazon has no products to offer this page. Its value in
+     * `merchant` is the word "amazon", not an id. See AmazonSearch::FILTER.
+     */
+    amazonShop?: string | null
     /** Null without a term. See SearchController::watch(). */
     watch: WatchState | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
@@ -235,6 +241,7 @@ export default function Search({
     landing,
     amazonSearch,
     amazon,
+    amazonShop = null,
     watch,
     pastedLink,
     terms,
@@ -291,25 +298,17 @@ export default function Search({
      * over making every search wait for Amazon.
      */
     const amazonHost = amazonSearch ? amazonSearch.host.replace(/^www\./, '') : ''
-    const mixed = useMemo<({ kind: 'ours'; g: GroupCard; index: number } | { kind: 'amazon'; item: AmazonItem })[]>(() => {
-        const ours = results.items
-        const theirs = amazon ?? []
-        const out: ({ kind: 'ours'; g: GroupCard; index: number } | { kind: 'amazon'; item: AmazonItem })[] = []
-        const step = (ours.length + 1) / (theirs.length + 1)
-        let j = 0
-
-        for (let i = 0; i <= ours.length; i++) {
-            while (j < theirs.length && Math.round((j + 1) * step) <= i) {
-                out.push({ kind: 'amazon', item: theirs[j] })
-                j++
-            }
-            if (i < ours.length) {
-                out.push({ kind: 'ours', g: ours[i], index: i })
-            }
-        }
-
-        return out
-    }, [results, amazon])
+    /*
+     * Only Amazon ticked in the shop filter: Amazon's cards alone. Our results are not
+     * filtered by it on the server (Amazon is no merchant of ours), so they are left
+     * out here, and so are the page buttons, which page through ours.
+     */
+    const pickedShops = ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String)
+    const amazonOnly = pickedShops.length === 1 && pickedShops[0] === AMAZON
+    const mixed = useMemo(
+        () => mixWithAmazon<GroupCard>(amazonOnly ? [] : results.items, amazon ?? []),
+        [results, amazon, amazonOnly],
+    )
 
     /*
      * The box follows the query, not only the first one.
@@ -431,7 +430,7 @@ export default function Search({
         ...shops.map((id) => ({
             key: `merchant:${id}`,
             kind: 'merchant' as const,
-            label: facets.merchants.find((m) => String(m.id) === id)?.name ?? t('search.shop'),
+            label: id === AMAZON ? (amazonShop ?? 'Amazon') : facets.merchants.find((m) => String(m.id) === id)?.name ?? t('search.shop'),
             remove: () => go({ merchant: shops.filter((m) => m !== id) }),
         })),
         ...(filters.min
@@ -809,6 +808,7 @@ export default function Search({
                                         brandLinks={brandLinks}
                                         go={go}
                                         showShops={view !== 'store'}
+                                        amazonShop={amazonShop}
                                         shopVisibility={
                                             view === 'store' && lanes
                                                 ? {
@@ -1467,7 +1467,7 @@ export default function Search({
                         </div>
                     )}
 
-                    {(results.currentPage > 1 || results.hasMore) && view === 'grid' && (
+                    {(results.currentPage > 1 || results.hasMore) && view === 'grid' && !amazonOnly && (
                         <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
                             <button
                                 disabled={results.currentPage <= 1}
@@ -1528,6 +1528,7 @@ function FilterPanel({
     brandLinks,
     go,
     showShops,
+    amazonShop = null,
     shopVisibility,
 }: {
     facets: Facets
@@ -1535,6 +1536,8 @@ function FilterPanel({
     brandLinks: Record<string, string>
     go: (next: Record<string, unknown>) => void
     showShops: boolean
+    /** Amazon's storefront, listed first among the shops when it has products to offer. */
+    amazonShop?: string | null
     /**
      * The by-store view's columns, each one ticked while it is shown (owner,
      * 2026-10-25). Not a filter on the search: it only hides columns, in this
@@ -1581,7 +1584,7 @@ function FilterPanel({
                 />
             )}
 
-            {showShops && facets.merchants.length > 0 && (
+            {showShops && (facets.merchants.length > 0 || amazonShop) && (
                 <Facet
                     title={t('search.shop')}
                     /* Open, like Brand above it. Two facets side by side, one
@@ -1589,7 +1592,10 @@ function FilterPanel({
                        distinction — and a shop list short enough to sit under a
                        heading is not worth a press to reveal. */
                     collapsible={false}
-                    items={facets.merchants.map((m) => ({
+                    items={[
+                        ...(amazonShop ? [{ id: AMAZON, name: amazonShop }] : []),
+                        ...facets.merchants,
+                    ].map((m) => ({
                         key: String(m.id),
                         label: m.name,
                         active: ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String).includes(String(m.id)),

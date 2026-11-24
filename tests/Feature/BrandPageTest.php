@@ -154,6 +154,34 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
+    public function the_brand_page_mixes_in_amazons_products_for_the_brand(): void
+    {
+        // Owner, 2026-11-24: Amazon "not on the brand search pages".
+        config(['giftcoves.connectors.asindata.key' => 'test-key']);
+        Http::preventStrayRequests();
+        Http::fake(['api.asindataapi.com/*' => Http::response(['request_info' => ['success' => true], 'search_results' => [
+            ['asin' => 'B0AUREX001', 'title' => 'Aurex koptelefoon', 'sponsored' => false, 'image' => null],
+        ]])]);
+        $this->seedBrand('Aurex');
+        $person = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36';
+
+        $page = $this->withHeader('User-Agent', $person)->get('/be-nl/brand/aurex')->assertOk()
+            ->assertInertia(fn ($p) => $p->missing('amazon')->where('amazonShop', 'amazon.com.be')->etc())
+            ->viewData('page');
+        Http::assertNothingSent();
+
+        $items = $this->withHeader('User-Agent', $person)->get('/be-nl/brand/aurex', [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) $page['version'],
+            'X-Inertia-Partial-Component' => 'Brand',
+            'X-Inertia-Partial-Data' => 'amazon',
+        ])->assertOk()->json('props.amazon');
+
+        $this->assertSame('B0AUREX001', $items[0]['asin']);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'search_term=aurex'));
+    }
+
+    #[Test]
     public function a_brand_with_enough_products_gets_a_page(): void
     {
         $this->seedBrand('Aurex');

@@ -9,6 +9,34 @@ export interface AmazonItem {
     url: string
 }
 
+/** Amazon's value in a page's shop filter: not a merchant id (AmazonSearch::FILTER). */
+export const AMAZON_SHOP = 'amazon'
+
+/**
+ * Amazon's products among ours (owner, 2026-11-23: "mix the amazon products with the
+ * other", mixed by relevance in every order and filter). Neither list scores the
+ * other, so relevance is each list's own order, interleaved evenly: Amazon's best
+ * match lands near our best, its second near our second, and so on down the page.
+ * Used by the search page and the brand page.
+ */
+export function mixWithAmazon<T>(ours: T[], theirs: AmazonItem[]): ({ kind: 'ours'; g: T; index: number } | { kind: 'amazon'; item: AmazonItem })[] {
+    const out: ({ kind: 'ours'; g: T; index: number } | { kind: 'amazon'; item: AmazonItem })[] = []
+    const step = (ours.length + 1) / (theirs.length + 1)
+    let j = 0
+
+    for (let i = 0; i <= ours.length; i++) {
+        while (j < theirs.length && Math.round((j + 1) * step) <= i) {
+            out.push({ kind: 'amazon', item: theirs[j] })
+            j++
+        }
+        if (i < ours.length) {
+            out.push({ kind: 'ours', g: ours[i], index: i })
+        }
+    }
+
+    return out
+}
+
 /**
  * An Amazon product among ours in the search grid (owner, 2026-11-23: "mix the
  * amazon products with the other", mixed by relevance in every order).

@@ -9,6 +9,7 @@ import { LiveStatus, SkeletonGrid } from '../Components/SearchWait'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
+import AmazonProductCard, { AMAZON_SHOP, mixWithAmazon, type AmazonItem } from '../Components/AmazonProductCard'
 import { buttonClasses } from '../Components/Button'
 import ToolIcon from '../Components/ToolIcon'
 
@@ -79,6 +80,13 @@ interface Props {
      * Null where the market has no Associates tag — see AmazonSearchLink.
      */
     amazonSearch: AmazonSearch | null
+    /**
+     * Amazon's products for the brand, without a price (owner, 2026-11-24), from a
+     * follow-up request: undefined while it runs, null when the page asks none.
+     */
+    amazon?: AmazonItem[] | null
+    /** Amazon's storefront when it is a shop in the shop filter; see Search.tsx. */
+    amazonShop?: string | null
     /** The long copy under the grid. Null on any variant that is noindex. */
     narrative: Narrative | null
     intro: BlockPayload[] | null
@@ -109,6 +117,8 @@ export default function Brand({
     live,
     liveOffers,
     amazonSearch,
+    amazon,
+    amazonShop = null,
     coves,
     related,
     narrative,
@@ -136,6 +146,19 @@ export default function Brand({
 
         return { ...live.results, items, empty: items.length === 0 }
     }, [storedResults, live])
+
+    /*
+     * Amazon's products among the brand's, as on the search page. Only Amazon ticked
+     * in the shop filter: Amazon's alone, without the page buttons, which page
+     * through ours.
+     */
+    const pickedShops = ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String)
+    const amazonOnly = pickedShops.length === 1 && pickedShops[0] === AMAZON_SHOP
+    const amazonHost = amazonShop ?? ''
+    const mixed = useMemo(
+        () => mixWithAmazon<GroupCard>(amazonOnly ? [] : results.items, amazon ?? []),
+        [results, amazon, amazonOnly],
+    )
 
     // The words currently narrowing this page. `q` on a brand page is not a
     // search box — there is none here — it is the accumulated result of clicking
@@ -383,11 +406,11 @@ export default function Brand({
                         </div>
                     )}
 
-                    {facets.merchants.length > 0 && (
+                    {(facets.merchants.length > 0 || amazonShop) && (
                         <div>
                             <h2 className="mb-2 font-medium">{t('search.shop')}</h2>
                             <ul className="space-y-1">
-                                {facets.merchants.map((m) => {
+                                {[...(amazonShop ? [{ id: AMAZON_SHOP, name: amazonShop }] : []), ...facets.merchants].map((m) => {
                                     const current = ([] as string[])
                                         .concat((filters.merchant as string[]) ?? [])
                                         .map(String)
@@ -522,16 +545,20 @@ export default function Brand({
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                            {results.items.map((g) => (
-                                // No brandUrl: every card on this page is this
-                                // brand, so a link back to the page you are on
-                                // is noise.
-                                <ProductCard key={g.id} group={g} />
-                            ))}
+                            {mixed.map((entry) =>
+                                entry.kind === 'amazon' ? (
+                                    <AmazonProductCard key={`amazon-${entry.item.asin}`} item={entry.item} host={amazonHost} />
+                                ) : (
+                                    // No brandUrl: every card on this page is this
+                                    // brand, so a link back to the page you are on
+                                    // is noise.
+                                    <ProductCard key={entry.g.id} group={entry.g} />
+                                ),
+                            )}
                         </div>
                     )}
 
-                    {(results.currentPage > 1 || results.hasMore) && (
+                    {(results.currentPage > 1 || results.hasMore) && !amazonOnly && (
                         <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
                             <button
                                 disabled={results.currentPage <= 1}

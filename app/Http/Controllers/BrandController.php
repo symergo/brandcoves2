@@ -11,6 +11,8 @@ use App\Models\BrandStat;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Services\Amazon\AmazonMatches;
+use App\Services\Amazon\AmazonSearch;
 use App\Services\Cove\CoveProse;
 use App\Services\Cove\EntityRails;
 use App\Services\Cove\SavedCoves;
@@ -154,6 +156,27 @@ class BrandController extends Controller
         $cove = $this->cove($stat, $current);
 
         /*
+         * Amazon's products for the brand, mixed into the grid as on the search page
+         * (owner, 2026-11-24: "not on the brand search pages"). Asked for the brand
+         * name plus any narrowing words, in a follow-up request after the page is
+         * shown, which wants `amazon` and nothing else and is answered here. Never
+         * for a crawler, and never on the Brand Cove (an article, no grid).
+         * AmazonSearch says what it costs.
+         */
+        $amazon = app(AmazonSearch::class);
+        $amazonTerm = trim($stat->brand.' '.$query->term);
+        $amazonPicked = AmazonSearch::picked($request);
+
+        if ((string) $request->header('X-Inertia-Partial-Data') === 'amazon') {
+            return Inertia::render('Brand', [
+                'amazon' => fn (): array => $amazon->applies($market, $amazonTerm, $request->userAgent())
+                    && AmazonSearch::shownWith($query, $amazonPicked)
+                    ? $amazon->results($market, $amazonTerm)
+                    : [],
+            ]);
+        }
+
+        /*
          * The live shops, as on the search page (2026-10-25). A crawler other
          * than a search engine sees what is stored (Crawlers::mayAskShops()).
          * A person on a thin brand page no longer waits for them: the page
@@ -204,6 +227,8 @@ class BrandController extends Controller
 
         $this->seo($stat, $current, $query);
 
+        $amazonOffered = $query->page <= 1 && $amazon->applies($market, $amazonTerm, $request->userAgent());
+
         return Inertia::render('Brand', [
             'brand' => [
                 'name' => $stat->brand,
@@ -222,7 +247,8 @@ class BrandController extends Controller
              * of templated statistics — see terms() below.
              */
             'terms' => $this->terms($stat, $result, $query, $market, $current),
-            'filters' => $query->toArray(),
+            // Amazon back among the ticked shops: SearchQuery keeps ids only.
+            'filters' => AmazonSearch::filtersWith($query->toArray(), $amazonPicked),
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
@@ -249,6 +275,13 @@ class BrandController extends Controller
             'live' => $result->liveDeferred()
                 ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search))
                 : null,
+
+            // Amazon's products for the brand (see above), and Amazon as a shop in
+            // the shop filter wherever it has products to offer.
+            'amazon' => $amazonOffered && AmazonSearch::shownWith($query, $amazonPicked)
+                ? Inertia::defer(fn (): array => $amazon->results($market, $amazonTerm), 'amazon')
+                : null,
+            'amazonShop' => $amazonOffered ? app(AmazonMatches::class)->storefront($market) : null,
 
             /*
              * "Search this brand on Amazon too".

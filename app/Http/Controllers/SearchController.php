@@ -233,11 +233,15 @@ class SearchController extends Controller
          * here, before any of the work below. AmazonSearch says what it costs.
          */
         $amazon = app(AmazonSearch::class);
+        // With the brand in front when the page is filtered to one (AmazonSearch::termFor()).
+        $amazonTerm = AmazonSearch::termFor($query);
+        $amazonPicked = AmazonSearch::picked($request);
 
         if ((string) $request->header('X-Inertia-Partial-Data') === 'amazon') {
             return Inertia::render('Search', [
-                'amazon' => fn (): array => $amazon->applies($current->get(), $query->term, $request->userAgent())
-                    ? $amazon->results($current->get(), (string) $query->term)
+                'amazon' => fn (): array => $amazon->applies($current->get(), $amazonTerm, $request->userAgent())
+                    && AmazonSearch::shownWith($query, $amazonPicked)
+                    ? $amazon->results($current->get(), $amazonTerm)
                     : [],
             ]);
         }
@@ -277,6 +281,9 @@ class SearchController extends Controller
 
         $this->seo($query, $result, $current);
 
+        $amazonOffered = $landing === null && $gift === null && $query->page <= 1
+            && $amazon->applies($current->get(), $amazonTerm, $request->userAgent());
+
         $results = $this->withSignals($gift ?? $this->present($result), $current);
 
         return Inertia::render('Search', [
@@ -284,7 +291,8 @@ class SearchController extends Controller
             // What the grid was seeded from, so the page can say so: 'lists'
             // or null. The heading changes; nothing else does.
             'landing' => $landing,
-            'filters' => $query->toArray(),
+            // Amazon back among the ticked shops: SearchQuery keeps ids only.
+            'filters' => AmazonSearch::filtersWith($query->toArray(), $amazonPicked),
             'sort' => $query->sort,
             'view' => $query->view,
             'facets' => $result->facetsWithoutCounts(),
@@ -307,9 +315,16 @@ class SearchController extends Controller
 
             // Amazon's products, without a price, in a follow-up request of their own
             // (see above): undefined while it runs, null when the page asks none.
-            'amazon' => $landing === null && $gift === null && $query->page <= 1 && $amazon->applies($current->get(), $query->term, $request->userAgent())
-                ? Inertia::defer(fn (): array => $amazon->results($current->get(), (string) $query->term), 'amazon')
+            'amazon' => $amazonOffered && AmazonSearch::shownWith($query, $amazonPicked)
+                ? Inertia::defer(fn (): array => $amazon->results($current->get(), $amazonTerm), 'amazon')
                 : null,
+
+            /*
+             * Amazon as a shop in the shop filter (owner, 2026-11-24), offered
+             * wherever its products could join the page, also while other shops
+             * are ticked and they do not. The storefront is its name.
+             */
+            'amazonShop' => $amazonOffered ? app(AmazonMatches::class)->storefront($current->get()) : null,
 
             // No "Coves hierover" row above the products since 2026-11-07 (owner).
 

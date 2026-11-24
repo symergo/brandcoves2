@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Market;
+use App\Services\Amazon\AmazonSearch;
+use App\Services\Search\SearchQuery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +105,45 @@ class AmazonSearchTest extends TestCase
 
         $this->assertSame([], $this->followUp('/nl-nl/search?q=lego')->json('props.amazon'));
         Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function amazon_is_a_shop_in_the_shop_filter(): void
+    {
+        // Owner, 2026-11-24: "Amazon is not in the filters".
+        Http::fake(['api.asindataapi.com/*' => Http::response(['request_info' => ['success' => true], 'search_results' => [
+            ['asin' => 'B0CFVYBW3L', 'title' => 'LEGO Technic racewagen', 'sponsored' => false, 'image' => null],
+        ]])]);
+
+        // Offered as a shop, by its storefront, on an ordinary search.
+        $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=lego')
+            ->assertInertia(fn ($page) => $page->where('amazonShop', 'amazon.com.be')->etc());
+
+        // Another shop ticked and Amazon not: Amazon stays offered, its products are not asked.
+        $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=lego&merchant[]=5')
+            ->assertInertia(fn ($page) => $page->where('amazonShop', 'amazon.com.be')->where('amazon', null)->etc());
+        $this->assertSame([], $this->followUp('/be-nl/search?q=lego&merchant[]=5')->json('props.amazon'));
+        Http::assertNothingSent();
+
+        // Amazon ticked: it stays ticked (the filter carries it back) and its products come.
+        $this->withHeader('User-Agent', self::PERSON)->get('/be-nl/search?q=lego&merchant[]=amazon')
+            ->assertInertia(fn ($page) => $page->where('filters.merchant', ['amazon'])->missing('amazon')->etc());
+        $this->assertSame('B0CFVYBW3L', $this->followUp('/be-nl/search?q=lego&merchant[]=amazon')->json('props.amazon.0.asin'));
+    }
+
+    #[Test]
+    public function one_brand_ticked_puts_the_brand_in_front_of_the_amazon_term(): void
+    {
+        Http::fake(['api.asindataapi.com/*' => Http::response(['request_info' => ['success' => true], 'search_results' => []])]);
+
+        $this->followUp('/be-nl/search?q=koptelefoon&brand[]=Sony');
+        Http::assertSent(fn ($request) => str_contains(urldecode($request->url()), 'search_term=sony koptelefoon')
+            || str_contains(urldecode($request->url()), 'search_term=sony+koptelefoon'));
+
+        $q = fn (array $brands, string $term) => new SearchQuery(Market::BeNl, term: $term, brands: $brands);
+        $this->assertSame('Sony koptelefoon', AmazonSearch::termFor($q(['Sony'], 'koptelefoon')));
+        $this->assertSame('sony wh-1000xm5', AmazonSearch::termFor($q(['Sony'], 'sony wh-1000xm5')), 'named already');
+        $this->assertSame('koptelefoon', AmazonSearch::termFor($q(['Sony', 'Bose'], 'koptelefoon')), 'several brands');
     }
 
     private function followUp(string $url): TestResponse
