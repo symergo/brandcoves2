@@ -216,6 +216,13 @@ External links: every anchor that leaves the site carries `nofollow` (with
 `sponsored` where money is involved): the shop buttons, the Amazon hand-off,
 list items linking out, and the share sheet's messaging endpoints.
 
+**One exception, decided 2026-11-24 (owner, on advice): the official-source links in articles stay
+followed.** `[[source:…]]` points only at the government, regulator and consumer-body domains in
+`giftcoves.editorial_sources` (economie.fgov.be, consumentenombudsdienst.be, ec.europa.eu…) and
+renders with `rel="noopener"` alone. A followed link to an authoritative source is a citation: it costs
+no ranking, and citing such sources is read as a sign of a careful article. `nofollow` is for links that
+are paid, untrusted or written by visitors, and these are none of the three.
+
 ### The crawl-budget rule this replaced
 
 Kept because the measurements in it are still true and the trade-off may come
