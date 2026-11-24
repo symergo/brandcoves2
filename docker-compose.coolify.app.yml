@@ -1,0 +1,364 @@
+# The app WITHOUT Postgres and Redis (2026-11-24, owner: deploys took the site offline).
+#
+# Postgres and Redis run as a Coolify resource of their own, docker-compose.state.yml, on
+# this app's Docker network under the names `postgres` and `redis`, so DB_HOST and
+# REDIS_HOST are unchanged. A deploy of this file replaces only the app containers: the
+# database keeps its memory and Redis its caches, and the gap is the app's own start.
+#
+# EXPAND/CONTRACT: this is a copy of docker-compose.coolify.yml without the two services,
+# for as long as production still deploys that file. Staging moved first. Until
+# production follows, a change to the app services goes in BOTH files; then the old file
+# goes. docs/deployment.md, "Postgres and Redis out of the app deploy".
+#
+# Production / staging compose, deployed by Coolify from GitHub.
+#
+# Coolify settings:
+#   Build Pack              = Docker Compose
+#   Docker Compose Location = /docker-compose.coolify.yml
+#   Domain                  -> assigned to the `app` service (Traefik + Let's Encrypt)
+#   Auto Deploy             = on
+#   Scheduled Backups       = on the `postgres` service
+#
+# Everything is built from the repo. There are NO bind mounts and no seeded
+# volumes. Persistent state is the postgres volume, redis's, and since
+# 2026-09-26 `media_data` (pictures on list items). That is still the whole
+# reason this deployment is simpler than v1's WordPress one.
+#
+# BUILD VARIABLES: VITE_* is baked into the client bundle at BUILD time. In
+# Coolify these must be ticked "Build Variable". Left as plain runtime vars they
+# are undefined in the browser and every client-side interaction breaks, while
+# server-rendered pages look perfectly fine — a genuinely confusing failure.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      VITE_APP_NAME: ${APP_NAME:-GiftCoves}
+      # SOURCE_COMMIT IS DELIBERATELY NOT DECLARED HERE, and the previous
+      # version of this block — "SOURCE_COMMIT: ${SOURCE_COMMIT:-}" — is why
+      # /health reported `unknown` for three weeks.
+      #
+      # Coolify parses this file and materialises a stored environment variable
+      # for every interpolated name it finds, one for production and one for
+      # previews. (Written without the dollar-brace spelling on purpose:
+      # ConfigContractTest scans this file for interpolations and cannot tell a
+      # comment from configuration, so an example in prose becomes a phantom
+      # undocumented variable and fails the suite.) A
+      # *stored* variable then shadows the per-deployment value Coolify would
+      # otherwise inject, so the reference intended to pass the real SHA through
+      # is exactly what stopped it arriving: every build baked the same literal.
+      # Confirmed in the running containers on 2026-09-02 —
+      # SOURCE_COMMIT=unknown, GIT_COMMIT_SHA=unknown, on an image built minutes
+      # earlier from a known commit.
+      #
+      # Deleting those variables in the UI is not enough on its own; the next
+      # parse of this file recreates them. The reference has to go first.
+      #
+      # Consequence for a local `docker compose build`: GIT_COMMIT_SHA is empty
+      # and /health reports null for the commit. That is honest — a laptop build
+      # has no deployed commit — and null is what HealthController returns for
+      # an absent value, deliberately, rather than a fabricated string.
+  environment: &app-env
+    APP_NAME: ${APP_NAME:-GiftCoves}
+    APP_ENV: production
+    APP_KEY: ${APP_KEY}
+    APP_DEBUG: "false"
+    APP_URL: ${APP_URL}
+    APP_LOCALE: en
+
+    # The canonical host, and everything that should 301 onto it.
+    #
+    # Absent here until now, which is why setting them in Coolify did nothing:
+    # a variable the compose file does not name never reaches the container.
+    # Both default to '' in config, and '' reads as "redirects are off in this
+    # environment" — indistinguishable from "the value never arrived", so all
+    # three production hostnames served the same site directly and nothing
+    # anywhere said so. Exactly the AWIN_VDB failure, which is documented in
+    # config/giftcoves.php and cost a publisher's worth of catalogue.
+    CANONICAL_HOST: ${CANONICAL_HOST}
+    LEGACY_HOSTS: ${LEGACY_HOSTS}
+
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: ${LOG_LEVEL:-warning}
+
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: ${POSTGRES_DB}
+    DB_USERNAME: ${POSTGRES_USER}
+    DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+    REDIS_CLIENT: phpredis
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+
+    SESSION_DRIVER: redis
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+
+    # Mail. OVH's Zimbra over SMTP, not Resend — which was hardcoded here and
+    # whose key was never set, so production could not send at all and nobody
+    # could sign in.
+    #
+    # Every one of these carries a compose-level default rather than a bare
+    # interpolation, and that is not decoration. An unset variable interpolates
+    # to an EMPTY STRING, and `env('MAIL_PORT', 2525)` returns '' for that
+    # rather than 2525 — a passthrough without a default actively defeats the
+    # default in config/mail.php. Same shape as the CANONICAL_HOST bug above.
+    MAIL_MAILER: ${MAIL_MAILER:-smtp}
+    MAIL_HOST: ${MAIL_HOST:-ssl0.ovh.net}
+    MAIL_PORT: ${MAIL_PORT:-465}
+    # smtps, not smtp: port 465 speaks implicit TLS, and Laravel infers plain
+    # STARTTLS when the scheme is blank — which fails on 465 with a handshake
+    # error that reads like a firewall problem.
+    MAIL_SCHEME: ${MAIL_SCHEME:-smtps}
+    MAIL_USERNAME: ${MAIL_USERNAME}
+    # No default, deliberately: a blank password is a visible auth failure,
+    # and there is no sane value to invent.
+    MAIL_PASSWORD: ${MAIL_PASSWORD}
+    # OVH rejects a From that is not the authenticated mailbox, so this is not
+    # free-form — it has to match MAIL_USERNAME.
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@giftcoves.com}
+    MAIL_FROM_NAME: ${APP_NAME:-GiftCoves}
+    # Who hears that somebody created an account. Blank means nobody, which is
+    # the documented off switch — but it has to be passed through, or the
+    # setting in Coolify silently never arrives and the notice never sends.
+    # ConfigContractTest caught it missing, on every CI run from 2026-09-12
+    # until 2026-09-13.
+    REGISTRATION_NOTIFY_EMAIL: ${REGISTRATION_NOTIFY_EMAIL:-}
+    # Who receives each report sent from the help page. Same shape and the
+    # same trap as the line above: added to config on 2026-09-26 without this
+    # passthrough, which ConfigContractTest caught the same day.
+    FEEDBACK_NOTIFY_EMAIL: ${FEEDBACK_NOTIFY_EMAIL:-}
+    # Link previews through Iframely when a shop refuses our reader. The
+    # queue asks, so it has to reach the queue; blank means off.
+    IFRAMELY_KEY: ${IFRAMELY_KEY:-}
+    IFRAMELY_PER_DAY: ${IFRAMELY_PER_DAY:-200}
+    # The privacy bar for list signals and offline ideas; 5 unless set.
+    GIFT_MIN_OWNERS: ${GIFT_MIN_OWNERS:-5}
+
+    # Kept so switching back is an env change rather than a redeploy of this
+    # file. Unused while MAIL_MAILER is smtp.
+    RESEND_API_KEY: ${RESEND_API_KEY}
+
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    GOOGLE_REDIRECT_URI: ${APP_URL}/auth/google/callback
+
+    CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY}
+    CLAIM_HASH_SECRET: ${CLAIM_HASH_SECRET}
+
+    AI_ENABLED: ${AI_ENABLED:-false}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+    INSTAGRAM_ENABLED: ${INSTAGRAM_ENABLED:-false}
+    INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN}
+    INSTAGRAM_USER_ID: ${INSTAGRAM_USER_ID}
+    INSTAGRAM_MARKET: ${INSTAGRAM_MARKET:-be-nl}
+    INSTAGRAM_GRAPH_HOST: ${INSTAGRAM_GRAPH_HOST:-graph.facebook.com}
+
+    AWIN_API_TOKEN: ${AWIN_API_TOKEN}
+    AWIN_PUBLISHER_ID: ${AWIN_PUBLISHER_ID}
+    # The second Awin publisher account. Absent here until now, which meant no
+    # container could see it: `config/giftcoves.php` filters accounts on a
+    # filled token, so the account vanished silently and deployed environments
+    # quietly ingested from one publisher while a laptop ingested from two.
+    AWIN_VDB_API_TOKEN: ${AWIN_VDB_API_TOKEN}
+    AWIN_VDB_PUBLISHER_ID: ${AWIN_VDB_PUBLISHER_ID}
+    BOL_CLIENT_ID: ${BOL_CLIENT_ID}
+    BOL_CLIENT_SECRET: ${BOL_CLIENT_SECRET}
+    # eBay. `EBAY_ENABLED` has a default and the marketplace map has defaults,
+    # so only the credentials and the campaign ids have to travel — and the
+    # campaign ids are the ones worth passing even though nothing breaks
+    # without them: a missing one means every eBay click resolves, sells, and
+    # is attributed to nobody. Same silent failure as AWIN_VDB above.
+    EBAY_CLIENT_ID: ${EBAY_CLIENT_ID}
+    EBAY_CLIENT_SECRET: ${EBAY_CLIENT_SECRET}
+    EBAY_CAMPAIGN_ID_NL: ${EBAY_CAMPAIGN_ID_NL}
+    EBAY_CAMPAIGN_ID_FR: ${EBAY_CAMPAIGN_ID_FR}
+    EBAY_CAMPAIGN_ID_ES: ${EBAY_CAMPAIGN_ID_ES}
+    # ASIN Data API, Amazon's products without a price (2026-11-23). Absent means
+    # no "Bekijk op Amazon" and no Amazon cards, with no error.
+    ASINDATA_API_KEY: ${ASINDATA_API_KEY}
+    # Tradedoubler. One value, and it is both the credential and the affiliate
+    # id — the tracking links come back already built around it. Absent here
+    # means the whole network is silently missing from search, with no error.
+    # The account-deletion webhook. Absent means eBay marks the application
+    # non compliant, which stops the production keyset minting tokens — so
+    # these two are not optional extras beside the credentials above, they are
+    # what makes the credentials work.
+    EBAY_DELETION_VERIFICATION_TOKEN: ${EBAY_DELETION_VERIFICATION_TOKEN}
+    EBAY_DELETION_ENDPOINT: ${EBAY_DELETION_ENDPOINT}
+    TRADEDOUBLER_TOKEN: ${TRADEDOUBLER_TOKEN}
+    AMAZON_ENABLED: ${AMAZON_ENABLED:-false}
+    AMAZON_ACCESS_KEY: ${AMAZON_ACCESS_KEY}
+    AMAZON_SECRET_KEY: ${AMAZON_SECRET_KEY}
+    AMAZON_PARTNER_TAGS: ${AMAZON_PARTNER_TAGS}
+
+    # Staging leaves this false so it never enters the index.
+    ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
+
+    # The image proxy (docs/features/image-proxy.md). On unless set to false;
+    # named here because a variable the compose file does not name never
+    # reaches the container, and then the switch in Coolify would do nothing.
+    # IMAGE_PROXY_HOSTS adds image servers to the built-in list, comma-separated.
+    IMAGE_PROXY_ENABLED: ${IMAGE_PROXY_ENABLED:-true}
+    IMAGE_PROXY_HOSTS: ${IMAGE_PROXY_HOSTS:-}
+
+    # Worker mode (Octane on FrankenPHP), prepared and OFF. Read by
+    # docker/entrypoint.sh on the app container only; see docs/features/speed.md,
+    # "Worker mode", before setting OCTANE_WORKERS=true on staging.
+    OCTANE_WORKERS: ${OCTANE_WORKERS:-false}
+    OCTANE_WORKER_NUM: ${OCTANE_WORKER_NUM:-4}
+    OCTANE_MAX_REQUESTS: ${OCTANE_MAX_REQUESTS:-500}
+    # Server-side rendering, in its own container. If it is unreachable Laravel
+    # falls back to client rendering rather than erroring.
+    #
+    # INERTIA_SSR_ENSURE_BUNDLE_EXISTS is deliberately absent: Inertia's default
+    # of true made `app` look for a bundle that only ever exists in `ssr`, and
+    # skip server rendering entirely without saying so. config/inertia.php
+    # defaults it to false; setting it here would only invite it back on.
+    INERTIA_SSR_ENABLED: "true"
+    INERTIA_SSR_URL: http://ssr:13714
+    # GIT_COMMIT_SHA is deliberately NOT set here, and must not be added to the
+    # Coolify UI either. Naming it here would make Coolify materialise a stored
+    # variable for it — the same trap SOURCE_COMMIT fell into — and a pinned
+    # value would freeze the social-card cache key, which exists precisely so a
+    # bad card cannot survive a deploy.
+    #
+    # Nothing needs to be passed through for the commit at all. Coolify injects
+    # SOURCE_COMMIT into the container itself, with the real SHA, and
+    # config/giftcoves.php reads it there. Measured 2026-09-02:
+    # SOURCE_COMMIT=04862b2eb72f... in a container whose GIT_COMMIT_SHA was
+    # empty, which is what finally identified the runtime route as the working
+    # one.
+  restart: unless-stopped
+  # Pictures on list items: photos people upload, and pictures copied from a
+  # pasted shop page (App\Services\Images\ImageStore). On every service that
+  # shares this anchor, because the queue writes them and `app` serves them.
+  # The one piece of state besides Postgres and Redis that must outlive a
+  # deploy: the container's own disk does not.
+  volumes:
+    - media_data:/app/storage/app/media
+
+services:
+  # Runs once per deploy and exits. app/queue/scheduler wait for it to succeed,
+  # so nothing ever serves traffic against an un-migrated schema.
+  migrate:
+    <<: *app
+    # Postgres and Redis are a resource of their own here (docker-compose.state.yml), so
+    # there is no depends_on to wait on them: docker/wait-for-state.php waits until both
+    # serve (Redis past its appendonly reload), five minutes at most, then the migration.
+    command: ["sh", "-c", "php /app/docker/wait-for-state.php && exec php artisan migrate --force --isolated"]
+    restart: "no"
+
+  app:
+    <<: *app
+    expose:
+      - "80"            # Coolify's Traefik routes the domain here. Never publish ports.
+    # Two speeds, because the check does two jobs (2026-09-27).
+    #
+    # While the container starts, the probe is deploy latency: Traefik will not
+    # route to it until the first probe passes. `start_interval` probes every 2s
+    # during `start_period`, so a FrankenPHP that answers /health about two
+    # seconds after boot is routed within a probe of it. (Before this, a flat
+    # 5s interval did that job, and ran /health, with its database and Redis
+    # checks, 17,000 times a day per environment for nothing.)
+    #
+    # Once it is up, the probe is monitoring, and 30s is Docker's own default:
+    # the VPS once went down under healthchecks that probed every 2s (see
+    # docs/deployment.md, "Every curl carries a timeout").
+    #
+    # `start_period` stays at 40s: it is how long failures are forgiven, and
+    # shortening it would make a slow boot fail rather than wait. `start_interval`
+    # needs Docker Engine 25 or later; see docs/deployment.md for what an older
+    # engine does with it.
+    #
+    # The probe carries its own 4s ceiling as well as Docker's `timeout`, the
+    # same rule as `--max-time 5` on every curl: file_get_contents with no
+    # timeout waits for PHP's default_socket_timeout, 60s.
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:80/health', false, stream_context_create(['http' => ['timeout' => 4]])) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+      start_interval: 2s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # EXACTLY ONE REPLICA. Horizon supervises its own worker pool; running two
+  # Horizons would double-process every job, including feed ingestion.
+  queue:
+    <<: *app
+    command: ["php", "artisan", "horizon"]
+    deploy:
+      replicas: 1
+    # Override the base image's healthcheck. frankenphp checks Caddy's admin
+    # endpoint on :2019, which this container never starts — it runs Horizon.
+    # Left inherited, the container reports unhealthy forever.
+    healthcheck:
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # SIGTERM lets Horizon finish the job in flight instead of abandoning a
+    # half-ingested feed chunk mid-transaction.
+    #
+    # 120s since 2026-09-28. IngestFeed notices the SIGTERM, finishes the chunk
+    # it is writing, records its place and puts itself back on the queue, so
+    # the new Horizon resumes it at once instead of after `retry_after` (65
+    # minutes). A chunk of a large feed can take most of a minute, so 60s cut
+    # some of them off mid-write. Other long jobs (a grouping pass, a Cove
+    # build) still run to their end or are killed at the limit, and are
+    # retried later; every one of them is idempotent.
+    stop_signal: SIGTERM
+    stop_grace_period: 120s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Replaces cron. Runs in its own container so a redeploy of `app` never drops
+  # a scheduled run.
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    deploy:
+      replicas: 1
+    # Same inherited-healthcheck problem as `queue`. There is no meaningful
+    # liveness probe for schedule:work — it sleeps between minutes — and a
+    # permanently-failing check is worse than none, so it is disabled outright.
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Pre-renders React on the server so crawlers receive real HTML instead of an
+  # empty div and a JSON blob. Without it the product and guide pages — the
+  # entire SEO growth model — depend on the crawler executing JavaScript.
+  #
+  # Deliberately NOT a dependency of `app`: SSR is an enhancement, and if it is
+  # down the site must still serve.
+  ssr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ssr
+      args:
+        VITE_APP_NAME: ${APP_NAME:-GiftCoves}
+    restart: unless-stopped
+    expose:
+      - "13714"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:13714/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  media_data:

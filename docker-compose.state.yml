@@ -1,0 +1,184 @@
+# Postgres and Redis for one GiftCoves environment, as a Coolify resource of their own
+# (2026-11-24, owner: deploys took the site offline).
+#
+# Deployed only when this file changes: a deploy of the app (docker-compose.coolify.app.yml)
+# never restarts them, so the database keeps its memory and Redis its caches, and the app
+# is gone only for its own start. The settings and their reasons moved here unchanged.
+#
+# Per environment, in Coolify:
+#   APP_NETWORK     the app's Docker network, which is the app's Coolify uuid
+#                   (vhfcyk39ug5exk0fyvdj8qo3 staging, gr0kqzz1er3s79u17vdph27t production)
+#   PG_DATA_DIR     the host folder of the database: the volume the bundled service used,
+#                   /var/lib/docker/volumes/<app uuid>_pg-data/_data, so nothing is copied
+#   REDIS_DATA_DIR  likewise for Redis
+#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD   the app's own values
+#
+# NEVER run this while the app's own bundled postgres is running on the same folder: two
+# servers on one data directory corrupt it. The app moves to the app-only file first.
+# docs/deployment.md, "Postgres and Redis out of the app deploy".
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Memory sized for the catalogue rather than Postgres's defaults (2026-09-14).
+    #
+    # It ran on stock settings: 128MB of shared buffers against a working set
+    # of about 3.4GB (products 1.9GB plus 0.85GB of indexes, product_groups
+    # 0.7GB), so nearly every read went to an OS cache shared with every other
+    # container on the box and emptied by any restart. After an unclean
+    # restart during a deploy, Whisperer requests hit the 30-second limit.
+    #
+    # Staging runs from this same file, so the numbers have to fit twice: the
+    # server has 11.7GB and every container together used about 3.5GB when
+    # measured. 1GB of buffers per database leaves the rest to the OS cache,
+    # which effective_cache_size tells the planner about (it allocates
+    # nothing). work_mem is per sort or hash, per query, so it stays modest.
+    #
+    # Raised to 2.5GB / 6GB on 2026-10-25. Production had grown to 21GB, and
+    # only 71% of table reads were found in the buffers. The box then had
+    # 6.7GB available with production already holding its 1GB. Staging's
+    # database is 1.7GB, so it can never fill more than that of its own
+    # buffers, and the shared file stays safe for both.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=2560MB
+      - -c
+      - effective_cache_size=6GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      # Seeing which queries cost the time (owner, 2026-09-27: "database restart
+      # is ok"). The speed audit had to guess from table counters because
+      # nothing recorded query times: pg_stat_statements keeps per-query totals
+      # (read with `SELECT ... FROM pg_stat_statements ORDER BY total_exec_time
+      # DESC`), a statement over 300ms is written to the log, and so is every
+      # sort or hash that spills to a temporary file (25GB had spilled with no
+      # trace of which query did it). The extension itself is created by the
+      # migration `..._postgres_records_query_times`.
+      #
+      # pg_prewarm (2026-11-24): Coolify recreates this container on every deploy,
+      # so it started with empty buffers and the first pages after a deploy were
+      # slow (a brand page took 26s right after the deploy of that day, 0.2s a
+      # minute later). With the library preloaded, its autoprewarm worker writes
+      # the list of cached blocks to autoprewarm.blocks in the data directory
+      # every five minutes and at shutdown, and reads them back in at start. No
+      # CREATE EXTENSION is needed for that; pg_prewarm.so ships in the
+      # postgres:16-alpine image (checked on production the same day).
+      - -c
+      - shared_preload_libraries=pg_stat_statements,pg_prewarm
+      - -c
+      - pg_stat_statements.track=top
+      - -c
+      - log_min_duration_statement=300ms
+      - -c
+      - log_temp_files=0
+      # JIT off (2026-09-28). Postgres compiles a query to machine code when
+      # its estimated cost passes a threshold, which the catalogue's large
+      # aggregate queries do; the compile itself takes 50-200ms and pays off
+      # only on queries that run for seconds over millions of rows. Ours are
+      # OLTP-shaped plus a few night passes, where it was cost without gain.
+      - -c
+      - jit=off
+      # A checkpoint every 1GB of WAL (the default) is several an hour while a
+      # feed is ingested or a market grouped, and each one writes every dirty
+      # page out at once. 4GB spreads them; the price is a longer crash
+      # recovery, bounded by checkpoint_timeout (5 min) either way.
+      - -c
+      - max_wal_size=4GB
+      # NOT SET, waiting for the owner: random_page_cost=1.1 and
+      # effective_io_concurrency=200 tell the planner that a random read costs
+      # about as much as a sequential one, which is true on an SSD or NVMe disk
+      # and false on a spinning one. Nothing in this repository records what
+      # the VPS disk is; confirm it (e.g. `lsblk -d -o name,rota` on the host:
+      # ROTA 0 means solid state) before adding them.
+    # Docker's default /dev/shm is 64MB, and parallel queries allocate their
+    # shared hash tables there: with work_mem raised, a parallel hash join can
+    # outgrow it and fail with "could not resize shared memory segment".
+    shm_size: 1gb
+    # Coolify stops this container on every deploy. With Docker's default ten
+    # seconds it was killed mid-checkpoint on 2026-09-14 and came back through
+    # crash recovery with every cache empty. A minute lets it shut down clean.
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${PG_DATA_DIR}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    # On the app's own network, under the name the app already uses.
+    networks:
+      app:
+        aliases: [postgres]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Queues live here. Without persistence, a restart loses every queued job —
+    # including a half-finished ingestion run.
+    #
+    # The memory cap is declared HERE rather than applied with CONFIG SET,
+    # because CONFIG SET does not survive a container recreate and every deploy
+    # recreates this container. That is not hypothetical: the cap was set by
+    # hand on 2026-09-02 while recovering from the incident below, and the very
+    # next production deploy silently reverted it to `maxmemory 0` /
+    # `noeviction` — the exact configuration that allowed the incident.
+    #
+    # What it prevents: 113,626 cached social cards reached 6.21GB on an 11.7GB
+    # box, exhausted memory, drove the machine into swap and took the load
+    # average to 360. With no cap, Redis has no reason to stop.
+    #
+    # volatile-lru, not allkeys-lru, and the distinction is the queue: it evicts
+    # only keys carrying a TTL. Cache entries have one; Laravel's queue lists do
+    # not, so a full Redis sheds cold cache rather than quietly dropping a
+    # half-finished ingestion run — which is the thing the line above exists to
+    # protect.
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 1gb
+      - --maxmemory-policy
+      - volatile-lru
+    volumes:
+      - ${REDIS_DATA_DIR}:/data
+    # Healthy means "serving commands", not "the process is up".
+    #
+    # `redis-cli ping` answers PONG while Redis is still replaying the appendonly
+    # file into memory — PING is one of the few commands allowed in that state,
+    # and everything else gets `-LOADING`. So `service_healthy` went green on a
+    # Redis that refused every write, and the `migrate` one-shot — which takes a
+    # Redis lock for `--isolated` before it touches Postgres — exited 1. app,
+    # queue and scheduler all wait on migrate, so production served 503 because a
+    # cache was still warming up.
+    #
+    # It only bites where the AOF is big enough to take a moment: staging's loads
+    # instantly and never raced, production's has a real queue history. The
+    # window grows with the file.
+    #
+    # `INFO persistence` is allowed during loading and reports `loading:1`.
+    # Anchored, because `async_loading:0` contains `loading:0` as a substring and
+    # an unanchored match would report healthy at exactly the wrong moment.
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli info persistence | grep -q '^loading:0'"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    # On the app's own network, under the name the app already uses.
+    networks:
+      app:
+        aliases: [redis]
+
+networks:
+  app:
+    external: true
+    name: ${APP_NETWORK}

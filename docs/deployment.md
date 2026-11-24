@@ -486,6 +486,22 @@ deploy measured the cost it removes: the app had no container for 32 s (old cont
 first brand page after it took 26 s against 0.2 s a minute later. The 32 s gap itself stays until B:
 with the databases out of the app deploy it would be the app's own start, a few seconds.
 
+**B is being built, staging first (owner, 2026-11-24: "Deploy still takes the site offline?", then
+"Yes").** The shape differs from the steps below in two ways that make it simpler:
+
+- The state resource joins the **app's own Docker network** (named after the app's Coolify uuid, which
+  has existed since August and survives every deploy) under the aliases `postgres` and `redis`, so the
+  app's `DB_HOST` and `REDIS_HOST` do not change and no shared network is needed.
+- It **bind-mounts the existing volume folders** (`/var/lib/docker/volumes/<app uuid>_pg-data/_data`),
+  so no data is copied: the app stops running its own Postgres, then the state resource starts on the
+  same folder. Never both at once.
+
+Files: `docker-compose.state.yml` (the state resource), `docker-compose.coolify.app.yml` (the app
+without the two services; its `migrate` runs `docker/wait-for-state.php` first, since there is no
+`depends_on` across resources). `docker-compose.coolify.yml` stays as it is for production until
+production moves: until then a change to the app services goes in both files. Each app chooses its file
+with Coolify's "Docker Compose Location".
+
 ### Steps for B (per environment, staging first)
 
 1. **Write `docker-compose.state.yml`.** Move the `postgres` and `redis` services and the `pg_data`
