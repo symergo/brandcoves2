@@ -479,6 +479,13 @@ their reasons in the compose file) stay in git, and deploying the app stops rest
 Option A's backup buttons are the one thing B lacks; they can be added later by pointing a Coolify
 scheduled task at `pg_dump`.
 
+**Option C's prewarm is in since 2026-11-24.** `pg_prewarm` is preloaded, so Postgres writes the
+list of its cached blocks every five minutes and at shutdown and reads it back at start. That day's
+deploy measured the cost it removes: the app had no container for 32 s (old containers removed at
+19:58:48, the new app started 19:59:20, of which Redis's start took 11 s and Postgres's 6 s), and the
+first brand page after it took 26 s against 0.2 s a minute later. The 32 s gap itself stays until B:
+with the databases out of the app deploy it would be the app's own start, a few seconds.
+
 ### Steps for B (per environment, staging first)
 
 1. **Write `docker-compose.state.yml`.** Move the `postgres` and `redis` services and the `pg_data`

@@ -387,8 +387,17 @@ services:
       # sort or hash that spills to a temporary file (25GB had spilled with no
       # trace of which query did it). The extension itself is created by the
       # migration `..._postgres_records_query_times`.
+      #
+      # pg_prewarm (2026-11-24): Coolify recreates this container on every deploy,
+      # so it started with empty buffers and the first pages after a deploy were
+      # slow (a brand page took 26s right after the deploy of that day, 0.2s a
+      # minute later). With the library preloaded, its autoprewarm worker writes
+      # the list of cached blocks to autoprewarm.blocks in the data directory
+      # every five minutes and at shutdown, and reads them back in at start. No
+      # CREATE EXTENSION is needed for that; pg_prewarm.so ships in the
+      # postgres:16-alpine image (checked on production the same day).
       - -c
-      - shared_preload_libraries=pg_stat_statements
+      - shared_preload_libraries=pg_stat_statements,pg_prewarm
       - -c
       - pg_stat_statements.track=top
       - -c
