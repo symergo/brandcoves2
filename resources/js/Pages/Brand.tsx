@@ -1,24 +1,32 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useMemo, useState } from 'react'
+import { Head, Link, usePage } from '@inertiajs/react'
+import { useEffect, useMemo, useState } from 'react'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import LiveOfferCard, { type LiveOffer } from '../Components/LiveOfferCard'
-import ProductCard, { type GroupCard } from '../Components/ProductCard'
-import { LiveStatus, SkeletonGrid } from '../Components/SearchWait'
+import { type GroupCard } from '../Components/ProductCard'
+import { PLACEHOLDER_AFTER, SearchStatus, SkeletonGrid, useElapsed } from '../Components/SearchWait'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
-import AmazonProductCard, { AMAZON_SHOP, mixWithAmazon, type AmazonItem } from '../Components/AmazonProductCard'
-import { buttonClasses } from '../Components/Button'
-import ToolIcon from '../Components/ToolIcon'
-
-interface BrandResults {
-    empty: boolean
-    currentPage: number
-    hasMore: boolean
-    items: GroupCard[]
-}
+import { AMAZON_SHOP, mixWithAmazon, type AmazonItem } from '../Components/AmazonProductCard'
+import {
+    AmazonBanner,
+    amazonCardAfter,
+    FilterChips,
+    FilterPanel,
+    FiltersMenu,
+    Pagination,
+    ResultControls,
+    ResultGrid,
+    SearchBar,
+    TermPills,
+    useFilterChips,
+    useLiveResults,
+    useResultNavigation,
+    type Facets,
+    type ResultPage,
+} from '../Components/SearchChrome'
 
 interface Props {
     brand: {
@@ -32,21 +40,18 @@ interface Props {
         category: string | null
         topMerchant: string | null
     }
-    /** Words that recur across this brand's products, each a search of its own. */
+    /** Words that recur across this brand's products, each narrowing this page. */
     terms: { term: string; url: string }[]
     filters: Record<string, unknown>
     sort: string
     view: 'grid' | 'store'
-    facets: {
-        brands: { value: string }[]
-        merchants: { id: number; name: string }[]
-    }
+    facets: Facets
     /**
      * One page and whether another follows. No total and no last page
      * (owner's decision, 2026-09-27): nothing counts the matches, so the
      * page shows neither a number nor a word standing in for one.
      */
-    results: BrandResults
+    results: ResultPage
     /**
      * The live shops being asked after the page was shown (a thin brand page,
      * 2026-10-25), by name; empty when nothing is pending. `live` arrives
@@ -54,29 +59,22 @@ interface Props {
      * null when there was nothing to ask.
      */
     liveShops: string[]
-    live?: { results: BrandResults; added: number; notice: string | null } | null
+    /** The market's biggest shops, named in the line under the search bar while the page loads. */
+    waitShops?: string[]
+    live?: { results: ResultPage; added: number; notice: string | null } | null
     /**
-     * Offers from a source we may show but not store — Amazon.
+     * Offers from a source we may show but not store.
      *
      * Fetched during this request and never written down, so they are absent
      * from `results` by construction and cannot be a ProductCard: there is no
      * group behind them, and therefore no offer count, no shop count and no
-     * discount measured against a previous price. Empty until the Amazon
-     * connector is enabled; everything bol returns is already in the grid.
+     * discount measured against a previous price.
      */
     liveOffers: LiveOffer[]
     coves: { title: string; intro: string | null; url: string }[]
-    /**
-     * The Brand Cove, when somebody has written one.
-     *
-     * Null for the great majority of brands, which is why the templated copy
-     * below the grid stays: the two are not duplicates. This is bespoke
-     * editorial about ranges and sub-brands; that is built from numbers the
-     * catalogue can back up.
-     */
     related: { name: string; url: string }[]
     /**
-     * The tagged Amazon search for this brand, narrowed by any term chips.
+     * The tagged Amazon search for this brand, narrowed by any words.
      * Null where the market has no Associates tag — see AmazonSearchLink.
      */
     amazonSearch: AmazonSearch | null
@@ -96,15 +94,18 @@ interface Props {
 /**
  * A brand page: a search with the brand preselected, plus editorial and links.
  *
- * Below the grid: the articles that mention the brand, then the long copy. The
- * copy went on 2026-08-16 for restating the cards above it identically on every
- * brand page, and came back on 2026-08-30 once every sentence in it became a
- * slot an editor rewrites in admin. See BrandController::narrative().
+ * It looks and works like the search page (owner, 2026-11-24: "The brand page
+ * should look the same as the search page (same filter ux design, searchfield)"),
+ * built from the same parts (Components/SearchChrome): the search field, which
+ * searches within the brand and keeps this address; the Filters button with its
+ * popover and sheet; the chips; the narrowing pills; the grid with Amazon mixed in.
+ * What it keeps of its own: the breadcrumb, the brand heading, the other brands
+ * (first in the Filters panel), the articles that mention the brand and the long
+ * copy below the grid.
  *
- * The brand facet is deliberately absent from the rail — filtering a Sony page
- * by brand is a control with one option. Everything else (shops, stock,
- * discounted, sort, pagination) is the same as search, because it is the same
- * query object underneath.
+ * The brand facet is deliberately absent: filtering a Sony page by brand is a
+ * control with one option. No by-store view: that needs the shops' columns, which
+ * only the search controller computes.
  */
 export default function Brand({
     brand,
@@ -114,6 +115,7 @@ export default function Brand({
     facets,
     results: storedResults,
     liveShops = [],
+    waitShops = [],
     live,
     liveOffers,
     amazonSearch,
@@ -126,26 +128,32 @@ export default function Brand({
     emptyCopy,
 }: Props) {
     const { market, seoTitle } = usePage<SharedProps>().props
-    const { t, n } = useTranslations()
-    const [filtersOpen, setFiltersOpen] = useState(false)
+    const { t } = useTranslations()
     const base = `/${market.key}/brand/${brand.slug}`
 
     /*
-     * The shops' products join the page after it is shown (2026-10-25), first,
-     * as on the search page: the cards already shown move down once, on a
-     * thin page only. Until they arrive, an empty page shows placeholders
-     * rather than "nothing found".
+     * The field holds the words narrowing this page. `q` on a brand page is a search
+     * within the brand: the pills add to it, the field replaces it, and an empty
+     * field is the brand's own page again.
      */
-    const livePending = liveShops.length > 0 && live === undefined
-    const results = useMemo<BrandResults>(() => {
-        if (!live) {
-            return storedResults
-        }
-        const shown = new Set(storedResults.items.map((g) => g.id))
-        const items = [...live.results.items.filter((g) => !shown.has(g.id)), ...storedResults.items]
+    const q = String(filters.q ?? '')
+    const [term, setTerm] = useState(q)
+    useEffect(() => {
+        setTerm(q)
+    }, [q])
 
-        return { ...live.results, items, empty: items.length === 0 }
-    }, [storedResults, live])
+    const { go, visit, searching } = useResultNavigation(filters, (next) => {
+        // The brand is in the path, not the query string: sending it as a filter as
+        // well would produce /brand/sony?brand[]=Sony, the same page at a second URL.
+        delete next.brand
+
+        return { path: base, query: next }
+    })
+
+    const livePending = liveShops.length > 0 && live === undefined
+    const results = useLiveResults(storedResults, live)
+    const elapsed = useElapsed(searching)
+    const placeholders = (searching && elapsed >= PLACEHOLDER_AFTER) || (livePending && storedResults.empty)
 
     /*
      * Amazon's products among the brand's, as on the search page. Only Amazon ticked
@@ -154,42 +162,17 @@ export default function Brand({
      */
     const pickedShops = ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String)
     const amazonOnly = pickedShops.length === 1 && pickedShops[0] === AMAZON_SHOP
-    const amazonHost = amazonShop ?? ''
-    const mixed = useMemo(
-        () => mixWithAmazon<GroupCard>(amazonOnly ? [] : results.items, amazon ?? []),
-        [results, amazon, amazonOnly],
-    )
+    const amazonHost = amazonShop ?? (amazonSearch ? amazonSearch.host.replace(/^www\./, '') : '')
+    const mixed = useMemo(() => mixWithAmazon<GroupCard>(amazonOnly ? [] : results.items, amazon ?? []), [results, amazon, amazonOnly])
 
-    // The words currently narrowing this page. `q` on a brand page is not a
-    // search box — there is none here — it is the accumulated result of clicking
-    // the term chips, so it is shown back as chips that can be taken off again.
-    const narrowedTo = String(filters.q ?? '')
-        .split(' ')
-        .filter(Boolean)
+    // What the Amazon link is labelled with, and what the server searched for: the
+    // brand plus the words narrowing the page. Kept in step with BrandController by
+    // construction: same two pieces, same order.
+    const brandTerm = [brand.name, ...q.split(' ').filter(Boolean)].join(' ')
+    const amazonLabel = t('search.amazon_search', { term: brandTerm })
+    const amazonAfter = amazonCardAfter(brandTerm, results.items.length)
 
-    // What the Amazon link is labelled with, and what the server searched for:
-    // the brand plus whatever chips are narrowing the page. Kept in step with
-    // BrandController by construction — same two pieces, same order.
-    const brandTerm = [brand.name, ...narrowedTo].join(' ')
-
-    function go(changes: Record<string, unknown>) {
-        const next = { ...filters, ...changes }
-        // The brand is in the path, not the query string — sending it as a
-        // filter as well would produce /brand/sony?brand[]=Sony, which is the
-        // same page at a second URL.
-        delete next.brand
-        if (!('page' in changes)) delete next.page
-        Object.keys(next).forEach((k) => {
-            const v = next[k]
-            if (v === null || v === undefined || v === '' || v === false) delete next[k]
-        })
-        router.get(base, next as Record<string, string>, {
-            // `brand[]=`, not `brand[0]=`. See the note in Search.tsx.
-            queryStringArrayFormat: 'brackets',
-            preserveScroll: true,
-            preserveState: true,
-        })
-    }
+    const chips = useFilterChips({ filters, facets, go, market, amazonShop, withBrands: false })
 
     return (
         <>
@@ -200,7 +183,7 @@ export default function Brand({
             */}
             <Head title={seoTitle ?? brand.name} />
 
-            <nav aria-label="Breadcrumb" className="text-sm text-ink-soft">
+            <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-soft">
                 <Link href={`/${market.key}/brands`} className="hover:text-accent">
                     {t('brand.crumb')}
                 </Link>
@@ -208,495 +191,163 @@ export default function Brand({
                 <span>{brand.name}</span>
             </nav>
 
-            <header className="mt-3 max-w-3xl">
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                    {t('brand.heading', { brand: brand.name })}
-                </h1>
+            <SearchBar
+                action={base}
+                term={term}
+                setTerm={setTerm}
+                onSubmit={() => go({ q: term })}
+                searching={searching}
+                placeholder={t('brand.search_placeholder', { brand: brand.name })}
+                label={t('brand.search_placeholder', { brand: brand.name })}
+                status={<SearchStatus elapsed={elapsed} shops={waitShops} liveShops={livePending ? liveShops : []} notice={live?.notice ?? null} />}
+            />
 
-                {/*
-                  What this brand makes, in its own words.
+            <section className="mt-8 min-w-0">
+                {/* Title and Filters on one row, as on the search page. */}
+                <div className="mb-4 flex items-start justify-between gap-3">
+                    <h1 className="min-w-0 text-xl font-semibold tracking-tight sm:text-3xl">{t('brand.heading', { brand: brand.name })}</h1>
 
-                  Four paragraphs of statistics used to open the page — product
-                  count, shop count, price range, how many were below their
-                  previous price. All true, all checkable, and all of it counting
-                  the grid immediately beneath it. Someone who has typed a brand
-                  name came to see the brand's products, not a screen of
-                  arithmetic about them, and the facts still exist in the long
-                  copy below the grid where a reader can go looking for them.
+                    <div className="flex shrink-0 items-start gap-2">
+                        <FiltersMenu count={chips.length}>
+                            <ResultControls sort={sort} go={go} />
 
-                  These links used to leave for a plain search on the bare word.
-                  They narrow this page instead: somebody on a Kärcher page
-                  reading "hogedrukreiniger" is asking which Kärchers those are,
-                  not to be shown Bosch. Each click adds its word to the ones
-                  already active, so the chips walk further in rather than
-                  swapping one filter for another.
-                */}
-                {narrowedTo.length > 0 && (
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                        {/*
-                          Every active word is removable on its own, and the
-                          whole thing clears back to the brand. Without this the
-                          only way out of a sub-search is the browser's back
-                          button, which is not a control a page gets to rely on.
-                        */}
-                        {narrowedTo.map((word) => (
-                            <button
-                                key={word}
-                                type="button"
-                                onClick={() => go({ q: narrowedTo.filter((w) => w !== word).join(' ') })}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 transition hover:border-accent hover:text-accent"
-                            >
-                                <ToolIcon name="close" className="h-3.5 w-3.5 shrink-0" />
-                                {word}
-                                {/* Names the word it drops, not "clear filters":
-                                    this button removes one, and a screen reader
-                                    reading four identical labels cannot tell
-                                    which is which. */}
-                                <span className="sr-only">{t('search.remove_term', { term: word })}</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/*
-                  An editor's sentence about this brand, above the products.
-
-                  This page opened with templated statistics until 2026-08-10,
-                  when they were removed for being arithmetic in sentences, the
-                  same on every brand. Nothing generates what goes here and it
-                  ships empty — a place, not a comeback.
-                */}
-                <PageBlocks blocks={intro} className="mt-4 max-w-3xl" />
-
-                {terms.length > 0 && (
-                    <nav className="mt-4" aria-label={t('search.terms_heading')}>
-                        <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
-                        {/*
-                          One row, whatever the width.
-
-                          `ResultTerms` returns as many as it finds worth
-                          offering and a narrow window wrapped them into
-                          three or four lines, which pushed the products
-                          down the page to make room for suggestions
-                          about them. Clipped rather than capped at a
-                          number, because how many fit is a question
-                          about the window: `flex-wrap` puts whole pills
-                          on the next line and the overflow hides it.
-                        */}
-                        <ul className="flex max-h-9 flex-wrap gap-2 overflow-hidden">
-                            {/*
-                              Buttons, not links, and that is the point.
-
-                              Each chip narrows the search by *adding* its word to the
-                              query — `watch`, then `watch Smartwatch`, then `watch
-                              Smartwatch 44mm`. As anchors that was a combinatorial
-                              supply of crawlable URLs, and each one a crawler followed
-                              logged a brand-new term in `search_log` — the table the
-                              related-search chips are drawn from by trigram scan. The
-                              links fed the query that renders them. They were indexable
-                              as well: no filter, page 1, default sort, so `seo()` marked
-                              every combination `index, follow`.
-
-                              A button navigates for a visitor and does not exist for a
-                              crawler. Narrowing behaviour is unchanged. The URL is the
-                              server's own, not rebuilt here: the rule for joining a word
-                              onto a query lives in `SearchContext::narrowUrl()`, and a
-                              second copy of it would drift. See docs/features/seo.md.
-                            */}
-                            {terms.map((item) => (
-                                <li key={item.term}>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            router.get(
-                                                item.url,
-                                                {},
-                                                {
-                                                    preserveScroll: true,
-                                                    preserveState: true,
-                                                },
-                                            )
-                                        }
-                                        className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-ink-soft transition hover:border-ink hover:text-ink"
-                                    >
-                                        <span aria-hidden className="mr-1">+</span>
-                                        {item.term}
-
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                )}
-            </header>
-
-            {/*
-              Two explicit rows, and the first one is `auto`.
-
-              The sidebar holds the filters and, under them, the articles. With
-              implicit rows the results column — which spans both — had its
-              height shared out between them, so row one grew to roughly half a
-              screen of product grid and the articles were pushed far below the
-              facets they are supposed to sit against. `auto` pins row one to
-              the height of the filters; `1fr` gives row two whatever is left.
-
-              The row gap is tighter than the column gap for the same reason: 2rem
-              between two blocks in a 16rem column reads as a gap, where 2rem
-              between the sidebar and the results reads as a margin.
-            */}
-            <div className="mt-8 grid gap-x-8 gap-y-6 lg:grid-cols-[16rem_1fr] lg:grid-rows-[auto_1fr]">
-                <button
-                    type="button"
-                    className="flex items-center justify-between rounded border border-line px-4 py-3 text-sm lg:hidden"
-                    aria-expanded={filtersOpen}
-                    aria-controls="brand-filters"
-                    onClick={() => setFiltersOpen(!filtersOpen)}
-                >
-                    <span>{t('search.filters')}</span>
-                    <ToolIcon name="chevron" className={`h-4 w-4 text-ink-soft transition ${filtersOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* A sheet on a phone, a rail on a desktop — see Search.tsx. */}
-                <aside
-                    id="brand-filters"
-                    aria-label={t('search.filters')}
-                    className={`text-sm lg:col-start-1 lg:row-start-1 lg:block lg:space-y-6 ${
-                        filtersOpen
-                            ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0'
-                            : 'hidden'
-                    }`}
-                >
-                    <div className="flex items-center justify-between lg:hidden">
-                        <h2 className="font-medium">{t('search.filters')}</h2>
-                        <button
-                            type="button"
-                            onClick={() => setFiltersOpen(false)}
-                            className={buttonClasses('primary', 'sm')}
-                        >
-                            {t('search.show_results')}
-                        </button>
-                    </div>
-
-                    {/*
-                      First in the rail, above the facets.
-
-                      It is the only thing in here that leaves the page, and it
-                      is what a reader who has decided this is the wrong brand
-                      is looking for. At the bottom it sat under a shop facet
-                      and two switches — a scroll away on a phone, below the
-                      fold on a laptop — so the reader most likely to want it
-                      was the least likely to see it.
-
-                      The facets narrow a set the visitor has already accepted.
-                      This offers a different set, and that question comes
-                      first.
-                    */}
-                    {related.length > 0 && (
-                        <div>
-                            <h2 className="mb-2 font-medium">{t('brand.related_heading')}</h2>
-                            <ul className="space-y-1">
-                                {related.map((other) => (
-                                    <li key={other.url}>
-                                        <Link href={other.url} className="flex gap-2 hover:text-accent">
-                                            <span className="flex-1 truncate">{other.name}</span>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {(facets.merchants.length > 0 || amazonShop) && (
-                        <div>
-                            <h2 className="mb-2 font-medium">{t('search.shop')}</h2>
-                            <ul className="space-y-1">
-                                {[...(amazonShop ? [{ id: AMAZON_SHOP, name: amazonShop }] : []), ...facets.merchants].map((m) => {
-                                    const current = ([] as string[])
-                                        .concat((filters.merchant as string[]) ?? [])
-                                        .map(String)
-                                    const active = current.includes(String(m.id))
-
-                                    return (
-                                        <li key={m.id}>
-                                            <label className="flex cursor-pointer items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={active}
-                                                    onChange={() =>
-                                                        go({
-                                                            merchant: active
-                                                                ? current.filter((x) => x !== String(m.id))
-                                                                : [...current, String(m.id)],
-                                                        })
-                                                    }
-                                                    className="accent-accent"
-                                                />
-                                                <span className="flex-1 truncate">{m.name}</span>
-                                            </label>
-                                        </li>
+                            <FilterPanel
+                                facets={facets}
+                                filters={filters}
+                                go={go}
+                                showBrands={false}
+                                amazonShop={amazonShop}
+                                before={
+                                    /*
+                                      First in the panel, above the shops. It is the only
+                                      thing in here that leaves the page, and it is what
+                                      a reader who has decided this is the wrong brand
+                                      is looking for. The shops narrow a set the visitor
+                                      has already accepted; this offers a different set.
+                                    */
+                                    related.length > 0 && (
+                                        <div>
+                                            <p className="py-1 font-medium">{t('brand.related_heading')}</p>
+                                            <ul className="mt-2 space-y-1">
+                                                {related.map((other) => (
+                                                    <li key={other.url}>
+                                                        <Link href={other.url} className="flex gap-2 hover:text-accent">
+                                                            <span className="flex-1 truncate">{other.name}</span>
+                                                            <span aria-hidden className="text-xs text-ink-soft">
+                                                                →
+                                                            </span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     )
-                                })}
-                            </ul>
-                        </div>
-                    )}
-
-                    {/*
-                      Below the shop facet, mirroring the search rail: the
-                      switches trim a set the facet has already chosen. Above
-                      it they were the entire collapsed panel on a phone.
-                      "Available from several shops" is gone here too — see
-                      docs/features/search.md.
-                    */}
-                    <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={filters.discounted === '1'}
-                            onChange={(e) => go({ discounted: e.target.checked ? '1' : null })}
-                            className="accent-accent"
-                        />
-                        <span>{t('search.discounted_only')}</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={filters.in_stock !== '0'}
-                            onChange={(e) => go({ in_stock: e.target.checked ? null : '0' })}
-                            className="accent-accent"
-                        />
-                        <span>{t('search.in_stock_only')}</span>
-                    </label>
-
-                    {/*
-                      Separated by a rule: everything above it narrows this
-                      page, and this one leaves it. Suppressed when the page
-                      found nothing, because the empty state carries its own
-                      copy in the middle of the screen.
-                    */}
-                    {amazonSearch && !results.empty && (
-                        <div className="border-t border-line pt-6">
-                            <AmazonSearchCta
-                                link={amazonSearch}
-                                label={t('search.amazon_search', { term: brandTerm })}
+                                }
                             />
-                        </div>
-                    )}
-                </aside>
-
-                {/*
-                  Spans both rows, so the articles below the filters do not push
-                  the results down a screen on a wide viewport.
-                */}
-                <section className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                        <h2 className="text-sm text-ink-soft">
-                            {/* No total, for the reason written out in Search.tsx. */}
-                            {t('brand.products_heading', { brand: brand.name })}
-                        </h2>
-
-                        {/*
-                          Who else is being asked, then how many products they
-                          added: in this row, whose height the sort menu sets,
-                          so it appears and goes without moving anything.
-                        */}
-                        <LiveStatus liveShops={livePending ? liveShops : []} notice={live?.notice ?? null} />
-
-                        <div className="ml-auto">
-                            <label className="sr-only" htmlFor="brand-sort">
-                                {t('search.sort')}
-                            </label>
-                            <select
-                                id="brand-sort"
-                                value={sort}
-                                onChange={(e) => go({ sort: e.target.value })}
-                                className="rounded-card border border-line bg-card px-2 py-1.5 text-sm"
-                            >
-                                <option value="relevance">{t('search.sort_relevance')}</option>
-                                <option value="price_asc">{t('search.sort_price_asc')}</option>
-                                <option value="price_desc">{t('search.sort_price_desc')}</option>
-                                <option value="discount">{t('search.sort_discount')}</option>
-                                <option value="newest">{t('search.sort_newest')}</option>
-                            </select>
-                        </div>
+                        </FiltersMenu>
                     </div>
-
-                    {livePending && storedResults.empty ? (
-                        <SkeletonGrid count={8} />
-                    ) : results.empty ? (
-                        <div className="rounded-card border border-line bg-card p-8 text-center">
-                            <p className="font-medium">{t('brand.empty', { brand: brand.name })}</p>
-
-                            {/*
-                              The line above is chrome and always renders; this
-                              is the editor's advice under it. Shown even on a
-                              noindex sub-search, because it is for the reader
-                              rather than for a crawler.
-                            */}
-                            <PageBlocks blocks={emptyCopy} className="mx-auto mt-2 max-w-xl" />
-
-                            {/* The dead end is where this link is worth most. */}
-                            {amazonSearch && (
-                                <div className="mx-auto mt-6 max-w-sm text-left">
-                                    <AmazonSearchCta
-                                        link={amazonSearch}
-                                        label={t('search.amazon_search', { term: brandTerm })}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                            {mixed.map((entry) =>
-                                entry.kind === 'amazon' ? (
-                                    <AmazonProductCard key={`amazon-${entry.item.asin}`} item={entry.item} host={amazonHost} />
-                                ) : (
-                                    // No brandUrl: every card on this page is this
-                                    // brand, so a link back to the page you are on
-                                    // is noise.
-                                    <ProductCard key={entry.g.id} group={entry.g} />
-                                ),
-                            )}
-                        </div>
-                    )}
-
-                    {(results.currentPage > 1 || results.hasMore) && !amazonOnly && (
-                        <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
-                            <button
-                                disabled={results.currentPage <= 1}
-                                onClick={() => go({ page: results.currentPage - 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
-                            >
-                                {t('search.previous')}
-                            </button>
-                            <span className="text-ink-soft">
-                                {t('search.page', { current: n(results.currentPage) })}
-                            </span>
-                            <button
-                                disabled={!results.hasMore}
-                                onClick={() => go({ page: results.currentPage + 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
-                            >
-                                {t('search.next')}
-                            </button>
-                        </nav>
-                    )}
-
-                    {/*
-                      Offers we may show but not keep.
-
-                      Their own section rather than mixed into the grid above,
-                      and that separation is the honest one: every card up there
-                      is a physical product with every shop's price under it,
-                      because those offers are stored and grouped. These are not
-                      grouped with anything — nothing wrote them down — so
-                      showing them as comparison cards would promise a comparison
-                      that was never made.
-
-                      The price note is a condition of display, not a nicety: a
-                      price fetched a moment ago may already have moved, and the
-                      programme requires saying so. Same reason the link is a
-                      plain anchor and skips the /go/ redirector every other
-                      outbound link on the site uses.
-                    */}
-                    {liveOffers.length > 0 && (
-                        <section className="mt-12" aria-labelledby="brand-live">
-                            <h2 id="brand-live" className="text-xl font-semibold tracking-tight">
-                                {t('brand.live_heading', { brand: brand.name })}
-                            </h2>
-                            <p className="mt-1 text-sm text-ink-soft">{t('brand.live_note')}</p>
-
-                            <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                                {liveOffers.map((offer) => (
-                                    <LiveOfferCard key={offer.url} offer={offer} />
-                                ))}
-                            </ul>
-                        </section>
-                    )}
-
-                    {/*
-                      The page-level "price and availability as of…" line, with
-                      the brand's whole range after it, was removed on
-                      2026-08-30. It read as a disclaimer on the grid, which does
-                      not need one: those cards are stored offers with their own
-                      timestamps.
-
-                      The Amazon condition is unaffected. It applies per offer,
-                      and each live card renders its own note when
-                      `needsPriceTimestamp` is set — see liveCard() for why that
-                      is read off `Source` rather than hard-coded.
-                    */}
-                </section>
+                </div>
 
                 {/*
-                  The written half of the page, and now the only half.
-
-                  A grid of cards states facts and cannot carry a voice. An
-                  article was written once, about a real question — so this is
-                  where any personality on a brand page comes from, and it is a
-                  link out of the page rather than a paragraph about the page.
-
-                  ## Where it sits, and why that differs by width
-
-                  On a wide screen it sits directly under the filters, in the
-                  same column — close enough to read as part of the same rail
-                  rather than as something stranded at the bottom of the page.
-                  `self-start` keeps it against the filters instead of stretching
-                  down the row.
-
-                  On a narrow screen it goes last, after the results. The column
-                  collapses to one, and putting articles between the filters and
-                  the products would make somebody who came here to look at
-                  products scroll past prose to reach them.
-
-                  Explicit placement rather than `order`: the results span both
-                  rows, so this has to be told which cell it belongs in. In DOM
-                  order it already comes last, which is exactly what the mobile
-                  single-column flow wants — no ordering classes needed there.
+                  An editor's sentence about this brand, above the products. This page
+                  opened with templated statistics until 2026-08-10, when they were
+                  removed for being arithmetic in sentences, the same on every brand.
+                  Nothing generates what goes here and it ships empty.
                 */}
+                <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
+
                 {/*
-                  The Brand Cove, above everything else this column carries.
-
-                  It renders here rather than at an address of its own because
-                  this page is the one canonical indexable URL per brand per
-                  market — every brand mention on the site points at it, so a
-                  second page would split exactly the link equity this one exists
-                  to consolidate.
+                  The words that come up across this brand's products. They narrow
+                  this page rather than leaving for a plain search: somebody on a
+                  Kärcher page reading "hogedrukreiniger" is asking which Kärchers
+                  those are, not to be shown Bosch.
                 */}
-                {coves.length > 0 && (
-                    <aside
-                        className="lg:col-start-1 lg:row-start-2 lg:self-start"
-                        aria-labelledby="brand-coves"
-                    >
-                        <h2 id="brand-coves" className="text-lg font-semibold tracking-tight">
-                            {t('brand.coves_heading', { brand: brand.name })}
+                <TermPills terms={terms} visit={visit} />
+
+                <FilterChips chips={chips} clearHref={q ? `${base}?q=${encodeURIComponent(q)}` : base} />
+
+                {amazonSearch && !results.empty && !placeholders && <AmazonBanner link={amazonSearch} term={brandTerm} />}
+
+                {placeholders ? (
+                    <SkeletonGrid />
+                ) : results.empty ? (
+                    <div className="rounded-card border border-line bg-card p-8 text-center">
+                        <p className="font-medium">{t('brand.empty', { brand: brand.name })}</p>
+
+                        {/* The editor's advice under the line above. Shown even on a
+                            noindex sub-search, because it is for the reader. */}
+                        <PageBlocks blocks={emptyCopy} className="mx-auto mt-2 max-w-xl" />
+
+                        {/* The dead end is where this link is worth most. */}
+                        {amazonSearch && (
+                            <div className="mx-auto mt-6 max-w-sm text-left">
+                                <AmazonSearchCta link={amazonSearch} label={amazonLabel} />
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // No brandUrl: every card on this page is this brand, so a link
+                    // back to the page you are on is noise.
+                    <ResultGrid
+                        entries={mixed}
+                        amazonHost={amazonHost}
+                        amazonCard={amazonSearch ? { link: amazonSearch, label: amazonLabel, after: amazonAfter } : null}
+                    />
+                )}
+
+                {!amazonOnly && <Pagination page={results} go={go} />}
+
+                {/*
+                  Offers we may show but not keep, in their own section: every card
+                  above is a physical product with every shop's price under it,
+                  because those offers are stored and grouped. These are not grouped
+                  with anything, so showing them as comparison cards would promise a
+                  comparison that was never made. Each live card renders its own
+                  price note, a condition of display.
+                */}
+                {liveOffers.length > 0 && (
+                    <section className="mt-12" aria-labelledby="brand-live">
+                        <h2 id="brand-live" className="text-xl font-semibold tracking-tight">
+                            {t('brand.live_heading', { brand: brand.name })}
                         </h2>
-                        <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                            {coves.map((cove) => (
-                                <li key={cove.url}>
-                                    <Link
-                                        href={cove.url}
-                                        className="block rounded-card border border-line bg-card p-4 transition hover:border-ink"
-                                    >
-                                        <h3 className="text-sm font-medium">{cove.title}</h3>
-                                        {cove.intro && (
-                                            <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
-                                                {cove.intro}
-                                            </p>
-                                        )}
-                                    </Link>
-                                </li>
+                        <p className="mt-1 text-sm text-ink-soft">{t('brand.live_note')}</p>
+
+                        <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                            {liveOffers.map((offer) => (
+                                <LiveOfferCard key={offer.url} offer={offer} />
                             ))}
                         </ul>
-                    </aside>
+                    </section>
                 )}
-            </div>
+            </section>
 
             {/*
-              Full width, under both columns rather than inside the results one.
+              The articles that mention the brand, under the products now that the
+              results take the whole width (they sat under the filter rail). An
+              article was written once, about a real question, so this is where any
+              voice on a brand page comes from, as a link out of the page.
+            */}
+            {coves.length > 0 && (
+                <section className="mt-12" aria-labelledby="brand-coves">
+                    <h2 id="brand-coves" className="text-lg font-semibold tracking-tight">
+                        {t('brand.coves_heading', { brand: brand.name })}
+                    </h2>
+                    <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {coves.map((cove) => (
+                            <li key={cove.url}>
+                                <Link href={cove.url} className="block h-full rounded-card border border-line bg-card p-4 transition hover:border-ink">
+                                    <h3 className="text-sm font-medium">{cove.title}</h3>
+                                    {cove.intro && <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
 
-              It is the last thing on the page and it is prose: constrained to
-              the results column it would have run in a 3-column grid inside a
-              2-column layout, and on a wide screen its own columns came out
-              narrower than the product cards beside them.
+            {/*
+              Full width, the last thing on the page, and prose: the long copy, drawn
+              from the editable bank. See BrandController::narrative().
             */}
             {narrative && <PageNarrative narrative={narrative} />}
         </>

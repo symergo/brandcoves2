@@ -29,6 +29,7 @@ use App\Services\Search\LiveOfferCard;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Search\WaitShops;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\SocialCard;
@@ -272,6 +273,9 @@ class BrandController extends Controller
             // The live shops' answer for a thin brand page, after it is shown
             // (see above): who is asked, then their products and a notice.
             'liveShops' => $result->deferredShops,
+            // The market's biggest shops, for the line under the search field while
+            // the page loads (SearchStatus), as on the search page. Cached a day.
+            'waitShops' => WaitShops::for($market),
             'live' => $result->liveDeferred()
                 ? Inertia::defer(fn (): array => $this->liveUpdate($searchQuery, $result, $search))
                 : null,

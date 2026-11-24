@@ -648,3 +648,28 @@ rendering. Now it works like the search page (docs/features/search.md, "While a 
 Tests read the follow-up through `BrandPageTest::visit()`, which requests the page as a browser
 does. And the filter counts of a brand page now count only its brand: see search.md, "The filter
 counts never cover a whole market" (38-55 s before, 20 ms after, on production).
+
+## The brand page looks like the search page (owner, 2026-11-24)
+
+"The brand page should look the same as the search page (same filter ux design, searchfield).
+Make sure you reuse code where possible."
+
+Both pages are now built from `resources/js/Components/SearchChrome.tsx`, the parts that were
+inside Search.tsx: the search field (`SearchBar`, with the scanner beam and the wait line), the
+Filters button with its popover on a desktop and sheet on a phone (`FiltersMenu`), sort
+(`ResultControls`), the facets and switches (`FilterPanel`, `Facet`), the chips (`useFilterChips`,
+`FilterChips`), the narrowing pills (`TermPills`), the Amazon banner, the grid with Amazon mixed in
+and the hand-off card (`ResultGrid`), the page buttons, and the navigation that keeps every filter
+in the URL (`useResultNavigation`). A change to one of these now changes both pages.
+
+What the brand page keeps of its own:
+
+- The field searches **within the brand** and keeps `/brand/{slug}`: it sets `q`, the same
+  parameter the pills add to, and an empty field is the brand's own page again. The removable word
+  chips that showed `q` went; the field shows it, and "clear filters" keeps it.
+- The breadcrumb, the brand heading, and the other brands as links, first in the Filters panel.
+- No brand facet (filtering a Sony page by brand is one option), and no by-store view: that needs
+  the shops' columns, which only SearchController computes.
+- The articles that mention the brand moved from under the filter rail to under the products,
+  since the rail is gone and the results take the whole width, as on search.
+- `waitShops` is sent too, for the line under the field while the page loads.

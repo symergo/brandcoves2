@@ -342,6 +342,8 @@ return [
         'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels des boutiques qui les vendent.',
         'index_empty' => 'Encore aucune marque dans cette région.',
         'products_heading' => 'Produits :brand',
+        // The search field on a brand page, which searches within the brand (2026-11-24).
+        'search_placeholder' => 'Chercher dans :brand',
         'coves_heading' => 'Coves qui mentionnent :brand',
         'related_heading' => 'D\'autres marques que les gens regardent',
         'empty' => 'Rien de :brand n\'est en stock pour le moment.',

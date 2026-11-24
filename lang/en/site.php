@@ -437,6 +437,8 @@ return [
         'index_intro' => 'Every brand in the catalogue, with live prices from the shops that stock it.',
         'index_empty' => 'No brands in this market yet.',
         'products_heading' => ':brand products',
+        // The search field on a brand page, which searches within the brand (2026-11-24).
+        'search_placeholder' => 'Search :brand',
         'coves_heading' => 'Coves that mention :brand',
         'related_heading' => 'Other brands people look at',
         'empty' => 'Nothing from :brand is in stock right now.',

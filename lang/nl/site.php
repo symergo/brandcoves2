@@ -341,6 +341,8 @@ return [
         'index_intro' => 'Alle merken in de catalogus, met actuele prijzen van de winkels die ze verkopen.',
         'index_empty' => 'Nog geen merken in deze regio.',
         'products_heading' => 'Producten van :brand',
+        // The search field on a brand page, which searches within the brand (2026-11-24).
+        'search_placeholder' => 'Zoek in :brand',
         'coves_heading' => 'Coves waarin :brand voorkomt',
         'related_heading' => 'Andere merken die mensen bekijken',
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
