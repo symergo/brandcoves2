@@ -7,6 +7,7 @@ namespace App\Services\Seo;
 use App\Enums\Market;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Whether a page has enough on it to be offered to a search engine.
@@ -34,6 +35,15 @@ use App\Models\ProductGroup;
  * the argument for it holds, a product that comes back in stock is then already known to the index.
  *
  * To widen or drop the exception, change {@see self::MARKETS}; nothing else knows which markets it covers.
+ *
+ * ## The second exception: one shop, no Cove (owner, 2026-11-24)
+ *
+ * A product page that only one shop sells shows that shop's feed text, which Google already has from the
+ * shop itself, and there are millions of them. What a page of ours adds is a comparison (two or more shops)
+ * or writing (a published Cove names it). Without either it is `noindex, follow`: still a page for a
+ * visitor, its links still followed, only not offered to the index. `index_single_shop_products` in
+ * config/giftcoves.php turns it off. It was asked for as a Google improvement without Search Console data
+ * (none was connected); how much search traffic single-shop pages brought was not known when it shipped.
  */
 final class Indexing
 {
@@ -48,7 +58,7 @@ final class Indexing
     public static function product(ProductGroup $group, array $offers): ?string
     {
         if (! in_array($group->market, self::MARKETS, true)) {
-            return null;
+            return self::hasSomethingOfItsOwn($group) ? null : 'noindex, follow';
         }
 
         foreach ($offers as $offer) {
@@ -58,5 +68,23 @@ final class Indexing
         }
 
         return 'noindex, follow';
+    }
+
+    /**
+     * Two or more shops to compare, or a published Cove that writes about it (see the class docblock).
+     * One indexed lookup on daily_picks (group_id, created_at) for a single-shop product; none otherwise.
+     */
+    private static function hasSomethingOfItsOwn(ProductGroup $group): bool
+    {
+        if (config('giftcoves.index_single_shop_products') || (int) $group->merchant_count >= 2) {
+            return true;
+        }
+
+        return DB::table('daily_picks')
+            ->join('daily_pick_sets', 'daily_pick_sets.id', '=', 'daily_picks.set_id')
+            ->where('daily_picks.group_id', $group->id)
+            ->whereNotNull('daily_pick_sets.published_at')
+            ->where('daily_pick_sets.published_at', '<=', now())
+            ->exists();
     }
 }

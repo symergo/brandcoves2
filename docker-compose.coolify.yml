@@ -166,6 +166,9 @@ x-app: &app
     EBAY_CAMPAIGN_ID_NL: ${EBAY_CAMPAIGN_ID_NL}
     EBAY_CAMPAIGN_ID_FR: ${EBAY_CAMPAIGN_ID_FR}
     EBAY_CAMPAIGN_ID_ES: ${EBAY_CAMPAIGN_ID_ES}
+    # ASIN Data API, Amazon's products without a price (2026-11-23). Absent means
+    # no "Bekijk op Amazon" and no Amazon cards, with no error.
+    ASINDATA_API_KEY: ${ASINDATA_API_KEY}
     # Tradedoubler. One value, and it is both the credential and the affiliate
     # id — the tracking links come back already built around it. Absent here
     # means the whole network is silently missing from search, with no error.

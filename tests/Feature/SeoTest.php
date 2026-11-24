@@ -11,6 +11,7 @@ use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\ProductGroup;
@@ -681,6 +682,37 @@ class SeoTest extends TestCase
         $html = (string) $this->get($page)->assertOk()->getContent();
         $this->assertStringContainsString('<meta name="robots" content="noindex, follow"', $html);
         $this->assertStringNotContainsString('hreflang="', strstr($html, '</head>', true) ?: $html);
+    }
+
+    #[Test]
+    public function a_product_one_shop_sells_and_no_cove_names_stays_out_of_the_index(): void
+    {
+        // Owner, 2026-11-24: index a product page only when it has something of its own.
+        config(['giftcoves.robots_allow' => true]);
+        $group = $this->seedCatalogue();
+        $page = "/be-nl/p/{$group->id}/{$group->slug}";
+        $noindex = '<meta name="robots" content="noindex, follow"';
+
+        // Two shops to compare: indexed.
+        $group->forceFill(['merchant_count' => 2])->save();
+        $this->assertStringNotContainsString($noindex, (string) $this->get($page)->assertOk()->getContent());
+
+        // One shop: out of the index, the page itself still served.
+        $group->forceFill(['merchant_count' => 1])->save();
+        $this->assertStringContainsString($noindex, (string) $this->get($page)->assertOk()->getContent());
+
+        // One shop, but a published Cove writes about it: indexed.
+        $set = DailyPickSet::create([
+            'market' => Market::BeNl, 'kind' => CoveKind::Guide, 'slug' => 'beste-test', 'theme_slug' => 'beste-test', 'theme_title' => 'Beste test',
+            'published_at' => now()->subDay(),
+        ]);
+        DailyPick::create(['set_id' => $set->id, 'group_id' => $group->id, 'rank' => 1, 'slug' => $group->slug]);
+        $this->assertStringNotContainsString($noindex, (string) $this->get($page)->assertOk()->getContent());
+
+        // And the switch returns to "every page indexable".
+        $set->delete();
+        config(['giftcoves.index_single_shop_products' => true]);
+        $this->assertStringNotContainsString($noindex, (string) $this->get($page)->assertOk()->getContent());
     }
 
     #[Test]

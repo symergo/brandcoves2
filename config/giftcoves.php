@@ -51,6 +51,19 @@ return [
     'robots_allow' => (bool) env('ROBOTS_ALLOW', false),
 
     /*
+     * Whether a product page sold by one shop, and in no published Cove, is
+     * offered to search engines (App\Services\Seo\Indexing). False since
+     * 2026-11-24 (owner): such a page shows the shop's own feed text, which Google
+     * already has from the shop, and there are about 2.4 million of them per
+     * market. A page with two or more shops to compare, or that a Cove writes
+     * about, has something of its own and stays indexed. Set
+     * SEO_INDEX_SINGLE_SHOP_PRODUCTS=true to return to "every page indexable":
+     * the pages are only marked, never removed, so the switch undoes it at once
+     * (Google takes weeks to re-index them either way).
+     */
+    'index_single_shop_products' => (bool) env('SEO_INDEX_SINGLE_SHOP_PRODUCTS', false),
+
+    /*
      * The whole-page cache for signed-out visitors (App\Http\Middleware\
      * CacheAnonymousPage; docs/features/speed.md, "Anonymous page cache").
      *

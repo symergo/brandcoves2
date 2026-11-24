@@ -121,6 +121,21 @@ What that means in code:
 | Previews, shared lists, Secret Santa, quiz, taste profile, magic link, an unanswered or held board question, 404 | **noindex** | — |
 | A Community Cove until it has been up a week, holds eight things and three people saved it (2026-09-26, [community-coves.md](community-coves.md#indexing-not-at-first)) | **noindex, follow** | itself |
 
+### A product page one shop sells, in no Cove, is `noindex, follow` (2026-11-24)
+
+Owner, asked as one of six Google improvements. A product page that only one shop sells shows that
+shop's feed text, which Google already has from the shop, and there are about 2.4 million product
+groups per Belgian market. A page with two or more shops to compare, or that a published Cove names,
+has something of its own and stays indexed. The rest: `noindex, follow`, no hreflang twins claimed, the
+page still served and its links still followed. `App\Services\Seo\Indexing::product()`; one indexed
+lookup on `daily_picks` for a single-shop product.
+
+**Not measured before it shipped.** No Search Console data was connected and Cloudflare's plan gives no
+referrers, so how many visitors single-shop product pages brought from Google was unknown. Watch Search
+Console's clicks on `/p/` pages for the weeks after. `SEO_INDEX_SINGLE_SHOP_PRODUCTS=true` on the app
+returns to "every page indexable" at once; Google takes weeks to re-index either way. Test:
+`SeoTest::a_product_one_shop_sells_and_no_cove_names_stays_out_of_the_index`.
+
 ### Product links in the grids are `nofollow` (2026-11-15)
 
 Owner: "minder crawl budget naar producten en meer naar search results", and then: "no follow to
