@@ -285,10 +285,13 @@ class CovePlanController extends Controller
          * it was stored, and finds out when the page renders without one.
          */
         if (! $kind->writesBody()) {
+            // A Daily takes the two search fields since 2026-11-24 (DailyCoveController):
+            // what its <title> and search result say. The rest stays an article's.
+            $daily = $kind === CoveKind::Daily;
             $stray = array_keys(array_filter([
-                'focusKeyphrase' => $data['focusKeyphrase'] ?? null,
+                'focusKeyphrase' => $daily ? null : ($data['focusKeyphrase'] ?? null),
                 'searchQuestions' => $data['searchQuestions'] ?? null,
-                'metaDescription' => $data['metaDescription'] ?? null,
+                'metaDescription' => $daily ? null : ($data['metaDescription'] ?? null),
                 'body' => $data['body'] ?? null,
                 'faq' => $data['faq'] ?? null,
             ]));
@@ -474,6 +477,10 @@ class CovePlanController extends Controller
              * did and the reason its keyphrase and FAQ were nobody's decision.
              * Sent here they survive every rebuild — that is the whole contract.
              */
+            ...($kind === CoveKind::Daily ? [
+                'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+                'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
+            ] : []),
             ...($kind->writesBody() ? [
                 'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
                 'search_questions' => isset($data['searchQuestions']) ? self::questions($data['searchQuestions']) : null,
@@ -1042,6 +1049,11 @@ class CovePlanController extends Controller
              * Only for the kinds that carry them — a persona reading back a null
              * `faq` invites an agent to fill it in, and it would be refused.
              */
+            // A Daily's two search fields (2026-11-24), read back like an article's.
+            ...($plan->kind === CoveKind::Daily ? [
+                'focusKeyphrase' => $plan->focus_keyphrase,
+                'metaDescription' => $plan->meta_description,
+            ] : []),
             ...($plan->kind->writesBody() ? [
                 'focusKeyphrase' => $plan->focus_keyphrase,
                 'searchQuestions' => $plan->search_questions ?? [],

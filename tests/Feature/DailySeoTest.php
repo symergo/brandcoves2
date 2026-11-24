@@ -108,6 +108,36 @@ class DailySeoTest extends TestCase
         $this->assertSame('Surtout ce qui s’y accroche.', $edition->theme_blurb);
     }
 
+    #[Test]
+    public function a_new_daily_takes_them_and_its_build_carries_them_to_the_page(): void
+    {
+        $this->withToken(ApiToken::issue('claude', [ApiToken::WRITE, ApiToken::READ])['token'])
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'kind' => CoveKind::Daily->value,
+                'date' => now()->addDays(3)->toDateString(),
+                'title' => 'Op twee wielen',
+                'focusKeyphrase' => 'cadeau voor fietser',
+                'metaDescription' => 'Een fietsmand, een houder voor de fietscomputer en een dubbele fietstas.',
+            ])
+            ->assertSuccessful()
+            ->assertJsonPath('data.focusKeyphrase', 'cadeau voor fietser');
+
+        $plan = CovePlan::query()->firstOrFail();
+        $this->assertSame('Een fietsmand, een houder voor de fietscomputer en een dubbele fietstas.', $plan->meta_description);
+
+        // Still refused: a Daily is no article.
+        $this->withToken(ApiToken::issue('claude2', [ApiToken::WRITE])['token'])
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'kind' => CoveKind::Daily->value,
+                'date' => now()->addDays(4)->toDateString(),
+                'title' => 'Iets anders',
+                'searchQuestions' => ['Wat geef je een fietser?'],
+            ])
+            ->assertStatus(422);
+    }
+
     /** @param array<string, mixed> $extra */
     private function edition(string $slug, string $title, string $date, Market $market, array $extra = []): DailyPickSet
     {

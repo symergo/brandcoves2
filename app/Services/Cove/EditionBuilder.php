@@ -142,6 +142,10 @@ class EditionBuilder
             $plan !== null => [
                 'title' => $plan->title,
                 'blurb' => $plan->blurb,
+                // What a search engine reads (2026-11-24): the phrase in front of the
+                // title and the description, authored with the plan like the title.
+                'focus_keyphrase' => $plan->focus_keyphrase,
+                'meta_description' => $plan->meta_description,
                 'slug' => Str::slug($plan->title).'-'.$plan->id,
                 'source' => 'planned',
             ],
@@ -209,6 +213,8 @@ class EditionBuilder
                 [
                     'theme_title' => $theme['title'],
                     'theme_blurb' => $theme['blurb'],
+                    'focus_keyphrase' => $theme['focus_keyphrase'] ?? null,
+                    'meta_description' => $theme['meta_description'] ?? null,
                     'theme_slug' => $theme['slug'],
                     'theme_source' => $theme['source'],
                     'editorial' => $editorial['text'],
