@@ -878,6 +878,12 @@ function Chrome({ children }: PropsWithChildren) {
                                     {t('brand.index_title')}
                                 </Link>
                             )}
+                            {/* The gift landing pages per person and interest (2026-11-24): their way in from every page. */}
+                            {discoverMenu.giftIdeas && (
+                                <Link href={`/${market.key}/gift-ideas/for`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                    {t('gift_ideas.for_whom_title')}
+                                </Link>
+                            )}
                             {/* Only what the header lacks (2026-09-26). Shop
                                 Smarter, Daily Cove and Surprise Cove are one
                                 tap away in the header on every page; a footer

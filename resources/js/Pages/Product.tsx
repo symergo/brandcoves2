@@ -63,6 +63,8 @@ interface Props {
     giftTags?: {
         interests: { value: string; label: string; url: string }[]
         vibes: { value: string; label: string; url: string }[]
+        /** The gift landing pages it belongs on (2026-11-24): "papa die graag kookt". */
+        pages?: { label: string; url: string }[]
     }
     alert: AlertState
     /**
@@ -251,6 +253,21 @@ export default function Product({ product, offers, giftTags, alert, amazonSearch
                                 </li>
                             ))}
                         </ul>
+                    )}
+                    {/* Where this product sits among the gift pages per person (2026-11-24): their
+                        way in from the catalogue. Plain links, so a crawler follows them too. */}
+                    {giftTags?.pages && giftTags.pages.length > 0 && (
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {t('product.good_gift_for')}{' '}
+                            {giftTags.pages.map((page, i) => (
+                                <span key={page.url}>
+                                    {i > 0 && ', '}
+                                    <Link href={page.url} className="text-accent-dark hover:text-ink">
+                                        {page.label}
+                                    </Link>
+                                </span>
+                            ))}
+                        </p>
                     )}
 
                     {/*

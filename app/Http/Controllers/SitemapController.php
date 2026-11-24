@@ -181,6 +181,12 @@ class SitemapController extends Controller
                 'priority' => '0.7',
                 'changefreq' => 'weekly',
             ];
+            // The directory of gift landing pages per person (2026-11-24).
+            $urls[] = [
+                'loc' => url("/{$resolved->value}/gift-ideas/for"),
+                'priority' => '0.7',
+                'changefreq' => 'weekly',
+            ];
 
             // The guides overview, checked weekly (owner, 2026-11-08).
             $urls[] = [

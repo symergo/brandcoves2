@@ -362,6 +362,8 @@ return [
      */
 
     'product' => [
+        // Before the gift landing pages a product belongs on (2026-11-24).
+        'good_gift_for' => "Une bonne idée aussi pour :",
         'gift_tags' => 'Un cadeau pour qui aime',
         'from' => 'à partir de',
         'one_offer' => '1 offre',
@@ -2247,6 +2249,11 @@ return [
     ],
 
     'gift_ideas' => [
+        // The directory of gift landing pages per person (2026-11-24): /gift-ideas/for.
+        'for_whom_title' => 'Idées cadeaux par personne',
+        'for_whom_description' => "Pour maman, papa, votre partenaire, un collègue ou l'hôte : les idées par personne, puis par centre d'intérêt, de la cuisine aux jeux vidéo.",
+        'for_whom_intro' => 'Choisissez pour qui, puis ce qui occupe cette personne. Chaque page montre ce qui convient à ce duo, avec les prix des boutiques que nous comparons.',
+        'for_whom_link' => 'Par personne et par intérêt',
 
         /*
          * A persona's listing title, which its theme_title cannot be.
@@ -2699,7 +2706,7 @@ return [
         'find_search_results' => 'Sur la page de résultats, les Coves sur ce que vous cherchez viennent d\'abord. Les filtres et le tri sont derrière le bouton Filtres, et chaque filtre actif s\'affiche en pastille que vous pouvez retirer. Sous un produit, vous voyez combien de personnes le gardent sur une liste et dans combien de Coves il se trouve : un nombre seulement, jamais qui. En bas, Enregistrez … sur votre liste de cadeaux enregistre la recherche elle-même dans une liste : qui ouvre la liste voit la même comparaison.',
         'find_scan' => 'Scannez un code-barres avec l\'appareil photo de votre téléphone pour voir le produit et son prix ailleurs.',
         'find_country' => 'Les prix et les boutiques dépendent de votre pays. Lors d\'une première visite, une barre en haut indique le pays choisi, avec les autres à un clic ; fermez-la pour le garder. Le bouton pays et langue en haut (dans le menu sur un téléphone) le change à tout moment. Nous retenons votre choix, et ouvrir le lien de quelqu\'un vers un autre pays ne le change pas.',
-        'find_gift' => 'Dans « Trouver un cadeau », dites d’abord pour qui c’est : l’un de vos proches, qui c’est, comme votre partenaire ou un collègue, ou vous-même. Choisissez ensuite comment chercher : balayez des cadeaux et mettez directement sur la liste ce qui vous plaît, répondez à quelques questions, choisissez entre deux choses dans Ceci ou cela, ou partez d’un type de personne. Ou demandez à quelqu’un : aux autres, ou à la personne elle-même, avec son propre lien où elle joue à Ceci ou cela, propose des cadeaux ou partage une liste d’envies. Chaque chemin sauf ces deux derniers mène à la même page d’idées, avec des idées hors boutique, des Coves faites par d’autres, et tout en bas Demandez à d’autres.',
+        'find_gift' => 'Dans « Trouver un cadeau », dites d’abord pour qui c’est : l’un de vos proches, qui c’est, comme votre partenaire ou un collègue, ou vous-même. Choisissez ensuite comment chercher : balayez des cadeaux et mettez directement sur la liste ce qui vous plaît, répondez à quelques questions, choisissez entre deux choses dans Ceci ou cela, ou partez d’un type de personne. Ou demandez à quelqu’un : aux autres, ou à la personne elle-même, avec son propre lien où elle joue à Ceci ou cela, propose des cadeaux ou partage une liste d’envies. Chaque chemin sauf ces deux derniers mène à la même page d’idées, avec des idées hors boutique, des Coves faites par d’autres, et tout en bas Demandez à d’autres. Si vous savez déjà pour qui et pour quoi, Idées cadeaux par personne propose une page par combinaison, comme papa qui aime cuisiner.',
         'find_ask' => 'Demandez aux autres : décrivez pour qui vous cherchez et d’autres personnes proposent quelque chose. Choisissez à qui vous demandez : la communauté GiftCoves, sur le tableau public (nous lisons d’abord votre question), ou seulement vos proches : vos amis sur GiftCoves reçoivent tout de suite une notification, et vous recevez un lien à envoyer à qui vous voulez. Cette question n’est pas sur le tableau. Sous Vos questions, vous retrouvez le lien de chacune de vos questions.Depuis « Trouver un cadeau » ou depuis une liste pour quelqu’un, la question est déjà remplie avec ce que nous savons (jamais le nom), et les idées des réponses s’ajoutent directement à cette liste. Une fois votre question publiée, vos amis sur GiftCoves en sont informés ; vous pouvez le désactiver, ou ne plus recevoir leurs questions, dans vos notifications.',
         'find_history' => 'Ce que vous avez marqué « Je m’en occupe » sur les listes pour quelqu’un n’apparaît plus dans les nouvelles idées pour cette personne. Ce que d’autres ont marqué ne compte pas. Sur sa page (ouvrez-la depuis une liste pour elle ou depuis « Trouver un cadeau »), nous proposons l’étape suivante, comme du café en grains après une cafetière italienne.',
         'find_reminders' => 'Enregistrez un anniversaire ou une occasion pour quelqu’un et nous vous envoyons un rappel par e-mail. Environ deux semaines avant, le rappel apporte trois idées adaptées à la personne, à son budget et à ce que vous avez déjà offert, avec un clic pour les voir dans « Trouver un cadeau » ou les ajouter à sa liste. Arrêtez les e-mails depuis le lien de n’importe quel rappel.',

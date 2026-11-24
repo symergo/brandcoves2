@@ -472,6 +472,8 @@ return [
      */
 
     'product' => [
+        // Before the gift landing pages a product belongs on (2026-11-24).
+        'good_gift_for' => "Also a good present for:",
         'gift_tags' => 'A gift for someone into',
         'from' => 'from',
         'one_offer' => '1 offer',
@@ -2415,6 +2417,11 @@ return [
      * shopping for" is the question most visitors actually arrive with.
      */
     'gift_ideas' => [
+        // The directory of gift landing pages per person (2026-11-24): /gift-ideas/for.
+        'for_whom_title' => 'Gift ideas by person',
+        'for_whom_description' => 'For mum, dad, your partner, a colleague or the host: ideas per person, then per interest, from cooking to gaming.',
+        'for_whom_intro' => 'Pick who it is for, then what they like doing. Each page shows what suits that pair, with prices from the shops we compare.',
+        'for_whom_link' => 'By person and interest',
 
         /*
          * A persona's listing title, which its theme_title cannot be.
@@ -2968,7 +2975,7 @@ return [
         'find_search_results' => 'On the results page, Coves about what you searched come first. Filters and sorting sit behind the Filters button, and every filter that is on shows as a chip you can remove. Under a product you can see how many people keep it on a list and how many Coves hold it: a count only, never who. At the bottom, Save … to your gift list saves the search itself to a list, so whoever opens the list sees the same comparison.',
         'find_scan' => 'Scan a barcode with your phone\'s camera to see the product and what it costs elsewhere.',
         'find_country' => 'Prices and shops depend on your country. On a first visit a bar at the top says which country we picked, with the others one tap away; close it to keep it. The country and language button at the top (in the menu on a phone) changes it any time. We remember what you choose, and opening somebody\'s link to another country does not change it.',
-        'find_gift' => 'In Find a gift you first say who it is for: one of your people, who they are, like your partner or a colleague, or yourself. Then choose how to look: swipe through gifts and put what you want straight on the list, answer a few questions, choose between two things in This or that, or start from a type of person. Or ask somebody: other people, or the person themselves, on their own link where they play This or that, suggest gifts or share a wish list. Every way but those last two ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask others.',
+        'find_gift' => 'In Find a gift you first say who it is for: one of your people, who they are, like your partner or a colleague, or yourself. Then choose how to look: swipe through gifts and put what you want straight on the list, answer a few questions, choose between two things in This or that, or start from a type of person. Or ask somebody: other people, or the person themselves, on their own link where they play This or that, suggest gifts or share a wish list. Every way but those last two ends on the same page of ideas, with ideas without a shop, Coves other people made, and at the bottom Ask others. If you already know who and what for, Gift ideas by person has a page for each pair, such as a dad who loves cooking.',
         'find_ask' => 'Ask others: describe who you are buying for and other people suggest something. Choose who you ask: the GiftCoves community, on the public board (we read your question first), or only your people: your friends on GiftCoves get a notification straight away, and you get a link to send to anyone you like. That question is not on the board. Under Your questions you find the link to each of your questions again.From Find a gift or from a list about somebody, the question is filled in with what we know (never their name), and ideas from the answers save straight onto that list. Once your question is on the board, your friends on GiftCoves hear about it; switch that off, or stop hearing about theirs, on your notifications page.',
         'find_history' => 'What you marked "I\'ll get this" on lists for someone stays out of new ideas for them. What anybody else marked does not count. On their page (open it from a list for them or from Find a gift) we suggest the next step, like coffee beans after a moka pot.',
         'find_reminders' => 'Save a birthday or an occasion for someone and we remind you by email. About two weeks before, the reminder brings three ideas that fit them, their budget and what you gave before, with one click to see them in Find a gift or add them to their list. Stop the emails from the link in any reminder.',

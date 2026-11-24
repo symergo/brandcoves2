@@ -363,6 +363,8 @@ return [
      */
 
     'product' => [
+        // Before the gift landing pages a product belongs on (2026-11-24).
+        'good_gift_for' => "También un buen regalo para:",
         'gift_tags' => 'Un regalo para quien le gusta',
         'from' => 'desde',
         'one_offer' => '1 oferta',
@@ -2248,6 +2250,11 @@ return [
     ],
 
     'gift_ideas' => [
+        // The directory of gift landing pages per person (2026-11-24): /gift-ideas/for.
+        'for_whom_title' => 'Ideas de regalo por persona',
+        'for_whom_description' => 'Para mamá, papá, tu pareja, un compañero o quien te invita: ideas por persona y por afición, de la cocina a los videojuegos.',
+        'for_whom_intro' => 'Elige para quién es y luego a qué dedica su tiempo. Cada página muestra lo que encaja con esa pareja, con los precios de las tiendas que comparamos.',
+        'for_whom_link' => 'Por persona y afición',
 
         /*
          * A persona's listing title, which its theme_title cannot be.
@@ -2699,7 +2706,7 @@ return [
         'find_search_results' => 'En la página de resultados, primero aparecen las colecciones sobre lo que buscaste. Los filtros y el orden están detrás del botón Filtros, y cada filtro activo se muestra como una etiqueta que puedes quitar. Debajo de un producto ves cuántas personas lo tienen en una lista y en cuántas colecciones está: solo un número, nunca quién. Abajo, Guarda … en tu lista de regalos guarda la búsqueda en una lista, para que quien la abra vea la misma comparación.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',
         'find_country' => 'Los precios y las tiendas dependen de tu país. En tu primera visita, una barra arriba dice qué país elegimos, con los demás a un toque; ciérrala para quedarte con él. El botón de país e idioma de arriba (en el menú, en un móvil) lo cambia cuando quieras. Recordamos lo que eliges, y abrir el enlace de alguien a otro país no lo cambia.',
-        'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, quién es, como tu pareja o un compañero de trabajo, o tú mismo. Luego eliges cómo buscar: desliza entre regalos y pon directamente en la lista lo que quieras, responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. O pregunta a alguien: a los demás, o a la propia persona, con su propio enlace donde juega a Esto o aquello, propone regalos o comparte una lista de deseos. Cada camino menos esos dos últimos termina en la misma página de ideas, con ideas sin tienda, colecciones que hicieron otros y, al final, Pregunta a otras personas.',
+        'find_gift' => 'En «Encontrar un regalo» primero dices para quién es: una de tus personas, quién es, como tu pareja o un compañero de trabajo, o tú mismo. Luego eliges cómo buscar: desliza entre regalos y pon directamente en la lista lo que quieras, responde unas preguntas, elige entre dos cosas en Esto o aquello, o empieza por un tipo de persona. O pregunta a alguien: a los demás, o a la propia persona, con su propio enlace donde juega a Esto o aquello, propone regalos o comparte una lista de deseos. Cada camino menos esos dos últimos termina en la misma página de ideas, con ideas sin tienda, colecciones que hicieron otros y, al final, Pregunta a otras personas. Si ya sabes para quién y para qué, Ideas de regalo por persona tiene una página por combinación, como un padre al que le gusta cocinar.',
         'find_ask' => 'Pregunta a los demás: describe para quién buscas y otras personas sugieren algo. Elige a quién preguntas: la comunidad de GiftCoves, en el tablón público (primero leemos tu pregunta), o solo tu gente: tus amigos en GiftCoves reciben un aviso enseguida, y tú recibes un enlace para enviarlo a quien quieras. Esa pregunta no está en el tablón. En Tus preguntas encuentras de nuevo el enlace de cada una de tus preguntas.Desde «Encontrar un regalo» o desde una lista sobre alguien, la pregunta ya viene rellenada con lo que sabemos (nunca el nombre), y las ideas de las respuestas se añaden directamente a esa lista. Cuando tu pregunta está publicada, tus amigos en GiftCoves se enteran; puedes desactivarlo, o dejar de recibir sus preguntas, en tus notificaciones.',
         'find_history' => 'Lo que marcaste con «Yo lo regalo» en listas para alguien queda fuera de las nuevas ideas para esa persona. Lo que marcaron otros no cuenta. En su página (ábrela desde una lista para esa persona o desde «Encontrar un regalo») proponemos el siguiente paso, como café en grano después de una cafetera italiana.',
         'find_reminders' => 'Guarda un cumpleaños o una ocasión de alguien y te lo recordamos por correo. Unas dos semanas antes, el recordatorio trae tres ideas que encajan con la persona, su presupuesto y lo que ya le regalaste, con un clic para verlas en «Encontrar un regalo» o añadirlas a su lista. Deja de recibirlos desde el enlace de cualquier recordatorio.',

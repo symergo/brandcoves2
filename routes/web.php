@@ -1229,6 +1229,14 @@ Route::prefix('{market}')->group(function () {
         ->middleware(CacheAnonymousPage::ALIAS)->name('gift-ideas');
 
     /*
+     * Every gift landing page per person (2026-11-24): the entry point the landing
+     * pages lacked. Before `/gift-ideas/{slug}` below, or "for" would be read as a
+     * persona's slug. GiftIdeasController::forWhom().
+     */
+    Route::get('/gift-ideas/for', [GiftIdeasController::class, 'forWhom'])
+        ->middleware(CacheAnonymousPage::ALIAS)->name('gift-ideas.for-whom');
+
+    /*
      * Gift landing pages: "gift ideas for dad who loves cooking" at
      * /be-nl/gift-ideas/for/papa/koken, in each market's own words
      * (App\Services\Gift\BriefUrl). Only the pairs PlanGiftLandingPages

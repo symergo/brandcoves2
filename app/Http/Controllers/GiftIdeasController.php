@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\CoveKind;
+use App\Enums\Interest;
+use App\Enums\RecipientType;
 use App\Models\DailyPickSet;
+use App\Models\GiftLanding;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Cove\SavedCoves;
+use App\Services\Gift\GiftLandingCopy;
 use App\Services\Gift\PersonaBudgets;
 use App\Services\Gift\PersonaTopTen;
 use App\Services\Seo\PageMeta;
@@ -86,6 +90,79 @@ class GiftIdeasController extends Controller
              */
             'personas' => $personas->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
             'occasions' => $occasions->map(fn (DailyPickSet $set) => $this->card($set, $current))->values()->all(),
+        ]);
+    }
+
+    /**
+     * Every gift landing page of the market, per person (2026-11-24, owner: "The landing
+     * pages have no real entry point").
+     *
+     * The ~430 pages per market such as /be-nl/gift-ideas/for/papa/koken were linked from
+     * /discover-cove and from each other only: not from the home page, the Gift Ideas shelf,
+     * a guide, a Daily or a product page, so a visitor never met them and a crawler found
+     * them through the sitemap alone. The owner kept the Gift Ideas shelf for personas
+     * (2026-09-28), so the pages get a directory of their own, linked from that page and
+     * from the footer on every page: per person, the person's own page and every interest
+     * page, the ones with written copy first.
+     */
+    public function forWhom(CurrentMarket $current, string $market): Response
+    {
+        $marketEnum = $current->get();
+        $groups = [];
+
+        GiftLanding::query()
+            ->forMarket($marketEnum)
+            ->orderByRaw('intro is null')
+            ->orderByDesc('product_count')
+            ->orderBy('id')
+            ->get(['recipient', 'interest', 'path', 'intro'])
+            ->each(function (GiftLanding $page) use (&$groups, $marketEnum): void {
+                if (! $page->recipient instanceof RecipientType) {
+                    return;
+                }
+
+                $key = $page->recipient->value;
+                $groups[$key] ??= ['recipient' => $key, 'title' => null, 'url' => null, 'interests' => []];
+
+                if ($page->interest === null) {
+                    $groups[$key]['title'] = (new GiftLandingCopy($marketEnum, $page->recipient))->heading();
+                    $groups[$key]['url'] = $page->path;
+
+                    return;
+                }
+
+                $interest = $page->interest instanceof Interest ? $page->interest : null;
+
+                if ($interest !== null) {
+                    $groups[$key]['interests'][] = [
+                        'label' => (new GiftLandingCopy($marketEnum, $page->recipient, $interest))->bare(),
+                        'url' => $page->path,
+                    ];
+                }
+            });
+
+        // A person whose own page the planner did not record still shows, under a plain name.
+        $groups = array_values(array_filter($groups, fn (array $g) => $g['url'] !== null || $g['interests'] !== []));
+
+        // The closest people first: the order a visitor scans for "who is it for".
+        $order = ['partner', 'mother', 'father', 'friend', 'child', 'grandparent', 'sibling', 'colleague', 'teacher', 'host'];
+        usort($groups, fn (array $a, array $b) => (array_search($a['recipient'], $order, true) === false ? 99 : array_search($a['recipient'], $order, true))
+            <=> (array_search($b['recipient'], $order, true) === false ? 99 : array_search($b['recipient'], $order, true)));
+
+        foreach ($groups as &$group) {
+            $group['title'] ??= (new GiftLandingCopy($marketEnum, RecipientType::from($group['recipient'])))->heading();
+        }
+        unset($group);
+
+        app(PageMeta::class)->set(
+            title: __('site.gift_ideas.for_whom_title'),
+            description: __('site.gift_ideas.for_whom_description'),
+            canonical: url($current->url('gift-ideas/for')),
+        );
+
+        return Inertia::render('GiftIdeas/ForWhom', [
+            'groups' => $groups,
+            'giftIdeasUrl' => $current->url('gift-ideas'),
         ]);
     }
 

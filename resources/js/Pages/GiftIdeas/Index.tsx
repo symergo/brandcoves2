@@ -1,4 +1,5 @@
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
+import type { SharedProps } from '../../types'
 import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 import { useTranslations } from '../../useTranslations'
 
@@ -32,6 +33,7 @@ interface Props {
  */
 export default function Index({ personas, occasions = [] }: Props) {
     const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
     const twoRows = occasions.length > 0
 
     return (
@@ -41,6 +43,13 @@ export default function Index({ personas, occasions = [] }: Props) {
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('gift_ideas.title')}</h1>
                 <p className="mt-2 text-ink-soft">{t('gift_ideas.description')}</p>
+                {/* The way in to the pages per person and interest (2026-11-24): a link, not a row
+                    in the shelf, which the owner keeps for personas (2026-09-28). */}
+                <p className="mt-3">
+                    <Link href={`/${market.key}/gift-ideas/for`} className="font-medium text-accent-dark hover:text-ink">
+                        {t('gift_ideas.for_whom_link')} <span aria-hidden>&rarr;</span>
+                    </Link>
+                </p>
             </header>
 
             {personas.length === 0 && !twoRows ? (

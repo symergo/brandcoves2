@@ -17,6 +17,7 @@ use App\Services\Amazon\AmazonMatches;
 use App\Services\Catalogue\ProductDescription;
 use App\Services\Catalogue\ProductSignals;
 use App\Services\Catalogue\ProductTitle;
+use App\Services\Gift\GiftLandingLinks;
 use App\Services\Images\ImageProxy;
 use App\Services\Images\ShopImageSizes;
 use App\Services\Search\AmazonSearchLink;
@@ -376,7 +377,12 @@ class ProductController extends Controller
             }
         }
 
-        return ['interests' => $interests, 'vibes' => $vibes];
+        return [
+            'interests' => $interests,
+            'vibes' => $vibes,
+            // The gift landing pages it belongs on, from the same editor's tags (2026-11-24).
+            'pages' => $interests === [] ? [] : app(GiftLandingLinks::class)->forProduct($current->get(), $group->giftTags()),
+        ];
     }
 
     private function presentOffers(Collection $offers): array

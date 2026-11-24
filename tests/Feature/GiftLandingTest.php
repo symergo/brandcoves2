@@ -111,6 +111,28 @@ class GiftLandingTest extends TestCase
     }
 
     #[Test]
+    public function the_pages_have_a_way_in_a_directory_the_sitemap_and_their_products(): void
+    {
+        // Owner, 2026-11-24: "The landing pages have no real entry point".
+        config(['giftcoves.robots_allow' => true]);
+        $knives = $this->products(Market::BeNl, 'Koksmes', 9, ['interest:cooking', 'recipient:father']);
+        PlanGiftLandingPages::dispatchSync(Market::BeNl);
+
+        // The directory: the person's page and the interest page, as plain links.
+        $groups = collect($this->get('/be-nl/gift-ideas/for')->assertOk()->viewData('page')['props']['groups'])->keyBy('recipient');
+        $this->assertSame('/be-nl/gift-ideas/for/papa', $groups['father']['url']);
+        $this->assertSame('/be-nl/gift-ideas/for/papa/koken', $groups['father']['interests'][0]['url']);
+
+        $this->assertStringContainsString('<loc>'.url('/be-nl/gift-ideas/for').'</loc>', (string) $this->get('/sitemap-be-nl.xml')->getContent());
+
+        // A product an editor tagged links to the page it belongs on, its own pair first.
+        $group = $knives[0];
+        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('giftTags.pages.0.url', '/be-nl/gift-ideas/for/papa/koken')->etc());
+    }
+
+    #[Test]
     public function a_page_that_falls_under_the_minimum_is_removed_the_next_night(): void
     {
         $knives = $this->products(Market::BeNl, 'Koksmes', 8, ['interest:cooking']);

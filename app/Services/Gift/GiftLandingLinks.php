@@ -100,6 +100,58 @@ class GiftLandingLinks
     }
 
     /**
+     * The landing pages a product belongs on, from an editor's tags (2026-11-24, owner: "The
+     * landing pages have no real entry point").
+     *
+     * A product tagged `interest:cooking` and `recipient:father` links to "papa die graag kookt"
+     * first; then the same interest's other pages, the ones with written copy before the rest. Up
+     * to `$limit`, one query. The label is the person as the page names them, so the line reads
+     * "Ook een goed cadeau voor: papa die graag kookt, je partner die graag kookt".
+     *
+     * @param  list<string>  $tags  `interest:…`, `recipient:…`, as ProductGroup::giftTags() returns them
+     * @return list<array{label: string, url: string}>
+     */
+    public function forProduct(Market $market, array $tags, int $limit = 4): array
+    {
+        $interests = [];
+        $recipients = [];
+
+        foreach ($tags as $tag) {
+            [$kind, $value] = array_pad(explode(':', (string) $tag, 2), 2, '');
+
+            if ($kind === 'interest' && Interest::tryFrom($value) !== null) {
+                $interests[] = $value;
+            } elseif ($kind === 'recipient' && RecipientType::tryFrom($value) !== null) {
+                $recipients[] = $value;
+            }
+        }
+
+        if ($interests === []) {
+            return [];
+        }
+
+        $pages = GiftLanding::query()
+            ->forMarket($market)
+            ->whereIn('interest', $interests)
+            ->get(['recipient', 'interest', 'path', 'intro', 'product_count'])
+            ->sortBy(fn (GiftLanding $page) => [
+                // The product's own pair first, then pages an editor wrote copy for.
+                in_array($page->recipient?->value, $recipients, true) ? 0 : 1,
+                $page->intro === null ? 1 : 0,
+                -$page->product_count,
+            ])
+            ->take($limit);
+
+        return $pages
+            ->map(fn (GiftLanding $page) => [
+                'label' => Str::lcfirst((new GiftLandingCopy($market, $page->recipient, $page->interest))->bare()),
+                'url' => $page->path,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * The same interest's page for other recipients.
      *
      * @return list<array{label: string, url: string}>

@@ -214,3 +214,23 @@ Set over the editorial API, as a publish: `GET /gift-landings?market=` lists eve
 `POST /gift-landings/copy` `{market, pages: [{path, intro, metaDescription}]}` writes up to 100, all or
 nothing (an unknown path refuses the batch), `intro: null` returns a page to the template. Test:
 `GiftLandingTest::written_copy_replaces_the_template_survives_the_planner_and_enters_the_sitemap`.
+
+## A way in (2026-11-24)
+
+Owner: "The landing pages have no real entry point. I mean, no link on site." Measured that day: no
+link to a landing page on the home page, Gift Ideas, the Coves overview, Find a gift, a Daily, a
+guide, a product or a brand page; one on a search page. The "for whom" row lived on /discover-cove
+only, and the owner had taken it off the Gift Ideas shelf on 2026-09-28 (the shelf is for personas).
+
+- `/{market}/gift-ideas/for` (`GiftIdeasController::forWhom()`, `GiftIdeas/ForWhom.tsx`): every
+  landing page per person, the closest people first, each person's own page as the heading and the
+  interest pages under it, the ones with written copy first. In the sitemap and the page cache.
+- Linked from one line under the Gift Ideas heading and from the footer's Explore row on every page
+  (where the market has gift pages), so it is a click from anywhere and crawled from everywhere.
+- Product pages: "Ook een goed cadeau voor: papa die graag kookt, ..." under the interest tags,
+  from an editor's tags only (`GiftLandingLinks::forProduct()`): the product's own person and interest
+  first, then the same interest's pages with written copy. The interest chips keep opening Find a gift
+  (owner, 2026-09-30); this line is the page links.
+- A sentence in the Find a gift entry on /help, four languages.
+
+Test: `GiftLandingTest::the_pages_have_a_way_in_a_directory_the_sitemap_and_their_products`.

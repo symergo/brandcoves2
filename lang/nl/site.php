@@ -365,6 +365,8 @@ return [
      */
 
     'product' => [
+        // Before the gift landing pages a product belongs on (2026-11-24).
+        'good_gift_for' => "Ook een goed cadeau voor:",
         'gift_tags' => 'Cadeau voor wie houdt van',
         'from' => 'vanaf',
         'one_offer' => '1 aanbod',
@@ -2253,6 +2255,11 @@ return [
     ],
 
     'gift_ideas' => [
+        // The directory of gift landing pages per person (2026-11-24): /gift-ideas/for.
+        'for_whom_title' => 'Cadeau-ideeën per persoon',
+        'for_whom_description' => 'Voor mama, papa, je partner, een collega of de gastheer: per persoon de cadeau-ideeën, en per interesse, van koken tot gamen.',
+        'for_whom_intro' => 'Kies voor wie het is, en dan waar die persoon graag mee bezig is. Elke pagina toont wat bij die combinatie past, met de prijzen van de winkels die we vergelijken.',
+        'for_whom_link' => 'Per persoon en interesse',
 
         /*
          * A persona's listing title, which its theme_title cannot be.
@@ -2713,7 +2720,7 @@ return [
         'find_search_results' => 'Op de resultatenpagina staan eerst de Coves over wat je zocht. Filters en sorteren zitten achter de knop Filters, en elk filter dat aan staat zie je als een chip die je weghaalt. Onder een product zie je hoeveel mensen het op een lijst hebben en in hoeveel Coves het staat: alleen een aantal, nooit wie. Onderaan bewaar je met Bewaar … op je cadeaulijst de zoekopdracht zelf op een lijst, zodat wie de lijst opent dezelfde vergelijking ziet.',
         'find_scan' => 'Scan een streepjescode met de camera van je telefoon en zie het product en wat het elders kost.',
         'find_country' => 'Prijzen en winkels hangen af van je land. Bij je eerste bezoek zegt een balk bovenaan welk land we kozen, met de andere één tik verder; sluit hem om dat land te houden. Met de knop voor land en taal bovenaan (op een telefoon in het menu) wissel je altijd. We onthouden wat je kiest, en een link van iemand naar een ander land verandert dat niet.',
-        'find_gift' => 'In Cadeau vinden zeg je eerst voor wie het is: een van je mensen, wie het is, zoals je partner of een collega, of jezelf. Kies dan hoe je zoekt: swipe door cadeaus en zet wat je wilt meteen op de lijst, beantwoord een paar vragen, kies tussen twee dingen in Dit of dat, of begin bij een type persoon. Of vraag het iemand: aan anderen, of aan de persoon zelf, met een eigen link waar die Dit of dat speelt, cadeaus voorstelt of een verlanglijst deelt. Elke weg behalve die laatste twee eindigt op dezelfde pagina met ideeën, met daaronder ideeën zonder winkel, Coves die anderen maakten, en onderaan Vraag het aan anderen.',
+        'find_gift' => 'In Cadeau vinden zeg je eerst voor wie het is: een van je mensen, wie het is, zoals je partner of een collega, of jezelf. Kies dan hoe je zoekt: swipe door cadeaus en zet wat je wilt meteen op de lijst, beantwoord een paar vragen, kies tussen twee dingen in Dit of dat, of begin bij een type persoon. Of vraag het iemand: aan anderen, of aan de persoon zelf, met een eigen link waar die Dit of dat speelt, cadeaus voorstelt of een verlanglijst deelt. Elke weg behalve die laatste twee eindigt op dezelfde pagina met ideeën, met daaronder ideeën zonder winkel, Coves die anderen maakten, en onderaan Vraag het aan anderen. Wie al weet voor wie en waarvoor, vindt onder Cadeau-ideeën per persoon een pagina per combinatie, zoals papa die graag kookt.',
         'find_ask' => 'Vraag het aan anderen: beschrijf voor wie je iets zoekt en anderen stellen iets voor. Kies aan wie je het vraagt: de GiftCoves-gemeenschap, op het openbare bord (we lezen je vraag eerst na), of alleen je mensen: je vrienden op GiftCoves krijgen meteen een melding, en je krijgt een link om te sturen naar wie je wilt. Die vraag staat niet op het bord. Bij Jouw vragen vind je de link van elke vraag terug. Vanuit Cadeau vinden of vanuit een lijst over iemand is je vraag al ingevuld met wat we weten (nooit de naam), en ideeën uit de antwoorden zet je meteen op die lijst. Staat je vraag op het bord, dan horen je vrienden op GiftCoves het; dat uitzetten, of hun vragen niet meer krijgen, kan bij je meldingen.',
         'find_history' => 'Wat jij met "Ik koop dit" aanduidde op lijsten voor iemand, laten we weg uit nieuwe ideeën voor die persoon. Wat anderen aanduidden telt niet mee. Op de pagina van die persoon (open ze vanuit een lijst voor hen of vanuit Cadeau vinden) stellen we de volgende stap voor, zoals koffiebonen na een moka-potje.',
         'find_reminders' => 'Bewaar een verjaardag of een gelegenheid voor iemand en we sturen je een herinnering per e-mail. Zo’n twee weken vooraf brengt die drie ideeën mee die passen bij de persoon, het budget en wat je eerder gaf, met één klik om ze in Cadeau vinden te bekijken of in een lijst voor hen te bewaren. Stoppen kan via de link in elke herinnering.',
