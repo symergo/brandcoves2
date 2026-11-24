@@ -5,6 +5,12 @@
 # never restarts them, so the database keeps its memory and Redis its caches, and the app
 # is gone only for its own start. The settings and their reasons moved here unchanged.
 #
+# FILL IN THE VALUES BEFORE PASTING IT INTO COOLIFY. Coolify parses a volume line before its
+# variables exist, so `${PG_DATA_DIR}:/var/lib/postgresql/data` became a NEW, EMPTY named volume
+# (`<uuid>_pg-data-dir`) in the staging rehearsal of 2026-11-24: started like that, Postgres would
+# have run on an empty database. The resource's compose holds the literal paths and network; this
+# file is the template. The POSTGRES_* variables do work as variables (environment, not volumes).
+#
 # Per environment, in Coolify:
 #   APP_NETWORK     the app's Docker network, which is the app's Coolify uuid
 #                   (vhfcyk39ug5exk0fyvdj8qo3 staging, gr0kqzz1er3s79u17vdph27t production)

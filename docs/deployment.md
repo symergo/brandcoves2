@@ -502,6 +502,29 @@ without the two services; its `migrate` runs `docker/wait-for-state.php` first, 
 production moves: until then a change to the app services goes in both files. Each app chooses its file
 with Coolify's "Docker Compose Location".
 
+**Staging moved on 2026-11-24 (rehearsal).** State resource `GiftCoves-staging-state`
+(`kveu89ly0eilys1lq98r4ldm`, project Brandcoves, environment website), compose location of
+`GiftCoves-staging` set to `/docker-compose.coolify.app.yml`. What happened, in order:
+
+1. Created the resource stopped (`POST /services`, `instant_deploy: false`), with the app's three
+   `POSTGRES_*` values copied over the API. **Coolify had turned the `${PG_DATA_DIR}` mount into a new
+   empty named volume**: the compose was replaced (`PATCH /services/{uuid}` `docker_compose_raw`) with the
+   literal paths and network filled in, which Coolify then kept as bind mounts. Check the parsed compose
+   (`GET /services/{uuid}`, `docker_compose`) before starting, every time.
+2. Switched the app's compose location (`PATCH /applications/{uuid}`) and deployed: Coolify removed the
+   app's old `postgres` and `redis` containers with the rest, and `migrate` waited in
+   `wait-for-state.php`. Checked that no running container mounted the data folder.
+3. Started the resource (`GET /services/{uuid}/start`): `migrate` found both within seconds, "Nothing to
+   migrate", staging served its own data (231,152 product groups) at once.
+4. Deployed staging again while polling `/health` every second: unreachable for about 12 s (it was ~32 s
+   without a server plus a cold start before), and Postgres and Redis kept running (`StartedAt`
+   unchanged). The 12 s left are the app container's own start: Coolify stops the old one first.
+
+For production, the same steps with `gr0kqzz1er3s79u17vdph27t`, outside the night windows, with a
+`pg_dump` first. Two things to redo there: Coolify's scheduled backups were configured on the app's
+`postgres` service and must be set up on the new resource, and the downtime of step 2-3 is the Postgres
+start on a 30 GB database (crash-safe, no copy), expected to be under a minute.
+
 ### Steps for B (per environment, staging first)
 
 1. **Write `docker-compose.state.yml`.** Move the `postgres` and `redis` services and the `pg_data`
