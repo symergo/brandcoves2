@@ -175,15 +175,24 @@ class GiftLandingTest extends TestCase
         $tooDear = $this->products(Market::BeNl, 'Kinderkeukentje', 1, ['interest:cooking', 'recipient:child'], price: 12000)[0];
         // "Their child", grown up: recipient:child with an adult age is not for a child's page.
         $grownUp = $this->products(Market::BeNl, 'Wokpan', 1, ['interest:cooking', 'recipient:child', 'age:30-49'], price: 3000)[0];
+        // Tagged for a child by mistake, but adults only by its category or its own tag.
+        $knife = $this->products(Market::BeNl, 'Koksmes junior', 1, ['interest:cooking', 'age:10-12'], price: 3000)[0];
+        $knife->update(['category' => 'Messenset']);
+        $wine = $this->products(Market::BeNl, 'Kookboek bij de wijn', 1, ['interest:cooking', 'age:10-12', 'age:18+'], price: 3000)[0];
+        // A toy version is for a child.
+        $toyKitchen = $this->products(Market::BeNl, 'Speelgoedfornuis', 1, ['interest:cooking', 'age:3-5'], price: 3000)[0];
+        $toyKitchen->update(['category' => 'Speelgoedvaatwasser']);
 
         PlanGiftLandingPages::dispatchSync(Market::BeNl);
 
         $child = GiftLanding::lookup(Market::BeNl, RecipientType::Child, Interest::Cooking);
         $this->assertNotNull($child);
-        $this->assertSame(8, $child->product_count);
+        $this->assertSame(9, $child->product_count);
 
         $shown = array_map(fn (array $v) => (int) $v['id'], Cache::get($child->verdictsKey()));
-        $this->assertEqualsCanonicalizing(array_map(fn ($g) => $g->id, $forChild), $shown, 'only products judged for a child');
+        $this->assertEqualsCanonicalizing([...array_map(fn ($g) => $g->id, $forChild), $toyKitchen->id], $shown, 'only products judged for a child');
+        $this->assertNotContains($knife->id, $shown, 'an adults-only category');
+        $this->assertNotContains($wine->id, $shown, 'tagged age:18+');
         $this->assertNotContains($tooDear->id, $shown, 'over the child default of €75');
         $this->assertNotContains($grownUp->id, $shown, 'recipient:child with only an adult age');
 
@@ -192,7 +201,7 @@ class GiftLandingTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('picks.0.id', $tooDear->id));
 
         // Dad's page is not limited to children's things.
-        $this->assertSame(9 + 8 + 1 + 1, GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking)->product_count);
+        $this->assertSame(9 + 8 + 1 + 1 + 3, GiftLanding::lookup(Market::BeNl, RecipientType::Father, Interest::Cooking)->product_count);
     }
 
     #[Test]

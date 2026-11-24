@@ -687,6 +687,12 @@ return [
          * - Verkleedkleding: judged as children's costumes; the unjudged
          *   ones were printed T-shirts for adults.
          * - Informatique (be-fr): a feed files gift vouchers there.
+         * - Vibrator, Dildo, Erotische geschenkset, Erotische lingerieset, Lingerie
+         *   (2026-11-25, tagging review): Vibrator alone gave 1,602 products
+         *   "wellness"; Masturbator had been skipped, its neighbours not.
+         * - Zakmes, Messenset, Motorhelm: "outdoors", "cooking" and "cars" are
+         *   true, but these are not what the interest's pages are for, and the
+         *   rule reaches pages where judging is thin (be-fr, nl-nl).
          *
          * Compared in lower case, in every market.
          */
@@ -695,6 +701,14 @@ return [
             'Mobiele telefoon & smartphone & GPS & e-book',
             'Verkleedkleding',
             'Informatique',
+            'Vibrator',
+            'Dildo',
+            'Erotische geschenkset',
+            'Erotische lingerieset',
+            'Lingerie',
+            'Zakmes',
+            'Messenset',
+            'Motorhelm',
         ],
     ],
 

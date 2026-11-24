@@ -20,7 +20,7 @@ Markets: be-nl and nl-nl titles are Dutch, be-fr French, en English. Brand and c
     id<TAB>i:coffee,home r:partner o:christmas p:design,luxurious   a gift, with tags
 
 Groups are space-separated and each is optional: `i:` interests, `r:` recipients, `o:` occasions, `g:` gender,
-`p:` preference,
+`p:` preference, `a:` age,
 values comma-separated with no spaces. Use ONLY the values below, spelled exactly. Nothing else on
 the line, no header, no commentary.
 
@@ -36,6 +36,7 @@ the line, no header, no commentary.
   halloween, communion, christening, engagement, get_well, new_job, secret_santa
 - **p:** practical, design, modern, vintage, minimal, colourful, natural, technical, manual, powered,
   everyday, luxurious, classic, quirky
+- **a:** 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+, 18+ (posted as `age:6-9`, `age:18+`)
 
 ## x: not a gift
 
@@ -85,8 +86,9 @@ tag both. Relations have no gender (since 2026-09-29, docs/features/gift-gender.
 
 ## r: recipients (only when the product plausibly suits that person)
 
-Leave `r:` off for products that suit anyone equally: an untagged product scores neutral, a product
-tagged for the wrong person scores lower for everyone else. Good uses:
+Leave `r:` off for products that suit any adult equally: an untagged product scores neutral, a product
+tagged for the wrong person scores lower for everyone else. "Anyone" rarely includes a child, though: a
+television suits any adult and no child, and that is what `a:18+` is for (below). Good uses:
 - `child` for products made for children. `partner` for romantic, intimate or luxury-personal items
   (jewellery, perfume, lingerie, couples' things). `grandparent` for products made for older people
   or family keepsakes. `host` for gifts you bring when invited (wine, chocolates, flowers, candles,
@@ -95,6 +97,19 @@ tagged for the wrong person scores lower for everyone else. Good uses:
 - Never tag by gender: a razor or a dress is not for "father" or "mother". `mother`/`father` only
   where the product is about being a parent (a baby-photo frame, a "best dad" mug).
 - At most three.
+
+## a: age (2026-11-25)
+
+- `a:6-9`, `a:10-12` and the other bands when the product is made for that age (a toy's box says so).
+  A child's landing page takes only products with a band up to 12, `i:kids`, or `r:child` without an
+  older band, so tag a children's product with its band.
+- `a:18+` on anything nobody gives a child or a young teenager, when its category does not already say
+  so: televisions and home cinema, network, office and security equipment, power tools and machinery,
+  large kitchen appliances, knives, alcohol and bar gear, erotica and lingerie, adult fragrance and
+  skincare, clothing in adult sizes, motorcycle gear. Never next to a band under 18.
+- The engine keeps a list of adults-only categories (TVs, knives, saws, wine glasses, motorcycle
+  helmets...), so `a:18+` matters most for the product filed somewhere neutral, like a television in
+  "Elektronica" or a whisky set in "Cadeaus".
 
 ## o: occasions (only when the product is tied to the occasion)
 

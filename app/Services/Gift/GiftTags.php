@@ -84,7 +84,17 @@ class GiftTags
      */
     public const YOUNG_CHILD = ['interest:kids', 'age:0-2', 'age:3-5', 'age:6-9', 'age:10-12'];
 
-    public const OLDER_THAN_CHILD = ['age:13-17', 'age:18-29', 'age:30-49', 'age:50-64', 'age:65+'];
+    public const OLDER_THAN_CHILD = ['age:13-17', 'age:18-29', 'age:30-49', 'age:50-64', 'age:65+', 'age:18+'];
+
+    /**
+     * "Not for anyone under 18" (2026-11-25): a television, a chainsaw, a wine
+     * cooler. A tag, not an age band: the wizard never offers it (it asks
+     * AGE_BANDS), and a product carrying it stays off every brief for somebody
+     * under 18 (SuggestionEngine::pool()), as do the categories in
+     * SuggestionEngine::ADULTS_ONLY_CATEGORY, so it is needed only where the
+     * category does not say so.
+     */
+    public const ADULTS_ONLY = '18+';
 
     /**
      * The whole vocabulary, grouped, in the order the wizard asks about it.
@@ -107,7 +117,7 @@ class GiftTags
                 ...self::EXTRA_OCCASIONS,
             ],
             self::RECIPIENT => RecipientType::values(),
-            self::AGE => self::AGE_BANDS,
+            self::AGE => [...self::AGE_BANDS, self::ADULTS_ONLY],
             self::GENDER => Gender::tagValues(),
             // The wizard's "which way does their taste go". The engine guesses
             // it from title words ("eiken", "retro"); a tag is an editor

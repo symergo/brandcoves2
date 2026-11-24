@@ -281,3 +281,43 @@ Production on the day: 22,789 products with a young-child tag (21,061 be-nl, 925
 en). The review estimated that about 82 of the 157 child pages keep their eight products.
 
 Test: `GiftLandingTest::a_childs_page_takes_child_products_within_the_childs_budget`.
+
+## Adults only, for anybody under 18 (2026-11-25)
+
+The child filter above trusts the tags, and a tag can be wrong: a knife set tagged `age:10-12`. So a
+brief for somebody under 18 (a child's landing page, or Find a gift with an age band up to 13-17) also
+leaves out:
+
+- products tagged `age:18+`, by an editor or the crowd. A new vocabulary value, a verdict rather than a
+  band: the wizard's age question reads `GiftTags::AGE_BANDS`, which does not carry it. The tagging brief
+  (`.claude/skills/giftcoves-tag-products/reference/brief.md`) says when to use it;
+- products filed under `SuggestionEngine::ADULTS_ONLY_CATEGORY`: televisions, projectors and home cinema,
+  knives, saws and drills, motorcycle gear, wine, beer, whisky and cocktail gear, network and security
+  equipment, large appliances, lingerie, tobacco. Written from production's own category names and
+  checked against them: 34,519 giftable products in 207 categories on the day. Toy and baby versions are
+  spared (`ADULTS_ONLY_EXCEPT`: "Speelgoedzaag", "Projecteur pour bébé"). Words that caught the wrong
+  thing on that check, and how they were narrowed: "bier" caught "Jambiere" (now `^bier`, `bierglas`),
+  "vape" caught "vapeur" (now a whole word), "couteau" caught "Plié au couteau" (now at the start), "home
+  cinéma" caught DVDs.
+
+A category rule, like the adult filter, so it holds for products nobody has judged, and it needs no
+re-tagging run. Find a gift with only "child" and no age is untouched: that child may be grown up.
+
+The auto-tagger (`auto_tags.skip_categories`) no longer infers interests for Vibrator, Dildo, the erotic
+sets, Lingerie, Zakmes, Messenset and Motorhelm (review P9: Vibrator alone gave 1,602 products
+"wellness").
+
+Not done, on purpose:
+
+- **A teenager page.** `child` is a `RecipientType`, and so would a teenager be: that enum is the
+  recipient of every list, the wizard's first question and a CHECK constraint, so a new value is a
+  migration and wording in four languages across the site, not a landing-page setting. Left for the
+  owner to decide.
+- **Raising `min_recipient_matches`** to tell the teacher, colleague and grandparent pages apart (review
+  P10). Recipient tags are on 1.5% of be-nl products and under 0.3% elsewhere, so it would remove most of
+  those pages. The budgets per person already separate them (teacher €30, colleague €40, grandparent
+  €100); measure the overlap after the next planner run first.
+- **A review queue** (P7). The filters above remove what it would list; reconsider if the next review
+  still finds wrong products.
+
+Test: `GiftLandingTest::a_childs_page_takes_child_products_within_the_childs_budget`.

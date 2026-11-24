@@ -68,6 +68,18 @@ class SuggestionEngine
      */
     private const ADULT_CATEGORY = 'vibrator|dildo|masturbat|sex ?toy|seks|penispomp|erotisch|erotiek|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|koppelspeelgoed|plug anal|anal plug';
 
+    /**
+     * Categories nobody under 18 is given (2026-11-25, tagging review): televisions and
+     * projectors, knives, power tools, motorcycle gear, alcohol and bar glasses, network
+     * and security gear, large appliances, lingerie, tobacco. From production's own
+     * category names; ADULTS_ONLY_EXCEPT spares the toy versions ("Speelgoedgereedschapsset",
+     * "Speelgoedwapen"). Like the adult filter, a category and not a tag, so it holds for
+     * the products nobody has judged.
+     */
+    private const ADULTS_ONLY_CATEGORY = '^televisie|^tv &|home cinema-set|ensemble home cin|^homecinema|^beamer|vidéoprojecteur|^soundbar|récepteur tv|zakmes|messenset|^couteau|à couteaux|jeu de couteaux|messenslijper|messenblok|kettingzaag|tronçonneuse|zaag|boormachine|boorhamer|schroefmachine|slijpmachine|perceuse|^motor(helm|jas|laarzen|kleding| communicatie)|moto\M|wijn|^bier|bierglas|bierpul|whisky|cocktail|alcoholtest|sterke drank|spiritueux|likeur|beveiligingscamera|surveillance|^netwerk|router|kvm-switch|serverbehuizing|vaatwas|^wasmachine$|^koelkast|barmodel koelkast|pizzaoven|vriezer|kookplaat|afzuigkap|lingerie|vaginale|sigaret|\mvape\M|tabak|tattoo machine';
+
+    private const ADULTS_ONLY_EXCEPT = 'speelgoed|jouet|kinder|enfant|bébé|baby|\mkids?\M|\mtoys?\M';
+
     private const ADULT_TITLE = 'vibrator|dildo|masturbat|sex ?toy|seksspeeltje|erotisch|érotique|erotic|bondage|fetish|bdsm|strap-?on|cockring|penisring|glijmiddel|pocket pussy|kunstvagina|sexy lingerie|lingerie sexy|body ?stocking|netkous|facesitting|tepelklem|nipple clamp';
 
     /** Angle queries per retrieval. Beyond this the tsquery stops being selective. */
@@ -594,6 +606,25 @@ class SuggestionEngine
                 ->whereRaw("jsonb_exists_any(coalesce(product_groups.gift_tags, '[]'::jsonb), ?::text[])", [$young])
                 ->orWhereRaw("jsonb_exists_any(coalesce(product_groups.crowd_tags, '[]'::jsonb), ?::text[])", [$young])
                 ->orWhereRaw("(coalesce(product_groups.gift_tags, '[]'::jsonb) ?? 'recipient:child' and not jsonb_exists_any(coalesce(product_groups.gift_tags, '[]'::jsonb), ?::text[]))", [$older]));
+        }
+
+        /*
+         * Nothing for adults only in a brief for somebody under 18: a child's landing
+         * page, or Find a gift with an age up to 17 (2026-11-25). Tagged `age:18+` by an
+         * editor or the crowd, or filed under ADULTS_ONLY_CATEGORY. Not for a brief that
+         * only says "child", which may be a grown-up son (gift-tags.md).
+         */
+        if (($brief->taggedOnly && $brief->relationship === 'child')
+            || in_array($brief->ageBand, ['0-2', '3-5', '6-9', '10-12', '13-17'], true)) {
+            $adultsOnly = GiftTags::age(GiftTags::ADULTS_ONLY);
+
+            foreach (['gift_tags', 'crowd_tags'] as $column) {
+                $groups->whereRaw("not (coalesce(product_groups.{$column}, '[]'::jsonb) ?? ?)", [$adultsOnly]);
+            }
+
+            $groups->where(fn ($q) => $q
+                ->whereRaw("coalesce(product_groups.category, '') !~* ?", [self::ADULTS_ONLY_CATEGORY])
+                ->orWhereRaw('product_groups.category ~* ?', [self::ADULTS_ONLY_EXCEPT]));
         }
 
         if ($queries !== []) {

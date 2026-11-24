@@ -120,7 +120,8 @@ class GiftTagsApiTest extends TestCase
         $this->assertContains('mother', $vocabulary['recipient']);
         $this->assertContains('13-17', $vocabulary['age']);
         $this->assertNotContains('teen', $vocabulary['recipient']);
-        $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'], $vocabulary['age']);
+        // The wizard's bands, then "adults only", which the wizard never offers (2026-11-25).
+        $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+', '18+'], $vocabulary['age']);
         // Which way their taste goes. Pairs of opposites, so every pole has
         // its other end in the list. Vibe and values were removed site-wide
         // (2026-09-29); the pairs carry the feel.

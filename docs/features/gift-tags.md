@@ -32,7 +32,7 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 | `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
 | `gender` | male, female — only on a product genuinely for one ([gift-gender.md](gift-gender.md)) | `App\Enums\Gender` |
-| `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
+| `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+, and `18+` (adults only, a verdict the wizard never asks: 2026-11-25, gift-landing-pages.md) | `GiftTags::AGE_BANDS`, `GiftTags::ADULTS_ONLY` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |
 | `preference` | seven axes, two poles each: practical/design, modern/vintage, minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky | `App\Enums\Preference` |
 | `values` | sustainable, local, handmade | `GiftTags::VALUE_OPTIONS` |
