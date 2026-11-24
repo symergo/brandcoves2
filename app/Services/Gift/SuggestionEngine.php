@@ -587,8 +587,18 @@ class SuggestionEngine
 
             $byText = DB::table('products')
                 ->select('group_id')
-                ->where('market', $market)
-                ->where('status', 'active')
+                /*
+                 * Written so the market and status indexes cannot be used
+                 * (2026-11-24), as in SearchService::wordMatch(). With them,
+                 * Postgres ANDs the word index with the market index, which
+                 * names every active offer in the market, before it can stop
+                 * at the cap: the 23 words of "wie alles al heeft" in be-nl ran
+                 * past 60 s on production and the page answered 500. On the
+                 * word index alone, checking market and status per row, the
+                 * same query stopped at the cap in 2.8 s from a cold cache.
+                 */
+                ->whereRaw("(products.market::text || '') = ?", [$market])
+                ->whereRaw("(products.status::text || '') = 'active'")
                 ->whereNotNull('group_id')
                 ->whereRaw(
                     'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',

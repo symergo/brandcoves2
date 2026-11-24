@@ -1357,3 +1357,13 @@ eight times in two hours and took gift-idea pages with it (a 500 after 20 s).
 category, brand): the same count reads 7,900 pages in 26 ms. Built by hand on production first
 (13 s, CONCURRENTLY, 19 MB), because a deploy runs migrations while the site is down; the migration
 (`2026_11_24_000100`) has IF NOT EXISTS and does nothing there.
+
+## Gift-idea pages: the word match off the market index too (2026-11-24)
+
+The same fix as search's word match (2026-11-23), in `SuggestionEngine::pool()`. A persona page
+searches its angle words joined with OR, capped at 20,000 offers. With `products.market = ?` written
+plainly, Postgres combined the word index with the market index first, which names every active
+offer in the market, and could not stop at the cap: "wie alles al heeft" in be-nl (23 words) ran
+past 60 s on production and the page answered 500 after the 20 s statement timeout. Written as
+`(products.market::text || '') = ?`, only the word index is used and market and status are
+checked per row: 2.8 s from a cold cache, stopping at the cap.
