@@ -2573,6 +2573,8 @@ return [
         'react_down' => 'Not for me',
         'title' => 'The Daily Cove',
         'seo_title' => ':theme — gift tips',
+        // With the edition's search phrase in front, when it has one (2026-11-24): "Fietsaccessoires als cadeau: Sur deux roues".
+        'seo_title_keyphrase' => ':keyphrase: :theme',
         'seo_description' => 'A handful of things you did not know existed, and a buying guide built from what people actually searched for.',
         'finds_title' => "Today's finds",
         'guide_title' => "Today's guide",

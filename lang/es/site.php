@@ -2313,6 +2313,8 @@ return [
         'react_down' => 'No es para mí',
         'title' => 'La colección del día',
         'seo_title' => ':theme — ideas de regalo',
+        // With the edition's search phrase in front, when it has one (2026-11-24): "Fietsaccessoires als cadeau: Sur deux roues".
+        'seo_title_keyphrase' => ':keyphrase: :theme',
         'seo_description' => 'Un puñado de cosas que no sabías que existían y una guía de compra construida con lo que la gente buscó aquí de verdad.',
         'finds_title' => 'Los hallazgos de hoy',
         'guide_title' => 'La guía de hoy',

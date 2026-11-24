@@ -2322,6 +2322,8 @@ return [
         // is the one place a searchable phrase earns its space. Brand suffix is
         // appended by the Inertia title callback, so it is not repeated here.
         'seo_title' => ':theme — cadeautips',
+        // With the edition's search phrase in front, when it has one (2026-11-24): "Fietsaccessoires als cadeau: Sur deux roues".
+        'seo_title_keyphrase' => ':keyphrase: :theme',
         'seo_description' => 'Een handvol dingen waarvan je niet wist dat ze bestonden, en een koopgids gebouwd op wat mensen hier echt zochten.',
         'finds_title' => 'De vondsten van vandaag',
         'guide_title' => 'De gids van vandaag',

@@ -17,6 +17,7 @@ use App\Support\PreviewAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -92,7 +93,14 @@ class DailyCoveController extends Controller
                  * copy is translated. The brand suffix is appended by the
                  * Inertia title callback, so it is not repeated in the string.
                  */
-                'seoTitle' => __('site.daily.seo_title', ['theme' => $edition->theme_title]),
+                /*
+                 * With the edition's search phrase in front, when it has one (2026-11-24):
+                 * "Sur deux roues" is a mood; "Fietsaccessoires als cadeau: Sur deux
+                 * roues" is a search. The heading keeps the editorial name.
+                 */
+                'seoTitle' => filled($edition->focus_keyphrase)
+                    ? __('site.daily.seo_title_keyphrase', ['keyphrase' => Str::ucfirst(trim((string) $edition->focus_keyphrase)), 'theme' => $edition->theme_title])
+                    : __('site.daily.seo_title', ['theme' => $edition->theme_title]),
                 'blurb' => $edition->theme_blurb,
                 'isToday' => $edition->drop_date->isToday(),
                 /*
@@ -356,6 +364,37 @@ class DailyCoveController extends Controller
         return $cove !== null && $cove !== $current->get()->coveSegment();
     }
 
+    /**
+     * The first published edition of the same theme, when this one repeats it (2026-11-24).
+     *
+     * A theme comes back: on 2026-11-24 be-fr had run "On rentre" ten times and be-nl "Naar
+     * binnen" six, 34 repeated titles in all, at `on-rentre`, `on-rentre-2` and so on. Same
+     * title, much the same products, so the editions competed with each other for one search,
+     * and Google picks one anyway. A repeat names the first edition as its canonical, the one
+     * indexed longest. Matched on the title, not on `theme_slug`: older editions carry a
+     * numbered slug per run (`on-rentre-161`), newer ones a shared theme key. Null for a
+     * first edition.
+     */
+    private function firstOfTheme(DailyPickSet $edition, CurrentMarket $current): ?string
+    {
+        if (blank($edition->theme_title)) {
+            return null;
+        }
+
+        $first = DailyPickSet::query()
+            ->where('market', $edition->market)
+            ->where('kind', $edition->kind)
+            ->whereRaw('lower(theme_title) = ?', [mb_strtolower((string) $edition->theme_title)])
+            ->where('id', '!=', $edition->id)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->where('drop_date', '<', $edition->drop_date)
+            ->orderBy('drop_date')
+            ->first(['id', 'slug']);
+
+        return $first === null ? null : url($current->get()->covePath($first->slug));
+    }
+
     private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void
     {
         $url = $isArchive
@@ -366,7 +405,11 @@ class DailyCoveController extends Controller
 
         $meta->set(
             title: $edition->theme_title,
-            description: $edition->theme_blurb ?? __('site.daily.seo_description'),
+            // A written description first (2026-11-24); the blurb is a teaser for
+            // the page, and the fallback sentence is the same on every edition.
+            description: filled($edition->meta_description)
+                ? (string) $edition->meta_description
+                : ($edition->theme_blurb ?? __('site.daily.seo_description')),
             /*
              * Always the dated card, even on /daily.
              *
@@ -376,7 +419,7 @@ class DailyCoveController extends Controller
              * showing the edition it was actually about.
              */
             image: SocialCard::versioned(url($current->url('og/daily/'.$edition->drop_date->toDateString().'.png'))),
-            canonical: $url,
+            canonical: $isArchive ? $this->firstOfTheme($edition, $current) ?? $url : $url,
             /*
              * A draft is never indexed, whatever else the page would say.
              *

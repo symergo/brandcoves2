@@ -2312,6 +2312,8 @@ return [
         'react_down' => 'Pas pour moi',
         'title' => 'La Cove Quotidienne',
         'seo_title' => ':theme — idées cadeaux',
+        // With the edition's search phrase in front, when it has one (2026-11-24): "Fietsaccessoires als cadeau: Sur deux roues".
+        'seo_title_keyphrase' => ':keyphrase : :theme',
         'seo_description' => 'Une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
         'finds_title' => 'Les trouvailles du jour',
         'guide_title' => 'Le guide du jour',

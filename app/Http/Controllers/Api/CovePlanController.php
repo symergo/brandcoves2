@@ -143,6 +143,9 @@ class CovePlanController extends Controller
             'queries' => ['nullable', 'array', 'max:12'],
             'queries.*' => ['string', 'max:60'],
             'focusKeyphrase' => ['nullable', 'string', 'max:120'],
+            // What a search result shows under the title (2026-11-24). Google cuts at
+            // about 155 characters.
+            'metaDescription' => ['nullable', 'string', 'max:160'],
             // The questions people search around the subject (2026-11-07).
             'searchQuestions' => ['nullable', 'array', 'max:10'],
             'searchQuestions.*' => ['nullable', 'string', 'max:160'],
@@ -169,7 +172,9 @@ class CovePlanController extends Controller
             ]);
         }
 
-        if (isset($data['focusKeyphrase']) && ! $plan->kind->writesBody()) {
+        // A Daily carries a search phrase too since 2026-11-24: it goes in front of the
+        // theme in the page's <title> (DailyCoveController).
+        if (isset($data['focusKeyphrase']) && ! $plan->kind->writesBody() && $plan->kind !== CoveKind::Daily) {
             throw ValidationException::withMessages([
                 'focusKeyphrase' => 'A '.$plan->kind->label().' does not carry a focus keyphrase.',
             ]);
@@ -192,9 +197,26 @@ class CovePlanController extends Controller
             'writer' => $data['writer'] ?? null,
             'queries' => $data['queries'] ?? null,
             'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+            'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
             'search_questions' => isset($data['searchQuestions']) ? self::questions($data['searchQuestions']) : null,
             'scene' => $data['scene'] ?? null,
         ], fn ($v) => $v !== null))->save();
+
+        /*
+         * The search phrase and the description reach the live page at once
+         * (2026-11-24). They are metadata, not prose: nothing on the page is built
+         * from them, so they need no rebuild, and a rebuild of a past Daily is
+         * not something to risk for a <title>. Written onto the edition the plan
+         * built, when it has one.
+         */
+        $seo = array_filter([
+            'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+            'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
+        ], fn ($v) => $v !== null);
+
+        if ($seo !== [] && $plan->edition !== null) {
+            $plan->edition->forceFill($seo)->save();
+        }
 
         return response()->json(['data' => $this->payload($plan->refresh())]);
     }
