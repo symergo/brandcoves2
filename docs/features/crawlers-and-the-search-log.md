@@ -168,3 +168,17 @@ joined the list on 2026-11-23 after it reached a search page (owner: "stop all b
 So did a catch-all on `amzn-`, so a later Amazon agent with that prefix is refused before it is
 first seen. Both in `LimitHeavyCrawlers::CRAWLERS`, so search and product pages answer 403 and
 robots.txt names them.
+
+### The challenge moved to "outside western EU", product pages included (owner, 2026-11-24)
+
+The next night a scraper came from inside Europe: 1,673 residential IPs, one to three requests
+each, no JavaScript (not one Inertia follow-up), Chrome 152-154 user agents, mostly France, Spain,
+the UK and Germany. About 1,000 of 1,500 searches in the sampled window, and thousands of product
+pages an hour, which also spent the day's Amazon lookups (since then the Amazon row loads in a
+follow-up only a browser makes, docs/features/amazon-links.md).
+
+The fourth custom rule now challenges search, `/go/` and product (`/p/`) pages for every country
+except the 14 western EU members: AT BE DE DK ES FI FR GR IE IT LU NL PT SE. Verified bots still
+pass. The owner chose to exclude all western EU countries, knowing most of this scraper's traffic
+came from inside that set (France, Spain, Germany, Italy), so the rule reaches its UK, Swiss,
+Norwegian and eastern-EU share; the Amazon credits were protected by the follow-up instead.
