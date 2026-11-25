@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly GiftCoves production backup
+
+# 02:15 UTC (03:15 Belgian winter time): after the evening window (18:10-19:45 Belgian) and
+# before the nightly jobs from 04:10 UTC. A missed night (VPS down) runs at the next boot.
+[Timer]
+OnCalendar=*-*-* 02:15:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

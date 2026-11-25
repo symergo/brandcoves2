@@ -16,7 +16,7 @@
 #   Docker Compose Location = /docker-compose.coolify.app.yml
 #   Domain                  -> assigned to the `app` service (Traefik + Let's Encrypt)
 #   Auto Deploy             = on for staging, OFF for production
-#   Scheduled Backups       = none (there never was one for this database; see deployment.md)
+#   Scheduled Backups       = none in Coolify; a nightly host timer (scripts/vps/, deployment.md "Backups")
 #
 # Everything is built from the repo. There are NO bind mounts and no seeded
 # volumes. Persistent state is the postgres volume, redis's, and since

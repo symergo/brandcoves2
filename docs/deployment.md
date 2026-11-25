@@ -27,10 +27,25 @@ Postgres and Redis are a resource of their own per environment, from `docker-com
 `GiftCoves-prod-state` (`sxvq4xkdg4svfxyltliwhnck`) and `GiftCoves-staging-state`
 (`kveu89ly0eilys1lq98r4ldm`). See "Postgres and Redis out of the app deploy" below.
 
-**No scheduled database backup exists** (checked in Coolify's own database on 2026-11-25: its
-only scheduled backup is of Coolify itself). This file used to say "Scheduled Backups on
-`postgres`"; that was never true for GiftCoves. The dumps that exist are the manual ones in
-`/root/backups/giftcoves/` on the VPS.
+### Backups
+
+**A nightly backup since 2026-11-25** (owner: "Yes, but delete the previous after quality check").
+Before that day there was none: this file said "Scheduled Backups on `postgres`", and Coolify's own
+database showed its only scheduled backup was of Coolify itself.
+
+- `scripts/vps/giftcoves-backup.sh`, installed as `/root/bin/giftcoves-backup.sh`, run by the systemd
+  timer `giftcoves-backup.timer` at 02:15 UTC (the VPS has no cron). The unit files are next to the
+  script; after changing any of them, copy them over and `systemctl daemon-reload`.
+- It writes a `pg_dump -Fc` (3.3 GB, about 4 minutes) and a tar of `media_data` (uploaded pictures)
+  to `/root/backups/giftcoves/`, checks them, and **only then** deletes the previous set. One set is
+  kept. The checks are in the script's header: pg_dump's exit code, a readable table of contents with
+  data for every table and for the key tables by name, and at least 80% of the previous dump's size.
+- A failed night keeps the previous set and logs `FAILED: <reason>` in `backup.log` in that folder.
+  Both paths were tried on 2026-11-25 (a pass, then a forced failure with `MIN_RATIO=200`).
+- Read the state with `tail /root/backups/giftcoves/backup.log` or
+  `systemctl list-timers giftcoves-backup.timer`.
+- **It is on the same disk as the database**, so it covers a bad migration or a deleted table, not
+  the loss of the VPS. An off-server copy is not set up.
 
 ## How it deploys
 
@@ -448,7 +463,7 @@ Most of the time no dump is needed — the catalogue is regenerable from the fee
 - Migrations are forward-only. Anything not backwards-compatible uses **expand/contract** (add column
   → deploy code → backfill → later migration drops the old column), so a rollback never meets a
   schema it cannot read.
-- `pg_dump` before any risky migration, on top of the scheduled backups.
+- `pg_dump` before any risky migration, on top of the nightly backup ("Backups" above).
 - **VPS headroom:** v2 adds Postgres + Redis + three PHP containers *per environment* to a box that
   ran v1's MySQL and Apache alongside them until v1's containers were retired at the end of the
   post-cutover watch period. Check free memory before standing a new environment up.

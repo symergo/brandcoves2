@@ -1,0 +1,8 @@
+[Unit]
+Description=GiftCoves production backup (scripts/vps/giftcoves-backup.sh in the repo)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/root/bin/giftcoves-backup.sh
+TimeoutStartSec=3600
