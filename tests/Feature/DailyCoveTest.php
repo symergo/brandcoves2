@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Jobs\BuildDailyEdition;
+use App\Models\AmazonProduct;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
@@ -16,6 +17,9 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ai\AiClient;
+use App\Services\Amazon\AmazonMatches;
+use App\Services\Amazon\AmazonSearch;
+use App\Services\Amazon\AsinDataClient;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\Observance;
 use App\Services\Cove\ObservanceCalendar;
@@ -228,6 +232,47 @@ class DailyCoveTest extends TestCase
         // No usable answer: the theme's own title.
         $title = ['title' => ''];
         $this->assertSame('Schetsboeken, aquarelverf en tekentablets', app(EditionBuilder::class)->build(Market::BeNl, CarbonImmutable::tomorrow())?->theme_title);
+    }
+
+    #[Test]
+    public function a_thin_day_is_topped_up_from_amazon_without_a_price(): void
+    {
+        // Owner, 2026-11-25: "Use amazon as well to find gifts for the coves for thin db".
+        $this->seedFinds(2);
+        $this->planDay();
+        foreach (['B0AAAAAAA1', 'B0AAAAAAA2', 'B0AAAAAAA3', 'B0AAAAAAA4', 'B0AAAAAAA5'] as $i => $asin) {
+            AmazonProduct::create(['asin' => $asin, 'classified_title' => "Amazon-apparaat {$i}", 'image_url' => "https://m.media-amazon.com/{$i}.jpg"]);
+        }
+        $this->mock(AmazonSearch::class, function ($mock): void {
+            $mock->shouldReceive('results')->with(Market::BeNl, 'apparaat')->once()->andReturn(array_map(
+                fn (string $asin) => ['asin' => $asin, 'title' => 'x', 'image' => null, 'url' => 'x'],
+                ['B0AAAAAAA1', 'B0AAAAAAA2', 'B0AAAAAAA3', 'B0AAAAAAA4', 'B0AAAAAAA5'],
+            ));
+            $mock->shouldReceive('saved')->andReturnUsing(fn (Market $m, array $asins) => (new AmazonSearch(app(AsinDataClient::class), app(AmazonMatches::class)))->saved($m, $asins));
+        });
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+
+        // Two of ours, then Amazon up to the day's six; only the ASIN is on the pick.
+        $this->assertNotNull($edition);
+        $this->assertSame(2, $edition->picks()->whereNotNull('group_id')->count());
+        $this->assertSame(['B0AAAAAAA1', 'B0AAAAAAA2', 'B0AAAAAAA3', 'B0AAAAAAA4'], $edition->picks()->whereNotNull('amazon_asin')->orderBy('rank')->pluck('amazon_asin')->all());
+
+        $amazon = $this->get('/be-nl/tips/'.$edition->slug)->assertOk()->viewData('page')['props']['amazon'];
+        $this->assertSame('amazon.com.be', $amazon['host']);
+        $this->assertCount(4, $amazon['items']);
+        $this->assertSame('Amazon-apparaat 0', $amazon['items'][0]['title']);
+        $this->assertStringStartsWith('https://www.amazon.com.be/dp/B0AAAAAAA1?tag=', $amazon['items'][0]['url']);
+        $this->assertArrayNotHasKey('price', $amazon['items'][0]);
+    }
+
+    #[Test]
+    public function amazon_never_fills_a_day_with_nothing_of_our_own(): void
+    {
+        $this->planDay();
+        $this->mock(AmazonSearch::class, fn ($mock) => $mock->shouldNotReceive('results'));
+
+        $this->assertNull(app(EditionBuilder::class)->build(Market::BeNl));
     }
 
     #[Test]

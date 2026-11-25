@@ -1336,6 +1336,15 @@ return [
         'minimum' => 3,
 
         /*
+         * Top a thin day up from Amazon (owner, 2026-11-25: "Use amazon as well to find
+         * gifts for the coves for thin db"): when the catalogue has fewer than `per_day`
+         * finds on the theme, ASIN Data API's search on the day's words fills the rest,
+         * shown as Amazon cards without a price. Markets with a storefront only, and
+         * only beside a find of our own. EditionBuilder::amazonFinds().
+         */
+        'amazon_top_up' => (bool) env('DAILY_AMAZON_TOP_UP', true),
+
+        /*
          * A Daily with no editorial is held, not published.
          *
          * On 27 Sep 2026 be-nl's edition published as a title over six

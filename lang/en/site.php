@@ -2586,6 +2586,8 @@ return [
         'seo_title_keyphrase' => ':keyphrase: :theme',
         'seo_description' => 'A handful of things you did not know existed, and a buying guide built from what people actually searched for.',
         'finds_title' => "Today's finds",
+        // Amazon's products on a day our catalogue could not fill (2026-11-25).
+        'amazon_title' => 'Also on Amazon',
         'guide_title' => "Today's guide",
         'guide_why' => 'Written because :count searches here asked for it.',
 
@@ -2991,7 +2993,7 @@ return [
         'find_filters' => 'From a gift ideas page, search everything tagged for that person and interest. The filters show above the results, and each comes off with one tap.',
         'find_pages' => 'Gift ideas by who and what they love, like "gift ideas for dad who loves cooking", each a page of its own. Find a gift links to the one closest to your answers with "Open as a page".',
         'find_product' => 'A product\'s page shows every shop\'s price, how many people keep it on a list, and the Coves it is in.',
-        'find_amazon' => 'When Amazon sells the same product in Belgium or the Netherlands, Check on Amazon appears among the shops and under the product in search results. Under the results, Also on Amazon shows what Amazon itself finds for your search. These links open the product on Amazon, without a price: you see that on Amazon itself.',
+        'find_amazon' => 'When Amazon sells the same product in Belgium or the Netherlands, Check on Amazon appears among the shops and under the product in search results. Under the results, Also on Amazon shows what Amazon itself finds for your search. These links open the product on Amazon, without a price: you see that on Amazon itself. When a Cove of the day finds too little in our shops, we fill it up with products from Amazon, the same way.',
         'find_crowd' => 'An idea marked "Chosen by others for someone like them" is on the lists of at least five different people shopping for the same kind of person, such as a dad who likes cooking. We count people, never show whose list it is, and show nothing below five.',
         'find_thumbs' => 'Thumbs up or down on an idea teaches the suggestions. Thumbs up keeps it and brings more like it; thumbs down swaps it for another. For one of your people we remember it for them only, and what you turned down never comes back for them. Everybody’s thumbs together move an idea only once at least five different people voted on it, and we never show who.',
         'add_title' => 'Adding anything',

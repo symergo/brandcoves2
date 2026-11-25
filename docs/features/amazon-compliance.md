@@ -350,3 +350,22 @@ restriction, but its rate limits are strict — see
 **Awin** rules are per-advertiser rather than network-wide. Some advertisers
 prohibit price comparison or restrict voucher content. Worth capturing per feed
 if a merchant objects; nothing enforces it today.
+
+## Amazon on a thin Daily (2026-11-25)
+
+Owner: "Use amazon as well to find gifts for the coves for thin db". When the catalogue has fewer
+than `picks.per_day` (6) finds on a Daily's theme, `EditionBuilder::amazonFinds()` fills the rest
+from ASIN Data API's search on the day's own words (at most two words a day per market), through
+`AmazonSearch::results()`: the same search, the same saved answer and the same 100-a-day budget as
+the search page's Amazon section. The pick keeps only the ASIN (`daily_picks.amazon_asin`); the page
+reads title and picture from `amazon_products` (`AmazonSearch::saved()`) and shows them under "Ook op
+Amazon" as the search page's Amazon card: our tagged link, sponsored, no price, no save button.
+
+- Markets with a storefront only: be-nl, be-fr (amazon.com.be), nl-nl (amazon.nl). **en and es get
+  nothing**, because no Associates tag exists for amazon.co.uk or amazon.es; en is the market that
+  would gain most (26 of 60 days without a Daily, measured that day).
+- Never on a day with no find of our own: the article is written about our finds, and a page of only
+  Amazon cards would be Amazon's page under our name.
+- The article does not name Amazon picks: they have no product group, so no `[[product:]]` token
+  resolves to them; they are cards below the article.
+- Off switch: `DAILY_AMAZON_TOP_UP=false`.

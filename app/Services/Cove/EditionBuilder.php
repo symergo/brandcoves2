@@ -17,6 +17,7 @@ use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use App\Services\Ai\PromptBank;
+use App\Services\Amazon\AmazonSearch;
 use App\Services\Cove\Selectors\Selectors;
 use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
@@ -68,6 +69,7 @@ class EditionBuilder
         private readonly EntityLinks $links,
         private readonly CoveProse $prose,
         private readonly PickNames $pickNames,
+        private readonly AmazonSearch $amazonSearch,
     ) {}
 
     /**
@@ -103,14 +105,16 @@ class EditionBuilder
 
         $finds = $this->finds($market, $perDay, $observance, $plan, $exclude);
         $liveFinds = $this->liveFinds($plan);
+        $amazon = $this->amazonFinds($market, $perDay - count($finds) - count($liveFinds), $finds, $observance, $plan);
 
-        if (count($finds) + count($liveFinds) < (int) config('giftcoves.picks.minimum')) {
+        if (count($finds) + count($liveFinds) + count($amazon) < (int) config('giftcoves.picks.minimum')) {
             // A three-item edition is worse than no edition. Publishing a thin
             // one on a bad catalogue day trains people that the page is not
             // worth opening.
             Log::warning('Edition skipped: not enough finds', [
                 'market' => $market->value,
                 'found' => count($finds),
+                'amazon' => count($amazon),
             ]);
 
             // Recorded on the plan where there is one, for the same reason the
@@ -122,7 +126,7 @@ class EditionBuilder
             if (($onDate = $plan ?? $this->planOn($market, $date)) !== null) {
                 $this->recordFailedBuild($onDate, sprintf(
                     '%d of the %d finds a Cove needs on its theme. The catalogue could not fill it; curate the day to publish it.',
-                    count($finds) + count($liveFinds),
+                    count($finds) + count($liveFinds) + count($amazon),
                     (int) config('giftcoves.picks.minimum'),
                 ));
             }
@@ -234,7 +238,7 @@ class EditionBuilder
             return null;
         }
 
-        $edition = DB::transaction(function () use ($market, $date, $finds, $liveFinds, $theme, $editorial): DailyPickSet {
+        $edition = DB::transaction(function () use ($market, $date, $finds, $liveFinds, $amazon, $theme, $editorial): DailyPickSet {
             /*
              * No slug here, deliberately.
              *
@@ -261,7 +265,7 @@ class EditionBuilder
                 ],
             );
 
-            $this->writePicks($edition, $finds, $liveFinds);
+            $this->writePicks($edition, $finds, $liveFinds, amazon: $amazon);
 
             /*
              * Link the plan to what it became, and leave its status alone.
@@ -1180,6 +1184,49 @@ class EditionBuilder
     }
 
     /**
+     * Amazon's products for a day the catalogue cannot fill (owner, 2026-11-25: "Use
+     * amazon as well to find gifts for the coves for thin db").
+     *
+     * Up to `$wanted` ASINs from ASIN Data API's search on the day's own words, the
+     * same search and the same saved answer as the search page (AmazonSearch), so a
+     * term already searched costs nothing. Only where the market has an Amazon
+     * storefront with our tag (be-nl, be-fr, nl-nl; en and es have none), and only
+     * beside at least one find of our own: the article is written about our finds,
+     * and a page of nothing but Amazon cards would be Amazon's page with our name on
+     * it. The ASIN is all that is kept on the pick; the card is read from
+     * `amazon_products` at render, title and picture, never a price
+     * (docs/features/amazon-compliance.md).
+     *
+     * @param  list<ProductGroup>  $finds
+     * @return list<string>
+     */
+    private function amazonFinds(Market $market, int $wanted, array $finds, ?Observance $observance, ?CovePlan $plan): array
+    {
+        if ($wanted <= 0 || $finds === [] || ! (bool) config('giftcoves.picks.amazon_top_up', true)) {
+            return [];
+        }
+
+        $words = array_values(array_unique(array_filter(array_map(
+            fn ($q) => trim((string) $q),
+            [...(array) ($plan?->queries ?? []), ...($observance?->queries ?? [])],
+        ))));
+
+        $asins = [];
+        // Two words at most: each new word is one of the day's 100 searches.
+        foreach (array_slice($words, 0, 2) as $word) {
+            foreach ($this->amazonSearch->results($market, $word) as $row) {
+                $asins[$row['asin']] = true;
+
+                if (count($asins) >= $wanted) {
+                    return array_keys($asins);
+                }
+            }
+        }
+
+        return array_keys($asins);
+    }
+
+    /**
      * Replace an edition's picks with what was just chosen.
      *
      * Delete-then-insert rather than a diff: a rebuild is routine and the ranks
@@ -1190,8 +1237,9 @@ class EditionBuilder
      *
      * @param  list<ProductGroup>  $finds
      * @param  list<CovePlanItem>  $liveFinds
+     * @param  list<string>  $amazon  ASINs found on Amazon for a thin day (amazonFinds())
      */
-    private function writePicks(DailyPickSet $edition, array $finds, array $liveFinds = [], array $copy = []): void
+    private function writePicks(DailyPickSet $edition, array $finds, array $liveFinds = [], array $copy = [], array $amazon = []): void
     {
         $edition->picks()->delete();
         $rank = 0;
@@ -1226,6 +1274,15 @@ class EditionBuilder
                 // The slug is the decision's id and nothing from the product:
                 // a title we may not store cannot appear in a URL either.
                 'slug' => Str::slug((string) $item->source?->value).'-'.Str::slug((string) $item->external_id),
+            ]);
+        }
+
+        foreach ($amazon as $asin) {
+            DailyPick::create([
+                'set_id' => $edition->id,
+                'amazon_asin' => $asin,
+                'rank' => ++$rank,
+                'slug' => 'amazon-'.Str::slug($asin),
             ]);
         }
     }

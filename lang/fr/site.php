@@ -2325,6 +2325,8 @@ return [
         'seo_title_keyphrase' => ':keyphrase : :theme',
         'seo_description' => 'Une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
         'finds_title' => 'Les trouvailles du jour',
+        // Amazon's products on a day our catalogue could not fill (2026-11-25).
+        'amazon_title' => 'Aussi sur Amazon',
         'guide_title' => 'Le guide du jour',
         'guide_why' => 'Écrit parce que :count recherches ici l’ont demandé.',
 
@@ -2722,7 +2724,7 @@ return [
         'find_filters' => 'Depuis une page d\'idées cadeaux, cherchez tout ce qui est destiné à cette personne et à cette passion. Les filtres s\'affichent au-dessus des résultats, et chacun se retire d\'un geste.',
         'find_pages' => 'Des idées cadeaux selon la personne et ce qu\'elle aime, comme « idées cadeaux pour papa qui aime la cuisine », chacune sur sa propre page. Trouver un cadeau renvoie à la plus proche de vos réponses avec « Ouvrir en page ».',
         'find_product' => 'La page d\'un produit montre le prix dans chaque boutique, combien de personnes l\'ont dans une liste, et les Coves où il figure.',
-        'find_amazon' => 'Si Amazon vend le même produit en Belgique ou aux Pays-Bas, Voir sur Amazon apparaît parmi les boutiques et sous le produit dans les résultats. Sous les résultats, Aussi sur Amazon montre aussi ce qu\'Amazon trouve pour votre recherche. Ces liens ouvrent le produit sur Amazon, sans prix : vous le voyez sur Amazon même.',
+        'find_amazon' => 'Si Amazon vend le même produit en Belgique ou aux Pays-Bas, Voir sur Amazon apparaît parmi les boutiques et sous le produit dans les résultats. Sous les résultats, Aussi sur Amazon montre aussi ce qu\'Amazon trouve pour votre recherche. Ces liens ouvrent le produit sur Amazon, sans prix : vous le voyez sur Amazon même. Quand une Cove du jour trouve trop peu de produits dans nos boutiques, nous la complétons avec des produits d’Amazon, de la même façon.',
         'find_crowd' => 'Une idée marquée « Choisi par d’autres pour quelqu’un comme cette personne » figure sur les listes d’au moins cinq personnes différentes qui cherchent pour le même genre de personne, comme un papa qui aime cuisiner. Nous comptons des personnes, ne montrons jamais de qui est la liste, et en dessous de cinq nous ne montrons rien.',
         'find_thumbs' => 'Un pouce levé ou baissé sur une idée affine les suggestions. Levé, l’idée reste et en amène d’autres du même genre ; baissé, elle est remplacée par une autre. Pour une de vos personnes, nous le retenons pour elle seule, et ce que vous avez refusé ne revient plus pour elle. Les pouces de tout le monde ne comptent pour une idée qu’une fois qu’au moins cinq personnes différentes ont voté, et nous ne montrons jamais qui.',
         'add_title' => 'Tout ajouter',

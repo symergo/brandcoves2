@@ -8,6 +8,8 @@ use App\Enums\CoveScene;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Services\Amazon\AmazonMatches;
+use App\Services\Amazon\AmazonSearch;
 use App\Support\CurrentMarket;
 
 /**
@@ -29,6 +31,8 @@ class EditionPresenter
 {
     public function __construct(
         private readonly CoveProse $prose,
+        private readonly AmazonSearch $amazon,
+        private readonly AmazonMatches $matches,
     ) {}
 
     /**
@@ -102,6 +106,21 @@ class EditionPresenter
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * The Amazon picks of a thin day (EditionBuilder::amazonFinds()), as Amazon cards:
+     * title and picture from what was saved, our tagged link, never a price. With the
+     * storefront's host for the card's "on amazon.com.be" line; null when there are none.
+     *
+     * @return array{host: string, items: list<array<string, mixed>>}|null
+     */
+    public function amazon(DailyPickSet $edition, CurrentMarket $current): ?array
+    {
+        $asins = $edition->picks->pluck('amazon_asin')->filter()->values()->all();
+        $items = $this->amazon->saved($current->get(), $asins);
+
+        return $items === [] ? null : ['host' => (string) $this->matches->storefront($current->get()), 'items' => $items];
     }
 
     /** @return array<string, mixed>|null */

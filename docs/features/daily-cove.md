@@ -121,6 +121,10 @@ name, which is true whatever was found. The search phrase now comes over by them
 a few hours: 162 editions whose title named a product they did not hold were retitled one by one
 from their products that evening, by hand.
 
+**A thin day is topped up from Amazon (2026-11-25).** Fewer than six finds on the theme: the rest
+comes from Amazon's search on the day's words, shown as Amazon cards without a price, in be-nl,
+be-fr and nl-nl only. Details and limits: amazon-compliance.md, "Amazon on a thin Daily".
+
 The rule before that, kept for the record: the theme prompt required the title to **name something
 concrete** — the occasion, the room, the category, or who it is for. "The last day of the holidays"
 names a mood; "the last day of the school holidays" names a thing. Both are honest and only one is

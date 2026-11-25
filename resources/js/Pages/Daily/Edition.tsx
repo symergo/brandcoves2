@@ -15,6 +15,7 @@ import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 import ShareMenu from '../../Components/ShareMenu'
 import SaveCove, { type SaveCoveState } from '../../Components/SaveCove'
+import AmazonProductCard, { type AmazonItem } from '../../Components/AmazonProductCard'
 
 interface Find {
     id: number
@@ -57,6 +58,8 @@ interface Props {
         editorial: { html: string; groupIds: number[] }[]
     }
     finds: Find[]
+    /** Amazon's products on a day our catalogue could not fill; no price (EditionPresenter::amazon()). */
+    amazon?: { host: string; items: AmazonItem[] } | null
     guide: {
         title: string
         intro: string | null
@@ -83,7 +86,7 @@ interface Props {
     rail: Rail
 }
 
-export default function Edition({ preview = false, edition, finds, guide, deals, rail, saveCove }: Props) {
+export default function Edition({ preview = false, edition, finds, amazon = null, guide, deals, rail, saveCove }: Props) {
     const { market, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -210,6 +213,19 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
 
                             <div className="flex gap-2">{reactionButtons(find)}</div>
                         </div>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    )
+
+    const amazonGrid = amazon && amazon.items.length > 0 && (
+        <section className="mt-10">
+            <h2 className="text-sm font-medium text-ink-soft">{t('daily.amazon_title')}</h2>
+            <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {amazon.items.map((item) => (
+                    <li key={item.asin}>
+                        <AmazonProductCard item={item} host={amazon.host.replace(/^www\./, '')} />
                     </li>
                 ))}
             </ul>
@@ -445,6 +461,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                       no longer need it.
                     */}
                     {findsGrid}
+                    {amazonGrid}
 
                     {guideCard}
                 </div>

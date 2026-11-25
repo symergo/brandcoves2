@@ -146,6 +146,45 @@ class AmazonSearch
         ], array_slice($rows, 0, self::SHOWN));
     }
 
+    /**
+     * Saved Amazon products by ASIN, as cards: for a Cove's Amazon picks
+     * (EditionBuilder::amazonFinds()). Read from `amazon_products` only, so a page
+     * never waits on Amazon; an ASIN with no saved title is left out. Empty for a
+     * market without a storefront.
+     *
+     * @param  list<string>  $asins
+     * @return list<array{asin: string, title: string, image: string|null, url: string}>
+     */
+    public function saved(Market $market, array $asins): array
+    {
+        $storefront = $this->matches->storefront($market);
+
+        if ($storefront === null || $asins === []) {
+            return [];
+        }
+
+        $tag = trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", ''));
+        $rows = AmazonProduct::query()->whereIn('asin', $asins)->get(['asin', 'classified_title', 'image_url'])->keyBy('asin');
+
+        $out = [];
+        foreach ($asins as $asin) {
+            $row = $rows->get($asin);
+
+            if ($row === null || blank($row->classified_title)) {
+                continue;
+            }
+
+            $out[] = [
+                'asin' => $asin,
+                'title' => (string) $row->classified_title,
+                'image' => $row->image_url,
+                'url' => 'https://www.'.$storefront.'/dp/'.$asin.($tag !== '' ? '?tag='.rawurlencode($tag) : ''),
+            ];
+        }
+
+        return $out;
+    }
+
     /** @return list<array{asin: string, title: string, image: string|null}> */
     private function ask(string $storefront, string $language, string $term, string $key): array
     {

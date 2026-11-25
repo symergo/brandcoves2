@@ -121,6 +121,8 @@ class DailyCoveController extends Controller
             ],
 
             'finds' => $this->presenter->finds($edition, $current),
+            // Amazon's products on a day the catalogue could not fill (2026-11-25).
+            'amazon' => $this->presenter->amazon($edition, $current),
             'guide' => $this->presenter->guide($edition, $current),
             'deals' => $this->deals($current),
 
