@@ -99,8 +99,11 @@ or three categories as people search them ("Schetsboeken, aquarelverf en tekenta
 Friday", "Winterzonnewende", not "Voor je moeder", "Echt goedkoper", "De langste nacht"). The voice
 moved to the blurb and the article. That day all 64 rotation themes, 26 named days and the fallback
 list were renamed in the four languages (`site.daily.day_themes`, `.observances`, `.themes`), with
-the 536 draft plans from that date on and that day's four editions; the archive kept its titles
-(199 editions) pending the owner's decision. Slugs are never rewritten, so no address changed. The
+the 536 draft plans from that date on and that day's four editions. The archive followed the same
+evening (owner: "Yes"): 195 editions by the same map, and 47 one-off mood titles the writer or a
+session had made up ("Griezelig bakken", "Where the small things live") renamed one by one after
+their search phrase. Titles that were already a day's name or a product ("Werelddierendag", "LEGO
+voor volwassenen") stayed. Slugs are never rewritten, so no address changed. The
 writer's naming prompt (`EditionBuilder::theme()`) says the same. When the title already holds the
 search phrase, the `<title>` is the title alone, so "Tekentablet: Schetsboeken, aquarelverf en
 tekentablets" does not happen (`DailyCoveController::titleSays()`). Titles stay under about 55
