@@ -5,19 +5,18 @@
 # REDIS_HOST are unchanged. A deploy of this file replaces only the app containers: the
 # database keeps its memory and Redis its caches, and the gap is the app's own start.
 #
-# EXPAND/CONTRACT: this is a copy of docker-compose.coolify.yml without the two services,
-# for as long as production still deploys that file. Staging moved first. Until
-# production follows, a change to the app services goes in BOTH files; then the old file
-# goes. docs/deployment.md, "Postgres and Redis out of the app deploy".
+# Both apps deploy this file: staging since 2026-11-24, production since 2026-11-25.
+# docker-compose.coolify.yml (the same with the two services) is the rollback for one
+# week, then goes. docs/deployment.md, "Postgres and Redis out of the app deploy".
 #
 # Production / staging compose, deployed by Coolify from GitHub.
 #
 # Coolify settings:
 #   Build Pack              = Docker Compose
-#   Docker Compose Location = /docker-compose.coolify.yml
+#   Docker Compose Location = /docker-compose.coolify.app.yml
 #   Domain                  -> assigned to the `app` service (Traefik + Let's Encrypt)
-#   Auto Deploy             = on
-#   Scheduled Backups       = on the `postgres` service
+#   Auto Deploy             = on for staging, OFF for production
+#   Scheduled Backups       = none (there never was one for this database; see deployment.md)
 #
 # Everything is built from the repo. There are NO bind mounts and no seeded
 # volumes. Persistent state is the postgres volume, redis's, and since

@@ -21,8 +21,16 @@ Read from the Coolify API on 2026-08-31, not from memory:
 Application UUIDs, which the deploy trigger needs: staging `vhfcyk39ug5exk0fyvdj8qo3`, production
 `gr0kqzz1er3s79u17vdph27t`, server `ek8ge5t94i9ieavic2cvrovf`.
 
-Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.yml`**, domain
-assigned to the **`app`** service, Scheduled Backups on **`postgres`**.
+Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.app.yml`**
+(since 2026-11-24 staging, 2026-11-25 production), domain assigned to the **`app`** service.
+Postgres and Redis are a resource of their own per environment, from `docker-compose.state.yml`:
+`GiftCoves-prod-state` (`sxvq4xkdg4svfxyltliwhnck`) and `GiftCoves-staging-state`
+(`kveu89ly0eilys1lq98r4ldm`). See "Postgres and Redis out of the app deploy" below.
+
+**No scheduled database backup exists** (checked in Coolify's own database on 2026-11-25: its
+only scheduled backup is of Coolify itself). This file used to say "Scheduled Backups on
+`postgres`"; that was never true for GiftCoves. The dumps that exist are the manual ones in
+`/root/backups/giftcoves/` on the VPS.
 
 ## How it deploys
 
@@ -407,9 +415,10 @@ One direction only. Schema changes reach production **only** as migrations run b
 # containers now, one per environment, distinguished by the Coolify project name
 # which is the application UUID. The old `grep '^postgres-'` matched both, and
 # restoring the wrong one silently gives you staging's small dataset:
-#   postgres-gr0kqzz1er3s79u17vdph27t-...  production
-#   postgres-vhfcyk39ug5exk0fyvdj8qo3-...  staging
-PG=$(ssh brandcoves-vps "docker ps --format '{{.Names}}' | grep gr0kqzz1er3s79u17vdph27t | grep -i postgres")
+#   postgres-sxvq4xkdg4svfxyltliwhnck      production (the state resource, since 2026-11-25;
+#                                          before that postgres-gr0kqzz1er3s79u17vdph27t-...)
+#   postgres-kveu89ly0eilys1lq98r4ldm      staging (since 2026-11-24)
+PG=postgres-sxvq4xkdg4svfxyltliwhnck
 ssh brandcoves-vps "docker exec $PG pg_dump -U brandcoves -Fc brandcoves" > "$TEMP/prod.dump"
 docker compose exec -T postgres pg_restore -U brandcoves -d brandcoves --clean --if-exists < "$TEMP/prod.dump"
 php artisan bc:scrub --force
@@ -520,10 +529,30 @@ with Coolify's "Docker Compose Location".
    without a server plus a cold start before), and Postgres and Redis kept running (`StartedAt`
    unchanged). The 12 s left are the app container's own start: Coolify stops the old one first.
 
-For production, the same steps with `gr0kqzz1er3s79u17vdph27t`, outside the night windows, with a
-`pg_dump` first. Two things to redo there: Coolify's scheduled backups were configured on the app's
-`postgres` service and must be set up on the new resource, and the downtime of step 2-3 is the Postgres
-start on a 30 GB database (crash-safe, no copy), expected to be under a minute.
+**Production moved on 2026-11-25 (owner: "Ok do it"), 15:13-15:18 Belgian time.** State resource
+`GiftCoves-prod-state` (`sxvq4xkdg4svfxyltliwhnck`), compose location of `GiftCoves-prod` set to
+`/docker-compose.coolify.app.yml`. In order:
+
+1. `pg_dump -Fc -Z 3` while the site ran: 3.3 GB in three minutes, in
+   `/root/backups/giftcoves/prod-before-state-move-20261125T1413.dump` (its table of contents read
+   back: 96 tables with data). 28 GB on disk, 29 GB data folder, 6,184,536 product groups.
+2. Created the resource stopped, with the **literal** paths and network written into the compose
+   before it was sent (`prod_state.py` in that session), so Coolify never saw a variable in a volume
+   line. The parsed compose showed both bind mounts on the production folders and the network
+   `gr0kqzz1er3s79u17vdph27t` as `app`.
+3. Switched the compose location and deployed. The old `postgres` and `redis` containers were removed
+   about 30 s into the deploy, before the build had finished (staging's went with the rest): the
+   site was down from then. Postgres logged a clean shutdown (`database system was shut down`).
+4. Started the resource the moment no container mounted the folders. Postgres was ready in under a
+   second (no recovery), autoprewarm loaded 306,399 of 327,680 cached blocks, Redis kept its keys,
+   and `/health` answered 200 at 14:18:28 UTC: **about 35 s down** (14:17:51 to 14:18:28).
+   6,184,539 product groups, `shared_buffers` 2560MB, Horizon running.
+
+**Coolify had no scheduled backup of this database to move** (see the top of this file), so none was
+set up on the new resource either.
+
+`docker-compose.coolify.yml` is used by neither app since then. It stays for one week as the
+rollback (set the compose location back, stop the state resource, deploy), then goes.
 
 ### Steps for B (per environment, staging first)
 

@@ -34,7 +34,8 @@ class ConfigContractTest extends TestCase
         'config/services.php',
     ];
 
-    private const COMPOSE = 'docker-compose.coolify.yml';
+    // The file both apps deploy since 2026-11-25 (docs/deployment.md).
+    private const COMPOSE = 'docker-compose.coolify.app.yml';
 
     private const ENV_EXAMPLE = '.env.example';
 

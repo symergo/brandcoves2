@@ -1,3 +1,7 @@
+# NOT DEPLOYED since 2026-11-25. Both apps deploy docker-compose.coolify.app.yml, with
+# Postgres and Redis in their own resource (docker-compose.state.yml). This file is kept
+# for one week as the rollback, then removed. Do not change it; change the app file.
+#
 # Production / staging compose, deployed by Coolify from GitHub.
 #
 # Coolify settings:
