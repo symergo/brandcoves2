@@ -9,6 +9,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RecursiveDirectoryIterator;
@@ -146,6 +147,28 @@ class AiClientTest extends TestCase
             $this->assertStringContainsString('no text block', $e->getMessage());
             $this->assertStringContainsString('thinking', $e->getMessage());
         }
+    }
+
+    #[Test]
+    public function an_answer_cut_off_at_the_ceiling_is_logged(): void
+    {
+        // nl-nl's Daily, held six times since October: half a JSON object, a parse
+        // failure, and nothing in the usage table to say why.
+        Http::fake(['api.anthropic.com/*' => Http::response([
+            'content' => [['type' => 'text', 'text' => '{"editorial": "Een begin zonder ein']],
+            'stop_reason' => 'max_tokens',
+            'usage' => ['input_tokens' => 900, 'output_tokens' => 2200],
+        ])]);
+        Log::spy();
+
+        try {
+            app(AiClient::class)->json('daily_picks', 'x', 'y', [], 2200);
+            $this->fail('a cut-off answer is not JSON');
+        } catch (AiUnavailable) {
+            // expected
+        }
+
+        Log::shouldHaveReceived('warning')->with('AI answer cut off at max_tokens', ['feature' => 'daily_picks', 'max_tokens' => 2200, 'output_tokens' => 2200])->once();
     }
 
     #[Test]

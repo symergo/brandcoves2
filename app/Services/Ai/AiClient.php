@@ -157,6 +157,22 @@ class AiClient
 
         $text = $this->textFrom($body);
 
+        /*
+         * Cut off at the ceiling (2026-11-25). The call succeeded and is recorded as
+         * one, so the usage table showed no error, while a JSON caller got half an
+         * object, failed to parse it and fell back: nl-nl's Daily was held six times
+         * in two months this way ("the writer returned no editorial"), with the
+         * builder's 2200 tokens below what its own 8000-character limit needs in
+         * Dutch, thinking blocks included. Logged so the next one is visible.
+         */
+        if (($body['stop_reason'] ?? null) === 'max_tokens') {
+            Log::warning('AI answer cut off at max_tokens', [
+                'feature' => $featureKey,
+                'max_tokens' => $maxTokens,
+                'output_tokens' => (int) ($body['usage']['output_tokens'] ?? 0),
+            ]);
+        }
+
         if ($text === '') {
             throw AiUnavailable::failed(
                 'no text block in response (blocks: '

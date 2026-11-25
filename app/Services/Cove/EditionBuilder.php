@@ -1435,8 +1435,14 @@ class EditionBuilder
                  * now owes a paragraph for every find, and a response cut off
                  * at the ceiling does not write about the last products
                  * briefly — it does not reach them at all.
+                 *
+                 * Raised from 2200 to 4000 on 2026-11-25. EDITORIAL_LIMIT is
+                 * 8000 characters, about 2,500 tokens of Dutch before the JSON
+                 * around it and any thinking block, so a full article could not
+                 * fit: the answer was cut, failed to parse, and the day was held
+                 * (nl-nl six times since October). A few cents more a day.
                  */
-                maxTokens: 2200,
+                maxTokens: 4000,
             );
         } catch (AiUnavailable $e) {
             Log::info('Cove editorial unavailable', ['reason' => $e->getMessage()]);

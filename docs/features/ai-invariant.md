@@ -117,3 +117,14 @@ that counts against the cap like any other, because a test that bypassed the cap
 would not be testing what runs in production.
 
 Rotating `APP_KEY` orphans the stored key. The fix is to paste it again here.
+
+## A cut-off answer is logged (2026-11-25)
+
+`AiClient::chat()` logs `AI answer cut off at max_tokens` when Anthropic stops at the ceiling. The
+call still succeeds and is recorded as one, so the usage table shows no error, while a JSON caller
+gets half an object and falls back. That is how nl-nl's Daily was held six times between October and
+November ("the writer returned no editorial"): the Daily writer's 2200 tokens were below what its own
+8000-character article limit needs in Dutch, with the JSON around it and any thinking block. The
+writer's ceiling is 4000 since (`EditionBuilder::write()`). The logs of those days were gone, so this
+cause is inferred from the code and the timing (nl-nl builds last, at about 07:04, and its days had
+calls and tokens but no errors), not read from a log line.
