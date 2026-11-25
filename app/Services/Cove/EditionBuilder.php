@@ -160,6 +160,27 @@ class EditionBuilder
             default => $this->theme($market, $finds),
         };
 
+        /*
+         * A theme that ran before keeps the search phrase it was given (2026-11-25, owner:
+         * "De nieuwe daily cove heeft weer geen goede seo title"). The phrase is authored on a
+         * plan, and the days the builder fills on its own (a rotation theme, an observance, an
+         * unwritten plan) had none, so their <title> was the mood name alone: "Slecht tekenen,
+         * met plezier — cadeautips". The themes repeat and 292 editions got a phrase on
+         * 2026-11-24, which covered every theme but two in each market, so the latest earlier
+         * edition of the same title in the same market has one to hand. The description is not
+         * carried over: it names that edition's products.
+         */
+        if (blank($theme['focus_keyphrase'] ?? null) && filled($theme['title'] ?? null)) {
+            $theme['focus_keyphrase'] = DailyPickSet::query()
+                ->where('market', $market->value)
+                ->where('kind', CoveKind::Daily->value)
+                ->where('theme_title', $theme['title'])
+                ->where('drop_date', '<', $date->toDateString())
+                ->whereNotNull('focus_keyphrase')
+                ->orderByDesc('drop_date')
+                ->value('focus_keyphrase');
+        }
+
         $editorial = $this->editorial($market, $finds, $observance, $theme['title'], $plan);
 
         /*

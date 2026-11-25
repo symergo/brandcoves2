@@ -180,6 +180,34 @@ class DailyCoveTest extends TestCase
     }
 
     #[Test]
+    public function a_theme_that_ran_before_keeps_its_search_phrase(): void
+    {
+        // Production, 2026-11-25: the builder filled the day and the <title> was the mood
+        // name alone, while the theme's earlier edition carried a phrase.
+        $this->publishedEdition('Apparaten van de dag', CarbonImmutable::today()->subDays(40))
+            ->update(['focus_keyphrase' => 'Handige apparaten']);
+        $this->publishedEdition('Iets anders', CarbonImmutable::today()->subDays(20))
+            ->update(['focus_keyphrase' => 'Niet deze']);
+
+        $edition = $this->buildEdition();
+
+        $this->assertSame('Handige apparaten', $edition->focus_keyphrase);
+        // The description named that edition's products, so it stays behind.
+        $this->assertNull($edition->meta_description);
+    }
+
+    #[Test]
+    public function a_plans_own_search_phrase_beats_an_earlier_one(): void
+    {
+        $this->publishedEdition('Apparaten van de dag', CarbonImmutable::today()->subDays(40))
+            ->update(['focus_keyphrase' => 'Handige apparaten']);
+        $this->seedFinds();
+        $this->planDay(extra: ['focus_keyphrase' => 'Rare apparaten']);
+
+        $this->assertSame('Rare apparaten', app(EditionBuilder::class)->build(Market::BeNl)?->focus_keyphrase);
+    }
+
+    #[Test]
     public function an_edition_never_repeats_a_recent_find(): void
     {
         $this->seedFinds(16);

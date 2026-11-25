@@ -114,6 +114,15 @@ blurb: a teaser, a template shared by most be-fr editions, or (once) English on 
   written that day on the most repeated themes, with exactly the phrases their Dailies carry.
 - `POST /coves` takes both fields on a Daily, the build copies them from the plan, and `PATCH` writes
   them (and the blurb) onto the live edition without a rebuild. Tests: `DailySeoTest`.
+- **A day the builder fills on its own keeps its theme's phrase (2026-11-25).** Owner: "De nieuwe
+  daily cove heeft weer geen goede seo title". The phrase was only ever authored on a plan, so a
+  rotation theme, an observance or an unwritten plan published as "Slecht tekenen, met plezier —
+  cadeautips". Themes repeat, and the phrases of 2026-11-24 cover every theme but two per market,
+  so `EditionBuilder` takes the phrase of the latest earlier edition with the same title in the
+  same market when the plan has none. The description is not carried over, since it names that
+  edition's products. A theme that never had one (be-fr "La saison des cadeaux", nl-nl "Dingen die
+  uren duren" until that day) still needs one written. Tests:
+  `DailyCoveTest::a_theme_that_ran_before_keeps_its_search_phrase`, `..._plans_own_search_phrase_beats_an_earlier_one`.
 
 ## Every public page is indexable (2026-09-12)
 
