@@ -191,3 +191,18 @@ Nobody finds the site through it, and bstore blocks it already. It is in
 and robots.txt names it. The same day showed where the rest of the search load comes from: 940 of
 969 full search pages were crawlers (Bingbot 270, Applebot 245, DotBot 163), 1,825 s of server time
 against 66 s for people. Bing and Apple are search engines people use and stay open.
+
+## The text links got the chips' four-word stop (2026-11-25)
+
+The 2026-11-13 stop (`SearchController::PILLS_UNTIL`) covered the chips above the grid, not the same
+words linked in the copy below it (`:term_links`, `App\Services\Pages\Placeholders\TermLinks`). Every
+page still linked six searches one word longer, up to eight words: about 1,300 reachable pages per
+four-word search, and each with its language twins. In the seven hours after the 2026-11-24 deploy a
+crawler on residential proxies (one Chrome 153 on Windows user agent, thousands of IPs in FR, ES, DE, IT,
+PT, at most five requests each) asked for 1,530 pages of 5-8 words: 4,004 s of the 4,825 s spent on
+search. `TermLinks` now links nothing narrower once the term has four words.
+
+The crawler keeps the addresses it collected, so a Cloudflare rule on giftcoves.com challenges search
+pages for visitors outside Belgium and the Netherlands, verified bots excepted (owner, same day).
+
+Test: `PlaceholderFunctionTest::narrower_search_links_stop_at_the_chips_four_words`.

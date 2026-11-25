@@ -159,6 +159,20 @@ class PlaceholderFunctionTest extends TestCase
     }
 
     #[Test]
+    public function narrower_search_links_stop_at_the_chips_four_words(): void
+    {
+        // 2026-11-25: the chips stopped at four words on 2026-11-13 and this block did
+        // not, so a crawler walked one word further on every page, up to eight.
+        $this->block('Kijk dan ook bij :term_links.');
+
+        $three = collect($this->render($this->context(['Aurex', 'Belka', 'Corvo'], 'koptelefoon blauw groot'))[0]['parts'] ?? [])->firstWhere('t', 'links');
+        $this->assertNotEmpty($three['items'] ?? [], 'three words still narrow');
+
+        $four = $this->render($this->context(['Aurex', 'Belka', 'Corvo'], 'koptelefoon blauw groot zacht'));
+        $this->assertNull(collect($four[0]['parts'] ?? [])->firstWhere('t', 'links'), 'a four-word search links no narrower search');
+    }
+
+    #[Test]
     public function guide_links_name_our_published_reading_about_the_term(): void
     {
         // Owner, 2026-11-07: links to buying guides and other useful content in

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Pages\Placeholders;
 
+use App\Http\Controllers\SearchController;
 use App\Services\Pages\Context\PageContext;
 use App\Services\Seo\ResultTerms;
 
@@ -67,6 +68,20 @@ final class TermLinks implements PlaceholderFunction
 
     public function resolve(PageContext $context): Value
     {
+        /*
+         * No narrower links once the term has the chips' four words (2026-11-25), the
+         * same stop as SearchController::PILLS_UNTIL. The chips got it on 2026-11-13 and
+         * this block did not, so every page still linked six searches one word longer, up
+         * to eight words: about 1,300 reachable pages per four-word search. A crawler on
+         * residential proxies spent 83% of the search time after the 2026-11-24 deploy
+         * on those 5-8 word pages (search-urls.md).
+         */
+        $term = trim((string) $context->fact('term'));
+
+        if ($term !== '' && count(preg_split('/\s+/u', $term) ?: []) >= SearchController::PILLS_UNTIL) {
+            return Value::links([]);
+        }
+
         // Six rather than the chip row's eight: this is a sentence, and a
         // sentence with eight links in it is a list wearing a full stop.
         $terms = app(ResultTerms::class)->extract(
