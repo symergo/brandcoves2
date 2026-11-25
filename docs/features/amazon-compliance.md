@@ -369,3 +369,12 @@ Amazon" as the search page's Amazon card: our tagged link, sponsored, no price, 
 - The article does not name Amazon picks: they have no product group, so no `[[product:]]` token
   resolves to them; they are cards below the article.
 - Off switch: `DAILY_AMAZON_TOP_UP=false`.
+
+## Amazon in the shops list (2026-11-25)
+
+Owner: "Amazon sites staan niet tussen winkels". `/{market}/shops` lists our merchants, and Amazon is
+none, so `ShopsController::withAmazon()` adds it where the market has a storefront with our tag
+(Amazon.com.be on be-nl and be-fr, Amazon.nl on nl-nl), in name order with the rest. It links to the
+storefront's home page with the tag, `rel="sponsored"`, in a new tab, never through our redirector.
+No shop Cove and no search filter behind it: those are for shops whose offers we hold. Test:
+`ShopCovesTest::amazon_is_among_the_shops_where_the_market_has_a_storefront`.

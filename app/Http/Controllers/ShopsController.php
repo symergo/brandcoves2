@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\PageMeta;
 use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
@@ -135,7 +136,7 @@ class ShopsController extends Controller
              */
             'newShops' => $this->present($this->arrivals($shops, $since), $current, $since),
 
-            'shops' => $this->present($shops, $current, $since),
+            'shops' => $this->withAmazon($this->present($shops, $current, $since), $current),
         ]);
     }
 
@@ -151,6 +152,42 @@ class ShopsController extends Controller
      * @param  Collection<int, Merchant>  $shops
      * @return Collection<int, Merchant>
      */
+    /**
+     * Amazon among the shops (owner, 2026-11-25: "Amazon sites staan niet tussen
+     * winkels"), where the market has a storefront with our tag: amazon.com.be for
+     * be-nl and be-fr, amazon.nl for nl-nl. Amazon is not a merchant (it never enters
+     * the catalogue, docs/features/amazon-compliance.md), so it is added here rather
+     * than through ShopDirectory, in name order like the rest. It links to the
+     * storefront itself, tagged and sponsored, never through our redirector
+     * (Amazon's rule), so the page renders it as an outbound link (`external`).
+     *
+     * @param  list<array<string, mixed>>  $shops
+     * @return list<array<string, mixed>>
+     */
+    private function withAmazon(array $shops, CurrentMarket $current): array
+    {
+        $amazon = AmazonSearchLink::for($current->get());
+
+        if ($amazon === null) {
+            return $shops;
+        }
+
+        $host = (string) preg_replace('/^www\./', '', $amazon->host);
+        $shops[] = [
+            'id' => 0,
+            'name' => ucfirst($host),
+            'domain' => $host,
+            'logo' => $amazon->iconUrl(),
+            'isNew' => false,
+            'url' => $amazon->homeUrl,
+            'external' => true,
+        ];
+
+        usort($shops, fn (array $a, array $b) => strcasecmp((string) $a['name'], (string) $b['name']));
+
+        return $shops;
+    }
+
     private function arrivals(Collection $shops, Carbon $since): Collection
     {
         $new = $shops->filter(

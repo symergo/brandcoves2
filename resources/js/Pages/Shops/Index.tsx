@@ -9,6 +9,8 @@ interface Shop {
     logo: string | null
     isNew: boolean
     url: string
+    /** Amazon: its own storefront, tagged, in a new tab (ShopsController::withAmazon()). */
+    external?: boolean
 }
 
 interface Cove {
@@ -31,39 +33,53 @@ interface Props {
  * only place that knows whether it exists is the browser. An empty box where a
  * mark should be reads as a broken shop; the name alone reads as a shop.
  */
+function ShopCardBody({ shop, newLabel }: { shop: Shop; newLabel: string }) {
+    return (
+        <>
+            {shop.logo && (
+                <img
+                    src={shop.logo}
+                    alt=""
+                    loading="lazy"
+                    width={24}
+                    height={24}
+                    className="h-6 w-6 shrink-0 rounded object-contain"
+                    onError={(e) => {
+                        e.currentTarget.hidden = true
+                    }}
+                />
+            )}
+
+            <span className="min-w-0">
+                <span className="block truncate font-medium group-hover:underline">
+                    {shop.name}
+                </span>
+                {shop.domain && (
+                    <span className="block truncate text-xs text-ink-soft">{shop.domain}</span>
+                )}
+            </span>
+
+            {shop.isNew && (
+                <Badge tone="accent" size="xs" className="ml-auto shrink-0">
+                    {newLabel}
+                </Badge>
+            )}
+        </>
+    )
+}
+
 function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
     return (
         <li className="rounded-card border border-line bg-card p-4">
-            <Link href={shop.url} className="group flex min-h-11 items-center gap-3 sm:min-h-0">
-                {shop.logo && (
-                    <img
-                        src={shop.logo}
-                        alt=""
-                        loading="lazy"
-                        width={24}
-                        height={24}
-                        className="h-6 w-6 shrink-0 rounded object-contain"
-                        onError={(e) => {
-                            e.currentTarget.hidden = true
-                        }}
-                    />
-                )}
-
-                <span className="min-w-0">
-                    <span className="block truncate font-medium group-hover:underline">
-                        {shop.name}
-                    </span>
-                    {shop.domain && (
-                        <span className="block truncate text-xs text-ink-soft">{shop.domain}</span>
-                    )}
-                </span>
-
-                {shop.isNew && (
-                    <Badge tone="accent" size="xs" className="ml-auto shrink-0">
-                        {newLabel}
-                    </Badge>
-                )}
-            </Link>
+            {shop.external ? (
+                <a href={shop.url} target="_blank" rel="sponsored noopener" className="group flex min-h-11 items-center gap-3 sm:min-h-0">
+                    <ShopCardBody shop={shop} newLabel={newLabel} />
+                </a>
+            ) : (
+                <Link href={shop.url} className="group flex min-h-11 items-center gap-3 sm:min-h-0">
+                    <ShopCardBody shop={shop} newLabel={newLabel} />
+                </Link>
+            )}
         </li>
     )
 }

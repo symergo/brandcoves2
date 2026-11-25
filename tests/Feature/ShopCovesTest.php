@@ -30,6 +30,37 @@ class ShopCovesTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Amazon joins the list where a storefront has a tag (ShopsController::withAmazon());
+        // off here so these tests count only merchants, on in the test about it.
+        config(['giftcoves.amazon_search.markets.be-nl.tag' => '']);
+    }
+
+    #[Test]
+    public function amazon_is_among_the_shops_where_the_market_has_a_storefront(): void
+    {
+        // Owner, 2026-11-25: "Amazon sites staan niet tussen winkels".
+        config(['giftcoves.amazon_search.markets.be-nl.tag' => 'giftcoves05-21']);
+        $this->shop('Coolblue', Market::BeNl);
+        $this->shop('Bol', Market::BeNl);
+
+        $this->get('/be-nl/shops')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('shops', 3)
+                ->where('shops.0.name', 'Amazon.com.be')
+                ->where('shops.0.external', true)
+                ->where('shops.0.url', 'https://www.amazon.com.be/?tag=giftcoves05-21')
+                ->where('shops.1.name', 'Bol')
+            );
+
+        // No storefront for en: no Amazon.
+        $this->get('/en/shops')->assertOk()->assertInertia(fn ($page) => $page->has('shops', 0));
+    }
+
     private function shop(
         string $name,
         ?Market $market,
