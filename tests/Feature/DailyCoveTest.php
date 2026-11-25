@@ -17,6 +17,8 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Cove\Observance;
+use App\Services\Cove\ObservanceCalendar;
 use App\Services\Guides\TopicMiner;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
@@ -194,6 +196,38 @@ class DailyCoveTest extends TestCase
         $this->assertSame('Handige apparaten', $edition->focus_keyphrase);
         // The description named that edition's products, so it stays behind.
         $this->assertNull($edition->meta_description);
+    }
+
+    #[Test]
+    public function a_rotation_day_is_named_after_what_was_found(): void
+    {
+        // Production, 2026-11-25: "Christmas gifts, gift sets and wrapping paper" over
+        // baby toys and a toothbrush gift set. The copy names the theme's search words,
+        // the finds are whichever of them the catalogue had.
+        $this->seedFinds(16);
+        $this->mock(ObservanceCalendar::class, fn ($mock) => $mock->shouldReceive('themeFor')
+            ->andReturn(new Observance('drawing', ['apparaat'], evergreen: true)));
+        $this->publishedEdition('Slecht tekenen, met plezier', CarbonImmutable::today()->subDays(30))
+            ->update(['theme_slug' => 'theme-drawing', 'focus_keyphrase' => 'tekentablet']);
+
+        $title = ['title' => 'Apparaten en gadgets'];
+        $this->mock(AiClient::class, function ($mock) use (&$title): void {
+            $mock->shouldReceive('isEnabled')->andReturn(true);
+            $mock->shouldReceive('json')->andReturnUsing(function (string $feature, string $system) use (&$title): array {
+                return str_contains($system, 'You title a page of products')
+                    ? $title
+                    : ['editorial' => 'Zes vreemde apparaten, en waarom.'];
+            });
+        });
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertSame('Apparaten en gadgets', $edition?->theme_title);
+        // The search phrase still comes over, matched on the theme key now the title varies.
+        $this->assertSame('tekentablet', $edition->focus_keyphrase);
+
+        // No usable answer: the theme's own title.
+        $title = ['title' => ''];
+        $this->assertSame('Schetsboeken, aquarelverf en tekentablets', app(EditionBuilder::class)->build(Market::BeNl, CarbonImmutable::tomorrow())?->theme_title);
     }
 
     #[Test]

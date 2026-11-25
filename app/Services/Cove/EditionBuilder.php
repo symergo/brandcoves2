@@ -150,7 +150,17 @@ class EditionBuilder
                 'source' => 'planned',
             ],
             $observance !== null => [
-                'title' => $observance->title($market),
+                /*
+                 * A rotation theme's title is named after the finds, not taken from the
+                 * copy (2026-11-25). The copy names the theme's three search words
+                 * ("Christmas gifts, gift sets and wrapping paper"), and the day's finds
+                 * are whichever of them the catalogue had: that edition held baby toys
+                 * and a toothbrush gift set, and no wrapping paper. A named day keeps
+                 * its name, which is true whatever was found. The copy stays the
+                 * fallback for a day with the model off or failing.
+                 */
+                'title' => ($observance->evergreen ? $this->nameTheFinds($market, $finds, (string) $observance->title($market)) : null)
+                    ?? $observance->title($market),
                 'blurb' => $observance->blurb($market),
                 'slug' => $observance->slug(),
                 // Recorded separately so the admin can see at a glance which
@@ -171,10 +181,13 @@ class EditionBuilder
          * carried over: it names that edition's products.
          */
         if (blank($theme['focus_keyphrase'] ?? null) && filled($theme['title'] ?? null)) {
+            // By the theme key as well as the title: a rotation theme's title is
+            // named after each day's finds since the same evening, so it varies.
             $theme['focus_keyphrase'] = DailyPickSet::query()
                 ->where('market', $market->value)
                 ->where('kind', CoveKind::Daily->value)
-                ->where('theme_title', $theme['title'])
+                ->where(fn ($q) => $q->where('theme_title', $theme['title'])
+                    ->when(str_starts_with((string) ($theme['slug'] ?? ''), 'theme-'), fn ($q) => $q->orWhere('theme_slug', $theme['slug'])))
                 ->where('drop_date', '<', $date->toDateString())
                 ->whereNotNull('focus_keyphrase')
                 ->orderByDesc('drop_date')
@@ -1466,6 +1479,59 @@ class EditionBuilder
             'slug' => Str::slug($title),
             'source' => 'ai',
         ];
+    }
+
+    /**
+     * A title for a rotation day that names what was actually found, or null.
+     *
+     * Null with the model off, capped or failing, or when the answer is empty or too
+     * long for a search result: the caller then uses the theme's own title.
+     *
+     * @param  list<ProductGroup>  $finds
+     */
+    private function nameTheFinds(Market $market, array $finds, string $theme): ?string
+    {
+        if ($finds === [] || ! $this->ai->isEnabled()) {
+            return null;
+        }
+
+        try {
+            $response = $this->ai->json(
+                self::FEATURE,
+                <<<'TXT'
+                You title a page of products. Name the products: two or three of
+                the categories these products actually belong to, as a person
+                would type them into a search box, joined the way the language
+                does it ("Sketchbooks and drawing tablets", "Slow cookers, casseroles
+                and cast iron pans").
+
+                Rules:
+                - Only categories that are in the list. Never name a kind of
+                  product that is not there, even if the theme suggests it.
+                - No mood, no wordplay. The title is for search; the voice
+                  belongs elsewhere on the page.
+                - Under 55 characters, sentence case, no full stop.
+                - No "gift", "present" or "buy", unless the products are sold as
+                  gift sets.
+                - Brand names only when every product is that brand.
+                TXT,
+                'Language: '.$market->language()."\n\nThe day's theme, for orientation only: ".$theme.
+                    "\n\nThe products:\n- ".implode("\n- ", array_map(
+                        fn (ProductGroup $g) => $g->title.(filled($g->category) ? ' (category: '.$g->category.')' : ''),
+                        $finds,
+                    )),
+                schemaHint: ['title' => '...'],
+                maxTokens: 100,
+            );
+        } catch (AiUnavailable $e) {
+            Log::info('Daily title unavailable, using the theme title', ['reason' => $e->getMessage()]);
+
+            return null;
+        }
+
+        $title = trim(strip_tags((string) HouseStyle::plain((string) ($response['title'] ?? ''))), " \t\n.");
+
+        return $title !== '' && mb_strlen($title) <= 70 ? $title : null;
     }
 
     /** @return list<string> */

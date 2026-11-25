@@ -109,6 +109,18 @@ search phrase, the `<title>` is the title alone, so "Tekentablet: Schetsboeken, 
 tekentablets" does not happen (`DailyCoveController::titleSays()`). Titles stay under about 55
 characters so they fit a search result.
 
+**A rotation day is named after its own finds (2026-11-25, the same evening).** Owner: "The daily
+Christmas gifts, gift sets and wrapping paper doesnt match the products". The theme copy names the
+theme's three search words, but the finds are whichever of them the catalogue had that day: baby toys
+and a toothbrush gift set under "wrapping paper", no watercolour under "aquarelverf". So a rotation
+day (an evergreen `Observance`) is titled by the model from its finds (`EditionBuilder::nameTheFinds()`,
+one call per market per day under the `daily_picks` cap): two or three categories that are in the
+list, never one that is not. The copy is the fallback with the model off. A named day keeps its
+name, which is true whatever was found. The search phrase now comes over by theme key
+(`theme-drawing`) as well as by title, since the title varies. The archive had the copy's titles for
+a few hours: 162 editions whose title named a product they did not hold were retitled one by one
+from their products that evening, by hand.
+
 The rule before that, kept for the record: the theme prompt required the title to **name something
 concrete** — the occasion, the room, the category, or who it is for. "The last day of the holidays"
 names a mood; "the last day of the school holidays" names a thing. Both are honest and only one is
