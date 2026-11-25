@@ -281,6 +281,11 @@ plan it is advisory — the builder's own finds are not in the allowlist yet.
 Voice: dry, specific, quietly amused. Pointing at odd things and saying why they are
 worth a second look, not selling.
 
+**A Daily's title is never a mood (owner, 2026-11-25).** It names the products, two or
+three categories as people search them ("Slowcookers en gietijzeren pannen"), or the
+day's real name ("Moederdag"), under about 55 characters. "Dingen die uren duren" is a
+mood; put that voice in the blurb and the editorial instead.
+
 **Shape: a short opening, then a paragraph about each product.** The frontend renders
 each product's card directly underneath the paragraph whose copy names it, so the
 paragraph is the writing that product gets and the only writing it gets. A product no

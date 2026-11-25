@@ -52,6 +52,23 @@ class DailySeoTest extends TestCase
     }
 
     #[Test]
+    public function a_title_that_already_names_the_phrase_does_not_repeat_it(): void
+    {
+        // Since 2026-11-25 the titles name the products, so the phrase is often in them.
+        $this->edition('schetsboeken', 'Schetsboeken, aquarelverf en tekentablets', '2026-11-25', Market::BeNl, [
+            'focus_keyphrase' => 'tekentablet',
+        ]);
+        $this->edition('slowcookers', 'Slowcookers en gietijzeren pannen', '2026-11-24', Market::BeNl, [
+            'focus_keyphrase' => 'cadeau voor een thuiskok',
+        ]);
+
+        $this->assertSame('Schetsboeken, aquarelverf en tekentablets — cadeautips',
+            $this->get('/be-nl/tips/schetsboeken')->assertOk()->viewData('page')['props']['edition']['seoTitle']);
+        $this->assertSame('Cadeau voor een thuiskok: Slowcookers en gietijzeren pannen',
+            $this->get('/be-nl/tips/slowcookers')->assertOk()->viewData('page')['props']['edition']['seoTitle']);
+    }
+
+    #[Test]
     public function without_them_it_reads_as_before(): void
     {
         $this->edition('in-de-auto', 'In de auto', '2026-11-22', Market::BeNl, ['theme_blurb' => 'De helft waar niemand aan denkt.']);

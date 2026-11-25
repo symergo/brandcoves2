@@ -1426,12 +1426,14 @@ class EditionBuilder
                 - Describe what these things have in common, honestly. If they
                   have nothing in common, say that — "Seven things with nothing
                   in common" is a better title than a forced theme.
-                - Name something concrete. The title must contain at least one
-                  noun a person could plausibly type into a search box: the
-                  occasion, the room, the category, or who it is for. "The last
-                  day of the holidays" names a mood; "The last day of the school
-                  holidays" names a thing. Both are honest, and the second is
-                  findable.
+                - No mood titles. Name the products: two or three of the
+                  categories these finds belong to, as a person would type them
+                  into a search box ("Sketchbooks, watercolours and drawing
+                  tablets", "Slow cookers and cast iron pans"), or the occasion
+                  when there is one ("Mother's Day"). "Drawing badly, happily"
+                  and "Things that take hours" are moods, and nobody searches
+                  for a mood. Keep it under 55 characters. The voice belongs in
+                  the sentence, not the title.
                 - Do not stuff in "gift", "present" or "buy". The page and its
                   address already say that, and a title that repeats it reads
                   like every other shopping site.

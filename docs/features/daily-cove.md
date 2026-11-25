@@ -93,7 +93,20 @@ omission. The address already reads `/nl-nl/tips/…`, so a slug carrying the sa
 `/tips/cadeautips-de-laatste-vakantiedag` — the keyword twice, adjacently, which is the
 clearest over-optimisation signal there is. The slug instead inherits whatever the headline gained.
 
-Which is where the real change is: the theme prompt now requires the title to **name something
+**No mood titles (owner, 2026-11-25: "Dont use mood titles").** The title names the products, two
+or three categories as people search them ("Schetsboeken, aquarelverf en tekentablets", not
+"Slecht tekenen, met plezier"), or the day's real name when it has one ("Moederdag", "Black
+Friday", "Winterzonnewende", not "Voor je moeder", "Echt goedkoper", "De langste nacht"). The voice
+moved to the blurb and the article. That day all 64 rotation themes, 26 named days and the fallback
+list were renamed in the four languages (`site.daily.day_themes`, `.observances`, `.themes`), with
+the 536 draft plans from that date on and that day's four editions; the archive kept its titles
+(199 editions) pending the owner's decision. Slugs are never rewritten, so no address changed. The
+writer's naming prompt (`EditionBuilder::theme()`) says the same. When the title already holds the
+search phrase, the `<title>` is the title alone, so "Tekentablet: Schetsboeken, aquarelverf en
+tekentablets" does not happen (`DailyCoveController::titleSays()`). Titles stay under about 55
+characters so they fit a search result.
+
+The rule before that, kept for the record: the theme prompt required the title to **name something
 concrete** — the occasion, the room, the category, or who it is for. "The last day of the holidays"
 names a mood; "the last day of the school holidays" names a thing. Both are honest and only one is
 findable. The prompt also forbids stuffing in "gift", "present" or "buy", because the page and its

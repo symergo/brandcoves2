@@ -93,8 +93,8 @@ class ObservanceTest extends TestCase
 
         $this->assertNotNull($observance);
         // One calendar, five markets: the copy is a translation key.
-        $this->assertSame('Pour l’animal qui dirige la maison', $observance->title(Market::BeFr));
-        $this->assertSame('Voor het dier dat je huis bestuurt', $observance->title(Market::BeNl));
+        $this->assertSame('Journée des animaux de compagnie', $observance->title(Market::BeFr));
+        $this->assertSame('Dag van het huisdier', $observance->title(Market::BeNl));
     }
 
     #[Test]

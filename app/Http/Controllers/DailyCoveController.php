@@ -98,7 +98,12 @@ class DailyCoveController extends Controller
                  * "Sur deux roues" is a mood; "Fietsaccessoires als cadeau: Sur deux
                  * roues" is a search. The heading keeps the editorial name.
                  */
-                'seoTitle' => filled($edition->focus_keyphrase)
+                /*
+                 * Not when the title already says it (2026-11-25): the titles name the
+                 * products since then ("Schetsboeken, aquarelverf en tekentablets"), and
+                 * "Tekentablet: Schetsboeken, aquarelverf en tekentablets" says it twice.
+                 */
+                'seoTitle' => filled($edition->focus_keyphrase) && ! self::titleSays((string) $edition->theme_title, (string) $edition->focus_keyphrase)
                     ? __('site.daily.seo_title_keyphrase', ['keyphrase' => Str::ucfirst(trim((string) $edition->focus_keyphrase)), 'theme' => $edition->theme_title])
                     : __('site.daily.seo_title', ['theme' => $edition->theme_title]),
                 'blurb' => $edition->theme_blurb,
@@ -375,6 +380,25 @@ class DailyCoveController extends Controller
      * numbered slug per run (`on-rentre-161`), newer ones a shared theme key. Null for a
      * first edition.
      */
+    /**
+     * Whether the title already holds every word of the search phrase, plural or not:
+     * "tekentablet" is in "Schetsboeken, aquarelverf en tekentablets". Words of two
+     * letters or fewer ("en", "of") are not asked for.
+     */
+    private static function titleSays(string $title, string $phrase): bool
+    {
+        $title = mb_strtolower($title);
+        $words = array_filter(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($phrase)) ?: [], fn (string $w) => mb_strlen($w) > 2);
+
+        foreach ($words as $word) {
+            if (! str_contains($title, $word) && ! str_contains($title, rtrim($word, 's'))) {
+                return false;
+            }
+        }
+
+        return $words !== [];
+    }
+
     private function firstOfTheme(DailyPickSet $edition, CurrentMarket $current): ?string
     {
         if (blank($edition->theme_title)) {
