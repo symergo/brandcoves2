@@ -172,16 +172,28 @@ class ShopsController extends Controller
             return $shops;
         }
 
-        $host = (string) preg_replace('/^www\./', '', $amazon->host);
-        $shops[] = [
-            'id' => 0,
-            'name' => ucfirst($host),
-            'domain' => $host,
-            'logo' => $amazon->iconUrl(),
-            'isNew' => false,
-            'url' => $amazon->homeUrl,
-            'external' => true,
-        ];
+        // The market's storefront, then any it lists `also` (en: amazon.fr in English).
+        $stores = [['host' => $amazon->host, 'icon' => $amazon->iconUrl(), 'url' => $amazon->homeUrl]];
+        foreach ((array) config("giftcoves.amazon_search.markets.{$current->get()->value}.also", []) as $also) {
+            $host = trim((string) ($also['host'] ?? ''));
+            if ($host !== '') {
+                $query = http_build_query(AmazonSearchLink::params((array) $also), '', '&', PHP_QUERY_RFC3986);
+                $stores[] = ['host' => $host, 'icon' => "https://{$host}/favicon.ico", 'url' => "https://{$host}/".($query !== '' ? '?'.$query : '')];
+            }
+        }
+
+        foreach ($stores as $i => $store) {
+            $host = (string) preg_replace('/^www\./', '', $store['host']);
+            $shops[] = [
+                'id' => -$i,
+                'name' => ucfirst($host),
+                'domain' => $host,
+                'logo' => $store['icon'],
+                'isNew' => false,
+                'url' => $store['url'],
+                'external' => true,
+            ];
+        }
 
         usort($shops, fn (array $a, array $b) => strcasecmp((string) $a['name'], (string) $b['name']));
 

@@ -6,6 +6,7 @@ namespace App\Services\Amazon;
 
 use App\Enums\Market;
 use App\Models\AmazonProduct;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Search\SearchQuery;
 use App\Support\Crawlers;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class AmazonSearch
      * in ASIN Data API's documentation; the owner supplied it (2026-11-23) and a test
      * search with nl_BE on amazon.com.be came back in Dutch.
      */
-    private const LANGUAGES = ['be-nl' => 'nl_BE', 'be-fr' => 'fr_BE', 'nl-nl' => 'nl_NL'];
+    private const LANGUAGES = ['be-nl' => 'nl_BE', 'be-fr' => 'fr_BE', 'nl-nl' => 'nl_NL', 'en' => 'en_GB'];
 
     public function __construct(
         private readonly AsinDataClient $client,
@@ -136,13 +137,11 @@ class AmazonSearch
         $rows = $this->stored($storefront, $language, $term)
             ?? (Cache::has($key.':failed') ? [] : $this->ask($storefront, $language, $term, $key));
 
-        $tag = trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", ''));
-
         return array_map(fn (array $row): array => [
             'asin' => $row['asin'],
             'title' => $row['title'],
             'image' => $row['image'] ?? null,
-            'url' => 'https://www.'.$storefront.'/dp/'.$row['asin'].($tag !== '' ? '?tag='.rawurlencode($tag) : ''),
+            'url' => AmazonSearchLink::productUrl($market, $storefront, $row['asin']),
         ], array_slice($rows, 0, self::SHOWN));
     }
 
@@ -163,7 +162,6 @@ class AmazonSearch
             return [];
         }
 
-        $tag = trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", ''));
         $rows = AmazonProduct::query()->whereIn('asin', $asins)->get(['asin', 'classified_title', 'image_url'])->keyBy('asin');
 
         $out = [];
@@ -178,7 +176,7 @@ class AmazonSearch
                 'asin' => $asin,
                 'title' => (string) $row->classified_title,
                 'image' => $row->image_url,
-                'url' => 'https://www.'.$storefront.'/dp/'.$asin.($tag !== '' ? '?tag='.rawurlencode($tag) : ''),
+                'url' => AmazonSearchLink::productUrl($market, $storefront, $asin),
             ];
         }
 

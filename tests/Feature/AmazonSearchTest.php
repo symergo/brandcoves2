@@ -45,7 +45,7 @@ class AmazonSearchTest extends TestCase
         $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')->get('/be-nl/search?q=lego')
             ->assertInertia(fn ($page) => $page->where('amazon', null)->etc());
 
-        $this->withHeader('User-Agent', self::PERSON)->get('/en/search?q=lego')
+        $this->withHeader('User-Agent', self::PERSON)->get('/es/search?q=lego')
             ->assertInertia(fn ($page) => $page->where('amazon', null)->etc());
 
         // Showing the page asked Amazon nothing: that is the follow-up's job.

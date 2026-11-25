@@ -8,7 +8,6 @@ use App\Enums\Market;
 use App\Models\CoveSubscriber;
 use App\Models\Notification;
 use App\Services\Cove\DiscoverMenu;
-use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\Alternates;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
@@ -144,7 +143,9 @@ class HandleInertiaRequests extends Middleware
              * as boilerplate rather than as a disclosure. One config read per
              * request, like `googleEnabled` above.
              */
-            'amazonAssociate' => AmazonSearchLink::for($market) !== null,
+            // A tag, not only a link: since 2026-11-25 en links to amazon.de untagged
+            // until the owner adds one, and "we earn" would not be true before then.
+            'amazonAssociate' => trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", '')) !== '',
 
             /*
              * The canonical URL of this page, for the client to write into the

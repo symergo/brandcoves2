@@ -361,9 +361,8 @@ the search page's Amazon section. The pick keeps only the ASIN (`daily_picks.ama
 reads title and picture from `amazon_products` (`AmazonSearch::saved()`) and shows them under "Ook op
 Amazon" as the search page's Amazon card: our tagged link, sponsored, no price, no save button.
 
-- Markets with a storefront only: be-nl, be-fr (amazon.com.be), nl-nl (amazon.nl). **en and es get
-  nothing**, because no Associates tag exists for amazon.co.uk or amazon.es; en is the market that
-  would gain most (26 of 60 days without a Daily, measured that day).
+- Markets with a storefront only: be-nl, be-fr (amazon.com.be), nl-nl (amazon.nl), and en on
+  amazon.de in English since the same evening (below). es gets nothing.
 - Never on a day with no find of our own: the article is written about our finds, and a page of only
   Amazon cards would be Amazon's page under our name.
 - The article does not name Amazon picks: they have no product group, so no `[[product:]]` token
@@ -378,3 +377,19 @@ none, so `ShopsController::withAmazon()` adds it where the market has a storefro
 storefront's home page with the tag, `rel="sponsored"`, in a new tab, never through our redirector.
 No shop Cove and no search filter behind it: those are for shops whose offers we hold. Test:
 `ShopCovesTest::amazon_is_among_the_shops_where_the_market_has_a_storefront`.
+
+## en on amazon.de and amazon.fr, in English, untagged (2026-11-25)
+
+Owner: "use for en also the en version of amazon.de and amazon.fr", then "Use without tag. I'll add
+them later". `amazon_search.markets.en` is amazon.de with `language=en_GB` on every link and search;
+amazon.fr (also `en_GB`) is listed under `also` and appears only in the shops list. Searches, product
+links, barcode matches and a thin Daily use amazon.de, the larger catalogue; one storefront per
+market is what the code assumes in about eight places, and splitting en by visitor country would
+also split its cached pages.
+
+**This reverses an old rule:** a storefront without a tag used to show no link at all ("no link
+beats an untracked one"). Now an empty tag sends the link untagged, which works and earns nothing,
+until `AMAZON_TAG_DE` / `AMAZON_TAG_FR` are set in Coolify or in the admin's Affiliate settings. The
+footer's Associates statement still needs a tag (`amazonAssociate`), because "we earn" is not true
+before then. Barcode lookups (`LookUpAmazonMatches`) now also run for en's products on amazon.de,
+inside the same daily cap.

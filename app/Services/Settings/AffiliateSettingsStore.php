@@ -60,6 +60,9 @@ class AffiliateSettingsStore
             'giftcoves.amazon_search.markets.be-nl.tag',
             'giftcoves.amazon_search.markets.be-fr.tag',
         ],
+        // en's storefronts (2026-11-25): amazon.de, and amazon.fr in the shops list.
+        'amazon_tag_de' => ['giftcoves.amazon_search.markets.en.tag'],
+        'amazon_tag_fr' => ['giftcoves.amazon_search.markets.en.also.0.tag'],
     ];
 
     /** Never rendered back; shown only as a fingerprint. */

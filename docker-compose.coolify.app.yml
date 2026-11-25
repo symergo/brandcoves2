@@ -180,6 +180,9 @@ x-app: &app
     # ASIN Data API, Amazon's products without a price (2026-11-23). Absent means
     # no "Bekijk op Amazon" and no Amazon cards, with no error.
     ASINDATA_API_KEY: ${ASINDATA_API_KEY}
+    # en's Amazon storefronts (amazon.de, amazon.fr in English), untagged until set (2026-11-25).
+    AMAZON_TAG_DE: ${AMAZON_TAG_DE:-}
+    AMAZON_TAG_FR: ${AMAZON_TAG_FR:-}
     # Tradedoubler. One value, and it is both the credential and the affiliate
     # id — the tracking links come back already built around it. Absent here
     # means the whole network is silently missing from search, with no error.

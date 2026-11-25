@@ -592,6 +592,21 @@ return [
             'nl-nl' => ['host' => 'www.amazon.nl', 'tag' => env('AMAZON_TAG_NL', 'giftcoves-21')],
             'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => env('AMAZON_TAG_BE', 'giftcoves05-21')],
             'be-fr' => ['host' => 'www.amazon.com.be', 'tag' => env('AMAZON_TAG_BE', 'giftcoves05-21')],
+            /*
+             * en on amazon.de in English (owner, 2026-11-25: "use for en also the en
+             * version of amazon.de and amazon.fr", then "Use without tag. I'll add them
+             * later"). `language` puts every link and search in English. Until a tag is
+             * set (AMAZON_TAG_DE, or the admin's Affiliate settings) the links earn
+             * nothing: the owner's choice, against the old rule of no link rather than
+             * an untracked one. amazon.fr in English is listed among the shops (`also`);
+             * searches, product links and a thin Daily use amazon.de, the larger catalogue.
+             */
+            'en' => [
+                'host' => 'www.amazon.de',
+                'tag' => env('AMAZON_TAG_DE', ''),
+                'language' => 'en_GB',
+                'also' => [['host' => 'www.amazon.fr', 'tag' => env('AMAZON_TAG_FR', ''), 'language' => 'en_GB']],
+            ],
         ],
     ],
 

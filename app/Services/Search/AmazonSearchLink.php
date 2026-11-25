@@ -91,11 +91,14 @@ final readonly class AmazonSearchLink
         $config = (array) config("giftcoves.amazon_search.markets.{$market->value}", []);
 
         $host = trim((string) ($config['host'] ?? ''));
-        $tag = trim((string) ($config['tag'] ?? ''));
 
-        if ($host === '' || $tag === '') {
+        // A storefront without a tag still gets its link since 2026-11-25 (owner, for en
+        // on amazon.de: "Use without tag. I'll add them later"); it earns nothing until then.
+        if ($host === '') {
             return null;
         }
+
+        $extra = self::params($config);
 
         /*
          * `/s` is the search *path*, `k` is the keyword *parameter*. They read
@@ -114,7 +117,8 @@ final readonly class AmazonSearchLink
          * ampersand or an accent arrives intact rather than truncating the
          * query at the first `&`.
          */
-        $home = "https://{$host}/?".http_build_query(['tag' => $tag], '', '&', PHP_QUERY_RFC3986);
+        $home = "https://{$host}/?".http_build_query($extra, '', '&', PHP_QUERY_RFC3986);
+        $home = rtrim($home, '?');
 
         if ($term === '') {
             // The storefront itself, tagged. `/s` with no `k` is a search
@@ -123,7 +127,7 @@ final readonly class AmazonSearchLink
             return new self($host, $home, hasTerm: false, homeUrl: $home);
         }
 
-        $query = http_build_query(['k' => $term, 'tag' => $tag], '', '&', PHP_QUERY_RFC3986);
+        $query = http_build_query(['k' => $term, ...$extra], '', '&', PHP_QUERY_RFC3986);
 
         return new self($host, "https://{$host}/s?{$query}", hasTerm: true, homeUrl: $home);
     }
@@ -138,5 +142,28 @@ final readonly class AmazonSearchLink
             'hasTerm' => $this->hasTerm,
             'home' => $this->homeUrl,
         ];
+    }
+
+    /**
+     * The tag and the language a storefront's links carry, either left out when not set:
+     * `language=en_GB` is how amazon.de and amazon.fr show English (en, 2026-11-25).
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, string>
+     */
+    public static function params(array $config): array
+    {
+        return array_filter([
+            'tag' => trim((string) ($config['tag'] ?? '')),
+            'language' => trim((string) ($config['language'] ?? '')),
+        ], fn (string $v) => $v !== '');
+    }
+
+    /** A product page on the market's storefront, with its tag and language. */
+    public static function productUrl(Market $market, string $storefront, string $asin): string
+    {
+        $query = http_build_query(self::params((array) config("giftcoves.amazon_search.markets.{$market->value}", [])), '', '&', PHP_QUERY_RFC3986);
+
+        return 'https://www.'.$storefront.'/dp/'.$asin.($query !== '' ? '?'.$query : '');
     }
 }

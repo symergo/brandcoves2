@@ -41,12 +41,18 @@ class AmazonSearchLinkTest extends TestCase
         }
     }
 
-    /** A market with no tag of its own gets no link, rather than an untracked one. */
+    /**
+     * A market with no storefront gets no link. en has one since 2026-11-25: amazon.de in
+     * English, untagged until the owner adds a tag ("Use without tag. I'll add them later").
+     */
     #[Test]
-    public function it_offers_nothing_where_there_is_no_tag(): void
+    public function it_offers_nothing_where_there_is_no_storefront(): void
     {
-        $this->assertNull(AmazonSearchLink::for(Market::En, 'headphones'));
         $this->assertNull(AmazonSearchLink::for(Market::Es, 'auriculares'));
+
+        $en = AmazonSearchLink::for(Market::En, 'headphones');
+        $this->assertSame('www.amazon.de', $en?->host);
+        $this->assertSame('https://www.amazon.de/s?k=headphones&language=en_GB', $en->url);
     }
 
     /** The mark beside the label is the storefront's own favicon, never ours. */
@@ -101,12 +107,12 @@ class AmazonSearchLinkTest extends TestCase
         $this->assertSame('giftcoves-21', $parts['tag']);
     }
 
-    /** An empty tag in config is treated as no tag, not as a tag. */
+    /** An empty tag in config is treated as no tag: the link goes without one (2026-11-25). */
     #[Test]
-    public function it_offers_nothing_when_the_tag_is_blank(): void
+    public function a_blank_tag_gives_an_untagged_link(): void
     {
         config()->set('giftcoves.amazon_search.markets.nl-nl.tag', '');
 
-        $this->assertNull(AmazonSearchLink::for(Market::NlNl, 'koptelefoon'));
+        $this->assertSame('https://www.amazon.nl/s?k=koptelefoon', AmazonSearchLink::for(Market::NlNl, 'koptelefoon')?->url);
     }
 }

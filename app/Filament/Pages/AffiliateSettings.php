@@ -63,7 +63,7 @@ class AffiliateSettings extends Page implements HasForms
     protected string $view = 'filament.pages.affiliate-settings';
 
     /** Shown in full, and emptied to fall back to Coolify. */
-    private const IDS = ['bol_partner_site_id_be', 'bol_partner_site_id_nl', 'amazon_tag_nl', 'amazon_tag_be'];
+    private const IDS = ['bol_partner_site_id_be', 'bol_partner_site_id_nl', 'amazon_tag_nl', 'amazon_tag_be', 'amazon_tag_de', 'amazon_tag_fr'];
 
     /** @var array<string, mixed> */
     public array $data = [];
@@ -125,6 +125,16 @@ class AffiliateSettings extends Page implements HasForms
                             ->regex('/^[A-Za-z0-9][A-Za-z0-9-]{1,62}$/')
                             ->validationMessages(['regex' => 'An Associates tag is letters, digits and hyphens, like giftcoves-21.'])
                             ->helperText(fn () => $this->idHelp($store, 'amazon_tag_be').' Serves both Belgian markets: Amazon runs them on one storefront.'),
+
+                        $this->idField($store, 'amazon_tag_de', 'Associates tag, amazon.de')
+                            ->regex('/^[A-Za-z0-9][A-Za-z0-9-]{1,62}$/')
+                            ->validationMessages(['regex' => 'An Associates tag is letters, digits and hyphens, like giftcoves-21.'])
+                            ->helperText(fn () => $this->idHelp($store, 'amazon_tag_de').' The English market, in English. Its links work without a tag but earn nothing.'),
+
+                        $this->idField($store, 'amazon_tag_fr', 'Associates tag, amazon.fr')
+                            ->regex('/^[A-Za-z0-9][A-Za-z0-9-]{1,62}$/')
+                            ->validationMessages(['regex' => 'An Associates tag is letters, digits and hyphens, like giftcoves-21.'])
+                            ->helperText(fn () => $this->idHelp($store, 'amazon_tag_fr').' Listed among the shops of the English market, in English.'),
                     ])
                     ->columns(2),
             ])

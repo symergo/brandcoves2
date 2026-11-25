@@ -86,9 +86,9 @@ class AmazonSearchCtaTest extends TestCase
     }
 
     #[Test]
-    public function a_market_without_a_tag_gets_no_link(): void
+    public function a_market_without_a_storefront_gets_no_link(): void
     {
-        $this->get('/en/search?q=headphones')
+        $this->get('/es/search?q=auriculares')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('amazonSearch', null));
     }

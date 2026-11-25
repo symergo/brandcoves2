@@ -36,14 +36,14 @@ class ShopCovesTest extends TestCase
 
         // Amazon joins the list where a storefront has a tag (ShopsController::withAmazon());
         // off here so these tests count only merchants, on in the test about it.
-        config(['giftcoves.amazon_search.markets.be-nl.tag' => '']);
+        config(['giftcoves.amazon_search.markets.be-nl.host' => '']);
     }
 
     #[Test]
     public function amazon_is_among_the_shops_where_the_market_has_a_storefront(): void
     {
         // Owner, 2026-11-25: "Amazon sites staan niet tussen winkels".
-        config(['giftcoves.amazon_search.markets.be-nl.tag' => 'giftcoves05-21']);
+        config(['giftcoves.amazon_search.markets.be-nl.host' => 'www.amazon.com.be']);
         $this->shop('Coolblue', Market::BeNl);
         $this->shop('Bol', Market::BeNl);
 
@@ -57,8 +57,14 @@ class ShopCovesTest extends TestCase
                 ->where('shops.1.name', 'Bol')
             );
 
-        // No storefront for en: no Amazon.
-        $this->get('/en/shops')->assertOk()->assertInertia(fn ($page) => $page->has('shops', 0));
+        // en: amazon.de and amazon.fr in English, untagged until a tag is set. es: none.
+        $this->get('/en/shops')->assertOk()->assertInertia(fn ($page) => $page
+            ->has('shops', 2)
+            ->where('shops.0.name', 'Amazon.de')
+            ->where('shops.0.url', 'https://www.amazon.de/?language=en_GB')
+            ->where('shops.1.name', 'Amazon.fr')
+            ->where('shops.1.url', 'https://www.amazon.fr/?language=en_GB'));
+        $this->get('/es/shops')->assertOk()->assertInertia(fn ($page) => $page->has('shops', 0));
     }
 
     private function shop(

@@ -145,10 +145,11 @@ class AmazonMatchesTest extends TestCase
     public function markets_without_our_storefront_get_no_link_and_ask_nothing(): void
     {
         Queue::fake();
-        $group = $this->group(Market::En, '5702017583518');
+        $group = $this->group(Market::Es, '5702017583518');
 
-        $this->assertNull(app(AmazonMatches::class)->storefront(Market::En));
-        $this->withHeader('User-Agent', self::PERSON)->get("/en/p/{$group->id}/{$group->slug}")
+        // es: no storefront. (en has amazon.de since 2026-11-25.)
+        $this->assertNull(app(AmazonMatches::class)->storefront(Market::Es));
+        $this->withHeader('User-Agent', self::PERSON)->get("/es/p/{$group->id}/{$group->slug}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('amazonLink', null));
         Queue::assertNothingPushed();

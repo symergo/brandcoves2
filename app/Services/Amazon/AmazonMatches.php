@@ -7,6 +7,7 @@ namespace App\Services\Amazon;
 use App\Enums\Market;
 use App\Jobs\LookUpAmazonMatches;
 use App\Models\ProductGroup;
+use App\Services\Search\AmazonSearchLink;
 use App\Support\Crawlers;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,8 @@ use Illuminate\Support\Facades\DB;
 class AmazonMatches
 {
     /** The storefronts this asks about. Each holds an Associates tag of ours. */
-    public const STOREFRONTS = ['amazon.com.be', 'amazon.nl'];
+    // amazon.de for en since 2026-11-25 (config amazon_search.markets.en).
+    public const STOREFRONTS = ['amazon.com.be', 'amazon.nl', 'amazon.de'];
 
     /** At most this many barcodes per queued job, so one page cannot queue a run of hundreds. */
     private const PER_JOB = 30;
@@ -58,14 +60,12 @@ class AmazonMatches
             return [];
         }
 
-        $tag = trim((string) config("giftcoves.amazon_search.markets.{$market->value}.tag", ''));
-
         return DB::table('amazon_matches')
             ->where('storefront', $storefront)
             ->whereIn('gtin', $gtins)
             ->whereNotNull('asin')
             ->pluck('asin', 'gtin')
-            ->map(fn (string $asin) => 'https://www.'.$storefront.'/dp/'.$asin.($tag !== '' ? '?tag='.rawurlencode($tag) : ''))
+            ->map(fn (string $asin) => AmazonSearchLink::productUrl($market, $storefront, $asin))
             ->all();
     }
 
