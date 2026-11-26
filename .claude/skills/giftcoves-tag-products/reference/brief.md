@@ -30,7 +30,7 @@ the line, no header, no commentary.
   diy, beauty, fashion, tech, home, craft, film, pets, wellness, kids, art, cycling, boardgames,
   drinks, baking, running, yoga, cars, science, water, wintersports, football, collecting, nature,
   fishing, horses, hunting, gadgets, it, sweets, stationery, pubgames, adult, perfume, golf, racket,
-  puzzles, needlework
+  puzzles, needlework, delicacies, motorcycles
 - **r:** partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host
 - **o:** birthday, christmas, wedding, anniversary, baby, housewarming, graduation, retirement,
   farewell, valentines, mothers_day, fathers_day, thank_you, sinterklaas, easter, new_year,
@@ -73,6 +73,9 @@ What the product is *for*, not everything it could touch. Most specific first.
 - `puzzles` for jigsaws, 3D puzzles, brain teasers and puzzle mats, never `boardgames` (split off
   2026-11-26: a puzzle is done alone, a board game with others). `needlework` for yarn, knitting and
   crochet sets and needles, embroidery and sewing machines, together with `craft` (added the same day).
+- `delicacies` for the food itself: sauces, oil and vinegar, spices, tapas, delicatessen boxes
+  (`cooking` stays the gear); `motorcycles` for motorcycle helmets, clothing, gloves, intercoms
+  (`cars` stays cars). Both added 2026-11-26.
 - `sweets` for chocolate, pralines and sweets; `stationery` for pens, notebooks, writing sets;
   `pubgames` for darts, poker and card games, table football, billiards; `adult` for erotic gifts
   (added 2026-09-30); `perfume` for perfume, eau de toilette and fragrance sets, together with

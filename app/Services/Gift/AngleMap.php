@@ -65,6 +65,8 @@ class AngleMap
         'cycling' => ['fietslamp', 'fietshelm', 'fietscomputer', 'fietstas', 'fietsbidon', 'fietsgereedschap'],
         'boardgames' => ['bordspel', 'kaartspel', 'strategiespel', 'partyspel', 'dobbelspel', 'coöperatief spel'],
         'puzzles' => ['legpuzzel 1000 stukjes', 'legpuzzel 500 stukjes', '3d puzzel', 'puzzelmat', 'breinbreker', 'houten puzzel'],
+        'delicacies' => ['olijfolie geschenkset', 'truffelsaus', 'kruidenset', 'balsamico azijn', 'tapenade', 'delicatessenpakket'],
+        'motorcycles' => ['motorhelm', 'motorhandschoenen', 'motorjas', 'motor intercom', 'motorlaarzen', 'motorhoes'],
         'needlework' => ['breigaren', 'haakpakket', 'breinaalden', 'haaknaalden', 'borduurpakket', 'naaimachine'],
         'drinks' => ['wijnset', 'decanteerkaraf', 'gin set', 'whiskyglazen', 'cocktailset', 'kurkentrekker'],
         'baking' => ['bakvorm', 'keukenweegschaal', 'springvorm', 'spuitzak set', 'bakboek', 'taartplateau'],

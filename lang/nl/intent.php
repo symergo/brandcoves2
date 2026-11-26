@@ -67,6 +67,8 @@ return [
         'cycling' => ['fietsen', 'fietser', 'wielrennen', 'wielrenner', 'mountainbike'],
         'boardgames' => ['bordspellen', 'gezelschapsspellen', 'spelletjes'],
         'puzzles' => ['puzzels', 'puzzelen', 'legpuzzels', 'puzzelaar'],
+        'delicacies' => ['lekker eten', 'foodie', 'fijnproever', 'lekkerbek'],
+        'motorcycles' => ['motorrijden', 'motorrijder', 'motoren'],
         'needlework' => ['breien', 'haken', 'naaien', 'borduren', 'handwerken'],
         'drinks' => ['wijn', 'bier', 'whisky', 'gin', 'cocktails'],
         'baking' => ['bakken', 'taarten'],

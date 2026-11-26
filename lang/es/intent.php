@@ -61,6 +61,8 @@ return [
         'cycling' => ['ciclismo', 'bici', 'bicicleta', 'ciclista', 'bicicleta de montaña'],
         'boardgames' => ['juegos de mesa', 'juegos de cartas'],
         'puzzles' => ['puzles', 'rompecabezas'],
+        'delicacies' => ['gastronomía', 'gastronomia', 'gourmet'],
+        'motorcycles' => ['moto', 'motos', 'motero', 'motera'],
         'needlework' => ['punto', 'ganchillo', 'costura', 'bordado'],
         'drinks' => ['vino', 'cerveza', 'whisky', 'gin', 'cócteles'],
         'baking' => ['repostería', 'reposteria', 'hornear'],

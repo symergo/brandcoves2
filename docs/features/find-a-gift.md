@@ -365,6 +365,7 @@ Then (same day) "bordspellen en puzzles zijn niet hetzelfde" and "en breien en h
 an interest of their own (`puzzles`, 3,724 be-nl products) and so did knitting, crochet and sewing
 (`needlework`, 1,930). Asked whether more were missing, the catalogue answered: of the 150 be-nl
 categories with 150+ giftable products and under 20% carrying an interest, most fit an existing
-interest and are simply untagged (guitars, fishing rods, tents, pens). Genuinely missing, left for the
-owner: food and delicacies (4,370: sauces, oil and vinegar, spices) and motorcycles (1,334).
+interest and are simply untagged (guitars, fishing rods, tents, pens). Genuinely missing, and added on the
+owner's yes: food and delicacies (`delicacies`, "Lekker eten", 4,370: sauces, oil and vinegar, spices)
+and motorcycles (`motorcycles`, "Motoren", 1,334).
 Wargaming and role-playing fit board games; crystals and incense fit `wellness`.

@@ -61,6 +61,8 @@ return [
         'cycling' => ['cycling', 'cyclist', 'bike', 'biking'],
         'boardgames' => ['board games', 'boardgames', 'tabletop'],
         'puzzles' => ['puzzles', 'jigsaws', 'jigsaw puzzles'],
+        'delicacies' => ['foodie', 'good food', 'gourmet'],
+        'motorcycles' => ['motorbike', 'motorbikes', 'motorcycle', 'motorcycles', 'biker'],
         'needlework' => ['knitting', 'crochet', 'sewing', 'embroidery'],
         'drinks' => ['wine', 'beer', 'whisky', 'whiskey', 'gin', 'cocktails'],
         'baking' => ['baking', 'baker'],

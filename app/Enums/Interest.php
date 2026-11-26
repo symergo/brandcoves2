@@ -96,6 +96,12 @@ enum Interest: string
     // Knitting, crochet and sewing (owner, same day: "en breien en haken?"): 1,930 be-nl
     // products that "Zelf maken" hid. Yarn and a sewing machine keep `craft` too.
     case Needlework = 'needlework';
+    // Two more the catalogue had no interest for (owner, 2026-11-26, after a count of the
+    // largest untagged be-nl categories): the food itself, as distinct from `cooking`, which
+    // is the gear (4,370 products: sauces, oil and vinegar, spices, delicatessen), and
+    // motorcycles, which `cars` did not cover (1,334: helmets, jackets, gloves).
+    case Delicacies = 'delicacies';
+    case Motorcycles = 'motorcycles';
 
     /**
      * The wizard shows the interests under these headings (owner, 2026-11-26: "a more
@@ -104,11 +110,11 @@ enum Interest: string
      * InterestTest holds that.
      */
     public const GROUPS = [
-        'food' => [self::Cooking, self::Baking, self::Coffee, self::Drinks, self::Sweets],
+        'food' => [self::Cooking, self::Baking, self::Delicacies, self::Coffee, self::Drinks, self::Sweets],
         'home' => [self::Home, self::Gardening, self::Diy, self::Pets],
         'tech' => [self::Tech, self::Gadgets, self::It, self::Gaming, self::Photography],
         'sport' => [self::Fitness, self::Running, self::Cycling, self::Yoga, self::Football, self::Racket, self::Golf, self::Water, self::WinterSports],
-        'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Horses, self::Fishing, self::Hunting],
+        'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Motorcycles, self::Horses, self::Fishing, self::Hunting],
         // Toys and puzzles first (owner, 2026-11-26: "ik mis spelen/speelgoed en puzzles"):
         // they were there, as "Kinderen" under Thuis and inside "Bordspellen", and not found.
         'culture' => [self::Kids, self::BoardGames, self::Puzzles, self::PubGames, self::Collecting, self::Reading, self::Music, self::Film, self::Science],
