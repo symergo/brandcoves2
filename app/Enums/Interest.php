@@ -98,11 +98,13 @@ enum Interest: string
      */
     public const GROUPS = [
         'food' => [self::Cooking, self::Baking, self::Coffee, self::Drinks, self::Sweets],
-        'home' => [self::Home, self::Gardening, self::Diy, self::Pets, self::Kids],
+        'home' => [self::Home, self::Gardening, self::Diy, self::Pets],
         'tech' => [self::Tech, self::Gadgets, self::It, self::Gaming, self::Photography],
         'sport' => [self::Fitness, self::Running, self::Cycling, self::Yoga, self::Football, self::Racket, self::Golf, self::Water, self::WinterSports],
         'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Horses, self::Fishing, self::Hunting],
-        'culture' => [self::Reading, self::Music, self::Film, self::BoardGames, self::PubGames, self::Collecting, self::Science],
+        // Toys and puzzles first (owner, 2026-11-26: "ik mis spelen/speelgoed en puzzles"):
+        // they were there, as "Kinderen" under Thuis and inside "Bordspellen", and not found.
+        'culture' => [self::Kids, self::BoardGames, self::PubGames, self::Collecting, self::Reading, self::Music, self::Film, self::Science],
         'creative' => [self::Craft, self::Art, self::Stationery],
         'care' => [self::Beauty, self::Perfume, self::Fashion, self::Wellness, self::Adult],
     ];

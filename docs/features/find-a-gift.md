@@ -355,3 +355,8 @@ Asked the same day whether any were missing ("what about fitness or gym?"). Fitn
 interests were added because be-nl stocked them under none: golf (1,011 products) and racket sports
 as one, "Padel en tennis" (716, padel, tennis, badminton, squash). Camping, sewing, instruments,
 beer, model trains and telescopes were checked and fit an existing interest.
+
+Then "ik mis spelen/speelgoed en puzzles" (same day). Both were there: toys as "Kinderen" under Thuis,
+puzzles inside "Bordspellen" (the `Puzzel` category already implies `boardgames`). Now "Speelgoed"
+and "Bordspellen en puzzels", first in a group renamed "Spel en cultuur". Typing "puzzels" maps to
+board games too.

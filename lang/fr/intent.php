@@ -59,7 +59,7 @@ return [
         'wellness' => ['détente', 'detente', 'bien-être', 'spa'],
         'art' => ['dessin', 'peinture', 'art', 'artiste'],
         'cycling' => ['vélo', 'velo', 'cyclisme', 'cycliste'],
-        'boardgames' => ['jeux de société', 'jeux de societe'],
+        'boardgames' => ['jeux de société', 'jeux de societe', 'puzzles'],
         'drinks' => ['vin', 'bière', 'biere', 'whisky', 'gin', 'cocktails'],
         'baking' => ['pâtisserie', 'patisserie', 'gâteaux'],
         'running' => ['course à pied', 'running', 'jogging', 'coureur'],

@@ -65,7 +65,7 @@ return [
         'wellness' => ['ontspannen', 'wellness', 'relaxen', 'spa'],
         'art' => ['tekenen', 'schilderen', 'kunst', 'kunstenaar'],
         'cycling' => ['fietsen', 'fietser', 'wielrennen', 'wielrenner', 'mountainbike'],
-        'boardgames' => ['bordspellen', 'gezelschapsspellen', 'spelletjes'],
+        'boardgames' => ['bordspellen', 'gezelschapsspellen', 'spelletjes', 'puzzels', 'puzzelen', 'legpuzzels'],
         'drinks' => ['wijn', 'bier', 'whisky', 'gin', 'cocktails'],
         'baking' => ['bakken', 'taarten'],
         'running' => ['hardlopen', 'lopen', 'loper', 'joggen'],
