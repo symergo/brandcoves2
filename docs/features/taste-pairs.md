@@ -68,3 +68,23 @@ them, so a rollback never meets a schema it cannot read:
   "any vibe" rows. `gift.vibes.*` and `gift.values.*` strings stay for the enum's label.
 
 A later cleanup can drop those columns and keys, the vibe rows of `gift_angles`, and the enum.
+
+## Lopsided poles, and two pairs that spread by category (owner, 2026-11-26)
+
+A count of be-nl's judged products: 32,747 of 47,737 carry a pole, none of the unjudged millions do,
+and the ends of a pair were far apart: powered 12,158 against manual 1,356, colourful 7,314 against
+minimal 768, practical and design 1,271 each. Picking "Minimal" or "Handmatig" in the finder lifted
+a few hundred products. nl-nl (2,658) and be-fr (1,321) had too few for the question to matter.
+
+Three changes, the owner's "all three":
+
+1. `AutoTagger` passes on `manual`/`powered` and `natural`/`technical` from a category the judges
+   agree on, as it does interests (`AutoTagger::CATEGORY_FACTS`). An electric toothbrush has a plug
+   whoever judges it. The other five pairs are taste and stay per product. The engine scores an
+   automatic pole between silence and a match (0.76 at the default auto weight of 0.6,
+   `SuggestionEngine::preferenceFit()`).
+2. The tagging brief says when `colourful`, `minimal`, `practical` and `manual` apply, with examples,
+   because the lopsidedness came from the judging: "colourful" for anything not black.
+3. A tagging pass over the thin poles and over nl-nl and be-fr.
+
+Test: `AutoTaggerTest::a_category_passes_on_a_factual_taste_pole_but_not_a_matter_of_taste`.

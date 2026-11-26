@@ -161,6 +161,25 @@ for wooden, woollen, leather goods; `quirky` for novelty; `vintage` for retro-st
 player, a retro radio). `design` only for things bought for how they look (Alessi, Hay, a designer
 lamp), not every nice-looking product.
 
+Sharpened 2026-11-26, after a count of be-nl: powered 12,158 against manual 1,356, colourful 7,314
+against minimal 768, and practical and design 1,271 each. A pole that almost nothing carries does
+nothing for the person who picks it in the gift finder.
+
+- `colourful` only when colour is the point: a rainbow lamp, a bold pattern, a toy in bright
+  colours. Not because the product comes in several colours, has a coloured logo, or is not black.
+- `minimal` for plain, sober, single-colour things with nothing added: a white ceramic mug, a black
+  leather wallet, a plain steel watch. Most good Scandinavian and Japanese design is `minimal`.
+- `practical` for anything bought to do a job well: a multitool, a good kitchen scale, a power
+  bank, a thermos, a rain jacket, a tool set, an organiser. This is the larger end of the pair:
+  most gifts with a use are `practical`. `design` stays narrow (bought for how it looks).
+- `manual` for every product that works without power where the electric kind exists or is
+  common: a hand coffee grinder, a manual toothbrush gift set, a hand whisk, a mechanical watch,
+  a fountain pen, a board game, a book, a jigsaw. When you tag `powered`, ask whether the other
+  end would have fitted the products next to it.
+- The pairs `manual`/`powered` and `natural`/`technical` are passed on to untagged products in the
+  same category (AutoTagger, since 2026-11-26). Tag them every time they apply, even when it feels
+  obvious: that is what lets a category earn the rule.
+
 ## Examples
 
     1	SoundLink Flex Bluetooth speaker (2nd Gen)	Bose	Speakers	164

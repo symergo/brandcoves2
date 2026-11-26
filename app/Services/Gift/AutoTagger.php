@@ -31,8 +31,14 @@ use Illuminate\Support\Facades\DB;
  * where the judges did not agree, a rule would be a guess. Works in every
  * language the feeds use, because it never reads the category's words.
  *
- * Interests only. Who a product suits and for which occasion were judged per
- * product, and a category says too little about either.
+ * Interests, and the two taste pairs that are a fact about a category rather
+ * than a taste (owner, 2026-11-26): Manual/Powered (an electric toothbrush has
+ * a plug, whoever judges it) and Natural/Technical. Of 32,747 judged be-nl
+ * products with a taste tag, none reached an unjudged one, so "Handmatig" in the
+ * gift finder scored a few hundred products. Modern/Vintage, Minimal/Colourful,
+ * Classic/Quirky, Practical/Design and Everyday/Luxurious stay per product: a
+ * category does not decide them. Who a product suits and for which occasion were
+ * judged per product, and a category says too little about either.
  *
  * ## What it writes
  *
@@ -52,6 +58,12 @@ class AutoTagger
 
     /** At most this many interests per category: the two the judges named most. */
     private const PER_CATEGORY = 2;
+
+    /**
+     * The taste poles a category may pass on: the two pairs that describe what a
+     * product is. At most one pole per pair can clear `min_share`, so no cap.
+     */
+    public const CATEGORY_FACTS = ['preference:manual', 'preference:powered', 'preference:natural', 'preference:technical'];
 
     /**
      * The categories that imply an interest, in this market.
@@ -75,7 +87,7 @@ class AutoTagger
                 FROM judged j
                 JOIN totals USING (category)
                 CROSS JOIN LATERAL jsonb_array_elements_text(j.gift_tags) AS t(tag)
-                WHERE t.tag LIKE 'interest:%'
+                WHERE t.tag LIKE 'interest:%' OR t.tag IN ('preference:manual', 'preference:powered', 'preference:natural', 'preference:technical')
                 GROUP BY j.category, t.tag
             )
             SELECT shared.category, shared.tag, shared.c::float / totals.n AS share
@@ -95,7 +107,9 @@ class AutoTagger
                 continue;
             }
 
-            if (count($rules[$row->category] ?? []) < self::PER_CATEGORY) {
+            $interests = array_filter($rules[$row->category] ?? [], fn (string $tag) => str_starts_with($tag, 'interest:'));
+
+            if (! str_starts_with($row->tag, 'interest:') || count($interests) < self::PER_CATEGORY) {
                 $rules[$row->category][] = $row->tag;
             }
         }

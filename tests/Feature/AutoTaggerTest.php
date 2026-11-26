@@ -95,6 +95,26 @@ class AutoTaggerTest extends TestCase
     }
 
     #[Test]
+    public function a_category_passes_on_a_factual_taste_pole_but_not_a_matter_of_taste(): void
+    {
+        // Four judged electric toothbrushes: all powered (a fact), all modern (a taste).
+        foreach (['een', 'twee', 'drie', 'vier'] as $n) {
+            $this->judged("Tandenborstel {$n}", ['interest:beauty', 'preference:powered', 'preference:modern'], 'Elektrische tandenborstel');
+        }
+
+        // Two interests still at most, and the fact comes on top of them.
+        foreach (['een', 'twee', 'drie', 'vier'] as $n) {
+            $this->judged("Houten speelgoed {$n}", ['interest:kids', 'interest:craft', 'interest:art', 'preference:natural'], 'Houten speelgoed');
+        }
+
+        $rules = app(AutoTagger::class)->rules(Market::BeNl);
+
+        $this->assertEqualsCanonicalizing(['interest:beauty', 'preference:powered'], $rules['Elektrische tandenborstel']);
+        $this->assertContains('preference:natural', $rules['Houten speelgoed']);
+        $this->assertCount(2, array_filter($rules['Houten speelgoed'], fn (string $t) => str_starts_with($t, 'interest:')));
+    }
+
+    #[Test]
     public function the_engine_finds_an_inferred_product_behind_a_judged_one(): void
     {
         $judged = $this->giftable('Hario V60 set', 3500, ['interest:coffee']);

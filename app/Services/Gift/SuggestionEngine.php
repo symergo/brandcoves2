@@ -1060,7 +1060,7 @@ class SuggestionEngine
              * beautiful) and "what matters" (sustainable, local, handmade)
              * everywhere, and the feel's weight moved here (config).
              */
-            'preference' => $this->preferenceFit($haystack, $brief, $tags) * $profile->weight('preference', 15),
+            'preference' => $this->preferenceFit($haystack, $brief, $tags, $auto) * $profile->weight('preference', 15),
             /*
              * Five since 2026-09-14, from zero. It was zero because the
              * catalogue was too thin in seasonal goods for title words to
@@ -1257,9 +1257,14 @@ class SuggestionEngine
      * that is merely not what they said, and the rest of the brief is a
      * better judge of it than this signal is.
      *
+     * A pole the AutoTagger passed on from the product's category (only the
+     * factual pairs, Manual/Powered and Natural/Technical, since 2026-11-26) counts
+     * between the two: more than silence, less than an editor's word or the title's.
+     *
      * @param  list<string>  $tags
+     * @param  list<string>  $auto
      */
-    private function preferenceFit(string $haystack, TasteBrief $brief, array $tags = []): float
+    private function preferenceFit(string $haystack, TasteBrief $brief, array $tags = [], array $auto = []): float
     {
         if ($brief->preferences === []) {
             // Unasked is not unmet. Same neutral 0.5 every skipped question
@@ -1277,6 +1282,13 @@ class SuggestionEngine
                 if (str_contains($haystack, $keyword)) {
                     return 1.0;
                 }
+            }
+        }
+
+        foreach ($brief->preferences as $preference) {
+            if (in_array(GiftTags::preference($preference), $auto, true)) {
+                // 0.76 at the default weight of 0.6: the gap between silence and a match, scaled.
+                return 0.4 + 0.6 * (float) config('giftcoves.auto_tags.weight', 0.6);
             }
         }
 
