@@ -125,6 +125,57 @@ class ProductTitleController extends Controller
     }
 
     /**
+     * The tags products carry now, so a writer can add to them.
+     *
+     * `POST /products/tags` replaces what a product had, which is right for
+     * taking a wrong tag off and wrong for adding one: without this read, an
+     * editor who wanted to give a judged product its vibe (owner, 2026-11-26:
+     * "add the read step") could only overwrite its interests, recipients and
+     * occasions with nothing. Read, add, send the whole set back.
+     *
+     * `?ids=1,2,3`, up to BATCH, in one market. An id that is not a product in
+     * that market is left out of `data` and named in `missing`, rather than
+     * refusing the read: a read changes nothing, so half an answer is still an
+     * answer. `autoTags` are shown for context and are never written back:
+     * they are the AutoTagger's, and a product that is judged loses them.
+     */
+    public function tags(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'market' => ['required', 'string', Rule::in(Market::values())],
+            'ids' => ['required', 'string', 'regex:/^\d+(,\d+)*$/'],
+        ]);
+
+        $market = Market::from($data['market']);
+        $ids = array_values(array_unique(array_map('intval', explode(',', $data['ids']))));
+
+        if (count($ids) > self::BATCH) {
+            throw ValidationException::withMessages(['ids' => 'At most '.self::BATCH.' ids per read.']);
+        }
+
+        $groups = ProductGroup::query()
+            ->forMarket($market)
+            ->whereIn('id', $ids)
+            ->orderBy('id')
+            ->get(['id', 'title', 'display_title', 'gift_tags', 'auto_tags', 'gift_tags_at', 'giftable', 'giftable_override']);
+
+        return response()->json([
+            'market' => $market->value,
+            'count' => $groups->count(),
+            'missing' => array_values(array_diff($ids, $groups->pluck('id')->all())),
+            'data' => $groups->map(fn (ProductGroup $group): array => [
+                'id' => $group->id,
+                'displayTitle' => $group->displayTitle(),
+                'tags' => $group->giftTags(),
+                'autoTags' => $group->autoTags(),
+                'judged' => $group->gift_tags_at !== null,
+                'giftable' => $group->giftable,
+                'giftableByEditor' => $group->giftable_override,
+            ])->all(),
+        ]);
+    }
+
+    /**
      * Write gift tags, all or nothing, replacing what a product had.
      *
      * Replacing rather than merging, so a wrong tag can be taken off by

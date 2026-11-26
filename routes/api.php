@@ -65,6 +65,7 @@ Route::prefix('editorial')
             Route::get('/products/untitled', [ProductTitleController::class, 'untitled']);
             Route::get('/products/untagged', [ProductTitleController::class, 'untagged']);
             Route::get('/products/to-tag', [ProductTitleController::class, 'toTag']);
+            Route::get('/products/tags', [ProductTitleController::class, 'tags']);
             Route::get('/interests/candidates', InterestCandidatesController::class);
             Route::get('/products/{group}', [CatalogueController::class, 'product']);
             Route::get('/topics', [CatalogueController::class, 'topics']);

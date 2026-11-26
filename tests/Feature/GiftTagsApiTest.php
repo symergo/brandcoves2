@@ -279,6 +279,43 @@ class GiftTagsApiTest extends TestCase
     }
 
     #[Test]
+    public function a_read_key_reads_the_tags_a_product_carries_now(): void
+    {
+        $judged = $this->group('Koffiemolen', extra: ['gift_tags' => ['interest:coffee', 'recipient:partner'], 'gift_tags_at' => now()]);
+        $inferred = $this->group('Waterkoker', extra: ['auto_tags' => ['interest:cooking']]);
+        $elsewhere = $this->group('Moulin à café', Market::BeFr);
+
+        $response = $this->withToken($this->key([ApiToken::READ]))
+            ->getJson("/api/editorial/products/tags?market=be-nl&ids={$judged->id},{$inferred->id},{$elsewhere->id}")
+            ->assertOk()
+            ->assertJsonPath('count', 2)
+            ->assertJsonPath('missing', [$elsewhere->id]);
+
+        $rows = collect($response->json('data'))->keyBy('id');
+        $this->assertSame(['interest:coffee', 'recipient:partner'], $rows[$judged->id]['tags']);
+        $this->assertTrue($rows[$judged->id]['judged']);
+        $this->assertSame([], $rows[$inferred->id]['tags']);
+        $this->assertSame(['interest:cooking'], $rows[$inferred->id]['autoTags']);
+        $this->assertFalse($rows[$inferred->id]['judged']);
+
+        // Read, add a vibe, write the whole set back: nothing the product had is lost.
+        $tags = [...$rows[$judged->id]['tags'], 'preference:manual'];
+        $this->withToken($this->key(ApiToken::abilities()))
+            ->postJson('/api/editorial/products/tags', ['market' => 'be-nl', 'tags' => [['id' => $judged->id, 'tags' => $tags]]])
+            ->assertOk();
+        $this->assertEqualsCanonicalizing(['interest:coffee', 'recipient:partner', 'preference:manual'], $judged->fresh()->giftTags());
+    }
+
+    #[Test]
+    public function a_tags_read_takes_a_list_of_ids(): void
+    {
+        $key = $this->key([ApiToken::READ]);
+
+        $this->withToken($key)->getJson('/api/editorial/products/tags?market=be-nl&ids=1;drop')->assertStatus(422);
+        $this->withToken($key)->getJson('/api/editorial/products/tags?market=be-nl&ids='.implode(',', range(1, 201)))->assertStatus(422);
+    }
+
+    #[Test]
     public function writing_tags_takes_the_publish_ability(): void
     {
         $group = $this->group('Echt product');

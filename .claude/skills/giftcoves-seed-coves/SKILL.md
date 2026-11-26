@@ -170,9 +170,12 @@ in the form the rest of the site reads (Find a gift, the gift landing pages, and
 "a good gift for ..." sentence under the search results, which only appears for tagged
 products).
 
-- Which ones: `GET /products/untagged?market=<m>&limit=200` lists the untagged products on
-  editorial surfaces; keep the rows whose `id` is on your shortlist. A product that already
-  has tags is left alone: `POST /products/tags` replaces what a product had.
+- Which ones: every product on your shortlist. Read what they carry now with
+  `GET /products/tags?market=<m>&ids=<id,id,...>` (up to 200 ids).
+  - No tags yet (`tags` empty): judge it whole, interests and the rest.
+  - Already tagged: keep every tag it has and add what is missing, above all its vibe (see
+    below). Send the whole set back: `POST /products/tags` replaces what a product had, so a
+    set without its old tags erases them. Never copy `autoTags` into the write.
 - How to judge and post: `.claude/skills/giftcoves-tag-products/SKILL.md` and its
   `reference/brief.md`. Same rules, same vocabulary, same `POST /products/tags` body. Never
   `"giftable": false` for a product you put in a Cove yourself; if it is not a gift, it
@@ -184,7 +187,8 @@ products).
   to do a job; manual for anything that works without power). Writing about a product is the
   best look at it anyone takes, so its vibe is decided there, not left for a later pass.
 - One batch per market, after the Cove's own writes, at the same 3 s pace.
-- Say in the report how many products were tagged, and how many got a vibe.
+- Say in the report how many products were tagged whole, how many already-tagged ones got a
+  vibe added, and how many got a vibe in all.
 
 ### Write from the brief, not from these notes
 

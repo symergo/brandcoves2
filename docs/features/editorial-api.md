@@ -546,6 +546,13 @@ the application writes them. The why, the surfaces and the writing brief are in
 listing carries the vocabulary, the write is a publish, all or nothing, replacing a product's tags.
 Since 2026-09-28 an entry may also carry `giftable` (true, false, or null to withdraw), an editor's
 verdict the nightly classification lets win; see [giftability.md](giftability.md).
+
+`GET /products/tags?market=&ids=1,2,3` (read ability, up to 200 ids) returns what each product carries
+now: `tags`, `autoTags`, `judged`, `giftable`, `giftableByEditor`; ids that are not products in the
+market are listed in `missing` rather than refusing the read. Added 2026-11-26 (owner: "add the read
+step") because the write replaces: without a read, giving an already-judged product its vibe meant
+erasing its interests. Read, add, send the whole set back. `autoTags` are context only and never
+belong in a write.
 The vocabulary, the engine's reading of them and the tagging brief are in
 [gift-tags.md](gift-tags.md).
 

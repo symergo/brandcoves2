@@ -49,6 +49,11 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
     GET /products/untagged             same, with no gift tags yet; carries the
                                        vocabulary (interest, occasion, recipient,
                                        age, preference)
+    GET /products/tags                 ?market=&ids=1,2,3 (<=200): the tags each
+                                       product carries now, autoTags, judged,
+                                       giftable; unknown ids listed in `missing`.
+                                       Read before adding to a tagged product: the
+                                       POST replaces (since 2026-11-26)
     GET /interests/candidates          market (req), days (def 90), limit (def 50):
                                        interests people typed that the vocabulary
                                        lacks, ranked; adding one is a code change
