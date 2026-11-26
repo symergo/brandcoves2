@@ -321,3 +321,10 @@ Not done, on purpose:
   still finds wrong products.
 
 Test: `GiftLandingTest::a_childs_page_takes_child_products_within_the_childs_budget`.
+
+## Names that have to read in a sentence (owner, 2026-11-26)
+
+An interest's `name` in `lang/*/site.php` (`gift_landing.interests`) is dropped into "Cadeaus voor
+mama die van … houdt", so it has to read there, not only as a menu label. "Die van wonen houdt" did
+not: the Dutch name is "interieur" now. The `slug` stays `wonen`, because the pages are indexed under
+it; a slug change needs a 301 from the old address.

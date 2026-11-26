@@ -2223,7 +2223,9 @@ return [
             'beauty' => ['slug' => 'verzorging', 'name' => 'verzorging'],
             'fashion' => ['slug' => 'mode', 'name' => 'mode'],
             'tech' => ['slug' => 'techniek', 'name' => 'techniek'],
-            'home' => ['slug' => 'wonen', 'name' => 'wonen'],
+            // "die van wonen houdt" reads oddly (owner, 2026-11-26). The slug stays, so the
+            // indexed /wonen pages keep their address.
+            'home' => ['slug' => 'wonen', 'name' => 'interieur'],
             'craft' => ['slug' => 'knutselen', 'name' => 'knutselen'],
             'film' => ['slug' => 'films', 'name' => 'films'],
             'pets' => ['slug' => 'huisdieren', 'name' => 'huisdieren'],
