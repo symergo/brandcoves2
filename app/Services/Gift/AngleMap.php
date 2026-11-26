@@ -63,7 +63,9 @@ class AngleMap
         // The sixteen added 2026-09-14. Same rule: concrete product nouns.
         'art' => ['acrylverf set', 'schildersezel', 'aquarelset', 'tekenset', 'penselen set', 'canvas doek'],
         'cycling' => ['fietslamp', 'fietshelm', 'fietscomputer', 'fietstas', 'fietsbidon', 'fietsgereedschap'],
-        'boardgames' => ['bordspel', 'kaartspel', 'strategiespel', 'partyspel', 'dobbelspel', 'puzzel 1000 stukjes'],
+        'boardgames' => ['bordspel', 'kaartspel', 'strategiespel', 'partyspel', 'dobbelspel', 'coöperatief spel'],
+        'puzzles' => ['legpuzzel 1000 stukjes', 'legpuzzel 500 stukjes', '3d puzzel', 'puzzelmat', 'breinbreker', 'houten puzzel'],
+        'needlework' => ['breigaren', 'haakpakket', 'breinaalden', 'haaknaalden', 'borduurpakket', 'naaimachine'],
         'drinks' => ['wijnset', 'decanteerkaraf', 'gin set', 'whiskyglazen', 'cocktailset', 'kurkentrekker'],
         'baking' => ['bakvorm', 'keukenweegschaal', 'springvorm', 'spuitzak set', 'bakboek', 'taartplateau'],
         'running' => ['hardloophorloge', 'hardloopriem', 'reflecterend vest', 'hartslagmeter', 'sportsokken', 'hardloopjack'],

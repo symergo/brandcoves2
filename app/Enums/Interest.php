@@ -89,6 +89,13 @@ enum Interest: string
     // padel player and a tennis player want much the same bag, balls and grip tape.
     case Golf = 'golf';
     case Racket = 'racket';
+    // Split off from `boardgames` (owner, 2026-11-26: "bordspellen en puzzles zijn niet
+    // hetzelfde"): a jigsaw is done alone at a table, a board game needs a table of people.
+    // be-nl stocks 3,724 puzzles. A puzzle does not keep `boardgames`.
+    case Puzzles = 'puzzles';
+    // Knitting, crochet and sewing (owner, same day: "en breien en haken?"): 1,930 be-nl
+    // products that "Zelf maken" hid. Yarn and a sewing machine keep `craft` too.
+    case Needlework = 'needlework';
 
     /**
      * The wizard shows the interests under these headings (owner, 2026-11-26: "a more
@@ -104,8 +111,8 @@ enum Interest: string
         'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Horses, self::Fishing, self::Hunting],
         // Toys and puzzles first (owner, 2026-11-26: "ik mis spelen/speelgoed en puzzles"):
         // they were there, as "Kinderen" under Thuis and inside "Bordspellen", and not found.
-        'culture' => [self::Kids, self::BoardGames, self::PubGames, self::Collecting, self::Reading, self::Music, self::Film, self::Science],
-        'creative' => [self::Craft, self::Art, self::Stationery],
+        'culture' => [self::Kids, self::BoardGames, self::Puzzles, self::PubGames, self::Collecting, self::Reading, self::Music, self::Film, self::Science],
+        'creative' => [self::Craft, self::Needlework, self::Art, self::Stationery],
         'care' => [self::Beauty, self::Perfume, self::Fashion, self::Wellness, self::Adult],
     ];
 

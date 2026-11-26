@@ -29,7 +29,8 @@ the line, no header, no commentary.
 - **i:** cooking, coffee, photography, music, gaming, reading, fitness, outdoors, travel, gardening,
   diy, beauty, fashion, tech, home, craft, film, pets, wellness, kids, art, cycling, boardgames,
   drinks, baking, running, yoga, cars, science, water, wintersports, football, collecting, nature,
-  fishing, horses, hunting, gadgets, it, sweets, stationery, pubgames, adult, perfume, golf, racket
+  fishing, horses, hunting, gadgets, it, sweets, stationery, pubgames, adult, perfume, golf, racket,
+  puzzles, needlework
 - **r:** partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host
 - **o:** birthday, christmas, wedding, anniversary, baby, housewarming, graduation, retirement,
   farewell, valentines, mothers_day, fathers_day, thank_you, sinterklaas, easter, new_year,
@@ -69,6 +70,9 @@ What the product is *for*, not everything it could touch. Most specific first.
   wizard shows as wine.
 - `golf` for clubs, balls, bags, trolleys, rangefinders; `racket` for padel, tennis, badminton and
   squash rackets, balls, shuttles, racket bags and grip tape (both added 2026-11-26).
+- `puzzles` for jigsaws, 3D puzzles, brain teasers and puzzle mats, never `boardgames` (split off
+  2026-11-26: a puzzle is done alone, a board game with others). `needlework` for yarn, knitting and
+  crochet sets and needles, embroidery and sewing machines, together with `craft` (added the same day).
 - `sweets` for chocolate, pralines and sweets; `stationery` for pens, notebooks, writing sets;
   `pubgames` for darts, poker and card games, table football, billiards; `adult` for erotic gifts
   (added 2026-09-30); `perfume` for perfume, eau de toilette and fragrance sets, together with

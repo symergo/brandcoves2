@@ -360,3 +360,11 @@ Then "ik mis spelen/speelgoed en puzzles" (same day). Both were there: toys as "
 puzzles inside "Bordspellen" (the `Puzzel` category already implies `boardgames`). Now "Speelgoed"
 and "Bordspellen en puzzels", first in a group renamed "Spel en cultuur". Typing "puzzels" maps to
 board games too.
+
+Then (same day) "bordspellen en puzzles zijn niet hetzelfde" and "en breien en haken?": puzzles became
+an interest of their own (`puzzles`, 3,724 be-nl products) and so did knitting, crochet and sewing
+(`needlework`, 1,930). Asked whether more were missing, the catalogue answered: of the 150 be-nl
+categories with 150+ giftable products and under 20% carrying an interest, most fit an existing
+interest and are simply untagged (guitars, fishing rods, tents, pens). Genuinely missing, left for the
+owner: food and delicacies (4,370: sauces, oil and vinegar, spices) and motorcycles (1,334).
+Wargaming and role-playing fit board games; crystals and incense fit `wellness`.
