@@ -64,3 +64,19 @@ Below the offer table. Above it, several hundred words of somebody else's market
 the one thing this page exists for — who sells it and for how much — off the first screen. Below is
 where a shopper who has seen the prices and now wants to know what the thing actually *is* goes
 looking.
+
+## Only in the page's language (owner, 2026-11-26)
+
+The be-nl page of the Kärcher SC 3 EasyFix quoted bol's French copy: bol answers `nl-BE` with what
+the seller wrote, and that was longer than Coolblue's Dutch text, so the longest won. About 42,000
+offers on the Dutch markets carry French copy (measured that day: 25,633 bol and 1,007 Awin in be-nl,
+15,670 bol in nl-nl).
+
+`ProductDescription::pick()` now takes the page's language and passes over a description that
+clearly reads in another one (`App\Support\TextLanguage`: the little words only one language uses,
+at least 3 hits and twice the runner-up). When only a foreign one exists the page shows no
+description: a Dutch page with a French block reads as broken, and repeats the be-fr page's text.
+Text the guess is unsure of, such as a spec list, stays.
+
+Tests: `ProductDescriptionTest::a_description_in_another_language_than_the_page_is_passed_over`,
+`a_description_the_guess_is_unsure_of_stays`.

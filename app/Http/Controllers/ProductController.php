@@ -154,7 +154,7 @@ class ProductController extends Controller
              * ProductDescription for why a live call to bol at render time is
              * the wrong shape for the most-crawled page on the site.
              */
-            'description' => ProductDescription::pick($offers, $productGroup->title)?->toArray(),
+            'description' => ProductDescription::pick($offers, $productGroup->title, $current->get()->language())?->toArray(),
 
             // People and Coves around the product: saved by, found in, where
             // next. See ProductSignals and docs/features/product-signals.md.

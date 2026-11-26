@@ -146,4 +146,31 @@ class ProductDescriptionTest extends TestCase
             $description->paragraphs[0],
         );
     }
+
+    #[Test]
+    public function a_description_in_another_language_than_the_page_is_passed_over(): void
+    {
+        // be-nl's Kärcher SC 3 EasyFix (2026-11-26): bol's copy was French and longer than
+        // Coolblue's Dutch one, so the Dutch page quoted French.
+        $french = $this->offer('Nettoyage hygiénique : le nettoyeur vapeur SC 3 EasyFix de Kärcher nettoie les surfaces dures sans produits chimiques. Grâce à la cartouche anticalcaire, vous profitez de la vapeur pour toute la maison, avec une préparation très rapide et plus de confort.', id: 1);
+        $dutch = $this->offer('Met de Kärcher SC 3 EasyFix stoom je jouw huis schoon zonder dat je last hebt van kalk. Het apparaat is snel klaar voor gebruik en werkt op alle harde vloeren.', id: 2, shop: 'Coolblue');
+
+        $this->assertSame('Coolblue', ProductDescription::pick(new Collection([$french, $dutch]), null, 'nl')?->merchant);
+
+        // Only the French one: no section on the Dutch page, the French one on the French page.
+        $this->assertNull(ProductDescription::pick(new Collection([$french]), null, 'nl'));
+        $this->assertNotNull(ProductDescription::pick(new Collection([$french]), null, 'fr'));
+
+        // Without a language, as before: the longest.
+        $this->assertSame('bol.com', ProductDescription::pick(new Collection([$french, $dutch]))?->merchant);
+    }
+
+    #[Test]
+    public function a_description_the_guess_is_unsure_of_stays(): void
+    {
+        // Spec lines carry few of the little words a language is told by.
+        $specs = $this->offer('Vermogen: 1900 W. Stoomdruk: 3,5 bar. Waterreservoir: 1 l. Opwarmtijd: 30 s. Kabellengte: 4 m. Gewicht: 3,1 kg. Kleur: wit/geel. Model: SC 3 EasyFix 1.513-650.0.');
+
+        $this->assertNotNull(ProductDescription::pick(new Collection([$specs]), null, 'nl'));
+    }
 }

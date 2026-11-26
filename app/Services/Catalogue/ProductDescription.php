@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Catalogue;
 
 use App\Models\Product;
+use App\Support\TextLanguage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -80,9 +81,15 @@ final readonly class ProductDescription
      * manufacturer's full text, and picking the first offer would show the
      * summary while the full description sat one row down.
      *
+     * A description that clearly reads in another language than the page's is left out,
+     * even when it is the only one (2026-11-26: bol's French copy on a be-nl page). A
+     * Dutch page with a French block reads as broken, and repeats the be-fr page's text.
+     * Text the guess is unsure of stays in: see TextLanguage.
+     *
      * @param  Collection<int, Product>  $offers
+     * @param  string|null  $language  the page's language ('nl', 'fr', 'en', 'es'); null skips the check
      */
-    public static function pick(Collection $offers, ?string $title = null): ?self
+    public static function pick(Collection $offers, ?string $title = null, ?string $language = null): ?self
     {
         $best = $offers
             ->filter(fn (Product $offer) => $offer->source->allowsCatalogueStorage())
@@ -96,6 +103,8 @@ final readonly class ProductDescription
             ])
             ->filter(fn (array $candidate) => $candidate['paragraphs'] !== [])
             ->reject(fn (array $candidate) => self::isJustTheTitle($candidate['paragraphs'], $title))
+            ->reject(fn (array $candidate) => $language !== null
+                && ! in_array(TextLanguage::guess(implode(' ', $candidate['paragraphs'])), [null, $language], true))
             ->sort(function (array $a, array $b) {
                 $byLength = mb_strlen(implode(' ', $b['paragraphs'])) <=> mb_strlen(implode(' ', $a['paragraphs']));
 
