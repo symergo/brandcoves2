@@ -29,7 +29,7 @@ the line, no header, no commentary.
 - **i:** cooking, coffee, photography, music, gaming, reading, fitness, outdoors, travel, gardening,
   diy, beauty, fashion, tech, home, craft, film, pets, wellness, kids, art, cycling, boardgames,
   drinks, baking, running, yoga, cars, science, water, wintersports, football, collecting, nature,
-  fishing, horses, hunting, gadgets, it, sweets, stationery, pubgames, adult, perfume
+  fishing, horses, hunting, gadgets, it, sweets, stationery, pubgames, adult, perfume, golf, racket
 - **r:** partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host
 - **o:** birthday, christmas, wedding, anniversary, baby, housewarming, graduation, retirement,
   farewell, valentines, mothers_day, fathers_day, thank_you, sinterklaas, easter, new_year,
@@ -64,7 +64,11 @@ What the product is *for*, not everything it could touch. Most specific first.
 - `tech` for general electronics (TVs, speakers, phones); `it` for computers, laptops, peripherals,
   networking; `gadgets` for clever small devices and novelties; `gaming` for consoles and games.
 - `home` for decor, textiles, furniture, lighting; `cooking` for kitchen tools and appliances;
-  `baking` for bakeware; `drinks` for wine, beer, spirits, bar tools, glassware for drinks.
+  `baking` for bakeware; `drinks` for wine, beer, spirits, bar tools, glassware for drinks. Tea, teapots
+  and tea sets are `coffee` (shown as "Koffie en thee" since 2026-11-26), never `drinks`, which the
+  wizard shows as wine.
+- `golf` for clubs, balls, bags, trolleys, rangefinders; `racket` for padel, tennis, badminton and
+  squash rackets, balls, shuttles, racket bags and grip tape (both added 2026-11-26).
 - `sweets` for chocolate, pralines and sweets; `stationery` for pens, notebooks, writing sets;
   `pubgames` for darts, poker and card games, table football, billiards; `adult` for erotic gifts
   (added 2026-09-30); `perfume` for perfume, eau de toilette and fragrance sets, together with

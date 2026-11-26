@@ -92,7 +92,7 @@ class GiftProfileTest extends TestCase
         app()->setLocale('nl');
 
         $this->assertSame(
-            'koffie, koken, '.__('site.gift.taste.budget', ['min' => '€30', 'max' => '€60']),
+            'koffie en thee, koken, '.__('site.gift.taste.budget', ['min' => '€30', 'max' => '€60']),
             GiftProfile::summary(['interests' => ['coffee', 'cooking'], 'budgetMin' => 3000, 'budgetMax' => 6000]),
         );
     }

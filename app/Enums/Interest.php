@@ -83,6 +83,12 @@ enum Interest: string
     // card was a hair dryer or mascara as often as a perfume, so perfume almost
     // never came up. A perfume keeps `beauty` too.
     case Perfume = 'perfume';
+    // Two sports with a shelf of their own and nowhere to go (owner, 2026-11-26): be-nl
+    // stocked 1,011 golf and 716 padel, tennis and badminton products under no interest.
+    // Padel is big in Belgium and the Netherlands. Racket sports are one interest: a
+    // padel player and a tennis player want much the same bag, balls and grip tape.
+    case Golf = 'golf';
+    case Racket = 'racket';
 
     /**
      * The wizard shows the interests under these headings (owner, 2026-11-26: "a more
@@ -94,7 +100,7 @@ enum Interest: string
         'food' => [self::Cooking, self::Baking, self::Coffee, self::Drinks, self::Sweets],
         'home' => [self::Home, self::Gardening, self::Diy, self::Pets, self::Kids],
         'tech' => [self::Tech, self::Gadgets, self::It, self::Gaming, self::Photography],
-        'sport' => [self::Fitness, self::Running, self::Cycling, self::Yoga, self::Football, self::Water, self::WinterSports],
+        'sport' => [self::Fitness, self::Running, self::Cycling, self::Yoga, self::Football, self::Racket, self::Golf, self::Water, self::WinterSports],
         'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Horses, self::Fishing, self::Hunting],
         'culture' => [self::Reading, self::Music, self::Film, self::BoardGames, self::PubGames, self::Collecting, self::Science],
         'creative' => [self::Craft, self::Art, self::Stationery],

@@ -1623,11 +1623,11 @@ return [
         'step_avoid' => '¿Algo que evitar?',
 
         'interests' => [
-            'cooking' => 'Cocinar', 'coffee' => 'El café', 'photography' => 'La fotografía',
+            'cooking' => 'Cocinar', 'coffee' => 'Café y té', 'photography' => 'La fotografía',
             'music' => 'La música', 'gaming' => 'Los videojuegos', 'reading' => 'Leer',
-            'fitness' => 'El deporte', 'outdoors' => 'El aire libre', 'travel' => 'Viajar',
+            'fitness' => 'El gimnasio', 'outdoors' => 'El aire libre', 'travel' => 'Viajar',
             'gardening' => 'La jardinería', 'diy' => 'El bricolaje', 'beauty' => 'El cuidado personal',
-            'fashion' => 'La moda', 'tech' => 'La tecnología', 'home' => 'Su casa',
+            'fashion' => 'Moda y joyas', 'tech' => 'La tecnología', 'home' => 'Su casa',
             'craft' => 'Hacer cosas', 'film' => 'Cine y series', 'pets' => 'Su mascota',
             'wellness' => 'Desconectar', 'kids' => 'Los niños',
             'art' => 'Dibujo y pintura', 'cycling' => 'Ciclismo', 'boardgames' => 'Juegos de mesa',
@@ -1636,7 +1636,7 @@ return [
             'water' => 'Natación y deportes acuáticos', 'wintersports' => 'Deportes de invierno', 'football' => 'Fútbol',
             'collecting' => 'Coleccionismo', 'nature' => 'Naturaleza y aves', 'fishing' => 'Pesca',
             'horses' => 'Caballos', 'hunting' => 'Caza', 'gadgets' => 'Gadgets', 'it' => 'Informática',
-            'sweets' => 'Dulces y chocolate', 'stationery' => 'Papelería', 'pubgames' => 'Dardos y juegos de cartas', 'adult' => 'Erotismo', 'perfume' => 'Perfumes',
+            'sweets' => 'Dulces y chocolate', 'stationery' => 'Papelería', 'pubgames' => 'Dardos y juegos de cartas', 'adult' => 'Erotismo', 'perfume' => 'Perfumes', 'golf' => 'El golf', 'racket' => 'Pádel y tenis',
         ],
 
         'vibes' => [
@@ -2259,6 +2259,8 @@ return [
             'pubgames' => ['slug' => 'dardos', 'name' => 'de los dardos'],
             'adult' => ['slug' => 'erotismo', 'name' => 'del erotismo'],
             'perfume' => ['slug' => 'perfume', 'name' => 'del perfume'],
+            'golf' => ['slug' => 'golf', 'name' => 'del golf'],
+            'racket' => ['slug' => 'padel-y-tenis', 'name' => 'del pádel y el tenis'],
         ],
     ],
 

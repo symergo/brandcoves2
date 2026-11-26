@@ -348,3 +348,10 @@ grouping saves); on a desktop it is about half the height.
 
 `InterestGroupsTest` holds that every interest is in exactly one group, so a new one cannot vanish
 from the wizard, and that every heading has a label in all four languages.
+
+Asked the same day whether any were missing ("what about fitness or gym?"). Fitness was there, labelled
+"Sporten" under the heading "Sport", so it was not found. Labels now say what people look for:
+"Fitness", "Koffie en thee" (tea had no home; `drinks` reads as wine), "Mode en sieraden". Two
+interests were added because be-nl stocked them under none: golf (1,011 products) and racket sports
+as one, "Padel en tennis" (716, padel, tennis, badminton, squash). Camping, sewing, instruments,
+beer, model trains and telescopes were checked and fit an existing interest.

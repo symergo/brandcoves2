@@ -1628,11 +1628,11 @@ return [
         'step_avoid' => 'Iets vermijden?',
 
         'interests' => [
-            'cooking' => 'Koken', 'coffee' => 'Koffie', 'photography' => 'Fotografie',
+            'cooking' => 'Koken', 'coffee' => 'Koffie en thee', 'photography' => 'Fotografie',
             'music' => 'Muziek', 'gaming' => 'Gamen', 'reading' => 'Lezen',
-            'fitness' => 'Sporten', 'outdoors' => 'Buiten zijn', 'travel' => 'Reizen',
+            'fitness' => 'Fitness', 'outdoors' => 'Buiten zijn', 'travel' => 'Reizen',
             'gardening' => 'Tuinieren', 'diy' => 'Klussen', 'beauty' => 'Verzorging',
-            'fashion' => 'Mode', 'tech' => 'Techniek', 'home' => 'Hun huis',
+            'fashion' => 'Mode en sieraden', 'tech' => 'Techniek', 'home' => 'Hun huis',
             'craft' => 'Zelf maken', 'film' => 'Films en series', 'pets' => 'Hun huisdier',
             'wellness' => 'Ontspannen', 'kids' => 'Kinderen',
             'art' => 'Tekenen en schilderen', 'cycling' => 'Fietsen', 'boardgames' => 'Bordspellen',
@@ -1641,7 +1641,7 @@ return [
             'water' => 'Zwemmen en watersport', 'wintersports' => 'Wintersport', 'football' => 'Voetbal',
             'collecting' => 'Verzamelen', 'nature' => 'Natuur en vogels', 'fishing' => 'Vissen',
             'horses' => 'Paarden', 'hunting' => 'Jagen', 'gadgets' => 'Gadgets', 'it' => 'Computers en IT',
-            'sweets' => 'Snoep en chocolade', 'stationery' => 'Pennen en papier', 'pubgames' => 'Darts en kaartspellen', 'adult' => 'Erotiek', 'perfume' => 'Parfum en geuren',
+            'sweets' => 'Snoep en chocolade', 'stationery' => 'Pennen en papier', 'pubgames' => 'Darts en kaartspellen', 'adult' => 'Erotiek', 'perfume' => 'Parfum en geuren', 'golf' => 'Golf', 'racket' => 'Padel en tennis',
         ],
 
         'vibes' => [
@@ -2266,6 +2266,8 @@ return [
             'pubgames' => ['slug' => 'darts-en-kaarten', 'name' => 'darts en kaarten'],
             'adult' => ['slug' => 'erotiek', 'name' => 'erotiek'],
             'perfume' => ['slug' => 'parfum', 'name' => 'parfum'],
+            'golf' => ['slug' => 'golf', 'name' => 'golf'],
+            'racket' => ['slug' => 'padel-en-tennis', 'name' => 'padel en tennis'],
         ],
     ],
 

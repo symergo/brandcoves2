@@ -1622,11 +1622,11 @@ return [
         'step_avoid' => 'Quelque chose à éviter ?',
 
         'interests' => [
-            'cooking' => 'La cuisine', 'coffee' => 'Le café', 'photography' => 'La photo',
+            'cooking' => 'La cuisine', 'coffee' => 'Café et thé', 'photography' => 'La photo',
             'music' => 'La musique', 'gaming' => 'Les jeux vidéo', 'reading' => 'La lecture',
-            'fitness' => 'Le sport', 'outdoors' => 'Le plein air', 'travel' => 'Les voyages',
+            'fitness' => 'Le fitness', 'outdoors' => 'Le plein air', 'travel' => 'Les voyages',
             'gardening' => 'Le jardinage', 'diy' => 'Le bricolage', 'beauty' => 'Les soins',
-            'fashion' => 'La mode', 'tech' => 'La tech', 'home' => 'Son intérieur',
+            'fashion' => 'Mode et bijoux', 'tech' => 'La tech', 'home' => 'Son intérieur',
             'craft' => 'Créer de ses mains', 'film' => 'Films et séries', 'pets' => 'Son animal',
             'wellness' => 'Se détendre', 'kids' => 'Les enfants',
             'art' => 'Dessin et peinture', 'cycling' => 'Le vélo', 'boardgames' => 'Jeux de société',
@@ -1635,7 +1635,7 @@ return [
             'water' => 'Natation et sports nautiques', 'wintersports' => 'Sports d\'hiver', 'football' => 'Le football',
             'collecting' => 'Objets de collection', 'nature' => 'Nature et oiseaux', 'fishing' => 'La pêche',
             'horses' => 'Les chevaux', 'hunting' => 'La chasse', 'gadgets' => 'Gadgets', 'it' => 'Informatique',
-            'sweets' => 'Bonbons et chocolat', 'stationery' => 'La papeterie', 'pubgames' => 'Fléchettes et jeux de cartes', 'adult' => 'Érotisme', 'perfume' => 'Parfums',
+            'sweets' => 'Bonbons et chocolat', 'stationery' => 'La papeterie', 'pubgames' => 'Fléchettes et jeux de cartes', 'adult' => 'Érotisme', 'perfume' => 'Parfums', 'golf' => 'Le golf', 'racket' => 'Padel et tennis',
         ],
 
         'vibes' => [
@@ -2258,6 +2258,8 @@ return [
             'pubgames' => ['slug' => 'flechettes', 'name' => 'les fléchettes'],
             'adult' => ['slug' => 'erotisme', 'name' => 'l\'érotisme'],
             'perfume' => ['slug' => 'parfum', 'name' => 'le parfum'],
+            'golf' => ['slug' => 'golf', 'name' => 'le golf'],
+            'racket' => ['slug' => 'padel-et-tennis', 'name' => 'le padel et le tennis'],
         ],
     ],
 

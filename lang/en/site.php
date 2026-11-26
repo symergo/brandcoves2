@@ -1825,11 +1825,11 @@ return [
         'step_avoid' => 'Anything to avoid?',
 
         'interests' => [
-            'cooking' => 'Cooking', 'coffee' => 'Coffee', 'photography' => 'Photography',
+            'cooking' => 'Cooking', 'coffee' => 'Coffee and tea', 'photography' => 'Photography',
             'music' => 'Music', 'gaming' => 'Gaming', 'reading' => 'Reading',
-            'fitness' => 'Fitness', 'outdoors' => 'The outdoors', 'travel' => 'Travel',
+            'fitness' => 'Fitness and the gym', 'outdoors' => 'The outdoors', 'travel' => 'Travel',
             'gardening' => 'Gardening', 'diy' => 'DIY', 'beauty' => 'Beauty',
-            'fashion' => 'Fashion', 'tech' => 'Tech', 'home' => 'Their home',
+            'fashion' => 'Fashion and jewellery', 'tech' => 'Tech', 'home' => 'Their home',
             'craft' => 'Making things', 'film' => 'Film and TV', 'pets' => 'Their pet',
             'wellness' => 'Winding down', 'kids' => 'Kids',
             'art' => 'Drawing and painting', 'cycling' => 'Cycling', 'boardgames' => 'Board games',
@@ -1838,7 +1838,7 @@ return [
             'water' => 'Swimming and water sports', 'wintersports' => 'Winter sports', 'football' => 'Football',
             'collecting' => 'Collecting', 'nature' => 'Nature and birds', 'fishing' => 'Fishing',
             'horses' => 'Horses', 'hunting' => 'Hunting', 'gadgets' => 'Gadgets', 'it' => 'Computers and IT',
-            'sweets' => 'Sweets and chocolate', 'stationery' => 'Pens and paper', 'pubgames' => 'Darts and card games', 'adult' => 'Erotica', 'perfume' => 'Perfume and fragrance',
+            'sweets' => 'Sweets and chocolate', 'stationery' => 'Pens and paper', 'pubgames' => 'Darts and card games', 'adult' => 'Erotica', 'perfume' => 'Perfume and fragrance', 'golf' => 'Golf', 'racket' => 'Padel and tennis',
         ],
 
         'vibes' => [
@@ -2574,6 +2574,8 @@ return [
             'pubgames' => ['slug' => 'darts-and-cards', 'name' => 'darts and cards'],
             'adult' => ['slug' => 'erotica', 'name' => 'erotica'],
             'perfume' => ['slug' => 'perfume', 'name' => 'perfume'],
+            'golf' => ['slug' => 'golf', 'name' => 'golf'],
+            'racket' => ['slug' => 'padel-and-tennis', 'name' => 'padel and tennis'],
         ],
     ],
 

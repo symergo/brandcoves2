@@ -45,7 +45,7 @@ return [
 
     'interests' => [
         'cooking' => ['koken', 'kok', 'keuken', 'kookt'],
-        'coffee' => ['koffie', 'koffieliefhebber'],
+        'coffee' => ['koffie', 'koffieliefhebber', 'thee', 'theeliefhebber'],
         'photography' => ['foto', 'fotografie', 'fotograferen', 'fotograaf'],
         'music' => ['muziek', 'muzikant', 'gitaar', 'piano'],
         'gaming' => ['gamen', 'gamer', 'games', 'gaming', 'playstation', 'nintendo', 'xbox'],
@@ -75,6 +75,8 @@ return [
         'water' => ['zwemmen', 'surfen', 'zeilen', 'watersport'],
         'wintersports' => ['skiën', 'skien', 'snowboarden', 'wintersport'],
         'football' => ['voetbal', 'voetballer'],
+        'golf' => ['golf', 'golfen', 'golfer'],
+        'racket' => ['padel', 'padellen', 'tennis', 'tennissen', 'badminton'],
         'collecting' => ['verzamelen', 'verzamelaar'],
         'nature' => ['natuur', 'vogels', 'vogelspotten'],
         'fishing' => ['vissen', 'visser', 'hengelen'],

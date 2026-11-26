@@ -39,7 +39,7 @@ return [
 
     'interests' => [
         'cooking' => ['cuisine', 'cuisiner', 'cuisinier', 'cuisinière'],
-        'coffee' => ['café', 'cafe'],
+        'coffee' => ['café', 'cafe', 'thé', 'the'],
         'photography' => ['photo', 'photographie', 'photographe'],
         'music' => ['musique', 'musicien', 'guitare', 'piano'],
         'gaming' => ['jeux vidéo', 'jeux video', 'gamer', 'gaming'],
@@ -69,6 +69,8 @@ return [
         'water' => ['natation', 'surf', 'voile'],
         'wintersports' => ['ski', 'snowboard', 'sports d\'hiver'],
         'football' => ['foot', 'football'],
+        'golf' => ['golf', 'golfeur', 'golfeuse'],
+        'racket' => ['padel', 'tennis', 'badminton'],
         'collecting' => ['collection', 'collectionneur'],
         'nature' => ['nature', 'oiseaux'],
         'fishing' => ['pêche', 'peche', 'pêcheur'],

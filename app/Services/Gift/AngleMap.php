@@ -41,7 +41,7 @@ class AngleMap
      */
     private const SEED = [
         'cooking' => ['kookboek', 'koksmes', 'pannenset', 'keukenmachine', 'snijplank', 'kruidenset', 'wok'],
-        'coffee' => ['espressomachine', 'koffiemolen', 'french press', 'melkopschuimer', 'koffiebonen', 'aeropress'],
+        'coffee' => ['espressomachine', 'koffiemolen', 'french press', 'melkopschuimer', 'koffiebonen', 'aeropress', 'theepot', 'losse thee'],
         'photography' => ['statief', 'cameratas', 'polarisatiefilter', 'objectief', 'fotolijst', 'instantcamera'],
         'music' => ['koptelefoon', 'platenspeler', 'bluetooth speaker', 'ukelele', 'microfoon', 'vinyl'],
         'gaming' => ['controller', 'gaming headset', 'bordspel', 'gaming muis', 'retro console', 'puzzel'],
@@ -85,6 +85,8 @@ class AngleMap
         'pubgames' => ['dartbord', 'dartpijlen', 'pokerset', 'speelkaarten', 'tafelvoetbal', 'biljartkeu'],
         'adult' => ['erotische geschenkset', 'massageolie', 'koppelspel', 'erotische adventskalender', 'massagekaars', 'erotisch spel'],
         'perfume' => ['eau de parfum', 'eau de toilette', 'parfum geschenkset', 'herenparfum', 'damesparfum', 'niche parfum'],
+        'golf' => ['golfballen', 'golfclub', 'golftas', 'putter', 'golfhandschoen', 'golf afstandsmeter'],
+        'racket' => ['padelracket', 'tennisracket', 'padelballen', 'tennisballen', 'racketbag', 'badmintonset'],
     ];
 
     /**
