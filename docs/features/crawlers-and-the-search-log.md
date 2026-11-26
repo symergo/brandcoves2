@@ -192,6 +192,24 @@ and robots.txt names it. The same day showed where the rest of the search load c
 969 full search pages were crawlers (Bingbot 270, Applebot 245, DotBot 163), 1,825 s of server time
 against 66 s for people. Bing and Apple are search engines people use and stay open.
 
+### An interactive challenge outside Europe (owner, 2026-11-26)
+
+A scraper with one "Mac Chrome" user agent passed the managed challenges: 2,018 requests in 74
+minutes from 195 US addresses, 1,099 of them search pages and 523 product pages, 177 of the 282
+slow searches. A managed challenge lets a browser through without a click when it looks real, and
+this one does. So search, product and `/go/` pages now ask for an **Interactive Challenge** (a
+click) outside Europe (`ip.src.continent ne "EU"`), verified bots excepted (`cf.client.bot`, so
+Google and Bing pass). It sits above the western-EU rule. A real visitor outside Europe clicks once.
+
+The free plan allows five custom rules, so the "WordPress probes" block rule went to make room
+(owner's choice): GiftCoves has no WordPress and answers those paths with a fast 404. Its last
+definition, to restore it:
+
+```
+(http.request.uri.path in {"/wp-login.php" "/xmlrpc.php"}) or starts_with(http.request.uri.path, "/wp-admin") or starts_with(http.request.uri.path, "/wp-content") or starts_with(http.request.uri.path, "/wp-includes")
+```
+action `block`.
+
 ### MJ12bot joins the heavy crawlers (owner, 2026-11-26)
 
 Majestic's link-index crawler, the same kind as DotBot: 458 requests in 74 minutes on the evening of
