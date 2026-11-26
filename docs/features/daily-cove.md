@@ -121,6 +121,11 @@ name, which is true whatever was found. The search phrase now comes over by them
 a few hours: 162 editions whose title named a product they did not hold were retitled one by one
 from their products that evening, by hand.
 
+The naming call's ceiling is 400 tokens, not the ~15 a title needs: the model may think before it
+answers, and thinking counts against the ceiling. At 100, be-fr's answer was cut off on its first
+morning (2026-11-26), and the day fell back to "Cadeaux de Noël, coffrets et papier cadeau" over
+baby sets and slippers. That edition was retitled by hand.
+
 **A thin day is topped up from Amazon (2026-11-25).** Fewer than six finds on the theme: the rest
 comes from Amazon's search on the day's words, shown as Amazon cards without a price, in be-nl,
 be-fr and nl-nl only. Details and limits: amazon-compliance.md, "Amazon on a thin Daily".

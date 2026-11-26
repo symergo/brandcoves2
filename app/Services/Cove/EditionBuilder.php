@@ -1584,7 +1584,10 @@ class EditionBuilder
                         $finds,
                     )),
                 schemaHint: ['title' => '...'],
-                maxTokens: 100,
+                // The title is ~15 tokens, but the model may think before it answers,
+                // and thinking counts against this ceiling: at 100, be-fr's answer was
+                // cut off on 2026-11-26 and the day fell back to the theme title.
+                maxTokens: 400,
             );
         } catch (AiUnavailable $e) {
             Log::info('Daily title unavailable, using the theme title', ['reason' => $e->getMessage()]);
