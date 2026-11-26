@@ -648,6 +648,12 @@ class GiftController extends Controller
                 'value' => $i->value,
                 'label' => $i->label(),
             ], Interest::cases()),
+            // The same interests under headings, for the wizard's step (Interest::GROUPS).
+            'interestGroups' => array_map(fn (string $key, array $members) => [
+                'key' => $key,
+                'label' => __('site.gift.interest_groups.'.$key),
+                'values' => array_map(fn (Interest $i) => $i->value, $members),
+            ], array_keys(Interest::GROUPS), array_values(Interest::GROUPS)),
             /*
              * Which way their taste goes, as the axes themselves rather than
              * a flat list of words: the wizard draws each one as its two

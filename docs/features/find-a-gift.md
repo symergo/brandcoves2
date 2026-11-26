@@ -332,3 +332,19 @@ with the shop's name and no note (`AddProduct::addNow`), skips the wording step,
 results open so several go on in a row; an added row is tinted and says "Op de lijst", and the
 "Bewaard in …" message names the list. A name of your own is given later, from the list
 (item-names.md). On the list page itself the row still leads to the wording step.
+
+## Interests under headings (owner, 2026-11-26)
+
+"We just need a better way to select them in the gift finder, a more compact way." The 44 interests
+were one block of loose chips, with nothing to scan by. They now sit under eight headings
+(`Interest::GROUPS`, labels in `site.gift.interest_groups`): food and drink, home, tech, sport,
+outdoors and on the road, culture and games, creative, looks and unwinding. Two groups side by side
+from `md` up.
+
+Considered and not chosen: a search field over twelve chips with "all 44" behind a link (shorter on a
+phone, but an interest outside the twelve is a tap further). The owner chose the headings with
+everything visible. On a phone the step is no shorter than before (the headings take the room the
+grouping saves); on a desktop it is about half the height.
+
+`InterestGroupsTest` holds that every interest is in exactly one group, so a new one cannot vanish
+from the wizard, and that every heading has a label in all four languages.

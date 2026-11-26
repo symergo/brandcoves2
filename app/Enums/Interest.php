@@ -84,6 +84,23 @@ enum Interest: string
     // never came up. A perfume keeps `beauty` too.
     case Perfume = 'perfume';
 
+    /**
+     * The wizard shows the interests under these headings (owner, 2026-11-26: "a more
+     * compact way to select them"): 44 loose chips were fifteen rows on a phone with
+     * nothing to scan by. Every case is in exactly one group, in the order shown;
+     * InterestTest holds that.
+     */
+    public const GROUPS = [
+        'food' => [self::Cooking, self::Baking, self::Coffee, self::Drinks, self::Sweets],
+        'home' => [self::Home, self::Gardening, self::Diy, self::Pets, self::Kids],
+        'tech' => [self::Tech, self::Gadgets, self::It, self::Gaming, self::Photography],
+        'sport' => [self::Fitness, self::Running, self::Cycling, self::Yoga, self::Football, self::Water, self::WinterSports],
+        'outdoors' => [self::Outdoors, self::Travel, self::Nature, self::Cars, self::Horses, self::Fishing, self::Hunting],
+        'culture' => [self::Reading, self::Music, self::Film, self::BoardGames, self::PubGames, self::Collecting, self::Science],
+        'creative' => [self::Craft, self::Art, self::Stationery],
+        'care' => [self::Beauty, self::Perfume, self::Fashion, self::Wellness, self::Adult],
+    ];
+
     /** @return list<string> */
     public static function values(): array
     {

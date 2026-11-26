@@ -86,6 +86,8 @@ interface Props extends GiftResultsExtras {
     personas?: PersonaCard[]
     options: {
         interests: Option[]
+        /** The same interests under headings, in the order shown. */
+        interestGroups?: { key: string; label: string; values: string[] }[]
         /** Taste as axes: each one drawn as its two ends, so picking a side is one click. */
         preferences: { axis: string; poles: [Option, Option] }[]
         ages: Option[]
@@ -1166,25 +1168,42 @@ export default function GiftWizard(props: Props) {
                     <div className="mt-4">
                         {STEPS[step] === 'interests' && (
                             <div>
-                                <div className="flex flex-wrap gap-2">
-                                    {options.interests.map((option) => {
-                                        const selected = chosenChips.includes(option.value)
-                                        const blocked = !selected && interestsFull
+                                {/*
+                                  Under headings (owner, 2026-11-26: "a more compact
+                                  way"): 44 loose chips gave nothing to scan by. Two
+                                  groups side by side from md up; one column on a
+                                  phone. Without groups from the server, one list.
+                                */}
+                                <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
+                                    {(options.interestGroups ?? [{ key: 'all', label: '', values: options.interests.map((o) => o.value) }]).map((group) => (
+                                        <div key={group.key} role="group" aria-labelledby={group.label ? `interest-group-${group.key}` : undefined}>
+                                            {group.label && (
+                                                <h3 id={`interest-group-${group.key}`} className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                                                    {group.label}
+                                                </h3>
+                                            )}
+                                            <div className="flex flex-wrap gap-2">
+                                                {group.values.map((value) => {
+                                                    const selected = chosenChips.includes(value)
+                                                    const blocked = !selected && interestsFull
 
-                                        return (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                aria-pressed={selected}
-                                                disabled={blocked}
-                                                className={chip(selected, blocked)}
-                                                onClick={() => toggle(interests, setInterests, option.value)}
-                                            >
-                                                {option.label}
-                                                <ChoiceCheck on={selected} />
-                                            </button>
-                                        )
-                                    })}
+                                                    return (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            aria-pressed={selected}
+                                                            disabled={blocked}
+                                                            className={chip(selected, blocked)}
+                                                            onClick={() => toggle(interests, setInterests, value)}
+                                                        >
+                                                            {interestLabel(value)}
+                                                            <ChoiceCheck on={selected} />
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
 
                                 {/*

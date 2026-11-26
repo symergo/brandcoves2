@@ -1699,6 +1699,17 @@ return [
 
         // The interests step accepts words of your own as well as the chips.
         'interests_other' => '¿Algo más?',
+        // Headings over the interests in the wizard (Interest::GROUPS, 2026-11-26).
+        'interest_groups' => [
+            'food' => 'Comer y beber',
+            'home' => 'La casa',
+            'tech' => 'Tecnología',
+            'sport' => 'Deporte',
+            'outdoors' => 'Al aire libre y de viaje',
+            'culture' => 'Cultura y juegos',
+            'creative' => 'Creativo',
+            'care' => 'Belleza y descanso',
+        ],
         'interests_other_placeholder' => 'p. ej. ciclismo, masa madre',
         'interests_max' => 'Hasta 8',
 

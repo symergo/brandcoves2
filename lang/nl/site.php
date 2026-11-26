@@ -1704,6 +1704,17 @@ return [
 
         // The interests step accepts words of your own as well as the chips.
         'interests_other' => 'Nog iets?',
+        // Headings over the interests in the wizard (Interest::GROUPS, 2026-11-26).
+        'interest_groups' => [
+            'food' => 'Eten en drinken',
+            'home' => 'Thuis',
+            'tech' => 'Technologie',
+            'sport' => 'Sport',
+            'outdoors' => 'Buiten en onderweg',
+            'culture' => 'Cultuur en spel',
+            'creative' => 'Creatief',
+            'care' => 'Mooi en ontspannen',
+        ],
         'interests_other_placeholder' => 'bv. wielrennen, zuurdesem',
         'interests_max' => 'Maximaal 8',
 
