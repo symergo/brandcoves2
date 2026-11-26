@@ -88,3 +88,9 @@ Three changes, the owner's "all three":
 3. A tagging pass over the thin poles and over nl-nl and be-fr.
 
 Test: `AutoTaggerTest::a_category_passes_on_a_factual_taste_pole_but_not_a_matter_of_taste`.
+
+The retired tags themselves were removed from `product_groups.gift_tags` the same night (owner,
+2026-11-26): 53,440 products carried `vibe:` (practical 26,081, playful 23,518, beautiful 3,846) or
+`values:` (23). No code read them, but the tag API refuses them, so any later write to such a product
+failed until the tag was taken off by hand. The before-state is in
+`~/backups/giftcoves/dead_tags_undo_2026-11-26.csv` on the VPS.
