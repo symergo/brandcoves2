@@ -569,6 +569,14 @@ return [
         ],
     ],
 
+    /*
+     * Amazon's European storefronts, each listed as a shop of its own on every market's
+     * shops page (owner, 2026-11-25: "Amazon is not 1 shop, every locale has one").
+     * Tagged where amazon_search below holds a tag for the host; untagged otherwise.
+     * ShopsController::withAmazon().
+     */
+    'amazon_shops' => ['amazon.com.be', 'amazon.nl', 'amazon.de', 'amazon.fr', 'amazon.es', 'amazon.it', 'amazon.pl', 'amazon.se', 'amazon.co.uk'],
+
     'amazon_search' => [
         /*
          * market => [storefront host, Associates tag].

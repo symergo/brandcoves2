@@ -371,18 +371,21 @@ Amazon" as the search page's Amazon card: our tagged link, sponsored, no price, 
 
 ## Amazon in the shops list (2026-11-25)
 
-Owner: "Amazon sites staan niet tussen winkels". `/{market}/shops` lists our merchants, and Amazon is
-none, so `ShopsController::withAmazon()` adds it where the market has a storefront with our tag
-(Amazon.com.be on be-nl and be-fr, Amazon.nl on nl-nl), in name order with the rest. It links to the
-storefront's home page with the tag, `rel="sponsored"`, in a new tab, never through our redirector.
-No shop Cove and no search filter behind it: those are for shops whose offers we hold. Test:
-`ShopCovesTest::amazon_is_among_the_shops_where_the_market_has_a_storefront`.
+Owner: "Amazon sites staan niet tussen winkels", then "Amazon is not 1 shop, every locale has one".
+`/{market}/shops` lists our merchants, and Amazon is none, so `ShopsController::withAmazon()` adds
+every European storefront in `giftcoves.amazon_shops` (amazon.com.be, .nl, .de, .fr, .es, .it, .pl,
+.se, .co.uk), each as a shop of its own, on every market, in name order with the rest. A storefront
+carries our tag where any market's `amazon_search` entry holds one for that host (.com.be and .nl
+today), else it links untagged; on en every link asks for English (`language=en_GB`). Each links to
+the storefront's home page, `rel="sponsored"`, in a new tab, never through our redirector. No shop
+Cove and no search filter behind them: those are for shops whose offers we hold. Test:
+`ShopCovesTest::every_amazon_storefront_is_a_shop_of_its_own`.
 
 ## en on amazon.de and amazon.fr, in English, untagged (2026-11-25)
 
 Owner: "use for en also the en version of amazon.de and amazon.fr", then "Use without tag. I'll add
 them later". `amazon_search.markets.en` is amazon.de with `language=en_GB` on every link and search;
-amazon.fr (also `en_GB`) is listed under `also` and appears only in the shops list. Searches, product
+amazon.fr (also `en_GB`) is listed under `also`, which is where its tag is held. Searches, product
 links, barcode matches and a thin Daily use amazon.de, the larger catalogue; one storefront per
 market is what the code assumes in about eight places, and splitting en by visitor country would
 also split its cached pages.

@@ -36,35 +36,38 @@ class ShopCovesTest extends TestCase
 
         // Amazon joins the list where a storefront has a tag (ShopsController::withAmazon());
         // off here so these tests count only merchants, on in the test about it.
-        config(['giftcoves.amazon_search.markets.be-nl.host' => '']);
+        config(['giftcoves.amazon_shops' => []]);
     }
 
     #[Test]
-    public function amazon_is_among_the_shops_where_the_market_has_a_storefront(): void
+    public function every_amazon_storefront_is_a_shop_of_its_own(): void
     {
-        // Owner, 2026-11-25: "Amazon sites staan niet tussen winkels".
-        config(['giftcoves.amazon_search.markets.be-nl.host' => 'www.amazon.com.be']);
+        // Owner, 2026-11-25: "Amazon sites staan niet tussen winkels", then "Amazon is not
+        // 1 shop, every locale has one".
+        config(['giftcoves.amazon_shops' => ['amazon.com.be', 'amazon.nl', 'amazon.de']]);
         $this->shop('Coolblue', Market::BeNl);
-        $this->shop('Bol', Market::BeNl);
 
         $this->get('/be-nl/shops')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->has('shops', 3)
+                ->has('shops', 4)
+                // Name order, with ours.
                 ->where('shops.0.name', 'Amazon.com.be')
-                ->where('shops.0.external', true)
                 ->where('shops.0.url', 'https://www.amazon.com.be/?tag=giftcoves05-21')
-                ->where('shops.1.name', 'Bol')
+                ->where('shops.0.external', true)
+                ->where('shops.1.name', 'Amazon.de')
+                // No tag held for amazon.de yet: untagged.
+                ->where('shops.1.url', 'https://www.amazon.de/')
+                ->where('shops.2.name', 'Amazon.nl')
+                ->where('shops.2.url', 'https://www.amazon.nl/?tag=giftcoves-21')
+                ->where('shops.3.name', 'Coolblue')
             );
 
-        // en: amazon.de and amazon.fr in English, untagged until a tag is set. es: none.
+        // en: the same storefronts, each asked for English. es too, with no shops of its own.
         $this->get('/en/shops')->assertOk()->assertInertia(fn ($page) => $page
-            ->has('shops', 2)
-            ->where('shops.0.name', 'Amazon.de')
-            ->where('shops.0.url', 'https://www.amazon.de/?language=en_GB')
-            ->where('shops.1.name', 'Amazon.fr')
-            ->where('shops.1.url', 'https://www.amazon.fr/?language=en_GB'));
-        $this->get('/es/shops')->assertOk()->assertInertia(fn ($page) => $page->has('shops', 0));
+            ->has('shops', 3)
+            ->where('shops.1.url', 'https://www.amazon.de/?language=en_GB'));
+        $this->get('/es/shops')->assertOk()->assertInertia(fn ($page) => $page->has('shops', 3));
     }
 
     private function shop(

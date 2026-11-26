@@ -8,7 +8,6 @@ use App\Enums\CoveKind;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Services\Guides\CoveMarkup;
-use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\PageMeta;
 use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
@@ -141,6 +140,72 @@ class ShopsController extends Controller
     }
 
     /**
+     * Amazon among the shops (owner, 2026-11-25: "Amazon sites staan niet tussen
+     * winkels", then "Amazon is not 1 shop, every locale has one"). Amazon is not a
+     * merchant (it never enters the catalogue, docs/features/amazon-compliance.md), so
+     * its storefronts are added here rather than through ShopDirectory, in name order
+     * with the rest. Each links to the storefront itself, sponsored, never through our
+     * redirector (Amazon's rule), so the page renders it as an outbound link (`external`).
+     *
+     * @param  list<array<string, mixed>>  $shops
+     * @return list<array<string, mixed>>
+     */
+    private function withAmazon(array $shops, CurrentMarket $current): array
+    {
+        /*
+         * Every European storefront, each its own shop (owner, 2026-11-25: "Amazon is not
+         * 1 shop, every locale has one"): a Belgian buys on amazon.nl, .de and .fr as
+         * readily as on .com.be. A storefront carries our tag where any market's config
+         * holds one for it (CoveMarkup tags by host the same way), else it goes untagged
+         * until the owner adds one; on en every link asks for English.
+         */
+        $language = trim((string) config("giftcoves.amazon_search.markets.{$current->get()->value}.language", ''));
+        $tags = $this->amazonTags();
+
+        foreach ((array) config('giftcoves.amazon_shops', []) as $i => $host) {
+            $host = (string) preg_replace('/^www\./', '', mb_strtolower(trim((string) $host)));
+            $query = http_build_query(array_filter(['tag' => $tags[$host] ?? '', 'language' => $language], fn (string $v) => $v !== ''), '', '&', PHP_QUERY_RFC3986);
+
+            $shops[] = [
+                'id' => -1 - $i,
+                'name' => ucfirst($host),
+                'domain' => $host,
+                'logo' => "https://www.{$host}/favicon.ico",
+                'isNew' => false,
+                'url' => "https://www.{$host}/".($query !== '' ? '?'.$query : ''),
+                'external' => true,
+            ];
+        }
+
+        usort($shops, fn (array $a, array $b) => strcasecmp((string) $a['name'], (string) $b['name']));
+
+        return $shops;
+    }
+
+    /**
+     * Host => Associates tag, from every market's storefront and its `also` list.
+     *
+     * @return array<string, string>
+     */
+    private function amazonTags(): array
+    {
+        $tags = [];
+
+        foreach ((array) config('giftcoves.amazon_search.markets', []) as $store) {
+            foreach ([(array) $store, ...array_map(fn ($a) => (array) $a, (array) ($store['also'] ?? []))] as $entry) {
+                $host = (string) preg_replace('/^www\./', '', mb_strtolower(trim((string) ($entry['host'] ?? ''))));
+                $tag = trim((string) ($entry['tag'] ?? ''));
+
+                if ($host !== '' && $tag !== '' && ! isset($tags[$host])) {
+                    $tags[$host] = $tag;
+                }
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
      * The shops worth calling new.
      *
      * Empty when *every* shop is new, which is not a hypothetical: a market
@@ -152,54 +217,6 @@ class ShopsController extends Controller
      * @param  Collection<int, Merchant>  $shops
      * @return Collection<int, Merchant>
      */
-    /**
-     * Amazon among the shops (owner, 2026-11-25: "Amazon sites staan niet tussen
-     * winkels"), where the market has a storefront with our tag: amazon.com.be for
-     * be-nl and be-fr, amazon.nl for nl-nl. Amazon is not a merchant (it never enters
-     * the catalogue, docs/features/amazon-compliance.md), so it is added here rather
-     * than through ShopDirectory, in name order like the rest. It links to the
-     * storefront itself, tagged and sponsored, never through our redirector
-     * (Amazon's rule), so the page renders it as an outbound link (`external`).
-     *
-     * @param  list<array<string, mixed>>  $shops
-     * @return list<array<string, mixed>>
-     */
-    private function withAmazon(array $shops, CurrentMarket $current): array
-    {
-        $amazon = AmazonSearchLink::for($current->get());
-
-        if ($amazon === null) {
-            return $shops;
-        }
-
-        // The market's storefront, then any it lists `also` (en: amazon.fr in English).
-        $stores = [['host' => $amazon->host, 'icon' => $amazon->iconUrl(), 'url' => $amazon->homeUrl]];
-        foreach ((array) config("giftcoves.amazon_search.markets.{$current->get()->value}.also", []) as $also) {
-            $host = trim((string) ($also['host'] ?? ''));
-            if ($host !== '') {
-                $query = http_build_query(AmazonSearchLink::params((array) $also), '', '&', PHP_QUERY_RFC3986);
-                $stores[] = ['host' => $host, 'icon' => "https://{$host}/favicon.ico", 'url' => "https://{$host}/".($query !== '' ? '?'.$query : '')];
-            }
-        }
-
-        foreach ($stores as $i => $store) {
-            $host = (string) preg_replace('/^www\./', '', $store['host']);
-            $shops[] = [
-                'id' => -$i,
-                'name' => ucfirst($host),
-                'domain' => $host,
-                'logo' => $store['icon'],
-                'isNew' => false,
-                'url' => $store['url'],
-                'external' => true,
-            ];
-        }
-
-        usort($shops, fn (array $a, array $b) => strcasecmp((string) $a['name'], (string) $b['name']));
-
-        return $shops;
-    }
-
     private function arrivals(Collection $shops, Carbon $since): Collection
     {
         $new = $shops->filter(
