@@ -72,7 +72,7 @@ function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
     return (
         <li className="rounded-card border border-line bg-card p-4">
             {shop.external ? (
-                <a href={shop.url} target="_blank" rel="sponsored noopener" className="group flex min-h-11 items-center gap-3 sm:min-h-0">
+                <a href={shop.url} target="_blank" rel="sponsored noopener nofollow" className="group flex min-h-11 items-center gap-3 sm:min-h-0">
                     <ShopCardBody shop={shop} newLabel={newLabel} />
                 </a>
             ) : (

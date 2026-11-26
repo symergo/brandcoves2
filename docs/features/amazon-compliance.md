@@ -377,7 +377,7 @@ every European storefront in `giftcoves.amazon_shops` (amazon.com.be, .nl, .de, 
 .se, .co.uk), each as a shop of its own, on every market, in name order with the rest. A storefront
 carries our tag where any market's `amazon_search` entry holds one for that host (.com.be and .nl
 today), else it links untagged; on en every link asks for English (`language=en_GB`). Each links to
-the storefront's home page, `rel="sponsored"`, in a new tab, never through our redirector. No shop
+the storefront's home page, `rel="sponsored nofollow"`, in a new tab, never through our redirector. No shop
 Cove and no search filter behind them: those are for shops whose offers we hold. Test:
 `ShopCovesTest::every_amazon_storefront_is_a_shop_of_its_own`.
 
