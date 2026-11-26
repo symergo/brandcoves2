@@ -177,8 +177,14 @@ products).
   `reference/brief.md`. Same rules, same vocabulary, same `POST /products/tags` body. Never
   `"giftable": false` for a product you put in a Cove yourself; if it is not a gift, it
   should not be on the shortlist.
+- **Vibes too, every time** (owner, 2026-11-26: "when interests are tagged through the article
+  generation, also tag vibes"). Each product gets its `preference:` poles alongside its
+  interests: 0 to 3, never both ends of a pair, by the brief's "## p: preference" section and
+  its sharpened rules (colourful only when colour is the point; practical for anything bought
+  to do a job; manual for anything that works without power). Writing about a product is the
+  best look at it anyone takes, so its vibe is decided there, not left for a later pass.
 - One batch per market, after the Cove's own writes, at the same 3 s pace.
-- Say in the report how many products were tagged.
+- Say in the report how many products were tagged, and how many got a vibe.
 
 ### Write from the brief, not from these notes
 
