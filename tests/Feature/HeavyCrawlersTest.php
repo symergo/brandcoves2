@@ -118,8 +118,10 @@ class HeavyCrawlersTest extends TestCase
         $amznLater = 'Mozilla/5.0 (compatible; Amzn-NewAgent/1.0)';
         // Moz's crawler (owner, 2026-11-24).
         $dot = 'Mozilla/5.0 (compatible; DotBot/1.2; +https://opensiteexplorer.org/dotbot; help@moz.com)';
+        // Majestic's (owner, 2026-11-26).
+        $mj12 = 'Mozilla/5.0 (compatible; MJ12bot/v2.0.7; http://mj12bot.com/)';
 
-        foreach ([self::AMAZON, $amzn, $amznUser, $amznLater, $dot, self::SEMRUSH, self::EXA] as $agent) {
+        foreach ([self::AMAZON, $amzn, $amznUser, $amznLater, $dot, $mj12, self::SEMRUSH, self::EXA] as $agent) {
             $this->withHeader('User-Agent', $agent)->get($page)->assertStatus(403);
             $this->withHeader('User-Agent', $agent)->get('/be-nl/zoek/lego')->assertStatus(403);
         }
@@ -136,7 +138,7 @@ class HeavyCrawlersTest extends TestCase
         $robots = $this->get('/robots.txt')->assertOk()->getContent();
         [$everybody, $three] = explode("\n\n", $robots);
 
-        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nUser-agent: Amzn-User\nUser-agent: DotBot\nUser-agent: Amzn\nCrawl-delay: 10\n", $three);
+        $this->assertStringContainsString("User-agent: Amazonbot\nUser-agent: SemrushBot\nUser-agent: ExaSearchBot\nUser-agent: Amzn-SearchBot\nUser-agent: Amzn-User\nUser-agent: DotBot\nUser-agent: MJ12bot\nUser-agent: Amzn\nCrawl-delay: 10\n", $three);
         // Product pages refused too (owner, 2026-11-23)
         $this->assertStringContainsString('Disallow: /*/p/', $three);
         $this->assertStringContainsString('Disallow: /*/zoek/', $three);

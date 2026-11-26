@@ -44,6 +44,9 @@ final class LimitHeavyCrawlers
         // Moz's link-index crawler for SEO tools (owner, 2026-11-24): 573 requests in a
         // day, 163 of them search pages. Nobody finds the site through it; bstore blocks it too.
         'dotbot' => 'DotBot',
+        // Majestic's link-index crawler, the same kind (owner, 2026-11-26): 458 requests in
+        // 74 minutes, 30 of them search pages over 2 s each.
+        'mj12bot' => 'MJ12bot',
         // Any later Amazon agent named "Amzn-…", matched before it is seen. Last, so the
         // named ones above keep their own rate-limit bucket.
         'amzn-' => 'Amzn',

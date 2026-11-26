@@ -192,6 +192,12 @@ and robots.txt names it. The same day showed where the rest of the search load c
 969 full search pages were crawlers (Bingbot 270, Applebot 245, DotBot 163), 1,825 s of server time
 against 66 s for people. Bing and Apple are search engines people use and stay open.
 
+### MJ12bot joins the heavy crawlers (owner, 2026-11-26)
+
+Majestic's link-index crawler, the same kind as DotBot: 458 requests in 74 minutes on the evening of
+2026-11-26, 30 of them search pages over 2 s each. In `LimitHeavyCrawlers::CRAWLERS`, with the same
+rules: 403 on search and product pages, ten other pages a minute, named in robots.txt.
+
 ## The text links got the chips' four-word stop (2026-11-25)
 
 The 2026-11-13 stop (`SearchController::PILLS_UNTIL`) covered the chips above the grid, not the same
