@@ -70,20 +70,38 @@ final class LimitHeavyCrawlers
         // Anthropic's crawler for Claude's web search (2026-11-23): 348 of the 609 search
         // requests in 20 minutes, 1.5 s each at the median. Not matched by "claudebot".
         'claude-searchbot' => 'Claude-SearchBot',
-        'meta-externalagent' => 'meta-externalagent',
-        // Meta's index for Meta AI search (2026-11-23): 573 search pages in 20 minutes, up to
-        // 17 s each. Link previews on Facebook and WhatsApp come from facebookexternalhit instead.
-        'meta-webindexer' => 'meta-webindexer',
         'reflectionbot' => 'Reflectionbot',
         'kakaobot' => 'KakaoBot',
+    ];
+
+    /**
+     * Kept off search and product pages, not slowed down anywhere else (owner, 2026-11-27:
+     * "only block meta on search and products").
+     *
+     * Search pages since 2026-11-22, as SEARCH_ONLY. Product pages since 2026-11-27, when
+     * meta-externalagent made 1,134 of the origin's 7,301 requests in about two hours, 1,000
+     * of them product pages. Link previews on Facebook and WhatsApp come from
+     * facebookexternalhit, which is on no list and keeps every page.
+     *
+     * Name in the user agent => the name in robots.txt.
+     */
+    public const NO_PRODUCTS = [
+        'meta-externalagent' => 'meta-externalagent',
+        // Meta's index for Meta AI search (2026-11-23): 573 search pages in 20 minutes, up to
+        // 17 s each.
+        'meta-webindexer' => 'meta-webindexer',
     ];
 
     public const PER_MINUTE = 10;
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->is('robots.txt') && self::isSearch($request) && self::matches($request->userAgent(), self::SEARCH_ONLY)) {
+        if (! $request->is('robots.txt') && self::isSearch($request) && self::matches($request->userAgent(), [...self::SEARCH_ONLY, ...self::NO_PRODUCTS])) {
             return response('Search pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
+        }
+
+        if (self::isProduct($request) && self::matches($request->userAgent(), self::NO_PRODUCTS)) {
+            return response('Product pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
         }
 
         $crawler = self::which($request->userAgent());
@@ -102,7 +120,7 @@ final class LimitHeavyCrawlers
          * A product page is a price comparison; none of these four has business
          * reading it.
          */
-        if (preg_match('#^[a-z-]+/p/#', $request->path()) === 1) {
+        if (self::isProduct($request)) {
             return response('Product pages are not open to this crawler. See /robots.txt.', 403, ['Content-Type' => 'text/plain']);
         }
 
@@ -137,6 +155,12 @@ final class LimitHeavyCrawlers
         }
 
         return null;
+    }
+
+    /** /be-nl/p/2648/karcher-sc-3-easyfix */
+    private static function isProduct(Request $request): bool
+    {
+        return preg_match('#^[a-z-]+/p/#', $request->path()) === 1;
     }
 
     /** /be-nl/search and /be-nl/zoek/…, in every market's word. */

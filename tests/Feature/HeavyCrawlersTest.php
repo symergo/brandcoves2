@@ -69,7 +69,31 @@ class HeavyCrawlersTest extends TestCase
 
         config(['giftcoves.robots_allow' => true]);
         $robots = $this->get('/robots.txt')->getContent();
-        $this->assertStringContainsString("User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: Claude-SearchBot\nUser-agent: meta-externalagent\nUser-agent: meta-webindexer\nUser-agent: Reflectionbot\nUser-agent: KakaoBot\nAllow: /\nDisallow: /*/search\n", $robots);
+        $this->assertStringContainsString("User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: Claude-SearchBot\nUser-agent: Reflectionbot\nUser-agent: KakaoBot\nAllow: /\nDisallow: /*/search\n", $robots);
+    }
+
+    #[Test]
+    public function metas_crawlers_get_no_search_or_product_pages_and_link_previews_do(): void
+    {
+        $meta = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 (compatible; meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))';
+        $preview = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
+        $gpt = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.4; +https://openai.com/gptbot)';
+
+        $this->withHeader('User-Agent', $meta)->get('/be-nl/p/1/anything')->assertForbidden();
+        $this->withHeader('User-Agent', $meta)->get('/be-nl/zoek/lego')->assertForbidden();
+
+        // Not a 403 for the others: whatever the page itself answers (here, no such product)
+        $this->withHeader('User-Agent', $preview)->get('/be-nl/p/1/anything')->assertNotFound();
+        $this->withHeader('User-Agent', $gpt)->get('/be-nl/p/1/anything')->assertNotFound();
+
+        // Uncapped elsewhere, like the AI crawlers
+        for ($i = 0; $i <= LimitHeavyCrawlers::PER_MINUTE + 2; $i++) {
+            $this->withHeader('User-Agent', $meta)->get('/be-nl/about')->assertOk();
+        }
+
+        config(['giftcoves.robots_allow' => true]);
+        $robots = $this->get('/robots.txt')->getContent();
+        $this->assertMatchesRegularExpression('#User-agent: meta-externalagent\nUser-agent: meta-webindexer\nAllow: /\nDisallow: /\*/search\n(?:Disallow: [^\n]+\n)*?Disallow: /\*/p/\n#', $robots);
     }
 
     #[Test]

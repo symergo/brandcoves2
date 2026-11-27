@@ -133,6 +133,16 @@ WhatsApp link previews come from `facebookexternalhit`, which is on neither list
 pasted together from product titles. The `claudebot` entry does not match its name. Kept off search
 pages only, so its answers can still cite the product, brand and guide pages.
 
+### Meta's crawlers lose product pages too (owner, 2026-11-27)
+
+In about two hours on the morning of 2026-11-27, meta-externalagent made 1,134 of the origin's 7,301
+requests, 1,000 of them product pages, from 243 Meta addresses (2a03:2880:…). Cloudflare passes it
+as a declared bot, so the out-of-Europe challenge does not stop it. Both Meta crawlers moved from
+`SEARCH_ONLY` to `LimitHeavyCrawlers::NO_PRODUCTS`: 403 on search and product pages, no cap
+elsewhere, with a robots.txt group of their own. `facebookexternalhit` (link previews) is still on no
+list. Applebot was asked about and left alone: it made 89 requests in the same two hours, and it is
+what feeds Siri, Spotlight and Safari suggestions.
+
 ## Search and shop clicks from outside Europe are challenged (owner, 2026-11-23)
 
 From 06:00 UTC on 2026-11-23 a scraper posing as Windows Chrome followed the site's own links:

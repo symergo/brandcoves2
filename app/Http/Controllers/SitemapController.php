@@ -413,6 +413,14 @@ class SitemapController extends Controller
                 ...$search,
                 ...$rules,
                 '',
+                // Meta's AI crawlers: no search and no product pages (owner, 2026-11-27).
+                ...array_map(fn (string $name): string => 'User-agent: '.$name, array_values(LimitHeavyCrawlers::NO_PRODUCTS)),
+                'Allow: /',
+                'Disallow: /*/search',
+                ...$search,
+                'Disallow: /*/p/',
+                ...$rules,
+                '',
                 'Sitemap: '.url('/sitemap.xml'),
             ]
             // Staging: a full duplicate of the site would compete with the real
