@@ -70,6 +70,10 @@ final class LimitHeavyCrawlers
         // Anthropic's crawler for Claude's web search (2026-11-23): 348 of the 609 search
         // requests in 20 minutes, 1.5 s each at the median. Not matched by "claudebot".
         'claude-searchbot' => 'Claude-SearchBot',
+        // OpenAI's crawler for ChatGPT search (owner, 2026-11-27). From 17:00 to 23:00 UTC it
+        // ran about 6,100 searches over 3 s each, 13-20 shuffled title words, about 8 a minute,
+        // and 30 hit the 30 s limit. GPTBot above is OpenAI's other crawler, for training.
+        'oai-searchbot' => 'OAI-SearchBot',
         'reflectionbot' => 'Reflectionbot',
         'kakaobot' => 'KakaoBot',
     ];

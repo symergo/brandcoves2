@@ -133,6 +133,12 @@ WhatsApp link previews come from `facebookexternalhit`, which is on neither list
 pasted together from product titles. The `claudebot` entry does not match its name. Kept off search
 pages only, so its answers can still cite the product, brand and guide pages.
 
+`OAI-SearchBot`, OpenAI's crawler for ChatGPT search, joined them on 2026-11-27 (owner). From 17:00
+to 23:00 UTC it ran about 6,100 searches over 3 s each (about 8.5 hours of database time, 30 of them
+cut off at 30 s), terms of 13-20 shuffled product-title words, about 8 a minute from 74.7.x.x. It
+followed the links between a search page's market versions, so Dutch terms were searched in `en`.
+`gptbot` does not match its name: GPTBot is OpenAI's training crawler, a separate agent.
+
 ### Meta's crawlers lose product pages too (owner, 2026-11-27)
 
 In about two hours on the morning of 2026-11-27, meta-externalagent made 1,134 of the origin's 7,301

@@ -53,11 +53,12 @@ class HeavyCrawlersTest extends TestCase
         $metaIndex = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 (compatible; meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))';
         $preview = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
         $claudeSearch = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; +searchbot@anthropic.com)';
+        $oaiSearch = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot';
 
         // Link previews are not an AI crawler and keep every page
         $this->withHeader('User-Agent', $preview)->get('/be-nl/zoek/lego')->assertOk();
 
-        foreach ([$gpt, $meta, $metaIndex, $claudeSearch] as $agent) {
+        foreach ([$gpt, $meta, $metaIndex, $claudeSearch, $oaiSearch] as $agent) {
             $this->withHeader('User-Agent', $agent)->get('/be-nl/zoek/lego')->assertForbidden();
             $this->withHeader('User-Agent', $agent)->get('/be-nl/search?q=lego')->assertForbidden();
         }
@@ -69,7 +70,7 @@ class HeavyCrawlersTest extends TestCase
 
         config(['giftcoves.robots_allow' => true]);
         $robots = $this->get('/robots.txt')->getContent();
-        $this->assertStringContainsString("User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: Claude-SearchBot\nUser-agent: Reflectionbot\nUser-agent: KakaoBot\nAllow: /\nDisallow: /*/search\n", $robots);
+        $this->assertStringContainsString("User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: Claude-SearchBot\nUser-agent: OAI-SearchBot\nUser-agent: Reflectionbot\nUser-agent: KakaoBot\nAllow: /\nDisallow: /*/search\n", $robots);
     }
 
     #[Test]
