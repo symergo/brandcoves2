@@ -174,8 +174,12 @@ nothing for the person who picks it in the gift finder.
   most gifts with a use are `practical`. `design` stays narrow (bought for how it looks).
 - `manual` for every product that works without power where the electric kind exists or is
   common: a hand coffee grinder, a manual toothbrush gift set, a hand whisk, a mechanical watch,
-  a fountain pen, a board game, a book, a jigsaw. When you tag `powered`, ask whether the other
+  a fountain pen, a board game, a jigsaw. When you tag `powered`, ask whether the other
   end would have fitted the products next to it.
+- Neither `manual` nor `powered` for things that do no job: books, clothing, food and drink,
+  cosmetics. Nobody picks "works by hand" in the gift finder hoping for a novel. (2026-11-27: the
+  example "a book" put `manual` on 17 of 24 judged French books, and the category rule then put
+  it on all 257,438 books in be-fr.)
 - The pairs `manual`/`powered` and `natural`/`technical` are passed on to untagged products in the
   same category (AutoTagger, since 2026-11-26). Tag them every time they apply, even when it feels
   obvious: that is what lets a category earn the rule.

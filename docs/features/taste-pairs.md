@@ -94,3 +94,16 @@ The retired tags themselves were removed from `product_groups.gift_tags` the sam
 `values:` (23). No code read them, but the tag API refuses them, so any later write to such a product
 failed until the tag was taken off by hand. The before-state is in
 `~/backups/giftcoves/dead_tags_undo_2026-11-26.csv` on the VPS.
+
+### Books are not "manual" (2026-11-27)
+
+The first nightly run after the change put `manual` on all 257,438 books in be-fr: the brief listed
+"a book" as an example of `manual`, 17 of the 24 judged French books got it, and that cleared the
+category rule (20 judged, 60% agreement). A giver who picks "Handmatig" wants a hand grinder or a
+fountain pen, not a novel. The brief now says neither `manual` nor `powered` for things that do no
+job (books, clothing, food and drink, cosmetics), and the pole was taken off the 176 judged books
+that carried it in any market (undo: `~/backups/giftcoves/books_manual_undo_2026-11-27.txt` on the
+VPS). The next 04:10 run drops the rule, since `auto_tags` is rewritten each night.
+
+The lesson for the factual pairs: 20 judged products is enough to pass a pole on to a quarter of a
+million, so an example in the brief is a rule for a whole category.

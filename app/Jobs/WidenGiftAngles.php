@@ -85,7 +85,10 @@ class WidenGiftAngles implements ShouldQueue
                 $this->system(),
                 $this->prompt($interests, $map),
                 schemaHint: ['angles' => [['interest' => 'cooking', 'queries' => ['...']]]],
-                maxTokens: 1500,
+                // 3000, was 1500: on 2026-11-27 all five nightly calls stopped at
+                // exactly 1500 output tokens, so the JSON came back cut off and
+                // nothing was stored. Thinking counts against this ceiling too.
+                maxTokens: 3000,
             );
         } catch (AiUnavailable $e) {
             // Expected: cap reached, key missing, model hiccup. The seed keeps
