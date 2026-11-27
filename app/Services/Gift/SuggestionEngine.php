@@ -213,10 +213,19 @@ class SuggestionEngine
 
         $candidates = $this->retrieve($brief, $slots);
 
-        if ($candidates->isEmpty() && $queries !== []) {
+        if ($candidates->isEmpty() && $queries !== [] && ! $brief->taggedOnly) {
             // Nothing matched the interests. Falling back to a budget-and-taste
             // browse is better than an empty page: the person told us who they
             // are shopping for, and "we found nothing" wastes that.
+            //
+            // Not for a landing page (taggedOnly, 2026-11-27). There the browse is
+            // a page titled "darts for a partner" showing a coat and a laptop
+            // charger, and it is the slowest query the engine has: every giftable
+            // product in the budget band, about 240,000 in be-fr or be-nl at
+            // €50-100, read and regex-filtered in 11-13 s. The planner already
+            // threw the result away (it counts matched interests only), and its
+            // be-fr run ran out of its hour on these. The page says "nothing
+            // fit" and offers the other budgets instead.
             $candidates = $this->retrieve($brief, []);
         }
 

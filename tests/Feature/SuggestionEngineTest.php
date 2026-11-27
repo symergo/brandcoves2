@@ -254,6 +254,21 @@ class SuggestionEngineTest extends TestCase
     }
 
     #[Test]
+    public function a_landing_brief_with_no_matches_gets_nothing_rather_than_a_budget_browse(): void
+    {
+        // The be-fr darts page for a partner at €50-100 (2026-11-27) showed a coat, a
+        // horror-film record and a laptop charger, and took 14 s to read the whole budget band.
+        $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
+
+        $picks = $this->engine()->suggest((new TasteBrief(
+            market: Market::BeNl,
+            interests: ['gardening'],
+        ))->taggedOnly());
+
+        $this->assertSame([], $picks);
+    }
+
+    #[Test]
     public function every_pick_carries_the_arithmetic_that_produced_it(): void
     {
         $this->giftable('Manfrotto statief voor camera', 8999, 'Foto');

@@ -328,3 +328,19 @@ An interest's `name` in `lang/*/site.php` (`gift_landing.interests`) is dropped 
 mama die van … houdt", so it has to read there, not only as a menu label. "Die van wonen houdt" did
 not: the Dutch name is "interieur" now. The `slug` stays `wonen`, because the pages are indexed under
 it; a slug change needs a 301 from the old address.
+
+## No budget browse on a landing page (2026-11-27)
+
+When nothing tagged for the interest fits, Find a gift falls back to "anything in the budget", so a
+giver never gets an empty page. A landing page no longer does (`SuggestionEngine::suggest()`, skipped
+for `taggedOnly` briefs). Two reasons, both measured on production that day:
+
+- The page was wrong. "Fléchettes pour partenaire" at €50-100 showed a gothic coat, a Texas Chainsaw
+  Massacre record, a Dell power adapter and a motocross mudguard, none of them darts.
+- It was the slowest query the engine runs: every giftable product in the budget band (about 240,000
+  in be-fr or be-nl at €50-100), read and regex-filtered to keep 300, 11 to 13 s each. The planner
+  only counts products that match an interest, so it threw the result away, and on 2026-11-27 its
+  be-fr run ran out of its hour on these (303 of 379 pages checked).
+
+A budget with no match now shows the usual "nothing fit" line, with the other budgets above it.
+Test: `SuggestionEngineTest::a_landing_brief_with_no_matches_gets_nothing_rather_than_a_budget_browse`.
